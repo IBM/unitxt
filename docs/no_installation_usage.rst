@@ -24,4 +24,4 @@ Loading a dataset with 5 demonstrations for in context learning
 
 .. code-block:: python
 
-  dataset = load_dataset('ibm/unitxt', 'card=squad,num_demos=5')
+  dataset = load_dataset('unitxt/data', 'card=wnli_card,num_demos=5')

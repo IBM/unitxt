@@ -21,6 +21,6 @@ docs-server:
 profile:
 	bash profile/profile.sh
 
-publish:
+pypi:
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
