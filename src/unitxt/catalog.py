@@ -1,18 +1,13 @@
-from unitxt.artifact import Artifact
 from .artifact import Artifact, Artifactory, register_atrifactory
-from abc import abstractmethod
-from dataclasses import field
-import os
 from .file_utils import get_all_files_in_dir
 
+import os
 
 class Catalog(Artifactory):
     name: str = None
     location: str = None
 
-
 catalog_path = os.path.dirname(__file__) + "/catalog"
-
 
 class LocalCatalog(Catalog):
     name: str = "local"
