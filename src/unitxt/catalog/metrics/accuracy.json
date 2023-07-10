@@ -1,0 +1,6 @@
+{
+    "type": "accuracy",
+    "implemented_reductions": [
+        "mean"
+    ]
+}

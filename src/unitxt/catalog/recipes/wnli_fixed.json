@@ -1,0 +1,62 @@
+{
+    "type": "sequential_recipe",
+    "steps": [
+        {
+            "type": "load_hf",
+            "path": "glue",
+            "name": "wnli",
+            "data_dir": null,
+            "data_files": null
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "entailment",
+                    "1": "not_entailment"
+                }
+            },
+            "strict": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "entailment",
+                    "not_entailment"
+                ]
+            }
+        },
+        {
+            "type": "form_task",
+            "inputs": [
+                "choices",
+                "sentence1",
+                "sentence2"
+            ],
+            "outputs": [
+                "label"
+            ],
+            "metrics": [
+                "accuracy"
+            ]
+        },
+        {
+            "type": "render_format_template",
+            "template": {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+                "output_format": "{label}"
+            },
+            "random_reference": false
+        }
+    ]
+}

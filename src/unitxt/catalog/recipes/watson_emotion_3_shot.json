@@ -1,0 +1,11 @@
+{
+    "type": "common_recipe",
+    "card": "watson_emotion_card",
+    "demos_pool_name": "demos_pool",
+    "demos_pool_size": 100,
+    "demos_field": "demos",
+    "num_demos": 3,
+    "sampler_type": "random",
+    "instruction_item": null,
+    "template_item": 0
+}

@@ -1,12 +1,27 @@
-from setuptools import setup, find_packages
+import setuptools
 
-setup(
-    name='unitxt',
-    version='0.0.1',
-    description='unitxt',
-    packages=find_packages('src'),
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+    
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
+setuptools.setup(
+    name="unitxt",
+    version="1.0.0",
+    author="IBM Research",
+    author_email="elron.bandel@ibm.com",
+    description="Load any mixture of text to text data in one line of code",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.ibm.com/IBM-Research-AI/unitext",
+    packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
-    author='Elron Bandel, IBM Research',
-    author_email='elronbandel@ibm.com',
-    url='https://github.com/IBM/unitxt',
+    package_data={'unitext': ['catalog/*.json']},
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.8',
+    install_requires=requirements,
 )

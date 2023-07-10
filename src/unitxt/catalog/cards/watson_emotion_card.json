@@ -1,0 +1,82 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "/dccstor/actr/unitxt-datasets/watson_emotion/",
+        "name": null,
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "text",
+            "textual_choices"
+        ],
+        "outputs": [
+            "labels"
+        ],
+        "metrics": [
+            "accuracy"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "fear",
+                    "joy",
+                    "anger",
+                    "sadness",
+                    "disgust",
+                    "none"
+                ]
+            }
+        },
+        {
+            "type": "normalize_list_fields",
+            "fields": [
+                "choices"
+            ],
+            "key_prefix": "textual_",
+            "empty_value": "",
+            "separator": ", "
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "labels": {
+                    "[]": [
+                        "none"
+                    ]
+                }
+            },
+            "strict": false
+        }
+    ],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{text}. Out of the following: {textual_choices}. The emotion expressed for the message is ",
+                "output_format": "{labels}"
+            },
+            {
+                "type": "input_output_template",
+                "input_format": "What is the emotion out of the following: {textual_choices}. In the text: {text}",
+                "output_format": "{labels}"
+            }
+        ]
+    },
+    "instructions": null
+}

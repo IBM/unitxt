@@ -12,7 +12,7 @@ by using the following code:
 
   from datasets import load_dataset
 
-  dataset = load_dataset('ibm/unitxt', 'squad')
+  dataset = load_dataset('unitxt/data', 'squad')
 
 Loading a Dataset with Different Format or Instructions
 -------------------------------------------------------
