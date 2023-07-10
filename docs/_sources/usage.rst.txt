@@ -1,0 +1,24 @@
+=======
+Usage
+=======
+
+Loading a Dataset
+-----------------
+
+.. code-block:: python
+
+  import unitxt
+
+  dataset = unitxt.load_dataset(['glue', 'stsb'])
+
+Loading a Dataset with Different Format or Instructions
+-------------------------------------------------------
+
+.. note:: This section is to be determined (TBD).
+
+Loading a Mixture of Datasets
+-----------------------------
+
+.. code-block:: python
+
+  unitxt.load_dataset('glue', source='mixture')
