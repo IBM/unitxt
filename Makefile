@@ -24,3 +24,6 @@ profile:
 pypi:
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
+
+hf:
+	python $(DIR)/make/hf.py
