@@ -14,10 +14,10 @@ setuptools.setup(
     description="Load any mixture of text to text data in one line of code",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.ibm.com/IBM-Research-AI/unitext",
+    url="https://github.com/ibm/unitxt",
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
-    package_data={'unitext': ['catalog/*.json']},
+    package_data={'unitxt': ['catalog/*.json']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

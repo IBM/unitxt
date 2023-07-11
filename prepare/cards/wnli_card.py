@@ -15,7 +15,7 @@ from src.unitxt.catalog import add_to_catalog
 card = TaskCard(
         loader=LoadHF(path='glue', name='wnli'),
         preprocess_steps=[
-            SplitRandomMix({'train': 'train[:95%]', 'validation': 'train[95%:]', 'test': 'test'}),
+            SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
             MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not_entailment'}}),
             AddFields(
             fields={

@@ -7,7 +7,11 @@ class Catalog(Artifactory):
     name: str = None
     location: str = None
 
-catalog_path = os.path.dirname(__file__) + "/catalog"
+try:
+    import unitxt
+    catalog_path = os.path.dirname(unitxt.__file__) + "/catalog"
+except ImportError:
+    catalog_path = os.path.dirname(__file__) + "/catalog"
 
 class LocalCatalog(Catalog):
     name: str = "local"

@@ -119,7 +119,7 @@ UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": d
 
 
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
-class UnitextMetric(evaluate.Metric):
+class Metric(evaluate.Metric):
     def _info(self):
         return evaluate.MetricInfo(
             description="_DESCRIPTION",

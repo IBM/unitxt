@@ -27,3 +27,8 @@ pypi:
 
 hf:
 	python $(DIR)/make/hf.py
+
+build:
+	format
+	pypi
+	

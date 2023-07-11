@@ -11,6 +11,7 @@ from typing import Union
 
 
 class CommonRecipe(Recipe, SourceOperator):
+    
     card: TaskCard
     demos_pool_name: str = "demos_pool"
     demos_pool_size: int = None
@@ -37,8 +38,8 @@ class CommonRecipe(Recipe, SourceOperator):
             steps.append(
                 SliceSplit(
                     slices={
-                        self.demos_pool_name: f"train[:{self.demos_pool_size}]",
-                        "train": f"train[{self.demos_pool_size}:]",
+                        self.demos_pool_name: f"train[:{int(self.demos_pool_size)}]",
+                        "train": f"train[{int(self.demos_pool_size)}:]",
                         "validation": "validation",
                         "test": "test",
                     }
@@ -47,7 +48,7 @@ class CommonRecipe(Recipe, SourceOperator):
 
         if self.num_demos is not None:
             if self.sampler_type == "random":
-                sampler = RandomSampler(sample_size=self.num_demos)
+                sampler = RandomSampler(sample_size=int(self.num_demos))
 
             steps.append(
                 SpreadSplit(

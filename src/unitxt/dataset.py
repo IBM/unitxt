@@ -65,10 +65,16 @@ from .text_utils import __file__ as _
 #############
 
 from .register import register_blocks
-from .artifact import Artifact
+from .artifact import Artifact, fetch_artifact, UnitxtArtifactNotFoundError
 
 import datasets
 
+def fetch(artifact_name):
+    try:
+        artifact, _ = fetch_artifact(artifact_name)
+        return artifact
+    except UnitxtArtifactNotFoundError:
+        return None
 
 def parse(query: str):
     """
@@ -87,7 +93,7 @@ def parse(query: str):
     return result
 
 
-class Unitext(datasets.GeneratorBasedBuilder):
+class Dataset(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
     VERSION = datasets.Version("1.1.1")
@@ -97,10 +103,12 @@ class Unitext(datasets.GeneratorBasedBuilder):
     def generators(self):
         register_blocks()
         if not hasattr(self, "_generators") or self._generators is None:
-            args = parse(self.config.name)
-            if "type" not in args:
-                args["type"] = "common_recipe"
-            recipe = Artifact.from_dict(args)
+            recipe = fetch(self.config.name)
+            if recipe is None:
+                args = parse(self.config.name)
+                if "type" not in args:
+                    args["type"] = "common_recipe"
+                recipe = Artifact.from_dict(args)
             self._generators = recipe()
         return self._generators
 
