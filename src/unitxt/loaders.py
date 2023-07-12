@@ -1,8 +1,9 @@
-from .stream import MultiStream
-from .operator import SourceOperator
+from typing import Mapping, Optional, Sequence, Union
 
-from typing import Optional, Union, Sequence, Mapping
 from datasets import load_dataset as hf_load_dataset
+
+from .operator import SourceOperator
+from .stream import MultiStream
 
 
 class Loader(SourceOperator):

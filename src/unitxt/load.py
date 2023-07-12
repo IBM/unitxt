@@ -1,9 +1,10 @@
-from .operator import StreamSource
-from datasets import DatasetDict
 from typing import Union
 
-from .catalog import LocalCatalog
+from datasets import DatasetDict
+
 from .artifact import Artifact
+from .catalog import LocalCatalog
+from .operator import StreamSource
 
 
 def load_stream(source_name_or_path: str) -> StreamSource:

@@ -1,6 +1,6 @@
-from .operator import StreamInstanceOperator
+from typing import Any, Dict, List
 
-from typing import List, Dict, Any
+from .operator import StreamInstanceOperator
 
 
 class NormalizeListFields(StreamInstanceOperator):

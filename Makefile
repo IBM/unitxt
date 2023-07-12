@@ -14,6 +14,7 @@ docs:
 
 format:
 	black $(DIR)/src/unitxt
+	isort $(DIR)/src/unitxt
 
 docs-server:
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
@@ -25,8 +26,13 @@ pypi:
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 
-hf:
-	python $(DIR)/make/hf.py
+dataset:
+	bash $(DIR)/make/hf/preapare_dataset_imports.sh
+	python $(DIR)/make/hf/preapare_dataset.py
+
+metric:
+	bash $(DIR)/make/hf/preapare_metric_imports.sh
+	python $(DIR)/make/hf/prepare_metric.py
 
 build:
 	format

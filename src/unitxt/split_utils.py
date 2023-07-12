@@ -1,6 +1,6 @@
-import re
-import random
 import itertools
+import random
+import re
 
 from .generator_utils import ReusableGenerator
 
@@ -26,7 +26,7 @@ def parse_random_mix_string(input_str):
         >>> parse_random_mix_string("dale[90%]+oren[0.7]+mike")
             {'dale': 0.9, 'oren': 0.7, 'mike': 1.0}
     """
-    
+
     if not re.fullmatch(r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)", input_str):
         raise ValueError("Invalid input format")
 
@@ -63,7 +63,7 @@ def parse_slices_string(input_str):
         >>> parse_slices_string("oren[:50]+jake[24:]+test+oren[5:10]")
         {'oren': [(None, 50), (5, 10)], 'jake': [(24, None)], 'test': [(None, None)]}
     """
-    
+
     result_dict = {}
 
     # Split the input string into a list of sources
@@ -127,7 +127,7 @@ def slice_streams(input_streams, mapping):
         >>> slice_streams(old_streams, mapping)
         {"new_train": [1, 2, 3, 4, 5, 8, 9], "new_test": [12, 13, 14]}
     """
-    
+
     new_streams = {}
     for new_stream, sources in mapping.items():
 
@@ -178,7 +178,7 @@ def build_stream_routing(mapping):
             # Output: {'my_old_stream1': (['my_new_stream', 'my_new_stream2'], [0.6, 0.4]),
             #          'my_old_stream2': (['my_new_stream', 'my_new_stream2'], [0.2, 0.8])}
     """
-    
+
     stream_mapping = {}
 
     # Calculate total weight for each old stream
@@ -257,7 +257,7 @@ def random_mix_streams(input_streams, mapping):
                 for _, item in zip(range(10), new_stream):
                     print(item)
     """
-    
+
     new_streams = {}
 
     # Build stream routing

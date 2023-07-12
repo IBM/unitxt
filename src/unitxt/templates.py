@@ -1,11 +1,11 @@
-from .text_utils import split_words
-from .artifact import Artifact
-from .operator import StreamInstanceOperator, InstanceOperatorWithGlobalAccess
-from .instructions import Instruction
-
 import random
-from typing import Dict, Any, List
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List
+
+from .artifact import Artifact
+from .instructions import Instruction
+from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
+from .text_utils import split_words
 
 
 class Renderer(ABC):

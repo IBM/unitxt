@@ -1,7 +1,7 @@
-from .artifact import Artifact
-
 from abc import ABC, abstractmethod
 from typing import Dict
+
+from .artifact import Artifact
 
 
 class Instruction(Artifact):

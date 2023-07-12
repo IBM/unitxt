@@ -1,9 +1,9 @@
-from .stream import Stream
-from .operator import SingleStreamOperator, StreamInstanceOperator
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from abc import abstractmethod, ABC
+from typing import Any, Dict, List
 
-from typing import List, Dict, Any
+from .operator import SingleStreamOperator, StreamInstanceOperator
+from .stream import Stream
 
 
 def absrtact_factory():

@@ -1,11 +1,10 @@
-from .stream import MultiStream
-from .operator import MultiStreamOperator, InstanceOperatorWithGlobalAccess
-from .generator_utils import ReusableGenerator
-from .artifact import Artifact
-
-
-from typing import Optional, Dict, List
 from dataclasses import field
+from typing import Dict, List, Optional
+
+from .artifact import Artifact
+from .generator_utils import ReusableGenerator
+from .operator import InstanceOperatorWithGlobalAccess, MultiStreamOperator
+from .stream import MultiStream
 
 
 class Splitter(MultiStreamOperator):
@@ -16,8 +15,8 @@ import random
 
 from .split_utils import (
     parse_random_mix_string,
-    random_mix_streams,
     parse_slices_string,
+    random_mix_streams,
     slice_streams,
 )
 

@@ -1,19 +1,17 @@
-from .stream import MultiStream, Stream
+from dataclasses import field
+from typing import Any, Dict, Generator, Iterable, List, Optional, Union
+
 from .artifact import Artifact, fetch_artifact
 from .operator import (
-    StreamInstanceOperator,
+    MultiStream,
     MultiStreamOperator,
     SingleStreamOperator,
     SingleStreamReducer,
-    StreamInitializerOperator,
     Stream,
-    MultiStream,
+    StreamInitializerOperator,
+    StreamInstanceOperator,
 )
-
-from dataclasses import field
-from typing import List, Union, Dict, Optional, Generator, Any, Iterable
-
-from typing import Dict, Any
+from .stream import MultiStream, Stream
 
 
 class FromIterables(StreamInitializerOperator):

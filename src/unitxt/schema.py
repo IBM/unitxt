@@ -1,9 +1,9 @@
-from datasets import Features, Sequence, Value
-from .operator import StreamInstanceOperatorValidator
-
-from typing import Dict, Any, List
-
 from dataclasses import field
+from typing import Any, Dict, List
+
+from datasets import Features, Sequence, Value
+
+from .operator import StreamInstanceOperatorValidator
 
 UNITXT_DATASET_SCHEMA = Features(
     {

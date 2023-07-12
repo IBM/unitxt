@@ -1,11 +1,10 @@
-from .stream import MultiStream
+from typing import List, Optional
 
 from .loaders import Loader
-from .splitters import Splitter
-from .task import Tasker
 from .render import Templater
-
-from typing import Optional, List
+from .splitters import Splitter
+from .stream import MultiStream
+from .task import Tasker
 
 
 class Fusion(StreamSource):

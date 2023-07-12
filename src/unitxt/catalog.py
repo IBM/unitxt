@@ -1,17 +1,21 @@
+import os
+
 from .artifact import Artifact, Artifactory, register_atrifactory
 from .file_utils import get_all_files_in_dir
 
-import os
 
 class Catalog(Artifactory):
     name: str = None
     location: str = None
 
+
 try:
     import unitxt
+
     catalog_path = os.path.dirname(unitxt.__file__) + "/catalog"
 except ImportError:
     catalog_path = os.path.dirname(__file__) + "/catalog"
+
 
 class LocalCatalog(Catalog):
     name: str = "local"

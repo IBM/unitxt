@@ -1,11 +1,11 @@
-from .artifact import Artifact
-from .operator import StreamingOperator
-from .templates import TemplatesList, TemplatesDict
-from .instructions import InstructionsList, InstructionsDict
-from .loaders import Loader
-from .task import FormTask
+from typing import List, Optional, Union
 
-from typing import Union, List, Optional
+from .artifact import Artifact
+from .instructions import InstructionsDict, InstructionsList
+from .loaders import Loader
+from .operator import StreamingOperator
+from .task import FormTask
+from .templates import TemplatesDict, TemplatesList
 
 
 class TaskCard(Artifact):

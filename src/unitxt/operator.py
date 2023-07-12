@@ -1,9 +1,9 @@
-from .stream import MultiStream, Stream
-from .artifact import Artifact
-
 from abc import abstractmethod
-from typing import Optional, List, Dict, Generator, Union, Any
 from dataclasses import field
+from typing import Any, Dict, Generator, List, Optional, Union
+
+from .artifact import Artifact
+from .stream import MultiStream, Stream
 
 
 class Operator(Artifact):

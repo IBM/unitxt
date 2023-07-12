@@ -1,7 +1,7 @@
-from .artifact import Artifact
-from . import blocks
-
 import inspect
+
+from . import blocks
+from .artifact import Artifact
 
 
 def register_blocks():

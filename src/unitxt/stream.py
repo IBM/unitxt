@@ -1,8 +1,8 @@
+from typing import Dict, Iterable
+
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+
 from .generator_utils import ReusableGenerator
-
-from typing import Iterable, Dict
-
-from datasets import IterableDatasetDict, IterableDataset, DatasetDict, Dataset
 
 
 class Stream:

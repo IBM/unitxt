@@ -1,9 +1,8 @@
-from .artifact import Artifact
-
-from abc import abstractmethod
-
-from dataclasses import field
 import random
+from abc import abstractmethod
+from dataclasses import field
+
+from .artifact import Artifact
 
 
 class Collection(Artifact):

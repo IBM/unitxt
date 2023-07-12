@@ -1,17 +1,16 @@
-from .stream import MultiStream
-from .operator import SourceOperator
-from .card import TaskCard
-from .splitters import SliceSplit, SpreadSplit, RandomSampler
-from .recipe import SequentialRecipe, Recipe
-from .collections import ItemPicker, RandomPicker
-from .templates import RenderTemplatedICL
-from .schema import ToUnitxtGroup
-
 from typing import Union
+
+from .card import TaskCard
+from .collections import ItemPicker, RandomPicker
+from .operator import SourceOperator
+from .recipe import Recipe, SequentialRecipe
+from .schema import ToUnitxtGroup
+from .splitters import RandomSampler, SliceSplit, SpreadSplit
+from .stream import MultiStream
+from .templates import RenderTemplatedICL
 
 
 class CommonRecipe(Recipe, SourceOperator):
-    
     card: TaskCard
     demos_pool_name: str = "demos_pool"
     demos_pool_size: int = None

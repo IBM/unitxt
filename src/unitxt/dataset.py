@@ -1,49 +1,19 @@
-###############
-# `ls -1 src/unitxt | grep '\.py$' | grep -Ev 'dataset\.py|__init__\.py' | sort`:
-# artifact.py
-# blocks.py
-# card.py
-# catalog.py
-# collections.py
-# common.py
-# file_utils.py
-# fusion.py
-# generator_utils.py
-# instructions.py
-# loaders.py
-# load.py
-# metric.py
-# metrics.py
-# normalizers.py
-# operator.py
-# operators.py
-# processors.py
-# recipe.py
-# register.py
-# splitters.py
-# split_utils.py
-# stream.py
-# task.py
-# templates.py
-# text_utils.py
-# utilize.py
-# validate.py
-#####
-# imports for hf system:
-#####
+import datasets
+
+from .artifact import Artifact, UnitxtArtifactNotFoundError
 from .artifact import __file__ as _
+from .artifact import fetch_artifact
 from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
 from .file_utils import __file__ as _
-
-# from .fusion import __file__
+from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .instructions import __file__ as _
-from .loaders import __file__ as _
 from .load import __file__ as _
+from .loaders import __file__ as _
 from .metric import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
@@ -52,22 +22,16 @@ from .operators import __file__ as _
 from .processors import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
+from .register import register_blocks
 from .schema import __file__ as _
-from .splitters import __file__ as _
 from .split_utils import __file__ as _
+from .splitters import __file__ as _
 from .stream import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .validate import __file__ as _
 
-# from .utilize import __file__ as _
-# from .validate import __file__ as _
-#############
-
-from .register import register_blocks
-from .artifact import Artifact, fetch_artifact, UnitxtArtifactNotFoundError
-
-import datasets
 
 def fetch(artifact_name):
     try:
@@ -75,6 +39,7 @@ def fetch(artifact_name):
         return artifact
     except UnitxtArtifactNotFoundError:
         return None
+
 
 def parse(query: str):
     """

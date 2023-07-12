@@ -1,6 +1,6 @@
-from .operator import StreamInstanceOperator
+from typing import Any, Dict, List
 
-from typing import Dict, List, Any
+from .operator import StreamInstanceOperator
 
 
 class Tasker:
