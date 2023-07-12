@@ -22,7 +22,7 @@ from .operators import __file__ as _
 from .processors import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .register import register_blocks
+from .register import register_all_artifacts
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
@@ -30,6 +30,7 @@ from .stream import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .utils import __file__ as _
 from .validate import __file__ as _
 
 
@@ -66,7 +67,7 @@ class Dataset(datasets.GeneratorBasedBuilder):
 
     @property
     def generators(self):
-        register_blocks()
+        register_all_artifacts()
         if not hasattr(self, "_generators") or self._generators is None:
             recipe = fetch(self.config.name)
             if recipe is None:

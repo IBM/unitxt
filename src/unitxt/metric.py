@@ -11,7 +11,6 @@ from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
-from .dataset import __file__ as _
 from .file_utils import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
@@ -38,6 +37,7 @@ from .operators import __file__ as _
 from .processors import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
+from .register import register_all_artifacts
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
@@ -46,6 +46,7 @@ from .stream import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .utils import __file__ as _
 from .validate import __file__ as _
 
 
@@ -91,6 +92,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 
 class MetricRecipe(SequntialOperatorInitilizer):
     def prepare(self):
+        register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
             ApplyValueOperatorsField(

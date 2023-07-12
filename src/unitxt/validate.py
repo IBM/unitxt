@@ -1,12 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import field
 from typing import Any, Dict
 
 from datasets import Dataset, Features, Sequence, Value
 
-from .stream import Artifact, InstanceOperatorWithGlobalAccess, StreamInstanceOperator
-from .text_utils import split_words
-
+from .operator import  StreamInstanceOperator
 
 class Validator(ABC):
     pass
