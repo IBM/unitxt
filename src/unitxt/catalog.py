@@ -1,7 +1,12 @@
 import os
+import re
+from pathlib import Path
 
 from .artifact import Artifact, Artifactory, register_atrifactory
 from .file_utils import get_all_files_in_dir
+
+
+COLLECTION_SEPARATOR = '::'
 
 
 class Catalog(Artifactory):
@@ -12,25 +17,17 @@ class Catalog(Artifactory):
 try:
     import unitxt
 
-    catalog_path = os.path.dirname(unitxt.__file__) + "/catalog"
+    default_catalog_path = os.path.dirname(unitxt.__file__) + "/catalog"
 except ImportError:
-    catalog_path = os.path.dirname(__file__) + "/catalog"
+    default_catalog_path = os.path.dirname(__file__) + "/catalog"
 
 
 class LocalCatalog(Catalog):
     name: str = "local"
-    location: str = catalog_path
-
-    @property
-    def path_dict(self):
-        result = {}
-        for path in get_all_files_in_dir(self.location, recursive=True, file_extension=".json"):
-            name = os.path.splitext(os.path.basename(path))[0]
-            result[name] = path
-        return result
+    location: str = default_catalog_path
 
     def path(self, artifact_identifier: str):
-        return self.path_dict.get(artifact_identifier, None)
+        return os.path.join(self.location, *(artifact_identifier + ".json").split(COLLECTION_SEPARATOR))
 
     def load(self, artifact_identifier: str):
         assert artifact_identifier in self, "Artifact with name {} does not exist".format(artifact_identifier)
@@ -49,20 +46,21 @@ class LocalCatalog(Catalog):
             return False
         return os.path.exists(path) and os.path.isfile(path)
 
-    def save(self, artifact: Artifact, artifact_identifier: str, collection: str, overwrite: bool = False):
+    def save(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
         assert isinstance(artifact, Artifact), "Artifact must be an instance of Artifact"
 
         if not overwrite:
             assert (
                 artifact_identifier not in self
             ), f"Artifact with name {artifact_identifier} already exists in catalog {self.name}"
-
-        collection_dir = os.path.join(self.location, collection)
-        os.makedirs(collection_dir, exist_ok=True)
-        path = os.path.join(collection_dir, artifact_identifier + ".json")
+        path = self.path(artifact_identifier)
+        os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
 
-
+# add artifactory by env var.
+# support :: '/'
+# add catalog, remove catalog -> from default catalog.
+# github catalog.
 register_atrifactory(LocalCatalog())
 
 try:
@@ -83,7 +81,18 @@ class CommunityCatalog(Catalog):
         pass
 
 
-def add_to_catalog(artifact: Artifact, name: str, collection=str, catalog: Catalog = None, overwrite: bool = False):
+def verify_legal_catalog_name(name):
+    assert re.match('^[\w' + COLLECTION_SEPARATOR + ']+$', name),\
+        'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/").'
+
+
+def add_to_catalog(artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False,
+                   catalog_path: str = None):
     if catalog is None:
-        catalog = LocalCatalog()
-    catalog.save(artifact, name, collection, overwrite=overwrite)
+        if catalog_path is None:
+            catalog_path = default_catalog_path
+        catalog = LocalCatalog(location=catalog_path)
+    verify_legal_catalog_name(name)
+    catalog.save(artifact, name, overwrite=overwrite) # remove collection (its actually the dir).
+    # verify name
+
