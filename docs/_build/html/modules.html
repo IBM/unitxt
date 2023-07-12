@@ -196,12 +196,13 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.dataset">unitxt.dataset module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.dataset.Unitext"><code class="docutils literal notranslate"><span class="pre">Unitext</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Unitext.VERSION"><code class="docutils literal notranslate"><span class="pre">Unitext.VERSION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Unitext.builder_configs"><code class="docutils literal notranslate"><span class="pre">Unitext.builder_configs</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Unitext.generators"><code class="docutils literal notranslate"><span class="pre">Unitext.generators</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.dataset.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Dataset.VERSION"><code class="docutils literal notranslate"><span class="pre">Dataset.VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Dataset.builder_configs"><code class="docutils literal notranslate"><span class="pre">Dataset.builder_configs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.dataset.Dataset.generators"><code class="docutils literal notranslate"><span class="pre">Dataset.generators</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.dataset.fetch"><code class="docutils literal notranslate"><span class="pre">fetch()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.dataset.parse"><code class="docutils literal notranslate"><span class="pre">parse()</span></code></a></li>
 </ul>
 </li>
@@ -209,7 +210,7 @@
 <li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.file_utils.get_all_files_in_dir"><code class="docutils literal notranslate"><span class="pre">get_all_files_in_dir()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="unitxt.html#unitxt-fusion-module">unitxt.fusion module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.fusion">unitxt.fusion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.generator_utils">unitxt.generator_utils module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.generator_utils.ReusableGenerator"><code class="docutils literal notranslate"><span class="pre">ReusableGenerator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.generator_utils.ReusableGenerator.construct"><code class="docutils literal notranslate"><span class="pre">ReusableGenerator.construct()</span></code></a></li>
@@ -268,6 +269,7 @@
 <li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.metric.FromPredictionsAndOriginalData.zip"><code class="docutils literal notranslate"><span class="pre">FromPredictionsAndOriginalData.zip()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.metric.Metric"><code class="docutils literal notranslate"><span class="pre">Metric</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.metric.MetricRecipe"><code class="docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.metric.MetricRecipe.prepare"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.prepare()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.metric.MetricRecipe.steps"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.steps</span></code></a></li>
@@ -280,7 +282,6 @@
 <li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.metric.MultiStreamScoreMean.type"><code class="docutils literal notranslate"><span class="pre">MultiStreamScoreMean.type</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.metric.UnitextMetric"><code class="docutils literal notranslate"><span class="pre">UnitextMetric</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.metrics">unitxt.metrics module</a><ul>
@@ -515,7 +516,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.register">unitxt.register module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.register.register_blocks"><code class="docutils literal notranslate"><span class="pre">register_blocks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.register.ProjectArtifactRegisterer"><code class="docutils literal notranslate"><span class="pre">ProjectArtifactRegisterer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.register.register_all_artifacts"><code class="docutils literal notranslate"><span class="pre">register_all_artifacts()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.schema">unitxt.schema module</a><ul>
@@ -693,7 +695,26 @@
 <li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.text_utils.split_words"><code class="docutils literal notranslate"><span class="pre">split_words()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="unitxt.html#unitxt-validate-module">unitxt.validate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.utils">unitxt.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.utils.Singleton"><code class="docutils literal notranslate"><span class="pre">Singleton</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt.validate">unitxt.validate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.validate.StandardSchema"><code class="docutils literal notranslate"><span class="pre">StandardSchema</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateSchema"><code class="docutils literal notranslate"><span class="pre">ValidateSchema</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateSchema.process"><code class="docutils literal notranslate"><span class="pre">ValidateSchema.process()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateSchema.schema"><code class="docutils literal notranslate"><span class="pre">ValidateSchema.schema</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateSchema.verify"><code class="docutils literal notranslate"><span class="pre">ValidateSchema.verify()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateSchema.verify_first_instance"><code class="docutils literal notranslate"><span class="pre">ValidateSchema.verify_first_instance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateStandartSchema"><code class="docutils literal notranslate"><span class="pre">ValidateStandartSchema</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="unitxt.html#unitxt.validate.ValidateStandartSchema.schema"><code class="docutils literal notranslate"><span class="pre">ValidateStandartSchema.schema</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="unitxt.html#unitxt.validate.Validator"><code class="docutils literal notranslate"><span class="pre">Validator</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="unitxt.html#module-unitxt">Module contents</a></li>
 </ul>
 </li>

@@ -149,7 +149,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="unitxt.html#unitxt.split_utils.build_stream_routing">build_stream_routing() (in module unitxt.split_utils)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.dataset.Unitext.builder_configs">builder_configs (unitxt.dataset.Unitext attribute)</a>
+      <li><a href="unitxt.html#unitxt.dataset.Dataset.builder_configs">builder_configs (unitxt.dataset.Dataset attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -207,6 +207,8 @@
 </li>
       <li><a href="unitxt.html#unitxt.loaders.LoadHF.data_files">data_files (unitxt.loaders.LoadHF attribute)</a>
 </li>
+      <li><a href="unitxt.html#unitxt.dataset.Dataset">Dataset (class in unitxt.dataset)</a>
+</li>
       <li><a href="unitxt.html#unitxt.operators.ApplyValueOperatorsField.default_operators">default_operators (unitxt.operators.ApplyValueOperatorsField attribute)</a>
 </li>
       <li><a href="unitxt.html#unitxt.templates.RenderTemplatedICL.demo_separator">demo_separator (unitxt.templates.RenderTemplatedICL attribute)</a>
@@ -241,6 +243,8 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="unitxt.html#unitxt.dataset.fetch">fetch() (in module unitxt.dataset)</a>
+</li>
       <li><a href="unitxt.html#unitxt.artifact.fetch_artifact">fetch_artifact() (in module unitxt.artifact)</a>
 </li>
       <li><a href="unitxt.html#unitxt.operators.ApplyStreamOperatorsField.field">field (unitxt.operators.ApplyStreamOperatorsField attribute)</a>
@@ -259,10 +263,10 @@
       </ul></li>
       <li><a href="unitxt.html#unitxt.operators.FilterByValues">FilterByValues (class in unitxt.operators)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.operators.flatten_dict">flatten_dict() (in module unitxt.operators)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="unitxt.html#unitxt.operators.flatten_dict">flatten_dict() (in module unitxt.operators)</a>
+</li>
       <li><a href="unitxt.html#unitxt.operators.FlattenInstances">FlattenInstances (class in unitxt.operators)</a>
 </li>
       <li><a href="unitxt.html#unitxt.task.FormTask">FormTask (class in unitxt.task)</a>
@@ -293,7 +297,7 @@
 </li>
       <li><a href="unitxt.html#unitxt.operator.InstanceOperatorWithGlobalAccess.generator">generator() (unitxt.operator.InstanceOperatorWithGlobalAccess method)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.dataset.Unitext.generators">generators (unitxt.dataset.Unitext property)</a>
+      <li><a href="unitxt.html#unitxt.dataset.Dataset.generators">generators (unitxt.dataset.Dataset property)</a>
 </li>
       <li><a href="unitxt.html#unitxt.file_utils.get_all_files_in_dir">get_all_files_in_dir() (in module unitxt.file_utils)</a>
 </li>
@@ -469,8 +473,12 @@
 </li>
       <li><a href="unitxt.html#unitxt.operators.MergeStreams">MergeStreams (class in unitxt.operators)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.metrics.Metric">Metric (class in unitxt.metrics)</a>
+      <li><a href="unitxt.html#unitxt.metric.Metric">Metric (class in unitxt.metric)</a>
+
+      <ul>
+        <li><a href="unitxt.html#unitxt.metrics.Metric">(class in unitxt.metrics)</a>
 </li>
+      </ul></li>
       <li><a href="unitxt.html#unitxt.metric.MetricRecipe">MetricRecipe (class in unitxt.metric)</a>
 </li>
       <li><a href="unitxt.html#unitxt.schema.ToUnitxtGroup.metrics">metrics (unitxt.schema.ToUnitxtGroup attribute)</a>
@@ -502,6 +510,8 @@
         <li><a href="unitxt.html#module-unitxt.dataset">unitxt.dataset</a>
 </li>
         <li><a href="unitxt.html#module-unitxt.file_utils">unitxt.file_utils</a>
+</li>
+        <li><a href="unitxt.html#module-unitxt.fusion">unitxt.fusion</a>
 </li>
         <li><a href="unitxt.html#module-unitxt.generator_utils">unitxt.generator_utils</a>
 </li>
@@ -540,6 +550,10 @@
         <li><a href="unitxt.html#module-unitxt.templates">unitxt.templates</a>
 </li>
         <li><a href="unitxt.html#module-unitxt.text_utils">unitxt.text_utils</a>
+</li>
+        <li><a href="unitxt.html#module-unitxt.utils">unitxt.utils</a>
+</li>
+        <li><a href="unitxt.html#module-unitxt.validate">unitxt.validate</a>
 </li>
       </ul></li>
   </ul></td>
@@ -719,6 +733,8 @@
 </li>
         <li><a href="unitxt.html#unitxt.templates.RenderFormatTemplate.process">(unitxt.templates.RenderFormatTemplate method)</a>
 </li>
+        <li><a href="unitxt.html#unitxt.validate.ValidateSchema.process">(unitxt.validate.ValidateSchema method)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -734,6 +750,8 @@
         <li><a href="unitxt.html#unitxt.templates.Template.process_outputs">(unitxt.templates.Template method)</a>
 </li>
       </ul></li>
+      <li><a href="unitxt.html#unitxt.register.ProjectArtifactRegisterer">ProjectArtifactRegisterer (class in unitxt.register)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -759,10 +777,12 @@
 </li>
       </ul></li>
       <li><a href="unitxt.html#unitxt.artifact.register_all_artifacts">register_all_artifacts() (in module unitxt.artifact)</a>
+
+      <ul>
+        <li><a href="unitxt.html#unitxt.register.register_all_artifacts">(in module unitxt.register)</a>
 </li>
+      </ul></li>
       <li><a href="unitxt.html#unitxt.artifact.register_atrifactory">register_atrifactory() (in module unitxt.artifact)</a>
-</li>
-      <li><a href="unitxt.html#unitxt.register.register_blocks">register_blocks() (in module unitxt.register)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -816,6 +836,12 @@
         <li><a href="unitxt.html#unitxt.catalog.LocalCatalog.save">(unitxt.catalog.LocalCatalog method)</a>
 </li>
       </ul></li>
+      <li><a href="unitxt.html#unitxt.validate.ValidateSchema.schema">schema (unitxt.validate.ValidateSchema attribute)</a>
+
+      <ul>
+        <li><a href="unitxt.html#unitxt.validate.ValidateStandartSchema.schema">(unitxt.validate.ValidateStandartSchema attribute)</a>
+</li>
+      </ul></li>
       <li><a href="unitxt.html#unitxt.normalizers.NormalizeListFields.separator">separator (unitxt.normalizers.NormalizeListFields attribute)</a>
 </li>
       <li><a href="unitxt.html#unitxt.recipe.SequentialRecipe">SequentialRecipe (class in unitxt.recipe)</a>
@@ -834,6 +860,8 @@
 </li>
       <li><a href="unitxt.html#unitxt.operator.SingleStreamReducer">SingleStreamReducer (class in unitxt.operator)</a>
 </li>
+      <li><a href="unitxt.html#unitxt.utils.Singleton">Singleton (class in unitxt.utils)</a>
+</li>
       <li><a href="unitxt.html#unitxt.templates.RenderTemplatedICL.size_limiter">size_limiter (unitxt.templates.RenderTemplatedICL attribute)</a>
 </li>
       <li><a href="unitxt.html#unitxt.split_utils.slice_stream">slice_stream() (in module unitxt.split_utils)</a>
@@ -842,10 +870,10 @@
 </li>
       <li><a href="unitxt.html#unitxt.splitters.SliceSplit.slices">slices (unitxt.splitters.SliceSplit attribute)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.splitters.SliceSplit">SliceSplit (class in unitxt.splitters)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="unitxt.html#unitxt.splitters.SliceSplit">SliceSplit (class in unitxt.splitters)</a>
+</li>
       <li><a href="unitxt.html#unitxt.splitters.SpreadSplit.source_stream">source_stream (unitxt.splitters.SpreadSplit attribute)</a>
 </li>
       <li><a href="unitxt.html#unitxt.operator.SourceOperator">SourceOperator (class in unitxt.operator)</a>
@@ -863,6 +891,8 @@
       <li><a href="unitxt.html#unitxt.metric.MultiStreamScoreMean.spread_results">spread_results() (unitxt.metric.MultiStreamScoreMean method)</a>
 </li>
       <li><a href="unitxt.html#unitxt.splitters.SpreadSplit">SpreadSplit (class in unitxt.splitters)</a>
+</li>
+      <li><a href="unitxt.html#unitxt.validate.StandardSchema">StandardSchema (class in unitxt.validate)</a>
 </li>
       <li><a href="unitxt.html#unitxt.metric.MetricRecipe.steps">steps (unitxt.metric.MetricRecipe attribute)</a>
 
@@ -1014,10 +1044,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="unitxt.html#unitxt.operators.Unique">Unique (class in unitxt.operators)</a>
 </li>
-      <li><a href="unitxt.html#unitxt.dataset.Unitext">Unitext (class in unitxt.dataset)</a>
-</li>
-      <li><a href="unitxt.html#unitxt.metric.UnitextMetric">UnitextMetric (class in unitxt.metric)</a>
-</li>
       <li>
     unitxt
 
@@ -1082,6 +1108,13 @@
 </li>
       </ul></li>
       <li>
+    unitxt.fusion
+
+      <ul>
+        <li><a href="unitxt.html#module-unitxt.fusion">module</a>
+</li>
+      </ul></li>
+      <li>
     unitxt.generator_utils
 
       <ul>
@@ -1123,8 +1156,6 @@
         <li><a href="unitxt.html#module-unitxt.metrics">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     unitxt.normalizers
 
@@ -1132,6 +1163,8 @@
         <li><a href="unitxt.html#module-unitxt.normalizers">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     unitxt.operator
 
@@ -1216,6 +1249,20 @@
         <li><a href="unitxt.html#module-unitxt.text_utils">module</a>
 </li>
       </ul></li>
+      <li>
+    unitxt.utils
+
+      <ul>
+        <li><a href="unitxt.html#module-unitxt.utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    unitxt.validate
+
+      <ul>
+        <li><a href="unitxt.html#module-unitxt.validate">module</a>
+</li>
+      </ul></li>
       <li><a href="unitxt.html#unitxt.artifact.UnitxtArtifactNotFoundError">UnitxtArtifactNotFoundError</a>
 </li>
       <li><a href="unitxt.html#unitxt.stream.MultiStream.unwrap">unwrap() (unitxt.stream.MultiStream method)</a>
@@ -1240,6 +1287,12 @@
         <li><a href="unitxt.html#unitxt.schema.ToUnitxtGroup.validate">(unitxt.schema.ToUnitxtGroup method)</a>
 </li>
       </ul></li>
+      <li><a href="unitxt.html#unitxt.validate.ValidateSchema">ValidateSchema (class in unitxt.validate)</a>
+</li>
+      <li><a href="unitxt.html#unitxt.validate.ValidateStandartSchema">ValidateStandartSchema (class in unitxt.validate)</a>
+</li>
+      <li><a href="unitxt.html#unitxt.validate.Validator">Validator (class in unitxt.validate)</a>
+</li>
       <li><a href="unitxt.html#unitxt.operators.ApplyValueOperatorsField.value_field">value_field (unitxt.operators.ApplyValueOperatorsField attribute)</a>
 </li>
       <li><a href="unitxt.html#unitxt.operators.FilterByValues.values">values (unitxt.operators.FilterByValues attribute)</a>
@@ -1265,10 +1318,14 @@
 </li>
         <li><a href="unitxt.html#unitxt.templates.TemplatesList.verify">(unitxt.templates.TemplatesList method)</a>
 </li>
+        <li><a href="unitxt.html#unitxt.validate.ValidateSchema.verify">(unitxt.validate.ValidateSchema method)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="unitxt.html#unitxt.dataset.Unitext.VERSION">VERSION (unitxt.dataset.Unitext attribute)</a>
+      <li><a href="unitxt.html#unitxt.validate.ValidateSchema.verify_first_instance">verify_first_instance() (unitxt.validate.ValidateSchema method)</a>
+</li>
+      <li><a href="unitxt.html#unitxt.dataset.Dataset.VERSION">VERSION (unitxt.dataset.Dataset attribute)</a>
 </li>
   </ul></td>
 </tr></table>

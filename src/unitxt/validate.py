@@ -4,7 +4,8 @@ from typing import Any, Dict
 
 from datasets import Dataset, Features, Sequence, Value
 
-from .operator import  StreamInstanceOperator
+from .operator import StreamInstanceOperator
+
 
 class Validator(ABC):
     pass

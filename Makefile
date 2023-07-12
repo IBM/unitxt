@@ -23,6 +23,7 @@ profile:
 	bash profile/profile.sh
 
 pypi:
+	. $(DIR)/SECRETS.SH
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 

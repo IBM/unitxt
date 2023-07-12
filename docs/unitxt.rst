@@ -228,6 +228,14 @@ unitxt.text\_utils module
    :undoc-members:
    :show-inheritance:
 
+unitxt.utils module
+-------------------
+
+.. automodule:: unitxt.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 unitxt.validate module
 ----------------------
 

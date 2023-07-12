@@ -136,3 +136,5 @@ dmypy.json
 
 .vscode/*
 t.py
+
+SECRETS.SH

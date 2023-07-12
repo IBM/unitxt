@@ -5,7 +5,6 @@ from .splitters import Splitter
 from .stream import MultiStream
 from .task import Tasker
 
-
 # class Fusion(StreamSource):
 #     pass
 
