@@ -3,9 +3,9 @@ import re
 from pathlib import Path
 
 from .artifact import Artifact, Artifactory, Artifactories
-from .file_utils import get_all_files_in_dir
 
-
+PATHS_SEP = ':'
+UNITXT_ARTIFACTORIES_ENV_VAR = 'unitxt_artifactories'
 COLLECTION_SEPARATOR = '::'
 
 
@@ -57,19 +57,13 @@ class LocalCatalog(Catalog):
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
 
-# add artifactory by env var.
 # add catalog, remove catalog -> from default catalog.
 # github catalog.
 Artifactories().register_atrifactory(LocalCatalog())
+if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
+    for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
+        Artifactories().register_atrifactory(LocalCatalog(location=path))
 
-try:
-    import unitxt
-
-    library_catalog = LocalCatalog("library", unitxt.__path__[0] + "/catalog")
-    Artifactories().register_atrifactory(library_catalog)
-except:
-    pass
-# create a catalog for the community
 
 
 class CommunityCatalog(Catalog):
