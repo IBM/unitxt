@@ -11,6 +11,7 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 # 
 [![version](https://img.shields.io/pypi/v/unitxt)](https://pypi.org/project/unitxt/)  ![license](https://img.shields.io/github/license/ibm/unitxt)  ![python](https://img.shields.io/badge/python-3.8%20|%203.9-blue)  ![tests](https://img.shields.io/github/actions/workflow/status/ibm/unitxt/tests.yml?branch=main&label=tests)
 ![Read the Docs](https://img.shields.io/readthedocs/unitxt)
+[![Downloads](https://static.pepy.tech/personalized-badge/unitxt?period=total&units=international_system&left_color=grey&right_color=green&left_text=Downloads)](https://pepy.tech/project/unitxt)
 
 
 # Installation 🦄
