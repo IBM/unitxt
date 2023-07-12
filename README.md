@@ -14,8 +14,6 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 
 # Installation 🦄
 
-Install with git clone:
-
 ```bash
   pip install unitxt
 ```
