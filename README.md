@@ -8,6 +8,10 @@ We aspire to be simple, adaptable and transperant.
 
 Unitxt builds on separation. Separation allows adding a dataset, without knowing anything about the models using it. Separation allows training without caring for preprocessing, switching models without loading the data differently and changing formats (instruction\ICL\etc.) without changing anything else. 
 
+# 
+[![version](https://img.shields.io/pypi/v/unitxt)](https://pypi.org/project/unitxt/)  ![license](https://img.shields.io/github/license/ibm/unitxt)  ![python](https://img.shields.io/badge/python-3.8%20|%203.9-blue)  ![tests](https://img.shields.io/github/actions/workflow/status/ibm/unitxt/test.yml?branch=main&label=tests)
+
+
 # Installation 🦄
 
 Install with git clone:
