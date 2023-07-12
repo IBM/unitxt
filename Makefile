@@ -27,11 +27,11 @@ pypi:
 	twine upload dist/*
 
 dataset:
-	bash $(DIR)/make/hf/preapare_dataset_imports.sh
-	python $(DIR)/make/hf/preapare_dataset.py
+	bash $(DIR)/make/hf/prepare_dataset_imports.sh
+	python $(DIR)/make/hf/prepare_dataset.py
 
 metric:
-	bash $(DIR)/make/hf/preapare_metric_imports.sh
+	bash $(DIR)/make/hf/prepare_metric_imports.sh
 	python $(DIR)/make/hf/prepare_metric.py
 
 build:
