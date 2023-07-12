@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 
-from .artifact import Artifact, Artifactory, register_atrifactory
+from .artifact import Artifact, Artifactory, Artifactories
 from .file_utils import get_all_files_in_dir
 
 
@@ -58,16 +58,15 @@ class LocalCatalog(Catalog):
         artifact.save(path)
 
 # add artifactory by env var.
-# support :: '/'
 # add catalog, remove catalog -> from default catalog.
 # github catalog.
-register_atrifactory(LocalCatalog())
+Artifactories().register_atrifactory(LocalCatalog())
 
 try:
     import unitxt
 
     library_catalog = LocalCatalog("library", unitxt.__path__[0] + "/catalog")
-    register_atrifactory(library_catalog)
+    Artifactories().register_atrifactory(library_catalog)
 except:
     pass
 # create a catalog for the community

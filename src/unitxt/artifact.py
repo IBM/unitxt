@@ -2,19 +2,33 @@ import inspect
 import json
 import os
 import pkgutil
-import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
 from typing import final
-
+from .text_utils import camel_to_snake_case, is_camel_case
 
 class AbstractField:
     pass
 
 
-from .text_utils import camel_to_snake_case, is_camel_case
+class Artifactories(object):
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Artifactories, cls).__new__(cls)
+            cls.instance.artifactories = []
+        return cls.instance
 
-artifactories = []
+    def __iter__(self):
+        return iter(self.artifactories)
+
+    def __next__(self):
+        return next(self.artifactories)
+
+    def register_atrifactory(self, artifactory):
+        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
+        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
+        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        self.artifactories.append(artifactory)
 
 
 class BaseArtifact(ABC):
@@ -162,18 +176,11 @@ def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
     else:
-        for artifactory in artifactories:
+        for artifactory in Artifactories():
             if name in artifactory:
                 return artifactory[name], artifactory
 
-    raise UnitxtArtifactNotFoundError(name, artifactories)
-
-
-def register_atrifactory(artifactory):
-    assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
-    assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
-    assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
-    artifactories.append(artifactory)
+    raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
 
 def register_all_artifacts(path):
