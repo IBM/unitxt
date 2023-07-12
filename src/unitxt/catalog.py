@@ -57,14 +57,6 @@ class LocalCatalog(Catalog):
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
 
-# add catalog, remove catalog -> from default catalog.
-# github catalog.
-Artifactories().register_atrifactory(LocalCatalog())
-if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
-    for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
-        Artifactories().register_atrifactory(LocalCatalog(location=path))
-
-
 
 class CommunityCatalog(Catalog):
     name = "community"

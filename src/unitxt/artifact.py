@@ -5,6 +5,8 @@ import pkgutil
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
 from typing import final
+
+from .catalog import LocalCatalog, UNITXT_ARTIFACTORIES_ENV_VAR, PATHS_SEP
 from .text_utils import camel_to_snake_case, is_camel_case
 
 class AbstractField:
@@ -16,6 +18,13 @@ class Artifactories(object):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Artifactories, cls).__new__(cls)
             cls.instance.artifactories = []
+            # add catalog, remove catalog -> from default catalog.
+            # github catalog.
+            cls.instance.register_atrifactory(LocalCatalog())
+            if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
+                for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
+                    cls.instance.register_atrifactory(LocalCatalog(location=path))
+
         return cls.instance
 
     def __iter__(self):
