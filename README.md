@@ -27,7 +27,6 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 [![Button](https://img.shields.io/badge/Docs-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
 # Why Unitxt? 🦄
 
-Unitxt is construct in the light of the principles: (1) Simplicity (2) Adpatability (3) Transperancy
 ### 🦄 Simplicity
 Everything is unitxt is simple and designed to feel natural and self explenatory.
 ### 🦄 Adaptability
