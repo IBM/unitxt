@@ -1,8 +1,4 @@
-from src.unitxt.blocks import (
-    MultiStream, 
-    MetricRecipe,
-    ToString,
-)
+from src.unitxt.blocks import (ToString)
 
 from src.unitxt.metric import MetricRecipe
 
@@ -12,8 +8,8 @@ from src.unitxt.metrics import (
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.text_utils import print_dict
 
-add_to_catalog(ToString(), 'to_string', 'processors', overwrite=True)
-add_to_catalog(Accuracy(), 'accuracy', 'metrics', overwrite=True)
+add_to_catalog(ToString(), 'processors::to_string', overwrite=True)
+add_to_catalog(Accuracy(), 'metrics::accuracy', overwrite=True)
 
 data = [
     {'group': 'group1', 'metrics': ['accuracy'], 'references':[3]},

@@ -12,7 +12,8 @@ from src.unitxt.blocks import (
 #from src.unitxt.catalog import add_to_catalog
 from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
-from unitxt.catalog import add_to_catalog
+from src.unitxt.artifact import Artifact
+from src.unitxt.catalog import add_to_catalog
 
 recipe = SequentialRecipe(
     steps=[
@@ -47,6 +48,7 @@ recipe = SequentialRecipe(
     ]
 )
 
+assert isinstance(recipe, Artifact), "Artifact must be an instance of Artifact"
 add_to_catalog(recipe, 'recipes::wnli', overwrite=True)
 dataset = load_dataset('recipes::wnli')
 print_dict(dataset['train'][0])

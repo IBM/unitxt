@@ -27,7 +27,7 @@ card = TaskCard(
         ])
     )
 
-add_to_catalog(card, 'watson_emotion_card', 'cards', overwrite=True)
+add_to_catalog(card, 'cards::watson_emotion_card', overwrite=True)
 
 
         

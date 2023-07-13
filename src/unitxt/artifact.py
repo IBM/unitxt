@@ -149,10 +149,6 @@ class BaseArtifact(ABC):
 class Artifact(BaseArtifact):
     type: str = field(init=False)
 
-    @classmethod
-    def is_artifact(cls):
-        return True
-
 
 class ArtifactList(list, Artifact):
     def prepare(self):

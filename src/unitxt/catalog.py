@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from .artifact import Artifact, Artifactory, Artifactories
+from .artifact import Artifact, Artifactory
 
 
 COLLECTION_SEPARATOR = '::'
@@ -48,8 +48,7 @@ class LocalCatalog(Catalog):
 
 
     def save_artifact(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
-        assert artifact.is_artifact(), "Artifact must be an instance of Artifact"
-
+        assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
             assert (
                 artifact_identifier not in self
