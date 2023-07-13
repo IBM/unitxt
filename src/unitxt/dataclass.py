@@ -48,40 +48,42 @@ class DataclassMeta(type):
 
 class Dataclass(metaclass=DataclassMeta):
     pass
+
+if __name__ == '__main__':
 # Test classes
-class GrandparentClass(Dataclass):
-    abstract_field: int = abstractfield()
-    final_field: str = finalfield(default_factory=lambda: 'Hello')
+    class GrandparentClass(Dataclass):
+        abstract_field: int = abstractfield()
+        final_field: str = finalfield(default_factory=lambda: 'Hello')
 
-class ParentClass(GrandparentClass):
-    pass
+    class ParentClass(GrandparentClass):
+        pass
 
-try:
-    class CorrectChildClass(ParentClass):
-        abstract_field: int = 1  # This correctly overrides the abstract field
-    correct_child_class_instance = CorrectChildClass()
-    print(f'CorrectChildClass instance: {correct_child_class_instance} - passed')
-except Exception as e:
-    print(f'CorrectChildClass: {str(e)} - failed')
+    try:
+        class CorrectChildClass(ParentClass):
+            abstract_field: int = 1  # This correctly overrides the abstract field
+        correct_child_class_instance = CorrectChildClass()
+        print(f'CorrectChildClass instance: {correct_child_class_instance} - passed')
+    except Exception as e:
+        print(f'CorrectChildClass: {str(e)} - failed')
 
-try:
-    class IncorrectChildClass1(ParentClass):
-        pass  # This fails to override the abstract field
-    print(f'IncorrectChildClass1: {IncorrectChildClass1} - passed')
-except Exception as e:
-    print(f'IncorrectChildClass1: {str(e)} - failed')
+    try:
+        class IncorrectChildClass1(ParentClass):
+            pass  # This fails to override the abstract field
+        print(f'IncorrectChildClass1: {IncorrectChildClass1} - passed')
+    except Exception as e:
+        print(f'IncorrectChildClass1: {str(e)} - failed')
 
-try:
-    incorrect_child_class1_instance = IncorrectChildClass1()
-    print(f'IncorrectChildClass1 instance: {incorrect_child_class1_instance} - failed')
-except Exception as e:
-    print(f'IncorrectChildClass1 instantiation: {str(e)} - passed')
+    try:
+        incorrect_child_class1_instance = IncorrectChildClass1()
+        print(f'IncorrectChildClass1 instance: {incorrect_child_class1_instance} - failed')
+    except Exception as e:
+        print(f'IncorrectChildClass1 instantiation: {str(e)} - passed')
 
-# Testing the final field functionality
+    # Testing the final field functionality
 
-try:
-    class IncorrectChildClass2(ParentClass):
-        final_field: str = 'Hello'  # This attempts to override the final field
-    print(f'IncorrectChildClass2: {IncorrectChildClass2} - failed')
-except Exception as e:
-    print(f'IncorrectChildClass2: {str(e)} - passed')
+    try:
+        class IncorrectChildClass2(ParentClass):
+            final_field: str = 'Hello'  # This attempts to override the final field
+        print(f'IncorrectChildClass2: {IncorrectChildClass2} - failed')
+    except Exception as e:
+        print(f'IncorrectChildClass2: {str(e)} - passed')
