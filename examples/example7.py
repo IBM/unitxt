@@ -22,8 +22,8 @@ data = [
 ]
 
 for d in data:
-    d['metrics'] = ['accuracy']
-    d['postprocessors'] = ['to_string']
+    d['metrics'] = ['metrics.accuracy']
+    d['postprocessors'] = ['processors.to_string']
     
 
     
