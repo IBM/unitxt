@@ -1,6 +1,6 @@
 {
     "type": "common_recipe",
-    "card": "cards::wnli",
+    "card": "cards.wnli",
     "demos_pool_name": "demos_pool",
     "demos_pool_size": 100,
     "demos_field": "demos",

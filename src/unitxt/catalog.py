@@ -28,7 +28,10 @@ class LocalCatalog(Catalog):
     location: str = default_catalog_path
 
     def path(self, artifact_identifier: str):
-        return os.path.join(self.location, *(artifact_identifier + ".json").split(COLLECTION_SEPARATOR))
+        assert artifact_identifier.strip(), 'artifact_identifier should not be an empty string.'
+        parts = artifact_identifier.split(COLLECTION_SEPARATOR)
+        parts[-1] = parts[-1] + ".json"
+        return os.path.join(self.location, *parts)
 
     def load(self, artifact_identifier: str):
         assert artifact_identifier in self, "Artifact with name {} does not exist".format(artifact_identifier)
