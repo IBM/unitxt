@@ -9,9 +9,10 @@ from src.unitxt.blocks import (
     RenderAutoFormatTemplate,
 )
 
-from src.unitxt.catalog import add_to_catalog
+#from src.unitxt.catalog import add_to_catalog
 from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
+from unitxt.catalog import add_to_catalog
 
 recipe = SequentialRecipe(
     steps=[
@@ -46,8 +47,6 @@ recipe = SequentialRecipe(
     ]
 )
 
-add_to_catalog(recipe, 'wnli', collection='recipes', overwrite=True)
-
-dataset = load_dataset('wnli')
-
+add_to_catalog(recipe, 'recipes::wnli', overwrite=True)
+dataset = load_dataset('recipes::wnli')
 print_dict(dataset['train'][0])

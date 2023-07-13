@@ -2,8 +2,12 @@ import importlib
 import inspect
 import os
 
-from .artifact import Artifact
+from .artifact import Artifact, Artifactories
+from .catalog import LocalCatalog, PATHS_SEP
 from .utils import Singleton
+
+
+UNITXT_ARTIFACTORIES_ENV_VAR = 'UNITXT_ARTIFACTORIES'
 
 # Usage
 non_registered_files = [
@@ -16,6 +20,12 @@ non_registered_files = [
     "blocks.py",
 ]
 
+
+def _register_all_catalogs():
+    Artifactories().register_atrifactory(LocalCatalog())
+    if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
+        for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
+            Artifactories().register_atrifactory(LocalCatalog(location=path))
 
 def _register_all_artifacts():
     dir = os.path.dirname(__file__)
@@ -41,6 +51,7 @@ class ProjectArtifactRegisterer(Singleton):
             self._registered = False
 
         if not self._registered:
+            _register_all_catalogs()
             _register_all_artifacts()
             self._registered = True
 

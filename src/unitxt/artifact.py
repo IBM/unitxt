@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
 from typing import final
 
-from .catalog import LocalCatalog, UNITXT_ARTIFACTORIES_ENV_VAR, PATHS_SEP
 from .text_utils import camel_to_snake_case, is_camel_case
+
 
 class AbstractField:
     pass
@@ -18,12 +18,6 @@ class Artifactories(object):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Artifactories, cls).__new__(cls)
             cls.instance.artifactories = []
-            # add catalog, remove catalog -> from default catalog.
-            # github catalog.
-            cls.instance.register_atrifactory(LocalCatalog())
-            if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
-                for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
-                    cls.instance.register_atrifactory(LocalCatalog(location=path))
 
         return cls.instance
 
@@ -100,7 +94,7 @@ class BaseArtifact(ABC):
                 value = getattr(self, field.name)
                 if isinstance(value, str):
                     artifact, artifactory = fetch_artifact(value)
-                    assert artifact is not None, f"Artifact {value} does not exist, in {artifactories}"
+                    assert artifact is not None, f"Artifact {value} does not exist, in {Artifactories()}"
                     print(f"Artifact {value} is fetched from {artifactory}")
                     setattr(self, field.name, artifact)
 
@@ -154,6 +148,10 @@ class BaseArtifact(ABC):
 
 class Artifact(BaseArtifact):
     type: str = field(init=False)
+
+    @classmethod
+    def is_artifact(cls):
+        return True
 
 
 class ArtifactList(list, Artifact):

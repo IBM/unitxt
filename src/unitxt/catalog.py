@@ -1,12 +1,11 @@
 import os
 import re
 from pathlib import Path
-
 from .artifact import Artifact, Artifactory, Artifactories
 
-PATHS_SEP = ':'
-UNITXT_ARTIFACTORIES_ENV_VAR = 'unitxt_artifactories'
+
 COLLECTION_SEPARATOR = '::'
+PATHS_SEP = ':'
 
 
 class Catalog(Artifactory):
@@ -46,8 +45,10 @@ class LocalCatalog(Catalog):
             return False
         return os.path.exists(path) and os.path.isfile(path)
 
-    def save(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
-        assert isinstance(artifact, Artifact), "Artifact must be an instance of Artifact"
+
+
+    def save_artifact(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
+        assert artifact.is_artifact(), "Artifact must be an instance of Artifact"
 
         if not overwrite:
             assert (
@@ -78,6 +79,7 @@ def add_to_catalog(artifact: Artifact, name: str, catalog: Catalog = None, overw
             catalog_path = default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
-    catalog.save(artifact, name, overwrite=overwrite) # remove collection (its actually the dir).
+    catalog.save_artifact(artifact, name, overwrite=overwrite) # remove collection (its actually the dir).
     # verify name
+
 
