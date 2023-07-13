@@ -52,8 +52,8 @@ recipe = SequentialRecipe(
     ]
 )
 
-add_to_catalog(recipe, 'recipes::wnli_fixed', overwrite=True)
+add_to_catalog(recipe, 'recipes.wnli_fixed', overwrite=True)
 
-dataset = load_dataset('recipes::wnli_fixed')
+dataset = load_dataset('recipes.wnli_fixed')
 
 print_dict(dataset['train'][0])

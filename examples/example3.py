@@ -75,8 +75,8 @@ recipe = SequentialRecipe(
     ]
 )
 
-add_to_catalog(recipe, 'recipes::wnli_5_shot', overwrite=True)
+add_to_catalog(recipe, 'recipes.wnli_5_shot', overwrite=True)
 
-dataset = load_dataset('recipes::wnli_5_shot')
+dataset = load_dataset('recipes.wnli_5_shot')
 
 print_dict(dataset['train'][0])

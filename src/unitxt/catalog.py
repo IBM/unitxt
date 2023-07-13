@@ -6,7 +6,7 @@ import json
 from .artifact import Artifact, Artifactory
 
 
-COLLECTION_SEPARATOR = '::'
+COLLECTION_SEPARATOR = '.'
 PATHS_SEP = ':'
 
 

@@ -18,7 +18,7 @@
             "label"
         ],
         "metrics": [
-            "metrics::accuracy"
+            "metrics.accuracy"
         ]
     },
     "preprocess_steps": [

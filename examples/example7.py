@@ -11,8 +11,8 @@ from src.unitxt.catalog import (
 from src import unitxt
 from src.unitxt.text_utils import print_dict
 
-add_to_catalog(ToString(), 'processors::to_string', overwrite=True)
-add_to_catalog(Accuracy(), 'metrics::accuracy', overwrite=True)
+add_to_catalog(ToString(), 'processors.to_string', overwrite=True)
+add_to_catalog(Accuracy(), 'metrics.accuracy', overwrite=True)
 
 data = [
     {'group': 'group1','references':['333', '4'], 'source': 'source1', 'target': 'target1'},

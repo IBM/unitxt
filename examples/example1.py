@@ -49,6 +49,6 @@ recipe = SequentialRecipe(
 )
 
 assert isinstance(recipe, Artifact), "Artifact must be an instance of Artifact"
-add_to_catalog(recipe, 'recipes::wnli', overwrite=True)
-dataset = load_dataset('recipes::wnli')
+add_to_catalog(recipe, 'recipes.wnli', overwrite=True)
+dataset = load_dataset('recipes.wnli')
 print_dict(dataset['train'][0])
