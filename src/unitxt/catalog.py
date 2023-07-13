@@ -1,6 +1,8 @@
 import os
 import re
 from pathlib import Path
+import requests
+import json
 from .artifact import Artifact, Artifactory
 
 
@@ -58,12 +60,28 @@ class LocalCatalog(Catalog):
         artifact.save(path)
 
 
-class CommunityCatalog(Catalog):
+class GithubCatalog(LocalCatalog):
     name = "community"
-    location = "https://raw.githubusercontent.com/unitxt/unitxt/main/catalog/community.json"
-
+    repo = "unitxt"
+    repo_dir = "src/unitxt/catalog"
+    user = "IBM"
+    branch = "master"
+    
+    def prepare(self):
+        self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{self.branch}/{self.repo_dir}"
+    
     def load(self, artifact_identifier: str):
-        pass
+        url = self.path(artifact_identifier)
+        response = requests.get(url)
+        data = response.json()
+        return Artifact.from_dict(data)
+    
+    def __contains__(self, artifact_identifier: str):
+        url = self.path(artifact_identifier)
+        response = requests.head(url)
+        return response.status_code == 200
+        
+        
 
 
 def verify_legal_catalog_name(name):

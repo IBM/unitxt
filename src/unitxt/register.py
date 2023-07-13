@@ -3,7 +3,7 @@ import inspect
 import os
 
 from .artifact import Artifact, Artifactories
-from .catalog import LocalCatalog, PATHS_SEP
+from .catalog import LocalCatalog, GithubCatalog, PATHS_SEP
 from .utils import Singleton
 
 
@@ -26,6 +26,7 @@ def _register_all_catalogs():
     if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
         for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
             Artifactories().register_atrifactory(LocalCatalog(location=path))
+    Artifactories().register_atrifactory(GithubCatalog())
 
 def _register_all_artifacts():
     dir = os.path.dirname(__file__)
