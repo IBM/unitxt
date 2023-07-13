@@ -11,6 +11,7 @@ from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
+from .dataclass import __file__ as _
 from .file_utils import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _

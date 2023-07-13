@@ -8,6 +8,7 @@ from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
+from .dataclass import __file__ as _
 from .file_utils import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
@@ -46,6 +47,7 @@ def parse(query: str):
     """
     Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
     """
+    query = query.replace("@", "::")
     result = {}
     for kv in query.split(","):
         parts = kv.split("=")
