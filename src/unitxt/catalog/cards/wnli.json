@@ -1,13 +1,27 @@
 {
-    "type": "sequential_recipe",
-    "steps": [
-        {
-            "type": "load_hf",
-            "path": "glue",
-            "name": "wnli",
-            "data_dir": null,
-            "data_files": null
-        },
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "glue",
+        "name": "wnli",
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "sentence2"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics::accuracy"
+        ]
+    },
+    "preprocess_steps": [
         {
             "type": "split_random_mix",
             "mix": {
@@ -36,27 +50,24 @@
             }
         },
         {
-            "type": "form_task",
-            "inputs": [
-                "choices",
-                "sentence1",
-                "sentence2"
+            "type": "normalize_list_fields",
+            "fields": [
+                "choices"
             ],
-            "outputs": [
-                "label"
-            ],
-            "metrics": [
-                "accuracy"
-            ]
-        },
-        {
-            "type": "render_format_template",
-            "template": {
+            "key_prefix": "",
+            "empty_value": "",
+            "separator": ", "
+        }
+    ],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
                 "output_format": "{label}"
-            },
-            "random_reference": false
-        }
-    ]
+            }
+        ]
+    },
+    "instructions": null
 }

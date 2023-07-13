@@ -96,7 +96,7 @@ class MetricRecipe(SequntialOperatorInitilizer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             ApplyValueOperatorsField(
-                value_field="prediction", operators_field="processors", default_operators=["to_string"]
+                value_field="prediction", operators_field="processors", default_operators=["processors::to_string"]
             ),
             SplitByValue(["group"]),
             ApplyStreamOperatorsField(
