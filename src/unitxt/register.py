@@ -45,7 +45,7 @@ def _register_all_artifacts():
                         Artifact.register_class(obj)
 
 
-class ProjectArtifactRegisterer(Singleton):
+class ProjectArtifactRegisterer(metaclass=Singleton):
     def __init__(self):
         if not hasattr(self, "_registered"):
             self._registered = False
