@@ -133,7 +133,7 @@ dmypy.json
 **/natural_instruction_tasks/*
 **/intermidates_cards/*
 **/promptsource/*
-docs/_build
+docs/_build/*
 .vscode/*
 t.py
 

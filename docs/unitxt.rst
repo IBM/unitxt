@@ -52,6 +52,14 @@ unitxt.common module
    :undoc-members:
    :show-inheritance:
 
+unitxt.dataclass module
+-----------------------
+
+.. automodule:: unitxt.dataclass
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 unitxt.dataset module
 ---------------------
 
