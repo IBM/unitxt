@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 from .artifact import Artifact
 from .instructions import InstructionsDict, InstructionsList
@@ -23,3 +23,4 @@ class ICLCard(Artifact):
     sampler_type: str = "random"
     instruction_item: Union[str, int] = None
     template_item: Union[str, int] = None
+
