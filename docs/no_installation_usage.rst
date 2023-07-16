@@ -2,8 +2,8 @@
 Loading Premade Dataset Recipes
 ===================================
 
-Loading a Dataset (In the future)
-----------------------------------
+Loading a Premade Dataset Recipe
+---------------------------------
 
 With unitxt you can load a dataset without installing the package simply 
 by using the following code (loading wnli dataset in 3 shot format):
