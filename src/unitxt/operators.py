@@ -31,12 +31,18 @@ class FromIterables(StreamInitializerOperator):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """
-    Maps values in each instance of a stream based on the provided mappers.
+    """A class used to map instance values into a stream.
 
-    Args:
-        mappers (Dict[str, Dict[str, str]]): A dictionary where each key-value pair represents a field in the instance and a mapper for that field.
-        strict (bool): If True, the operator will raise a KeyError if a value is not in its corresponding mapper. If False, unmapped values will be left unchanged. Defaults to True.
+    This class is a type of StreamInstanceOperator, and its main purpose
+    is to map values of instances in a stream using predefined mappers.
+
+    Attributes:
+        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
+            Keys are the names of the fields to be mapped, and values are dictionaries
+            that define the mapping from old values to new values.
+        strict (bool): If True, the mapping is applied strictly. That means if a value 
+            does not exist in the mapper, it will raise a KeyError. If False, values 
+            that are not present in the mapper are kept as they are.
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True

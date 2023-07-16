@@ -20,6 +20,15 @@ class ListCollection(Collection):
     def __len__(self):
         return len(self.items)
 
+    def append(self, item):
+        self.items.append(item)
+
+    def extend(self, other):
+        self.items.extend(other)
+
+    def __add__(self, other):
+        return ListCollection(self.items.__add__(other))
+
 
 class DictCollection(Collection):
     items: dict = field(default_factory=dict)
