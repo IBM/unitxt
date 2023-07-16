@@ -47,7 +47,6 @@ def parse(query: str):
     """
     Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
     """
-    query = query.replace("@", "::")
     result = {}
     for kv in query.split(","):
         parts = kv.split("=")
