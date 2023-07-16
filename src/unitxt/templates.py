@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .random_utils import random
 from .artifact import Artifact
@@ -124,12 +124,12 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
         for demo_instance in demos:
             demo_example = super().render(demo_instance)
             demo_str = (
-                self.input_prefix
-                + demo_example["source"]
-                + self.input_output_separator
-                + self.output_prefix
-                + demo_example["target"]
-                + self.demo_separator
+                    self.input_prefix
+                    + demo_example["source"]
+                    + self.input_output_separator
+                    + self.output_prefix
+                    + demo_example["target"]
+                    + self.demo_separator
             )
 
             if self.size_limiter is not None:
@@ -195,6 +195,45 @@ class TemplatesList(ListCollection):
     def verify(self):
         for template in self.items:
             assert isinstance(template, Template)
+
+
+def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]):
+    """
+    combines input and output formats into their dot product
+    :param inputs: list of input formats (or one)
+    :param outputs: list of output formats (or one)
+    :return: TemplatesList of InputOutputTemplate
+    """
+    templates = []
+    if isinstance(inputs, str):
+        inputs = []
+    if isinstance(outputs, str):
+        outputs = []
+    for input in inputs:
+        for output in outputs:
+            templates.append(
+                InputOutputTemplate(
+                    input_format=input.strip(),
+                    output_format=output.strip(),
+                ),
+            )
+    return TemplatesList(templates)
+
+
+def instructions2templates(instructions: List[Instruction], templates: List[InputOutputTemplate]) -> TemplatesList:
+    """
+    Insert instructions into per demonstration templates
+    :param instructions:
+    :param templates: strings containing {instuction} where the instruction should be placed
+    :return:
+    """
+    res_templates = []
+    for instruction in instructions:
+        for template in templates:
+            res_templates.append(
+                InputOutputTemplate(input_format=template.input_format.replace("{instruction}", instruction),
+                                    output_format=template.output_format))
+    return TemplatesList(templates)
 
 
 class TemplatesDict(Dict):
