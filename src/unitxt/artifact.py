@@ -52,7 +52,7 @@ class BaseArtifact(ABC):
 
         if snake_case_key in cls._class_register:
             assert (
-                cls._class_register[snake_case_key] == artifact_class
+                    cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
 
         cls._class_register[snake_case_key] = artifact_class
@@ -156,6 +156,9 @@ def map_values_in_place(object, mapper):
 
 class Artifact(BaseArtifact):
     type: str = field(init=False)
+
+    def __post_init__(self):
+        pass
 
 
 class ArtifactList(list, Artifact):
