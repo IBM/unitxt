@@ -17,7 +17,11 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 ![Read the Docs](https://img.shields.io/readthedocs/unitxt)
 [![downloads](https://static.pepy.tech/personalized-badge/unitxt?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/unitxt)
 
+#
 
+<div align="center">
+    <img src="./assets/unitxt_flow_light.gif" alt="Unitxt Flow" width="100%" />
+</div>
 
 # Where to start? 🦄
 [![Button](https://img.shields.io/badge/Overview-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
