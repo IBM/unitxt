@@ -30,6 +30,7 @@ class SplitRandomMix(Splitter):
         return MultiStream.from_generators(generators, streaming=True)
 
 
+
 class SliceSplit(Splitter):
     slices: Dict[str, str]
 
@@ -89,9 +90,11 @@ if __name__ == "__main__":
         }
     )
 
+
     def generator(name, size):
         for i in range(size):
             yield {"text": f"{name}_{i}"}
+
 
     stream = MultiStream.from_generators(
         {
