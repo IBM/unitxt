@@ -22,6 +22,8 @@ Unitxt is a Python library for getting data prepared and ready for utilization. 
    no_installation_usage
    installation
    concepts
+   adding_common_recipe
+   adding_operators_and_metrics
    modules
    api_reference
 
