@@ -5,6 +5,7 @@ from src.unitxt.operators import (
     FlattenInstances,
     FilterByValues,
     ApplyValueOperatorsField,
+    AddFields,
     Unique,
 )
 
@@ -86,6 +87,26 @@ class TestOperators(unittest.TestCase):
         
         outputs = apply_operator(
             operator=ApplyValueOperatorsField(value_field='a', operators_field='c', default_operators=['add']),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+    
+    def test_add_fields(self):
+        
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+        ]
+        
+        targets = [
+            {'a': 1, 'b': 2, 'c': 3},
+            {'a': 2, 'b': 3, 'c': 3},
+        ]
+        
+        outputs = apply_operator(
+            operator=AddFields(fields={'c': 3}),
             inputs=inputs
         )
         
