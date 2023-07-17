@@ -18,7 +18,7 @@
             "label"
         ],
         "metrics": [
-            "metrics.accuracy"
+            "accuracy"
         ]
     },
     "preprocess_steps": [
@@ -48,15 +48,6 @@
                     "not_entailment"
                 ]
             }
-        },
-        {
-            "type": "normalize_list_fields",
-            "fields": [
-                "choices"
-            ],
-            "key_prefix": "",
-            "empty_value": "",
-            "separator": ", "
         }
     ],
     "templates": {

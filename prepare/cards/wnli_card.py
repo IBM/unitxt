@@ -9,6 +9,7 @@ from src.unitxt.blocks import (
     InputOutputTemplate,
     MapInstanceValues
 )
+from src.unitxt.test_utils.card import test_card
 
 from src.unitxt.catalog import add_to_catalog
 
@@ -21,9 +22,6 @@ card = TaskCard(
             fields={
                 'choices': ['entailment', 'not_entailment'],
             }
-            ),
-            NormalizeListFields(
-                fields=['choices']
             ),
         ],
         task=FormTask(
@@ -38,10 +36,11 @@ card = TaskCard(
                 """.strip(),
                 output_format='{label}',
             ),
-        ])
+               ])
     )
 
-add_to_catalog(card, 'wnli_card', 'cards', overwrite=True)
+test_card(card)
+add_to_catalog(card, 'cards.wnli', overwrite=True)
 
 
         
