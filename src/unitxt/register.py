@@ -21,12 +21,21 @@ non_registered_files = [
 ]
 
 
+
+def _register_catalog(catalog: LocalCatalog):
+    Artifactories().register_atrifactory(catalog)
+
+def register_local_catalog(catalog_path: str):
+    assert os.path.exists(catalog_path), f"Catalog path {catalog_path} does not exist."
+    assert os.path.isdir(catalog_path), f"Catalog path {catalog_path} is not a directory."
+    _register_catalog(LocalCatalog(location=catalog_path))
+
 def _register_all_catalogs():
     Artifactories().register_atrifactory(LocalCatalog())
     if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
         for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
-            Artifactories().register_atrifactory(LocalCatalog(location=path))
-    Artifactories().register_atrifactory(GithubCatalog())
+            _register_catalog(LocalCatalog(location=path))
+    _register_catalog(GithubCatalog())
 
 def _register_all_artifacts():
     dir = os.path.dirname(__file__)
