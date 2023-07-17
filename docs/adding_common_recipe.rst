@@ -27,7 +27,7 @@ Common Recipe to build its pipeline through a component called a Task Card.
 .. code-block:: python
 
     from unitxt.blocks import CommonRecipe
-    from unitxt.load import load_dataset
+    from unitxt import load_dataset
 
     recipe = CommonRecipe(
         card='cards.wnli',
@@ -124,9 +124,21 @@ Once the card is defined, it can be saved to a local catalog as follows:
 
 .. code-block:: python
 
-    from unitxt.catalog import add_to_catalog
+    from unitxt import add_to_catalog
 
-    add_to_catalog(card, 'cards.wnli') # will be saved to CATALOG_DIR/cards/wnli
+    add_to_catalog(card, 'cards.wnli') # will be saved to a default catalog 
+                                       # if you want to save to a different 
+                                       # directory use the catalog_path argument
+.. note::
+
+   By default new artifact will be added to a local catalog stored 
+   in the library directory. To use a different catalog,
+   use the `catalog_path` argument.
+
+   In order to load automatically from your new catalog remember to
+   register your new catalog by `unitxt.register_catalog('my_catalog')` 
+   or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
+
 
 Then the dataset can be loaded as follows:
 
