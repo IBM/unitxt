@@ -7,9 +7,9 @@ import tempfile
 class TestCatalogs(unittest.TestCase):
     
     def test_catalog_registration(self):
-        tmp_dir = tempfile.gettempdir()
-        register_local_catalog(tmp_dir)
-        artifs = Artifactories()
-        first_artif = next(iter(artifs))
-        self.assertTrue(isinstance(first_artif, unitxt.catalog.LocalCatalog))
-        self.assertEqual(first_artif.location, tmp_dir)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            register_local_catalog(tmp_dir)
+            artifs = Artifactories()
+            first_artif = next(iter(artifs))
+            self.assertTrue(isinstance(first_artif, unitxt.catalog.LocalCatalog))
+            self.assertEqual(first_artif.location, tmp_dir)
