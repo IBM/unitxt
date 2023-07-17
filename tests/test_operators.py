@@ -52,5 +52,44 @@ class TestOperators(unittest.TestCase):
         
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
+    
+    def test_filter_by_values(self):
+        
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+        ]
+        
+        targets = [
+            {'a': 1, 'b': 2},
+        ]
+        
+        outputs = apply_operator(
+            operator=FilterByValues(values={'a': 1}),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+        
+    def test_apply_value_operators_field(self):
+        
+        inputs = [
+            {'a': 111, 'b': 2, 'c': 'processors.to_string'},
+            {'a': 222, 'b': 3, 'c': 'processors.to_string'},
+        ]
+        
+        targets = [
+            {'a': '111', 'b': 2, 'c': 'processors.to_string'},
+            {'a': '222', 'b': 3, 'c': 'processors.to_string'},
+        ]
+        
+        outputs = apply_operator(
+            operator=ApplyValueOperatorsField(value_field='a', operators_field='c', default_operators=['add']),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
         
     
