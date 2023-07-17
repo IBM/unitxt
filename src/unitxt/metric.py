@@ -112,6 +112,20 @@ class MetricRecipe(SequntialOperatorInitilizer):
 UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
 
 
+def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+        recipe = MetricRecipe()
+
+        multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
+
+        if flatten:
+            operator = FlattenInstances()
+            multi_stream = operator(multi_stream)
+
+        stream = multi_stream[split_name]
+
+        return list(stream)
+
+
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
     def _info(self):
@@ -128,14 +142,4 @@ class Metric(evaluate.Metric):
         )
 
     def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
-        recipe = MetricRecipe()
-
-        multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
-
-        if flatten:
-            operator = FlattenInstances()
-            multi_stream = operator(multi_stream)
-
-        stream = multi_stream[split_name]
-
-        return list(stream)
+        return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)

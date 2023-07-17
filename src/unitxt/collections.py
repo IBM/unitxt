@@ -17,6 +17,9 @@ class ListCollection(Collection):
     def __getitem__(self, index):
         return self.items[index]
 
+    def __len__(self):
+        return len(self.items)
+
 
 class DictCollection(Collection):
     items: dict = field(default_factory=dict)
