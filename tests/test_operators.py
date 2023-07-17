@@ -8,7 +8,7 @@ from src.unitxt.operators import (
     Unique,
 )
 
-from src.unitxt.test_utils.operators import test_operator
+from src.unitxt.test_utils.operators import apply_operator
 
 class TestOperators(unittest.TestCase):
     
@@ -19,16 +19,38 @@ class TestOperators(unittest.TestCase):
             {'a': 2, 'b': 3},
         ]
         
-        outputs = [
+        targets = [
             {'a': 'hi', 'b': 2},
             {'a': 'bye', 'b': 3},
         ]
         
-        result = test_operator(
-            MapInstanceValues(mappers={'a': {'1': 'hi', '2': 'bye'}}),
-            inputs, outputs
+        outputs = apply_operator(
+            operator=MapInstanceValues(mappers={'a': {'1': 'hi', '2': 'bye'}}),
+            inputs=inputs
         )
         
-        self.assertTrue(result)
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+
+    
+    def test_flatten_instances(self):
+        
+        inputs = [
+            {'a': {'b': 1}},
+            {'a': {'b': 2}},
+        ]
+        
+        targets = [
+            {'a...b': 1},
+            {'a...b': 2},
+        ]
+        
+        outputs = apply_operator(
+            operator=FlattenInstances(sep='...'),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
         
     

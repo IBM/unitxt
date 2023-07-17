@@ -20,6 +20,20 @@ class FromIterables(StreamInitializerOperator):
 
 
 class MapInstanceValues(StreamInstanceOperator):
+    """A class used to map instance values in a stream.
+
+    This class is a type of StreamInstanceOperator, and its main purpose
+    is to map values of instances in a stream using predefined mappers.
+
+    Attributes:
+        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
+            Keys are the names of the fields to be mapped, and values are dictionaries
+            that define the mapping from old values to new values.
+        strict (bool): If True, the mapping is applied strictly. That means if a value 
+            does not exist in the mapper, it will raise a KeyError. If False, values 
+            that are not present in the mapper are kept as they are.
+
+    """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
 
@@ -57,8 +71,12 @@ def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = "_") -> Dic
 
 
 class FlattenInstances(StreamInstanceOperator):
+    
+    parent_key: str = ""
+    sep: str = "_"
+    
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        return flatten_dict(instance)
+        return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
 class AddFields(StreamInstanceOperator):
