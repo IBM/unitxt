@@ -31,7 +31,7 @@ class Artifactories(object):
         assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
         assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
         assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
-        self.artifactories.append(artifactory)
+        self.artifactories = [artifactory] + self.artifactories
 
 
 class BaseArtifact(ABC):
