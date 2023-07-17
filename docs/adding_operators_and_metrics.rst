@@ -13,11 +13,27 @@ Create a new class that extends the `StreamInstanceOperator` or any other :ref:`
 
     .. code-block:: python
 
+        from unitxt.operator import StreamInstanceOperator
+
         class AddFields(StreamInstanceOperator):
             fields: Dict[str, object]
 
             def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
                 return {**instance, **self.fields}
+
+To test our operator work as expected we can use unitxt built in
+testing suit:
+
+    .. code-block:: python
+
+        from unitxt.test_utils.operators import test_operator
+
+        operator = AddFields(fields={"b": 2})
+
+        inputs = [{'a': 1}, {'a': 2}]
+        targets = [{'a': 1, 'b': 2}, {'a': 2, 'b': 2}]
+        
+        print(test_operator(operator, inputs, targets)) # True
 
 
 Adding a new metric
@@ -35,3 +51,18 @@ Create a new class that extends the `Metric` or any other :ref:`Metric <metrics>
                 return {"accuracy": float(str(reference) == str(prediction))}
 
 Other base classes for metrics are: `InstanceMetric`, `GlobalMetric`.
+
+To test our metric work as expected we can use unitxt built in 
+testing suit:
+
+    .. code-block:: python
+
+        from unitxt.test_utils.metrics import test_metric
+
+        metric = Accuracy()
+
+        predictions = ['positive', 'negative']
+        references = [['positive'], ['positive']]
+        target = {'accuracy': 0.5}
+
+        print(test_metric(metric, predictions, references, target)) # True
