@@ -13,14 +13,16 @@ from src.unitxt.blocks import (
 
 from src.unitxt.catalog import add_to_catalog
 
+from unitxt.instructions import TextualInstruction
 from unitxt.templates import outputs_inputs2templates, instructions2templates
 
 # TODO convert str to instructions
-Classification_instructions = ["Predict the class of the following ({choices}):",
+classification_instructions = ["Predict the class of the following ({choices}):",
                                "What is the type of the following? Types:{choices}",
                                "Which of the choices, best describes the following text:"]  # TODO How to share instructions?
+classification_instructions = [TextualInstruction(x) for x in classification_instructions]
 
-instructions = [Classification_instructions]
+instructions = [classification_instructions]
 card = ClassificationCard(
     loader=LoadHF(path='ethos'),
     label="label",
