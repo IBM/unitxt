@@ -12,7 +12,7 @@ from ..text_utils import print_dict
 
 TEMP_NAME = 'tmp_name'
 
-
+  
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
         add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
