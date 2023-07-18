@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
-
+  
 setuptools.setup(
     name="unitxt",
     version="1.0.8",
