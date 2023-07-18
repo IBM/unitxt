@@ -25,7 +25,7 @@ jobs:
       run: echo ::set-output name=TAG_NAME::$(echo $GITHUB_REF | cut -d / -f 3)
     - name: Update version in setup.py
       run: >-
-        sed -i "s/{{VERSION_PLACEHOLDER}}/${{ steps.tag.outputs.TAG_NAME }}/g" setup.py
+        sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}"/g' setup.py
     - name: Build a binary wheel
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
