@@ -11,7 +11,7 @@ from ..metric import _compute
 from ..text_utils import print_dict
 
 TEMP_NAME = 'tmp_name'
- 
+
 
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
