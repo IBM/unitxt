@@ -55,7 +55,7 @@ recipe = SequentialRecipe(
         FormTask(
             inputs=['choices', 'sentence1', 'sentence2'],
             outputs=['label'],
-            metrics=['accuracy'],
+            metrics=['metrics.accuracy'],
         ),
         SpreadSplit(
             source_stream='demos_pool',
