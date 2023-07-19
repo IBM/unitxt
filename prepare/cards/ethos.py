@@ -41,7 +41,7 @@ card = ClassificationCard(
     templates=instructions2templates(
         instructions=instructions,
         templates=[
-            InputOutputTemplate(
+            ItesnputOutputTemplate(
                 input_format="""
                     {instruction} Sentence: {text}. Choices {choices}
                 """.strip(),
