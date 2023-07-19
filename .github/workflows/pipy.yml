@@ -10,8 +10,8 @@ jobs:
     name: Release new version to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Set up Python 3.10
+    - uses: actions/checkout@main
+    - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
         python-version: '3.9'
@@ -47,6 +47,4 @@ jobs:
         git config --local user.name "GitHub Actions"
         git add setup.py
         git commit -m "Update version in setup.py"
-        git fetch
-        git rebase origin/main main
-        git push origin main:main
+        git push origin main
