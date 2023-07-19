@@ -25,7 +25,7 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 
 # Where to start? 🦄
 [![Button](https://img.shields.io/badge/Overview-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Concepts-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
+[![Button](https://img.shields.io/badge/Concepts-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/concepts.html)
 [![Button](https://img.shields.io/badge/Tutorial-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
 [![Button](https://img.shields.io/badge/Examples-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
 [![Button](https://img.shields.io/badge/Docs-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
