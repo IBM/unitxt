@@ -10,41 +10,54 @@ jobs:
     name: Release new version to PyPI
     runs-on: ubuntu-latest
     steps:
+    
     - uses: actions/checkout@main
+    
     - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
         python-version: '3.9'
+    
     - name: Install pypa/setuptools
       run: >-
         python -m
         pip install wheel
         pip install twine
+    
     - name: Extract tag name
       id: tag
       run: echo ::set-output name=TAG_NAME::$(echo $GITHUB_REF | cut -d / -f 3)
+    
     - name: Update version in setup.py
       run: >-
         sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}"/g' setup.py
+    
     - name: Build a binary wheel
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         python setup.py sdist bdist_wheel
+    
     - name: push wheel to pypi
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         twine upload dist/*
+    
     - name: Update version in setup.py for local install
       run: >-
         sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}.dev"/g' setup.py
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
-        git add setup.py
-        git commit -m "Update version in setup.py"
-        git push origin HEAD:main
+    
+    - name: Commit and Push
+      uses: EndBug/add-and-commit@v9
+      with:
+        add: 'setup.py'
+        author_name: GitHub Actions Bot
+        author_email: <>
+        commit: --signoff
+        fetch: false
+        message: 'Update Setup: update version in setup.py to recent tag'
+        pull: '--rebase'
+        push: true
