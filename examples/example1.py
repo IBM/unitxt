@@ -42,7 +42,7 @@ recipe = SequentialRecipe(
         FormTask(
             inputs=['choices', 'instruction', 'sentence1', 'sentence2'],
             outputs=['label'],
-            metrics=['accuracy'],
+            metrics=['matrics.accuracy'],
         ),
         RenderAutoFormatTemplate(),
     ]
