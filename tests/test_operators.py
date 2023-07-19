@@ -8,6 +8,7 @@ from src.unitxt.operators import (
     AddFields,
     Unique,
     Shuffle,
+    Unique, RenameFields,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -115,7 +116,7 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(output, target)
     
     def test_shuffle(self):
-        
+
         inputs = [{'a': i} for i in range(15)]
         
         outputs = apply_operator(
@@ -143,4 +144,22 @@ class TestOperators(unittest.TestCase):
         
         inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
         self.assertSetEqual(inputs_outputs_intersection, set())
-        
+
+    def test_rename_fields(self):
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+        ]
+
+        targets = [
+            {'a': 1, 'c': 2},
+            {'a': 2, 'c': 3},
+        ]
+
+        outputs = apply_operator(
+            operator=RenameFields(mapper={'b': 'c'}),
+            inputs=inputs
+        )
+
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
