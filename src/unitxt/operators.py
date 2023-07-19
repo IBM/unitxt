@@ -29,6 +29,23 @@ class FromIterables(StreamInitializerOperator):
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
         return MultiStream.from_iterables(iterables)
 
+class RenameFields(StreamInstanceOperator):
+    """
+    Renames fields
+    Attributes:
+    mapper (Dict[str, str]): old field names to new field names dict
+    """
+    mapper: Dict[str, str]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        result = {}
+        # passes on all values to preserve ordering
+        for key, value in instance.items():
+            result[self.mapper.get(key, key)] = value
+        # doesn't warn if unnecessary mapping was supplied for efficiency
+        return result
+
+
 
 class MapInstanceValues(StreamInstanceOperator):
     """A class used to map instance values into a stream.
@@ -78,7 +95,7 @@ class FlattenInstances(StreamInstanceOperator):
     """
     parent_key: str = ""
     sep: str = "_"
-    
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
@@ -233,7 +250,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
-                self.default_operators is not None
+                    self.default_operators is not None
             ), f"No operators found in {self.field} field and no default operators provided"
             operator_names = self.default_operators
 

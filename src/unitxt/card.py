@@ -15,9 +15,10 @@ from .templates import TemplatesDict, TemplatesList
 class TaskCard(Artifact):
     loader: Loader
     task: FormTask
-    preprocess_steps: Optional[List[StreamingOperator]] = None
+    preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None
     templates: Union[TemplatesList, TemplatesDict] = None
     instructions: Union[InstructionsList, InstructionsDict] = None
+
 
 class ICLCard(Artifact):
     demos_pool_name: str = "demos_pool"

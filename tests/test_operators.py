@@ -6,10 +6,9 @@ from src.unitxt.operators import (
     FilterByValues,
     ApplyValueOperatorsField,
     AddFields,
-    Unique,
     Shuffle,
     CastFields,
-    CopyPasteFields,
+    CopyPasteFields, RenameFields,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -117,7 +116,7 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(output, target)
     
     def test_shuffle(self):
-        
+
         inputs = [{'a': i} for i in range(15)]
         
         outputs = apply_operator(
@@ -178,10 +177,9 @@ class TestOperators(unittest.TestCase):
                 operator=CastFields(fields={'a': 'float', 'b': 'int'}),
                 inputs=inputs
             )
-    
-            
-    def test_copy_paste_fields(self):
-        
+
+
+    def test_rename_fields(self):
         inputs = [
             {'a': 1, 'b': 2},
             {'a': 2, 'b': 3},
@@ -199,9 +197,9 @@ class TestOperators(unittest.TestCase):
         
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
-        
-    
-    def test_copy_patse_same_name(self):
+
+
+    def test_copy_paste_fields(self):
         
         inputs = [
             {'a': [1, 3]},
@@ -222,7 +220,7 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(output, target)
             
     
-    def test_copy_patse_same_name2(self):
+    def test_copy_paste_same_name2(self):
         
         inputs = [
             {'a': 'test'},
@@ -239,5 +237,18 @@ class TestOperators(unittest.TestCase):
             inputs=inputs
         )
         
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+
+        targets = [
+            {'a': 1, 'c': 2},
+            {'a': 2, 'c': 3},
+        ]
+
+        outputs = apply_operator(
+            operator=RenameFields(mapper={'b': 'c'}),
+            inputs=inputs
+        )
+
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
