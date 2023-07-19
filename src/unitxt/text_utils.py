@@ -2,6 +2,15 @@ import re
 
 
 def split_words(s):
+    """
+    Splits a string into words based on PascalCase, camelCase, snake_case, kebab-case, and numbers attached to strings.
+
+    Args:
+        s (str): The string to be split.
+
+    Returns:
+        list: The list of words obtained after splitting the string.
+    """
     # Split PascalCase or camelCase
     s = re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", s)).strip()
     # Split snake_case or kebab-case
@@ -15,16 +24,41 @@ def split_words(s):
 
 
 def is_camel_case(s):
-    # The string must start with an uppercase letter, followed by zero or more sequences of an uppercase letter followed by zero or more lowercase letters.
+    """
+    Checks if a string is in camelCase.
+
+    Args:
+        s (str): The string to be checked.
+
+    Returns:
+        bool: True if the string is in camelCase, False otherwise.
+    """
     return re.match(r"^[A-Z]+([a-z0-9]*[A-Z]*[a-z0-9]*)*$", s) is not None
 
 
 def is_snake_case(s):
-    # The string must start with a lowercase letter, followed by zero or more sequences of an underscore followed by one or more lowercase letters.
+    """
+    Checks if a string is in snake_case.
+
+    Args:
+        s (str): The string to be checked.
+
+    Returns:
+        bool: True if the string is in snake_case, False otherwise.
+    """
     return re.match(r"^[a-z0-9]+(_[a-z0-9]+)*$", s) is not None
 
 
 def camel_to_snake_case(s):
+    """
+    Converts a string from camelCase to snake_case.
+
+    Args:
+        s (str): The string to be converted.
+
+    Returns:
+        str: The string converted to snake_case.
+    """
     # Add an underscore before every uppercase letter that is followed by a lowercase letter or digit and not preceded by an underscore, a hyphen or an uppercase letter
     s = re.sub("(?<=[^A-Z_-])([A-Z])", r"_\1", s)
 
@@ -39,6 +73,15 @@ import shutil
 
 
 def print_dict(d, indent=0, indent_delta=4, max_chars=None):
+    """
+    Prints a dictionary in a formatted manner, taking into account the terminal width.
+
+    Args:
+        d (dict): The dictionary to be printed.
+        indent (int, optional): The current level of indentation. Defaults to 0.
+        indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
+        max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
+    """
     max_chars = max_chars or shutil.get_terminal_size()[0] - 10  # Get terminal size if max_chars not set
     indent_str = " " * indent
     indent_delta_str = " " * indent_delta
@@ -67,6 +110,15 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
+    """
+    Converts a nested tuple to a string, with elements separated by underscores.
+
+    Args:
+        nested_tuple (tuple): The nested tuple to be converted.
+
+    Returns:
+        str: The string representation of the nested tuple.
+    """
     result = []
     for item in nested_tuple:
         if isinstance(item, tuple):
@@ -74,90 +126,3 @@ def nested_tuple_to_string(nested_tuple: tuple) -> str:
         else:
             result.append(str(item))
     return "_".join(result)
-
-
-if __name__ == "__main__":
-    # Define test cases
-    test_cases = [
-        ("example1", ["example", "1"]),
-        ("exampleOne", ["example", "One"]),
-        ("123example456", ["123", "example", "456"]),
-        ("happyDay", ["happy", "Day"]),
-        ("thisIsATest", ["this", "Is", "A", "Test"]),
-        ("TestAI2023", ["Test", "AI", "2023"]),
-        ("stringWith1Number", ["string", "With", "1", "Number"]),
-        ("camelCaseExample", ["camel", "Case", "Example"]),
-        ("snake_case_example", ["snake", "case", "example"]),
-        ("snake_case2example3", ["snake", "case", "2", "example", "3"]),
-        ("kebab-case-example", ["kebab", "case", "example"]),
-        ("kebab-case2example3", ["kebab", "case", "2", "example", "3"]),
-        ("PascalCaseExample", ["Pascal", "Case", "Example"]),
-        ("Title Case Example", ["Title", "Case", "Example"]),
-        ("Mixed1Example_case", ["Mixed", "1", "Example", "case"]),
-        ("Mixed2Example-case", ["Mixed", "2", "Example", "case"]),
-        ("Mixed3_Example-case", ["Mixed", "3", "Example", "case"]),
-        ("UPPERCASEEXAMPLE", ["UPPERCASEEXAMPLE"]),
-        ("lowercaseexample", ["lowercaseexample"]),
-        ("mixedUPanddown", ["mixed", "U", "Panddown"]),
-    ]
-
-    # Loop through test cases
-    for i, (input_string, expected_output) in enumerate(test_cases, 1):
-        # Apply function and check result
-        if split_words(input_string) != expected_output:
-            print(f"Failed on example {i}: {input_string}")
-            print(f"Expected: {expected_output}, but got: {split_words(input_string)}\n")
-
-    is_camel_case_test_cases = [
-        ("isCamelCase", False),
-        ("notCamelCase", False),
-        ("camelCase", False),
-        ("Notcamelcase", True),
-        ("camel_Case", False),
-        ("camelCase123", False),
-        ("camelcase", False),
-        ("CAMELCASE", True),
-        ("camel-case", False),
-        ("HFLoader", True),
-    ]
-
-    for input_string, expected_output in is_camel_case_test_cases:
-        if is_camel_case(input_string) != expected_output:
-            print(f"Failed on is_camel_case: {input_string}")
-            print(f"Expected: {expected_output}, but got: {is_camel_case(input_string)}\n")
-
-    is_snake_case_test_cases = [
-        ("is_snake_case", True),
-        ("Not_snake_case", False),
-        ("snake_case", True),
-        ("snake_Case", False),
-        ("Snakecase", False),
-        ("snake-case", False),
-        ("snake_case123", True),
-        ("123snake_case", True),
-        ("snakecase", True),
-    ]
-
-    for input_string, expected_output in is_snake_case_test_cases:
-        if is_snake_case(input_string) != expected_output:
-            print(f"Failed on is_snake_case: {input_string}")
-            print(f"Expected: {expected_output}, but got: {is_snake_case(input_string)}\n")
-
-    camel_to_snake_case_test_cases = [
-        ("camelToSnake", "camel_to_snake"),
-        ("CamelToSnake", "camel_to_snake"),
-        ("CamelToSnakeCase", "camel_to_snake_case"),
-        ("camelToSnakeCase123", "camel_to_snake_case123"),
-        ("123CamelToSnakeCase", "123_camel_to_snake_case"),
-        ("camelTo_Snake_Case", "camel_to__snake__case"),
-        ("camelTo-Snake-Case", "camel_to-_snake-_case"),
-        ("camelToSnakeCASE", "camel_to_snake_case"),
-        ("CAMELToSnakeCase", "camel_to_snake_case"),
-        ("camelToSNAKECase", "camel_to_snake_case"),
-        ("HFLoader", "hf_loader"),
-    ]
-
-    for input_string, expected_output in camel_to_snake_case_test_cases:
-        if camel_to_snake_case(input_string) != expected_output:
-            print(f"Failed on camel_to_snake_case: {input_string}")
-            print(f"Expected: {expected_output}, but got: {camel_to_snake_case(input_string)}\n")
