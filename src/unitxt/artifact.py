@@ -158,9 +158,6 @@ def map_values_in_place(object, mapper):
 class Artifact(BaseArtifact):
     type: str = field(init=False)
 
-    def __post_init__(self):
-        pass
-
 
 class ArtifactList(list, Artifact):
     def prepare(self):

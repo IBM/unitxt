@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from src.unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
@@ -11,34 +14,30 @@ from src.unitxt.blocks import (
 )
 
 from src.unitxt.catalog import add_to_catalog
+from unitxt.card import ClassificationCard
 
-card = TaskCard(
-        loader=LoadHF(path='super_glue', name='wsc'),
-        preprocess_steps=[
-            SmallNoTestSplitter(),
-            MapInstanceValues(mappers={'label': {"0": 'True', "1": 'False'}}),
-            AddFields(
-            fields={
-                'choices': ['True', 'False'],
-            }
-            ),
-            NormalizeListFields(
-                fields=['choices']
-            ),
-        ],
-        task=FormTask(
-            inputs=['choices', 'span1_text', 'span2_text'],
-            outputs=['label'],
-            metrics=['accuracy'],
-        ),
-        templates=TemplatesList([
-            InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {span1_text}, classify if this sentence: {span2_text} is {choices}.
+from unitxt.test_utils.card import test_card
+
+card = ClassificationCard(
+    loader=LoadHF(path='glue', name='wsc'),
+    preprocess_steps=[
+        'splitters.small_no_test', ],
+    label_name="label",
+    label2string={"0": 'True', "1": 'False'},
+    inputs=['span1_text', 'span2_text'],
+    metrics=['metrics.accuracy'],
+    templates=TemplatesList([
+        InputOutputTemplate(
+            input_format="""
+                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
                 """.strip(),
-                output_format='{label}',
-            ),
-        ])
-    )
+            output_format='{label}',
+        ),
+    ])
+)
 
-add_to_catalog(card, 'wsc', 'cards', overwrite=True)
+
+project_dir = Path(__file__).parent.parent.parent.absolute()
+catalog_dir = os.path.join(project_dir, 'fm_eval', 'catalogs', 'private')
+test_card(card)
+add_to_catalog(card, 'cards.wsc', overwrite=True,catalog_path=catalog_dir)
