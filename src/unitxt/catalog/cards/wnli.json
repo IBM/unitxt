@@ -35,7 +35,7 @@
             "mappers": {
                 "label": {
                     "0": "entailment",
-                    "1": "not_entailment"
+                    "1": "not entailment"
                 }
             },
             "strict": true
@@ -44,9 +44,25 @@
             "type": "add_fields",
             "fields": {
                 "choices": [
-                    "entailment",
-                    "not_entailment"
+                    "0",
+                    "1"
                 ]
+            }
+        },
+        {
+            "type": "normalize_list_fields",
+            "fields": [
+                "choices"
+            ],
+            "key_prefix": "",
+            "empty_value": "",
+            "separator": ", "
+        },
+        {
+            "type": "rename_fields",
+            "mapper": {
+                "sentence1": "sentence1",
+                "sentence2": "sentence2"
             }
         }
     ],
