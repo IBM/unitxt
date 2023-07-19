@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Union
 
 from .artifact import Artifact
-from .instructions import Instruction
+from .instructions import Instruction, TextualInstruction
 from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
 from .text_utils import split_words
 
@@ -197,7 +197,7 @@ class TemplatesList(ListCollection):
             assert isinstance(template, Template)
 
 
-def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]):
+def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]) -> TemplatesList:
     """
     combines input and output formats into their dot product
     :param inputs: list of input formats (or one)
@@ -220,7 +220,8 @@ def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]
     return TemplatesList(templates)
 
 
-def instructions2templates(instructions: List[Instruction], templates: List[InputOutputTemplate]) -> TemplatesList:
+def instructions2templates(instructions: List[TextualInstruction],
+                           templates: List[InputOutputTemplate]) -> TemplatesList:
     """
     Insert instructions into per demonstration templates
     :param instructions:
@@ -231,7 +232,7 @@ def instructions2templates(instructions: List[Instruction], templates: List[Inpu
     for instruction in instructions:
         for template in templates:
             res_templates.append(
-                InputOutputTemplate(input_format=template.input_format.replace("{instruction}", instruction),
+                InputOutputTemplate(input_format=template.input_format.replace("{instruction}", instruction.text),
                                     output_format=template.output_format))
     return TemplatesList(templates)
 
