@@ -53,13 +53,9 @@ jobs:
         sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}.dev"/g' setup.py
     
     - name: Commit and Push
-      uses: EndBug/add-and-commit@v9
-      with:
-        add: 'setup.py'
-        author_name: GitHub Actions Bot
-        author_email: <>
-        commit: --signoff
-        fetch: false
-        message: 'Update Setup: update version in setup.py to recent tag'
-        pull: '--rebase'
-        push: true
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add setup.py
+        git commit -m "Update version in setup.py"
+        git push origin HEAD:main
