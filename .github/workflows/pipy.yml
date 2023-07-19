@@ -47,4 +47,5 @@ jobs:
         git config --local user.name "GitHub Actions"
         git add setup.py
         git commit -m "Update version in setup.py"
+        git pull --rebase
         git push origin HEAD:main
