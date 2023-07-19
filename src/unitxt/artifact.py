@@ -4,8 +4,8 @@ import os
 import pkgutil
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
-from typing import final
-
+from typing import final, Any, Dict, List, Union
+from .type_utils import issubtype
 from .text_utils import camel_to_snake_case, is_camel_case
 
 
@@ -89,14 +89,12 @@ class BaseArtifact(ABC):
         self._args_dict = asdict(self)
 
         for field in fields(self):
-            # check if field.type is class and if it is subclass of BaseArtifact
-            if isinstance(field.type, type) and issubclass(field.type, BaseArtifact):
+            if getattr(self, field.name) == 'cards.wnli':
+                print('cards.wnli')
+            if issubtype(field.type, Union[BaseArtifact, List[BaseArtifact], Dict[str, BaseArtifact]]):
                 value = getattr(self, field.name)
-                if isinstance(value, str):
-                    artifact, artifactory = fetch_artifact(value)
-                    assert artifact is not None, f"Artifact {value} does not exist, in {Artifactories()}"
-                    print(f"Artifact {value} is fetched from {artifactory}")
-                    setattr(self, field.name, artifact)
+                value = map_values_in_place(value, maybe_recover_artifact)
+                setattr(self, field.name, value)
 
         self.prepare()
         self.verify()
@@ -145,6 +143,16 @@ class BaseArtifact(ABC):
         # cls = cls._class_register[d.pop('type')]
         # return cls(**d)
 
+def map_values_in_place(object, mapper):
+    if isinstance(object, dict):
+        for key, value in object.items():
+            object[key] = mapper(value)
+        return object
+    if isinstance(object, list):
+        for i in range(len(object)):
+            object[i] = mapper(object[i])
+        return object
+    return mapper(object)
 
 class Artifact(BaseArtifact):
     type: str = field(init=False)
@@ -185,6 +193,16 @@ def fetch_artifact(name):
 
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
+def verbosed_fetch_artifact(identifer):
+        artifact, artifactory = fetch_artifact(identifer)
+        print(f"Artifact {identifer} is fetched from {artifactory}")
+        return artifact
+
+def maybe_recover_artifact(artifact):
+    if isinstance(artifact, str):
+        return verbosed_fetch_artifact(artifact)
+    else:
+        return artifact
 
 def register_all_artifacts(path):
     for loader, module_name, is_pkg in pkgutil.walk_packages(path):
