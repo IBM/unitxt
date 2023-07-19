@@ -1,0 +1,8 @@
+{
+    "type": "slice_split",
+    "slices": {
+        "train": "train[0]",
+        "validation": "train[0]",
+        "test": "test"
+    }
+}
