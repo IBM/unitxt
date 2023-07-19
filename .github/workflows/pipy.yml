@@ -38,3 +38,13 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         twine upload dist/*
+    - name: Update version in setup.py for local install
+      run: >-
+        sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}.dev"/g' setup.py
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add setup.py
+        git commit -m "Update version in setup.py"
+        git push origin HEAD:main
