@@ -24,10 +24,10 @@ class ListCollection(Collection):
         self.items.append(item)
 
     def extend(self, other):
-        self.items.extend(other)
+        self.items.extend(other.items)
 
     def __add__(self, other):
-        return ListCollection(self.items.__add__(other))
+        return ListCollection(self.items.__add__(other.items))
 
 
 class DictCollection(Collection):

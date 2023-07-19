@@ -16,6 +16,9 @@ class TextualInstruction(Instruction):
     def __call__(self) -> str:
         return self.text
 
+    def __repr__(self):
+        return self.text
+
 
 from .collections import ListCollection
 
