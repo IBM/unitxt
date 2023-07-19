@@ -1,0 +1,64 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "glue",
+        "name": "rte",
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "sentence2"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "entailment",
+                    "1": "not_entailment"
+                }
+            },
+            "strict": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "entailment",
+                    "not_entailment"
+                ]
+            }
+        }
+    ],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    },
+    "instructions": null
+}
