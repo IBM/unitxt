@@ -1,6 +1,6 @@
 from ..operator import StreamingOperator
 from ..stream import MultiStream
-from ..type_utils import is_typing_type
+from ..type_utils import isoftype
 from typing import List
 import json
 
@@ -12,9 +12,9 @@ def apply_operator(operator:StreamingOperator, inputs: List[dict]):
     
 def test_operator(operator:StreamingOperator, inputs: List[dict], targets: List[dict]):
     
-    assert is_typing_type(operator, StreamingOperator), "operator must be an Operator"
-    assert is_typing_type(inputs, List[dict]), "inputs must be a list of dicts"
-    assert is_typing_type(outputs, List[dict]), "outputs must be a list of dicts"
+    assert isoftype(operator, StreamingOperator), "operator must be an Operator"
+    assert isoftype(inputs, List[dict]), "inputs must be a list of dicts"
+    assert isoftype(outputs, List[dict]), "outputs must be a list of dicts"
     
     outputs = apply_operator(operator, inputs)
     

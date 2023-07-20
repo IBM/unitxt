@@ -1,5 +1,5 @@
 from queue import Queue
-
+from typing import Dict, Any
 
 def is_done(query):
     return query is None or len(query) == 0 or query == '/'
@@ -11,7 +11,6 @@ def is_wildcard(query):
 
 def is_int(query):
     return query.isdigit()
-
 
 class Singleton(type):
     _instances = {}
@@ -60,3 +59,14 @@ def dict_query(dic, query_path):
         raise ValueError(f'query "{query_path}" did not match any item in dict: {dic}')
 
     return results if len(results) > 1 else results[0]
+    
+def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = "_") -> Dict[str, Any]:
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
