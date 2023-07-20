@@ -23,6 +23,7 @@ jobs:
     - name: Install Requirements
       run: >-
         pip install -r requirements.txt
+        pip install isort
     
     - name: Prepare dataset imports
       run: >-
