@@ -16,6 +16,8 @@ from .operator import (
 from .stream import MultiStream, Stream
 from .utils import flatten_dict
 import random
+from .utils import dict_query
+
 
 class FromIterables(StreamInitializerOperator):
     """
@@ -86,7 +88,19 @@ class AddFields(StreamInstanceOperator):
     fields: Dict[str, object]
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        return {**instance, **self.fields}
+        instance.update(self.fields)
+        return instance
+
+
+class MapNestedDictValuesByQueries(StreamInstanceOperator):
+    field_to_query: Dict[str, str]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        updates = {}
+        for field, query in self.field_to_query.items():
+            updates[field] = dict_query(instance, query)
+        instance.update(updates)
+        return instance
 
 
 class ArtifactFetcherMixin:

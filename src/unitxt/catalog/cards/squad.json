@@ -1,0 +1,50 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "squad",
+        "name": null,
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "context",
+            "question"
+        ],
+        "outputs": [
+            "answer"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "map_nested_dict_values_by_queries",
+            "field_to_query": {
+                "answer": "answers/text"
+            }
+        }
+    ],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given: {context}, answer {question}",
+                "output_format": "{answer}"
+            }
+        ]
+    },
+    "instructions": null
+}
