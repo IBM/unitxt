@@ -1,43 +1,34 @@
-import os
-from pathlib import Path
-
 from src.unitxt.blocks import (
     LoadHF,
-    SplitRandomMix,
-    AddFields,
-    TaskCard,
-    NormalizeListFields,
-    FormTask,
     TemplatesList,
-    InputOutputTemplate,
-    MapInstanceValues
+    InputOutputTemplate
 )
-
 from src.unitxt.catalog import add_to_catalog
-from unitxt.card import ClassificationCard
+from src.unitxt.test_utils.card import test_card
+from src.unitxt.prepare_utils.card_types import  addClassificationChoices
+from src.unitxt.card import TaskCard
+from src.unitxt.task import FormTask
 
-from unitxt.test_utils.card import test_card
-
-card = ClassificationCard(
-    loader=LoadHF(path='glue', name='wsc'),
+card = TaskCard(
+    loader=LoadHF(path='super_glue', name='wsc'),
     preprocess_steps=[
-        'splitters.small_no_test', ],
-    label_name="label",
-    label2string={"0": 'True', "1": 'False'},
-    inputs=['span1_text', 'span2_text'],
-    metrics=['metrics.accuracy'],
+        'splitters.small_no_test',
+        *addClassificationChoices('label', {"0": 'False', "1": 'True'})
+    ],
+    task=FormTask(
+        inputs=['choices', 'text', 'span1_text', 'span2_text'],
+        outputs=['label'],
+        metrics=['metrics.accuracy'],
+    ),
     templates=TemplatesList([
         InputOutputTemplate(
             input_format="""
-                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
+                    Given this sentence: {text} classify if "{span2_text}" refers to "{span1_text}".
                 """.strip(),
             output_format='{label}',
         ),
     ])
 )
 
-
-project_dir = Path(__file__).parent.parent.parent.absolute()
-catalog_dir = os.path.join(project_dir, 'fm_eval', 'catalogs', 'private')
 test_card(card)
-add_to_catalog(card, 'cards.wsc', overwrite=True,catalog_path=catalog_dir)
+add_to_catalog(card, 'cards.wsc', overwrite=True)

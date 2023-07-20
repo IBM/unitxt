@@ -8,11 +8,11 @@ from src.unitxt.test_utils.card import test_card
 from src.unitxt.prepare_utils.card_types import create_2sentences_classification_card
 
 card = create_2sentences_classification_card(
-    loader=LoadHF(path='glue', name='wnli'),
+    loader=LoadHF(path='glue', name='cola'),
     preprocess_steps=
     ['splitters.small_no_test', ],
     label_name="label",
-    label2string={"0": 'entailment', "1": 'not entailment'},
+    label2string={"0": 'acceptable', "1": 'not acceptable'},
     inputs=['sentence1', 'sentence2'],
     metrics=['metrics.accuracy'],
     templates=TemplatesList([
@@ -26,4 +26,4 @@ card = create_2sentences_classification_card(
 )
 
 test_card(card)
-add_to_catalog(card, 'cards.wnli', overwrite=True)
+add_to_catalog(card, 'cards.cola', overwrite=True)
