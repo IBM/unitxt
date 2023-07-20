@@ -1,0 +1,47 @@
+name: Release new version HuggingFace Hub
+
+on:
+  push:
+    tags:
+     - '*'
+
+jobs:
+  push-to-hf-hub:
+    name: Release new version to PyPI
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: actions/checkout@v3
+      with:
+        ref: main
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+    
+    - name: Install Requirements
+      run: >-
+        pip install -r requirements.txt
+    
+    - name: Prepare dataset imports
+      run: >-
+        bash make/hf/prepare_dataset_imports.sh
+    
+    - name: Prepare metric imports
+      run: >-
+        bash make/hf/prepare_metric_imports.sh
+
+    - name: Push dataset to HuggingFace Hub
+      env:
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+      run: >-
+        python make/hf/prepare_dataset.py
+    
+    - name: Push metric to HuggingFace Hub
+      env:
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+      run: >-
+        python make/hf/prepare_metric.py
+    
+   
