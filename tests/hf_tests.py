@@ -22,7 +22,7 @@ class HFTests(unittest.TestCase):
     
     def test_dataset_load(self):
         with set_hf_caching(False):
-            dataset = load_dataset(unitxt.dataset_file, 'card=cards.wnli')
+            dataset = load_dataset(unitxt.dataset_file, 'card=cards.wnli,template_item=0')
         
     
     def test_metric_load(self):
