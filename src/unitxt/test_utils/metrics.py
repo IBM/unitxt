@@ -1,4 +1,4 @@
-from ..metric import Metric
+from ..metrics import Metric
 from ..stream import MultiStream, Stream
 from ..type_utils import isoftype
 from typing import List
