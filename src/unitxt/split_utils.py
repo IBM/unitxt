@@ -1,8 +1,10 @@
 import itertools
 import re
+from typing import Dict
 
 from .generator_utils import ReusableGenerator
 from .random_utils import nested_seed
+from .stream import Stream
 
 def parse_random_mix_string(input_str):
     """
@@ -204,7 +206,23 @@ def build_stream_routing(mapping):
     return stream_mapping
 
 
-def random_mix_generator(new_stream_name, new_stream_sources, stream_routing, input_streams):
+def rename_split(input_streams: Dict[str, Stream], mapping:Dict[str,str]):
+    """
+        Renames the streams
+        Args:
+            input_streams (dict): A dictionary containing the input streams, where each key is
+                                  the name of the stream and the value is an iterable or generator
+                                  representing the stream.
+
+            mapping (dict): A dictionary specifying the mapping of old streams to new streams.
+
+        Returns:
+            dict: A dictionary containing the generated new streams, where each key is the name
+                  of the new stream and the value is a generator representing the stream."""
+    return {mapping.get(key, key): val for key, val in input_streams.items()}
+
+
+def random_mix_generator(new_stream_name, new_stream_sources, stream_routing, rand, input_streams):
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
         with nested_seed(old_stream_name) as rand:
