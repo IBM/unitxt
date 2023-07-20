@@ -2,6 +2,8 @@ from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
 
+from unitxt.stream import Stream
+
 from .artifact import Artifact
 from .stream import MultiStream, Stream
 
@@ -94,14 +96,22 @@ class SingleStreamOperator(MultiStreamOperator):
         pass
 
 
-# class StreamGeneratorOperator(SingleStreamOperator):
+class PagedStreamOperator(SingleStreamOperator):
 
-#     def stream(self, stream):
-#         return Stream(self.process, gen_kwargs={'stream': stream})
+    page_size: int = 1000
+    
+    def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
+        page = []
+        for instance in stream:
+            page.append(instance)
+            if len(page) >= self.page_size:
+                yield from self.process(page, stream_name)
+                page = []
+        yield from self.process(page, stream_name)
 
-#     @abstractmethod
-#     def process(self, stream: Stream) -> Generator:
-#         yield None
+    @abstractmethod
+    def process(self, page: List[Dict], stream_name: str = None) -> Generator:
+        pass
 
 
 class SingleStreamReducer(StreamingOperator):
