@@ -58,4 +58,10 @@ jobs:
         git config --local user.name "GitHub Actions"
         git add setup.py
         git commit -m "Update version in setup.py"
-        git push origin HEAD:main
+    
+    - name: Push to protected branch
+      uses: CasperWA/push-protected@v2
+      with:
+        token: ${{ secrets.PUSH_TO_PROTECTED_BRANCH }}
+        branch: main
+        unprotect_reviews: true
