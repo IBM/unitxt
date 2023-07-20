@@ -7,6 +7,7 @@ from src.unitxt.operators import (
     ApplyValueOperatorsField,
     AddFields,
     Unique,
+    Shuffle,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -112,5 +113,34 @@ class TestOperators(unittest.TestCase):
         
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
-        
     
+    def test_shuffle(self):
+        
+        inputs = [{'a': i} for i in range(15)]
+        
+        outputs = apply_operator(
+            operator=Shuffle(page_size=10),
+            inputs=inputs
+        )
+        
+        inputs = [instance['a'] for instance in inputs]
+        outputs = [instance['a'] for instance in outputs]
+        
+        self.assertNotEqual(inputs, outputs)
+        self.assertSetEqual(set(inputs), set(outputs))
+        
+        # test no mixing between pages:
+        page_1_inputs = inputs[:10]
+        page_2_inputs = inputs[10:]
+        page_1_outputs = outputs[:10]
+        page_2_outputs = outputs[10:]
+        
+        self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
+        self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
+        
+        inputs_outputs_intersection = set(page_1_inputs).intersection(set(page_2_outputs))
+        self.assertSetEqual(inputs_outputs_intersection, set())
+        
+        inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
+        self.assertSetEqual(inputs_outputs_intersection, set())
+        

@@ -10,9 +10,11 @@ from .operator import (
     Stream,
     StreamInitializerOperator,
     StreamInstanceOperator,
+    PagedStreamOperator,
 )
 from .stream import MultiStream, Stream
 
+import random
 
 class FromIterables(StreamInitializerOperator):
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
@@ -221,3 +223,9 @@ class MergeStreams(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream({self.new_stream_name: Stream(self.merge, gen_kwargs={"multi_stream": multi_stream})})
+
+class Shuffle(PagedStreamOperator):
+    
+    def process(self, page: List[Dict], stream_name: str = None) -> Generator:
+        random.shuffle(page)
+        yield from page
