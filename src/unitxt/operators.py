@@ -1,6 +1,7 @@
 from dataclasses import field
 from typing import Any, Dict, Generator, Iterable, List, Optional, Union
 
+from .text_utils import nested_tuple_to_string
 from .artifact import Artifact, fetch_artifact
 from .operator import (
     MultiStream,
@@ -13,28 +14,27 @@ from .operator import (
     PagedStreamOperator,
 )
 from .stream import MultiStream, Stream
-
+from .utils import flatten_dict
 import random
 
 class FromIterables(StreamInitializerOperator):
+    """
+    Creates a MultiStream from iterables.
+
+    Args:
+        iterables (Dict[str, Iterable]): A dictionary where each key-value pair represents a stream name and its corresponding iterable.
+    """
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
         return MultiStream.from_iterables(iterables)
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values in a stream.
+    """
+    Maps values in each instance of a stream based on the provided mappers.
 
-    This class is a type of StreamInstanceOperator, and its main purpose
-    is to map values of instances in a stream using predefined mappers.
-
-    Attributes:
-        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
-            Keys are the names of the fields to be mapped, and values are dictionaries
-            that define the mapping from old values to new values.
-        strict (bool): If True, the mapping is applied strictly. That means if a value 
-            does not exist in the mapper, it will raise a KeyError. If False, values 
-            that are not present in the mapper are kept as they are.
-
+    Args:
+        mappers (Dict[str, Dict[str, str]]): A dictionary where each key-value pair represents a field in the instance and a mapper for that field.
+        strict (bool): If True, the operator will raise a KeyError if a value is not in its corresponding mapper. If False, unmapped values will be left unchanged. Defaults to True.
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
@@ -61,19 +61,14 @@ class MapInstanceValues(StreamInstanceOperator):
         return result
 
 
-def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = "_") -> Dict[str, Any]:
-    items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return dict(items)
-
-
 class FlattenInstances(StreamInstanceOperator):
-    
+    """
+    Flattens each instance in a stream, making nested dictionary entries into top-level entries.
+
+    Args:
+        parent_key (str): A prefix to use for the flattened keys. Defaults to an empty string.
+        sep (str): The separator to use when concatenating nested keys. Defaults to "_".
+    """
     parent_key: str = ""
     sep: str = "_"
     
@@ -82,6 +77,12 @@ class FlattenInstances(StreamInstanceOperator):
 
 
 class AddFields(StreamInstanceOperator):
+    """
+    Adds specified fields to each instance in a stream.
+
+    Args:
+        fields (Dict[str, object]): The fields to add to each instance.
+    """
     fields: Dict[str, object]
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
@@ -89,6 +90,12 @@ class AddFields(StreamInstanceOperator):
 
 
 class ArtifactFetcherMixin:
+    """
+    Provides a way to fetch and cache artifacts in the system.
+
+    Args:
+        cache (Dict[str, Artifact]): A cache for storing fetched artifacts.
+    """
     cache: Dict[str, Artifact] = {}
 
     @classmethod
@@ -100,6 +107,14 @@ class ArtifactFetcherMixin:
 
 
 class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
+    """
+    Applies value operators to each instance in a stream based on specified fields.
+
+    Args:
+        value_field (str): The field containing the value to be operated on.
+        operators_field (str): The field containing the operators to be applied.
+        default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
+    """
     value_field: str
     operators_field: str
     default_operators: List[str] = None
@@ -123,6 +138,12 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
 
 class FilterByValues(SingleStreamOperator):
+    """
+    Filters a stream, yielding only instances that match specified values.
+
+    Args:
+        values (Dict[str, Any]): The values that instances should match to be included in the output.
+    """
     values: Dict[str, Any]
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
@@ -132,6 +153,12 @@ class FilterByValues(SingleStreamOperator):
 
 
 class Unique(SingleStreamReducer):
+    """
+    Reduces a stream to unique instances based on specified fields.
+
+    Args:
+        fields (List[str]): The fields that should be unique in each instance.
+    """
     fields: List[str] = field(default_factory=list)
 
     @staticmethod
@@ -153,10 +180,13 @@ class Unique(SingleStreamReducer):
         return list(seen)
 
 
-from .text_utils import nested_tuple_to_string
-
-
 class SplitByValue(MultiStreamOperator):
+    """
+    Splits a MultiStream into multiple streams based on unique values in specified fields.
+
+    Args:
+        fields (List[str]): The fields to use when splitting the MultiStream.
+    """
     fields: List[str] = field(default_factory=list)
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -176,6 +206,13 @@ class SplitByValue(MultiStreamOperator):
 
 
 class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
+    """
+    Applies stream operators to a stream based on specified fields in each instance.
+
+    Args:
+        field (str): The field containing the operators to be applied.
+        reversed (bool): Whether to apply the operators in reverse order.
+    """
     field: str
     reversed: bool = False
 
@@ -200,6 +237,12 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
 
 
 class AddFieldNamePrefix(StreamInstanceOperator):
+    """
+    Adds a prefix to each field name in each instance of a stream.
+
+    Args:
+        prefix_dict (Dict[str, str]): A dictionary mapping stream names to prefixes.
+    """
     prefix_dict: Dict[str, str]
 
     def prepare(self):
@@ -210,6 +253,14 @@ class AddFieldNamePrefix(StreamInstanceOperator):
 
 
 class MergeStreams(MultiStreamOperator):
+    """
+    Merges multiple streams into a single stream.
+
+    Args:
+        new_stream_name (str): The name of the new stream resulting from the merge.
+        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
+        origin_stream_name_field_name (str): The field name for the origin stream name.
+    """
     new_stream_name: str = "all"
     add_origin_stream_name: bool = True
     origin_stream_name_field_name: str = "origin"
@@ -225,7 +276,12 @@ class MergeStreams(MultiStreamOperator):
         return MultiStream({self.new_stream_name: Stream(self.merge, gen_kwargs={"multi_stream": multi_stream})})
 
 class Shuffle(PagedStreamOperator):
-    
+    """
+    Shuffles the order of instances in each page of a stream.
+
+    Args:
+        page_size (int): The size of each page in the stream. Defaults to 1000.
+    """
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
         random.shuffle(page)
         yield from page
