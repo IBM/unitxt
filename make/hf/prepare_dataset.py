@@ -4,7 +4,7 @@ import os
 
 files = glob.glob("./src/unitxt/*.py")
 
-api = HfApi()
+api = HfApi(token=os.environ['HUGGINGFACE_HUB_TOKEN'])
 
 print('Uploading files from src/unitxt/ to hf:unitxt/data')
 
