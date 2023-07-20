@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Generator
 
 from .operator import SingleStreamOperator, StreamInstanceOperator
 from .stream import Stream
@@ -21,7 +21,7 @@ class UpdateStream(StreamInstanceOperator):
         instance.update(self.update)
         return instance
 
-
+# TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(ABC):
     @property
     @abstractmethod
@@ -78,7 +78,7 @@ class InstanceMetric(SingleStreamOperator, Metric):
     def reduction_map(self) -> dict:
         pass
 
-    def process(self, stream: Stream):
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
         global_score = {}
         instances = []
 

@@ -127,7 +127,7 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
 
         return list(stream)
 
-
+# TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
     def _info(self):
