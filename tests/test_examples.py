@@ -9,10 +9,6 @@ class TestExamples(unittest.TestCase):
         import examples.example1
         self.assertTrue(True)
 
-    def test_example1(self):
-        import examples.example1
-        self.assertTrue(True)
-
     def test_example2(self):
         import examples.example2
         self.assertTrue(True)
@@ -21,13 +17,11 @@ class TestExamples(unittest.TestCase):
         import examples.example3
         self.assertTrue(True)
 
-    def test_example4(self):
-        import examples.example4
+    def test_add_metric_to_catalog(self):
+        import examples.add_metric_to_catalog
         self.assertTrue(True)
 
     def test_example5(self):
-
-
         dataset = load_dataset_hf(
             unitxt.dataset_file,
             'card=cards.wnli,template_item=0',
@@ -37,6 +31,10 @@ class TestExamples(unittest.TestCase):
         target = {'metrics': ['metrics.accuracy'], 'source': "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not_entailment'].\nOutput: ", 'target': 'not_entailment', 'references': ['not_entailment'], 'group': 'unitxt', 'postprocessors': ['to_string']}
 
         self.assertDictEqual(output, target)
+
+    def test_add_recipe_to_catalog(self):
+        import examples.add_recipe_to_catalog
+        self.assertTrue(True)
 
     def test_example6(self):
         import examples.example6
@@ -76,6 +74,12 @@ class TestExamples(unittest.TestCase):
 
         results = metric.compute(predictions=['none' for t in dataset['test']], references=dataset['test'])
 
+    def test_evaluate(self):
+        import examples.evaluate
+        self.assertTrue(True)
+
+    def test_load_dataset(self):
+        import examples.load_dataset
         self.assertTrue(True)
 
     def test_example9(self):
