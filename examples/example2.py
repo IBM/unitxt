@@ -28,12 +28,12 @@ recipe = SequentialRecipe(
         ),
         MapInstanceValues(
             mappers={
-                'label': {"0": 'entailment', "1": 'not_entailment'}
+                'label': {"0": 'entailment', "1": 'not entailment'}
             }
         ),
         AddFields(
             fields={
-                'choices': ['entailment', 'not_entailment'],
+                'choices': ['entailment', 'not entailment'],
             }
         ),
         FormTask(
