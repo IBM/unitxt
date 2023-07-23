@@ -33,7 +33,7 @@ class Metric(ABC):
 
 
 class GlobalMetric(SingleStreamOperator, Metric):
-    def process(self, stream: Stream):
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
         global_score = {}
@@ -125,17 +125,23 @@ class InstanceMetric(SingleStreamOperator, Metric):
         pass
 
 
-class EvalMetric(InstanceMetric):
+class Squad(GlobalMetric):
     _metric = None
+    reduction_map = {"mean": ["f1"]}
+    main_score = "f1"
+    metric = 'squad'
 
-    def compute(self, predictions, references):
-        if self._metric is None:
-            self.metric = self.metric if isinstance(self.metric, list) else [self.metric]
-            self._metric = evaluate.load(*self.metric)
+    def prepare(self):
+        super(Squad, self).prepare()
+        self._metric = evaluate.load(self.metric)
 
-        id = str(uuid.uuid4()).replace('-', '')
-        formatted_predictions = [{'prediction_text': predictions, 'id': id}]
-        formatted_references = [{'answers': {'answer_start': [-1], 'text': references}, 'id': id}]
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+
+        ids = [str(uuid.uuid4()).replace('-', '') for _ in range(len(predictions))]
+        formatted_predictions = [{'prediction_text': prediction, 'id': ids[i]}
+                                 for i, prediction in enumerate(predictions)]
+        formatted_references = [{'answers': {'answer_start': [-1], 'text': reference}, 'id': ids[i]}
+                                for i, reference in enumerate(references)]
 
         return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
 
@@ -159,12 +165,3 @@ class Accuracy(SingleReferenceInstanceMetric):
 
     def compute(self, reference, prediction: str) -> dict:
         return {"accuracy": float(str(reference) == str(prediction))}
-
-
-class Squad(EvalMetric):
-    reduction_map = {"mean": ["f1"]}
-    main_score = "f1"
-    metric = 'squad'
-
-    #def compute(self, reference, prediction: str) -> dict:
-    #    return {"accuracy": float(str(reference) == str(prediction))}
