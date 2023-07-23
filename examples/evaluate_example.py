@@ -1,3 +1,5 @@
+import evaluate
+
 from src.unitxt.common import (
     CommonRecipe,
 )
@@ -9,7 +11,7 @@ from src import unitxt
 
 dataset = load_dataset('recipes.wnli_3_shot')
 
-import evaluate
+import evaluate_example
 
 metric = evaluate.load(unitxt.metric_url)
 
