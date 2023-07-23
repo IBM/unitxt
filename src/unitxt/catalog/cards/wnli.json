@@ -37,22 +37,13 @@
             "type": "add_fields",
             "fields": {
                 "choices": [
-                    "0",
-                    "1"
+                    "entailment",
+                    "not entailment"
                 ]
             },
             "use_nested_query": false,
             "use_deepcopy": false
             }
-        },
-        {
-            "type": "normalize_list_fields",
-            "fields": [
-                "choices"
-            ],
-            "key_prefix": "",
-            "empty_value": "",
-            "separator": ", "
         },
         {
             "type": "rename_fields",
