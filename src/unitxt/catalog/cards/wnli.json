@@ -22,14 +22,7 @@
         ]
     },
     "preprocess_steps": [
-        {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train[95%]",
-                "validation": "train[5%]",
-                "test": "validation"
-            }
-        },
+        "splitters.small_no_test",
         {
             "type": "map_instance_values",
             "mappers": {

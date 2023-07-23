@@ -12,12 +12,12 @@ def split_words(s):
         list: The list of words obtained after splitting the string.
     """
     # Split PascalCase or camelCase
-    s = re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", s)).strip()
+    s = re.sub(r"([A-Z][a-z]+)", r" \1", re.sub(r"([A-Z]+)", r" \1", s)).strip()
     # Split snake_case or kebab-case
-    s = re.sub("[_-]", " ", s)
+    s = re.sub(r"[_-]", " ", s)
     # Split numbers attached to strings
-    s = re.sub("([a-zA-Z])(\d)", r"\1 \2", s)
-    s = re.sub("(\d)([a-zA-Z])", r"\1 \2", s)
+    s = re.sub(r"([a-zA-Z])(\d)", r"\1 \2", s)
+    s = re.sub(r"(\d)([a-zA-Z])", r"\1 \2", s)
     # Split the string into words based on spaces
     words = s.split()
     return words
@@ -60,10 +60,10 @@ def camel_to_snake_case(s):
         str: The string converted to snake_case.
     """
     # Add an underscore before every uppercase letter that is followed by a lowercase letter or digit and not preceded by an underscore, a hyphen or an uppercase letter
-    s = re.sub("(?<=[^A-Z_-])([A-Z])", r"_\1", s)
+    s = re.sub(r"(?<=[^A-Z_-])([A-Z])", r"_\1", s)
 
     # Ensure there's an underscore before any uppercase letter that's followed by a lowercase letter or digit and comes after a sequence of uppercase letters
-    s = re.sub("([A-Z]+)([A-Z][a-z0-9])", r"\1_\2", s)
+    s = re.sub(r"([A-Z]+)([A-Z][a-z0-9])", r"\1_\2", s)
 
     s = s.lower()
     return s

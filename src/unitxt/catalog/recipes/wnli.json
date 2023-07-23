@@ -48,7 +48,7 @@
                 "label"
             ],
             "metrics": [
-                "metrics.accuracy"
+                "matrics.accuracy"
             ]
         },
         {
