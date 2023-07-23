@@ -165,3 +165,39 @@ class Accuracy(SingleReferenceInstanceMetric):
 
     def compute(self, reference, prediction: str) -> dict:
         return {"accuracy": float(str(reference) == str(prediction))}
+
+
+class F1(GlobalMetric):
+    _metric = None
+    reduction_map = {"mean": ["f1"]}
+    main_score = "f1"
+    metric = 'f1'
+    average = 'binary'
+
+    def prepare(self):
+        super(F1, self).prepare()
+        self._metric = evaluate.load(self.metric)
+        self.str_to_ids = {}
+
+    def get_str_id(self, str):
+        if str not in self.str_to_ids:
+            self.str_to_ids[str] = len(self.str_to_ids)
+        return self.str_to_ids[str]
+
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+
+        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
+        assert all(len(reference) == 1 for reference in references)
+        formatted_references = [self.get_str_id(reference[0]) for reference  in references]
+        result = self._metric.compute(predictions=formatted_predictions, references=formatted_references,
+                                    average=self.average)
+        return result
+
+
+class F1Micro(F1):
+    average = 'micro'
+
+
+class F1Macro(F1):
+    average = 'macro'
+
