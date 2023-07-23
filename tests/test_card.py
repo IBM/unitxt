@@ -16,10 +16,10 @@ card = TaskCard(
         loader=LoadHF(path='glue', name='wnli'),
         preprocess_steps=[
             SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
-            MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not_entailment'}}),
+            MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not entailment'}}),
             AddFields(
             fields={
-                'choices': ['entailment', 'not_entailment'],
+                'choices': ['entailment', 'not entailment'],
             }
             ),
         ],
