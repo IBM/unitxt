@@ -68,7 +68,7 @@ def parse_slices_string(input_str):
     result_dict = {}
 
     # Split the input string into a list of sources
-    sources = re.split("\+", input_str)
+    sources = re.split(r"\+", input_str)
     for source in sources:
         # If the source has a slice, parse it
         match = re.fullmatch(r"(\w+)\[(\d*):(\d*)\]", source)
@@ -120,7 +120,7 @@ def slice_streams(input_streams, mapping):
               the new streams, which consist of parts of the old streams chained together.
 
     Raises:
-        ValueError: If a stream is supposed to be sliced at an index greater than its length.
+        ValueError: If a stream is supposed to be sliced at an index greater than its length or a negative one.
 
     Example:
         >>> old_streams = {"train": [1, 2, 3, 4, 5, 6, 7, 8, 9], "test": [10, 11, 12, 13, 14]}
@@ -206,7 +206,7 @@ def build_stream_routing(mapping):
     return stream_mapping
 
 
-def rename_split(input_streams: Dict[str, Stream], mapping:Dict[str,str]):
+def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
     """
         Renames the streams
         Args:
