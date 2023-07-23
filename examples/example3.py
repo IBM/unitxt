@@ -41,12 +41,12 @@ recipe = SequentialRecipe(
         ),
         MapInstanceValues(
             mappers={
-                'label': {"0": 'entailment', "1": 'not_entailment'}
+                'label': {"0": 'entailment', "1": 'not entailment'}
             }
         ),
         AddFields(
             fields={
-                'choices': ['entailment', 'not_entailment'],
+                'choices': ['entailment', 'not entailment'],
             }
         ),
         NormalizeListFields(
@@ -63,7 +63,7 @@ recipe = SequentialRecipe(
             sampler=RandomSampler(sample_size=5),
         ),
         RenderTemplatedICL(
-            instruction=TextualInstruction("classify if this sentence is entailment or not_entailment."),
+            instruction=TextualInstruction("classify if this sentence is entailment or not entailment."),
             template=InputOutputTemplate(
                 input_format="""
                     Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
