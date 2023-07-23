@@ -7,8 +7,6 @@ dataset = load_dataset('unitxt/data', 'card=cards.wnli,template_item=0,num_demos
 
 print_dict(dataset['train'][0])
 
-import evaluate_example
-
 metric = evaluate.load('unitxt/metric')
 
 results = metric.compute(predictions=['entailment' for t in dataset['test']], references=dataset['test'])
