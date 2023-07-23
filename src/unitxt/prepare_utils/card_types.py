@@ -14,12 +14,10 @@ def addClassificationChoices(label_name, label2string):
     return [MapInstanceValues(mappers={label_name: label2string}),
             AddFields(
                 fields={
-                    'choices': list(sorted(label2string.keys())),
+                    'choices': list(sorted(label2string.values())),
                 }
             ),
-            NormalizeListFields(
-                fields=['choices']
-            ), ]
+            ]
 
 
 def create_2sentences_classification_card(loader: Loader, label_name: str, label2string: Dict, inputs: List[str],
