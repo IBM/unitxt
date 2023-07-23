@@ -29,7 +29,7 @@ card = TaskCard(
         task=FormTask(
             inputs=['context', 'question'],
             outputs=['answer'],
-            metrics=['metrics.accuracy'],
+            metrics=['metrics.squad'],
         ),
         templates=TemplatesList([
             InputOutputTemplate(

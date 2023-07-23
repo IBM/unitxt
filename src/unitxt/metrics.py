@@ -1,6 +1,9 @@
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Generator
+from typing import Any, Dict, List, Generator, Union
+
+import evaluate
 
 from .operator import SingleStreamOperator, StreamInstanceOperator
 from .stream import Stream
@@ -113,13 +116,30 @@ class InstanceMetric(SingleStreamOperator, Metric):
             yield instance
 
     def _compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        result = self.compute(references, predictions)
+        result = self.compute(references=references, predictions=predictions)
         result["score"] = result[self.main_score]
         return result
 
     @abstractmethod
     def compute(self, references: List[str], prediction: str) -> dict:
         pass
+
+
+class EvalMetric(InstanceMetric):
+    _metric = None
+
+    def compute(self, predictions, references):
+        if self._metric is None:
+            self.metric = self.metric if isinstance(self.metric, list) else [self.metric]
+            self._metric = evaluate.load(*self.metric)
+
+        id = str(uuid.uuid4()).replace('-', '')
+        formatted_predictions = [{'prediction_text': predictions, 'id': id}]
+        formatted_references = [{'answers': {'answer_start': [-1], 'text': references}, 'id': id}]
+
+        return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
+
+
 
 
 class SingleReferenceInstanceMetric(InstanceMetric):
@@ -139,3 +159,12 @@ class Accuracy(SingleReferenceInstanceMetric):
 
     def compute(self, reference, prediction: str) -> dict:
         return {"accuracy": float(str(reference) == str(prediction))}
+
+
+class Squad(EvalMetric):
+    reduction_map = {"mean": ["f1"]}
+    main_score = "f1"
+    metric = 'squad'
+
+    #def compute(self, reference, prediction: str) -> dict:
+    #    return {"accuracy": float(str(reference) == str(prediction))}

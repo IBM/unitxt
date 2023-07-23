@@ -1,0 +1,6 @@
+{
+    "type": "squad",
+    "implemented_reductions": [
+        "mean"
+    ]
+}
