@@ -17,8 +17,16 @@ from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
     random_mix_streams,
-    slice_streams,
+    slice_streams, rename_split,
 )
+
+
+class RenameSplits(Splitter):
+    mapper: Dict[str, str]
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        generators = rename_split(multi_stream, self.mapper)
+        return MultiStream(generators)
 
 
 class SplitRandomMix(Splitter):
@@ -28,7 +36,6 @@ class SplitRandomMix(Splitter):
         mapping = {k: parse_random_mix_string(v) for k, v in self.mix.items()}
         generators = random_mix_streams(multi_stream, mapping)
         return MultiStream.from_generators(generators, streaming=True)
-
 
 
 class SliceSplit(Splitter):
