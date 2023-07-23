@@ -29,7 +29,7 @@ for d in data:
     
 predictions = ['4',' 3', '3', '3']
 
-import evaluate
+import evaluate_example
 
 metric = evaluate.load(unitxt.metric_url)
 
