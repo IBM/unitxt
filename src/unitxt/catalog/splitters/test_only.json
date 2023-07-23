@@ -1,8 +1,8 @@
 {
-    "type": "slice_split",
-    "slices": {
-        "train": "train[0]",
-        "validation": "train[0]",
+    "type": "split_random_mix",
+    "mix": {
+        "train": "test[0%]",
+        "validation": "test[0%]",
         "test": "test"
     }
 }
