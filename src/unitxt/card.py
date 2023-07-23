@@ -11,7 +11,6 @@ from .task import FormTask
 from .templates import TemplatesDict, TemplatesList
 
 
-@dataclass(kw_only=True)
 class TaskCard(Artifact):
     loader: Loader
     task: FormTask
