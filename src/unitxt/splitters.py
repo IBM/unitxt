@@ -46,6 +46,7 @@ class Sampler(Artifact):
 class RandomSampler(Sampler):
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
+        random.seed(0)
         return random.sample(instances_pool, self.sample_size)
 
 
