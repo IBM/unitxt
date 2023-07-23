@@ -206,9 +206,9 @@ def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]
     """
     templates = []
     if isinstance(inputs, str):
-        inputs = []
+        inputs = [inputs]
     if isinstance(outputs, str):
-        outputs = []
+        outputs = [outputs]
     for input in inputs:
         for output in outputs:
             templates.append(
