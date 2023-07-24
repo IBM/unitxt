@@ -8,7 +8,7 @@ from .instructions import (
     InstructionsList,
     TextualInstruction,
 )
-from .loaders import LoadHF
+from .loaders import LoadHF,LoadFromIBMCloud
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
 from .operators import AddFields, MapInstanceValues, CopyPasteFields, CastFields, AddID, DivideAllFieldsBy
