@@ -33,12 +33,13 @@ def test_loading_from_catalog(card):
             'Card loaded is not equal to card stored'
 
 
-def load_examples_from_common_recipe(card):
+def load_examples_from_common_recipe(card, tested_split):
     num_templates = len(card.templates) if card.templates else 0
     num_instructions = len(card.instructions) if card.instructions else 0
     recipe = CommonRecipe(
         card=card,
         demos_pool_size=100,
+        demos_taken_from=tested_split,
         num_demos=3,
         template_item=0 if num_templates else None,
         instruction_item=0 if num_instructions else None
@@ -54,8 +55,8 @@ def load_examples_from_common_recipe(card):
     return examples
 
 
-def test_with_eval(card):
-    examples = load_examples_from_common_recipe(card)
+def test_with_eval(card, tested_split):
+    examples = load_examples_from_common_recipe(card, tested_split)
     #metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
@@ -72,8 +73,8 @@ def test_with_eval(card):
 
 
 
-def test_card(card):
+def test_card(card, tested_split="train"):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
-    test_with_eval(card)
+    test_with_eval(card, tested_split)

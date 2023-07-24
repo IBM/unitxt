@@ -104,7 +104,7 @@ class TestExamples(unittest.TestCase):
                                    )
             print_dict(dataset['train'][0])
             target = {'metrics': ['metrics.accuracy'],
-                      'source': 'Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is 0, 1.\nOutput: ',
+                      'source': "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not entailment'].\nOutput: ",
                       'target': 'not entailment',
                       'references': ['not entailment'],
                       'group': 'unitxt',
