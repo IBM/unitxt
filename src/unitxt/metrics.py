@@ -1,11 +1,15 @@
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Generator, Union
+
+from typing import Any, Dict, List, Generator, Optional
 
 import evaluate
 
-from .operator import SingleStreamOperator, StreamInstanceOperator
+from unitxt.stream import MultiStream
+
+from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOperator, StreamingOperator, MultiStreamOperator
+from .operators import CopyPasteFields
 from .stream import Stream
 
 
@@ -31,8 +35,8 @@ class Metric(ABC):
     def main_score(self):
         pass
 
-
 class GlobalMetric(SingleStreamOperator, Metric):
+
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
@@ -71,7 +75,6 @@ class GlobalMetric(SingleStreamOperator, Metric):
     @abstractmethod
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         pass
-
 
 class InstanceMetric(SingleStreamOperator, Metric):
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
@@ -166,6 +169,52 @@ class Accuracy(SingleReferenceInstanceMetric):
     def compute(self, reference, prediction: str) -> dict:
         return {"accuracy": float(str(reference) == str(prediction))}
 
+class MetricPipeline(MultiStreamOperator, Metric):
+    
+    main_score: str = None
+    preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    postpreprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    metric: Metric = None
+    
+    def verify(self):
+        assert self.main_score is not None, "main_score is not set"
+    
+    def prepare(self):
+        super().prepare()
+        self.prepare_score = CopyPasteFields([
+            [f'score/instance/{self.main_score}', 'score/instance/score'],
+            [f'score/global/{self.main_score}', 'score/global/score'],
+        ], use_dpath=True)
+    
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        for step in self.preprocess_steps:
+            multi_stream = step(multi_stream)
+        multi_stream = self.metric(multi_stream)
+        for step in self.postpreprocess_steps:
+            multi_stream = step(multi_stream)
+        multi_stream = self.prepare_score(multi_stream)
+        return multi_stream
+    
+    
+        
+
+class HuggingfaceMetric(GlobalMetric):
+    
+    metric_name: str = None
+    main_score: str = None
+    scale: float = 1.0
+    
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(self.metric_name)
+        
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        result = self.metric.compute(predictions=predictions, references=references)
+        if self.scale != 1.0:
+            for key in result:
+                if isinstance(result[key], float):
+                    result[key] /= self.scale
+        return result
 
 class F1(GlobalMetric):
     _metric = None
