@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import Any, Dict, Generator, Iterable, List, Optional, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Union, Tuple
 
 from .text_utils import nested_tuple_to_string
 from .artifact import Artifact, fetch_artifact
@@ -8,7 +8,7 @@ from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
     SingleStreamReducer,
-    Stream,
+    StreamingOperator,
     StreamInitializerOperator,
     StreamInstanceOperator,
     PagedStreamOperator,
@@ -16,9 +16,9 @@ from .operator import (
 from .stream import MultiStream, Stream
 from .utils import flatten_dict
 import random
-from .utils import dict_query
-
-
+from .dict_utils import dict_get, dict_set, dict_delete, is_subpath
+import uuid
+from copy import deepcopy
 class FromIterables(StreamInitializerOperator):
     """
     Creates a MultiStream from iterables.
@@ -40,6 +40,7 @@ class MapInstanceValues(StreamInstanceOperator):
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
+    use_dpath=False
 
     def verify(self):
         # make sure the mappers are valid
@@ -49,18 +50,16 @@ class MapInstanceValues(StreamInstanceOperator):
                 assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        result = {}
-        for key, value in instance.items():
-            str_value = str(value)
-            if key in self.mappers:
-                mapper = self.mappers[key]
+        for key, mapper in self.mappers.items():
+            value = dict_get(instance, key, use_dpath=self.use_dpath)
+            if value is not None:
+                value = str(value) # make sure the value is a string
                 if self.strict:
-                    value = mapper[str_value]
+                    dict_set(instance, key, mapper[value], use_dpath=self.use_dpath)
                 else:
-                    if str_value in mapper:
-                        value = mapper[str_value]
-            result[key] = value
-        return result
+                    if value in mapper:
+                        dict_set(instance, key, mapper[value], use_dpath=self.use_dpath)
+        return instance
 
 
 class FlattenInstances(StreamInstanceOperator):
@@ -86,23 +85,114 @@ class AddFields(StreamInstanceOperator):
         fields (Dict[str, object]): The fields to add to each instance.
     """
     fields: Dict[str, object]
+    use_dpath: bool = False
+    use_deepcopy: bool = False
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        instance.update(self.fields)
+        if self.use_dpath:
+            for key, value in self.fields.items():
+                if self.use_deepcopy:
+                    value = deepcopy(value)
+                dict_set(instance, key, value, use_dpath=self.use_dpath)
+        else:
+            if self.use_deepcopy:
+                self.fields = deepcopy(self.fields)
+            instance.update(self.fields)
         return instance
 
-
-class MapNestedDictValuesByQueries(StreamInstanceOperator):
-    field_to_query: Dict[str, str]
-
+class CopyPasteFields(StreamInstanceOperator):
+    """
+    Copies specified fields from one field to another.
+    
+    Args:
+        mapping (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
+        use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
+    """
+    mapping: Union[List[List], Dict[str, str]] = field(default_factory=list)
+    use_dpath: bool = False
+    
+    def prepare(self):
+        if isinstance(self.mapping, dict):
+            self.mapping = [[k, v] for k, v in self.mapping.items()]
+    
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        updates = {}
-        for field, query in self.field_to_query.items():
-            updates[field] = dict_query(instance, query)
-        instance.update(updates)
+        for old_name, new_name in self.mapping:
+            old_value = dict_get(instance, old_name, use_dpath=self.use_dpath)
+            if self.use_dpath and is_subpath(old_name, new_name):
+                dict_delete(instance, old_name)
+            dict_set(instance, new_name, old_value, use_dpath=self.use_dpath, not_exist_ok=True)
         return instance
 
+    
+class AddID(StreamInstanceOperator):
+    id_field_name: str = 'id'
+    
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        instance[self.id_field_name] = str(uuid.uuid4()).replace('-', '')
+        return instance
+    
+class CastFields(StreamInstanceOperator):
+    """
+    Casts specified fields to specified types.
+    
+    Args:
+        types (Dict[str, str]): A dictionary mapping fields to their new types.
+        nested (bool): Whether to cast nested fields. Defaults to False.
+        fields (Dict[str, str]): A dictionary mapping fields to their new types.
+        defaults (Dict[str, object]): A dictionary mapping types to their default values for cases of casting failure.
+    """
+    types = {
+        'int': int,
+        'float': float,
+        'str': str,
+        'bool': bool,
+    }
+    fields: Dict[str, str] = field(default_factory=dict)
+    failure_defaults: Dict[str, object] = field(default_factory=dict)
+    use_dpath: bool = False
+    cast_multiple: bool = False
+    
+    def _cast_single(self, value, type, field):
+        try:
+            return self.types[type](value)
+        except:
+            if field not in self.failure_defaults:
+                raise ValueError(f'Failed to cast field "{field}" with value {value} to type "{type}", and no default value is provided.')
+            return self.failure_defaults[field]
+    
+    def _cast_multiple(self, values, type, field):
+        values = [self._cast_single(value, type, field) for value in values]
+    
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        for field, type in self.fields.items():
+            value = dict_get(instance, field, use_dpath=self.use_dpath)
+            if self.cast_multiple:
+                casted_value = self._cast_multiple(value, type, field)
+            else:
+                casted_value = self._cast_single(value, type, field)
+            dict_set(instance, field, casted_value, use_dpath=self.use_dpath)
+        return instance
 
+def recursive_divide(instance, divisor, strict=False):
+    if isinstance(instance, dict):
+        for key, value in instance.items():
+            instance[key] = recursive_divide(value, divisor, strict=strict)
+    elif isinstance(instance, list):
+        for i, value in enumerate(instance):
+            instance[i] = recursive_divide(value, divisor, strict=strict)
+    elif isinstance(instance, float):
+        instance /= divisor
+    elif strict:
+        raise ValueError(f'Cannot divide instance of type {type(instance)}')
+    return instance
+
+class DivideAllFieldsBy(StreamInstanceOperator):
+    divisor: float = 1.0
+    strict: bool = False
+    recursive: bool = True
+    
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        return recursive_divide(instance, self.divisor, strict=self.strict)
 class ArtifactFetcherMixin:
     """
     Provides a way to fetch and cache artifacts in the system.
@@ -243,9 +333,10 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
         for operator_name in operators:
             operator = self.get_artifact(operator_name)
             assert isinstance(
-                operator, SingleStreamOperator
+                operator, StreamingOperator
             ), f"Operator {operator_name} must be a SingleStreamOperator"
-            stream = operator.process(stream)
+            
+            stream = operator(MultiStream({'tmp': stream}))['tmp']
 
         yield from stream
 
