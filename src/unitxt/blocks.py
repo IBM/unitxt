@@ -11,7 +11,7 @@ from .instructions import (
 from .loaders import LoadHF
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
-from .operators import AddFields, MapInstanceValues, CopyPasteFields
+from .operators import AddFields, MapInstanceValues, CopyPasteFields, CastFields, AddID, DivideAllFieldsBy
 from .processors import ToString
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
@@ -26,6 +26,7 @@ from .templates import (
     Template,
     TemplatesDict,
     TemplatesList,
+    OutputQuantizingTemplate
 )
 
 # from .validate import (
