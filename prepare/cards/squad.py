@@ -5,7 +5,7 @@ from src.unitxt.blocks import (
     FormTask,
     TemplatesList,
     InputOutputTemplate,
-    CopyPasteFields
+    CopyPasteFields,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -15,7 +15,7 @@ card = TaskCard(
         loader=LoadHF(path='squad'),
         preprocess_steps=[
             SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
-            CopyPasteFields({'answers/text': 'answer'}),
+            CopyPasteFields([['answers/text', 'answer']], use_dpath=True),
         ],
         task=FormTask(
             inputs=['context', 'question'],
