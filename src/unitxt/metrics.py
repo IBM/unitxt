@@ -182,7 +182,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         self.prepare_score = CopyPasteFields([
             [f'score/instance/{self.main_score}', 'score/instance/score'],
             [f'score/global/{self.main_score}', 'score/global/score'],
-        ], use_dpath=True)
+        ], use_nested_query=True)
     
     def process(self, multi_stream: MultiStream) -> MultiStream:
         for step in self.preprocess_steps:
