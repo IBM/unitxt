@@ -108,17 +108,10 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
     size_limiter: Artifact = None
     input_output_separator: str = "\n"
     demo_separator: str = "\n\n"
-    demos_cache = None
-
-    def verify(self):
-        assert self.demos_cache is None
 
     def render(self, instance: Dict[str, object]) -> Dict[str, object]:
-        
-        if self.demos_cache is None:
-            self.demos_cache = instance.pop(self.demos_field, [])
-        else:
-            instance.pop(self.demos_field, None)
+
+        demos = instance.pop(self.demos_field, [])
 
         source = ""
 
@@ -129,7 +122,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
         if self.instruction is not None:
             source += self.instruction_prefix + self.instruction() + self.demo_separator
 
-        for demo_instance in self.demos_cache:
+        for demo_instance in demos:
             demo_example = super().render(demo_instance)
             demo_str = (
                 self.input_prefix
