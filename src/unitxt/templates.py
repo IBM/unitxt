@@ -114,6 +114,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
         assert self.demos_cache is None
 
     def render(self, instance: Dict[str, object]) -> Dict[str, object]:
+        
         if self.demos_cache is None:
             self.demos_cache = instance.pop(self.demos_field, [])
         else:
@@ -165,6 +166,14 @@ class InputOutputTemplate(Template):
 
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
+    
+class OutputQuantizingTemplate(InputOutputTemplate):
+    
+    quantum: float = 0.1
+    
+    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+        quantized_outputs = {key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()}
+        return super().process_outputs(quantized_outputs)
 
 
 class AutoInputOutputTemplate(InputOutputTemplate):
