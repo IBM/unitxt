@@ -22,7 +22,7 @@ metric = MetricPipeline(
                 ['id', 'reference_template/id'],
                 ['reference_template', 'references'],
                 ['prediction_template', 'prediction'],
-            ], use_dpath=True),
+            ], use_nested_query=True),
     ],
     metric=HuggingfaceMetric(
         metric_name='squad',

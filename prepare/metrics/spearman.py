@@ -9,11 +9,11 @@ import numpy as np
 metric = MetricPipeline(
     main_score='spearmanr',
     preprocess_steps=[
-        CopyPasteFields(mapping=[('references/0', 'references')], use_dpath=True),
+        CopyPasteFields(mapping=[('references/0', 'references')], use_nested_query=True),
         CastFields(
             fields={'prediction': 'float', 'references': 'float'}, 
             failure_defaults={'prediction': 0.0}, 
-            use_dpath=True,
+            use_nested_query=True,
         ),
     ],
     metric=HuggingfaceMetric(

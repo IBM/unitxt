@@ -40,7 +40,7 @@ class MapInstanceValues(StreamInstanceOperator):
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_dpath=False
+    use_nested_query=False
 
     def verify(self):
         # make sure the mappers are valid
@@ -51,14 +51,14 @@ class MapInstanceValues(StreamInstanceOperator):
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
-            value = dict_get(instance, key, use_dpath=self.use_dpath)
+            value = dict_get(instance, key, use_dpath=self.use_nested_query)
             if value is not None:
                 value = str(value) # make sure the value is a string
                 if self.strict:
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_dpath)
+                    dict_set(instance, key, mapper[value], use_dpath=self.use_nested_query)
                 else:
                     if value in mapper:
-                        dict_set(instance, key, mapper[value], use_dpath=self.use_dpath)
+                        dict_set(instance, key, mapper[value], use_dpath=self.use_nested_query)
         return instance
 
 
@@ -85,15 +85,15 @@ class AddFields(StreamInstanceOperator):
         fields (Dict[str, object]): The fields to add to each instance.
     """
     fields: Dict[str, object]
-    use_dpath: bool = False
+    use_nested_query: bool = False
     use_deepcopy: bool = False
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        if self.use_dpath:
+        if self.use_nested_query:
             for key, value in self.fields.items():
                 if self.use_deepcopy:
                     value = deepcopy(value)
-                dict_set(instance, key, value, use_dpath=self.use_dpath)
+                dict_set(instance, key, value, use_dpath=self.use_nested_query)
         else:
             if self.use_deepcopy:
                 self.fields = deepcopy(self.fields)
@@ -109,7 +109,7 @@ class CopyPasteFields(StreamInstanceOperator):
         use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
     """
     mapping: Union[List[List], Dict[str, str]] = field(default_factory=list)
-    use_dpath: bool = False
+    use_nested_query: bool = False
     
     def prepare(self):
         if isinstance(self.mapping, dict):
@@ -117,10 +117,10 @@ class CopyPasteFields(StreamInstanceOperator):
     
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for old_name, new_name in self.mapping:
-            old_value = dict_get(instance, old_name, use_dpath=self.use_dpath)
-            if self.use_dpath and is_subpath(old_name, new_name):
+            old_value = dict_get(instance, old_name, use_dpath=self.use_nested_query)
+            if self.use_nested_query and is_subpath(old_name, new_name):
                 dict_delete(instance, old_name)
-            dict_set(instance, new_name, old_value, use_dpath=self.use_dpath, not_exist_ok=True)
+            dict_set(instance, new_name, old_value, use_dpath=self.use_nested_query, not_exist_ok=True)
         return instance
 
     
@@ -149,7 +149,7 @@ class CastFields(StreamInstanceOperator):
     }
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
-    use_dpath: bool = False
+    use_nested_query: bool = False
     cast_multiple: bool = False
     
     def _cast_single(self, value, type, field):
@@ -165,12 +165,12 @@ class CastFields(StreamInstanceOperator):
     
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for field, type in self.fields.items():
-            value = dict_get(instance, field, use_dpath=self.use_dpath)
+            value = dict_get(instance, field, use_dpath=self.use_nested_query)
             if self.cast_multiple:
                 casted_value = self._cast_multiple(value, type, field)
             else:
                 casted_value = self._cast_single(value, type, field)
-            dict_set(instance, field, casted_value, use_dpath=self.use_dpath)
+            dict_set(instance, field, casted_value, use_dpath=self.use_nested_query)
         return instance
 
 def recursive_divide(instance, divisor, strict=False):
