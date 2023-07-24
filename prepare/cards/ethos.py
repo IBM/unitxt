@@ -13,7 +13,7 @@ from src.unitxt.splitters import RenameSplits
 card = create_sentence_classification_card(
     loader=LoadHF(path='ethos', name='binary'),
     label_name="label",
-    label2string={"0": 'hate speech', "1": 'not hate speech'},
+    label2string={"0": 'not hate speech', "1": 'hate speech'},
     inputs=['text'],
     metrics=['metrics.accuracy'],
     preprocess_steps=[
@@ -21,8 +21,8 @@ card = create_sentence_classification_card(
         "splitters.test_only"
     ],
     templates=outputs_inputs2templates(inputs=[
-        """Given this sentence: {text}. Classify if it contains hatespeech. Choices: {choices}.""",
-        """Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {text}."""],
+        """Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.""",
+        """Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {sentence1}."""],
         outputs='{label}'
     )
     # +
@@ -39,7 +39,7 @@ card = create_sentence_classification_card(
     # )
 )
 
-test_card(card)
+test_card(card, tested_split="test")
 add_to_catalog(card, 'cards.ethos_binary', overwrite=True)
 
 # # see example in https://huggingface.co/datasets/ethos/viewer/multilabel/train
