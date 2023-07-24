@@ -42,7 +42,9 @@
                     "entailment",
                     "not_entailment"
                 ]
-            }
+            },
+            "use_nested_query": false,
+            "use_deepcopy": false
         },
         {
             "type": "normalize_list_fields",
