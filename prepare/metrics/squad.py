@@ -1,11 +1,10 @@
 from src.unitxt.catalog import add_to_catalog
 
 
-from src.unitxt.metrics import HFSpearman, MetricPipeline, HuggingfaceMetric
+from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import DivideAllFieldsBy, CopyPasteFields, AddID, AddFields
-import numpy as np
+from src.unitxt.blocks import CopyPasteFields, AddID, AddFields
 
 metric = MetricPipeline(
     main_score='f1',

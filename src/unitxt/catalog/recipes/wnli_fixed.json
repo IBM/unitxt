@@ -1,27 +1,13 @@
 {
-    "type": "task_card",
-    "loader": {
-        "type": "load_hf",
-        "path": "glue",
-        "name": "rte",
-        "data_dir": null,
-        "data_files": null
-    },
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "sentence1",
-            "sentence2"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
-    "preprocess_steps": [
+    "type": "sequential_recipe",
+    "steps": [
+        {
+            "type": "load_hf",
+            "path": "glue",
+            "name": "wnli",
+            "data_dir": null,
+            "data_files": null
+        },
         {
             "type": "split_random_mix",
             "mix": {
@@ -47,20 +33,30 @@
                     "entailment",
                     "not_entailment"
                 ]
-            },
-            "use_nested_query": false,
-            "use_deepcopy": false
-        }
-    ],
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
+            }
+        },
+        {
+            "type": "form_task",
+            "inputs": [
+                "choices",
+                "sentence1",
+                "sentence2"
+            ],
+            "outputs": [
+                "label"
+            ],
+            "metrics": [
+                "metrics.accuracy"
+            ]
+        },
+        {
+            "type": "render_format_template",
+            "template": {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
                 "output_format": "{label}"
-            }
-        ]
-    },
-    "instructions": null
+            },
+            "random_reference": false
+        }
+    ]
 }

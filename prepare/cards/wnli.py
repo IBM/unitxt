@@ -3,7 +3,6 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     AddFields,
     TaskCard,
-    NormalizeListFields,
     FormTask,
     TemplatesList,
     InputOutputTemplate,

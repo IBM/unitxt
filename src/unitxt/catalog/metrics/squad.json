@@ -1,6 +1,67 @@
 {
-    "type": "squad",
-    "implemented_reductions": [
-        "mean"
-    ]
+    "type": "metric_pipeline",
+    "main_score": "f1",
+    "preprocess_steps": [
+        {
+            "type": "add_id",
+            "id_field_name": "id"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "prediction_template": {
+                    "prediction_text": "PRED",
+                    "id": "ID"
+                },
+                "reference_template": {
+                    "answers": {
+                        "answer_start": [
+                            -1
+                        ],
+                        "text": "REF"
+                    },
+                    "id": "ID"
+                }
+            },
+            "use_nested_query": false,
+            "use_deepcopy": true
+        },
+        {
+            "type": "copy_paste_fields",
+            "mapping": [
+                [
+                    "references",
+                    "reference_template/answers/text"
+                ],
+                [
+                    "prediction",
+                    "prediction_template/prediction_text"
+                ],
+                [
+                    "id",
+                    "prediction_template/id"
+                ],
+                [
+                    "id",
+                    "reference_template/id"
+                ],
+                [
+                    "reference_template",
+                    "references"
+                ],
+                [
+                    "prediction_template",
+                    "prediction"
+                ]
+            ],
+            "use_nested_query": true
+        }
+    ],
+    "postpreprocess_steps": [],
+    "metric": {
+        "type": "huggingface_metric",
+        "metric_name": "squad",
+        "main_score": "f1",
+        "scale": 100.0
+    }
 }
