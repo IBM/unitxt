@@ -214,7 +214,7 @@ class TestOperators(unittest.TestCase):
         ]
         
         outputs = apply_operator(
-            operator=CopyPasteFields({'a/0': 'a'}, use_dpath=True),
+            operator=CopyPasteFields({'a/0': 'a'}, use_nested_query=True),
             inputs=inputs
         )
         
@@ -235,7 +235,7 @@ class TestOperators(unittest.TestCase):
         ]
         
         outputs = apply_operator(
-            operator=CopyPasteFields({'a': 'a/x'}, use_dpath=True),
+            operator=CopyPasteFields({'a': 'a/x'}, use_nested_query=True),
             inputs=inputs
         )
         
