@@ -18,9 +18,15 @@ def test_operator(operator:StreamingOperator, inputs: List[dict], targets: List[
     
     outputs = apply_operator(operator, inputs)
     
-    for input, output in zip(outputs, targets):
-        assert json.dumps(input, sort_keys=True) == json.dumps(output, sort_keys=True), "input and output must be equal"
+    errors = []
     
+    for input, output in zip(outputs, targets):
+        if json.dumps(input, sort_keys=True) == json.dumps(output, sort_keys=True):
+            errors.append(f"input and output must be equal, got <{input}> =/= <{output}>")
+    
+    if len(errors) > 0:
+        raise AssertionError("\n".join(errors))
+        
     return True
     
     
