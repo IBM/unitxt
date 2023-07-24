@@ -6,11 +6,9 @@ from typing import Any, Dict, List, Generator, Optional
 
 import evaluate
 
-from unitxt.stream import MultiStream
-
 from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOperator, StreamingOperator, MultiStreamOperator
 from .operators import CopyPasteFields
-from .stream import Stream
+from .stream import Stream, MultiStream
 
 
 def absrtact_factory():
