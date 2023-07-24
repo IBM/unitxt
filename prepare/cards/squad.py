@@ -15,7 +15,7 @@ card = TaskCard(
         loader=LoadHF(path='squad'),
         preprocess_steps=[
             SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
-            CopyPasteFields([['answers/text', 'answer']], use_dpath=True),
+            CopyPasteFields([['answers/text', 'answer']], use_nested_query=True),
         ],
         task=FormTask(
             inputs=['context', 'question'],
