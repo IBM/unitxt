@@ -151,10 +151,16 @@ class InputOutputTemplate(Template):
     output_format: str = None
 
     def process_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        return self.input_format.format(**inputs)
+        try:
+            return self.input_format.format(**inputs)
+        except KeyError as e:
+            raise KeyError(f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}")
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
-        return self.output_format.format(**outputs)
+        try:
+            return self.output_format.format(**outputs)
+        except KeyError as e:
+            raise KeyError(f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}")
 
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
