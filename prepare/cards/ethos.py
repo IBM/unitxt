@@ -42,7 +42,7 @@ card = create_sentence_classification_card(
 test_card(card, tested_split="test")
 add_to_catalog(card, 'cards.ethos_binary', overwrite=True)
 
-# # see example in https://huggingface.co/datasets/ethos/viewer/multilabel/train
+# # # see example in https://huggingface.co/datasets/ethos/viewer/multilabel/train
 # card = create_sentence_multilabel_classification_card(
 #     loader=LoadHF(path='ethos', name='multilabel'),
 #     label_name="label",
@@ -72,5 +72,5 @@ add_to_catalog(card, 'cards.ethos_binary', overwrite=True)
 #
 # )
 #
-# test_card(card)
+# test_card(card, tested_split="test")
 # add_to_catalog(card, 'cards.ethos_multilabel', overwrite=True)
