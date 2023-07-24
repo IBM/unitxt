@@ -7,18 +7,23 @@ from src.unitxt.metrics import Accuracy, Squad, F1, F1Micro, F1Macro
 class TestMetrics(unittest.TestCase):
 
     def test_accuracy(self):
+       
         metric = Accuracy()
+        
         predictions = ['A', 'B', 'C']
         references = [['B'], ['A'], ['C']]
-        instance_targets = [{'accuracy': 0.0,'score': 0.0},
-                            {'accuracy': 0.0,'score': 0.0},
-                            {'accuracy': 1.0,'score': 1.0}]
-        global_target = 1/3
+        
+        instance_targets = [{'accuracy': 0.0, 'score': 0.0},
+                            {'accuracy': 0.0, 'score': 0.0},
+                            {'accuracy': 1.0, 'score': 1.0}]
+        
+        global_target = {'accuracy': 1/3, 'score': 1/3}
+        
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
-        self.assertEqual(global_target, outputs[0]['score']['global']['score'])
+        self.assertDictEqual(outputs[0]['score']['global'], global_target)
         for output, target in zip(outputs, instance_targets):
-            self.assertEqual(output['score']['instance'], target)
+            self.assertDictEqual(output['score']['instance'], target)
 
     def test_squad(self):
         metric = Squad()

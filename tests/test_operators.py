@@ -8,6 +8,8 @@ from src.unitxt.operators import (
     AddFields,
     Unique,
     Shuffle,
+    CastFields,
+    CopyPasteFields,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -143,4 +145,99 @@ class TestOperators(unittest.TestCase):
         
         inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
         self.assertSetEqual(inputs_outputs_intersection, set())
+
+    def test_cast_fields(self):
         
+        inputs = [
+            {'a': '0.5', 'b': '2'},
+            {'a': 'fail', 'b': 'fail'},
+        ]
+        
+        targets = [
+            {'a': 0.5, 'b': 2},
+            {'a': 0.0, 'b': 0},
+        ]
+        
+        outputs = apply_operator(
+            operator=CastFields(fields={'a': 'float', 'b': 'int'}, failure_defaults={'a': 0.0, 'b': 0}),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+    
+    def test_test_cast_fields_casting_failure(self):
+         
+        inputs = [
+            {'a': '0.5', 'b': '2'},
+            {'a': 'fail', 'b': 'fail'},
+        ]
+
+        with self.assertRaises(ValueError):
+            outputs = apply_operator(
+                operator=CastFields(fields={'a': 'float', 'b': 'int'}),
+                inputs=inputs
+            )
+    
+            
+    def test_copy_paste_fields(self):
+        
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+        ]
+        
+        targets = [
+            {'a': 1, 'b': 2, 'c': 2},
+            {'a': 2, 'b': 3, 'c': 3},
+        ]
+        
+        outputs = apply_operator(
+            operator=CopyPasteFields({'b': 'c'}),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+        
+    
+    def test_copy_patse_same_name(self):
+        
+        inputs = [
+            {'a': [1, 3]},
+            {'a': [2, 4]},
+        ]
+        
+        targets = [
+            {'a': 1},
+            {'a': 2}
+        ]
+        
+        outputs = apply_operator(
+            operator=CopyPasteFields({'a/0': 'a'}, use_dpath=True),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+            
+    
+    def test_copy_patse_same_name2(self):
+        
+        inputs = [
+            {'a': 'test'},
+            {'a': 'pest'},
+        ]
+        
+        targets = [
+            {'a': {'x': 'test'}},
+            {'a': {'x': 'pest'}}
+        ]
+        
+        outputs = apply_operator(
+            operator=CopyPasteFields({'a': 'a/x'}, use_dpath=True),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
