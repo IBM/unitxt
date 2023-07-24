@@ -1,0 +1,35 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "spearmanr",
+    "preprocess_steps": [
+        {
+            "type": "copy_paste_fields",
+            "mapping": [
+                [
+                    "references/0",
+                    "references"
+                ]
+            ],
+            "use_nested_query": true
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "prediction": "float",
+                "references": "float"
+            },
+            "failure_defaults": {
+                "prediction": 0.0
+            },
+            "use_nested_query": true,
+            "cast_multiple": false
+        }
+    ],
+    "postpreprocess_steps": [],
+    "metric": {
+        "type": "huggingface_metric",
+        "metric_name": "spearmanr",
+        "main_score": "spearmanr",
+        "scale": 1.0
+    }
+}

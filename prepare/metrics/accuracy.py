@@ -11,7 +11,7 @@ instance_targets = [{'accuracy': 0.0, 'score': 0.0},
                     {'accuracy': 0.0, 'score': 0.0},
                     {'accuracy': 1.0, 'score': 1.0}]
 
-global_target = {'accuracy': 1/3, 'score': 1/3}
+global_target = {'accuracy': 0.33, 'score': 0.33}
 
 outputs = test_metric(
     metric=metric, 
@@ -21,4 +21,4 @@ outputs = test_metric(
     global_target=global_target
 )
 
-add_to_catalog(metric, 'metrics.accuracy')
+add_to_catalog(metric, 'metrics.accuracy', overwrite=True)

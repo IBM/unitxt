@@ -2,22 +2,22 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "squad",
-        "name": null,
+        "path": "glue",
+        "name": "stsb",
         "data_dir": null,
         "data_files": null
     },
     "task": {
         "type": "form_task",
         "inputs": [
-            "context",
-            "question"
+            "sentence1",
+            "sentence2"
         ],
         "outputs": [
-            "answer"
+            "label"
         ],
         "metrics": [
-            "metrics.squad"
+            "metrics.spearman"
         ]
     },
     "preprocess_steps": [
@@ -28,25 +28,16 @@
                 "validation": "train[5%]",
                 "test": "validation"
             }
-        },
-        {
-            "type": "copy_paste_fields",
-            "mapping": [
-                [
-                    "answers/text",
-                    "answer"
-                ]
-            ],
-            "use_nested_query": true
         }
     ],
     "templates": {
         "type": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
-                "input_format": "Given: {context}, answer {question}",
-                "output_format": "{answer}"
+                "type": "output_quantizing_template",
+                "input_format": "Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?",
+                "output_format": "{label}",
+                "quantum": 0.2
             }
         ]
     },
