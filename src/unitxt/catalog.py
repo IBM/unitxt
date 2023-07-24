@@ -2,7 +2,6 @@ import os
 import re
 from pathlib import Path
 import requests
-import json
 from .artifact import Artifact, Artifactory
 
 
@@ -17,10 +16,14 @@ class Catalog(Artifactory):
 
 try:
     import unitxt
-
-    default_catalog_path = os.path.dirname(unitxt.__file__) + "/catalog"
+    if unitxt.__file__:
+        lib_dir = os.path.dirname(unitxt.__file__)
+    else:
+        lib_dir = os.path.dirname(__file__)
 except ImportError:
-    default_catalog_path = os.path.dirname(__file__) + "/catalog"
+    lib_dir = os.path.dirname(__file__)
+
+default_catalog_path = os.path.join(lib_dir, "catalog")
 
 
 class LocalCatalog(Catalog):
@@ -61,6 +64,7 @@ class LocalCatalog(Catalog):
         path = self.path(artifact_identifier)
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
+        print(f"Artifact {artifact_identifier} saved to {path}")
 
 
 class GithubCatalog(LocalCatalog):
