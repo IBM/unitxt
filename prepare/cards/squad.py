@@ -1,30 +1,21 @@
 from src.unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
-    AddFields,
     TaskCard,
-    NormalizeListFields,
     FormTask,
     TemplatesList,
     InputOutputTemplate,
-    MapInstanceValues
+    CopyPasteFields
 )
 from src.unitxt.test_utils.card import test_card
 
 from src.unitxt.catalog import add_to_catalog
-from unitxt.operators import MapNestedDictValuesByQueries
 
 card = TaskCard(
         loader=LoadHF(path='squad'),
         preprocess_steps=[
             SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
-            MapNestedDictValuesByQueries(field_to_query={'answer': 'answers/text'}),
-            #MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not_entailment'}}),
-            #AddFields(
-            #fields={
-            #    'choices': ['entailment', 'not_entailment'],
-            #}
-          #  ),
+            CopyPasteFields({'answers/text': 'answer'}),
         ],
         task=FormTask(
             inputs=['context', 'question'],
