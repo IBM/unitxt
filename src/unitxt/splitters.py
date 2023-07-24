@@ -1,3 +1,4 @@
+import itertools
 from dataclasses import field
 from typing import Dict, List, Optional
 
@@ -35,6 +36,32 @@ class SplitRandomMix(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_random_mix_string(v) for k, v in self.mix.items()}
         generators = random_mix_streams(multi_stream, mapping)
+        return MultiStream.from_generators(generators, streaming=True)
+
+
+class SeparateSplit(Splitter):
+    """
+    Separates a split (e.g. train) into several splits (e.g. train1, train2)
+    sizes must indicate the size of every split except the last. If no size is give for the last split,
+     it includes all the examples not allocated to any split.
+    """
+    from_split: str
+    to_split_names: List[str]
+    to_split_sizes: List[int]
+
+    def verify(self):
+        assert len(self.to_split_names) == len(self.to_split_sizes) or len(self.to_split_names) == len(
+            self.to_split_sizes) + 1, f"Examples num should be specified to all or all but the last splits, instead given {len(self.to_split_names)} split names and {len(self.to_split_sizes)} split sizes. \n split names:{self.to_split_names} split sizes {self.to_split_sizes}"
+        return super().verify()
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        mapping = {}
+        so_far = 0
+        for name, size in itertools.zip_longest(self.to_split_names, self.to_split_sizes):
+            mapping[name] = {self.from_split: [(so_far, size)]}
+            if size:
+                so_far += size
+        generators = slice_streams(multi_stream, mapping)
         return MultiStream.from_generators(generators, streaming=True)
 
 

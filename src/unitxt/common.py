@@ -5,7 +5,7 @@ from .collections import ItemPicker, RandomPicker
 from .operator import SourceOperator
 from .recipe import Recipe, SequentialRecipe
 from .schema import ToUnitxtGroup
-from .splitters import RandomSampler, SliceSplit, SpreadSplit
+from .splitters import RandomSampler, SpreadSplit, SeparateSplit, SliceSplit
 from .stream import MultiStream
 from .templates import RenderTemplatedICL
 
@@ -13,6 +13,7 @@ from .templates import RenderTemplatedICL
 class CommonRecipe(Recipe, SourceOperator):
     card: TaskCard
     demos_pool_name: str = "demos_pool"
+    demos_taken_from: str = "train"
     demos_pool_size: int = None
     demos_field: str = "demos"
     num_demos: int = None
@@ -21,7 +22,7 @@ class CommonRecipe(Recipe, SourceOperator):
     template_item: Union[str, int] = None
 
     def verify(self):
-        self.sampler_type in ["random"]
+        assert self.sampler_type in ["random"], f"Uknown sampler type {self.sampler_type}"
 
     def prepare(self):
         steps = [
@@ -35,14 +36,9 @@ class CommonRecipe(Recipe, SourceOperator):
 
         if self.demos_pool_size is not None:
             steps.append(
-                SliceSplit(
-                    slices={
-                        self.demos_pool_name: f"train[:{int(self.demos_pool_size)}]",
-                        "train": f"train[{int(self.demos_pool_size)}:]",
-                        "validation": "validation",
-                        "test": "test",
-                    }
-                )
+                SeparateSplit(from_split=self.demos_taken_from,
+                              to_split_names=[self.demos_pool_name, self.demos_taken_from],
+                              to_split_sizes=[int(self.demos_pool_size)])
             )
 
         if self.num_demos is not None:
