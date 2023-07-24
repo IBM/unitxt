@@ -35,6 +35,8 @@ from .utils import __file__ as _
 from .validate import __file__ as _
 from .type_utils import __file__ as _
 from .hf_utils import __file__ as _
+from .dict_utils import __file__ as _
+
 
 def fetch(artifact_name):
     try:
