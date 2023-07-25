@@ -126,18 +126,30 @@ class TestExamples(unittest.TestCase):
 
             print_dict(results[0])
             target = {
-                'source': "Input: Given this sentence: Sam and Amy are passionately in love, but Amy's parents are unhappy about it, because they are snobs., classify if this sentence: Amy's parents are snobs. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: This morning, Joey built a sand castle on the beach, and put a toy flag in the highest tower, but this afternoon the tide knocked it down., classify if this sentence: This afternoon the tide knocked The flag down. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: Dan had to stop Bill from toying with the injured bird. He is very cruel., classify if this sentence: Bill is very cruel. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: John promised Bill to leave, so an hour later he left., classify if this sentence: John left. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: Fred is the only man still alive who remembers my great-grandfather. He was a remarkable man., classify if this sentence: My great-grandfather was a remarkable man. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
-                'target': 'entailment',
-                'references': ['entailment'],
-                'metrics': ['metrics.accuracy'],
-                'group': 'unitxt',
-                'postprocessors': ['to_string'],
-                'prediction': 'entailment',
-                'score': {'global': {'accuracy': 0.5633802816901409,
-                                     'score': 0.5633802816901409,
-                                     'groups_mean_score': 0.5633802816901409},
-                          'instance': {'accuracy': 1.0, 'score': 1.0}},
+                'source': "Input: Given this sentence: I can't cut that tree down with that axe; it is too small.,"
+                          " classify if this sentence: The axe is too small. is ['entailment', 'not entailment'].\n"
+                          "Output: not entailment\n\nInput: Given this sentence: Alice was dusting the living room and "
+                          "trying to find the button that Mama had hidden. No time today to look at old pictures in her "
+                          "favorite photo album. Today she had to hunt for a button, so she put the album on a chair "
+                          "without even opening it., classify if this sentence: She put the album on a chair without "
+                          "even opening the living room. is ['entailment', 'not entailment'].\nOutput: "
+                          "entailment\n\nInput: Given this sentence: Joe has sold his house and bought a new one a "
+                          "few miles away. He will be moving out of it on Thursday., classify if this sentence: "
+                          "He will be moving out of The old house on Thursday. is ['entailment', 'not entailment'].\n"
+                          "Output: not entailment\n\nInput: Given this sentence: Although they ran at about the same "
+                          "speed, Sue beat Sally because she had such a good start., classify if this sentence: "
+                          "Sue had such a good start. is ['entailment', 'not entailment'].\nOutput: not entailment\n\n"
+                          "Input: Given this sentence: John was jogging through the park when he saw a man juggling "
+                          "watermelons. He was very impressive., classify if this sentence: John was very impressive. "
+                          "is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: "
+                          "The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair "
+                          "has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
+                'target': 'entailment', 'references': ['entailment'], 'metrics': ['metrics.accuracy'],
+                'group': 'unitxt', 'postprocessors': ['to_string'], 'prediction': 'entailment', 'score': {
+                    'global': {'accuracy': 0.5633802816901409, 'score': 0.5633802816901409,
+                               'groups_mean_score': 0.5633802816901409}, 'instance': {'accuracy': 1.0, 'score': 1.0}},
                 'origin': 'all_unitxt'}
+
         self.assertDictEqual(target, results[0])
 
 
