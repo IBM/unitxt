@@ -77,6 +77,11 @@ class TestMetrics(unittest.TestCase):
         metric = F1Macro()
         predictions = ['0', '2', '1', '0', '0', '1']
         references = [['0'], ['1'], ['2'], ['0'], ['1'], ['2']]
+        # recall class 0 -> 2/2 = 1.0    precision class 0 -> 2/3 = 0.667       f1 class 0 = 0.8 
+        # recall class 1 -> 0/2 = 0      precision class 1 -> 0/2 = 0           f1 class 1 = 0 
+        # recall class 2 -> 0/2 = 0      precision class 2 -> 0/0 = 0           f1 class 2 = 0
+        #
+        # macro f1 = 0.8 / 3 = 0.266..
         global_target = 0.26666666666
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
