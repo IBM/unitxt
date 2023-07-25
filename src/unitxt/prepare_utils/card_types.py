@@ -22,7 +22,7 @@ def addClassificationChoices(label_name, label2string):
 
 def create_2sentences_classification_card(loader: Loader, label_name: str, label2string: Dict, inputs: List[str],
                                           metrics: List[str] = tuple('accuracy'), task: FormTask = None,
-                                          preprocess_steps: Optional[List[StreamingOperator]] = None,
+                                          preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None,
                                           templates: Union[TemplatesList, TemplatesDict] = None,
                                           instructions: Union[InstructionsList, InstructionsDict] = None
                                           ) -> TaskCard:
