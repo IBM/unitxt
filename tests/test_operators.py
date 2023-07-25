@@ -253,17 +253,17 @@ class TestOperators(unittest.TestCase):
             {'a': 1, 'b': 2},
             {'a': 2, 'b': 3},
         ]
-        
+
         targets = [
-            {'a': 1, 'b': 2, 'c': 2},
-            {'a': 2, 'b': 3, 'c': 3},
+            {'a': 1, 'c': 2},
+            {'a': 2, 'c': 3},
         ]
-        
+
         outputs = apply_operator(
-            operator=CopyPasteFields({'b': 'c'}),
+            operator=RenameFields(mapper={'b': 'c'}),
             inputs=inputs
         )
-        
+
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
 
