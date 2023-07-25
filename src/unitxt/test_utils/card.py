@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os.path
 import tempfile
 
@@ -45,7 +46,7 @@ def load_examples_from_common_recipe(card, tested_split):
         instruction_item=0 if num_instructions else None
     )
     multi_stream = recipe()
-    stream = next(iter(multi_stream.values()))
+    stream = multi_stream[tested_split]
     examples = list(stream.take(5))
     print('5 Examples: ')
     for example in examples:
@@ -57,20 +58,19 @@ def load_examples_from_common_recipe(card, tested_split):
 
 def test_with_eval(card, tested_split):
     examples = load_examples_from_common_recipe(card, tested_split)
-    #metric = evaluate.load('unitxt/metric')
+    # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
         predictions.append(example['references'][0] if len(example['references']) > 0 else [])
 
     results = _compute(predictions=predictions, references=examples)
-    assert results[0]['score']['global']['groups_mean_score'] == 1.0, \
-        f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+    assert math.isclose(results[0]['score']['global']['groups_mean_score'],
+                        1.0), f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
     predictions = ['a1s', 'bfsdf', 'dgdfgs', 'gfjgfh', 'ghfjgh']
     results = _compute(predictions=predictions, references=examples)
     if results[0]['score']['global']['groups_mean_score'] != 0.0:
         print(f"Warning: metric on rundom predicions is different than zero "
               f"({results[0]['score']['global']['groups_mean_score']})")
-
 
 
 def test_card(card, tested_split="train"):

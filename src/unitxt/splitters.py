@@ -55,7 +55,7 @@ class SeparateSplit(Splitter):
         return super().verify()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        mapping = {}
+        mapping = {key: {key: [(None, None)]} for key in multi_stream.keys() if key != self.from_split}
         so_far = 0
         for name, size in itertools.zip_longest(self.to_split_names, self.to_split_sizes):
             mapping[name] = {self.from_split: [(so_far, size)]}
@@ -81,7 +81,6 @@ class Sampler(Artifact):
 class RandomSampler(Sampler):
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        random.seed(0)
         return random.sample(instances_pool, self.sample_size)
 
 

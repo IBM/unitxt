@@ -2,9 +2,10 @@ from .register import register_all_artifacts, register_local_catalog
 from .load import load_dataset
 from .catalog import add_to_catalog
 import os
+import random
 
 register_all_artifacts()
-
+random.seed(0)
 dataset_file = os.path.join(os.path.dirname(__file__), "dataset.py")
 metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
 
