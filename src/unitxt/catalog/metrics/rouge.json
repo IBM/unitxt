@@ -1,0 +1,12 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "rougeL",
+    "preprocess_steps": [],
+    "postpreprocess_steps": [],
+    "metric": {
+        "type": "huggingface_metric",
+        "metric_name": "rouge",
+        "main_score": "rougeL",
+        "scale": 1.0
+    }
+}
