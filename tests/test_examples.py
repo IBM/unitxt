@@ -126,24 +126,7 @@ class TestExamples(unittest.TestCase):
 
             print_dict(results[0])
             target = {
-                'source': "Input: Given this sentence: I can't cut that tree down with that axe; it is too small.,"
-                          " classify if this sentence: The axe is too small. is ['entailment', 'not entailment'].\n"
-                          "Output: not entailment\n\nInput: Given this sentence: Alice was dusting the living room and "
-                          "trying to find the button that Mama had hidden. No time today to look at old pictures in her "
-                          "favorite photo album. Today she had to hunt for a button, so she put the album on a chair "
-                          "without even opening it., classify if this sentence: She put the album on a chair without "
-                          "even opening the living room. is ['entailment', 'not entailment'].\nOutput: "
-                          "entailment\n\nInput: Given this sentence: Joe has sold his house and bought a new one a "
-                          "few miles away. He will be moving out of it on Thursday., classify if this sentence: "
-                          "He will be moving out of The old house on Thursday. is ['entailment', 'not entailment'].\n"
-                          "Output: not entailment\n\nInput: Given this sentence: Although they ran at about the same "
-                          "speed, Sue beat Sally because she had such a good start., classify if this sentence: "
-                          "Sue had such a good start. is ['entailment', 'not entailment'].\nOutput: not entailment\n\n"
-                          "Input: Given this sentence: John was jogging through the park when he saw a man juggling "
-                          "watermelons. He was very impressive., classify if this sentence: John was very impressive. "
-                          "is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: "
-                          "The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair "
-                          "has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
+                'source': "Input: Given this sentence: Sam broke both his ankles and he's walking with crutches. But a month or so from now they should be better., classify if this sentence: The crutches should be better. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply too many of them., classify if this sentence: There were simply too many copies of the newsletter. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., classify if this sentence: The police were trying to stop the drug trade in the neighborhood. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: Emma did not pass the ball to Janie although she saw that she was open., classify if this sentence: Janie saw that she was open. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: The table was piled high with food, and on the floor beside it there were crocks, baskets, and a five-quart pail of milk., classify if this sentence: Beside the table there were crocks, baskets, and a five-quart pail of milk. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
                 'target': 'entailment', 'references': ['entailment'], 'metrics': ['metrics.accuracy'],
                 'group': 'unitxt', 'postprocessors': ['to_string'], 'prediction': 'entailment', 'score': {
                     'global': {'accuracy': 0.5633802816901409, 'score': 0.5633802816901409,
