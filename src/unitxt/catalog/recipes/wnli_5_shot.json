@@ -30,7 +30,7 @@
             "mappers": {
                 "label": {
                     "0": "entailment",
-                    "1": "not_entailment"
+                    "1": "not entailment"
                 }
             },
             "strict": true
@@ -40,7 +40,7 @@
             "fields": {
                 "choices": [
                     "entailment",
-                    "not_entailment"
+                    "not entailment"
                 ]
             },
             "use_nested_query": false,
@@ -92,7 +92,7 @@
             "random_reference": false,
             "instruction": {
                 "type": "textual_instruction",
-                "text": "classify if this sentence is entailment or not_entailment."
+                "text": "classify if this sentence is entailment or not entailment."
             },
             "input_prefix": "Input: ",
             "output_prefix": "Output: ",

@@ -39,8 +39,8 @@ class TestExamples(unittest.TestCase):
 
         output = dataset['train'][0]
         target = {'metrics': ['metrics.accuracy'],
-                  'source': "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not_entailment'].\nOutput: ",
-                  'target': 'not_entailment', 'references': ['not_entailment'], 'group': 'unitxt',
+                  'source': "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not entailment'].\nOutput: ",
+                  'target': 'not entailment', 'references': ['not entailment'], 'group': 'unitxt',
                   'postprocessors': ['to_string']}
 
         self.assertDictEqual(output, target)
@@ -126,7 +126,7 @@ class TestExamples(unittest.TestCase):
 
             print_dict(results[0])
             target = {
-                'source': "Input: Given this sentence: I couldn't put the pot on the shelf because it was too tall., classify if this sentence: The pot was too tall. is 0, 1.\nOutput: not entailment\n\nInput: Given this sentence: No one joins Facebook to be sad and lonely. But a new study from the University of Wisconsin psychologist George Lincoln argues that that's exactly how it makes us feel., classify if this sentence: That's exactly how the study makes us feel. is 0, 1.\nOutput: entailment\n\nInput: Given this sentence: The large ball crashed right through the table because it was made of steel., classify if this sentence: The large ball was made of steel. is 0, 1.\nOutput: not entailment\n\nInput: Given this sentence: John couldn't see the stage with Billy in front of him because he is so short., classify if this sentence: John is so short. is 0, 1.\nOutput: not entailment\n\nInput: Given this sentence: The man couldn't lift his son because he was so weak., classify if this sentence: The man was so weak. is 0, 1.\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is 0, 1.\nOutput: ",
+                'source': "Input: Given this sentence: Sam and Amy are passionately in love, but Amy's parents are unhappy about it, because they are snobs., classify if this sentence: Amy's parents are snobs. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: This morning, Joey built a sand castle on the beach, and put a toy flag in the highest tower, but this afternoon the tide knocked it down., classify if this sentence: This afternoon the tide knocked The flag down. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: Dan had to stop Bill from toying with the injured bird. He is very cruel., classify if this sentence: Bill is very cruel. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: John promised Bill to leave, so an hour later he left., classify if this sentence: John left. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: Fred is the only man still alive who remembers my great-grandfather. He was a remarkable man., classify if this sentence: My great-grandfather was a remarkable man. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
                 'target': 'entailment',
                 'references': ['entailment'],
                 'metrics': ['metrics.accuracy'],
