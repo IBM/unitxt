@@ -43,17 +43,21 @@ class LoadFromIBMCloud(Loader):
 
     def _download_from_cos(self,cos, bucket_name, item_name, local_file):
         print(f"Downloading {item_name} from {bucket_name} COS to {local_file}")
-        response = cos.Object(bucket_name, item_name).get()
-        size = response['ContentLength']
+        try:        
+            response = cos.Object(bucket_name, item_name).get()
+            size = response['ContentLength']
+        except Exception as e:
+            raise Exception(f"Unabled to access {item_name} in {bucket_name} in COS",e)
+        
         progress_bar = tqdm(total=size, unit='iB', unit_scale=True)
-
         def upload_progress(chunk):
             progress_bar.update(chunk)
+       
         try:
             cos.Bucket(bucket_name).download_file(item_name, local_file, Callback=upload_progress)
             print("\nDownload Successful")
         except Exception as e:
-            raise Exception(f"Unabled to access {item_name} in {bucket_name}",e)
+            raise Exception(f"Unabled to download {item_name} in {bucket_name}",e)
     
 
     def prepare(self):
@@ -64,7 +68,7 @@ class LoadFromIBMCloud(Loader):
 
     def verify(self):
         super().verify()
-        assert ibm_boto3_available,"fPlease install ibm_boto3 using pip install ibm... in order to use LoadHFFromIBMCOS"
+        assert ibm_boto3_available,f"Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
         assert self.endpoint_url is not None, f"Please set the {self.endpoint_url_env} environmental variable"
         assert self.aws_access_key_id is not None, f"Please set {self.aws_access_key_id_env} environmental variable"
         assert self.aws_secret_access_key is not None, f"Please set {self.aws_secret_access_key_env} environmental variable"
