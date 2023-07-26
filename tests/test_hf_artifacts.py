@@ -4,7 +4,7 @@ from datasets.utils.py_utils import get_imports
 
 import unittest
 from src import unitxt
-from src.unitxt.hf_utils import set_hf_caching, get_missing_imports
+from src.unitxt.hf_utils, get_missing_imports
 from src.unitxt.file_utils import get_all_files_in_dir
 from pathlib import Path
 
@@ -21,12 +21,10 @@ class HFTests(unittest.TestCase):
         self.assertEqual(missing_imports, [])
     
     def test_dataset_load(self):
-        with set_hf_caching(False):
-            dataset = load_dataset(unitxt.dataset_file, 'card=cards.wnli,template_item=0')
+        dataset = load_dataset(unitxt.dataset_file, 'card=cards.wnli,template_item=0', download_mode='force_redownload')
         
     
     def test_metric_load(self):
-        with set_hf_caching(False):
-            metric = load(unitxt.metric_file)
+        metric = load(unitxt.metric_file)
         
         
