@@ -1,6 +1,6 @@
 import unittest
 
-import unitxt
+from src import unitxt
 from datasets import load_dataset
 
 class TestExamples(unittest.TestCase):
