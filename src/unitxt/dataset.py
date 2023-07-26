@@ -92,3 +92,7 @@ class Dataset(datasets.GeneratorBasedBuilder):
         generator = self.generators[split_name]
         for i, row in enumerate(generator):
             yield i, row
+
+    def _download_and_prepare(self, dl_manager, verification_mode, **prepare_splits_kwargs):
+        result = super()._download_and_prepare(dl_manager, "no_checks", **prepare_splits_kwargs)
+        return result
