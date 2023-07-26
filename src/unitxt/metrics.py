@@ -218,8 +218,9 @@ class HuggingfaceMetric(GlobalMetric):
 class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
-    average = None # Report per class then aggregate by mean
+    average = None  # Report per class then aggregate by mean
     metric = 'f1'
+
     def prepare(self):
         super(F1, self).prepare()
         self._metric = evaluate.load(self.metric)
@@ -234,8 +235,9 @@ class F1(GlobalMetric):
         return self.str_to_id[str]
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        assert all(len(reference) == 1 for reference in references), "One single reference per predictition are allowed in F1 metric"
-        formatted_references = [self.get_str_id(reference[0]) for reference  in references]
+        assert all(len(reference) == 1 for reference in
+                   references), "One single reference per predictition are allowed in F1 metric"
+        formatted_references = [self.get_str_id(reference[0]) for reference in references]
         unique_labels = self.str_to_id.keys()
         formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
         labels = list(set(formatted_references))
@@ -243,23 +245,22 @@ class F1(GlobalMetric):
                                       labels=labels, average=self.average)
         if isinstance(result['f1'], numpy.ndarray):
             from statistics import mean
-            final_result = { self.main_score : mean(result['f1'])} 
-            for i,label in enumerate(labels):
-                final_result[ 'f1_' + self.id_to_str[label]] = result['f1'][i]
-        else: 
-            final_result = { self.main_score : result['f1'] }
+            final_result = {self.main_score: mean(result['f1'])}
+            for i, label in enumerate(labels):
+                final_result['f1_' + self.id_to_str[label]] = result['f1'][i]
+        else:
+            final_result = {self.main_score: result['f1']}
         return final_result
-
 
 
 class F1Micro(F1):
     main_score = "f1_micro"
     average = 'micro'
 
+
 class F1Macro(F1):
     main_score = "f1_macro"
-    average = None # Report per class then aggregate by mean
-
+    average = None  # Report per class then aggregate by mean
 
 
 class Rouge(HuggingfaceMetric):
@@ -282,5 +283,4 @@ class Rouge(HuggingfaceMetric):
     def compute(self, references, predictions):
         predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
         references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
-        return super().compute(references,predictions)
-
+        return super().compute(references, predictions)
