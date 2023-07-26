@@ -30,8 +30,6 @@ class HFCachingContextManager:
             else:
                 disable_caching()
 
-def set_hf_caching(enabled):
-    return HFCachingContextManager(enabled)
 
 def get_missing_imports(file, exclude=[]):
     src_dir = Path(__file__).parent
