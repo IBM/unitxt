@@ -11,7 +11,7 @@ class Splitter(MultiStreamOperator):
     pass
 
 
-import random
+from .random_utils import random
 
 from .split_utils import (
     parse_random_mix_string,
@@ -77,47 +77,47 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
         return instance
 
 
-if __name__ == "__main__":
-    # some tests
-    import random
+# if __name__ == "__main__":
+#     # some tests
+#     import random
 
-    random.seed(0)
-    splitter = SplitRandomMix(
-        mix={
-            "train": "train[90%]+validation[50%]",
-            "validation": "train[10%]+validation[50%]",
-            "test": "test",
-        }
-    )
+#     random.seed(0)
+#     splitter = SplitRandomMix(
+#         mix={
+#             "train": "train[90%]+validation[50%]",
+#             "validation": "train[10%]+validation[50%]",
+#             "test": "test",
+#         }
+#     )
 
-    def generator(name, size):
-        for i in range(size):
-            yield {"text": f"{name}_{i}"}
+#     def generator(name, size):
+#         for i in range(size):
+#             yield {"text": f"{name}_{i}"}
 
-    stream = MultiStream.from_generators(
-        {
-            "train": ReusableGenerator(generator, gen_kwargs={"name": "train", "size": 10}),
-            "validation": ReusableGenerator(generator, gen_kwargs={"name": "validation", "size": 10}),
-            "test": ReusableGenerator(generator, gen_kwargs={"name": "test", "size": 10}),
-        }
-    )
+#     stream = MultiStream.from_generators(
+#         {
+#             "train": ReusableGenerator(generator, gen_kwargs={"name": "train", "size": 10}),
+#             "validation": ReusableGenerator(generator, gen_kwargs={"name": "validation", "size": 10}),
+#             "test": ReusableGenerator(generator, gen_kwargs={"name": "test", "size": 10}),
+#         }
+#     )
 
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
+#     ds = splitter(stream)
+#     for key, value in ds.items():
+#         print(key)
+#         for item in value:
+#             print(item)
 
-    splitter = SliceSplit(
-        slices={
-            "train": "train[:2]+train[2:4]",
-            "validation": "train[4:6]",
-            "test": "train[6:]+test",
-        }
-    )
+#     splitter = SliceSplit(
+#         slices={
+#             "train": "train[:2]+train[2:4]",
+#             "validation": "train[4:6]",
+#             "test": "train[6:]+test",
+#         }
+#     )
 
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
+#     ds = splitter(stream)
+#     for key, value in ds.items():
+#         print(key)
+#         for item in value:
+#             print(item)

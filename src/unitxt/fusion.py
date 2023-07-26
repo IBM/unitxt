@@ -1,8 +1,8 @@
 from typing import List, Optional, Generator
 from dataclasses import asdict
-import random
 from abc import abstractmethod
 
+from .random_utils import random
 from .stream import MultiStream, Stream
 from .operator import SourceOperator, StreamSource
 from .card import TaskCard, ICLCard

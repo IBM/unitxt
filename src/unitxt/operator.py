@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .stream import MultiStream, Stream
-
+from .random_utils import nested_seed
 
 class Operator(Artifact):
     pass
@@ -81,7 +81,8 @@ class SourceOperator(StreamSource):
 
     """
     def __call__(self) -> MultiStream:
-        return self.process()
+        with nested_seed():
+            return self.process()
 
     @abstractmethod
     def process(self) -> MultiStream:
@@ -99,7 +100,8 @@ class StreamInitializerOperator(StreamSource):
     """
     
     def __call__(self, *args, **kwargs) -> MultiStream:
-        return self.process(*args, **kwargs)
+        with nested_seed():
+            return self.process(*args, **kwargs)
 
     @abstractmethod
     def process(self, *args, **kwargs) -> MultiStream:
@@ -113,7 +115,8 @@ class MultiStreamOperator(StreamingOperator):
     A multi-stream operator is a type of `StreamingOperator` that operates on an entire MultiStream object at once. It takes a `MultiStream` as input and produces a `MultiStream` as output. The `process` method should be implemented by subclasses to define the specific operations to be performed on the input `MultiStream`.
     """
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        return self._process_multi_stream(multi_stream)
+        with nested_seed():
+            return self._process_multi_stream(multi_stream)
 
     def _process_multi_stream(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         result = self.process(multi_stream)
@@ -334,7 +337,8 @@ class SequntialOperatorInitilizer(SequntialOperator):
     A sequential operator initializer is a type of `SequntialOperator` that starts with a stream initializer operator. The first operator in its list of steps is a `StreamInitializerOperator`, which generates the initial `MultiStream` based on the provided arguments and keyword arguments.
     """
     def __call__(self, *args, **kwargs) -> MultiStream:
-        return self.process(*args, **kwargs)
+        with nested_seed():
+            return self.process(*args, **kwargs)
 
     def process(self, *args, **kwargs) -> MultiStream:
         assert isinstance(

@@ -4,10 +4,14 @@ from ..type_utils import isoftype
 from typing import List
 import json
 
-def apply_operator(operator:StreamingOperator, inputs: List[dict]):
+def apply_operator(operator:StreamingOperator, inputs: List[dict], return_multi_stream=False, return_stream=False):
     multi_stream = MultiStream({'test': inputs})
     output_multi_stream = operator(multi_stream)
+    if return_multi_stream:
+        return output_multi_stream
     output_stream = output_multi_stream['test']
+    if return_stream:
+        return output_stream
     return list(output_stream)
     
 def test_operator(operator:StreamingOperator, inputs: List[dict], targets: List[dict]):

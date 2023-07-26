@@ -1,7 +1,7 @@
-import random
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
+from .random_utils import random
 from .artifact import Artifact
 from .instructions import Instruction
 from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
@@ -166,8 +166,7 @@ class OutputQuantizingTemplate(InputOutputTemplate):
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         quantized_outputs = {key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()}
         return super().process_outputs(quantized_outputs)
-
-
+           
 class AutoInputOutputTemplate(InputOutputTemplate):
     def infer_input_format(self, inputs):
         input_format = ""
