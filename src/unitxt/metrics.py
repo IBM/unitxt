@@ -1,4 +1,5 @@
 import uuid
+import numpy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
@@ -216,35 +217,44 @@ class HuggingfaceMetric(GlobalMetric):
 
 class F1(GlobalMetric):
     _metric = None
-    reduction_map = {"mean": ["f1"]}
-    main_score = "f1"
+    main_score = "f1_macro"
+    average = None # Report per class then aggregate by mean
     metric = 'f1'
-    average = 'binary'
-
     def prepare(self):
         super(F1, self).prepare()
         self._metric = evaluate.load(self.metric)
-        self.str_to_ids = {}
+        self.str_to_id = {}
+        self.id_to_str = {}
 
     def get_str_id(self, str):
-        if str not in self.str_to_ids:
-            self.str_to_ids[str] = len(self.str_to_ids)
-        return self.str_to_ids[str]
+        if str not in self.str_to_id:
+            id = len(self.str_to_id)
+            self.str_to_id[str] = id
+            self.id_to_str[id] = str
+        return self.str_to_id[str]
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-
-        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
-        assert all(len(reference) == 1 for reference in references)
+        assert all(len(reference) == 1 for reference in references), "One single reference per predictition are allowed in F1 metric"
         formatted_references = [self.get_str_id(reference[0]) for reference  in references]
+        unique_labels = self.str_to_id.keys()
+        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
+        labels = list(set(formatted_references))
         result = self._metric.compute(predictions=formatted_predictions, references=formatted_references,
-                                    average=self.average)
-        return result
+                                      labels=labels, average=self.average)
+        if isinstance(result['f1'], numpy.ndarray):
+            from statistics import mean
+            final_result = { self.main_score : mean(result['f1'])} 
+            for i,label in enumerate(labels):
+                final_result[ 'f1_' + self.id_to_str[label]] = result['f1'][i]
+        else: 
+            final_result = { self.main_score : result['f1'] }
+        return final_result
 
 
 class F1Micro(F1):
+    main_score = "f1_micro"
     average = 'micro'
 
-
 class F1Macro(F1):
-    average = 'macro'
-
+    main_score = "f1_macro"
+    average = None # Report per class then aggregate by mean
