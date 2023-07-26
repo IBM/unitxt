@@ -1,11 +1,6 @@
-import os
-import tempfile
+
 import unittest
-
-import evaluate
-
 from src import unitxt
-from datasets import enable_caching, disable_caching
 from datasets import load_dataset
 from src.unitxt.blocks import (
     LoadHF,
@@ -17,7 +12,6 @@ from src.unitxt.blocks import (
     RenderAutoFormatTemplate,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt import register_local_catalog
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.operators import AddID, CopyPasteFields, CastFields
 
