@@ -1,12 +1,10 @@
 from datasets import load_dataset
 from evaluate import load
-from datasets.utils.py_utils import get_imports
 
 import unittest
 from src import unitxt
-from src.unitxt.hf_utils, get_missing_imports
-from src.unitxt.file_utils import get_all_files_in_dir
-from pathlib import Path
+from src.unitxt.hf_utils import get_missing_imports
+
 
 class HFTests(unittest.TestCase):
     

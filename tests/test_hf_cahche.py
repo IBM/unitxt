@@ -98,14 +98,11 @@ spearman_metric = MetricPipeline(
 class TestHfCache(unittest.TestCase):
 
     def test_hf_cache_enabling(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            enable_caching()
-            add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', catalog_path=tmpdir, overwrite=True)
-            register_local_catalog(tmpdir)
-            wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-            add_to_catalog(rte_recipe, 'tmp.recipes.wnli', catalog_path=tmpdir, overwrite=True)
-            rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-            self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
+        add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', overwrite=True)
+        wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
+        add_to_catalog(rte_recipe, 'tmp.recipes.wnli', overwrite=True)
+        rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
+        self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
 
     def test_hf_dataset_cache_disabling(self):
         add_to_catalog(wnli_recipe, 'tmp.recipes.wnli2', overwrite=True)
