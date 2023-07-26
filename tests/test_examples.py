@@ -1,7 +1,6 @@
 import unittest
 from src import unitxt
 from datasets import load_dataset as load_dataset_hf
-from src.unitxt.text_utils import print_dict
 import evaluate
 
 from src import unitxt
@@ -113,13 +112,16 @@ class TestExamples(unittest.TestCase):
         results = metric.compute(predictions=['entailment' for t in dataset['test']], references=dataset['test'])
 
         print_dict(results[0])
-        target = {
-            'source': "Input: Given this sentence: Sam broke both his ankles and he's walking with crutches. But a month or so from now they should be better., classify if this sentence: The crutches should be better. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply too many of them., classify if this sentence: There were simply too many copies of the newsletter. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., classify if this sentence: The police were trying to stop the drug trade in the neighborhood. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: Emma did not pass the ball to Janie although she saw that she was open., classify if this sentence: Janie saw that she was open. is ['entailment', 'not entailment'].\nOutput: entailment\n\nInput: Given this sentence: The table was piled high with food, and on the floor beside it there were crocks, baskets, and a five-quart pail of milk., classify if this sentence: Beside the table there were crocks, baskets, and a five-quart pail of milk. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
-            'target': 'entailment', 'references': ['entailment'], 'metrics': ['metrics.accuracy'],
-            'group': 'unitxt', 'postprocessors': ['to_string'], 'prediction': 'entailment', 'score': {
-                'global': {'accuracy': 0.5633802816901409, 'score': 0.5633802816901409,
-                           'groups_mean_score': 0.5633802816901409}, 'instance': {'accuracy': 1.0, 'score': 1.0}},
-            'origin': 'all_unitxt'}
+        target = {'source': "Input: Given this sentence: The politicians far away in Washington could not know the settlers so they must make rules to regulate them., classify if this sentence: The politicians must make rules to regulate them. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: I put the cake away in the refrigerator. It has a lot of butter in it., classify if this sentence: The cake has a lot of butter in it. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: By rolling over in her upper berth, Tatyana could look over the edge of it and see her mother plainly. How very small and straight and rigid she lay in the bunk below! Her eyes were closed, but Tatyana doubted if she slept., classify if this sentence: Tatyana doubted if her mother slept. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The table was piled high with food, and on the floor beside it there were crocks, baskets, and a five-quart pail of milk., classify if this sentence: Beside the table there were crocks, baskets, and a five-quart pail of milk. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: Lily spoke to Donna, breaking her concentration., classify if this sentence: Lily spoke to Donna, breaking Donna's concentration. is ['entailment', 'not entailment'].\nOutput: not entailment\n\nInput: Given this sentence: The drain is clogged with hair. It has to be cleaned., classify if this sentence: The hair has to be cleaned. is ['entailment', 'not entailment'].\nOutput: ",
+                  'target': 'entailment',
+                  'references': ['entailment'],
+                  'metrics': ['metrics.accuracy'],
+                  'group': 'unitxt',
+                  'postprocessors': ['to_string'],
+                  'prediction': 'entailment',
+                  'score': {'global': {'accuracy': 0.5633802816901409, 'score': 0.5633802816901409, 'groups_mean_score': 0.5633802816901409},
+                            'instance': {'accuracy': 1.0, 'score': 1.0}}, 'origin': 'all_unitxt'}
+
 
         self.assertDictEqual(target, results[0])
 
