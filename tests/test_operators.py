@@ -5,11 +5,13 @@ from src.unitxt.operators import (
     FlattenInstances,
     FilterByValues,
     ApplyValueOperatorsField,
+    SplitByValue,
     AddFields,
     Unique,
     Shuffle,
     CastFields,
     CopyPasteFields,
+    EncodeLabels,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -115,6 +117,72 @@ class TestOperators(unittest.TestCase):
         
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
+            
+    def test_unique_on_single_field(self):
+        
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+            {'a': 2, 'b': 4},
+        ]
+                
+        targets = set([(1,), (2,)])
+        
+        outputs = apply_operator(
+            operator=Unique(fields=['a']),
+            inputs=inputs,
+        )
+    
+        self.assertSetEqual(set(outputs), targets)
+    
+    def test_unique_on_multiple_fields(self):
+        
+        inputs = [
+            {'a': 1, 'b': 2},
+            {'a': 2, 'b': 3},
+            {'a': 2, 'b': 4},
+            {'a': 1, 'b': 2},
+        ]
+        fields = ['a', 'b']
+        targets = set([(1, 2), (2, 3), (2, 4)])
+        
+        outputs = apply_operator(
+            operator=Unique(fields=fields),
+            inputs=inputs,
+        )
+    
+        self.assertSetEqual(set(outputs), targets)
+            
+    def test_split_by_value(self):
+        
+        inputs = [
+            {'a': 1, 'b': 4},
+            {'a': 2, 'b': 3},
+            {'a': 2, 'b': 4},
+        ]
+        
+        outputs = apply_operator(
+            operator=SplitByValue(fields='a'),
+            inputs=inputs,
+            return_multi_stream=True
+        )
+        
+        self.assertSetEqual(set(outputs.keys()), set(['test_1', 'test_2']))
+        
+        outputs_1 = list(outputs['test_1'])
+        self.assertEqual(len(outputs_1), 1)
+        
+        outputs_2 = list(outputs['test_2'])
+        self.assertEqual(len(outputs_2), 2)
+        
+        for input_dict, ouput_dict in zip(inputs, outputs_1):
+            self.assertDictEqual(input_dict, ouput_dict)
+        
+        for input_dict, ouput_dict in zip(inputs[1:], outputs_2):
+            self.assertDictEqual(input_dict, ouput_dict)
+        
+        
+        
     
     def test_shuffle(self):
         
@@ -236,6 +304,28 @@ class TestOperators(unittest.TestCase):
         
         outputs = apply_operator(
             operator=CopyPasteFields({'a': 'a/x'}, use_nested_query=True),
+            inputs=inputs
+        )
+        
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+            
+    def test_label_encoder(self):
+        
+        inputs = [
+            {'prediction': 'red', 'references': ['red', 'blue']},
+            {'prediction': 'blue', 'references': ['blue']},
+            {'prediction': 'green', 'references': ['red']},
+        ]
+        
+        targets = [
+            {'prediction': 0, 'references': [0, 1]},
+            {'prediction': 1, 'references': [1]},
+            {'prediction': 2, 'references': [0]},
+        ]
+        
+        outputs = apply_operator(
+            operator=EncodeLabels(fields=['prediction', 'references/*']),
             inputs=inputs
         )
         

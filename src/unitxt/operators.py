@@ -15,7 +15,7 @@ from .operator import (
 )
 from .stream import MultiStream, Stream
 from .utils import flatten_dict
-import random
+from .random_utils import random
 from .dict_utils import dict_get, dict_set, dict_delete, is_subpath
 import uuid
 from copy import deepcopy
@@ -390,3 +390,29 @@ class Shuffle(PagedStreamOperator):
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
         random.shuffle(page)
         yield from page
+        
+class EncodeLabels(StreamInstanceOperator):
+    """
+    Encode labels of specified fields together a into integers.
+
+    Args:
+        fields (List[str]): The fields to encode together.
+    """
+    fields: List[str]
+    
+    def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
+        self.encoder = {}
+        return super()._process_multi_stream(multi_stream)
+    
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        for field in self.fields:
+            values = dict_get(instance, field, use_dpath=True)
+            if not isinstance(values, list):
+                values = [values]
+            for value in values:
+                if value not in self.encoder:
+                    self.encoder[value] = len(self.encoder)
+            new_values = [self.encoder[value] for value in values]
+            dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
+        
+        return instance
