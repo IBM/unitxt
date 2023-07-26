@@ -1,6 +1,5 @@
 import unittest
 
-from src.unitxt.operators import Unique
 from src.unitxt.operators import (
     MapInstanceValues,
     FlattenInstances,
@@ -8,10 +7,12 @@ from src.unitxt.operators import (
     ApplyValueOperatorsField,
     SplitByValue,
     AddFields,
+    Unique,
     Shuffle,
     CastFields,
     EncodeLabels,
-    CopyPasteFields, RenameFields,
+    CopyPasteFields,
+    RenameFields,
 )
 
 from src.unitxt.test_utils.operators import apply_operator
@@ -328,18 +329,5 @@ class TestOperators(unittest.TestCase):
             inputs=inputs
         )
         
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
-
-        targets = [
-            {'a': 1, 'c': 2},
-            {'a': 2, 'c': 3},
-        ]
-
-        outputs = apply_operator(
-            operator=RenameFields(mapper={'b': 'c'}),
-            inputs=inputs
-        )
-
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
