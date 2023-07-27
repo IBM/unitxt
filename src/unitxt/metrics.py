@@ -205,6 +205,7 @@ class HuggingfaceMetric(GlobalMetric):
     
     def prepare(self):
         super().prepare()
+        print(self.metric_name)
         self.metric = evaluate.load(self.metric_name)
         
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
@@ -258,3 +259,29 @@ class F1Micro(F1):
 class F1Macro(F1):
     main_score = "f1_macro"
     average = None # Report per class then aggregate by mean
+
+
+
+class Rouge(HuggingfaceMetric):
+    
+
+    metric_name ='rouge'
+    main_score ='rougeL'
+    scale = 100
+    def __post_init__(self):
+        super().__post_init__()
+        if self.metric_name is None:
+            self.metric_name = 'rouge'
+        if self.metric_name is None:
+            self.main_score ='rougeL'
+        if self.scale is None:
+            self.scale = 100
+        
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+    def compute(self, references, predictions ):
+        predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
+        references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
+        return super().compute(references,predictions)
