@@ -7,9 +7,11 @@ from typing import Any, Dict, List, Generator, Optional
 
 import evaluate
 
-from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOperator, StreamingOperator, MultiStreamOperator
+from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOperator, StreamingOperator, \
+    MultiStreamOperator
 from .operators import CopyPasteFields
 from .stream import Stream, MultiStream
+import nltk
 
 
 def absrtact_factory():
@@ -27,12 +29,14 @@ class UpdateStream(StreamInstanceOperator):
         instance.update(self.update)
         return instance
 
+
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(ABC):
     @property
     @abstractmethod
     def main_score(self):
         pass
+
 
 class GlobalMetric(SingleStreamOperator, Metric):
 
@@ -75,6 +79,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         pass
 
+
 class InstanceMetric(SingleStreamOperator, Metric):
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
@@ -103,7 +108,7 @@ class InstanceMetric(SingleStreamOperator, Metric):
 
         for reduction, fields in self.reduction_map.items():
             assert (
-                reduction in self.implemented_reductions
+                    reduction in self.implemented_reductions
             ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
 
             if reduction == "mean":
@@ -138,7 +143,6 @@ class Squad(GlobalMetric):
         self._metric = evaluate.load(self.metric)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-
         ids = [str(uuid.uuid4()).replace('-', '') for _ in range(len(predictions))]
         formatted_predictions = [{'prediction_text': prediction, 'id': ids[i]}
                                  for i, prediction in enumerate(predictions)]
@@ -146,8 +150,6 @@ class Squad(GlobalMetric):
                                 for i, reference in enumerate(references)]
 
         return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
-
-
 
 
 class SingleReferenceInstanceMetric(InstanceMetric):
@@ -168,23 +170,23 @@ class Accuracy(SingleReferenceInstanceMetric):
     def compute(self, reference, prediction: str) -> dict:
         return {"accuracy": float(str(reference) == str(prediction))}
 
+
 class MetricPipeline(MultiStreamOperator, Metric):
-    
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postpreprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     metric: Metric = None
-    
+
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
-    
+
     def prepare(self):
         super().prepare()
         self.prepare_score = CopyPasteFields([
             [f'score/instance/{self.main_score}', 'score/instance/score'],
             [f'score/global/{self.main_score}', 'score/global/score'],
         ], use_nested_query=True)
-    
+
     def process(self, multi_stream: MultiStream) -> MultiStream:
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
@@ -193,21 +195,17 @@ class MetricPipeline(MultiStreamOperator, Metric):
             multi_stream = step(multi_stream)
         multi_stream = self.prepare_score(multi_stream)
         return multi_stream
-    
-    
-        
+
 
 class HuggingfaceMetric(GlobalMetric):
-    
     metric_name: str = None
     main_score: str = None
     scale: float = 1.0
-    
+
     def prepare(self):
         super().prepare()
-        print(self.metric_name)
         self.metric = evaluate.load(self.metric_name)
-        
+
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.metric.compute(predictions=predictions, references=references)
         if self.scale != 1.0:
@@ -215,6 +213,7 @@ class HuggingfaceMetric(GlobalMetric):
                 if isinstance(result[key], float):
                     result[key] /= self.scale
         return result
+
 
 class F1(GlobalMetric):
     _metric = None
@@ -252,6 +251,7 @@ class F1(GlobalMetric):
         return final_result
 
 
+
 class F1Micro(F1):
     main_score = "f1_micro"
     average = 'micro'
@@ -263,26 +263,24 @@ class F1Macro(F1):
 
 
 class Rouge(HuggingfaceMetric):
-    
-
-    metric_name ='rouge'
-    main_score ='rougeL'
+    metric_name = 'rouge'
+    main_score = 'rougeL'
     scale = 100
-    
-    def __post_init__(self):
-        super().__post_init__()
+
+    def initialize_vars(self):
         if self.metric_name is None:
             self.metric_name = 'rouge'
-        if self.metric_name is None:
-            self.main_score ='rougeL'
+        if self.main_score is None:
+            self.main_score = 'rougeL'
         if self.scale is None:
             self.scale = 100
-        
-    def prepare(self):
-        super().prepare()
-        import nltk
 
-    def compute(self, references, predictions ):
+    def prepare(self):
+        self.initialize_vars()
+        super().prepare()
+
+    def compute(self, references, predictions):
         predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
         references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references,predictions)
+
