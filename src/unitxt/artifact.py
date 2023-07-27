@@ -83,6 +83,7 @@ class BaseArtifact(ABC):
     def verify(self):
         pass
 
+    @final
     def __post_init__(self):
         self.type = self.register_class(self.__class__)
 
