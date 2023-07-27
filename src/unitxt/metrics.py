@@ -224,8 +224,6 @@ class F1(GlobalMetric):
     def prepare(self):
         super(F1, self).prepare()
         self._metric = evaluate.load(self.metric)
-        self.str_to_id = {}
-        self.id_to_str = {}
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
@@ -235,9 +233,10 @@ class F1(GlobalMetric):
         return self.str_to_id[str]
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        assert all(len(reference) == 1 for reference in
-                   references), "One single reference per predictition are allowed in F1 metric"
-        formatted_references = [self.get_str_id(reference[0]) for reference in references]
+        assert all(len(reference) == 1 for reference in references), "One single reference per predictition are allowed in F1 metric"
+        self.str_to_id = {}
+        self.id_to_str = {}
+        formatted_references = [self.get_str_id(reference[0]) for reference  in references]
         unique_labels = self.str_to_id.keys()
         formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
         labels = list(set(formatted_references))
@@ -269,8 +268,6 @@ class F1MultiLabel(GlobalMetric):
     def prepare(self):
         super(F1MultiLabel, self).prepare()
         self._metric = evaluate.load("f1","multilabel")
-        self.str_to_id = {}
-        self.id_to_str = {}
 
     def add_str_to_id(self, str):
         if not str in self.str_to_id:
@@ -288,6 +285,8 @@ class F1MultiLabel(GlobalMetric):
 
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        self.str_to_id = {}
+        self.id_to_str = {}
         labels = list(set([ label for reference in references for label in reference ]))
         for label in labels:
             assert not self.seperator in label, "Reference label (f{label}) can not contain multi label seperator (f{self.seperator}) "
