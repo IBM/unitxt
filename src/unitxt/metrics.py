@@ -268,6 +268,7 @@ class Rouge(HuggingfaceMetric):
     metric_name ='rouge'
     main_score ='rougeL'
     scale = 100
+    
     def __post_init__(self):
         super().__post_init__()
         if self.metric_name is None:
