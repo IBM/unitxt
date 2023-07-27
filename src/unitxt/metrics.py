@@ -204,6 +204,7 @@ class HuggingfaceMetric(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        print(self.metric_name)
         self.metric = evaluate.load(self.metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
@@ -261,6 +262,7 @@ class F1Micro(F1):
 class F1Macro(F1):
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
+
 
 
 class Rouge(HuggingfaceMetric):
