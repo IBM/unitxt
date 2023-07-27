@@ -260,7 +260,59 @@ class F1Micro(F1):
 
 class F1Macro(F1):
     main_score = "f1_macro"
-    average = None  # Report per class then aggregate by mean
+ 
+class F1MultiLabel(GlobalMetric):
+    _metric = None
+    main_score = "f1_macro"
+    average = None # Report per class then aggregate by mean
+    seperator = ","
+    def prepare(self):
+        super(F1MultiLabel, self).prepare()
+        self._metric = evaluate.load("f1","multilabel")
+        self.str_to_id = {}
+        self.id_to_str = {}
+
+    def add_str_to_id(self, str):
+        if not str in self.str_to_id:
+            id = len(self.str_to_id)
+            self.str_to_id[str] = id
+            self.id_to_str[id] = str
+        return
+
+    def get_one_hot_vector(self,labels: List[str]):
+        result = [0] * len(self.str_to_id)
+        for label in labels:
+            if label in self.str_to_id:
+                result[self.str_to_id[label]] = 1
+        return result
+
+
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        labels = list(set([ label for reference in references for label in reference ]))
+        for label in labels:
+            assert not self.seperator in label, "Reference label (f{label}) can not contain multi label seperator (f{self.seperator}) "
+            self.add_str_to_id(label) 
+        formatted_references = [self.get_one_hot_vector(reference) for reference  in references]
+        split_predictions = [ [ label.strip() for label in prediction.split(self.seperator)]  for prediction in predictions]
+        formatted_predictions = [self.get_one_hot_vector(prediction) for prediction in split_predictions]
+        result = self._metric.compute(predictions=formatted_predictions, references=formatted_references, average=self.average)
+        if isinstance(result['f1'], numpy.ndarray):
+            from statistics import mean
+            final_result = { self.main_score : mean(result['f1'])} 
+            for i,label in enumerate(labels):
+                final_result[ 'f1_' + label] = result['f1'][i]
+        else: 
+            final_result = { self.main_score : result['f1'] }
+        return final_result
+
+
+class F1MicroMultiLabel(F1MultiLabel):
+    main_score = "f1_micro"
+    average = 'micro'
+
+class F1MacroMultiLabel(F1MultiLabel):
+    main_score = "f1_macro"
+    average = None
 
 
 class Rouge(HuggingfaceMetric):
@@ -284,3 +336,4 @@ class Rouge(HuggingfaceMetric):
         predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
         references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
+
