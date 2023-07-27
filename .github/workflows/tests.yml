@@ -27,6 +27,9 @@ jobs:
     - name: Install Requirements
       run: pip install -r requirements.txt
 
+    - name: Install the project itself
+      run: pip install -e .
+
     - name: Install the package that is required for testing and coverage calculation
       run: pip install coverage
 
