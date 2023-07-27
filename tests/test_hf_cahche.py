@@ -93,7 +93,7 @@ class TestHfCache(unittest.TestCase):
 
     def test_hf_cache_enabling(self):
         add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', overwrite=True)
-        wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
+        wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli', download_mode='force_redownload')
         add_to_catalog(rte_recipe, 'tmp.recipes.wnli', overwrite=True)
         rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
         self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
