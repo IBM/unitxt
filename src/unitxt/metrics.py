@@ -12,7 +12,7 @@ from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOpe
 from .operators import CopyPasteFields
 from .stream import Stream, MultiStream
 import nltk
-
+nltk.download("punkt")
 
 def absrtact_factory():
     return {}
