@@ -37,6 +37,7 @@ class Artifactories(object):
 class BaseArtifact(ABC):
     _class_register = {}
 
+    
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d and d["type"] in cls._class_register
@@ -82,7 +83,6 @@ class BaseArtifact(ABC):
     def verify(self):
         pass
 
-    @final
     def __post_init__(self):
         self.type = self.register_class(self.__class__)
 

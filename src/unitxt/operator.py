@@ -55,7 +55,7 @@ class StreamingOperator(Artifact):
         Returns:
             MultiStream: The output MultiStream resulting from the operations performed on the input.
         """
-
+    
 
 class StreamSource(StreamingOperator):
     """
