@@ -31,11 +31,15 @@ def register_local_catalog(catalog_path: str):
     _register_catalog(LocalCatalog(location=catalog_path))
 
 def _register_all_catalogs():
+    print("$$$$$$$$$ _register_all_catalogs")
     _register_catalog(GithubCatalog())
-    _register_catalog(LocalCatalog())
+    local = LocalCatalog()
+    print(f"$$$$$$$$$ local: {local}")
+    _register_catalog(local)
     if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
         for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
             _register_catalog(LocalCatalog(location=path))
+    print(f'$$$$$$$$$$$$ after: {list(Artifactories())}')
     
 
 def _register_all_artifacts():

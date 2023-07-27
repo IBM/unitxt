@@ -47,6 +47,7 @@ def fetch(artifact_name):
 
 
 def parse(query: str):
+    print(f'%%%%%% query {query}')
     """
     Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
     """
@@ -94,5 +95,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
             yield i, row
 
     def _download_and_prepare(self, dl_manager, verification_mode, **prepare_splits_kwargs):
+        print
         result = super()._download_and_prepare(dl_manager, "no_checks", **prepare_splits_kwargs)
         return result

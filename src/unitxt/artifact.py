@@ -188,7 +188,9 @@ def fetch_artifact(name):
         return Artifact.load(name), None
     else:
         for artifactory in Artifactories():
+            print(f'@@@@@ Searching in artifactory: {artifactory}')
             if name in artifactory:
+                print(f'@@@ find {name} in artifactory')
                 return artifactory[name], artifactory
 
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)

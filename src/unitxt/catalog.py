@@ -1,5 +1,6 @@
 import os
 import re
+from os import listdir
 from pathlib import Path
 import requests
 from .artifact import Artifact, Artifactory
@@ -15,13 +16,17 @@ class Catalog(Artifactory):
 
 
 try:
+    print('%%%%%% ')
     import unitxt
     if unitxt.__file__:
+        print(f'%%%%%% has file {os.path.dirname(unitxt.__file__)}')
         lib_dir = os.path.dirname(unitxt.__file__)
     else:
         lib_dir = os.path.dirname(__file__)
+        print(f'%%%%%% else file {os.path.dirname(__file__)}')
 except ImportError:
     lib_dir = os.path.dirname(__file__)
+    print(f'%%%%%% except {os.path.dirname(__file__)}')
 
 default_catalog_path = os.path.join(lib_dir, "catalog")
 
@@ -98,12 +103,17 @@ def verify_legal_catalog_name(name):
 
 def add_to_catalog(artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False,
                    catalog_path: str = None):
+    print('@@@ ADING to catalog')
     if catalog is None:
         if catalog_path is None:
             catalog_path = default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
+
+    print(f'@@@ Catalog is: {catalog}')
     verify_legal_catalog_name(name)
     catalog.save_artifact(artifact, name, overwrite=overwrite) # remove collection (its actually the dir).
+    print(f'@@@@ After saving. catalog files: {listdir(catalog.location)}')
+    print(f"@@@@ After saving. catalog files: {listdir(os.path.join(catalog.location, *name.split('.')[:-1]))}")
     # verify name
 
 
