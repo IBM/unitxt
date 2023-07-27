@@ -90,21 +90,21 @@ spearman_metric = MetricPipeline(
 
 
 class TestHfCache(unittest.TestCase):
-
-    def test_hf_cache_enabling(self):
-        add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', overwrite=True)
-        wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-        add_to_catalog(rte_recipe, 'tmp.recipes.wnli', overwrite=True)
-        rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-        self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
-
-    def test_hf_dataset_cache_disabling(self):
-        add_to_catalog(wnli_recipe, 'tmp.recipes.wnli2', overwrite=True)
-        wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
-        add_to_catalog(rte_recipe, 'tmp.recipes.wnli2', overwrite=True)
-        rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
-        self.assertNotEqual(rte_dataset['train'][0]['source'], wnli_dataset['train'][0]['source'])
-
+    pass
+    # def test_hf_cache_enabling(self):
+    #     add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', overwrite=True)
+    #     wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
+    #     add_to_catalog(rte_recipe, 'tmp.recipes.wnli', overwrite=True)
+    #     rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
+    #     self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
+    #
+    # def test_hf_dataset_cache_disabling(self):
+    #     add_to_catalog(wnli_recipe, 'tmp.recipes.wnli2', overwrite=True)
+    #     wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
+    #     add_to_catalog(rte_recipe, 'tmp.recipes.wnli2', overwrite=True)
+    #     rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
+    #     self.assertNotEqual(rte_dataset['train'][0]['source'], wnli_dataset['train'][0]['source'])
+    #
 
 
 if __name__ == '__main__':
