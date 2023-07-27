@@ -111,7 +111,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 
     def render(self, instance: Dict[str, object]) -> Dict[str, object]:
         demos = instance.pop(self.demos_field, [])
-        
+
         source = ""
 
         example = super().render(instance)
@@ -150,29 +150,67 @@ class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
 
-    def process_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        try:
-            return self.input_format.format(**inputs)
-        except KeyError as e:
-            raise KeyError(f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}")
+    def process_template(self, template: str, data: Dict[str, object]) -> str:
+        return template.format(**data)
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
-            return self.output_format.format(**outputs)
+            return self.process_template(self.input_format, inputs)
         except KeyError as e:
-            raise KeyError(f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}")
+            raise KeyError(
+                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}")
+
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
+        try:
+            return self.process_template(self.output_format, outputs)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}")
 
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
-    
+
+
+class MultipleChoiceInputOutputTemplate(InputOutputTemplate):
+    choices_column: str = "choices"
+    numbers_column: str = "labels"
+    all_numbering: List[str] = tuple(str(x) for x in range(200))
+
+    def get_current_numbering(self, choices) -> List[str]:
+        assert len(choices) >= len(
+            self.all_numbering), f"Not enough numbering supplied: {len(self.all_numbering)} while {len(choices)} choices in the example. Choices ids example:{self.all_numbering[:3]}"
+        return self.all_numbering[:len(choices)]
+
+    def process_choices(self, choices):
+        pairs = []
+        for id, choice in zip(self.get_current_numbering(choices), choices):
+            pairs.append(f"{id}:{choice}")
+        return ",".join(pairs)
+
+    def process_template(self, template: str, data: Dict[str, str]) -> str:
+        choices = data.pop(self.choices_column)
+        choices_str = self.process_choices(choices)
+        template = template.replace(f"{self.choices_column}", choices_str)
+        template = template.replace(f"{self.numbers_column}", ",".join(self.get_current_numbering(choices)))
+        return super().process_template(template, data)
+
+    def process_outputs(self, outputs: Dict[str, str]) -> str:
+        format = self.output_format
+        if outputs["label"].isdigit():
+            label = self.all_numbering[int(outputs["label"])]
+            format = format.replace("{label}", label)
+        return self.process_template(format, outputs)
+
+
 class OutputQuantizingTemplate(InputOutputTemplate):
-    
     quantum: float = 0.1
-    
+
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
-        quantized_outputs = {key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()}
+        quantized_outputs = {key: round(input_float / self.quantum) * self.quantum for key, input_float in
+                             outputs.items()}
         return super().process_outputs(quantized_outputs)
-           
+
+
 class AutoInputOutputTemplate(InputOutputTemplate):
     def infer_input_format(self, inputs):
         input_format = ""
