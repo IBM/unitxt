@@ -4,23 +4,10 @@ from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import CastFields, CopyPasteFields
+from src.unitxt.metrics import Rouge
 import numpy as np
 
-metric = MetricPipeline(
-    main_score='rougeL',
-    preprocess_steps=[
-        # CopyPasteFields(mapping=[('references/0', 'references')], use_dpath=True),
-        # CastFields(
-        #     fields={'prediction': 'float', 'references': 'float'}, 
-        #     failure_defaults={'prediction': 0.0}, 
-        #     use_dpath=True,
-        # ),
-    ],
-    metric=HuggingfaceMetric(
-        metric_name='rouge',
-        main_score='rougeL',
-    )
-)
+metric = Rouge()
 
 predictions = ["hello there", "general kenobi"]
 references = [["hello", "there"], ["general kenobi", "general yoda"]]
