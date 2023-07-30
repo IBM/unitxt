@@ -1,5 +1,5 @@
 #!/bin/sh
 
 black .
-isort .
-autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive .
+#isort .
+#autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive .
