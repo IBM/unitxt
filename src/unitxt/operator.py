@@ -246,7 +246,7 @@ class InstanceOperator(Artifact):
         pass
 
 
-class FieldOperator(Artifact):
+class BaseFieldOperator(Artifact):
     """
     A class representing a field operator in the streaming system.
 

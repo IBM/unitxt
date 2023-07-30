@@ -30,14 +30,17 @@
             }
         },
         {
-            "type": "copy_paste_fields",
-            "mapping": [
+            "type": "copy_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": [
                 [
                     "answers/text",
                     "answer"
                 ]
             ],
-            "use_nested_query": true
+            "process_every_value": false,
+            "use_query": true
         }
     ],
     "templates": {

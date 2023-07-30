@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, Iterable, List, Optional, Union, Tuple
 
@@ -19,6 +20,8 @@ from .random_utils import random
 from .dict_utils import dict_get, dict_set, dict_delete, is_subpath
 import uuid
 from copy import deepcopy
+
+
 class FromIterables(StreamInitializerOperator):
     """
     Creates a MultiStream from iterables.
@@ -26,8 +29,10 @@ class FromIterables(StreamInitializerOperator):
     Args:
         iterables (Dict[str, Iterable]): A dictionary where each key-value pair represents a stream name and its corresponding iterable.
     """
+
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
         return MultiStream.from_iterables(iterables)
+
 
 class RenameFields(StreamInstanceOperator):
     """
@@ -46,12 +51,11 @@ class RenameFields(StreamInstanceOperator):
         return result
 
 
-
 class MapInstanceValues(StreamInstanceOperator):
     """A class used to map instance values into a stream.
 
-    This class is a type of StreamInstanceOperator, and its main purpose
-    is to map values of instances in a stream using predefined mappers.
+    This class is a type of StreamInstanceOperator,
+    it maps values of instances in a stream using predefined mappers.
 
     Attributes:
         mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
@@ -63,7 +67,7 @@ class MapInstanceValues(StreamInstanceOperator):
     """
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_nested_query=False
+    use_nested_query = False
 
     def verify(self):
         # make sure the mappers are valid
@@ -76,7 +80,7 @@ class MapInstanceValues(StreamInstanceOperator):
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_nested_query)
             if value is not None:
-                value = str(value) # make sure the value is a string
+                value = str(value)  # make sure the value is a string
                 if self.strict:
                     dict_set(instance, key, mapper[value], use_dpath=self.use_nested_query)
                 else:
@@ -123,37 +127,70 @@ class AddFields(StreamInstanceOperator):
             instance.update(self.fields)
         return instance
 
-class CopyPasteFields(StreamInstanceOperator):
+
+class FieldOperator(StreamInstanceOperator):
+    field: Optional[str] = None
+    to_field: Optional[str] = None
+    field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
+    process_every_value: bool = False
+    use_query: bool = False
+
+    def verify(self):
+        super().verify()
+
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
+
+    def prepare(self):
+        assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
+        assert self.to_field is None or self.field_to_field is None, f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
+        assert self.field is None or self.field_to_field is None, f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
+        if self.to_field is None:
+            self.to_field = self.field
+        if self.field_to_field is None:
+            self.field_to_field = [(self.field, self.to_field)]
+        else:
+            try:
+                self.field_to_field = [(k, v) for k, v in self.field_to_field.items()]
+            except AttributeError:
+                pass
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        for from_field, to_field in self.field_to_field:
+            old_value = dict_get(instance, from_field, use_dpath=self.use_query)
+            if self.process_every_value:
+                new_value = [self.process_value(value) for value in old_value]
+            else:
+                new_value = self.process_value(old_value)
+            if self.use_query and is_subpath(from_field, to_field):
+                dict_delete(instance, from_field)
+            dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
+        return instance
+
+
+class CopyFields(FieldOperator):
     """
     Copies specified fields from one field to another.
     
     Args:
-        mapping (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
+        field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
         use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
     """
-    mapping: Union[List[List], Dict[str, str]] = field(default_factory=list)
-    use_nested_query: bool = False
-    
-    def prepare(self):
-        if isinstance(self.mapping, dict):
-            self.mapping = [[k, v] for k, v in self.mapping.items()]
-    
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        for old_name, new_name in self.mapping:
-            old_value = dict_get(instance, old_name, use_dpath=self.use_nested_query)
-            if self.use_nested_query and is_subpath(old_name, new_name):
-                dict_delete(instance, old_name)
-            dict_set(instance, new_name, old_value, use_dpath=self.use_nested_query, not_exist_ok=True)
-        return instance
 
-    
+    def process_value(self, value: Any) -> Any:
+        return value
+
+
 class AddID(StreamInstanceOperator):
     id_field_name: str = 'id'
-    
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         instance[self.id_field_name] = str(uuid.uuid4()).replace('-', '')
         return instance
-    
+
+
 class CastFields(StreamInstanceOperator):
     """
     Casts specified fields to specified types.
@@ -174,18 +211,19 @@ class CastFields(StreamInstanceOperator):
     failure_defaults: Dict[str, object] = field(default_factory=dict)
     use_nested_query: bool = False
     cast_multiple: bool = False
-    
+
     def _cast_single(self, value, type, field):
         try:
             return self.types[type](value)
         except:
             if field not in self.failure_defaults:
-                raise ValueError(f'Failed to cast field "{field}" with value {value} to type "{type}", and no default value is provided.')
+                raise ValueError(
+                    f'Failed to cast field "{field}" with value {value} to type "{type}", and no default value is provided.')
             return self.failure_defaults[field]
-    
+
     def _cast_multiple(self, values, type, field):
         values = [self._cast_single(value, type, field) for value in values]
-    
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for field, type in self.fields.items():
             value = dict_get(instance, field, use_dpath=self.use_nested_query)
@@ -195,6 +233,7 @@ class CastFields(StreamInstanceOperator):
                 casted_value = self._cast_single(value, type, field)
             dict_set(instance, field, casted_value, use_dpath=self.use_nested_query)
         return instance
+
 
 def recursive_divide(instance, divisor, strict=False):
     if isinstance(instance, dict):
@@ -209,13 +248,16 @@ def recursive_divide(instance, divisor, strict=False):
         raise ValueError(f'Cannot divide instance of type {type(instance)}')
     return instance
 
+
 class DivideAllFieldsBy(StreamInstanceOperator):
     divisor: float = 1.0
     strict: bool = False
     recursive: bool = True
-    
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         return recursive_divide(instance, self.divisor, strict=self.strict)
+
+
 class ArtifactFetcherMixin:
     """
     Provides a way to fetch and cache artifacts in the system.
@@ -358,7 +400,7 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             assert isinstance(
                 operator, StreamingOperator
             ), f"Operator {operator_name} must be a SingleStreamOperator"
-            
+
             stream = operator(MultiStream({'tmp': stream}))['tmp']
 
         yield from stream
@@ -403,6 +445,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream({self.new_stream_name: Stream(self.merge, gen_kwargs={"multi_stream": multi_stream})})
 
+
 class Shuffle(PagedStreamOperator):
     """
     Shuffles the order of instances in each page of a stream.
@@ -410,10 +453,12 @@ class Shuffle(PagedStreamOperator):
     Args:
         page_size (int): The size of each page in the stream. Defaults to 1000.
     """
+
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
         random.shuffle(page)
         yield from page
-        
+
+
 class EncodeLabels(StreamInstanceOperator):
     """
     Encode labels of specified fields together a into integers.
@@ -422,11 +467,11 @@ class EncodeLabels(StreamInstanceOperator):
         fields (List[str]): The fields to encode together.
     """
     fields: List[str]
-    
+
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         self.encoder = {}
         return super()._process_multi_stream(multi_stream)
-    
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for field in self.fields:
             values = dict_get(instance, field, use_dpath=True)
@@ -437,5 +482,22 @@ class EncodeLabels(StreamInstanceOperator):
                     self.encoder[value] = len(self.encoder)
             new_values = [self.encoder[value] for value in values]
             dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
-        
+
         return instance
+
+
+class RenameFields(StreamInstanceOperator):
+    """
+    Renames fields
+    Attributes:
+    mapper (Dict[str, str]): old field names to new field names dict
+    """
+    mapper: Dict[str, str]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        result = {}
+        # passes on all values to preserve ordering
+        for key, value in instance.items():
+            result[self.mapper.get(key, key)] = value
+        # doesn't warn if unnecessary mapping was supplied for efficiency
+        return result
