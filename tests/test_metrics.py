@@ -126,4 +126,21 @@ class TestMetrics(unittest.TestCase):
         predictions = ["cat", "2", "cat   ,  dog", "dog", "cat", "cat"]
         global_target = 0.769230760933
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(global_target, outputs[0]['score']['global']['score'])
+
+    def test_f1_multiple_use(self):
+        metric = F1MacroMultiLabel()
+        references =  [['cat','dog']]
+        predictions = [ 'cat']
+        # recall class 'dog'  = 0/1 = 0             precision= 0/0 = 1       f1 = 0
+        # recall class 'cat'  = 1/1 = 1             precision= 1/1 = 1       f1 = 1
+        global_target = 0.5
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertAlmostEqual(global_target, outputs[0]['score']['global']['score'])
+        references =  [['horse']]
+        predictions = [ 'horse']
+        global_target = 1
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertAlmostEqual(global_target, outputs[0]['score']['global']['score'])
+       
+        
