@@ -56,7 +56,7 @@ class CommonRecipe(Recipe, SourceOperator):
             )
 
         if self.card.instructions is not None:
-            if self.instruction_item is None:
+            if not self.instruction_item is None:
                 picker = ItemPicker(self.instruction_item)
             else:
                 picker = RandomPicker()
@@ -65,7 +65,7 @@ class CommonRecipe(Recipe, SourceOperator):
             instruction = None
 
         if self.card.templates is not None:
-            if self.template_item is None:
+            if not self.template_item is None:
                 picker = ItemPicker(self.template_item)
             else:
                 picker = RandomPicker()
