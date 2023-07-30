@@ -33,7 +33,7 @@ class CommonRecipe(Recipe, SourceOperator):
             steps.extend(self.card.preprocess_steps)
 
         steps.append(self.card.task)
-
+        st = "this is my string"
         if self.demos_pool_size is not None:
             steps.append(
                 SeparateSplit(
