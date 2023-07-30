@@ -1,8 +1,4 @@
-from src.unitxt.blocks import (
-    LoadHF,
-    TemplatesList,
-    InputOutputTemplate
-)
+from src.unitxt.blocks import LoadHF, TemplatesList, InputOutputTemplate
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 from src.unitxt.prepare_utils.card_types import create_sentence_classification_card
@@ -11,19 +7,18 @@ from src.unitxt.operators import RenameFields
 from src.unitxt.splitters import RenameSplits
 
 card = create_sentence_classification_card(
-    loader=LoadHF(path='ethos', name='binary'),
+    loader=LoadHF(path="ethos", name="binary"),
     label_name="label",
-    label2string={"0": 'not hate speech', "1": 'hate speech'},
-    inputs=['text'],
-    metrics=['metrics.accuracy'],
-    preprocess_steps=[
-        RenameSplits({'train': 'test'}),
-        "splitters.test_only"
-    ],
-    templates=outputs_inputs2templates(inputs=[
-        """Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.""",
-        """Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {sentence1}."""],
-        outputs='{label}'
+    label2string={"0": "not hate speech", "1": "hate speech"},
+    inputs=["text"],
+    metrics=["metrics.accuracy"],
+    preprocess_steps=[RenameSplits({"train": "test"}), "splitters.test_only"],
+    templates=outputs_inputs2templates(
+        inputs=[
+            """Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.""",
+            """Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {sentence1}.""",
+        ],
+        outputs="{label}",
     )
     # +
     # instructions2templates(
@@ -40,7 +35,7 @@ card = create_sentence_classification_card(
 )
 
 test_card(card, tested_split="test")
-add_to_catalog(card, 'cards.ethos_binary', overwrite=True)
+add_to_catalog(card, "cards.ethos_binary", overwrite=True)
 
 # # # see example in https://huggingface.co/datasets/ethos/viewer/multilabel/train
 # card = create_sentence_multilabel_classification_card(

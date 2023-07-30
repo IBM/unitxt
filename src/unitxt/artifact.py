@@ -15,7 +15,7 @@ class AbstractField:
 
 class Artifactories(object):
     def __new__(cls):
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, "instance"):
             cls.instance = super(Artifactories, cls).__new__(cls)
             cls.instance.artifactories = []
 
@@ -37,7 +37,6 @@ class Artifactories(object):
 class BaseArtifact(ABC):
     _class_register = {}
 
-    
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d and d["type"] in cls._class_register
@@ -53,7 +52,7 @@ class BaseArtifact(ABC):
 
         if snake_case_key in cls._class_register:
             assert (
-                    cls._class_register[snake_case_key] == artifact_class
+                cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
 
         cls._class_register[snake_case_key] = artifact_class
@@ -90,8 +89,8 @@ class BaseArtifact(ABC):
         self._args_dict = asdict(self)
 
         for field in fields(self):
-            if getattr(self, field.name) == 'cards.wnli':
-                print('cards.wnli')
+            if getattr(self, field.name) == "cards.wnli":
+                print("cards.wnli")
             if issubtype(field.type, Union[BaseArtifact, List[BaseArtifact], Dict[str, BaseArtifact]]):
                 value = getattr(self, field.name)
                 value = map_values_in_place(value, maybe_recover_artifact)
@@ -144,6 +143,7 @@ class BaseArtifact(ABC):
         # cls = cls._class_register[d.pop('type')]
         # return cls(**d)
 
+
 def map_values_in_place(object, mapper):
     if isinstance(object, dict):
         for key, value in object.items():
@@ -154,6 +154,7 @@ def map_values_in_place(object, mapper):
             object[i] = mapper(object[i])
         return object
     return mapper(object)
+
 
 class Artifact(BaseArtifact):
     type: str = field(init=False)
@@ -194,16 +195,19 @@ def fetch_artifact(name):
 
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
+
 def verbosed_fetch_artifact(identifer):
-        artifact, artifactory = fetch_artifact(identifer)
-        print(f"Artifact {identifer} is fetched from {artifactory}")
-        return artifact
+    artifact, artifactory = fetch_artifact(identifer)
+    print(f"Artifact {identifer} is fetched from {artifactory}")
+    return artifact
+
 
 def maybe_recover_artifact(artifact):
     if isinstance(artifact, str):
         return verbosed_fetch_artifact(artifact)
     else:
         return artifact
+
 
 def register_all_artifacts(path):
     for loader, module_name, is_pkg in pkgutil.walk_packages(path):

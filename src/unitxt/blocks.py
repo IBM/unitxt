@@ -8,7 +8,7 @@ from .instructions import (
     InstructionsList,
     TextualInstruction,
 )
-from .loaders import LoadHF,LoadFromIBMCloud
+from .loaders import LoadHF, LoadFromIBMCloud
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
 from .operators import AddFields, MapInstanceValues, CopyFields, CastFields, AddID, DivideAllFieldsBy, RenameFields
@@ -26,7 +26,7 @@ from .templates import (
     Template,
     TemplatesDict,
     TemplatesList,
-    OutputQuantizingTemplate
+    OutputQuantizingTemplate,
 )
 
 # from .validate import (

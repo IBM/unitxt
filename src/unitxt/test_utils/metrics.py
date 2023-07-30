@@ -4,6 +4,7 @@ from ..type_utils import isoftype
 from typing import List
 import json
 
+
 def round_floats(obj, precision=2, recursive=True):
     if isinstance(obj, float):
         return round(obj, precision)
@@ -14,43 +15,50 @@ def round_floats(obj, precision=2, recursive=True):
     else:
         return obj
 
+
 def dict_equal(dict1, dict2):
     return json.dumps(dict1, sort_keys=True) == json.dumps(dict2, sort_keys=True)
 
 
-def apply_metric(metric:Metric, predictions: List[str], references: List[List[str]]):
-    
+def apply_metric(metric: Metric, predictions: List[str], references: List[List[str]]):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[str]), "predictions must be a list of strings"
     assert isoftype(references, List[List[str]]), "references must be a list of lists of strings"
-    
-    test_iterable = [{'prediction': prediction, 'references': reference} for prediction, reference in zip(predictions, references)]
-    multi_stream = MultiStream.from_iterables({'test': test_iterable})
+
+    test_iterable = [
+        {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
+    ]
+    multi_stream = MultiStream.from_iterables({"test": test_iterable})
     output_multi_stream = metric(multi_stream)
-    output_stream = output_multi_stream['test']
+    output_stream = output_multi_stream["test"]
     return list(output_stream)
-    
-def test_metric(metric:Metric, predictions: List[str], references: List[List[str]], instance_targets: List[dict], global_target: dict):
-    
+
+
+def test_metric(
+    metric: Metric,
+    predictions: List[str],
+    references: List[List[str]],
+    instance_targets: List[dict],
+    global_target: dict,
+):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[str]), "predictions must be a list of strings"
     assert isoftype(references, List[List[str]]), "references must be a list of lists of strings"
-    
+
     outputs = apply_metric(metric, predictions, references)
-    
+
     errors = []
-    global_score = round_floats(outputs[0]['score']['global'])
+    global_score = round_floats(outputs[0]["score"]["global"])
     if not dict_equal(global_score, global_target):
         errors.append(f"global score must be equal, got <{global_score}> =/= <{global_target}>")
-        
+
     for output, instance_target in zip(outputs, instance_targets):
-        instance_score = round_floats(output['score']['instance'])
+        instance_score = round_floats(output["score"]["instance"])
         if not dict_equal(instance_score, instance_target):
             errors.append(f"instance score must be equal, got <{instance_score}> =/= <{instance_target}>")
-    
+
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))
-    
-    print('Metric tested successfully!')
+
+    print("Metric tested successfully!")
     return True
-    

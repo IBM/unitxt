@@ -6,6 +6,7 @@ from .generator_utils import ReusableGenerator
 from .random_utils import nested_seed
 from .stream import Stream
 
+
 def parse_random_mix_string(input_str):
     """
     Parses a string of format "source1[percentage1%]+source2[value2]+..." and returns a dictionary.
@@ -208,17 +209,17 @@ def build_stream_routing(mapping):
 
 def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
     """
-        Renames the streams
-        Args:
-            input_streams (dict): A dictionary containing the input streams, where each key is
-                                  the name of the stream and the value is an iterable or generator
-                                  representing the stream.
+    Renames the streams
+    Args:
+        input_streams (dict): A dictionary containing the input streams, where each key is
+                              the name of the stream and the value is an iterable or generator
+                              representing the stream.
 
-            mapping (dict): A dictionary specifying the mapping of old streams to new streams.
+        mapping (dict): A dictionary specifying the mapping of old streams to new streams.
 
-        Returns:
-            dict: A dictionary containing the generated new streams, where each key is the name
-                  of the new stream and the value is a generator representing the stream."""
+    Returns:
+        dict: A dictionary containing the generated new streams, where each key is the name
+              of the new stream and the value is a generator representing the stream."""
     return {mapping.get(key, key): val for key, val in input_streams.items()}
 
 
@@ -280,7 +281,6 @@ def random_mix_streams(input_streams, mapping):
     stream_routing = build_stream_routing(mapping)
 
     with nested_seed():
-
         # Create new stream generators
         for new_stream_name, new_stream_sources in mapping.items():
             new_streams[new_stream_name] = ReusableGenerator(

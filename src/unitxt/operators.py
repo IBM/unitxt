@@ -40,6 +40,7 @@ class RenameFields(StreamInstanceOperator):
     Attributes:
     mapper (Dict[str, str]): old field names to new field names dict
     """
+
     mapper: Dict[str, str]
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
@@ -61,10 +62,11 @@ class MapInstanceValues(StreamInstanceOperator):
         mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
             Keys are the names of the fields to be mapped, and values are dictionaries
             that define the mapping from old values to new values.
-        strict (bool): If True, the mapping is applied strictly. That means if a value 
-            does not exist in the mapper, it will raise a KeyError. If False, values 
+        strict (bool): If True, the mapping is applied strictly. That means if a value
+            does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
     """
+
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
     use_nested_query = False
@@ -97,6 +99,7 @@ class FlattenInstances(StreamInstanceOperator):
         parent_key (str): A prefix to use for the flattened keys. Defaults to an empty string.
         sep (str): The separator to use when concatenating nested keys. Defaults to "_".
     """
+
     parent_key: str = ""
     sep: str = "_"
 
@@ -111,6 +114,7 @@ class AddFields(StreamInstanceOperator):
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
     """
+
     fields: Dict[str, object]
     use_nested_query: bool = False
     use_deepcopy: bool = False
@@ -138,15 +142,18 @@ class FieldOperator(StreamInstanceOperator):
     def verify(self):
         super().verify()
 
-
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
 
     def prepare(self):
         assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
-        assert self.to_field is None or self.field_to_field is None, f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
-        assert self.field is None or self.field_to_field is None, f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
+        assert (
+            self.field is None or self.field_to_field is None
+        ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
         if self.to_field is None:
             self.to_field = self.field
         if self.field_to_field is None:
@@ -173,7 +180,7 @@ class FieldOperator(StreamInstanceOperator):
 class CopyFields(FieldOperator):
     """
     Copies specified fields from one field to another.
-    
+
     Args:
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
         use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
@@ -184,28 +191,29 @@ class CopyFields(FieldOperator):
 
 
 class AddID(StreamInstanceOperator):
-    id_field_name: str = 'id'
+    id_field_name: str = "id"
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        instance[self.id_field_name] = str(uuid.uuid4()).replace('-', '')
+        instance[self.id_field_name] = str(uuid.uuid4()).replace("-", "")
         return instance
 
 
 class CastFields(StreamInstanceOperator):
     """
     Casts specified fields to specified types.
-    
+
     Args:
         types (Dict[str, str]): A dictionary mapping fields to their new types.
         nested (bool): Whether to cast nested fields. Defaults to False.
         fields (Dict[str, str]): A dictionary mapping fields to their new types.
         defaults (Dict[str, object]): A dictionary mapping types to their default values for cases of casting failure.
     """
+
     types = {
-        'int': int,
-        'float': float,
-        'str': str,
-        'bool': bool,
+        "int": int,
+        "float": float,
+        "str": str,
+        "bool": bool,
     }
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
@@ -218,7 +226,8 @@ class CastFields(StreamInstanceOperator):
         except:
             if field not in self.failure_defaults:
                 raise ValueError(
-                    f'Failed to cast field "{field}" with value {value} to type "{type}", and no default value is provided.')
+                    f'Failed to cast field "{field}" with value {value} to type "{type}", and no default value is provided.'
+                )
             return self.failure_defaults[field]
 
     def _cast_multiple(self, values, type, field):
@@ -245,7 +254,7 @@ def recursive_divide(instance, divisor, strict=False):
     elif isinstance(instance, float):
         instance /= divisor
     elif strict:
-        raise ValueError(f'Cannot divide instance of type {type(instance)}')
+        raise ValueError(f"Cannot divide instance of type {type(instance)}")
     return instance
 
 
@@ -265,6 +274,7 @@ class ArtifactFetcherMixin:
     Args:
         cache (Dict[str, Artifact]): A cache for storing fetched artifacts.
     """
+
     cache: Dict[str, Artifact] = {}
 
     @classmethod
@@ -284,6 +294,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operators_field (str): The field containing the operators to be applied.
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
     """
+
     value_field: str
     operators_field: str
     default_operators: List[str] = None
@@ -292,7 +303,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
-                    self.default_operators is not None
+                self.default_operators is not None
             ), f"No operators found in {self.field} field and no default operators provided"
             operator_names = self.default_operators
 
@@ -313,6 +324,7 @@ class FilterByValues(SingleStreamOperator):
     Args:
         values (Dict[str, Any]): The values that instances should match to be included in the output.
     """
+
     values: Dict[str, Any]
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
@@ -328,6 +340,7 @@ class Unique(SingleStreamReducer):
     Args:
         fields (List[str]): The fields that should be unique in each instance.
     """
+
     fields: List[str] = field(default_factory=list)
 
     @staticmethod
@@ -356,6 +369,7 @@ class SplitByValue(MultiStreamOperator):
     Args:
         fields (List[str]): The fields to use when splitting the MultiStream.
     """
+
     fields: List[str] = field(default_factory=list)
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -382,6 +396,7 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
         field (str): The field containing the operators to be applied.
         reversed (bool): Whether to apply the operators in reverse order.
     """
+
     field: str
     reversed: bool = False
 
@@ -397,11 +412,9 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
 
         for operator_name in operators:
             operator = self.get_artifact(operator_name)
-            assert isinstance(
-                operator, StreamingOperator
-            ), f"Operator {operator_name} must be a SingleStreamOperator"
+            assert isinstance(operator, StreamingOperator), f"Operator {operator_name} must be a SingleStreamOperator"
 
-            stream = operator(MultiStream({'tmp': stream}))['tmp']
+            stream = operator(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 
@@ -413,6 +426,7 @@ class AddFieldNamePrefix(StreamInstanceOperator):
     Args:
         prefix_dict (Dict[str, str]): A dictionary mapping stream names to prefixes.
     """
+
     prefix_dict: Dict[str, str]
 
     def prepare(self):
@@ -431,6 +445,7 @@ class MergeStreams(MultiStreamOperator):
         add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
         origin_stream_name_field_name (str): The field name for the origin stream name.
     """
+
     new_stream_name: str = "all"
     add_origin_stream_name: bool = True
     origin_stream_name_field_name: str = "origin"
@@ -466,6 +481,7 @@ class EncodeLabels(StreamInstanceOperator):
     Args:
         fields (List[str]): The fields to encode together.
     """
+
     fields: List[str]
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
@@ -492,6 +508,7 @@ class RenameFields(StreamInstanceOperator):
     Attributes:
     mapper (Dict[str, str]): old field names to new field names dict
     """
+
     mapper: Dict[str, str]
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:

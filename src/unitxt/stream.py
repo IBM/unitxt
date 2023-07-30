@@ -85,8 +85,10 @@ class Stream:
 def is_stream(obj):
     return isinstance(obj, IterableDataset) or isinstance(obj, Stream) or isinstance(obj, Dataset)
 
+
 def iterable_starter(iterable):
     return iter(deepcopy(iterable))
+
 
 class MultiStream(dict):
     """A class for handling multiple streams of data in a dictionary-like format.
@@ -165,8 +167,6 @@ class MultiStream(dict):
                 for key, generator in generators.items()
             }
         )
-        
-   
 
     @classmethod
     def from_iterables(cls, iterables: Dict[str, Iterable], streaming=True, caching=False):
@@ -183,7 +183,7 @@ class MultiStream(dict):
 
         return cls(
             {
-                key: Stream(iterable_starter, gen_kwargs={'iterable': iterable}, streaming=streaming, caching=caching)
+                key: Stream(iterable_starter, gen_kwargs={"iterable": iterable}, streaming=streaming, caching=caching)
                 for key, iterable in iterables.items()
             }
         )

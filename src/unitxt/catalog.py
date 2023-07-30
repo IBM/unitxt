@@ -5,8 +5,8 @@ import requests
 from .artifact import Artifact, Artifactory
 
 
-COLLECTION_SEPARATOR = '.'
-PATHS_SEP = ':'
+COLLECTION_SEPARATOR = "."
+PATHS_SEP = ":"
 
 
 class Catalog(Artifactory):
@@ -16,6 +16,7 @@ class Catalog(Artifactory):
 
 try:
     import unitxt
+
     if unitxt.__file__:
         lib_dir = os.path.dirname(unitxt.__file__)
     else:
@@ -31,7 +32,7 @@ class LocalCatalog(Catalog):
     location: str = default_catalog_path
 
     def path(self, artifact_identifier: str):
-        assert artifact_identifier.strip(), 'artifact_identifier should not be an empty string.'
+        assert artifact_identifier.strip(), "artifact_identifier should not be an empty string."
         parts = artifact_identifier.split(COLLECTION_SEPARATOR)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
@@ -53,8 +54,6 @@ class LocalCatalog(Catalog):
             return False
         return os.path.exists(path) and os.path.isfile(path)
 
-
-
     def save_artifact(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
         assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
@@ -73,37 +72,35 @@ class GithubCatalog(LocalCatalog):
     repo_dir = "src/unitxt/catalog"
     user = "IBM"
     branch = "master"
-    
+
     def prepare(self):
         self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{self.branch}/{self.repo_dir}"
-    
+
     def load(self, artifact_identifier: str):
         url = self.path(artifact_identifier)
         response = requests.get(url)
         data = response.json()
         return Artifact.from_dict(data)
-    
+
     def __contains__(self, artifact_identifier: str):
         url = self.path(artifact_identifier)
         response = requests.head(url)
         return response.status_code == 200
-        
-        
 
 
 def verify_legal_catalog_name(name):
-    assert re.match(r'^[\w' + COLLECTION_SEPARATOR + ']+$', name),\
-        'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/").'
+    assert re.match(
+        r"^[\w" + COLLECTION_SEPARATOR + "]+$", name
+    ), 'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/").'
 
 
-def add_to_catalog(artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False,
-                   catalog_path: str = None):
+def add_to_catalog(
+    artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False, catalog_path: str = None
+):
     if catalog is None:
         if catalog_path is None:
             catalog_path = default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
-    catalog.save_artifact(artifact, name, overwrite=overwrite) # remove collection (its actually the dir).
+    catalog.save_artifact(artifact, name, overwrite=overwrite)  # remove collection (its actually the dir).
     # verify name
-
-

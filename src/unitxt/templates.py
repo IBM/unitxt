@@ -124,12 +124,12 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
         for demo_instance in demos:
             demo_example = super().render(demo_instance)
             demo_str = (
-                    self.input_prefix
-                    + demo_example["source"]
-                    + self.input_output_separator
-                    + self.output_prefix
-                    + demo_example["target"]
-                    + self.demo_separator
+                self.input_prefix
+                + demo_example["source"]
+                + self.input_output_separator
+                + self.output_prefix
+                + demo_example["target"]
+                + self.demo_separator
             )
 
             if self.size_limiter is not None:
@@ -158,14 +158,16 @@ class InputOutputTemplate(Template):
             return self.process_template(self.input_format, inputs)
         except KeyError as e:
             raise KeyError(
-                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}")
+                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}"
+            )
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.output_format, outputs)
         except KeyError as e:
             raise KeyError(
-                f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}")
+                f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
+            )
 
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
@@ -178,8 +180,9 @@ class MultipleChoiceInputOutputTemplate(InputOutputTemplate):
 
     def get_current_numbering(self, choices) -> List[str]:
         assert len(choices) >= len(
-            self.all_numbering), f"Not enough numbering supplied: {len(self.all_numbering)} while {len(choices)} choices in the example. Choices ids example:{self.all_numbering[:3]}"
-        return self.all_numbering[:len(choices)]
+            self.all_numbering
+        ), f"Not enough numbering supplied: {len(self.all_numbering)} while {len(choices)} choices in the example. Choices ids example:{self.all_numbering[:3]}"
+        return self.all_numbering[: len(choices)]
 
     def process_choices(self, choices):
         pairs = []
@@ -206,8 +209,9 @@ class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
-        quantized_outputs = {key: round(input_float / self.quantum) * self.quantum for key, input_float in
-                             outputs.items()}
+        quantized_outputs = {
+            key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
+        }
         return super().process_outputs(quantized_outputs)
 
 
@@ -264,8 +268,9 @@ def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]
     return TemplatesList(templates)
 
 
-def instructions2templates(instructions: List[TextualInstruction],
-                           templates: List[InputOutputTemplate]) -> TemplatesList:
+def instructions2templates(
+    instructions: List[TextualInstruction], templates: List[InputOutputTemplate]
+) -> TemplatesList:
     """
     Insert instructions into per demonstration templates
     :param instructions:
@@ -276,8 +281,11 @@ def instructions2templates(instructions: List[TextualInstruction],
     for instruction in instructions:
         for template in templates:
             res_templates.append(
-                InputOutputTemplate(input_format=template.input_format.replace("{instruction}", instruction.text),
-                                    output_format=template.output_format))
+                InputOutputTemplate(
+                    input_format=template.input_format.replace("{instruction}", instruction.text),
+                    output_format=template.output_format,
+                )
+            )
     return TemplatesList(templates)
 
 

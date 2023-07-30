@@ -36,9 +36,11 @@ class CommonRecipe(Recipe, SourceOperator):
 
         if self.demos_pool_size is not None:
             steps.append(
-                SeparateSplit(from_split=self.demos_taken_from,
-                              to_split_names=[self.demos_pool_name, self.demos_taken_from],
-                              to_split_sizes=[int(self.demos_pool_size)])
+                SeparateSplit(
+                    from_split=self.demos_taken_from,
+                    to_split_names=[self.demos_pool_name, self.demos_taken_from],
+                    to_split_sizes=[int(self.demos_pool_size)],
+                )
             )
 
         if self.num_demos is not None:
