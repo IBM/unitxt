@@ -16,4 +16,7 @@ jobs:
           pip install -r dev_requiremets.txt
       - name: Validate no fromat is needed
         run: |
+          ./format
+      - name: Validate no fromat is needed
+        run: |
           .github/workflows/validate_no_status_modifications
