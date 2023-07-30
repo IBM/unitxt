@@ -16,7 +16,7 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
-from src.unitxt.operators import AddID, CopyPasteFields, CastFields
+from src.unitxt.operators import AddID, CopyFields, CastFields
 
 wnli_recipe = SequentialRecipe(
                 steps=[LoadHF(path='glue', name='wnli'),
@@ -59,14 +59,14 @@ squad_metric = MetricPipeline(
             'prediction_template': {'prediction_text': 'PRED', 'id': 'ID'},
             'reference_template': {'answers': {'answer_start': [-1], 'text': 'REF'}, 'id': 'ID'},
         }, use_deepcopy=True),
-        CopyPasteFields(mapping=[
+        CopyFields(field_to_field=[
                 ['references', 'reference_template/answers/text'],
                 ['prediction', 'prediction_template/prediction_text'],
                 ['id', 'prediction_template/id'],
                 ['id', 'reference_template/id'],
                 ['reference_template', 'references'],
                 ['prediction_template', 'prediction'],
-            ], use_nested_query=True),
+            ], use_query=True),
     ],
     metric=HuggingfaceMetric(
         metric_name='squad',
@@ -78,7 +78,7 @@ squad_metric = MetricPipeline(
 spearman_metric = MetricPipeline(
     main_score='spearmanr',
     preprocess_steps=[
-        CopyPasteFields(mapping=[('references/0', 'references')], use_nested_query=True),
+        CopyFields(field_to_field=[('references/0', 'references')], use_query=True),
         CastFields(
             fields={'prediction': 'float', 'references': 'float'},
             failure_defaults={'prediction': 0.0},

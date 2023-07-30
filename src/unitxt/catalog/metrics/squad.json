@@ -27,8 +27,10 @@
             "use_deepcopy": true
         },
         {
-            "type": "copy_paste_fields",
-            "mapping": [
+            "type": "copy_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": [
                 [
                     "references",
                     "reference_template/answers/text"
@@ -54,7 +56,8 @@
                     "prediction"
                 ]
             ],
-            "use_nested_query": true
+            "process_every_value": false,
+            "use_query": true
         }
     ],
     "postpreprocess_steps": [],

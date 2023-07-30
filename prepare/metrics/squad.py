@@ -4,7 +4,7 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CopyPasteFields, AddID, AddFields
+from src.unitxt.blocks import CopyFields, AddID, AddFields
 
 metric = MetricPipeline(
     main_score='f1',
@@ -14,14 +14,14 @@ metric = MetricPipeline(
             'prediction_template': {'prediction_text': 'PRED', 'id': 'ID'},
             'reference_template': {'answers': {'answer_start': [-1], 'text': 'REF'}, 'id': 'ID'},
         }, use_deepcopy=True),
-        CopyPasteFields(mapping=[
+        CopyFields(field_to_field=[
                 ['references', 'reference_template/answers/text'],
                 ['prediction', 'prediction_template/prediction_text'],
                 ['id', 'prediction_template/id'],
                 ['id', 'reference_template/id'],
                 ['reference_template', 'references'],
                 ['prediction_template', 'prediction'],
-            ], use_nested_query=True),
+            ], use_query=True),
     ],
     metric=HuggingfaceMetric(
         metric_name='squad',

@@ -1,7 +1,7 @@
-from .operator import FieldOperator
+from .operator import BaseFieldOperator
 
 
-class ToString(FieldOperator):
+class ToString(BaseFieldOperator):
     def process(self, instance):
         return str(instance)
 

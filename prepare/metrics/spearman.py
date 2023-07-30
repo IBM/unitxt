@@ -3,13 +3,13 @@
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CastFields, CopyPasteFields
+from src.unitxt.blocks import CastFields, CopyFields
 import numpy as np
 
 metric = MetricPipeline(
     main_score='spearmanr',
     preprocess_steps=[
-        CopyPasteFields(mapping=[('references/0', 'references')], use_nested_query=True),
+        CopyFields(field_to_field=[('references/0', 'references')], use_query=True),
         CastFields(
             fields={'prediction': 'float', 'references': 'float'}, 
             failure_defaults={'prediction': 0.0}, 

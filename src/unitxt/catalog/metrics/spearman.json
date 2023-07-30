@@ -3,14 +3,17 @@
     "main_score": "spearmanr",
     "preprocess_steps": [
         {
-            "type": "copy_paste_fields",
-            "mapping": [
+            "type": "copy_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": [
                 [
                     "references/0",
                     "references"
                 ]
             ],
-            "use_nested_query": true
+            "process_every_value": false,
+            "use_query": true
         },
         {
             "type": "cast_fields",

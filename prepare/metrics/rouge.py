@@ -1,7 +1,7 @@
 from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CastFields, CopyPasteFields
+from src.unitxt.blocks import CastFields, CopyFields
 from src.unitxt.metrics import Rouge
 import numpy as np
 

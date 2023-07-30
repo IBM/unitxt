@@ -9,10 +9,12 @@ import evaluate
 
 from .operator import SingleStreamOperator, StreamInstanceOperator, SequntialOperator, StreamingOperator, \
     MultiStreamOperator
-from .operators import CopyPasteFields
+from .operators import CopyFields
 from .stream import Stream, MultiStream
 import nltk
+
 nltk.download("punkt")
+
 
 def absrtact_factory():
     return {}
@@ -182,10 +184,10 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
-        self.prepare_score = CopyPasteFields([
+        self.prepare_score = CopyFields(field_to_field=[
             [f'score/instance/{self.main_score}', 'score/instance/score'],
             [f'score/global/{self.main_score}', 'score/global/score'],
-        ], use_nested_query=True)
+        ], use_query=True)
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         for step in self.preprocess_steps:
