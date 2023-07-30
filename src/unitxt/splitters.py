@@ -18,7 +18,8 @@ from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
     random_mix_streams,
-    slice_streams, rename_split,
+    slice_streams,
+    rename_split,
 )
 
 
@@ -45,13 +46,16 @@ class SeparateSplit(Splitter):
     sizes must indicate the size of every split except the last. If no size is give for the last split,
      it includes all the examples not allocated to any split.
     """
+
     from_split: str
     to_split_names: List[str]
     to_split_sizes: List[int]
 
     def verify(self):
-        assert len(self.to_split_names) == len(self.to_split_sizes) or len(self.to_split_names) == len(
-            self.to_split_sizes) + 1, f"Examples num should be specified to all or all but the last splits, instead given {len(self.to_split_names)} split names and {len(self.to_split_sizes)} split sizes. \n split names:{self.to_split_names} split sizes {self.to_split_sizes}"
+        assert (
+            len(self.to_split_names) == len(self.to_split_sizes)
+            or len(self.to_split_names) == len(self.to_split_sizes) + 1
+        ), f"Examples num should be specified to all or all but the last splits, instead given {len(self.to_split_names)} split names and {len(self.to_split_sizes)} split sizes. \n split names:{self.to_split_names} split sizes {self.to_split_sizes}"
         return super().verify()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -124,11 +128,9 @@ if __name__ == "__main__":
         }
     )
 
-
     def generator(name, size):
         for i in range(size):
             yield {"text": f"{name}_{i}"}
-
 
     stream = MultiStream.from_generators(
         {

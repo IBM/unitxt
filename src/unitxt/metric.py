@@ -117,17 +117,18 @@ UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": d
 
 
 def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
-        recipe = MetricRecipe()
+    recipe = MetricRecipe()
 
-        multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
+    multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
-        if flatten:
-            operator = FlattenInstances()
-            multi_stream = operator(multi_stream)
+    if flatten:
+        operator = FlattenInstances()
+        multi_stream = operator(multi_stream)
 
-        stream = multi_stream[split_name]
+    stream = multi_stream[split_name]
 
-        return list(stream)
+    return list(stream)
+
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)

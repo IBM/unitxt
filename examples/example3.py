@@ -21,45 +21,39 @@ from src.unitxt.text_utils import print_dict
 recipe = SequentialRecipe(
     steps=[
         LoadHF(
-            path='glue',
-            name='wnli',
+            path="glue",
+            name="wnli",
         ),
         SplitRandomMix(
             mix={
-                'train': 'train[95%]',
-                'validation': 'train[5%]',
-                'test': 'validation',
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation",
             }
         ),
         SliceSplit(
             slices={
-                'demos_pool': 'train[:100]',
-                'train': 'train[100:]',
-                'validation': 'validation',
-                'test': 'test',
+                "demos_pool": "train[:100]",
+                "train": "train[100:]",
+                "validation": "validation",
+                "test": "test",
             }
         ),
-        MapInstanceValues(
-            mappers={
-                'label': {"0": 'entailment', "1": 'not entailment'}
-            }
-        ),
+        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
         AddFields(
             fields={
-                'choices': ['entailment', 'not entailment'],
+                "choices": ["entailment", "not entailment"],
             }
         ),
-        NormalizeListFields(
-            fields=['choices']
-        ),
+        NormalizeListFields(fields=["choices"]),
         FormTask(
-            inputs=['choices', 'sentence1', 'sentence2'],
-            outputs=['label'],
-            metrics=['metrics.accuracy'],
+            inputs=["choices", "sentence1", "sentence2"],
+            outputs=["label"],
+            metrics=["metrics.accuracy"],
         ),
         SpreadSplit(
-            source_stream='demos_pool',
-            target_field='demos',
+            source_stream="demos_pool",
+            target_field="demos",
             sampler=RandomSampler(sample_size=5),
         ),
         RenderTemplatedICL(
@@ -68,15 +62,15 @@ recipe = SequentialRecipe(
                 input_format="""
                     Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
                 """.strip(),
-                output_format='{label}',
+                output_format="{label}",
             ),
-            demos_field='demos',
-        )
+            demos_field="demos",
+        ),
     ]
 )
 
-add_to_catalog(recipe, 'recipes.wnli_5_shot', overwrite=True)
+add_to_catalog(recipe, "recipes.wnli_5_shot", overwrite=True)
 
-dataset = load_dataset('recipes.wnli_5_shot')
+dataset = load_dataset("recipes.wnli_5_shot")
 
-print_dict(dataset['train'][0])
+print_dict(dataset["train"][0])

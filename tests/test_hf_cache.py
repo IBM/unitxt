@@ -19,79 +19,96 @@ from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
 from src.unitxt.operators import AddID, CopyFields, CastFields
 
 wnli_recipe = SequentialRecipe(
-                steps=[LoadHF(path='glue', name='wnli'),
-                    SplitRandomMix(mix={ 'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation',}),
-                    MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not entailment'}}),
-                    AddFields(fields={'choices': ['entailment', 'not entailment'],
-                                      'instruction': 'classify the relationship between the two sentences from the choices.',
-                                      'dataset': 'wnli'}),
-                    FormTask(
-                        inputs=['choices', 'instruction', 'sentence1', 'sentence2'],
-                        outputs=['label'],
-                        metrics=['matrics.accuracy'],
-                    ),
-                    RenderAutoFormatTemplate(),
-                ]
-            )
+    steps=[
+        LoadHF(path="glue", name="wnli"),
+        SplitRandomMix(
+            mix={
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation",
+            }
+        ),
+        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        AddFields(
+            fields={
+                "choices": ["entailment", "not entailment"],
+                "instruction": "classify the relationship between the two sentences from the choices.",
+                "dataset": "wnli",
+            }
+        ),
+        FormTask(
+            inputs=["choices", "instruction", "sentence1", "sentence2"],
+            outputs=["label"],
+            metrics=["matrics.accuracy"],
+        ),
+        RenderAutoFormatTemplate(),
+    ]
+)
 
 
 rte_recipe = SequentialRecipe(
-        steps = [
-            LoadHF(path='glue', name='rte'),
-            SplitRandomMix({'train': 'train[95%]', 'validation': 'train[5%]', 'test': 'validation'}),
-            MapInstanceValues(mappers={'label': {"0": 'entailment', "1": 'not entailment'}}),
-            AddFields(fields={'choices': ['entailment', 'not entailment'], 'dataset': 'rte'}),
-            FormTask(
-                inputs=['choices', 'sentence1', 'sentence2'],
-                outputs=['label'],
-                metrics=['metrics.accuracy'],
-            ),
-            RenderAutoFormatTemplate(),
-        ]
-    )
+    steps=[
+        LoadHF(path="glue", name="rte"),
+        SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
+        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        AddFields(fields={"choices": ["entailment", "not entailment"], "dataset": "rte"}),
+        FormTask(
+            inputs=["choices", "sentence1", "sentence2"],
+            outputs=["label"],
+            metrics=["metrics.accuracy"],
+        ),
+        RenderAutoFormatTemplate(),
+    ]
+)
 
 
 squad_metric = MetricPipeline(
-    main_score='f1',
+    main_score="f1",
     preprocess_steps=[
         AddID(),
-        AddFields({
-            'prediction_template': {'prediction_text': 'PRED', 'id': 'ID'},
-            'reference_template': {'answers': {'answer_start': [-1], 'text': 'REF'}, 'id': 'ID'},
-        }, use_deepcopy=True),
-        CopyFields(field_to_field=[
-                ['references', 'reference_template/answers/text'],
-                ['prediction', 'prediction_template/prediction_text'],
-                ['id', 'prediction_template/id'],
-                ['id', 'reference_template/id'],
-                ['reference_template', 'references'],
-                ['prediction_template', 'prediction'],
-            ], use_query=True),
+        AddFields(
+            {
+                "prediction_template": {"prediction_text": "PRED", "id": "ID"},
+                "reference_template": {"answers": {"answer_start": [-1], "text": "REF"}, "id": "ID"},
+            },
+            use_deepcopy=True,
+        ),
+        CopyFields(
+            field_to_field=[
+                ["references", "reference_template/answers/text"],
+                ["prediction", "prediction_template/prediction_text"],
+                ["id", "prediction_template/id"],
+                ["id", "reference_template/id"],
+                ["reference_template", "references"],
+                ["prediction_template", "prediction"],
+            ],
+            use_query=True,
+        ),
     ],
     metric=HuggingfaceMetric(
-        metric_name='squad',
-        main_score='f1',
+        metric_name="squad",
+        main_score="f1",
         scale=100.0,
     ),
 )
 
 spearman_metric = MetricPipeline(
-    main_score='spearmanr',
+    main_score="spearmanr",
     preprocess_steps=[
-        CopyFields(field_to_field=[('references/0', 'references')], use_query=True),
+        CopyFields(field_to_field=[("references/0", "references")], use_query=True),
         CastFields(
-            fields={'prediction': 'float', 'references': 'float'},
-            failure_defaults={'prediction': 0.0},
+            fields={"prediction": "float", "references": "float"},
+            failure_defaults={"prediction": 0.0},
             use_nested_query=True,
         ),
     ],
     metric=HuggingfaceMetric(
-        metric_name='spearmanr',
-        main_score='spearmanr',
-    )
+        metric_name="spearmanr",
+        main_score="spearmanr",
+    ),
 )
 
-catalog_path = os.path.join(Path(__file__).parent, 'temp_catalog')
+catalog_path = os.path.join(Path(__file__).parent, "temp_catalog")
 
 
 class TestHfCache(unittest.TestCase):
@@ -122,5 +139,5 @@ class TestHfCache(unittest.TestCase):
     #     self.assertNotEqual(rte_dataset['train'][0]['source'], wnli_dataset['train'][0]['source'])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

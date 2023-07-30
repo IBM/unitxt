@@ -16,44 +16,40 @@ from src.unitxt.text_utils import print_dict
 recipe = SequentialRecipe(
     steps=[
         LoadHF(
-            path='glue',
-            name='wnli',
+            path="glue",
+            name="wnli",
         ),
         SplitRandomMix(
             mix={
-                'train': 'train[95%]',
-                'validation': 'train[5%]',
-                'test': 'validation',
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation",
             }
         ),
-        MapInstanceValues(
-            mappers={
-                'label': {"0": 'entailment', "1": 'not entailment'}
-            }
-        ),
+        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
         AddFields(
             fields={
-                'choices': ['entailment', 'not entailment'],
+                "choices": ["entailment", "not entailment"],
             }
         ),
         FormTask(
-            inputs=['choices', 'sentence1', 'sentence2'],
-            outputs=['label'],
-            metrics=['metrics.accuracy'],
+            inputs=["choices", "sentence1", "sentence2"],
+            outputs=["label"],
+            metrics=["metrics.accuracy"],
         ),
         RenderFormatTemplate(
             template=InputOutputTemplate(
                 input_format="""
                 Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
                 """.strip(),
-                output_format='{label}',
+                output_format="{label}",
             ),
         ),
     ]
 )
 
-add_to_catalog(recipe, 'recipes.wnli_fixed', overwrite=True)
+add_to_catalog(recipe, "recipes.wnli_fixed", overwrite=True)
 
-dataset = load_dataset('recipes.wnli_fixed')
+dataset = load_dataset("recipes.wnli_fixed")
 
-print_dict(dataset['train'][0])
+print_dict(dataset["train"][0])

@@ -1,8 +1,8 @@
 import unittest
 from src.unitxt.text_utils import split_words, is_snake_case, is_camel_case, camel_to_snake_case
 
-class TestTextUtils(unittest.TestCase):
 
+class TestTextUtils(unittest.TestCase):
     def test_split_words(self):
         test_cases = [
             ("example1", ["example", "1"]),

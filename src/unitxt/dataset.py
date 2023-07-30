@@ -38,6 +38,7 @@ from .hf_utils import __file__ as _
 from .dict_utils import __file__ as _
 from .random_utils import __file__ as _
 
+
 def fetch(artifact_name):
     try:
         artifact, _ = fetch_artifact(artifact_name)
