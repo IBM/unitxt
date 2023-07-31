@@ -223,6 +223,22 @@ class ZipFieldValues(StreamInstanceOperator):
         return instance
 
 
+class IndexOf(StreamInstanceOperator):
+    """
+        Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)
+        """
+    search_in: str
+    index_of: str
+    to_field: str
+    use_query: bool = False
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        lst = dict_get(instance, self.search_in, use_dpath=self.use_query)
+        item = dict_get(instance, self.index_of, use_dpath=self.use_query)
+        instance[self.to_field] = lst.index(item)
+        return instance
+
+
 class TakeByField(StreamInstanceOperator):
     """
     Takes value from one field based on another field similar to field[index]
@@ -241,6 +257,18 @@ class TakeByField(StreamInstanceOperator):
         index_value = dict_get(instance, self.index, use_dpath=self.use_query)
         instance[self.to_field] = value[index_value]
         return instance
+
+
+class CastFields(FieldOperator):
+    """
+    Casts the fields to the given type
+    Args:
+        cast_to:type to cast to
+    """
+    cast_to: type =None
+
+    def process_value(self, value: Any) -> Any:
+        return self.cast_to(value)
 
 
 class CopyFields(FieldOperator):

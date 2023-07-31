@@ -172,39 +172,6 @@ class InputOutputTemplate(Template):
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
 
-
-class MultipleChoiceInputOutputTemplate(InputOutputTemplate):
-    choices_column: str = "choices"
-    numbers_column: str = "labels"
-    all_numbering: List[str] = tuple(str(x) for x in range(200))
-
-    def get_current_numbering(self, choices) -> List[str]:
-        assert len(choices) >= len(
-            self.all_numbering
-        ), f"Not enough numbering supplied: {len(self.all_numbering)} while {len(choices)} choices in the example. Choices ids example:{self.all_numbering[:3]}"
-        return self.all_numbering[: len(choices)]
-
-    def process_choices(self, choices):
-        pairs = []
-        for id, choice in zip(self.get_current_numbering(choices), choices):
-            pairs.append(f"{id}:{choice}")
-        return ",".join(pairs)
-
-    def process_template(self, template: str, data: Dict[str, str]) -> str:
-        choices = data.pop(self.choices_column)
-        choices_str = self.process_choices(choices)
-        template = template.replace(f"{self.choices_column}", choices_str)
-        template = template.replace(f"{self.numbers_column}", ",".join(self.get_current_numbering(choices)))
-        return super().process_template(template, data)
-
-    def process_outputs(self, outputs: Dict[str, str]) -> str:
-        format = self.output_format
-        if outputs["label"].isdigit():
-            label = self.all_numbering[int(outputs["label"])]
-            format = format.replace("{label}", label)
-        return self.process_template(format, outputs)
-
-
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
