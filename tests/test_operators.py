@@ -13,6 +13,7 @@ from src.unitxt.operators import (
     Shuffle,
     SplitByValue,
     Unique,
+    RenameFields, JoinStr, ZipFieldValues, TakeByField,
 )
 from src.unitxt.test_utils.operators import apply_operator
 
@@ -265,6 +266,66 @@ class TestOperators(unittest.TestCase):
         ]
 
         outputs = apply_operator(operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs)
+
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+
+    def test_join_str(self):
+        inputs = [
+            {'a': [1, 3]},
+            {'a': [2, 4]},
+        ]
+
+        targets = [
+            {'a': [1, 3], 'b': "1,3"},
+            {'a': [2, 4], 'b': "2,4"},
+        ]
+
+        outputs = apply_operator(
+            operator=JoinStr(field_to_field={'a': 'b'}, separator=",", use_query=True),
+            inputs=inputs
+        )
+
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+
+    def test_zip_fields(self):
+        inputs = [
+            {'a': [1, 3], 'b': [1, 3]},
+            {'a': [2, 4], 'b': [2, 4]},
+        ]
+
+        targets = [
+            {'a': [1, 3], 'b': [1, 3], 'c': [(1, 1), (3, 3)]},
+            {'a': [2, 4], 'b': [2, 4], 'c': [(2, 2), (4, 4)]},
+
+        ]
+
+        outputs = apply_operator(
+            operator=ZipFieldValues(fields=['a', 'b'], to_field='c',
+                                    use_query=True),
+            inputs=inputs
+        )
+
+        for output, target in zip(outputs, targets):
+            self.assertDictEqual(output, target)
+
+    def test_take_by_field(self):
+        inputs = [
+            {'a': [1, 3], 'b': 0},
+            {'a': {"a": 1}, 'b': "a"},
+        ]
+
+        targets = [
+            {'a': [1, 3], 'b': 0, 'c': 1},
+            {'a': {"a": 1}, 'b': "a", 'c': 1},
+        ]
+
+        outputs = apply_operator(
+            TakeByField(field='a', index='b', to_field='c',
+                        use_query=True),
+            inputs=inputs
+        )
 
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
