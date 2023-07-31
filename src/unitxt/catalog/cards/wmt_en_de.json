@@ -1,0 +1,60 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "wmt16",
+        "name": "de-en",
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "en"
+        ],
+        "outputs": [
+            "de"
+        ],
+        "metrics": [
+            "metrics.bleu"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train",
+                "validation": "validation",
+                "test": "test"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": [
+                [
+                    "translation/en",
+                    "en"
+                ],
+                [
+                    "translation/de",
+                    "de"
+                ]
+            ],
+            "process_every_value": false,
+            "use_query": true
+        }
+    ],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{en}",
+                "output_format": "{de}"
+            }
+        ]
+    },
+    "instructions": null
+}
