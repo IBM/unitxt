@@ -1,5 +1,6 @@
-import unittest
 import typing
+import unittest
+
 from src.unitxt.type_utils import isoftype, issubtype
 
 

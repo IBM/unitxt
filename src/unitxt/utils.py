@@ -1,5 +1,5 @@
-from typing import Dict, Any
 from queue import Queue
+from typing import Any, Dict
 
 
 class Singleton(type):

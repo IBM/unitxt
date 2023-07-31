@@ -1,15 +1,14 @@
 from src.unitxt.blocks import (
+    CopyFields,
+    FormTask,
+    InputOutputTemplate,
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    FormTask,
     TemplatesList,
-    InputOutputTemplate,
-    CopyFields,
 )
-from src.unitxt.test_utils.card import test_card
-
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="squad"),

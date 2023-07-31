@@ -1,8 +1,10 @@
-from typing import Mapping, Optional, Sequence, Union
-from datasets import load_dataset as hf_load_dataset
-from tempfile import TemporaryDirectory
-from tqdm import tqdm
 import os
+from tempfile import TemporaryDirectory
+from typing import Mapping, Optional, Sequence, Union
+
+from datasets import load_dataset as hf_load_dataset
+from tqdm import tqdm
+
 from .operator import SourceOperator
 from .stream import MultiStream
 

@@ -1,22 +1,21 @@
 import uuid
-import numpy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-
-from typing import Any, Dict, List, Generator, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 import evaluate
+import nltk
+import numpy
 
 from .operator import (
-    SingleStreamOperator,
-    StreamInstanceOperator,
-    SequntialOperator,
-    StreamingOperator,
     MultiStreamOperator,
+    SequntialOperator,
+    SingleStreamOperator,
+    StreamingOperator,
+    StreamInstanceOperator,
 )
 from .operators import CopyFields
-from .stream import Stream, MultiStream
-import nltk
+from .stream import MultiStream, Stream
 
 nltk.download("punkt")
 
@@ -342,19 +341,7 @@ class F1MacroMultiLabel(F1MultiLabel):
 class Rouge(HuggingfaceMetric):
     metric_name = "rouge"
     main_score = "rougeL"
-    scale = 100
-
-    def initialize_vars(self):
-        if self.metric_name is None:
-            self.metric_name = "rouge"
-        if self.main_score is None:
-            self.main_score = "rougeL"
-        if self.scale is None:
-            self.scale = 100
-
-    def prepare(self):
-        self.initialize_vars()
-        super().prepare()
+    scale = 1.0
 
     def compute(self, references, predictions):
         predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]

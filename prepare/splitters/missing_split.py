@@ -1,5 +1,5 @@
-from src.unitxt.splitters import SplitRandomMix, SliceSplit
 from src.unitxt import add_to_catalog
+from src.unitxt.splitters import SliceSplit, SplitRandomMix
 
 add_to_catalog(
     SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),

@@ -1,14 +1,14 @@
 import unittest
 
 from src.unitxt.blocks import (
-    LoadHF,
-    SplitRandomMix,
     AddFields,
-    TaskCard,
     FormTask,
-    TemplatesList,
     InputOutputTemplate,
+    LoadHF,
     MapInstanceValues,
+    SplitRandomMix,
+    TaskCard,
+    TemplatesList,
 )
 from src.unitxt.test_utils.card import test_card
 

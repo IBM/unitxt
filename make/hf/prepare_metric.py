@@ -1,6 +1,7 @@
-from huggingface_hub import HfApi
 import glob
 import os
+
+from huggingface_hub import HfApi
 
 files = glob.glob("./src/unitxt/*.py")
 

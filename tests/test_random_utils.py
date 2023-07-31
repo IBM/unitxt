@@ -1,7 +1,7 @@
-import unittest
-from src.unitxt.random_utils import random
-from src.unitxt.random_utils import nested_seed
 import random as python_random
+import unittest
+
+from src.unitxt.random_utils import nested_seed, random
 
 
 def first_randomization():

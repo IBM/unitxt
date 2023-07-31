@@ -1,14 +1,13 @@
 from src.unitxt.blocks import (
+    FormTask,
     LoadHF,
+    OutputQuantizingTemplate,
     SplitRandomMix,
     TaskCard,
-    FormTask,
     TemplatesList,
-    OutputQuantizingTemplate,
 )
-from src.unitxt.test_utils.card import test_card
-
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="stsb"),

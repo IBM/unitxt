@@ -8,10 +8,18 @@ from .instructions import (
     InstructionsList,
     TextualInstruction,
 )
-from .loaders import LoadHF, LoadFromIBMCloud
+from .loaders import LoadFromIBMCloud, LoadHF
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
-from .operators import AddFields, MapInstanceValues, CopyFields, CastFields, AddID, DivideAllFieldsBy, RenameFields
+from .operators import (
+    AddFields,
+    AddID,
+    CastFields,
+    CopyFields,
+    DivideAllFieldsBy,
+    MapInstanceValues,
+    RenameFields,
+)
 from .processors import ToString
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
@@ -20,13 +28,13 @@ from .task import FormTask
 from .templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
+    OutputQuantizingTemplate,
     RenderAutoFormatTemplate,
     RenderFormatTemplate,
     RenderTemplatedICL,
     Template,
     TemplatesDict,
     TemplatesList,
-    OutputQuantizingTemplate,
 )
 
 # from .validate import (

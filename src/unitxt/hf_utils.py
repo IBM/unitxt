@@ -1,11 +1,9 @@
-from datasets import (
-    disable_caching,
-    enable_caching,
-    is_caching_enabled,
-)
 from pathlib import Path
-from .file_utils import get_all_files_in_dir
+
+from datasets import disable_caching, enable_caching, is_caching_enabled
 from datasets.utils.py_utils import get_imports
+
+from .file_utils import get_all_files_in_dir
 
 HF_CACHING_ENABLED = False
 

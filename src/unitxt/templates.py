@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Union
 
-from .random_utils import random
 from .artifact import Artifact
 from .instructions import Instruction, TextualInstruction
 from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
+from .random_utils import random
 from .text_utils import split_words
 
 

@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from dataclasses import field
-from .random_utils import random
+
 from .artifact import Artifact
+from .random_utils import random
 
 
 class Collection(Artifact):

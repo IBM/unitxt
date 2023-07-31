@@ -1,7 +1,5 @@
-from src.unitxt.blocks import (
-    ToString,
-)
 from src.unitxt import add_to_catalog
+from src.unitxt.blocks import ToString
 
 operator = ToString()
 

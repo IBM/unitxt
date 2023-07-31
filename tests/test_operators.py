@@ -1,20 +1,19 @@
 import unittest
 
 from src.unitxt.operators import (
-    MapInstanceValues,
-    FlattenInstances,
-    FilterByValues,
-    ApplyValueOperatorsField,
-    SplitByValue,
     AddFields,
-    Unique,
-    Shuffle,
+    ApplyValueOperatorsField,
     CastFields,
-    EncodeLabels,
     CopyFields,
+    EncodeLabels,
+    FilterByValues,
+    FlattenInstances,
+    MapInstanceValues,
     RenameFields,
+    Shuffle,
+    SplitByValue,
+    Unique,
 )
-
 from src.unitxt.test_utils.operators import apply_operator
 
 
