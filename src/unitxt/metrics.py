@@ -347,3 +347,9 @@ class Rouge(HuggingfaceMetric):
         predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
         references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
+
+
+class Bleu(HuggingfaceMetric):
+    metric_name = "bleu"
+    main_score = "bleu"
+    scale = 1.0
