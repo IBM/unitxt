@@ -1,8 +1,9 @@
+import json
+from typing import List
+
 from ..operator import StreamingOperator
 from ..stream import MultiStream
 from ..type_utils import isoftype
-from typing import List
-import json
 
 
 def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi_stream=False, return_stream=False):

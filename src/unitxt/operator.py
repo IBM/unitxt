@@ -3,8 +3,8 @@ from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
-from .stream import MultiStream, Stream
 from .random_utils import nested_seed
+from .stream import MultiStream, Stream
 
 
 class Operator(Artifact):

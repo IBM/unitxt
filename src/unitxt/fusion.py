@@ -1,12 +1,12 @@
-from typing import List, Optional, Generator
-from dataclasses import asdict
 from abc import abstractmethod
+from dataclasses import asdict
+from typing import Generator, List, Optional
 
+from .card import ICLCard, TaskCard
+from .common import CommonRecipe
+from .operator import SourceOperator, StreamSource
 from .random_utils import random
 from .stream import MultiStream, Stream
-from .operator import SourceOperator, StreamSource
-from .card import TaskCard, ICLCard
-from .common import CommonRecipe
 
 
 class BaseFusion(SourceOperator):

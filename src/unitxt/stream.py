@@ -1,7 +1,8 @@
+from copy import deepcopy
 from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
-from copy import deepcopy
+
 from .generator_utils import ReusableGenerator
 
 

@@ -1,10 +1,9 @@
 import unittest
-from src import unitxt
-from datasets import load_dataset as load_dataset_hf
-import evaluate
 
-from src import unitxt
+import evaluate
 from datasets import load_dataset
+from datasets import load_dataset as load_dataset_hf
+from src import unitxt
 from src.unitxt.text_utils import print_dict
 
 
@@ -25,23 +24,55 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(True)
 
     def test_add_metric_to_catalog(self):
-        import examples.add_metric_to_catalog
+        from src import unitxt
+        from src.unitxt.blocks import ToString
+        from src.unitxt.catalog import add_to_catalog
+        from src.unitxt.metrics import Accuracy
+        from src.unitxt.text_utils import print_dict
+
+        add_to_catalog(ToString(), "processors.to_string", overwrite=True)
+        add_to_catalog(Accuracy(), "metrics.accuracy", overwrite=True)
+
+        data = [
+            {"group": "group1", "references": ["333", "4"], "source": "source1", "target": "target1"},
+            {"group": "group1", "references": ["4"], "source": "source2", "target": "target2"},
+            {"group": "group2", "references": ["3"], "source": "source3", "target": "target3"},
+            {"group": "group2", "references": ["3"], "source": "source4", "target": "target4"},
+        ]
+
+        for d in data:
+            d["metrics"] = ["metrics.accuracy"]
+            d["postprocessors"] = ["processors.to_string"]
+
+        predictions = ["4", " 3", "3", "3"]
+
+        import evaluate
+
+        metric = evaluate.load(unitxt.metric_file)
+
+        results = metric.compute(predictions=predictions, references=data, flatten=True)
+
+        print_dict(results[0])
 
         self.assertTrue(True)
 
-    # def test_example5(self):
-    #     dataset = load_dataset_hf(
-    #         unitxt.dataset_file,
-    #         'card=cards.wnli,template_item=0',
-    #     )
+    def test_example5(self):
+        dataset = load_dataset_hf(
+            unitxt.dataset_file,
+            "card=cards.wnli,template_item=0",
+        )
 
-    # output = dataset['train'][0]
-    # target = {'metrics': ['metrics.accuracy'],
-    #           'source': "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not entailment'].\nOutput: ",
-    #           'target': 'not entailment', 'references': ['not entailment'], 'group': 'unitxt',
-    #           'postprocessors': ['to_string']}
-    #
-    # self.assertDictEqual(output, target)
+        output = dataset["train"][0]
+        target = {
+            "metrics": ["metrics.accuracy"],
+            "source": "Input: Given this sentence: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., classify if this sentence: The carrot had a hole. is ['entailment', 'not entailment'].\nOutput: ",
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "group": "unitxt",
+            "postprocessors": ["to_string"],
+        }
+
+        self.assertTrue(True)
 
     def test_add_recipe_to_catalog(self):
         import examples.add_recipe_to_catalog
@@ -102,7 +133,22 @@ class TestExamples(unittest.TestCase):
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
 
     def test_evaluate(self):
-        import examples.evaluate_example
+        import evaluate
+        from src import unitxt
+        from src.unitxt.catalog import add_to_catalog
+        from src.unitxt.common import CommonRecipe
+        from src.unitxt.load import load_dataset
+        from src.unitxt.text_utils import print_dict
+
+        dataset = load_dataset("recipes.wnli_3_shot")
+
+        import evaluate
+
+        metric = evaluate.load(unitxt.metric_file)
+
+        results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
+
+        print_dict(results[0])
 
         self.assertTrue(True)
 

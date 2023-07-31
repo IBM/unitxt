@@ -3,20 +3,17 @@ import shutil
 import unittest
 from pathlib import Path
 
-from src import unitxt
-from datasets import load_dataset
 from src.unitxt.blocks import (
-    LoadHF,
-    SplitRandomMix,
     AddFields,
-    SequentialRecipe,
-    MapInstanceValues,
     FormTask,
+    LoadHF,
+    MapInstanceValues,
     RenderAutoFormatTemplate,
+    SequentialRecipe,
+    SplitRandomMix,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
-from src.unitxt.operators import AddID, CopyFields, CastFields
+from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.operators import AddID, CastFields, CopyFields
 
 wnli_recipe = SequentialRecipe(
     steps=[
@@ -39,7 +36,7 @@ wnli_recipe = SequentialRecipe(
         FormTask(
             inputs=["choices", "instruction", "sentence1", "sentence2"],
             outputs=["label"],
-            metrics=["matrics.accuracy"],
+            metrics=["metrics.accuracy"],
         ),
         RenderAutoFormatTemplate(),
     ]

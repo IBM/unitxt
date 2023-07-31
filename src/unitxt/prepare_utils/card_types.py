@@ -1,7 +1,7 @@
-from typing import Union, List, Optional, Dict
+from typing import Dict, List, Optional, Union
 
 from ..card import TaskCard
-from ..instructions import InstructionsList, InstructionsDict
+from ..instructions import InstructionsDict, InstructionsList
 from ..loaders import Loader
 from ..normalizers import NormalizeListFields
 from ..operator import StreamingOperator

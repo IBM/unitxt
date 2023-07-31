@@ -1,8 +1,9 @@
+import tempfile
 import unittest
+
 from src import unitxt
 from src.unitxt import register_local_catalog
 from src.unitxt.artifact import Artifactories
-import tempfile
 
 
 class TestCatalogs(unittest.TestCase):

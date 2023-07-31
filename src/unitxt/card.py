@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union, Dict
+from typing import Dict, List, Optional, Union
 
 from .artifact import Artifact
 from .instructions import InstructionsDict, InstructionsList

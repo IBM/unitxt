@@ -1,5 +1,7 @@
 from typing import Union
+
 from datasets import DatasetDict
+
 from .artifact import fetch_artifact
 from .operator import StreamSource
 

@@ -1,8 +1,9 @@
-import dpath
+import os
 from typing import Sequence
+
+import dpath
 from dpath import MutableSequence
 from dpath.segments import extend
-import os
 
 
 def is_subpath(subpath, fullpath):

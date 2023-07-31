@@ -13,13 +13,12 @@ class Splitter(MultiStreamOperator):
 
 
 from .random_utils import random
-
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
     random_mix_streams,
-    slice_streams,
     rename_split,
+    slice_streams,
 )
 
 

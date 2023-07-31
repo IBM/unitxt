@@ -1,6 +1,6 @@
-import unittest
 import glob
 import os
+import unittest
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")

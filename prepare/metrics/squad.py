@@ -1,10 +1,8 @@
-from src.unitxt.catalog import add_to_catalog
-
-
-from src.unitxt.metrics import MetricPipeline, HuggingfaceMetric
-from src.unitxt.test_utils.metrics import test_metric
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CopyFields, AddID, AddFields
+from src.unitxt.blocks import AddFields, AddID, CopyFields
+from src.unitxt.catalog import add_to_catalog
+from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="f1",

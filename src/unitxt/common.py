@@ -5,7 +5,7 @@ from .collections import ItemPicker, RandomPicker
 from .operator import SourceOperator
 from .recipe import Recipe, SequentialRecipe
 from .schema import ToUnitxtGroup
-from .splitters import RandomSampler, SpreadSplit, SeparateSplit, SliceSplit
+from .splitters import RandomSampler, SeparateSplit, SliceSplit, SpreadSplit
 from .stream import MultiStream
 from .templates import RenderTemplatedICL
 

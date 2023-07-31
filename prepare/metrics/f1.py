@@ -1,5 +1,11 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.metrics import F1, F1Macro, F1Micro, F1MacroMultiLabel, F1MicroMultiLabel
+from src.unitxt.metrics import (
+    F1,
+    F1Macro,
+    F1MacroMultiLabel,
+    F1Micro,
+    F1MicroMultiLabel,
+)
 
 metric = F1Macro()
 add_to_catalog(metric, "metrics.f1_macro", overwrite=True)

@@ -4,9 +4,8 @@ import math
 import os.path
 import tempfile
 
-from .. import add_to_catalog
+from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
-from .. import register_local_catalog
 from ..common import CommonRecipe
 from ..metric import _compute
 from ..text_utils import print_dict

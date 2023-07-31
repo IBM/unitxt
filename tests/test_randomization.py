@@ -1,7 +1,7 @@
 import unittest
 
-from src import unitxt
 from datasets import load_dataset
+from src import unitxt
 
 
 class TestExamples(unittest.TestCase):

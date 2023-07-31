@@ -5,3 +5,4 @@ target-version = ['py37']
 [tool.isort]
 profile = "black"
 src_paths = ["isort", "test"]
+skip = ["src/unitxt/dataset.py", "src/unitxt/metric.py"]

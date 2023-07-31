@@ -1,25 +1,25 @@
+import uuid
 from abc import abstractmethod
+from copy import deepcopy
 from dataclasses import field
-from typing import Any, Dict, Generator, Iterable, List, Optional, Union, Tuple
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
-from .text_utils import nested_tuple_to_string
 from .artifact import Artifact, fetch_artifact
+from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
     MultiStreamOperator,
+    PagedStreamOperator,
     SingleStreamOperator,
     SingleStreamReducer,
     StreamingOperator,
     StreamInitializerOperator,
     StreamInstanceOperator,
-    PagedStreamOperator,
 )
-from .stream import MultiStream, Stream
-from .utils import flatten_dict
 from .random_utils import random
-from .dict_utils import dict_get, dict_set, dict_delete, is_subpath
-import uuid
-from copy import deepcopy
+from .stream import MultiStream, Stream
+from .text_utils import nested_tuple_to_string
+from .utils import flatten_dict
 
 
 class FromIterables(StreamInitializerOperator):
