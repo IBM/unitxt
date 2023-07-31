@@ -13,31 +13,6 @@ and how to load or share it with others.
    
       pip install unitxt
 
-The dataset in this tutorial will be processed 
-with a predefined pipeline called The Common Recipe.
-
-The Common Recipe
-------------------
-
-The Common Recipe is a pipeline for processing data based on unique factors 
-associated with the dataset and task. The Common Recipe can prepare the data in different ways, for example,
-through instructions or demonstrations. The arguments of the dataset are given to the 
-Common Recipe to build its pipeline through a component called a Task Card.
-
-.. code-block:: python
-
-    from unitxt.blocks import CommonRecipe
-    from unitxt import load_dataset
-
-    recipe = CommonRecipe(
-        card='cards.wnli',
-        num_demos=5, # The number of demonstrations for in-context learning
-        demos_pool_size=100, # The size of the demonstration pool from which to sample the 5 demonstrations
-        instruction_item=0, # Which instruction from the ones available in the card
-    )
-
-    dataset = load_dataset(recipe)
-
 The Task Card
 ----------------
 
@@ -101,20 +76,8 @@ For example, for `wnli` the card is defined as follows:
    and `AddFields` in the :ref:`lib` unitxt section.
 
 
-Once the card is defined, it can be used to load the dataset as follows:
 
-.. code-block:: python
-
-    recipe = CommonRecipe(
-        card=card, # The card defined above
-        num_demos=5,
-        demos_pool_size=100,
-        instruction_item=0, 
-    )
-
-    dataset = load_dataset(recipe)
-
-However, it is recommended to save the card to a local catalog and load it 
+It is recommended to save the card to a local catalog and load it 
 as explained in the next section.
 
 Adding the Dataset to the Catalog
@@ -139,21 +102,24 @@ Once the card is defined, it can be saved to a local catalog as follows:
    register your new catalog by `unitxt.register_catalog('my_catalog')` 
    or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
 
-
-Then the dataset can be loaded as follows:
+Once the card is defined,a Common Recipe can be used to load the dataset. 
+The Common Recipe can prepare the data in different ways, for example,
+through instructions or demonstrations. 
 
 .. code-block:: python
 
-    from unitxt.load import load_dataset
+    from unitxt.blocks import CommonRecipe
+    from unitxt import load_dataset
 
     recipe = CommonRecipe(
         card='cards.wnli',
-        num_demos=5,
-        demos_pool_size=100,
-        instruction_item=0, 
+        num_demos=5, # The number of demonstrations for in-context learning
+        demos_pool_size=100, # The size of the demonstration pool from which to sample the 5 demonstrations
+        instruction_item=0, # Which instruction from the ones available in the card
     )
 
     dataset = load_dataset(recipe)
+
 
 Or even simpler:
 
