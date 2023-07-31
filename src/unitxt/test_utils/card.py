@@ -35,14 +35,23 @@ def test_loading_from_catalog(card):
 
 
 def load_examples_from_common_recipe(card, tested_split):
-    num_templates = len(card.templates) if card.templates else 0
+    if card.templates:
+        num_templates = len(card.templates)
+
+        try:  # named templates (dict)
+            template_item = next(iter(card.templates.keys()))
+        except AttributeError:  # template list
+            template_item = 0
+    else:
+        num_templates = 0
+        template_item = None
     num_instructions = len(card.instructions) if card.instructions else 0
     recipe = CommonRecipe(
         card=card,
         demos_pool_size=100,
         demos_taken_from=tested_split,
         num_demos=3,
-        template_item=0 if num_templates else None,
+        template_item=template_item,
         instruction_item=0 if num_instructions else None,
     )
     multi_stream = recipe()

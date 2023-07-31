@@ -59,7 +59,7 @@ class LocalCatalog(Catalog):
         assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
             assert (
-                artifact_identifier not in self
+                    artifact_identifier not in self
             ), f"Artifact with name {artifact_identifier} already exists in catalog {self.name}"
         path = self.path(artifact_identifier)
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
@@ -96,7 +96,7 @@ def verify_legal_catalog_name(name):
 
 
 def add_to_catalog(
-    artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False, catalog_path: str = None
+        artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False, catalog_path: str = None
 ):
     if catalog is None:
         if catalog_path is None:
