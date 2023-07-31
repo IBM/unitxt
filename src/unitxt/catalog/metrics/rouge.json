@@ -1,6 +1,6 @@
 {
     "type": "rouge",
-    "metric_name": null,
-    "main_score": null,
+    "metric_name": "rouge",
+    "main_score": "rougeL",
     "scale": 1.0
 }

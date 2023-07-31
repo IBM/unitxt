@@ -1,5 +1,11 @@
 import unittest
-from src.unitxt.text_utils import split_words, is_snake_case, is_camel_case, camel_to_snake_case
+
+from src.unitxt.text_utils import (
+    camel_to_snake_case,
+    is_camel_case,
+    is_snake_case,
+    split_words,
+)
 
 
 class TestTextUtils(unittest.TestCase):

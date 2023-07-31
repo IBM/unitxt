@@ -1,9 +1,10 @@
 import os
 import re
 from pathlib import Path
-import requests
-from .artifact import Artifact, Artifactory
 
+import requests
+
+from .artifact import Artifact, Artifactory
 
 COLLECTION_SEPARATOR = "."
 PATHS_SEP = ":"

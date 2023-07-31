@@ -1,18 +1,18 @@
+from src.unitxt.artifact import Artifact
 from src.unitxt.blocks import (
-    LoadHF,
-    SplitRandomMix,
     AddFields,
-    SequentialRecipe,
-    MapInstanceValues,
     FormTask,
+    LoadHF,
+    MapInstanceValues,
     RenderAutoFormatTemplate,
+    SequentialRecipe,
+    SplitRandomMix,
 )
+from src.unitxt.catalog import add_to_catalog
 
 # from src.unitxt.catalog import add_to_catalog
 from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
-from src.unitxt.artifact import Artifact
-from src.unitxt.catalog import add_to_catalog
 
 recipe = SequentialRecipe(
     steps=[

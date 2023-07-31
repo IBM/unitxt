@@ -1,7 +1,7 @@
+import unittest
+
 from datasets import load_dataset
 from evaluate import load
-
-import unittest
 from src import unitxt
 from src.unitxt.hf_utils import get_missing_imports
 

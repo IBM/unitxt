@@ -1,10 +1,10 @@
-from src.unitxt.blocks import LoadHF, TemplatesList, InputOutputTemplate
+from src.unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
-from src.unitxt.prepare_utils.card_types import create_sentence_classification_card
-from src.unitxt.templates import outputs_inputs2templates
 from src.unitxt.operators import RenameFields
+from src.unitxt.prepare_utils.card_types import create_sentence_classification_card
 from src.unitxt.splitters import RenameSplits
+from src.unitxt.templates import outputs_inputs2templates
+from src.unitxt.test_utils.card import test_card
 
 card = create_sentence_classification_card(
     loader=LoadHF(path="ethos", name="binary"),

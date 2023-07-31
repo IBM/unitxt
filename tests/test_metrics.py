@@ -1,7 +1,15 @@
 import unittest
 
+from src.unitxt.metrics import (
+    F1,
+    Accuracy,
+    F1Macro,
+    F1MacroMultiLabel,
+    F1Micro,
+    F1MicroMultiLabel,
+    Squad,
+)
 from src.unitxt.test_utils.metrics import apply_metric
-from src.unitxt.metrics import Accuracy, Squad, F1, F1Micro, F1Macro, F1MacroMultiLabel, F1MicroMultiLabel
 
 
 class TestMetrics(unittest.TestCase):

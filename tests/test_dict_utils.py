@@ -1,8 +1,6 @@
 import unittest
-from src.unitxt.dict_utils import (
-    dict_get,
-    dict_set,
-)
+
+from src.unitxt.dict_utils import dict_get, dict_set
 
 
 class TestDictUtils(unittest.TestCase):

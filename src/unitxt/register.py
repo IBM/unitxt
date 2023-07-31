@@ -3,9 +3,8 @@ import inspect
 import os
 
 from .artifact import Artifact, Artifactories
-from .catalog import LocalCatalog, GithubCatalog, PATHS_SEP
+from .catalog import PATHS_SEP, GithubCatalog, LocalCatalog
 from .utils import Singleton
-
 
 UNITXT_ARTIFACTORIES_ENV_VAR = "UNITXT_ARTIFACTORIES"
 

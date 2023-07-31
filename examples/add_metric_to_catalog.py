@@ -1,14 +1,7 @@
-from src.unitxt.blocks import (
-    ToString,
-)
-
-from src.unitxt.metrics import (
-    Accuracy,
-)
-from src.unitxt.catalog import (
-    add_to_catalog,
-)
 from src import unitxt
+from src.unitxt.blocks import ToString
+from src.unitxt.catalog import add_to_catalog
+from src.unitxt.metrics import Accuracy
 from src.unitxt.text_utils import print_dict
 
 add_to_catalog(ToString(), "processors.to_string", overwrite=True)

@@ -1,19 +1,18 @@
 from src.unitxt.blocks import (
-    LoadHF,
-    SplitRandomMix,
     AddFields,
-    SequentialRecipe,
-    MapInstanceValues,
     FormTask,
-    SliceSplit,
-    RenderTemplatedICL,
-    SpreadSplit,
-    RandomSampler,
-    NormalizeListFields,
     InputOutputTemplate,
+    LoadHF,
+    MapInstanceValues,
+    NormalizeListFields,
+    RandomSampler,
+    RenderTemplatedICL,
+    SequentialRecipe,
+    SliceSplit,
+    SplitRandomMix,
+    SpreadSplit,
     TextualInstruction,
 )
-
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict

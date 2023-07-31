@@ -1,8 +1,9 @@
+import json
+from typing import List
+
 from ..metrics import Metric
 from ..stream import MultiStream, Stream
 from ..type_utils import isoftype
-from typing import List
-import json
 
 
 def round_floats(obj, precision=2, recursive=True):

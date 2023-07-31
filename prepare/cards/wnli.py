@@ -1,7 +1,15 @@
-from src.unitxt.blocks import LoadHF, SplitRandomMix, AddFields, TaskCard, FormTask, TemplatesList, InputOutputTemplate
+from src.unitxt.blocks import (
+    AddFields,
+    FormTask,
+    InputOutputTemplate,
+    LoadHF,
+    SplitRandomMix,
+    TaskCard,
+    TemplatesList,
+)
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
 from src.unitxt.prepare_utils.card_types import create_2sentences_classification_card
+from src.unitxt.test_utils.card import test_card
 
 card = create_2sentences_classification_card(
     loader=LoadHF(path="glue", name="wnli"),
