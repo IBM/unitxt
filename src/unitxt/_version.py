@@ -19,6 +19,20 @@ import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
 import functools
 
+import versioneer
+
+
+hardcoded_version = 'HARDCODED_VERSION'
+
+
+def get_current_version():
+    try:
+        version = versioneer.get_version()
+        if 'unknown' in version:
+            return hardcoded_version
+        return versioneer.get_version()
+    except:
+        return hardcoded_version
 
 def get_keywords() -> Dict[str, str]:
     """Get the keywords needed to look up the version information."""
