@@ -30,6 +30,9 @@ jobs:
     - name: Install the package that is required for testing and coverage calculation
       run: pip install coverage
 
+    - name: git fetch (including tags)
+      run: git fetch
+
     - name: Generate Report
       run:  coverage run -m unittest
 
