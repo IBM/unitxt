@@ -21,16 +21,6 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
-from unitxt.splitters import RenameSplits
-
-# import huggingface_hub
-# from huggingface_hub.hf_api import DatasetInfo as HFDatasetInfo, HfApi
-# from huggingface_hub import DatasetFilter
-# api = HfApi()
-# analyzer = AnalyzerEngine()
-# datasets = list(api.list_datasets(filter=DatasetFilter(dataset_name='cais/mmlu')))
-# builder = load_dataset_builder(path='cais/mmlu')
-from unitxt.templates import TemplatesDict
 
 subtasks = ["ARC-Challenge", "ARC-Easy"]
 
