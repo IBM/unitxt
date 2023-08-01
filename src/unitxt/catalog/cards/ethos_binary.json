@@ -46,7 +46,7 @@
                     "not hate speech"
                 ]
             },
-            "use_nested_query": false,
+            "use_query": false,
             "use_deepcopy": false
         },
         {
