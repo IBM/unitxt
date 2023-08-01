@@ -2,10 +2,8 @@ import uuid
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import field
-
 from itertools import zip_longest
-from typing import Any, Dict, Generator, Iterable, List, Optional, Union, Tuple
-
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 from .artifact import Artifact, fetch_artifact
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
@@ -145,6 +143,7 @@ class FieldOperator(StreamInstanceOperator):
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False
     """
+
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
@@ -156,10 +155,10 @@ class FieldOperator(StreamInstanceOperator):
 
         assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
         assert (
-                self.to_field is None or self.field_to_field is None
+            self.to_field is None or self.field_to_field is None
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
-                self.field is None or self.field_to_field is None
+            self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
 
     @abstractmethod
@@ -196,6 +195,7 @@ class JoinStr(FieldOperator):
     Args:
         separator (str): text to put between values
     """
+
     separator: str = ","
 
     def process_value(self, value: Any) -> Any:
@@ -204,8 +204,9 @@ class JoinStr(FieldOperator):
 
 class ZipFieldValues(StreamInstanceOperator):
     """
-        Zips values of multiple fields similar to list(zip(*fields))
-        """
+    Zips values of multiple fields similar to list(zip(*fields))
+    """
+
     fields: str
     to_field: str
     longest: bool = False
@@ -225,8 +226,9 @@ class ZipFieldValues(StreamInstanceOperator):
 
 class IndexOf(StreamInstanceOperator):
     """
-        Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)
-        """
+    Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)
+    """
+
     search_in: str
     index_of: str
     to_field: str
@@ -243,6 +245,7 @@ class TakeByField(StreamInstanceOperator):
     """
     Takes value from one field based on another field similar to field[index]
     """
+
     field: str
     index: str
     to_field: str = None
@@ -385,7 +388,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
-                    self.default_operators is not None
+                self.default_operators is not None
             ), f"No operators found in {self.field} field and no default operators provided"
             operator_names = self.default_operators
 
@@ -582,5 +585,3 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
 
         return instance
-
-
