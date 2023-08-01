@@ -161,6 +161,7 @@ class FieldOperator(StreamInstanceOperator):
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
+
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
