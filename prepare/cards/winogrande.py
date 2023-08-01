@@ -50,4 +50,4 @@ for subtask in subtasks:
         templates=MMLU_TEMPLATES
     )
     test_card(card)
-    add_to_catalog(card, f'cards.ai2_arc.{subtask.replace("-", "_")}', overwrite=True)
+    add_to_catalog(card, f'cards.winogrande.{subtask.replace("-", "_")}', overwrite=True)

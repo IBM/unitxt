@@ -4,6 +4,8 @@ from abc import ABCMeta
 from copy import deepcopy
 from typing import Any, final
 
+_FIELDS = "__fields__"
+
 
 @dataclasses.dataclass
 class Field:
@@ -101,7 +103,7 @@ def get_fields(cls, attrs):
         dict: A dictionary mapping field names to Field instances.
     """
 
-    fields = {**getattr(cls, "__fields__", {})}
+    fields = {**getattr(cls, _FIELDS, {})}
     annotations = {**attrs.get("__annotations__", {})}
 
     for attr_name, attr_value in attrs.items():
@@ -152,7 +154,10 @@ def get_fields(cls, attrs):
 
 
 def is_dataclass(obj):
-    return isinstance(obj, Dataclass)
+    """Returns True if obj is a dataclass or an instance of a
+    dataclass."""
+    cls = obj if isinstance(obj, type) else type(obj)
+    return hasattr(cls, _FIELDS)
 
 
 def class_fields(obj):
@@ -161,11 +166,11 @@ def class_fields(obj):
 
 
 def fields(cls):
-    return list(cls.__fields__.values())
+    return list(getattr(cls, _FIELDS).values())
 
 
 def fields_names(cls):
-    return list(cls.__fields__.keys())
+    return list(getattr(cls, _FIELDS).keys())
 
 
 def final_fields(cls):
@@ -226,7 +231,7 @@ class DataclassMeta(ABCMeta):
     @final
     def __init__(cls, name, bases, attrs):
         super().__init__(name, bases, attrs)
-        setattr(cls, "__fields__", get_fields(cls, attrs))
+        setattr(cls, _FIELDS, get_fields(cls, attrs))
 
 
 class Dataclass(metaclass=DataclassMeta):
@@ -319,6 +324,10 @@ class Dataclass(metaclass=DataclassMeta):
                 setattr(self, field.name, get_field_default(field))
 
         self.__post_init__()
+
+    @property
+    def __is_dataclass__(self) -> bool:
+        return True
 
     def __post_init__(self):
         """
