@@ -176,7 +176,7 @@ class Artifact(Dataclass):
 
         if snake_case_key in cls._class_register:
             assert (
-                    cls._class_register[snake_case_key] == artifact_class
+                cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
 
         cls._class_register[snake_case_key] = artifact_class

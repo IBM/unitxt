@@ -1,21 +1,27 @@
 from datasets import load_dataset_builder
-
-from prepare.cards.mmlu import multiple_choice_preprocess, MMLU_TEMPLATES
+from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess
 from src.unitxt.blocks import (
-    LoadHF,
-    SplitRandomMix,
     AddFields,
-    TaskCard,
-    NormalizeListFields,
     FormTask,
-    TemplatesList,
     InputOutputTemplate,
-    MapInstanceValues
+    LoadHF,
+    MapInstanceValues,
+    NormalizeListFields,
+    SplitRandomMix,
+    TaskCard,
+    TemplatesList,
+)
+from src.unitxt.catalog import add_to_catalog
+from src.unitxt.operators import (
+    CastFields,
+    CopyFields,
+    IndexOf,
+    JoinStr,
+    RenameFields,
+    TakeByField,
+    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
-
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import RenameFields, JoinStr, TakeByField, ZipFieldValues, CopyFields, IndexOf, CastFields
 from unitxt.splitters import RenameSplits
 
 # import huggingface_hub
@@ -27,27 +33,29 @@ from unitxt.splitters import RenameSplits
 # builder = load_dataset_builder(path='cais/mmlu')
 from unitxt.templates import TemplatesDict
 
-subtasks = ['debiasex', 'l', 'm', 's', 'xl', 'xs']
+subtasks = ["debiasex", "l", "m", "s", "xl", "xs"]
 
 for subtask in subtasks:
     # numbering=tuple(str(x) for x in range(200))
-    numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    expected_answer = 'number'  # 'number_and_answer' #'number'
+    numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    expected_answer = "number"  # 'number_and_answer' #'number'
 
     card = TaskCard(
-        loader=LoadHF(path='winogrande', name=subtask),
+        loader=LoadHF(path="winogrande", name=subtask),
         preprocess_steps=[
-            AddFields({'topic': 'science', 'numbering':numbering}),
-            ZipFieldValues(fields=['option1', 'option2'], to_field='choices'),
+            AddFields({"topic": "science", "numbering": numbering}),
+            ZipFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "answer"}, cast_to="int"),
-            *multiple_choice_preprocess(numbering='numbering', choices='choices', topic='topic', label_index='answer'),
+            *multiple_choice_preprocess(numbering="numbering", choices="choices", topic="topic", label_index="answer"),
         ],
         task=FormTask(
-            inputs=['choices', 'sentence1', 'numbers', 'topic'],
-            outputs=['label', ],
-            metrics=['metrics.accuracy'],
+            inputs=["choices", "sentence1", "numbers", "topic"],
+            outputs=[
+                "label",
+            ],
+            metrics=["metrics.accuracy"],
         ),
-        templates=MMLU_TEMPLATES
+        templates=MMLU_TEMPLATES,
     )
     test_card(card)
     add_to_catalog(card, f'cards.winogrande.{subtask.replace("-", "_")}', overwrite=True)

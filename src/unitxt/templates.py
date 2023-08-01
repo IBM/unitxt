@@ -172,6 +172,7 @@ class InputOutputTemplate(Template):
     def get_postprocessors(self) -> List[str]:
         return ["to_string"]
 
+
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
