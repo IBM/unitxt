@@ -1,6 +1,6 @@
 from datasets import load_dataset_builder
 
-from prepare.cards.mmlu import MMLU_TEMPLATES
+from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess
 from src.unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
@@ -41,14 +41,17 @@ for subtask in subtasks:
             ZipFieldValues(fields=['sol1', 'sol2'], to_field='choices'),
 
             RenameFields({'goal': 'sentence1'}),
-            ZipFieldValues(fields=['numbering', 'choices'], to_field='choices'),
-            JoinStr(separator='. ', field='choices/*', to_field='choices_list', use_query=True,
-                    process_every_value=True),
-            IndexOf(search_in='numbering', index_of='label', to_field='index'),
-            TakeByField(field='choices_list', index='index', to_field='number_and_answer'),
-            TakeByField(field='numbering', index='index', to_field='number'),
-            JoinStr(separator=',', field='choices/*/0', to_field='numbers', use_query=True),
-            JoinStr(separator=' ', field='choices_list', to_field='choices'),  # field_to_field
+
+            *multiple_choice_preprocess(numbering='numbering', choices='choices', topic='topic', label_index='index'),
+            # ZipFieldValues(fields=['numbering', 'choices'], to_field='choices'),
+            #
+            # JoinStr(separator='. ', field='choices/*', to_field='choices_list', use_query=True,
+            #         process_every_value=True),
+            # IndexOf(search_in='numbering', index_of='label', to_field='index'),
+            # TakeByField(field='choices_list', index='index', to_field='number_and_answer'),
+            # TakeByField(field='numbering', index='index', to_field='number'),
+            # JoinStr(separator=',', field='choices/*/0', to_field='numbers', use_query=True),
+            # JoinStr(separator=' ', field='choices_list', to_field='choices'),  # field_to_field
             RenameFields({expected_answer: 'label'})
         ],
         task=FormTask(

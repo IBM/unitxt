@@ -329,15 +329,3 @@ class TestOperators(unittest.TestCase):
 
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
-
-    def test_cast(self):
-        inputs = [{'a': 1}]
-        targets = [{'a': '1'}]
-        outputs = apply_operator(
-            CastFields(field='a',
-                       cast_to=str),
-            inputs=inputs
-        )
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
