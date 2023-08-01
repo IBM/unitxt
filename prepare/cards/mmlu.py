@@ -18,8 +18,8 @@ from src.unitxt.test_utils.card import test_card
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import TemplatesDict
 from src.unitxt.operators import RenameFields, JoinStr, TakeByField, ZipFieldValues
-from unitxt.operator import StreamingOperator
-from unitxt.splitters import RenameSplits
+from src.unitxt.operator import StreamingOperator
+from src.unitxt.splitters import RenameSplits
 
 # import huggingface_hub
 # from huggingface_hub.hf_api import DatasetInfo as HFDatasetInfo, HfApi
@@ -96,29 +96,34 @@ def multiple_choice_preprocess(numbering: str, choices: str, topic: str, label_i
             JoinStr(separator=" ", field="choices_list", to_field="choices"),  # field_to_field
             RenameFields({expected_answer: "label"})]
 
+def main():
 
-for subtask in subtasks:
-    # numbering=tuple(str(x) for x in range(200))
-    numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    expected_answer = "number"  # "number_and_answer" #"number"
+    for subtask in subtasks:
+        # numbering=tuple(str(x) for x in range(200))
+        numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        expected_answer = "number"  # "number_and_answer" #"number"
 
-    card = TaskCard(
-        loader=LoadHF(path='cais/mmlu', name=subtask),
-        preprocess_steps=[
-            RenameSplits({"auxiliary_train": "train"}),
-            RenameFields({'answer': 'label', 'question': 'sentence1'}),
-            AddFields({"numbering": numbering,
-                       "topic": subtask.replace("_", " ")}),
-            *multiple_choice_preprocess(numbering='numbering', choices='choices', topic='topic', label_index='label',
-                                        expected_answer=expected_answer),
+        card = TaskCard(
+            loader=LoadHF(path='cais/mmlu', name=subtask),
+            preprocess_steps=[
+                RenameSplits({"auxiliary_train": "train"}),
+                RenameFields({'answer': 'label', 'question': 'sentence1'}),
+                AddFields({"numbering": numbering,
+                           "topic": subtask.replace("_", " ")}),
+                *multiple_choice_preprocess(numbering='numbering', choices='choices', topic='topic', label_index='label',
+                                            expected_answer=expected_answer),
 
-        ],
-        task=FormTask(
-            inputs=['choices', 'sentence1', 'topic', 'numbers'],
-            outputs=["label", ],
-            metrics=['metrics.accuracy'],
-        ),
-        templates=MMLU_TEMPLATES
-    )
-    test_card(card)
-    add_to_catalog(card, f'cards.mmlu.{subtask}', overwrite=True)
+            ],
+            task=FormTask(
+                inputs=['choices', 'sentence1', 'topic', 'numbers'],
+                outputs=["label", ],
+                metrics=['metrics.accuracy'],
+            ),
+            templates=MMLU_TEMPLATES
+        )
+        test_card(card)
+        add_to_catalog(card, f'cards.mmlu.{subtask}', overwrite=True)
+
+
+if __name__ == '__main__':
+    main()

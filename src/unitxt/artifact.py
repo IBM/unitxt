@@ -176,7 +176,7 @@ class Artifact(Dataclass):
 
         if snake_case_key in cls._class_register:
             assert (
-                cls._class_register[snake_case_key] == artifact_class
+                    cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
 
         cls._class_register[snake_case_key] = artifact_class
@@ -231,7 +231,7 @@ class Artifact(Dataclass):
     def __post_init__(self):
         self.type = self.register_class(self.__class__)
 
-        self._original_dict = asdict(self)
+        self._init_dict = asdict(self)
 
         for field in fields(self):
             if issubtype(field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]):
@@ -242,12 +242,13 @@ class Artifact(Dataclass):
         self.prepare()
         self.verify()
 
-    def get_original_dict(self):
-        return self._original_dict
+    def get_init_dict(self):
+        return self._init_dict
 
     def save(self, path):
         with open(path, "w") as f:
-            json.dump(self.get_original_dict(), f, indent=4)
+            init_dict = self.get_init_dict()
+            json.dump(init_dict, f, indent=4)
 
 
 class ArtifactList(list, Artifact):
