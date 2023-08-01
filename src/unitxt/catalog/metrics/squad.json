@@ -23,7 +23,7 @@
                     "id": "ID"
                 }
             },
-            "use_nested_query": false,
+            "use_query": false,
             "use_deepcopy": true
         },
         {

@@ -2,6 +2,7 @@ import uuid
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import field
+from itertools import zip_longest
 from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 from .artifact import Artifact, fetch_artifact
@@ -69,7 +70,7 @@ class MapInstanceValues(StreamInstanceOperator):
 
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_nested_query = False
+    use_query = False
 
     def verify(self):
         # make sure the mappers are valid
@@ -80,14 +81,14 @@ class MapInstanceValues(StreamInstanceOperator):
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
-            value = dict_get(instance, key, use_dpath=self.use_nested_query)
+            value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
                 value = str(value)  # make sure the value is a string
                 if self.strict:
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_nested_query)
+                    dict_set(instance, key, mapper[value], use_dpath=self.use_query)
                 else:
                     if value in mapper:
-                        dict_set(instance, key, mapper[value], use_dpath=self.use_nested_query)
+                        dict_set(instance, key, mapper[value], use_dpath=self.use_query)
         return instance
 
 
@@ -116,15 +117,15 @@ class AddFields(StreamInstanceOperator):
     """
 
     fields: Dict[str, object]
-    use_nested_query: bool = False
+    use_query: bool = False
     use_deepcopy: bool = False
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        if self.use_nested_query:
+        if self.use_query:
             for key, value in self.fields.items():
                 if self.use_deepcopy:
                     value = deepcopy(value)
-                dict_set(instance, key, value, use_dpath=self.use_nested_query)
+                dict_set(instance, key, value, use_dpath=self.use_query)
         else:
             if self.use_deepcopy:
                 self.fields = deepcopy(self.fields)
@@ -133,6 +134,16 @@ class AddFields(StreamInstanceOperator):
 
 
 class FieldOperator(StreamInstanceOperator):
+    """
+    A general stream that processes the values of a field (or multiple ones
+    Args:
+        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
+        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operator would happen in-place and replace "field" Defaults to None
+        field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
+        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
+        use_query (bool): Whether to use dpath style queries. Defaults to False
+    """
+
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
@@ -142,11 +153,6 @@ class FieldOperator(StreamInstanceOperator):
     def verify(self):
         super().verify()
 
-    @abstractmethod
-    def process_value(self, value: Any) -> Any:
-        pass
-
-    def prepare(self):
         assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
         assert (
             self.to_field is None or self.field_to_field is None
@@ -154,18 +160,25 @@ class FieldOperator(StreamInstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
+        assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
+
+    def prepare(self):
         if self.to_field is None:
             self.to_field = self.field
         if self.field_to_field is None:
-            self.field_to_field = [(self.field, self.to_field)]
+            self._field_to_field = [(self.field, self.to_field)]
         else:
             try:
-                self.field_to_field = [(k, v) for k, v in self.field_to_field.items()]
+                self._field_to_field = [(k, v) for k, v in self.field_to_field.items()]
             except AttributeError:
-                pass
+                self._field_to_field = self.field_to_field
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        for from_field, to_field in self.field_to_field:
+        for from_field, to_field in self._field_to_field:
             old_value = dict_get(instance, from_field, use_dpath=self.use_query)
             if self.process_every_value:
                 new_value = [self.process_value(value) for value in old_value]
@@ -174,6 +187,79 @@ class FieldOperator(StreamInstanceOperator):
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
+        return instance
+
+
+class JoinStr(FieldOperator):
+    """
+    Joins a list of strings (contents of a field), similar to str.join()
+    Args:
+        separator (str): text to put between values
+    """
+
+    separator: str = ","
+
+    def process_value(self, value: Any) -> Any:
+        return self.separator.join(str(x) for x in value)
+
+
+class ZipFieldValues(StreamInstanceOperator):
+    """
+    Zips values of multiple fields similar to list(zip(*fields))
+    """
+
+    fields: str
+    to_field: str
+    longest: bool = False
+    use_query: bool = False
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        values = []
+        for field in self.fields:
+            values.append(dict_get(instance, field, use_dpath=self.use_query))
+        if self.longest:
+            zipped = zip_longest(*values)
+        else:
+            zipped = zip(*values)
+        instance[self.to_field] = list(zipped)
+        return instance
+
+
+class IndexOf(StreamInstanceOperator):
+    """
+    Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)
+    """
+
+    search_in: str
+    index_of: str
+    to_field: str
+    use_query: bool = False
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        lst = dict_get(instance, self.search_in, use_dpath=self.use_query)
+        item = dict_get(instance, self.index_of, use_dpath=self.use_query)
+        instance[self.to_field] = lst.index(item)
+        return instance
+
+
+class TakeByField(StreamInstanceOperator):
+    """
+    Takes value from one field based on another field similar to field[index]
+    """
+
+    field: str
+    index: str
+    to_field: str = None
+    use_query: bool = False
+
+    def prepare(self):
+        if self.to_field is None:
+            self.to_field = self.field
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        value = dict_get(instance, self.field, use_dpath=self.use_query)
+        index_value = dict_get(instance, self.index, use_dpath=self.use_query)
+        instance[self.to_field] = value[index_value]
         return instance
 
 
@@ -500,21 +586,3 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
 
         return instance
-
-
-class RenameFields(StreamInstanceOperator):
-    """
-    Renames fields
-    Attributes:
-    mapper (Dict[str, str]): old field names to new field names dict
-    """
-
-    mapper: Dict[str, str]
-
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        result = {}
-        # passes on all values to preserve ordering
-        for key, value in instance.items():
-            result[self.mapper.get(key, key)] = value
-        # doesn't warn if unnecessary mapping was supplied for efficiency
-        return result
