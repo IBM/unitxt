@@ -259,18 +259,6 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class CastFields(FieldOperator):
-    """
-    Casts the fields to the given type
-    Args:
-        cast_to:type to cast to
-    """
-    cast_to: type =None
-
-    def process_value(self, value: Any) -> Any:
-        return self.cast_to(value)
-
-
 class CopyFields(FieldOperator):
     """
     Copies specified fields from one field to another.
@@ -596,19 +584,3 @@ class EncodeLabels(StreamInstanceOperator):
         return instance
 
 
-class RenameFields(StreamInstanceOperator):
-    """
-    Renames fields
-    Attributes:
-    mapper (Dict[str, str]): old field names to new field names dict
-    """
-
-    mapper: Dict[str, str]
-
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        result = {}
-        # passes on all values to preserve ordering
-        for key, value in instance.items():
-            result[self.mapper.get(key, key)] = value
-        # doesn't warn if unnecessary mapping was supplied for efficiency
-        return result

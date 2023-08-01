@@ -1,5 +1,6 @@
 from datasets import load_dataset_builder
 
+from prepare.cards.mmlu import multiple_choice_preprocess, MMLU_TEMPLATES
 from src.unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
@@ -36,55 +37,17 @@ for subtask in subtasks:
     card = TaskCard(
         loader=LoadHF(path='winogrande', name=subtask),
         preprocess_steps=[
-            AddFields({'topic': 'science'}),
-            CastFields(field="answer", cast_to=int),
-            RenameFields({'answerKey': 'label', 'sentence': 'sentence1', 'choices': 'choices_struct'}),
-            CopyFields(field_to_field={'choices_struct/text': 'choices', 'choices_struct/label': 'numbering'},
-                       use_query=True),
-            ZipFieldValues(fields=['numbering', 'choices'], to_field='choices'),
-            JoinStr(separator='. ', field='choices/*', to_field='choices_list', use_query=True,
-                    process_every_value=True),
-            IndexOf(search_in='numbering', index_of='label', to_field='index'),
-            TakeByField(field='choices_list', index='index', to_field='number_and_answer'),
-            TakeByField(field='numbering', index='index', to_field='number'),
-            JoinStr(separator=',', field='choices/*/0', to_field='numbers', use_query=True),
-            JoinStr(separator=' ', field='choices_list', to_field='choices'),  # field_to_field
-            RenameFields({expected_answer: 'label'})
+            AddFields({'topic': 'science', 'numbering':numbering}),
+            ZipFieldValues(fields=['option1', 'option2'], to_field='choices'),
+            CastFields(fields={"answer": "answer"}, cast_to="int"),
+            *multiple_choice_preprocess(numbering='numbering', choices='choices', topic='topic', label_index='answer'),
         ],
         task=FormTask(
             inputs=['choices', 'sentence1', 'numbers', 'topic'],
             outputs=['label', ],
             metrics=['metrics.accuracy'],
         ),
-        templates=TemplatesDict({
-            'original': InputOutputTemplate(
-                input_format="""
-                            The following are multiple choice questions (with answers) about {topic}.\n
-                            {sentence1}.\nAnswers: {choices}.\nAnswer:
-                    """.strip(),
-                output_format='{label}',
-            ),
-            "helm": InputOutputTemplate(
-                input_format="""
-                            The following are multiple choice questions (with answers) about {topic}.\n\n
-                            Question: {sentence1}.\nAnswers: {choices}.\nAnswer:
-                    """.strip(),
-                output_format='{label}',
-            ),
-            "lm_eval_harness": InputOutputTemplate(
-                input_format="""
-                            Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:
-                    """.strip(),
-                output_format='{label}',
-            ),
-            "fm-eval": InputOutputTemplate(
-                input_format="""
-                            The following are multiple choice questions (with answers) about {topic}.\n\n
-                            Question: {sentence1}.\nChoose from {numbers}\nAnswers: {choices}.\nAnswer:
-                    """.strip(),
-                output_format='{label}',
-            ),
-        })
+        templates=MMLU_TEMPLATES
     )
     test_card(card)
     add_to_catalog(card, f'cards.ai2_arc.{subtask.replace("-", "_")}', overwrite=True)
