@@ -160,7 +160,7 @@ class FieldOperator(StreamInstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
-
+        assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
@@ -174,7 +174,7 @@ class FieldOperator(StreamInstanceOperator):
             try:
                 self._field_to_field = [(k, v) for k, v in self.field_to_field.items()]
             except AttributeError:
-                pass
+                self._field_to_field = self.field_to_field
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for from_field, to_field in self._field_to_field:

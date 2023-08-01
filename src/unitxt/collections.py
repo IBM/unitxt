@@ -41,7 +41,10 @@ class ItemPicker(Artifact):
     item: object = None
 
     def __call__(self, collection: Collection):
-        return collection[self.item]
+        try:
+            return collection[int(self.item)]
+        except (SyntaxError, KeyError, ValueError) as e:  # in case picking from a dictionary
+            return collection[self.item]
 
 
 class RandomPicker(Artifact):
