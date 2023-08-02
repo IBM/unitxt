@@ -53,7 +53,6 @@ from .type_utils import __file__ as _
 from .hf_utils import __file__ as _
 from .dict_utils import __file__ as _
 from .random_utils import __file__ as _
-from ._version import __file__ as _
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
