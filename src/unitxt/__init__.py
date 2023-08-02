@@ -14,5 +14,4 @@ dataset_url = "unitxt/data"
 metric_url = "unitxt/metric"
 
 from . import _version
-
-__version__ = _version.get_versions()["version"]
+__version__ = _version.get_versions()['version']
