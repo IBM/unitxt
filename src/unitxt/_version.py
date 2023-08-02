@@ -20,17 +20,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import versioneer
 
-hardcoded_version = "HARDCODED_VERSION"
+hardcoded_version = None
 
 
 def get_current_version():
-    try:
-        version = versioneer.get_version()
-        if "unknown" in version:
-            return hardcoded_version
-        return versioneer.get_version()
-    except:
+    if hardcoded_version is not None:
         return hardcoded_version
+    return versioneer.get_version()
 
 
 def get_keywords() -> Dict[str, str]:
