@@ -305,6 +305,8 @@ class Dataclass(metaclass=DataclassMeta):
         init_fields = [field for field in fields(self) if field.init]
         for field, arg in zip(init_fields, args):
             kwargs[field.name] = arg
+            
+        kwargs = {**kwargs}
 
         for field in abstract_fields(self):
             raise AbstractFieldError(
@@ -319,9 +321,12 @@ class Dataclass(metaclass=DataclassMeta):
 
         for field in fields(self):
             if field.name in kwargs:
-                setattr(self, field.name, kwargs[field.name])
+                setattr(self, field.name, kwargs.pop(field.name))
             else:
                 setattr(self, field.name, get_field_default(field))
+                
+        if len(kwargs) > 0:
+            raise TypeError(f"__init__() got an unexpected keyword argument '{list(kwargs.keys())[0]}'")
 
         self.__post_init__()
 
