@@ -173,7 +173,7 @@ class TestDataclass(unittest.TestCase):
             c: int
 
         self.assertListEqual(fields_names(Child), ["a", "b", "c"])
-        
+
         child = Child(b=2, c=3)
 
         with self.subTest("test_parent"):
@@ -242,12 +242,12 @@ class TestDataclass(unittest.TestCase):
         self.assertEqual(child.a, 2)
         self.assertEqual(child.b, 2)
         self.assertEqual(child.c, 3)
-        
+
     def test_raising_unexpected_keyword_argument_error(self):
         class Dummy(Dataclass):
-            b = 1 # not a field!!!
+            b = 1  # not a field!!!
             a: int = 1
-            
+
         self.assertListEqual(fields_names(Dummy), ["a"])
 
         with self.assertRaises(UnexpectedKeywordArgumentError):
