@@ -74,6 +74,10 @@ class TypeMismatchError(TypeError):
     pass
 
 
+class UnexpectedKeywordArgumentError(TypeError):
+    pass
+
+
 standart_variables = dir(object)
 
 
@@ -102,8 +106,9 @@ def get_fields(cls, attrs):
     Returns:
         dict: A dictionary mapping field names to Field instances.
     """
-
-    fields = {**getattr(cls, _FIELDS, {})}
+    fields = {}
+    for base in cls.__bases__:
+        fields = {**getattr(base, _FIELDS, {}), **fields}
     annotations = {**attrs.get("__annotations__", {})}
 
     for attr_name, attr_value in attrs.items():
@@ -305,8 +310,6 @@ class Dataclass(metaclass=DataclassMeta):
         init_fields = [field for field in fields(self) if field.init]
         for field, arg in zip(init_fields, args):
             kwargs[field.name] = arg
-            
-        kwargs = {**kwargs}
 
         for field in abstract_fields(self):
             raise AbstractFieldError(
@@ -318,15 +321,18 @@ class Dataclass(metaclass=DataclassMeta):
                 raise RequiredFieldError(
                     f"Required field '{field.name}' of class {field.origin_cls} not set in {self.__class__.__name__}"
                 )
-
+        
+        unexpected_kwargs = set(kwargs.keys()) - set(fields_names(self))
+        if len(unexpected_kwargs) > 0:
+            raise UnexpectedKeywordArgumentError(
+                f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+            )
+            
         for field in fields(self):
             if field.name in kwargs:
-                setattr(self, field.name, kwargs.pop(field.name))
+                setattr(self, field.name, kwargs[field.name])
             else:
                 setattr(self, field.name, get_field_default(field))
-                
-        if len(kwargs) > 0:
-            raise TypeError(f"__init__() got an unexpected keyword argument '{list(kwargs.keys())[0]}'")
 
         self.__post_init__()
 
