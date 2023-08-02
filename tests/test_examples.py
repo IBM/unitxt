@@ -1,4 +1,3 @@
-import os
 import unittest
 
 import evaluate
@@ -6,10 +5,8 @@ from datasets import load_dataset
 from datasets import load_dataset as load_dataset_hf
 from src import unitxt
 from src.unitxt.text_utils import print_dict
-from tests.unitxt_test_case import setup_unitxt_test_env
 
 
-@setup_unitxt_test_env
 class TestExamples(unittest.TestCase):
     def test_example1(self):
         import examples.example1

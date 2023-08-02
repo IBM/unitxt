@@ -14,7 +14,6 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
 from src.unitxt.operators import AddID, CastFields, CopyFields
-from tests.unitxt_test_case import setup_unitxt_test_env
 
 wnli_recipe = SequentialRecipe(
     steps=[
@@ -109,7 +108,6 @@ spearman_metric = MetricPipeline(
 catalog_path = os.path.join(Path(__file__).parent, "temp_catalog")
 
 
-@setup_unitxt_test_env
 class TestHfCache(unittest.TestCase):
     pass
     # @classmethod
