@@ -321,13 +321,13 @@ class Dataclass(metaclass=DataclassMeta):
                 raise RequiredFieldError(
                     f"Required field '{field.name}' of class {field.origin_cls} not set in {self.__class__.__name__}"
                 )
-        
+
         unexpected_kwargs = set(kwargs.keys()) - set(fields_names(self))
         if len(unexpected_kwargs) > 0:
             raise UnexpectedKeywordArgumentError(
                 f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
             )
-            
+
         for field in fields(self):
             if field.name in kwargs:
                 setattr(self, field.name, kwargs[field.name])
