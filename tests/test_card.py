@@ -11,6 +11,7 @@ from src.unitxt.blocks import (
     TemplatesList,
 )
 from src.unitxt.test_utils.card import test_card
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="wnli"),
@@ -43,6 +44,7 @@ card = TaskCard(
 from src.unitxt.test_utils.card import test_card
 
 
+@setup_unitxt_test_env
 class TestCard(unittest.TestCase):
     def test_card(self):
         test_card(card)

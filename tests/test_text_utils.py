@@ -6,8 +6,10 @@ from src.unitxt.text_utils import (
     is_snake_case,
     split_words,
 )
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestTextUtils(unittest.TestCase):
     def test_split_words(self):
         test_cases = [

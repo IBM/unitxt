@@ -4,8 +4,10 @@ from datasets import load_dataset
 from evaluate import load
 from src import unitxt
 from src.unitxt.hf_utils import get_missing_imports
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class HFTests(unittest.TestCase):
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(unitxt.dataset_file, exclude=["dataset", "__init__"])
