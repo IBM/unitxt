@@ -1,5 +1,4 @@
 import setuptools
-import versioneer
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -9,8 +8,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="unitxt",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version="1.0.17.dev",
     author="IBM Research",
     author_email="elron.bandel@ibm.com",
     description="Load any mixture of text to text data in one line of code",
