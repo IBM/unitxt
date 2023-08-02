@@ -1,9 +1,21 @@
+import importlib
+import inspect
 import uuid
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
-from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from .artifact import Artifact, fetch_artifact
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
