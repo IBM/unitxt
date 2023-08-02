@@ -1,9 +1,21 @@
+import importlib
+import inspect
 import uuid
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
-from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from .artifact import Artifact, fetch_artifact
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
@@ -201,6 +213,115 @@ class JoinStr(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.separator.join(str(x) for x in value)
+
+
+class FunctionFieldOperator(FieldOperator):
+    function_path: str
+    argv_before_value: List[Any] = field(default_factory=list)
+    argv_after_value: List[Any] = field(default_factory=list)
+    value_arg_name: Optional[str] = None
+    kwargs: Dict[str, Any] = field(default_factory=dict)
+    unpack_value_as_list: bool = False
+    unpack_value_as_dict: bool = False
+
+    @abstractmethod
+    def get_function(self) -> Callable:
+        pass
+
+    def verify(self):
+        super().verify()
+        assert (
+            not self.unpack_value_as_list or not self.unpack_value_as_dict
+        ), "Can not unpack value as both list and dict"
+        if self.unpack_value_as_dict or self.unpack_value_as_list:
+            assert self.value_arg_name is None, "Can not unpack value as list or dict without value_arg_name"
+        if self.unpack_value_as_dict:
+            assert len(self.argv_after_value) == 0, "Can not unpack value as dict with argv_after_value"
+        if self.value_arg_name is not None:
+            assert self.value_arg_name not in self.kwargs, f"Value argument {self.value_arg_name} is already in kwargs"
+            assert (
+                len(self.argv_after_value) == 0
+            ), f"Can not use both value argument {self.value_arg_name} and argv_after_value {self.argv_after_value}"
+
+    def prepare(self):
+        super().prepare()
+        self.function = self.get_function()
+        # get argument names
+        signature = inspect.signature(self.function)
+        arg_names = list(signature.parameters.keys())
+        # assert that there are no arguments in kwargs that are not in the function
+        not_in_function = set(self.kwargs.keys()) - set(arg_names)
+        assert len(not_in_function) == 0, f"Arguments {not_in_function} are not in function {self.function_path}"
+        if self.value_arg_name is not None:
+            assert (
+                self.value_arg_name in arg_names
+            ), f"Value argument {self.value_arg_name} is not in function {self.function_path}"
+
+    def get_args(self, value: Any) -> Tuple[List[Any], Dict[str, Any]]:
+        if self.unpack_value_as_dict:
+            kwargs = {**self.kwargs, **value}
+            argv = self.argv_before_value
+        elif self.unpack_value_as_list:
+            argv = self.argv_before_value + value + self.argv_after_value
+            kwargs = self.kwargs
+        elif self.value_arg_name is None:
+            argv = self.argv_before_value + [value] + self.argv_after_value
+            kwargs = self.kwargs
+        else:  # value_arg_name is not None
+            argv = self.argv_before_value
+            kwargs = {self.value_arg_name: value, **self.kwargs}
+
+        return argv, kwargs
+
+    def process_value(self, value: Any) -> Any:
+        argv, kwargs = self.get_args(value)
+
+        result = self.function(*argv, **kwargs)
+
+        return result
+
+
+class SourcedFunctionFieldOperator(FunctionFieldOperator):
+    def get_function(self):
+        function = self.get_source()
+        for part in self.function_path.split("."):
+            function = getattr(function, part)
+        return function
+
+    @abstractmethod
+    def get_source(self):
+        pass
+
+
+class Builtins:
+    def __getattr__(self, name):
+        return __builtins__[name]
+
+
+class PythonFunctionOperator(SourcedFunctionFieldOperator):
+
+    """
+    Applies a python function to a field
+    Args:
+        function (function): function to apply
+    """
+
+    def get_source(self):
+        return Builtins()
+
+
+class LibraryFunctionOperator(SourcedFunctionFieldOperator):
+    """
+    Applies a function from a library to a field
+    Args:
+        library (str): library to import from
+        function (str): function to apply
+    """
+
+    library_name: str
+
+    def get_source(self):
+        return importlib.import_module(self.library_name)
 
 
 class ZipFieldValues(StreamInstanceOperator):
