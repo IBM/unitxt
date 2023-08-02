@@ -32,7 +32,7 @@ jobs:
     
     - name: Update version in setup.py
       run: >-
-        sed -i 's/HARDCODED_VERSION/${{ steps.tag.outputs.TAG_NAME }}/g' src/unitxt/_version.py
+        sed -i 's/hardcoded_version = None/hardcoded_version = "${{ steps.tag.outputs.TAG_NAME }}"/g' src/unitxt/_version.py
     
     - name: Build a binary wheel
       env:
