@@ -2,12 +2,14 @@ import random as python_random
 import unittest
 
 from src.unitxt.random_utils import nested_seed, random
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
 def first_randomization():
     return tuple(random.randint(0, 10000000000000000000000) for _ in range(100))
 
 
+@setup_unitxt_test_env
 class TestRandomUtils(unittest.TestCase):
     def test_nested_level_difference(self):
         with nested_seed():
