@@ -326,6 +326,7 @@ class AddConstant(FieldOperator):
         instance[self.to_field] = result
         return instance
 
+
 class ListFieldValues(StreamInstanceOperator):
     """
     Concatanates values of multiple fields into a list to list(fields)
