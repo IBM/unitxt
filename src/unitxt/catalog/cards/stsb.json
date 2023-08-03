@@ -37,6 +37,9 @@
                 "type": "output_quantizing_template",
                 "input_format": "Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?",
                 "output_format": "{label}",
+                "postprocessors": [
+                    "processors.to_string"
+                ],
                 "quantum": 0.2
             }
         ]

@@ -1,0 +1,13 @@
+{
+    "type": "weighted_fusion",
+    "include_splits": null,
+    "origins": [
+        "recipes.wnli_3_shot",
+        "recipes.wnli_3_shot"
+    ],
+    "weights": [
+        1,
+        1
+    ],
+    "total_examples": 4
+}

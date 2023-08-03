@@ -56,7 +56,10 @@
             "template": {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.to_string"
+                ]
             },
             "random_reference": false
         }

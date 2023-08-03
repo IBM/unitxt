@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import field
 from typing import Any, Dict, List, Union
 
 from .artifact import Artifact
@@ -149,6 +150,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
+    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
         return template.format(**data)
@@ -170,7 +172,7 @@ class InputOutputTemplate(Template):
             )
 
     def get_postprocessors(self) -> List[str]:
-        return ["to_string"]
+        return self.postprocessors
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
@@ -181,6 +183,37 @@ class OutputQuantizingTemplate(InputOutputTemplate):
             key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
         }
         return super().process_outputs(quantized_outputs)
+
+
+class SpanLabelingTemplate(InputOutputTemplate):
+    spans_starts_field: str = "spans_starts"
+    spans_ends_field: str = "spans_ends"
+    text_field: str = "text"
+    labels_field: str = "labels"
+    span_label_format: str = "{span}: {label}"
+    postprocessors = ["processors.extract_pairs"]
+
+    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+        spans_starts = outputs[self.spans_starts_field]
+        spans_ends = outputs[self.spans_ends_field]
+        text = outputs[self.text_field]
+        labels = outputs[self.labels_field]
+
+        spans = []
+        for span_start, span_end, label in zip(spans_starts, spans_ends, labels):
+            spans.append((span_start, span_end, label))
+
+        spans.sort(key=lambda span: span[0])
+
+        text_spans = []
+        for span in spans:
+            text_spans.append(text[span[0] : span[1]])
+
+        targets = []
+        for span, label in zip(text_spans, labels):
+            targets.append(self.span_label_format.format(span=span, label=label))
+
+        return super().process_outputs({"spans_and_labels": targets})
 
 
 class AutoInputOutputTemplate(InputOutputTemplate):

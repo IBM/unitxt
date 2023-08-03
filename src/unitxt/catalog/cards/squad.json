@@ -49,7 +49,10 @@
             {
                 "type": "input_output_template",
                 "input_format": "Given: {context}, answer {question}",
-                "output_format": "{answer}"
+                "output_format": "{answer}",
+                "postprocessors": [
+                    "processors.to_string"
+                ]
             }
         ]
     },

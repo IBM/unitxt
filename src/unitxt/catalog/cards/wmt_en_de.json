@@ -52,7 +52,10 @@
             {
                 "type": "input_output_template",
                 "input_format": "{en}",
-                "output_format": "{de}"
+                "output_format": "{de}",
+                "postprocessors": [
+                    "processors.to_string"
+                ]
             }
         ]
     },
