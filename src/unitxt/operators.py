@@ -206,13 +206,29 @@ class RenameFields(FieldOperator):
                 res.pop(key)
         return res
 
-    # def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-    #     result = {}
-    #     # passes on all values to preserve ordering
-    #     for key, value in instance.items():
-    #         result[self.field_to_field.get(key, key)] = value
-    #     # doesn't warn if unnecessary mapping was supplied for efficiency
-    #     return result
+
+class AddConstant(FieldOperator):
+    """
+    Adds a number, similar to field + add
+    Args:
+        add (float): sum to add
+    """
+
+    add: float
+
+    def process_value(self, value: Any) -> Any:
+        return value + self.add
+
+
+class ShuffleFieldValues(FieldOperator):
+    """
+    Shuffles an iterable value
+    """
+
+    def process_value(self, value: Any) -> Any:
+        res = list(value)
+        random.shuffle(res)
+        return res
 
 
 class JoinStr(FieldOperator):
@@ -325,6 +341,8 @@ class ListFieldValues(StreamInstanceOperator):
             values.append(dict_get(instance, field, use_dpath=self.use_query))
         instance[self.to_field] = values
         return instance
+
+
 class ZipFieldValues(StreamInstanceOperator):
     """
     Zips values of multiple fields similar to list(zip(*fields))

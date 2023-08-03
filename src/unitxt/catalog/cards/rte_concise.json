@@ -33,10 +33,14 @@
         },
         {
             "type": "rename_fields",
-            "mapper": {
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
                 "sentence1": "premise",
                 "sentence2": "hypothesis"
-            }
+            },
+            "process_every_value": false,
+            "use_query": false
         }
     ],
     "templates": "templates.nli",

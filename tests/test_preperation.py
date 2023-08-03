@@ -4,6 +4,10 @@ import os
 import sys
 import unittest
 
+from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+
+register_local_catalog_for_tests()
+
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_prepration_files = glob.glob(glob_query, recursive=True)
