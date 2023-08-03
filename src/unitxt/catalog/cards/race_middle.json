@@ -50,9 +50,9 @@
             "type": "rename_fields",
             "field_to_field": {
                 "numbering": "_numbering",
-                "topic": "topic",
                 "options": "_options",
                 "index": "_index",
+                "topic": "topic",
                 "article": "context",
                 "question": "sentence1"
             }

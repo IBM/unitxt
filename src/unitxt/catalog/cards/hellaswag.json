@@ -222,9 +222,9 @@
             "type": "rename_fields",
             "field_to_field": {
                 "numbering": "_numbering",
-                "activity_label": "topic",
                 "endings": "_endings",
                 "index": "_index",
+                "activity_label": "topic",
                 "ctx": "sentence1"
             }
         },
