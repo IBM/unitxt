@@ -22,7 +22,14 @@
         ]
     },
     "preprocess_steps": [
-        "splitters.small_no_test",
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
         {
             "type": "map_instance_values",
             "mappers": {
@@ -43,17 +50,6 @@
             },
             "use_query": false,
             "use_deepcopy": false
-        },
-        {
-            "type": "rename_fields",
-            "field": null,
-            "to_field": null,
-            "field_to_field": {
-                "sentence1": "sentence1",
-                "sentence2": "sentence2"
-            },
-            "process_every_value": false,
-            "use_query": false
         }
     ],
     "templates": {
