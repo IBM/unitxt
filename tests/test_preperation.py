@@ -3,8 +3,7 @@ import importlib.util
 import os
 import sys
 import unittest
-import importlib.util
-import sys
+
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 register_local_catalog_for_tests()

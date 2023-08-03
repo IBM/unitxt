@@ -150,10 +150,10 @@ class FieldOperator(StreamInstanceOperator):
 
         assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
         assert (
-                self.to_field is None or self.field_to_field is None
+            self.to_field is None or self.field_to_field is None
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
-                self.field is None or self.field_to_field is None
+            self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
 
@@ -327,8 +327,8 @@ class ShuffleFieldValues(FieldOperator):
 
 class ListFieldValues(StreamInstanceOperator):
     """
-        Concatanates values of multiple fields into a list to list(fields)
-        """
+    Concatanates values of multiple fields into a list to list(fields)
+    """
 
     fields: str
     to_field: str
@@ -528,7 +528,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
-                    self.default_operators is not None
+                self.default_operators is not None
             ), f"No operators found in {self.field} field and no default operators provided"
             operator_names = self.default_operators
 
