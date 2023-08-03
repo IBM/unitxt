@@ -18,6 +18,7 @@ from typing import (
 )
 
 from .artifact import Artifact, fetch_artifact
+from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -227,29 +228,46 @@ class JoinStr(FieldOperator):
         return self.separator.join(str(x) for x in value)
 
 
-class AddConstant(FieldOperator):
-    """
-    Adds a number, similar to field + add
-    Args:
-        add (float): sum to add
-    """
+class Apply(StreamInstanceOperator):
+    __allow_unexpected_arguments__ = True
+    function: Callable = NonPositionalField(required=True)
+    to_field: str = NonPositionalField(required=True)
 
-    add: float
+    def function_to_str(self, function: Callable) -> str:
+        return function.__qualname__
 
-    def process_value(self, value: Any) -> Any:
-        return value + self.add
+    def str_to_function(self, function_str: str) -> Callable:
+        splitted = function_str.split(".", 1)
+        if len(splitted) == 1:
+            return getattr(__builtins__, function_str)
+        else:
+            module_name, function_name = splitted
+            if module_name in globals():
+                obj = globals()[module_name]
+            else:
+                obj = importlib.import_module(module_name)
+            for part in function_name.split("."):
+                obj = getattr(obj, part)
+            return obj
 
+    def prepare(self):
+        super().prepare()
+        if isinstance(self.function, str):
+            self.function = self.str_to_function(self.function)
 
-class ShuffleFieldValues(FieldOperator):
-    """
-    Shuffles an iterable value
-    """
+    def get_init_dict(self):
+        result = super().get_init_dict()
+        result["function"] = self.function_to_str(self.function)
+        return result
 
-    def process_value(self, value: Any) -> Any:
-        res = list(value)
-        random.shuffle(res)
-        return res
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        argv = [instance[arg] for arg in self._argv]
+        kwargs = {key: instance[val] for key, val in self._kwargs}
 
+        result = self.function(*argv, **kwargs)
+
+        instance[self.to_field] = result
+        return instance
 
 class ListFieldValues(StreamInstanceOperator):
     """
@@ -266,8 +284,6 @@ class ListFieldValues(StreamInstanceOperator):
             values.append(dict_get(instance, field, use_dpath=self.use_query))
         instance[self.to_field] = values
         return instance
-
-
 class ZipFieldValues(StreamInstanceOperator):
     """
     Zips values of multiple fields similar to list(zip(*fields))
