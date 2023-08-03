@@ -51,9 +51,9 @@
             "type": "rename_fields",
             "field_to_field": {
                 "numbering": "_numbering",
-                "topic": "topic",
                 "choices": "_choices",
                 "label": "_label",
+                "topic": "topic",
                 "goal": "sentence1"
             }
         },
