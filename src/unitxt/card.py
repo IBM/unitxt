@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
 from .artifact import Artifact
+from .collections import Collection
 from .instructions import InstructionsDict, InstructionsList
 from .loaders import Loader
 from .normalizers import NormalizeListFields
@@ -15,8 +16,8 @@ class TaskCard(Artifact):
     loader: Loader
     task: FormTask
     preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None
-    templates: Union[TemplatesList, TemplatesDict] = None
-    instructions: Union[InstructionsList, InstructionsDict] = None
+    templates: Collection = None
+    instructions: Collection = None
 
 
 class ICLCard(Artifact):
