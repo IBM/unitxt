@@ -1,0 +1,80 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "boolq",
+        "name": null,
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "question",
+            "label",
+            "context",
+            "topic"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "add_fields",
+            "fields": {
+                "topic": "boolean questions",
+                "answers": [
+                    "yes",
+                    "false"
+                ]
+            },
+            "use_query": false,
+            "use_deepcopy": false
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "answer": "str"
+            },
+            "failure_defaults": {},
+            "use_nested_query": false,
+            "cast_multiple": false
+        },
+        {
+            "type": "rename_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
+                "question": "question",
+                "answer": "label",
+                "passage": "context",
+                "answers": "answers",
+                "topic": "topic"
+            },
+            "process_every_value": false,
+            "use_query": false
+        },
+        {
+            "type": "join_str",
+            "field": "answers",
+            "to_field": "answers",
+            "field_to_field": null,
+            "process_every_value": false,
+            "use_query": false,
+            "separator": ","
+        }
+    ],
+    "templates": {
+        "clean": {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {question}.\nAnswer:",
+            "output_format": "{label}"
+        }
+    },
+    "instructions": null
+}
