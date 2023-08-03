@@ -1,6 +1,10 @@
 from datasets import load_dataset_builder
-from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess, CONTEXT_MMLU_TEMPLATES, \
-    multiple_choice_inputs_outputs
+from prepare.cards.mmlu import (
+    CONTEXT_MMLU_TEMPLATES,
+    MMLU_TEMPLATES,
+    multiple_choice_inputs_outputs,
+    multiple_choice_preprocess,
+)
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -17,9 +21,11 @@ from src.unitxt.operators import (
     CopyFields,
     IndexOf,
     JoinStr,
+    ListFieldValues,
     RenameFields,
+    ShuffleFieldValues,
     TakeByField,
-    ZipFieldValues, ListFieldValues, ShuffleFieldValues,
+    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -32,27 +38,31 @@ from src.unitxt.test_utils.card import test_card
 # builder = load_dataset_builder(path='cais/mmlu')
 
 # numbering=tuple(str(x) for x in range(200))
-numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-expected_answer = 'number'  # 'number_and_answer' #'number'
+numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+expected_answer = "number"  # 'number_and_answer' #'number'
 
 card = TaskCard(
-    loader=LoadHF(path='sciq'),
+    loader=LoadHF(path="sciq"),
     preprocess_steps=[
-        AddFields({'numbering': numbering, 'topic': 'physical commonsense'}),
-        ListFieldValues(fields=['distractor1', 'distractor2', 'distractor3', 'correct_answer'], to_field='choices'),
-        ShuffleFieldValues(field='choices'),
-        IndexOf(search_in='choices', index_of='correct_answer', to_field='index'),
-
+        AddFields({"numbering": numbering, "topic": "physical commonsense"}),
+        ListFieldValues(fields=["distractor1", "distractor2", "distractor3", "correct_answer"], to_field="choices"),
+        ShuffleFieldValues(field="choices"),
+        IndexOf(search_in="choices", index_of="correct_answer", to_field="index"),
         # ZipFieldValues(fields=['sol1', 'sol2'], to_field='choices'),
-        *multiple_choice_preprocess(context='support', question='question', numbering='numbering', choices='choices',
-                                    topic='topic',
-                                    label_index='index'),
+        *multiple_choice_preprocess(
+            context="support",
+            question="question",
+            numbering="numbering",
+            choices="choices",
+            topic="topic",
+            label_index="index",
+        ),
     ],
     task=FormTask(
         **multiple_choice_inputs_outputs(context=True),
-        metrics=['metrics.accuracy'],
+        metrics=["metrics.accuracy"],
     ),
     templates=CONTEXT_MMLU_TEMPLATES,
 )
 test_card(card)
-add_to_catalog(card, f'cards.piqa', overwrite=True)
+add_to_catalog(card, f"cards.piqa", overwrite=True)

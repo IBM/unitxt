@@ -1,8 +1,9 @@
 import glob
-import os
-import unittest
 import importlib.util
+import os
 import sys
+import unittest
+
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_prepration_files = glob.glob(glob_query, recursive=True)
@@ -22,6 +23,7 @@ def import_module_from_file(file_path):
     spec.loader.exec_module(module)
 
     return module
+
 
 class TestExamples(unittest.TestCase):
     def test_preprations(self):
