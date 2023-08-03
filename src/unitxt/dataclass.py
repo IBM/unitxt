@@ -74,7 +74,7 @@ class TypeMismatchError(TypeError):
     pass
 
 
-class UnexpectedKeywordArgumentError(TypeError):
+class UnexpectedArgumentError(TypeError):
     pass
 
 
@@ -114,10 +114,13 @@ def get_fields(cls, attrs):
     for attr_name, attr_value in attrs.items():
         if attr_name not in annotations and is_possible_field(attr_name, attr_value):
             if attr_name in fields:
-                if not isinstance(attr_value, fields[attr_name].type):
-                    raise TypeMismatchError(
-                        f"Type mismatch for field '{attr_name}' of class '{fields[attr_name].origin_cls}'. Expected {fields[attr_name].type}, got {type(attr_value)}"
-                    )
+                try:
+                    if not isinstance(attr_value, fields[attr_name].type):
+                        raise TypeMismatchError(
+                            f"Type mismatch for field '{attr_name}' of class '{fields[attr_name].origin_cls}'. Expected {fields[attr_name].type}, got {type(attr_value)}"
+                        )
+                except TypeError:
+                    pass
                 annotations[attr_name] = fields[attr_name].type
 
     for field_name, field_type in annotations.items():
@@ -300,15 +303,44 @@ class Dataclass(metaclass=DataclassMeta):
         ```
 
     """
-
+    __allow_unexpected_arguments__ = False
+    
     @final
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *argv, **kwargs):
         """
         Initialize fields based on kwargs.
         Checks for abstract fields when an instance is created.
         """
-        init_fields = [field for field in fields(self) if field.init]
-        for field, arg in zip(init_fields, args):
+        _init_fields = [field for field in fields(self) if field.init]
+        _init_fields_names = [field.name for field in _init_fields]
+        
+        for name in _init_fields_names[:len(argv)]:
+            if name in kwargs:
+                raise TypeError(
+                    f"__init__() got multiple values for argument '{name}'"
+                )
+                
+        unexpected_argv = argv[len(_init_fields):]
+        unexpected_kwargs = {k: v for k, v in kwargs.items() if k not in _init_fields_names}
+        
+        if self.__allow_unexpected_arguments__:
+            
+            self._argv = unexpected_argv
+            self._kwargs = unexpected_kwargs
+        
+        else:
+            
+            if len(unexpected_argv) > 0:
+                raise UnexpectedArgumentError(
+                    f"Unexpected positional argument(s) {unexpected_argv} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+                )
+            
+            if len(unexpected_kwargs) > 0:
+                raise UnexpectedArgumentError(
+                    f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+                )
+        
+        for field, arg in zip(_init_fields, argv):
             kwargs[field.name] = arg
 
         for field in abstract_fields(self):
@@ -322,11 +354,7 @@ class Dataclass(metaclass=DataclassMeta):
                     f"Required field '{field.name}' of class {field.origin_cls} not set in {self.__class__.__name__}"
                 )
 
-        unexpected_kwargs = set(kwargs.keys()) - set(fields_names(self))
-        if len(unexpected_kwargs) > 0:
-            raise UnexpectedKeywordArgumentError(
-                f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
-            )
+       
 
         for field in fields(self):
             if field.name in kwargs:
