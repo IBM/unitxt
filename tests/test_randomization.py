@@ -2,6 +2,9 @@ import unittest
 
 from datasets import load_dataset
 from src import unitxt
+from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+
+register_local_catalog_for_tests()
 
 
 class TestExamples(unittest.TestCase):

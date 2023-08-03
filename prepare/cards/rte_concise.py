@@ -44,7 +44,7 @@ card = TaskCard(
             }
         ),
         RenameFields(
-            {
+            field_to_field={
                 "sentence1": "premise",
                 "sentence2": "hypothesis",
             }
