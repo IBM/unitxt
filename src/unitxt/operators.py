@@ -277,22 +277,38 @@ class AddConstant(FieldOperator):
         add (float): sum to add
     """
 
-    add: float
+    def str_to_function(self, function_str: str) -> Callable:
+        splitted = function_str.split(".", 1)
+        if len(splitted) == 1:
+            return getattr(__builtins__, function_str)
+        else:
+            module_name, function_name = splitted
+            if module_name in globals():
+                obj = globals()[module_name]
+            else:
+                obj = importlib.import_module(module_name)
+            for part in function_name.split("."):
+                obj = getattr(obj, part)
+            return obj
 
-    def process_value(self, value: Any) -> Any:
-        return value + self.add
+    def prepare(self):
+        super().prepare()
+        if isinstance(self.function, str):
+            self.function = self.str_to_function(self.function)
 
+    def get_init_dict(self):
+        result = super().get_init_dict()
+        result["function"] = self.function_to_str(self.function)
+        return result
 
-class ShuffleFieldValues(FieldOperator):
-    """
-    Shuffles an iterable value
-    """
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        argv = [instance[arg] for arg in self._argv]
+        kwargs = {key: instance[val] for key, val in self._kwargs}
 
-    def process_value(self, value: Any) -> Any:
-        res = list(value)
-        random.shuffle(res)
-        return res
+        result = self.function(*argv, **kwargs)
 
+        instance[self.to_field] = result
+        return instance
 
 class ListFieldValues(StreamInstanceOperator):
     """
@@ -309,8 +325,6 @@ class ListFieldValues(StreamInstanceOperator):
             values.append(dict_get(instance, field, use_dpath=self.use_query))
         instance[self.to_field] = values
         return instance
-
-
 class ZipFieldValues(StreamInstanceOperator):
     """
     Zips values of multiple fields similar to list(zip(*fields))
