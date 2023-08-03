@@ -223,7 +223,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        outputs = apply_operator(operator=RenameFields(mapper={"b": "c"}), inputs=inputs)
+        outputs = apply_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs)
 
         for output, target in zip(outputs, targets):
             self.assertDictEqual(output, target)
