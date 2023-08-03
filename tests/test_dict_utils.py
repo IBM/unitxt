@@ -1,8 +1,10 @@
 import unittest
 
 from src.unitxt.dict_utils import dict_get, dict_set
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestDictUtils(unittest.TestCase):
     def test_simple_get(self):
         dic = {"a": 1, "b": 2}

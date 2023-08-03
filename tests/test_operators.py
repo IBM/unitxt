@@ -18,8 +18,10 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.test_utils.operators import apply_operator
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestOperators(unittest.TestCase):
     def test_map_instance_values(self):
         inputs = [

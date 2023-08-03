@@ -2,8 +2,10 @@ import unittest
 
 from src.unitxt.task import MultipleChoiceTask
 from src.unitxt.test_utils.operators import apply_operator
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestTasks(unittest.TestCase):
     def test_multiple_choice_task(self):
         operator = MultipleChoiceTask(
