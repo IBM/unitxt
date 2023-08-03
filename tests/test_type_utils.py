@@ -2,8 +2,10 @@ import typing
 import unittest
 
 from src.unitxt.type_utils import isoftype, issubtype
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestAssertTyping(unittest.TestCase):
     def test_simple_types(self):
         self.assertEqual(isoftype(1, int), True)

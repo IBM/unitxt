@@ -1,6 +1,7 @@
 import os
 import random
 
+from ._version import get_versions
 from .catalog import add_to_catalog
 from .load import load_dataset
 from .register import register_all_artifacts, register_local_catalog
@@ -12,3 +13,6 @@ metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
 
 dataset_url = "unitxt/data"
 metric_url = "unitxt/metric"
+
+
+__version__ = get_versions()["version"]

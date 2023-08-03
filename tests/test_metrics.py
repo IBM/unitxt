@@ -10,8 +10,10 @@ from src.unitxt.metrics import (
     Squad,
 )
 from src.unitxt.test_utils.metrics import apply_metric
+from tests.unitxt_test_case import setup_unitxt_test_env
 
 
+@setup_unitxt_test_env
 class TestMetrics(unittest.TestCase):
     def test_accuracy(self):
         metric = Accuracy()
