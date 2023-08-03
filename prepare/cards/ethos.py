@@ -12,7 +12,7 @@ card = create_sentence_classification_card(
     label2string={"0": "not hate speech", "1": "hate speech"},
     inputs=["text"],
     metrics=["metrics.accuracy"],
-    preprocess_steps=[RenameSplits({"train": "test"}), "splitters.test_only"],
+    preprocess_steps=[RenameSplits(mapper={"train": "test"}), "splitters.test_only"],
     templates=outputs_inputs2templates(
         inputs=[
             """Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.""",

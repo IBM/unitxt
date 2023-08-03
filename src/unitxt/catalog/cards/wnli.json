@@ -46,10 +46,14 @@
         },
         {
             "type": "rename_fields",
-            "mapper": {
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
                 "sentence1": "sentence1",
                 "sentence2": "sentence2"
-            }
+            },
+            "process_every_value": false,
+            "use_query": false
         }
     ],
     "templates": {

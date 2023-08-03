@@ -33,12 +33,12 @@ for subtask in subtasks:
         loader=LoadHF(path="ai2_arc", name=subtask),
         preprocess_steps=[
             AddFields({"topic": "science"}),
-            RenameFields({"answerKey": "label", "question": "sentence1", "choices": "choices_struct"}),
+            RenameFields(field_to_field={"answerKey": "label", "choices": "choices_struct"}),
             CopyFields(
                 field_to_field={"choices_struct/text": "choices", "choices_struct/label": "numbering"}, use_query=True
             ),
             IndexOf(search_in="numbering", index_of="label", to_field="index"),
-            *multiple_choice_preprocess(numbering="numbering", choices="choices", topic="topic", label_index="index"),
+            *multiple_choice_preprocess(question="question", numbering="numbering", choices="choices", topic="topic", label_index="index"),
         ],
         task=FormTask(
             inputs=["choices", "sentence1", "numbers", "topic"],

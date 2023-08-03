@@ -1,7 +1,8 @@
 import glob
 import os
 import unittest
-
+import importlib.util
+import sys
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_prepration_files = glob.glob(glob_query, recursive=True)
@@ -13,8 +14,8 @@ class TestExamples(unittest.TestCase):
         print(f"Testing prepration files: {all_prepration_files}")
         for file in all_prepration_files:
             with self.subTest(file=file):
-                print(f"Testing prepration file: {file}")
+                print(f"Testing preparation file: {file}")
                 with open(file, "r") as f:
                     exec(f.read())
-                print(f"Testing prepration file: {file} passed")
+                print(f"Testing preparation file: {file} passed")
                 self.assertTrue(True)

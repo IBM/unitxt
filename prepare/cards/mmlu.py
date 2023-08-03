@@ -1,16 +1,11 @@
 from typing import List, Union
 
-from datasets import load_dataset_builder
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
@@ -85,41 +80,53 @@ subtasks = [
     "virology",
     "world_religions",
 ]
-MMLU_TEMPLATES = TemplatesDict(
-    {
-        "original": InputOutputTemplate(
-            input_format="""
+templates = {"original": """
                             The following are multiple choice questions (with answers) about {topic}.\n
                             {sentence1}.\nAnswers: {choices}.\nAnswer:
                     """.strip(),
-            output_format="{label}",
-        ),
-        "helm": InputOutputTemplate(
-            input_format="""
+             "helm": """
                             The following are multiple choice questions (with answers) about {topic}.\n\n
                             Question: {sentence1}.\nAnswers: {choices}.\nAnswer:
                     """.strip(),
-            output_format="{label}",
-        ),
-        "lm_eval_harness": InputOutputTemplate(
-            input_format="""
+             "lm_eval_harness": """
                             Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:
                     """.strip(),
-            output_format="{label}",
-        ),
-        "fm-eval": InputOutputTemplate(
-            input_format="""
+             "fm-eval": """
                             The following are multiple choice questions (with answers) about {topic}.\n\n
                             Question: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:
                     """.strip(),
-            output_format="{label}",
-        ),
-    }
+             }
+MMLU_TEMPLATES = TemplatesDict(
+    {key: InputOutputTemplate(
+        input_format=val, output_format="{label}") for key, val in templates.items()}
 )
+CONTEXT_MMLU_TEMPLATES = TemplatesDict(
+    {key: InputOutputTemplate(
+        input_format=val.replace("Question:", "Context: {context}\nQuestion:").replace("{sentence1}",
+                                                                                       "{context}\n{sentence1}"),
+        output_format="{label}") for key, val in templates.items()})
+
+
+
+
+def multiple_choice_outputs():
+    return ["label"]
+
+
+def multiple_choice_inputs_outputs(context=False):
+    return {"inputs": multiple_choice_inputs(context=context), "outputs": multiple_choice_outputs()}
+
+
+def multiple_choice_inputs(context=False):
+    inputs = ['choices', 'sentence1', 'numbers', 'topic']
+    if context:
+        inputs.append('context')
+    return inputs
 
 
 def multiple_choice_preprocess(
-    numbering: str, choices: str, topic: str, label_index: str, expected_answer: str = "number"
+        question: str, numbering: str, choices: str, topic: str, label_index: str, context: str = None,
+        expected_answer: str = "number"
 ) -> List[Union[StreamingOperator, str]]:
     """
     Processing to make a unified format of multiple choice questions
@@ -132,15 +139,22 @@ def multiple_choice_preprocess(
     """
 
     assert expected_answer in ["number", "number_and_answer", "answer"]
+    input_fields = [numbering, topic, choices, label_index]
+    renames = {field: "_" + field for field in input_fields}
+    renames["topic"] = topic
+    if context:
+        renames[context] = "context"
+    renames[question] = "sentence1"
     return [
-        TakeByField(field=numbering, index=label_index, to_field="number"),
-        TakeByField(field=choices, index=label_index, to_field="answer"),
-        ZipFieldValues(fields=[numbering, choices], to_field="choices"),
+        RenameFields(field_to_field=renames),
+        TakeByField(field=renames[numbering], index=renames[label_index], to_field="number"),
+        TakeByField(field=renames[choices], index=renames[label_index], to_field="answer"),
+        ZipFieldValues(fields=[renames[numbering], renames[choices]], to_field="choices"),
         JoinStr(separator=". ", field="choices/*", to_field="choices_list", use_query=True, process_every_value=True),
-        TakeByField(field="choices_list", index=label_index, to_field="number_and_answer"),
+        TakeByField(field="choices_list", index=renames[label_index], to_field="number_and_answer"),
         JoinStr(separator=",", field="choices/*/0", to_field="numbers", use_query=True),
         JoinStr(separator=" ", field="choices_list", to_field="choices"),  # field_to_field
-        RenameFields({expected_answer: "label"}),
+        RenameFields(field_to_field={expected_answer: "label"}),
     ]
 
 
@@ -154,23 +168,13 @@ def main():
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
                 RenameSplits({"auxiliary_train": "train"}),
-                RenameFields({"answer": "label", "question": "sentence1"}),
                 AddFields({"numbering": numbering, "topic": subtask.replace("_", " ")}),
-                *multiple_choice_preprocess(
-                    numbering="numbering",
-                    choices="choices",
-                    topic="topic",
-                    label_index="label",
-                    expected_answer=expected_answer,
-                ),
+                *multiple_choice_preprocess(question="question", numbering="numbering", choices="choices",
+                                            topic="topic", label_index="answer", expected_answer=expected_answer),
             ],
-            task=FormTask(
-                inputs=["choices", "sentence1", "topic", "numbers"],
-                outputs=[
-                    "label",
-                ],
-                metrics=["metrics.accuracy"],
-            ),
+            task=FormTask(**multiple_choice_inputs_outputs(),
+                          metrics=["metrics.accuracy"],
+                          ),
             templates=MMLU_TEMPLATES,
         )
         test_card(card)

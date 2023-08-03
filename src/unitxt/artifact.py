@@ -215,11 +215,13 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path):
-        with open(path, "r") as f:
-            d = json.load(f)
-
-        assert "type" in d, "Saved artifact must have a type field"
-        return cls._recursive_load(d)
+        try:
+            with open(path, "r") as f:
+                d = json.load(f)
+            assert "type" in d, "Saved artifact must have a type field"
+            return cls._recursive_load(d)
+        except Exception as e:
+            raise IOError(f"Failed loading {cls.type} from {path}")
 
     def prepare(self):
         pass

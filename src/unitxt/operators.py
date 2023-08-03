@@ -35,24 +35,6 @@ class FromIterables(StreamInitializerOperator):
         return MultiStream.from_iterables(iterables)
 
 
-class RenameFields(StreamInstanceOperator):
-    """
-    Renames fields
-    Attributes:
-    mapper (Dict[str, str]): old field names to new field names dict
-    """
-
-    mapper: Dict[str, str]
-
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        result = {}
-        # passes on all values to preserve ordering
-        for key, value in instance.items():
-            result[self.mapper.get(key, key)] = value
-        # doesn't warn if unnecessary mapping was supplied for efficiency
-        return result
-
-
 class MapInstanceValues(StreamInstanceOperator):
     """A class used to map instance values into a stream.
 
@@ -155,10 +137,10 @@ class FieldOperator(StreamInstanceOperator):
 
         assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
         assert (
-            self.to_field is None or self.field_to_field is None
+                self.to_field is None or self.field_to_field is None
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
-            self.field is None or self.field_to_field is None
+                self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
 
@@ -179,7 +161,10 @@ class FieldOperator(StreamInstanceOperator):
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for from_field, to_field in self._field_to_field:
-            old_value = dict_get(instance, from_field, use_dpath=self.use_query)
+            try:
+                old_value = dict_get(instance, from_field, use_dpath=self.use_query)
+            except TypeError as e:
+                raise TypeError(f"Failed to get {from_field} from {instance}")
             if self.process_every_value:
                 new_value = [self.process_value(value) for value in old_value]
             else:
@@ -188,6 +173,33 @@ class FieldOperator(StreamInstanceOperator):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
         return instance
+
+
+class RenameFields(FieldOperator):
+    """
+    Renames fields
+    """
+
+    def process_value(self, value: Any) -> Any:
+        return value
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        res = super().process(instance=instance, stream_name=stream_name)
+        vals = [x[1] for x in self._field_to_field]
+        for key, _ in self._field_to_field:
+            if self.use_query and "/" in key:
+                continue
+            if key not in vals:
+                res.pop(key)
+        return res
+
+    # def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    #     result = {}
+    #     # passes on all values to preserve ordering
+    #     for key, value in instance.items():
+    #         result[self.field_to_field.get(key, key)] = value
+    #     # doesn't warn if unnecessary mapping was supplied for efficiency
+    #     return result
 
 
 class JoinStr(FieldOperator):
@@ -201,6 +213,47 @@ class JoinStr(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.separator.join(str(x) for x in value)
+
+
+class AddConstant(FieldOperator):
+    """
+    Adds a number, similar to field + add
+    Args:
+        add (float): sum to add
+    """
+
+    add: float
+
+    def process_value(self, value: Any) -> Any:
+        return value + self.add
+
+
+class ShuffleFieldValues(FieldOperator):
+    """
+    Shuffles an iterable value
+    """
+
+    def process_value(self, value: Any) -> Any:
+        res = list(value)
+        random.shuffle(res)
+        return res
+
+
+class ListFieldValues(StreamInstanceOperator):
+    """
+        Concatanates values of multiple fields into a list to list(fields)
+        """
+
+    fields: str
+    to_field: str
+    use_query: bool = False
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        values = []
+        for field in self.fields:
+            values.append(dict_get(instance, field, use_dpath=self.use_query))
+        instance[self.to_field] = values
+        return instance
 
 
 class ZipFieldValues(StreamInstanceOperator):
@@ -389,7 +442,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
-                self.default_operators is not None
+                    self.default_operators is not None
             ), f"No operators found in {self.field} field and no default operators provided"
             operator_names = self.default_operators
 
