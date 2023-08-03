@@ -27,10 +27,12 @@ class Field:
     name: str = None
     type: type = None
     init: bool = True
+    also_positional: bool = True
     default_factory: Any = None
     final: bool = False
     abstract: bool = False
     required: bool = False
+    internal: bool = False
     origin_cls: type = None
 
     def get_default(self):
@@ -56,6 +58,20 @@ class RequiredField(Field):
 class AbstractField(Field):
     def __post_init__(self):
         self.abstract = True
+
+
+@dataclasses.dataclass
+class NonPositionalField(Field):
+    def __post_init__(self):
+        self.also_positional = False
+
+
+@dataclasses.dataclass
+class InternalField(Field):
+    def __post_init__(self):
+        self.internal = True
+        self.init = False
+        self.also_positional = False
 
 
 class FinalFieldError(TypeError):
@@ -157,6 +173,10 @@ def get_fields(cls, attrs):
 
         field_instance = Field(**args)
         fields[field_name] = field_instance
+
+        if cls.__allow_unexpected_arguments__:
+            fields["_argv"] = InternalField(name="_argv", type=tuple, default=())
+            fields["_kwargs"] = InternalField(name="_kwargs", type=dict, default={})
 
     return fields
 
@@ -303,8 +323,9 @@ class Dataclass(metaclass=DataclassMeta):
         ```
 
     """
+
     __allow_unexpected_arguments__ = False
-    
+
     @final
     def __init__(self, *argv, **kwargs):
         """
@@ -313,35 +334,36 @@ class Dataclass(metaclass=DataclassMeta):
         """
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
-        
-        for name in _init_fields_names[:len(argv)]:
+        _init_positional_fields_names = [field.name for field in _init_fields if field.also_positional]
+
+        for name in _init_positional_fields_names[: len(argv)]:
             if name in kwargs:
-                raise TypeError(
-                    f"__init__() got multiple values for argument '{name}'"
-                )
-                
-        unexpected_argv = argv[len(_init_fields):]
+                raise TypeError(f"{self.__class__.__name__} got multiple values for argument '{name}'")
+
+        if len(argv) <= len(_init_positional_fields_names):
+            unexpected_argv = []
+        else:
+            unexpected_argv = argv[len(_init_positional_fields_names) :]
+
         unexpected_kwargs = {k: v for k, v in kwargs.items() if k not in _init_fields_names}
-        
+
         if self.__allow_unexpected_arguments__:
-            
             self._argv = unexpected_argv
             self._kwargs = unexpected_kwargs
-        
+
         else:
-            
             if len(unexpected_argv) > 0:
                 raise UnexpectedArgumentError(
-                    f"Unexpected positional argument(s) {unexpected_argv} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+                    f"Too many positional arguments {unexpected_argv} for class {self.__class__.__name__}.\nShould be only {len(_init_positional_fields_names)} positional arguments: {', '.join(_init_positional_fields_names)}"
                 )
-            
+
             if len(unexpected_kwargs) > 0:
                 raise UnexpectedArgumentError(
                     f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
                 )
-        
-        for field, arg in zip(_init_fields, argv):
-            kwargs[field.name] = arg
+
+        for name, arg in zip(_init_positional_fields_names, argv):
+            kwargs[name] = arg
 
         for field in abstract_fields(self):
             raise AbstractFieldError(
@@ -354,12 +376,12 @@ class Dataclass(metaclass=DataclassMeta):
                     f"Required field '{field.name}' of class {field.origin_cls} not set in {self.__class__.__name__}"
                 )
 
-       
-
         for field in fields(self):
             if field.name in kwargs:
                 setattr(self, field.name, kwargs[field.name])
             else:
+                if field.name in ["_argv", "_kwargs"] and self.__allow_unexpected_arguments__:
+                    continue
                 setattr(self, field.name, get_field_default(field))
 
         self.__post_init__()
