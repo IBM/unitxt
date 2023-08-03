@@ -33,11 +33,14 @@
         },
         {
             "type": "rename_fields",
-            "mapper": {
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
                 "answerKey": "label",
-                "question": "sentence1",
                 "choices": "choices_struct"
-            }
+            },
+            "process_every_value": false,
+            "use_query": false
         },
         {
             "type": "copy_fields",
@@ -58,24 +61,38 @@
             "use_query": false
         },
         {
+            "type": "rename_fields",
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
+                "numbering": "_numbering",
+                "topic": "topic",
+                "choices": "_choices",
+                "index": "_index",
+                "question": "sentence1"
+            },
+            "process_every_value": false,
+            "use_query": false
+        },
+        {
             "type": "take_by_field",
-            "field": "numbering",
-            "index": "index",
+            "field": "_numbering",
+            "index": "_index",
             "to_field": "number",
             "use_query": false
         },
         {
             "type": "take_by_field",
-            "field": "choices",
-            "index": "index",
+            "field": "_choices",
+            "index": "_index",
             "to_field": "answer",
             "use_query": false
         },
         {
             "type": "zip_field_values",
             "fields": [
-                "numbering",
-                "choices"
+                "_numbering",
+                "_choices"
             ],
             "to_field": "choices",
             "longest": false,
@@ -93,7 +110,7 @@
         {
             "type": "take_by_field",
             "field": "choices_list",
-            "index": "index",
+            "index": "_index",
             "to_field": "number_and_answer",
             "use_query": false
         },
@@ -117,9 +134,13 @@
         },
         {
             "type": "rename_fields",
-            "mapper": {
+            "field": null,
+            "to_field": null,
+            "field_to_field": {
                 "number": "label"
-            }
+            },
+            "process_every_value": false,
+            "use_query": false
         }
     ],
     "templates": {

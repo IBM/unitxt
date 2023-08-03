@@ -286,47 +286,6 @@ class Apply(StreamInstanceOperator):
         return instance
 
 
-class AddConstant(FieldOperator):
-    """
-    Adds a number, similar to field + add
-    Args:
-        add (float): sum to add
-    """
-
-    def str_to_function(self, function_str: str) -> Callable:
-        splitted = function_str.split(".", 1)
-        if len(splitted) == 1:
-            return getattr(__builtins__, function_str)
-        else:
-            module_name, function_name = splitted
-            if module_name in globals():
-                obj = globals()[module_name]
-            else:
-                obj = importlib.import_module(module_name)
-            for part in function_name.split("."):
-                obj = getattr(obj, part)
-            return obj
-
-    def prepare(self):
-        super().prepare()
-        if isinstance(self.function, str):
-            self.function = self.str_to_function(self.function)
-
-    def get_init_dict(self):
-        result = super().get_init_dict()
-        result["function"] = self.function_to_str(self.function)
-        return result
-
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        argv = [instance[arg] for arg in self._argv]
-        kwargs = {key: instance[val] for key, val in self._kwargs}
-
-        result = self.function(*argv, **kwargs)
-
-        instance[self.to_field] = result
-        return instance
-
-
 class ListFieldValues(StreamInstanceOperator):
     """
     Concatanates values of multiple fields into a list to list(fields)
