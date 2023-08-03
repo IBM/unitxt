@@ -1,9 +1,5 @@
 from datasets import load_dataset_builder
-from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
-    multiple_choice_inputs_outputs,
-    multiple_choice_preprocess,
-)
+from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess, multiple_choice_inputs_outputs
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -17,39 +13,36 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
-    AddConstant,
     CastFields,
     CopyFields,
     IndexOf,
     JoinStr,
-    ListFieldValues,
     RenameFields,
     TakeByField,
-    ZipFieldValues,
+    ZipFieldValues, ListFieldValues, AddConstant,
 )
 from src.unitxt.test_utils.card import test_card
 
-subtasks = ["debiased", "l", "m", "s", "xl", "xs"]
+subtasks = ['debiased', 'l', 'm', 's', 'xl', 'xs']
 
 for subtask in subtasks:
     # numbering=tuple(str(x) for x in range(200))
-    numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    expected_answer = "number"  # 'number_and_answer' #'number'
+    numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    expected_answer = 'number'  # 'number_and_answer' #'number'
 
     card = TaskCard(
-        loader=LoadHF(path="winogrande", name=f"winogrande_{subtask}"),
+        loader=LoadHF(path='winogrande', name=f'winogrande_{subtask}'),
         preprocess_steps=[
-            AddFields({"topic": "common sense", "numbering": numbering}),
-            ListFieldValues(fields=["option1", "option2"], to_field="choices"),
-            CastFields(fields={"answer": "int"}),
+            AddFields({'topic': 'common sense', 'numbering': numbering}),
+            ListFieldValues(fields=['option1', 'option2'], to_field='choices'),
+            CastFields(fields={'answer': 'int'}),
             AddConstant(field="answer", add=-1),
-            *multiple_choice_preprocess(
-                question="sentence", numbering="numbering", choices="choices", topic="topic", label_index="answer"
-            ),
+            *multiple_choice_preprocess(question="sentence", numbering='numbering', choices='choices', topic='topic',
+                                        label_index='answer'),
         ],
         task=FormTask(
             **multiple_choice_inputs_outputs(),
-            metrics=["metrics.accuracy"],
+            metrics=['metrics.accuracy'],
         ),
         templates=MMLU_TEMPLATES,
     )

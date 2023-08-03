@@ -16,10 +16,9 @@ from src.unitxt.operators import (
     CopyFields,
     IndexOf,
     JoinStr,
-    ListFieldValues,
     RenameFields,
     TakeByField,
-    ZipFieldValues,
+    ZipFieldValues, ListFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -41,9 +40,8 @@ card = TaskCard(
         AddFields({"numbering": numbering, "topic": "physical commonsense"}),
         ListFieldValues(fields=["sol1", "sol2"], to_field="choices"),
         # ZipFieldValues(fields=["sol1", "sol2"], to_field="choices"),
-        *multiple_choice_preprocess(
-            question="goal", numbering="numbering", choices="choices", topic="topic", label_index="label"
-        ),
+        *multiple_choice_preprocess(question="goal", numbering="numbering", choices="choices", topic="topic",
+                                    label_index="label"),
     ],
     task=FormTask(
         inputs=["choices", "sentence1", "numbers", "topic"],
@@ -55,4 +53,4 @@ card = TaskCard(
     templates=MMLU_TEMPLATES,
 )
 test_card(card)
-add_to_catalog(card, f"cards.piqa", overwrite=True)
+add_to_catalog(card, f'cards.piqa', overwrite=True)

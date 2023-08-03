@@ -22,21 +22,22 @@ def addClassificationChoices(label_name, label2string):
 
 
 def create_2sentences_classification_card(
-    loader: Loader,
-    label_name: str,
-    label2string: Dict,
-    inputs: List[str],
-    metrics: List[str] = tuple("accuracy"),
-    task: FormTask = None,
-    preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None,
-    templates: Union[TemplatesList, TemplatesDict] = None,
-    instructions: Union[InstructionsList, InstructionsDict] = None,
+        loader: Loader,
+        label_name: str,
+        label2string: Dict,
+        inputs: List[str],
+        metrics: List[str] = tuple("accuracy"),
+        task: FormTask = None,
+        preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None,
+        templates: Union[TemplatesList, TemplatesDict] = None,
+        instructions: Union[InstructionsList, InstructionsDict] = None,
 ) -> TaskCard:
     assert len(inputs) == 2, f"expected only 2 columns as input but received {inputs}"
     sentence1_col = "sentence1"
     sentence2_col = "sentence2"
     preprocess_steps += [
         *addClassificationChoices(label_name, label2string),
+        RenameFields(field_to_field={inputs[0]: sentence1_col, inputs[1]: sentence2_col}),
         RenameFields(field_to_field={inputs[0]: sentence1_col, inputs[1]: sentence2_col}),
     ]
     if task is None:
@@ -47,15 +48,15 @@ def create_2sentences_classification_card(
 
 
 def create_sentence_classification_card(
-    loader: Loader,
-    label_name: str,
-    label2string: Dict,
-    inputs: List[str],
-    metrics: List[str] = tuple("accuracy"),
-    task: FormTask = None,
-    preprocess_steps: Optional[List[StreamingOperator]] = None,
-    templates: Union[TemplatesList, TemplatesDict] = None,
-    instructions: Union[InstructionsList, InstructionsDict] = None,
+        loader: Loader,
+        label_name: str,
+        label2string: Dict,
+        inputs: List[str],
+        metrics: List[str] = tuple("accuracy"),
+        task: FormTask = None,
+        preprocess_steps: Optional[List[StreamingOperator]] = None,
+        templates: Union[TemplatesList, TemplatesDict] = None,
+        instructions: Union[InstructionsList, InstructionsDict] = None,
 ) -> TaskCard:
     """
 
@@ -73,10 +74,7 @@ def create_sentence_classification_card(
     # TODO labels should be deduced by default
     assert len(inputs) == 1, f"expected only 1 column as input but recieved {inputs}"
     sentence_col = "sentence1"
-    preprocess_steps += [
-        *addClassificationChoices(label_name, label2string),
-        RenameFields(field_to_field={inputs[0]: sentence_col}),
-    ]
+    preprocess_steps += [*addClassificationChoices(label_name, label2string), RenameFields(field_to_field={inputs[0]: sentence_col})]
     if task is None:
         task = FormTask(inputs=["choices"] + [sentence_col], outputs=[label_name], metrics=metrics)
         return TaskCard(

@@ -1,9 +1,5 @@
 from datasets import load_dataset_builder
-from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
-    multiple_choice_inputs_outputs,
-    multiple_choice_preprocess,
-)
+from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -26,24 +22,30 @@ from src.unitxt.operators import (
 )
 from src.unitxt.test_utils.card import test_card
 
-numbering = tuple(str(x) for x in range(200))
-# numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+# numbering=tuple(str(x) for x in range(200))
+numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 expected_answer = "number"  # 'number_and_answer' #'number'
 
 card = TaskCard(
     loader=LoadHF(path="hellaswag"),
     preprocess_steps=[
-        AddFields({"numbering": numbering}),
-        IndexOf(search_in="numbering", index_of="label", to_field="index"),
-        *multiple_choice_preprocess(
-            question="ctx", numbering="numbering", choices="endings", topic="activity_label", label_index="index"
+        AddFields({"topic": "activity_label"}),
+        RenameFields(field_to_field={"answerKey": "label", "choices": "choices_struct"}),
+        CopyFields(
+            field_to_field={"choices_struct/text": "choices", "choices_struct/label": "numbering"}, use_query=True
         ),
+        IndexOf(search_in="numbering", index_of="label", to_field="index"),
+        *multiple_choice_preprocess(question="question", numbering="numbering", choices="choices", topic="topic",
+                                    label_index="index"),
     ],
     task=FormTask(
-        **multiple_choice_inputs_outputs(),
+        inputs=["choices", "sentence1", "numbers", "topic"],
+        outputs=[
+            "label",
+        ],
         metrics=["metrics.accuracy"],
     ),
     templates=MMLU_TEMPLATES,
 )
 test_card(card)
-add_to_catalog(card, f"cards.hellaswag", overwrite=True)
+add_to_catalog(card, f'cards.hellaswag', overwrite=True)
