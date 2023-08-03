@@ -18,6 +18,7 @@ from typing import (
 )
 
 from .artifact import Artifact, fetch_artifact
+from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -215,113 +216,46 @@ class JoinStr(FieldOperator):
         return self.separator.join(str(x) for x in value)
 
 
-class FunctionFieldOperator(FieldOperator):
-    function_path: str
-    argv_before_value: List[Any] = field(default_factory=list)
-    argv_after_value: List[Any] = field(default_factory=list)
-    value_arg_name: Optional[str] = None
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    unpack_value_as_list: bool = False
-    unpack_value_as_dict: bool = False
+class Apply(StreamInstanceOperator):
+    __allow_unexpected_arguments__ = True
+    function: Callable = NonPositionalField(required=True)
+    to_field: str = NonPositionalField(required=True)
 
-    @abstractmethod
-    def get_function(self) -> Callable:
-        pass
+    def function_to_str(self, function: Callable) -> str:
+        return function.__qualname__
 
-    def verify(self):
-        super().verify()
-        assert (
-            not self.unpack_value_as_list or not self.unpack_value_as_dict
-        ), "Can not unpack value as both list and dict"
-        if self.unpack_value_as_dict or self.unpack_value_as_list:
-            assert self.value_arg_name is None, "Can not unpack value as list or dict without value_arg_name"
-        if self.unpack_value_as_dict:
-            assert len(self.argv_after_value) == 0, "Can not unpack value as dict with argv_after_value"
-        if self.value_arg_name is not None:
-            assert self.value_arg_name not in self.kwargs, f"Value argument {self.value_arg_name} is already in kwargs"
-            assert (
-                len(self.argv_after_value) == 0
-            ), f"Can not use both value argument {self.value_arg_name} and argv_after_value {self.argv_after_value}"
+    def str_to_function(self, function_str: str) -> Callable:
+        splitted = function_str.split(".", 1)
+        if len(splitted) == 1:
+            return getattr(__builtins__, function_str)
+        else:
+            module_name, function_name = splitted
+            if module_name in globals():
+                obj = globals()[module_name]
+            else:
+                obj = importlib.import_module(module_name)
+            for part in function_name.split("."):
+                obj = getattr(obj, part)
+            return obj
 
     def prepare(self):
         super().prepare()
-        self.function = self.get_function()
-        # get argument names
-        signature = inspect.signature(self.function)
-        arg_names = list(signature.parameters.keys())
-        # assert that there are no arguments in kwargs that are not in the function
-        not_in_function = set(self.kwargs.keys()) - set(arg_names)
-        assert len(not_in_function) == 0, f"Arguments {not_in_function} are not in function {self.function_path}"
-        if self.value_arg_name is not None:
-            assert (
-                self.value_arg_name in arg_names
-            ), f"Value argument {self.value_arg_name} is not in function {self.function_path}"
+        if isinstance(self.function, str):
+            self.function = self.str_to_function(self.function)
 
-    def get_args(self, value: Any) -> Tuple[List[Any], Dict[str, Any]]:
-        if self.unpack_value_as_dict:
-            kwargs = {**self.kwargs, **value}
-            argv = self.argv_before_value
-        elif self.unpack_value_as_list:
-            argv = self.argv_before_value + value + self.argv_after_value
-            kwargs = self.kwargs
-        elif self.value_arg_name is None:
-            argv = self.argv_before_value + [value] + self.argv_after_value
-            kwargs = self.kwargs
-        else:  # value_arg_name is not None
-            argv = self.argv_before_value
-            kwargs = {self.value_arg_name: value, **self.kwargs}
+    def get_init_dict(self):
+        result = super().get_init_dict()
+        result["function"] = self.function_to_str(self.function)
+        return result
 
-        return argv, kwargs
-
-    def process_value(self, value: Any) -> Any:
-        argv, kwargs = self.get_args(value)
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        argv = [instance[arg] for arg in self._argv]
+        kwargs = {key: instance[val] for key, val in self._kwargs}
 
         result = self.function(*argv, **kwargs)
 
-        return result
-
-
-class SourcedFunctionFieldOperator(FunctionFieldOperator):
-    def get_function(self):
-        function = self.get_source()
-        for part in self.function_path.split("."):
-            function = getattr(function, part)
-        return function
-
-    @abstractmethod
-    def get_source(self):
-        pass
-
-
-class Builtins:
-    def __getattr__(self, name):
-        return __builtins__[name]
-
-
-class PythonFunctionOperator(SourcedFunctionFieldOperator):
-
-    """
-    Applies a python function to a field
-    Args:
-        function (function): function to apply
-    """
-
-    def get_source(self):
-        return Builtins()
-
-
-class LibraryFunctionOperator(SourcedFunctionFieldOperator):
-    """
-    Applies a function from a library to a field
-    Args:
-        library (str): library to import from
-        function (str): function to apply
-    """
-
-    library_name: str
-
-    def get_source(self):
-        return importlib.import_module(self.library_name)
+        instance[self.to_field] = result
+        return instance
 
 
 class ZipFieldValues(StreamInstanceOperator):
