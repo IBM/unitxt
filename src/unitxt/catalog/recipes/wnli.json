@@ -58,7 +58,10 @@
             "template": {
                 "type": "auto_input_output_template",
                 "input_format": null,
-                "output_format": null
+                "output_format": null,
+                "postprocessors": [
+                    "processors.to_string"
+                ]
             },
             "random_reference": false
         }

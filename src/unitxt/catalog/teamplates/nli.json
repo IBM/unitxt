@@ -1,0 +1,13 @@
+{
+    "type": "templates_list",
+    "items": [
+        {
+            "type": "input_output_template",
+            "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.to_string"
+            ]
+        }
+    ]
+}

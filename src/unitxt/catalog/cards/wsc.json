@@ -52,7 +52,10 @@
             {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
-                "output_format": "{label}"
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.to_string"
+                ]
             }
         ]
     },

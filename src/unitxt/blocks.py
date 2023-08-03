@@ -32,6 +32,7 @@ from .templates import (
     RenderAutoFormatTemplate,
     RenderFormatTemplate,
     RenderTemplatedICL,
+    SpanLabelingTemplate,
     Template,
     TemplatesDict,
     TemplatesList,
