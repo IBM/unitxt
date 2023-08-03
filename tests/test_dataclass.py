@@ -9,7 +9,7 @@ from src.unitxt.dataclass import (
     FinalFieldError,
     RequiredField,
     RequiredFieldError,
-    UnexpectedKeywordArgumentError,
+    UnexpectedArgumentError,
     fields,
     fields_names,
 )
@@ -250,5 +250,17 @@ class TestDataclass(unittest.TestCase):
 
         self.assertListEqual(fields_names(Dummy), ["a"])
 
-        with self.assertRaises(UnexpectedKeywordArgumentError):
+        with self.assertRaises(UnexpectedArgumentError):
             Dummy(b=2)
+            
+    
+    def test_unexpected_arguments_saving(self):
+        class Dummy(Dataclass):
+            __allow_unexpected_arguments__ = True
+            a: int = 1
+        
+
+        d = Dummy(1, 2, c=3)
+        self.assertEqual(d.a, 1)
+        self.assertTupleEqual(d._argv, (2,))
+        self.assertDictEqual(d._kwargs, {"c": 3})
