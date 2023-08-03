@@ -7,6 +7,7 @@ from src.unitxt.dataclass import (
     Dataclass,
     FinalField,
     FinalFieldError,
+    NonPositionalField,
     RequiredField,
     RequiredFieldError,
     UnexpectedArgumentError,
@@ -252,13 +253,36 @@ class TestDataclass(unittest.TestCase):
 
         with self.assertRaises(UnexpectedArgumentError):
             Dummy(b=2)
-            
-    
+
+    def test_non_positional_fields(self):
+        class Dummy(Dataclass):
+            a: int = NonPositionalField()
+
+        with self.assertRaises(UnexpectedArgumentError):
+            Dummy(1)
+
+        d = Dummy(a=1)
+        self.assertEqual(d.a, 1)
+
+        class Dummy(Dataclass):
+            a: int = NonPositionalField()
+            b: int
+
+        with self.assertRaises(UnexpectedArgumentError):
+            Dummy(1, 2)
+
+        with self.assertRaises(TypeError):
+            Dummy(1, b=2)  # both assigning to b
+
+        d = Dummy(2, a=1)
+
+        self.assertEqual(d.a, 1)
+        self.assertEqual(d.b, 2)
+
     def test_unexpected_arguments_saving(self):
         class Dummy(Dataclass):
             __allow_unexpected_arguments__ = True
             a: int = 1
-        
 
         d = Dummy(1, 2, c=3)
         self.assertEqual(d.a, 1)
