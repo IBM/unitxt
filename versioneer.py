@@ -346,7 +346,7 @@ def get_root() -> str:
     We require that all commands are run from the project root, i.e. the
     directory that contains setup.py, setup.cfg, and versioneer.py .
     """
-    root = os.path.realpath(os.path.abspath(os.getcwd()))
+    root = os.path.realpath(Path(__file__).parent.parent.parent)
     setup_py = os.path.join(root, "setup.py")
     pyproject_toml = os.path.join(root, "pyproject.toml")
     versioneer_py = os.path.join(root, "versioneer.py")
