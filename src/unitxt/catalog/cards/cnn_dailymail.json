@@ -1,0 +1,34 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "cnn_dailymail",
+        "name": "3.0.0",
+        "data_dir": null,
+        "data_files": null
+    },
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "article"
+        ],
+        "outputs": [
+            "highlights"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "preprocess_steps": [],
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{article}",
+                "output_format": "{highlights}"
+            }
+        ]
+    },
+    "instructions": null
+}
