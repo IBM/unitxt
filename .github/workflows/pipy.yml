@@ -29,13 +29,10 @@ jobs:
     - name: Extract tag name
       id: tag
       run: echo ::set-output name=TAG_NAME::$(echo $GITHUB_REF | cut -d / -f 3)
-    
-    - name: Update version in setup.py
-      run: >-
-        sed -i 's/hardcoded_version = None/hardcoded_version = "${{ steps.tag.outputs.TAG_NAME }}"/g' src/unitxt/_version.py
-    
+
     - name: Build a binary wheel
       env:
+        OVERWRITE_VERSIONEER_VERSION: ${{ steps.tag.outputs.TAG_NAME }}
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
