@@ -5,6 +5,7 @@ from pathlib import Path
 import requests
 
 from .artifact import Artifact, Artifactory
+from .version import version
 
 COLLECTION_SEPARATOR = "."
 PATHS_SEP = ":"
@@ -72,10 +73,10 @@ class GithubCatalog(LocalCatalog):
     repo = "unitxt"
     repo_dir = "src/unitxt/catalog"
     user = "IBM"
-    branch = "master"
 
     def prepare(self):
-        self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{self.branch}/{self.repo_dir}"
+        tag = version
+        self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{tag}/{self.repo_dir}"
 
     def load(self, artifact_identifier: str):
         url = self.path(artifact_identifier)

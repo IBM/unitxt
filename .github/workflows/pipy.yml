@@ -29,11 +29,7 @@ jobs:
     - name: Extract tag name
       id: tag
       run: echo ::set-output name=TAG_NAME::$(echo $GITHUB_REF | cut -d / -f 3)
-    
-    - name: Update version in setup.py
-      run: >-
-        sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}"/g' setup.py
-    
+
     - name: Build a binary wheel
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -47,21 +43,3 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         twine upload dist/*
-    
-    - name: Update version in setup.py for local install
-      run: >-
-        sed -i 's/version=\".*\"/version=\"${{ steps.tag.outputs.TAG_NAME }}.dev"/g' setup.py
-    
-    - name: Commit and Push
-      run: |
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
-        git add setup.py
-        git commit -m "Update version in setup.py"
-    
-    - name: Push to protected branch
-      uses: CasperWA/push-protected@v2
-      with:
-        token: ${{ secrets.PUSH_TO_PROTECTED_BRANCH }}
-        branch: main
-        unprotect_reviews: true

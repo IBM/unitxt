@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export version=$1
+echo "version = '$version'" > src/unitxt/version.py
+git add src/unitxt/version.py
+git commit
