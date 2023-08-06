@@ -1,0 +1,9 @@
+#!/bin/sh
+
+git fetch
+git checkout main
+export current_version=$(grep version version.py |cut -d \" -f2)
+
+echo "current_version=$current_version"
+git tag $current_version
+git push origin $current_version
