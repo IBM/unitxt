@@ -4,7 +4,7 @@ from pathlib import Path
 
 import requests
 
-from ._version import get_current_version
+from ._version import get_versions
 from .artifact import Artifact, Artifactory
 
 COLLECTION_SEPARATOR = "."
@@ -75,7 +75,7 @@ class GithubCatalog(LocalCatalog):
     user = "IBM"
 
     def prepare(self):
-        tag = get_current_version().split("+")[0]
+        tag = get_versions()["version"].split("+")[0]
         self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{tag}/{self.repo_dir}"
 
     def load(self, artifact_identifier: str):

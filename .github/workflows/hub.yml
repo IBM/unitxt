@@ -31,7 +31,7 @@ jobs:
 
     - name: Update version from tag
       run: >-
-        echo "def get_current_version(): return '${{ steps.tag.outputs.TAG_NAME }}'" > src/unitxt/_version.py
+        echo "def get_versions(): return {'version': '${{ steps.tag.outputs.TAG_NAME }}'}" > src/unitxt/_version.py
 
     - name: Prepare dataset imports
       run: >-
