@@ -30,7 +30,7 @@ def parse_random_mix_string(input_str):
     """
 
     if not re.fullmatch(r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)", input_str):
-        raise ValueError("Invalid input format")
+        raise ValueError(f"Invalid input format for split '{input_str}'")
 
     pattern = re.compile(r"([a-zA-Z]+)(\[\d*\.?\d*%?\])?")
     matches = pattern.findall(input_str)
@@ -227,6 +227,9 @@ def random_mix_generator(new_stream_name, new_stream_sources, stream_routing, in
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
         with nested_seed(old_stream_name) as rand:
+            assert (
+                old_stream_name in input_streams
+            ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
             for item in input_streams[old_stream_name]:
                 choice = rand.choices(optinal_streams, weights=weights, k=1)[0]
                 if choice == new_stream_name:
