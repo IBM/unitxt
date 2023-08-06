@@ -18,15 +18,31 @@ import subprocess
 import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import versioneer
+hardcoded_version = "1.0.27+10.gae82afc.dirty"
 
-hardcoded_version = None
+
+def hardcoded_version_to_python_file(version):
+    with open(__file__, "r") as file:
+        lines = file.readlines()
+
+    modified_lines = []
+    for line in lines:
+        if line.startswith("hardcoded_version = "):
+            line = f'hardcoded_version = "{version}"\n'
+        modified_lines.append(line)
+
+    with open(__file__, "w") as file:
+        file.writelines(modified_lines)
 
 
 def get_current_version():
-    if hardcoded_version is not None:
+    try:
+        from versioneer import get_version
+        version = get_version()
+        hardcoded_version_to_python_file(version)
+        return version
+    except:
         return hardcoded_version
-    return versioneer.get_version()
 
 
 def get_keywords() -> Dict[str, str]:
