@@ -5,10 +5,8 @@ from src import unitxt
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 register_local_catalog_for_tests()
-from tests.unitxt_test_case import setup_unitxt_test_env
 
 
-@setup_unitxt_test_env
 class TestExamples(unittest.TestCase):
     def test_dataset_is_deterministic_after_loading_other_dataset(self):
         print("Loading wnli- first time")

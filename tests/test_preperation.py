@@ -1,12 +1,12 @@
 import glob
 import importlib.util
 import os
+import sys
 import unittest
 
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 register_local_catalog_for_tests()
-from tests.unitxt_test_case import setup_unitxt_test_env
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
@@ -29,7 +29,6 @@ def import_module_from_file(file_path):
     return module
 
 
-@setup_unitxt_test_env
 class TestExamples(unittest.TestCase):
     def test_preprations(self):
         print(glob_query)

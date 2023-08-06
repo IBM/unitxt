@@ -7,10 +7,8 @@ from src.unitxt.hf_utils import get_missing_imports
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 register_local_catalog_for_tests()
-from tests.unitxt_test_case import setup_unitxt_test_env
 
 
-@setup_unitxt_test_env
 class HFTests(unittest.TestCase):
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(unitxt.dataset_file, exclude=["dataset", "__init__"])
