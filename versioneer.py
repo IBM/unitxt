@@ -1875,6 +1875,8 @@ def get_versions(verbose: bool = False) -> Dict[str, Any]:
 
 def get_version() -> str:
     """Get the short version string for this project."""
+    if "OVERWRITE_VERSIONEER_VERSION" in os.environ:
+        return os.environ["OVERWRITE_VERSIONEER_VERSION"]
     return get_versions()["version"]
 
 
@@ -2121,7 +2123,7 @@ def get_cmdclass(cmdclass: Optional[Dict[str, Any]] = None):
             self._versioneer_generated_versions = versions
             # unless we update this, the command will keep using the old
             # version
-            self.distribution.metadata.version = versions["version"]
+            self.distribution.metadata.version = get_version()
             return _sdist.run(self)
 
         def make_release_tree(self, base_dir: str, files: List[str]) -> None:
