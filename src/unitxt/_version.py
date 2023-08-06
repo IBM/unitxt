@@ -38,6 +38,7 @@ def hardcoded_version_to_python_file(version):
 def get_current_version():
     try:
         from versioneer import get_version
+
         version = get_version()
         hardcoded_version_to_python_file(version)
         return version

@@ -1525,6 +1525,10 @@ def versions_from_file(filename: str) -> Dict[str, Any]:
 
 def write_to_version_file(filename: str, versions: Dict[str, Any]) -> None:
     """Write the given version number to the given _version.py file."""
+    if "OVERWRITE_VERSIONEER_VERSION" in os.environ:
+        versions["version"] = os.environ["OVERWRITE_VERSIONEER_VERSION"]
+        versions["full-revisionid"] = None
+
     contents = json.dumps(versions, sort_keys=True, indent=1, separators=(",", ": "))
     with open(filename, "w") as f:
         f.write(SHORT_VERSION_PY % contents)
