@@ -1,8 +1,8 @@
-from src.unitxt.test_utils.catalog import add_local_catalog_to_artifactories_env_var
+from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 
 def setUpClass(cls):
-    add_local_catalog_to_artifactories_env_var()
+    register_local_catalog_for_tests()
 
 
 def setup_unitxt_test_env(cls):
