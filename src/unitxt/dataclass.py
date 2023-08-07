@@ -235,11 +235,7 @@ def asdict(obj):
 
 def _asdict_inner(obj):
     if is_dataclass(obj):
-        result = {}
-        for field in fields(obj):
-            v = getattr(obj, field.name)
-            result[field.name] = _asdict_inner(v)
-        return result
+        return obj.to_dict()
     elif isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
         return type(obj)(*[_asdict_inner(v) for v in obj])
     elif isinstance(obj, (list, tuple)):
@@ -395,12 +391,18 @@ class Dataclass(metaclass=DataclassMeta):
         Post initialization hook.
         """
         pass
+    
+    def _to_raw_dict(self):
+        """
+        Convert to raw dict
+        """
+        return {field.name: getattr(self, field.name) for field in fields(self)}
 
     def to_dict(self):
         """
         Convert to dict.
         """
-        return asdict(self)
+        return _asdict_inner(self._to_raw_dict())
 
     def __repr__(self) -> str:
         """

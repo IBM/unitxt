@@ -1,0 +1,4 @@
+{
+    "type": "regex_parser",
+    "regex": "(\\w+):(\\w+)"
+}
