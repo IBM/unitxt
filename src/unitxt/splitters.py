@@ -36,7 +36,7 @@ class SplitRandomMix(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_random_mix_string(v) for k, v in self.mix.items()}
         generators = random_mix_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators, streaming=True)
+        return MultiStream.from_generators(generators)
 
 
 class SeparateSplit(Splitter):
@@ -65,7 +65,7 @@ class SeparateSplit(Splitter):
             if size:
                 so_far += size
         generators = slice_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators, streaming=True)
+        return MultiStream.from_generators(generators)
 
 
 class SliceSplit(Splitter):
@@ -74,7 +74,7 @@ class SliceSplit(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_slices_string(v) for k, v in self.slices.items()}
         generators = slice_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators, streaming=True)
+        return MultiStream.from_generators(generators)
 
 
 class Sampler(Artifact):
