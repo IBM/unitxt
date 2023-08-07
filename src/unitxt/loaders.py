@@ -33,7 +33,7 @@ class LoadHF(Loader):
             self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=True
         )
 
-        return MultiStream.from_iterables(dataset)
+        return MultiStream.from_iterables(dataset, reusable_iterables=True)
 
 
 class LoadFromIBMCloud(Loader):
@@ -95,4 +95,4 @@ class LoadFromIBMCloud(Loader):
                 )
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
-        return MultiStream.from_iterables(dataset)
+        return MultiStream.from_iterables(dataset, reusable_iterables=True)
