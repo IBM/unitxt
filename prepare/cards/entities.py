@@ -57,7 +57,7 @@ card = TaskCard(
                 """.strip(),
                 output_format="{spans_and_labels}",
                 span_label_format="{span}: {label}",
-                postprocessors = ["processors.processors.to_span_label_pairs"]
+                postprocessors=["processors.processors.to_span_label_pairs"],
             ),
         ]
     ),
