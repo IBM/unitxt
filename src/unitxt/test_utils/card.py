@@ -73,15 +73,15 @@ def test_with_eval(card, tested_split, strict=True):
         predictions.append(example["references"][0] if len(example["references"]) > 0 else [])
 
     results = _compute(predictions=predictions, references=examples)
-    if not math.isclose(
-        results[0]["score"]["global"]["groups_mean_score"], 1.0
-    ):
-        message = f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+    if not math.isclose(results[0]["score"]["global"]["groups_mean_score"], 1.0):
+        message = (
+            f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+        )
         if strict:
             raise AssertionError(message)
         else:
             print(f"Warning: {message}")
-    
+
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
     if results[0]["score"]["global"]["groups_mean_score"] != 0.0:
