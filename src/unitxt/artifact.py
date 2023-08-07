@@ -117,7 +117,7 @@ class Artifact(Dataclass):
             assert "type" in d, "Saved artifact must have a type field"
             return cls._recursive_load(d)
         except Exception as e:
-            raise IOError(f"Failed loading {cls.type} from {path}")
+            raise Exception(f"{e}\n\nFailed to load artifact from {path} see above for more details.")
 
     def prepare(self):
         pass

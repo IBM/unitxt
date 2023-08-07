@@ -266,10 +266,12 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return getattr(__builtins__, function_str)
+            return __builtins__[module_name]
         else:
             module_name, function_name = splitted
-            if module_name in globals():
+            if module_name in __builtins__:
+                obj = __builtins__[module_name]
+            elif module_name in globals():
                 obj = globals()[module_name]
             else:
                 obj = importlib.import_module(module_name)
