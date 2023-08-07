@@ -1,6 +1,22 @@
 #!/bin/sh
 
 export version=$1
-echo "version = '$version'" > src/unitxt/version.py
+
+# Check for uncommitted changes
+if ! git diff-index --quiet HEAD || ! git diff --cached --quiet; then
+    echo "Warning: There are uncommitted changes."
+    exit 1
+fi
+
+# Check for unpushed changes
+if [ "$(git log origin/master..HEAD)" != "" ]; then
+    echo "Warning: There are unpushed changes."
+    exit 1
+fi
+
+echo "version = \"$version\"" > src/unitxt/version.py
 git add src/unitxt/version.py
-git commit
+git commit -m "Update version to $version"
+git push origin main:$version
+
+echo "New branch with new version was pushed. Please open a PR for this branch."

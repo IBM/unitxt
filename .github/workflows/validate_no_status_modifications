@@ -4,7 +4,7 @@ git status 2>&1 |tee git_status.out
 if grep -q "modified:" git_status.out 
 then 
    echo "\n\n\nfiles are not formatted well";
-   echo "Try running './format' and commit and push changes"
+   echo "Try running './utils/format' and commit and push changes"
    exit 1;
 else
    echo "All files are formatted";
