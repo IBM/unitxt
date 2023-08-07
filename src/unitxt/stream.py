@@ -14,23 +14,19 @@ class Stream:
     Attributes:
         generator (function): A generator function for streaming data.
         gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function.
-        streaming (bool): Whether the data is streaming or not.
         caching (bool): Whether the data is cached or not.
     """
 
-    def __init__(self, generator, gen_kwargs=None, streaming=True, caching=False):
+    def __init__(self, generator, gen_kwargs=None, caching=False):
         """Initializes the Stream with the provided parameters.
 
         Args:
             generator (function): A generator function for streaming data.
             gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. Defaults to None.
-            streaming (bool, optional): Whether the data is streaming or not. Defaults to True.
             caching (bool, optional): Whether the data is cached or not. Defaults to False.
         """
-
         self.generator = generator
         self.gen_kwargs = gen_kwargs if gen_kwargs is not None else {}
-        self.streaming = streaming
         self.caching = caching
 
     def _get_initator(self):
@@ -39,16 +35,10 @@ class Stream:
         Returns:
             function: The correct initiator function.
         """
-        if self.streaming:
-            if self.caching:
-                return IterableDataset.from_generator
-            else:
-                return ReusableGenerator
+        if self.caching:
+            return Dataset.from_generator
         else:
-            if self.caching:
-                return Dataset.from_generator
-            else:
-                raise ValueError("Cannot create non-streaming non-caching stream")
+            return ReusableGenerator
 
     def _get_stream(self):
         """Private method to get the stream based on the initiator function.
@@ -61,14 +51,8 @@ class Stream:
     def set_caching(self, caching):
         self.caching = caching
 
-    def set_streaming(self, streaming):
-        self.streaming = streaming
-
     def __iter__(self):
         return iter(self._get_stream())
-
-    def unwrap(self):
-        return self._get_stream()
 
     def peak(self):
         return next(iter(self))
@@ -80,7 +64,7 @@ class Stream:
             yield instance
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(generator={self.generator.__name__}, gen_kwargs={self.gen_kwargs}, streaming={self.streaming}, caching={self.caching})"
+        return f"{self.__class__.__name__}(generator={self.generator.__name__}, gen_kwargs={self.gen_kwargs}, caching={self.caching})"
 
 
 def is_stream(obj):
@@ -125,9 +109,6 @@ class MultiStream(dict):
         """
         yield from self[key]
 
-    def unwrap(self, cls):
-        return cls({key: value.unwrap() for key, value in self.items()})
-
     def to_dataset(self) -> DatasetDict:
         return DatasetDict(
             {key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
@@ -144,12 +125,11 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(cls, generators: Dict[str, ReusableGenerator], streaming=True, caching=False):
+    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False):
         """Creates a MultiStream from a dictionary of ReusableGenerators.
 
         Args:
             generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
-            streaming (bool, optional): Whether the data should be streaming or not. Defaults to True.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
 
         Returns:
@@ -162,7 +142,6 @@ class MultiStream(dict):
                 key: Stream(
                     generator.get_generator(),
                     gen_kwargs=generator.get_gen_kwargs(),
-                    streaming=streaming,
                     caching=caching,
                 )
                 for key, generator in generators.items()
@@ -170,12 +149,11 @@ class MultiStream(dict):
         )
 
     @classmethod
-    def from_iterables(cls, iterables: Dict[str, Iterable], streaming=True, caching=False):
+    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False):
         """Creates a MultiStream from a dictionary of iterables.
 
         Args:
             iterables (Dict[str, Iterable]): A dictionary of iterables.
-            streaming (bool, optional): Whether the data should be streaming or not. Defaults to True.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
 
         Returns:
@@ -184,7 +162,7 @@ class MultiStream(dict):
 
         return cls(
             {
-                key: Stream(iterable_starter, gen_kwargs={"iterable": iterable}, streaming=streaming, caching=caching)
+                key: Stream(iterable_starter, gen_kwargs={"iterable": iterable}, caching=caching)
                 for key, iterable in iterables.items()
             }
         )
