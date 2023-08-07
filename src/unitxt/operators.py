@@ -250,7 +250,18 @@ class Apply(StreamInstanceOperator):
     to_field: str = NonPositionalField(required=True)
 
     def function_to_str(self, function: Callable) -> str:
-        return function.__qualname__
+        parts = []
+
+        if hasattr(function, "__module__"):
+            parts.append(function.__module__)
+        if hasattr(function, "__qualname__"):
+            parts.append(function.__qualname__)
+        else:
+            parts.append(function.__name__)
+
+        result = ".".join(parts)
+
+        return result
 
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
@@ -270,11 +281,7 @@ class Apply(StreamInstanceOperator):
         super().prepare()
         if isinstance(self.function, str):
             self.function = self.str_to_function(self.function)
-
-    def get_init_dict(self):
-        result = super().get_init_dict()
-        result["function"] = self.function_to_str(self.function)
-        return result
+        self._init_dict["function"] = self.function_to_str(self.function)
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         argv = [instance[arg] for arg in self._argv]

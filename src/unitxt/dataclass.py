@@ -391,7 +391,7 @@ class Dataclass(metaclass=DataclassMeta):
         Post initialization hook.
         """
         pass
-    
+
     def _to_raw_dict(self):
         """
         Convert to raw dict

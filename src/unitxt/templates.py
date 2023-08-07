@@ -191,7 +191,7 @@ class SpanLabelingTemplate(InputOutputTemplate):
     text_field: str = "text"
     labels_field: str = "labels"
     span_label_format: str = "{span}: {label}"
-    postprocessors = ["processors.extract_pairs"]
+    postprocessors = ["processors.to_span_label_pairs"]
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         spans_starts = outputs[self.spans_starts_field]

@@ -233,7 +233,7 @@ class Artifact(Dataclass):
     def __post_init__(self):
         self.type = self.register_class(self.__class__)
 
-        self._init_dict = asdict(self)
+        self._init_dict = super()._to_raw_dict()
 
         for field in fields(self):
             if issubtype(field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]):
@@ -244,12 +244,12 @@ class Artifact(Dataclass):
         self.prepare()
         self.verify()
 
-    def get_init_dict(self):
+    def _to_raw_dict(self):
         return self._init_dict
 
     def save(self, path):
         with open(path, "w") as f:
-            init_dict = self.get_init_dict()
+            init_dict = self.to_dict()
             json.dump(init_dict, f, indent=4)
 
 
