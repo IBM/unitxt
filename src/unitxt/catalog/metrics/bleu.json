@@ -1,6 +1,3 @@
 {
-    "type": "bleu",
-    "metric_name": "bleu",
-    "main_score": "bleu",
-    "scale": 1.0
+    "type": "bleu"
 }

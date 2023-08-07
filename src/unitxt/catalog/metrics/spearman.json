@@ -4,15 +4,12 @@
     "preprocess_steps": [
         {
             "type": "copy_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": [
                 [
                     "references/0",
                     "references"
                 ]
             ],
-            "process_every_value": false,
             "use_query": true
         },
         {
@@ -24,15 +21,12 @@
             "failure_defaults": {
                 "prediction": 0.0
             },
-            "use_nested_query": true,
-            "cast_multiple": false
+            "use_nested_query": true
         }
     ],
-    "postpreprocess_steps": [],
     "metric": {
         "type": "huggingface_metric",
         "metric_name": "spearmanr",
-        "main_score": "spearmanr",
-        "scale": 1.0
+        "main_score": "spearmanr"
     }
 }

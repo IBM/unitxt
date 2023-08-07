@@ -4,9 +4,7 @@
         {
             "type": "load_hf",
             "path": "glue",
-            "name": "wnli",
-            "data_dir": null,
-            "data_files": null
+            "name": "wnli"
         },
         {
             "type": "split_random_mix",
@@ -32,8 +30,7 @@
                     "0": "entailment",
                     "1": "not entailment"
                 }
-            },
-            "strict": true
+            }
         },
         {
             "type": "add_fields",
@@ -42,18 +39,13 @@
                     "entailment",
                     "not entailment"
                 ]
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "normalize_list_fields",
             "fields": [
                 "choices"
-            ],
-            "key_prefix": "",
-            "empty_value": "",
-            "separator": ", "
+            ]
         },
         {
             "type": "form_task",
@@ -71,10 +63,6 @@
         },
         {
             "type": "spread_split",
-            "accessible_streams": [
-                "demos_pool"
-            ],
-            "cache_accessible_streams": true,
             "source_stream": "demos_pool",
             "target_field": "demos",
             "sampler": {
@@ -84,26 +72,16 @@
         },
         {
             "type": "render_templated_icl",
-            "template": {
-                "type": "auto_input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
-            },
-            "random_reference": false,
             "instruction": {
                 "type": "textual_instruction",
                 "text": "classify if this sentence is entailment or not entailment."
             },
-            "input_prefix": "Input: ",
-            "output_prefix": "Output: ",
-            "instruction_prefix": "",
-            "demos_field": "demos",
-            "size_limiter": null,
-            "input_output_separator": "\n",
-            "demo_separator": "\n\n"
+            "template": {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+                "output_format": "{label}"
+            },
+            "demos_field": "demos"
         }
     ]
 }

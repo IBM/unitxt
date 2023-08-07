@@ -3,11 +3,11 @@
     "main_score": "f1",
     "preprocess_steps": [
         {
-            "type": "add_id",
-            "id_field_name": "id"
+            "type": "add_id"
         },
         {
             "type": "add_fields",
+            "use_deepcopy": true,
             "fields": {
                 "prediction_template": {
                     "prediction_text": "PRED",
@@ -22,14 +22,10 @@
                     },
                     "id": "ID"
                 }
-            },
-            "use_query": false,
-            "use_deepcopy": true
+            }
         },
         {
             "type": "copy_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": [
                 [
                     "references",
@@ -56,11 +52,9 @@
                     "prediction"
                 ]
             ],
-            "process_every_value": false,
             "use_query": true
         }
     ],
-    "postpreprocess_steps": [],
     "metric": {
         "type": "huggingface_metric",
         "metric_name": "squad",

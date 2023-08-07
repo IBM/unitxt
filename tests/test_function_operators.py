@@ -59,8 +59,6 @@ class TestFunctionOperators(unittest.TestCase):
 
     def test_apply_function_operator_serialization(self):
         operator = Apply("a", function=str.upper, to_field="b")
-        dic = operator.get_init_dict()
+        dic = operator.to_dict()
 
-        self.assertDictEqual(
-            {"type": "apply", "function": "str.upper", "to_field": "b", "_argv": ("a",), "_kwargs": {}}, dic
-        )
+        self.assertDictEqual({"type": "apply", "function": "str.upper", "to_field": "b", "_argv": ("a",)}, dic)
