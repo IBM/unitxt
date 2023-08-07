@@ -344,8 +344,10 @@ class Dataclass(metaclass=DataclassMeta):
         unexpected_kwargs = {k: v for k, v in kwargs.items() if k not in _init_fields_names}
 
         if self.__allow_unexpected_arguments__:
-            self._argv = unexpected_argv
-            self._kwargs = unexpected_kwargs
+            if len(unexpected_argv) > 0:
+                kwargs["_argv"] = unexpected_argv
+            if len(unexpected_kwargs) > 0:
+                kwargs["_kwargs"] = unexpected_kwargs
 
         else:
             if len(unexpected_argv) > 0:
@@ -372,12 +374,12 @@ class Dataclass(metaclass=DataclassMeta):
                     f"Required field '{field.name}' of class {field.origin_cls} not set in {self.__class__.__name__}"
                 )
 
+        self.__pre_init__(**kwargs)
+
         for field in fields(self):
             if field.name in kwargs:
                 setattr(self, field.name, kwargs[field.name])
             else:
-                if field.name in ["_argv", "_kwargs"] and self.__allow_unexpected_arguments__:
-                    continue
                 setattr(self, field.name, get_field_default(field))
 
         self.__post_init__()
@@ -385,6 +387,12 @@ class Dataclass(metaclass=DataclassMeta):
     @property
     def __is_dataclass__(self) -> bool:
         return True
+
+    def __pre_init__(self, **kwargs):
+        """
+        Pre initialization hook.
+        """
+        pass
 
     def __post_init__(self):
         """

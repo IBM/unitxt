@@ -3,10 +3,9 @@
     "loader": {
         "type": "load_hf",
         "path": "cnn_dailymail",
-        "name": "3.0.0",
-        "data_dir": null,
-        "data_files": null
+        "name": "3.0.0"
     },
+    "preprocess_steps": [],
     "task": {
         "type": "form_task",
         "inputs": [
@@ -19,7 +18,6 @@
             "metrics.rouge"
         ]
     },
-    "preprocess_steps": [],
     "templates": {
         "type": "templates_list",
         "items": [
@@ -29,6 +27,5 @@
                 "output_format": "{highlights}"
             }
         ]
-    },
-    "instructions": null
+    }
 }

@@ -3,9 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "glue",
-        "name": "wnli",
-        "data_dir": null,
-        "data_files": null
+        "name": "wnli"
     },
     "task": {
         "type": "form_task",
@@ -30,8 +28,7 @@
                     "0": "entailment",
                     "1": "not entailment"
                 }
-            },
-            "strict": true
+            }
         },
         {
             "type": "add_fields",
@@ -40,20 +37,14 @@
                     "entailment",
                     "not entailment"
                 ]
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "rename_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": {
                 "sentence1": "sentence1",
                 "sentence2": "sentence2"
-            },
-            "process_every_value": false,
-            "use_query": false
+            }
         }
     ],
     "templates": {
@@ -62,10 +53,7 @@
             {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{label}"
             }
         ]
     },

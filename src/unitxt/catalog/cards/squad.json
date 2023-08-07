@@ -2,11 +2,28 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "squad",
-        "name": null,
-        "data_dir": null,
-        "data_files": null
+        "path": "squad"
     },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "answers/text",
+                    "answer"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
     "task": {
         "type": "form_task",
         "inputs": [
@@ -20,41 +37,14 @@
             "metrics.squad"
         ]
     },
-    "preprocess_steps": [
-        {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train[95%]",
-                "validation": "train[5%]",
-                "test": "validation"
-            }
-        },
-        {
-            "type": "copy_fields",
-            "field": null,
-            "to_field": null,
-            "field_to_field": [
-                [
-                    "answers/text",
-                    "answer"
-                ]
-            ],
-            "process_every_value": false,
-            "use_query": true
-        }
-    ],
     "templates": {
         "type": "templates_list",
         "items": [
             {
                 "type": "input_output_template",
                 "input_format": "Given: {context}, answer {question}",
-                "output_format": "{answer}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{answer}"
             }
         ]
-    },
-    "instructions": null
+    }
 }

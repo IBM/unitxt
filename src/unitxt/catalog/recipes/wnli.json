@@ -4,9 +4,7 @@
         {
             "type": "load_hf",
             "path": "glue",
-            "name": "wnli",
-            "data_dir": null,
-            "data_files": null
+            "name": "wnli"
         },
         {
             "type": "split_random_mix",
@@ -23,8 +21,7 @@
                     "0": "entailment",
                     "1": "not entailment"
                 }
-            },
-            "strict": true
+            }
         },
         {
             "type": "add_fields",
@@ -34,9 +31,7 @@
                     "not entailment"
                 ],
                 "instruction": "classify the relationship between the two sentences from the choices."
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "form_task",
@@ -54,16 +49,7 @@
             ]
         },
         {
-            "type": "render_auto_format_template",
-            "template": {
-                "type": "auto_input_output_template",
-                "input_format": null,
-                "output_format": null,
-                "postprocessors": [
-                    "processors.to_string"
-                ]
-            },
-            "random_reference": false
+            "type": "render_auto_format_template"
         }
     ]
 }

@@ -1,12 +1,7 @@
 {
     "type": "common_recipe",
     "card": "cards.wnli",
-    "demos_pool_name": "demos_pool",
-    "demos_taken_from": "train",
     "demos_pool_size": 100,
-    "demos_field": "demos",
     "num_demos": 3,
-    "sampler_type": "random",
-    "instruction_item": null,
     "template_item": 0
 }

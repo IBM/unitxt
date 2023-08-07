@@ -3,10 +3,29 @@
     "loader": {
         "type": "load_hf",
         "path": "super_glue",
-        "name": "wsc",
-        "data_dir": null,
-        "data_files": null
+        "name": "wsc"
     },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "False",
+                    "1": "True"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "False",
+                    "True"
+                ]
+            }
+        }
+    ],
     "task": {
         "type": "form_task",
         "inputs": [
@@ -22,42 +41,14 @@
             "metrics.accuracy"
         ]
     },
-    "preprocess_steps": [
-        "splitters.small_no_test",
-        {
-            "type": "map_instance_values",
-            "mappers": {
-                "label": {
-                    "0": "False",
-                    "1": "True"
-                }
-            },
-            "strict": true
-        },
-        {
-            "type": "add_fields",
-            "fields": {
-                "choices": [
-                    "False",
-                    "True"
-                ]
-            },
-            "use_query": false,
-            "use_deepcopy": false
-        }
-    ],
     "templates": {
         "type": "templates_list",
         "items": [
             {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
-                "output_format": "{label}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{label}"
             }
         ]
-    },
-    "instructions": null
+    }
 }

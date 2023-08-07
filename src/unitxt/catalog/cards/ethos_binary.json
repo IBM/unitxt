@@ -3,9 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "ethos",
-        "name": "binary",
-        "data_dir": null,
-        "data_files": null
+        "name": "binary"
     },
     "task": {
         "type": "form_task",
@@ -35,8 +33,7 @@
                     "0": "not hate speech",
                     "1": "hate speech"
                 }
-            },
-            "strict": true
+            }
         },
         {
             "type": "add_fields",
@@ -45,19 +42,13 @@
                     "hate speech",
                     "not hate speech"
                 ]
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "rename_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": {
                 "text": "sentence1"
-            },
-            "process_every_value": false,
-            "use_query": false
+            }
         }
     ],
     "templates": {
@@ -66,18 +57,12 @@
             {
                 "type": "input_output_template",
                 "input_format": "Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.",
-                "output_format": "{label}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{label}"
             },
             {
                 "type": "input_output_template",
                 "input_format": "Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {sentence1}.",
-                "output_format": "{label}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{label}"
             }
         ]
     },

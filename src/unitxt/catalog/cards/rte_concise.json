@@ -3,11 +3,8 @@
     "loader": {
         "type": "load_hf",
         "path": "glue",
-        "name": "rte",
-        "data_dir": null,
-        "data_files": null
+        "name": "rte"
     },
-    "task": "tasks.nli",
     "preprocess_steps": [
         "splitters.small_no_test",
         {
@@ -17,8 +14,7 @@
                     "0": "entailment",
                     "1": "not entailment"
                 }
-            },
-            "strict": true
+            }
         },
         {
             "type": "add_fields",
@@ -27,22 +23,16 @@
                     "entailment",
                     "not entailment"
                 ]
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "rename_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": {
                 "sentence1": "premise",
                 "sentence2": "hypothesis"
-            },
-            "process_every_value": false,
-            "use_query": false
+            }
         }
     ],
-    "templates": "templates.nli",
-    "instructions": null
+    "task": "tasks.nli",
+    "templates": "templates.nli"
 }

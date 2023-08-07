@@ -3,21 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "wmt14",
-        "name": "fr-en",
-        "data_dir": null,
-        "data_files": null
-    },
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "en"
-        ],
-        "outputs": [
-            "fr"
-        ],
-        "metrics": [
-            "metrics.bleu"
-        ]
+        "name": "fr-en"
     },
     "preprocess_steps": [
         {
@@ -30,8 +16,6 @@
         },
         {
             "type": "copy_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": [
                 [
                     "translation/en",
@@ -42,22 +26,29 @@
                     "fr"
                 ]
             ],
-            "process_every_value": false,
             "use_query": true
         }
     ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "en"
+        ],
+        "outputs": [
+            "fr"
+        ],
+        "metrics": [
+            "metrics.bleu"
+        ]
+    },
     "templates": {
         "type": "templates_list",
         "items": [
             {
                 "type": "input_output_template",
                 "input_format": "{en}",
-                "output_format": "{fr}",
-                "postprocessors": [
-                    "processors.to_string"
-                ]
+                "output_format": "{fr}"
             }
         ]
-    },
-    "instructions": null
+    }
 }
