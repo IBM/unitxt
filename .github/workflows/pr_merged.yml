@@ -15,6 +15,6 @@ jobs:
       with:
         ref: main
 
-    - name: Creaet tag and push
+    - name: Create tag and push
       run: >-
-        ./create_tag_for_new_version
+        ./utils/create_tag_for_new_version

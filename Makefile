@@ -13,8 +13,11 @@ docs:
 	@$(MAKE) -C $(DIR)/docs html
 
 format:
-	black $(DIR)/src/unitxt
-	isort $(DIR)/src/unitxt
+	bash $(DIR)/utils/format
+
+# command: make version={new_version} new-version
+new-version:
+	bash $(DIR)/utils/update_version $(version)
 
 docs-server:
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
@@ -38,4 +41,4 @@ metric:
 build:
 	format
 	pypi
-	
+
