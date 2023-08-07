@@ -65,7 +65,7 @@ def load_examples_from_common_recipe(card, tested_split):
     return examples
 
 
-def test_with_eval(card, tested_split):
+def test_with_eval(card, tested_split, strict=True):
     examples = load_examples_from_common_recipe(card, tested_split)
     # metric = evaluate.load('unitxt/metric')
     predictions = []
@@ -73,9 +73,15 @@ def test_with_eval(card, tested_split):
         predictions.append(example["references"][0] if len(example["references"]) > 0 else [])
 
     results = _compute(predictions=predictions, references=examples)
-    assert math.isclose(
+    if not math.isclose(
         results[0]["score"]["global"]["groups_mean_score"], 1.0
-    ), f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+    ):
+        message = f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+        if strict:
+            raise AssertionError(message)
+        else:
+            print(f"Warning: {message}")
+    
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
     if results[0]["score"]["global"]["groups_mean_score"] != 0.0:
@@ -85,8 +91,8 @@ def test_with_eval(card, tested_split):
         )
 
 
-def test_card(card, tested_split="train"):
+def test_card(card, tested_split="train", strict=True):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
-    test_with_eval(card, tested_split)
+    test_with_eval(card, tested_split, strict=strict)
