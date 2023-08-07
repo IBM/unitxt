@@ -15,8 +15,9 @@ class RegexParser(BaseFieldOperator):
 
     regex: str
 
-    def process(self, instance):
-        result = re.search(self.regex, instance)
+    def process(self, text):
+        matches = re.findall(self.regex, text)
+        return matches
 
 
 # add_to_catalog(ToString('prediction'), 'processors', 'to_string')
