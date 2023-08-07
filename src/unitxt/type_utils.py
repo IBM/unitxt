@@ -41,6 +41,8 @@ def isoftype(object, type):
         elif origin is tuple:
             return all(isoftype(element, type_arg) for element, type_arg in zip(object, type_args))
     else:
+        if type == typing.Any:
+            return True
         return isinstance(object, type)
 
 

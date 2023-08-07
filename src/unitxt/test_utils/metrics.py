@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import Any, List
 
 from ..metrics import Metric
 from ..stream import MultiStream, Stream
@@ -23,8 +23,8 @@ def dict_equal(dict1, dict2):
 
 def apply_metric(metric: Metric, predictions: List[str], references: List[List[str]]):
     assert isoftype(metric, Metric), "operator must be an Operator"
-    assert isoftype(predictions, List[str]), "predictions must be a list of strings"
-    assert isoftype(references, List[List[str]]), "references must be a list of lists of strings"
+    assert isoftype(predictions, List[Any]), "predictions must be a list"
+    assert isoftype(references, List[Any]), "references must be a list"
 
     test_iterable = [
         {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
@@ -43,8 +43,8 @@ def test_metric(
     global_target: dict,
 ):
     assert isoftype(metric, Metric), "operator must be an Operator"
-    assert isoftype(predictions, List[str]), "predictions must be a list of strings"
-    assert isoftype(references, List[List[str]]), "references must be a list of lists of strings"
+    assert isoftype(predictions, List[Any]), "predictions must be a list"
+    assert isoftype(references, List[Any]), "references must be a list"
 
     outputs = apply_metric(metric, predictions, references)
 

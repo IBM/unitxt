@@ -1,6 +1,7 @@
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from collections import Counter
+from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
 
 import evaluate
@@ -9,7 +10,6 @@ import numpy
 
 from .operator import (
     MultiStreamOperator,
-    SequntialOperator,
     SingleStreamOperator,
     StreamingOperator,
     StreamInstanceOperator,
@@ -353,3 +353,82 @@ class Bleu(HuggingfaceMetric):
     metric_name = "bleu"
     main_score = "bleu"
     scale = 1.0
+
+
+class CustomF1(GlobalMetric):
+    main_score = "f1_micro"
+
+    @abstractmethod
+    def get_element_group(self, element):
+        pass
+
+    @abstractmethod
+    def get_element_representation(self, element):
+        pass
+
+    def group_elements(self, l):
+        return {
+            k: Counter([self.get_element_representation(value) for value in l if self.get_element_group(value) == k])
+            for k in set([self.get_element_group(e) for e in l])
+        }
+
+    def calculate_groups_ratio(self, actual_group, total_group):
+        return sum([min(actual_group[k], total_group[k]) for k in actual_group.keys()]), sum(actual_group.values())
+
+    def f1(self, pn, pd, rn, rd):
+        precision = 1.0 if pn == 0 and pd == 0 else pn / pd
+        recall = 1.0 if rn == 0 and rd == 0 else rn / rd
+        return 2 * precision * recall / (precision + recall)
+
+    def compute(self, references: List[Any], predictions: List[Any]) -> dict:
+        assert len(references) == len(predictions), (
+            f"references size ({len(references)})" f" doesn't mach predictions sise ({len(references)})."
+        )
+        groups_statistics = dict()
+        for references_batch, predictions_batch in zip(references, predictions):
+            grouped_references = self.group_elements(references_batch)
+            grouped_predictions = self.group_elements(predictions_batch)
+            all_groups = set(grouped_references.keys()).union(grouped_predictions.keys())
+            for group in all_groups:
+                if group not in groups_statistics:
+                    groups_statistics[group] = {
+                        "precision_numerator": 0,
+                        "precision_denominator": 0,
+                        "recall_numerator": 0,
+                        "recall_denominator": 0,
+                    }
+                references_by_group = grouped_references.get(group, Counter([]))
+                predictions_by_group = grouped_predictions.get(group, Counter([]))
+                pn, pd = self.calculate_groups_ratio(
+                    actual_group=predictions_by_group, total_group=references_by_group
+                )
+                rn, rd = self.calculate_groups_ratio(
+                    actual_group=references_by_group, total_group=predictions_by_group
+                )
+                groups_statistics[group]["precision_numerator"] += pn
+                groups_statistics[group]["precision_denominator"] += pd
+                groups_statistics[group]["recall_numerator"] += rn
+                groups_statistics[group]["recall_denominator"] += rd
+
+        result = {}
+        pn_total = pd_total = rn_total = rd_total = 0
+        for group in groups_statistics.keys():
+            pn, pd, rn, rd = (
+                groups_statistics[group]["precision_numerator"],
+                groups_statistics[group]["precision_denominator"],
+                groups_statistics[group]["recall_numerator"],
+                groups_statistics[group]["recall_denominator"],
+            )
+            result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
+            pn_total, pd_total, rn_total, rd_total = pn_total + pn, pd_total + pd, rn_total + rn, rd_total + rd
+        result["f1_macro"] = sum(result.values()) / len(result.keys())
+        result[f"f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
+        return result
+
+
+class NER(CustomF1):
+    def get_element_group(self, element):
+        return element[1]
+
+    def get_element_representation(self, element):
+        return str(element)
