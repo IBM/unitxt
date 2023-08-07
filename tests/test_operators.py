@@ -17,7 +17,7 @@ from src.unitxt.operators import (
     Unique,
     ZipFieldValues,
 )
-from src.unitxt.test_utils.operators import apply_operator
+from src.unitxt.test_utils.operators import apply_operator, test_operator
 
 
 class TestOperators(unittest.TestCase):
@@ -32,10 +32,12 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        outputs = apply_operator(operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(
+            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_flatten_instances(self):
         inputs = [
@@ -48,10 +50,7 @@ class TestOperators(unittest.TestCase):
             {"a...b": 2},
         ]
 
-        outputs = apply_operator(operator=FlattenInstances(sep="..."), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
 
     def test_filter_by_values(self):
         inputs = [
@@ -63,10 +62,7 @@ class TestOperators(unittest.TestCase):
             {"a": 1, "b": 2},
         ]
 
-        outputs = apply_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs, targets=targets, tester=self)
 
     def test_apply_value_operators_field(self):
         inputs = [
@@ -79,13 +75,12 @@ class TestOperators(unittest.TestCase):
             {"a": "222", "b": 3, "c": "processors.to_string"},
         ]
 
-        outputs = apply_operator(
+        test_operator(
             operator=ApplyValueOperatorsField(value_field="a", operators_field="c", default_operators=["add"]),
             inputs=inputs,
+            targets=targets,
+            tester=self,
         )
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
 
     def test_add_fields(self):
         inputs = [
@@ -98,10 +93,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 3, "c": 3},
         ]
 
-        outputs = apply_operator(operator=AddFields(fields={"c": 3}), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
 
     def test_unique_on_single_field(self):
         inputs = [
@@ -196,12 +188,12 @@ class TestOperators(unittest.TestCase):
             {"a": 0.0, "b": 0},
         ]
 
-        outputs = apply_operator(
-            operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}), inputs=inputs
+        test_operator(
+            operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
 
     def test_test_cast_fields_casting_failure(self):
         inputs = [
@@ -223,10 +215,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        outputs = apply_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
 
     def test_copy_paste_fields(self):
         inputs = [
@@ -236,10 +225,12 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": 1}, {"a": 2}]
 
-        outputs = apply_operator(operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(
+            operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_copy_paste_same_name2(self):
         inputs = [
@@ -249,10 +240,12 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-        outputs = apply_operator(operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(
+            operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_label_encoder(self):
         inputs = [
@@ -267,10 +260,9 @@ class TestOperators(unittest.TestCase):
             {"prediction": 2, "references": [0]},
         ]
 
-        outputs = apply_operator(operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(
+            operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
+        )
 
     def test_join_str(self):
         inputs = [
@@ -283,12 +275,9 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": "2,4"},
         ]
 
-        outputs = apply_operator(
-            operator=JoinStr(field_to_field={"a": "b"}, separator=",", use_query=True), inputs=inputs
+        test_operator(
+            operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
         )
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
 
     def test_zip_fields(self):
         inputs = [
@@ -301,12 +290,12 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
         ]
 
-        outputs = apply_operator(
-            operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True), inputs=inputs
+        test_operator(
+            operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
 
     def test_take_by_field(self):
         inputs = [
@@ -319,7 +308,9 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "c": 1},
         ]
 
-        outputs = apply_operator(TakeByField(field="a", index="b", to_field="c", use_query=True), inputs=inputs)
-
-        for output, target in zip(outputs, targets):
-            self.assertDictEqual(output, target)
+        test_operator(
+            operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )

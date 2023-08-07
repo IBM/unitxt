@@ -336,12 +336,30 @@ class Dataclass(metaclass=DataclassMeta):
             if name in kwargs:
                 raise TypeError(f"{self.__class__.__name__} got multiple values for argument '{name}'")
 
+        expected_unexpected_argv = kwargs.pop("_argv", None)
+
         if len(argv) <= len(_init_positional_fields_names):
             unexpected_argv = []
         else:
             unexpected_argv = argv[len(_init_positional_fields_names) :]
 
-        unexpected_kwargs = {k: v for k, v in kwargs.items() if k not in _init_fields_names}
+        if expected_unexpected_argv is not None:
+            assert (
+                len(unexpected_argv) == 0
+            ), f"Cannot specify both _argv and unexpected positional arguments. Got {unexpected_argv}"
+            unexpected_argv = tuple(expected_unexpected_argv)
+
+        expected_unexpected_kwargs = kwargs.pop("_kwargs", None)
+        unexpected_kwargs = {
+            k: v for k, v in kwargs.items() if k not in _init_fields_names and k not in ["_argv", "_kwargs"]
+        }
+
+        if expected_unexpected_kwargs is not None:
+            intersection = set(unexpected_kwargs.keys()) & set(expected_unexpected_kwargs.keys())
+            assert (
+                len(intersection) == 0
+            ), f"Cannot specify the same arguments in both _kwargs and in unexpected keyword arguments. Got {intersection} in both."
+            unexpected_kwargs = {**unexpected_kwargs, **expected_unexpected_kwargs}
 
         if self.__allow_unexpected_arguments__:
             if len(unexpected_argv) > 0:
