@@ -1,0 +1,152 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "race",
+        "name": "high"
+    },
+    "preprocess_steps": [
+        {
+            "type": "add_fields",
+            "fields": {
+                "numbering": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "I",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "O",
+                    "P",
+                    "Q",
+                    "R",
+                    "S",
+                    "T",
+                    "U",
+                    "V",
+                    "W",
+                    "X",
+                    "Y",
+                    "Z"
+                ],
+                "topic": "reading comprehension"
+            }
+        },
+        {
+            "type": "index_of",
+            "search_in": "numbering",
+            "index_of": "answer",
+            "to_field": "index"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "numbering": "_numbering",
+                "topic": "topic",
+                "options": "_options",
+                "index": "_index",
+                "article": "context",
+                "question": "sentence1"
+            }
+        },
+        {
+            "type": "take_by_field",
+            "field": "_numbering",
+            "index": "_index",
+            "to_field": "number"
+        },
+        {
+            "type": "take_by_field",
+            "field": "_options",
+            "index": "_index",
+            "to_field": "answer"
+        },
+        {
+            "type": "zip_field_values",
+            "fields": [
+                "_numbering",
+                "_options"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "join_str",
+            "separator": ". ",
+            "field": "choices/*",
+            "to_field": "choices_list",
+            "use_query": true,
+            "process_every_value": true
+        },
+        {
+            "type": "take_by_field",
+            "field": "choices_list",
+            "index": "_index",
+            "to_field": "number_and_answer"
+        },
+        {
+            "type": "join_str",
+            "separator": ",",
+            "field": "choices/*/0",
+            "to_field": "numbers",
+            "use_query": true
+        },
+        {
+            "type": "join_str",
+            "separator": " ",
+            "field": "choices_list",
+            "to_field": "choices"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "number": "label"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "numbers",
+            "topic",
+            "context"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "original": {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n                            {context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}"
+        },
+        "helm": {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Context: {context}\nQuestion: {context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}"
+        },
+        "lm_eval_harness": {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {context}\n{sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "output_format": "{label}"
+        },
+        "fm-eval": {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Context: {context}\nQuestion: {context}\n{sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "output_format": "{label}"
+        }
+    }
+}
