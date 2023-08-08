@@ -3,6 +3,7 @@ from dataclasses import field
 from typing import Any, Dict, List, Union
 
 from .artifact import Artifact
+from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
 from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
 from .random_utils import random
@@ -16,6 +17,9 @@ class Renderer(ABC):
 
 
 class Template(Artifact):
+    is_multi_target: bool = NonPositionalField(default=False)
+    is_multi_reference: bool = NonPositionalField(default=False)
+
     @abstractmethod
     def process_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
         pass
@@ -45,19 +49,19 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
         outputs = instance.pop("outputs")
 
         source = self.template.process_inputs(inputs)
+        targets = self.template.process_outputs(outputs)
 
-        key, targets = next(iter(outputs.items()))
-        if not isinstance(targets, list):
-            targets = [targets]
-
-        references = [self.template.process_outputs({key: target}) for target in targets]
-
-        if self.random_reference:
-            target = random.choice(references)
+        if self.template.is_multi_reference:
+            references = targets
+            if self.random_reference:
+                target = random.choice(references)
+            else:
+                if len(references) == 0:
+                    raise ValueError("No references found")
+                target = references[0]
         else:
-            if len(references) == 0:
-                raise ValueError("No references found")
-            target = references[0]  # what
+            references = [targets]
+            target = targets
 
         return {
             **instance,
@@ -74,19 +78,13 @@ class RenderAutoFormatTemplate(RenderFormatTemplate):
     def prepare(self):
         if self.template is None:
             self.template = AutoInputOutputTemplate()
-        elif isinstance(self.template, InputOutputTemplate):
-            self.template = AutoInputOutputTemplate(
-                input_format=self.template.input_format,
-                output_format=self.template.output_format,
-            )
-        else:
-            raise ValueError(
-                f"Template must be an instance of InputOutputTemplate or AutoInputOutputTemplate, got {type(self.template)}"
-            )
 
     def render(self, instance: Dict[str, object]) -> Dict[str, object]:
-        if not self.template.is_complete():
-            self.template.infer_missing(instance["inputs"], instance["outputs"])
+        try:
+            if not self.template.is_complete():
+                self.template.infer_missing(instance["inputs"], instance["outputs"])
+        except:
+            pass
 
         inputs = {key: value for key, value in instance["inputs"].items()}
 
@@ -185,11 +183,25 @@ class OutputQuantizingTemplate(InputOutputTemplate):
         return super().process_outputs(quantized_outputs)
 
 
-class SpanLabelingTemplate(InputOutputTemplate):
+class MultiLabelTemplate(InputOutputTemplate):
+    labels_field: str = "labels"
+    labels_seprator: str = ", "
+    postprocessors = ["processors.to_list"]
+    output_format = "{labels}"
+    empty_label = "None"
+
+    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+        labels = outputs[self.labels_field]
+        if len(labels) == 0:
+            labels = [self.empty_label]
+        labels_str = self.labels_seprator.join(labels)
+        return super().process_outputs({"labels": labels_str})
+
+
+class SpanLabelingTemplate(MultiLabelTemplate):
     spans_starts_field: str = "spans_starts"
     spans_ends_field: str = "spans_ends"
     text_field: str = "text"
-    labels_field: str = "labels"
     span_label_format: str = "{span}: {label}"
     postprocessors = ["processors.to_span_label_pairs"]
 
@@ -213,7 +225,7 @@ class SpanLabelingTemplate(InputOutputTemplate):
         for span, label in zip(text_spans, labels):
             targets.append(self.span_label_format.format(span=span, label=label))
 
-        return super().process_outputs({"spans_and_labels": targets})
+        return super().process_outputs({"labels": targets})
 
 
 class AutoInputOutputTemplate(InputOutputTemplate):

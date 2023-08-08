@@ -29,7 +29,7 @@ from .operator import (
 from .operator import __file__ as _
 from .operators import (
     ApplyStreamOperatorsField,
-    ApplyValueOperatorsField,
+    ApplyOperatorsField,
     FlattenInstances,
     MergeStreams,
     SplitByValue,
@@ -101,8 +101,10 @@ class MetricRecipe(SequntialOperatorInitilizer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
-            ApplyValueOperatorsField(
-                value_field="prediction", operators_field="processors", default_operators=["processors.to_string"]
+            ApplyOperatorsField(
+                inputs_fields=["prediction", "references"],
+                operators_field="postprocessors",
+                default_operators=["processors.to_string"],
             ),
             SplitByValue(["group"]),
             ApplyStreamOperatorsField(
