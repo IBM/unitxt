@@ -83,10 +83,14 @@ class SourceOperator(StreamSource):
     When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses to generate the required `MultiStream`.
 
     """
-
+    caching: bool = NonPositionalField(default=None)
+    
     def __call__(self) -> MultiStream:
         with nested_seed():
-            return self.process()
+            multi_stream = self.process()
+            if self.caching is not None:
+                multi_stream.set_caching(self.caching)
+            return multi_stream
 
     @abstractmethod
     def process(self) -> MultiStream:
@@ -102,9 +106,13 @@ class StreamInitializerOperator(StreamSource):
     When called, a `StreamInitializerOperator` invokes its `process` method, passing any supplied arguments and keyword arguments. The `process` method should be implemented by all subclasses to generate the required `MultiStream` based on the given arguments and keyword arguments.
 
     """
-
+    caching: bool = NonPositionalField(default=None)
+    
     def __call__(self, *args, **kwargs) -> MultiStream:
         with nested_seed():
+            multi_stream = self.process(*args, **kwargs)
+            if self.caching is not None:
+                multi_stream.set_caching(self.caching)
             return self.process(*args, **kwargs)
 
     @abstractmethod
