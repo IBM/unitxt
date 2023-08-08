@@ -29,7 +29,7 @@ def apply_metric(metric: Metric, predictions: List[str], references: List[List[s
     test_iterable = [
         {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
     ]
-    multi_stream = MultiStream.from_iterables({"test": test_iterable})
+    multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
     return list(output_stream)
