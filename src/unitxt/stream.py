@@ -92,6 +92,14 @@ class MultiStream(dict):
         """
         yield from self[key]
 
+    def set_caching(self, caching: bool):
+        for stream in self.values():
+            stream.caching = caching
+
+    def set_copying(self, copying: bool):
+        for stream in self.values():
+            stream.copying = copying
+
     def to_dataset(self) -> DatasetDict:
         return DatasetDict(
             {key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
