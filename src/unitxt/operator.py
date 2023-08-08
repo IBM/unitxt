@@ -3,6 +3,7 @@ from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
+from .dataclass import NonPositionalField
 from .random_utils import nested_seed
 from .stream import MultiStream, Stream
 
@@ -118,6 +119,8 @@ class MultiStreamOperator(StreamingOperator):
     A multi-stream operator is a type of `StreamingOperator` that operates on an entire MultiStream object at once. It takes a `MultiStream` as input and produces a `MultiStream` as output. The `process` method should be implemented by subclasses to define the specific operations to be performed on the input `MultiStream`.
     """
 
+    caching: bool = NonPositionalField(default=None)
+
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         with nested_seed():
             return self._process_multi_stream(multi_stream)
@@ -125,6 +128,8 @@ class MultiStreamOperator(StreamingOperator):
     def _process_multi_stream(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         result = self.process(multi_stream)
         assert isinstance(result, MultiStream), "MultiStreamOperator must return a MultiStream"
+        if self.caching is not None:
+            result.set_caching(self.caching)
         return result
 
     @abstractmethod
@@ -198,7 +203,7 @@ class SingleStreamReducer(StreamingOperator):
         return result
 
     @abstractmethod
-    def process(self, stream: Stream) -> Any:
+    def process(self, stream: Stream) -> Stream:
         pass
 
 
