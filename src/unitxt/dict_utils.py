@@ -100,7 +100,7 @@ def dict_get(dic, query, use_dpath=True, not_exist_ok=False, default=None):
         elif len(values) == 0:
             raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
 
-        if len(values) == 1:
+        if len(values) == 1 and "*" not in query and "," not in query:
             return values[0]
 
         return values

@@ -378,9 +378,16 @@ class CustomF1(GlobalMetric):
     def f1(self, pn, pd, rn, rd):
         precision = 1.0 if pn == 0 and pd == 0 else pn / pd
         recall = 1.0 if rn == 0 and rd == 0 else rn / rd
-        return 2 * precision * recall / (precision + recall)
+        try:
+            return 2 * precision * recall / (precision + recall)
+        except ZeroDivisionError:
+            return 0.0
 
     def compute(self, references: List[Any], predictions: List[Any]) -> dict:
+        # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
+        if isinstance(references[0], list) and isinstance(references[0][0], list):
+            references = [element[0] for element in references]
+
         assert len(references) == len(predictions), (
             f"references size ({len(references)})" f" doesn't mach predictions sise ({len(references)})."
         )
@@ -421,7 +428,11 @@ class CustomF1(GlobalMetric):
             )
             result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
             pn_total, pd_total, rn_total, rd_total = pn_total + pn, pd_total + pd, rn_total + rn, rd_total + rd
-        result["f1_macro"] = sum(result.values()) / len(result.keys())
+        try:
+            result["f1_macro"] = sum(result.values()) / len(result.keys())
+        except ZeroDivisionError:
+            result["f1_macro"] = 1.0
+
         result[f"f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
         return result
 

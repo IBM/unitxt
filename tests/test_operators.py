@@ -2,7 +2,7 @@ import unittest
 
 from src.unitxt.operators import (
     AddFields,
-    ApplyValueOperatorsField,
+    ApplyOperatorsField,
     CastFields,
     CopyFields,
     EncodeLabels,
@@ -76,7 +76,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=ApplyValueOperatorsField(value_field="a", operators_field="c", default_operators=["add"]),
+            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
             inputs=inputs,
             targets=targets,
             tester=self,

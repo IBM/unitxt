@@ -144,6 +144,8 @@ class FieldOperator(StreamInstanceOperator):
     field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
     process_every_value: bool = False
     use_query: bool = False
+    get_default: Any = None
+    not_exist_ok: bool = False
 
     def verify(self):
         super().verify()
@@ -175,7 +177,13 @@ class FieldOperator(StreamInstanceOperator):
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for from_field, to_field in self._field_to_field:
             try:
-                old_value = dict_get(instance, from_field, use_dpath=self.use_query)
+                old_value = dict_get(
+                    instance,
+                    from_field,
+                    use_dpath=self.use_query,
+                    default=self.get_default,
+                    not_exist_ok=self.not_exist_ok,
+                )
             except TypeError as e:
                 raise TypeError(f"Failed to get {from_field} from {instance}")
             if self.process_every_value:
@@ -480,7 +488,7 @@ class ArtifactFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
+class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """
     Applies value operators to each instance in a stream based on specified fields.
 
@@ -490,7 +498,7 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
     """
 
-    value_field: str
+    inputs_fields: str
     operators_field: str
     default_operators: List[str] = None
 
@@ -507,7 +515,12 @@ class ApplyValueOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
         for name in operator_names:
             operator = self.get_artifact(name)
-            instance = operator(instance, self.value_field)
+            for field in self.inputs_fields:
+                value = instance[field]
+                if isinstance(value, list):
+                    instance[field] = [operator.process(v) for v in value]
+                else:
+                    instance[field] = operator.process(instance[field])
 
         return instance
 
