@@ -296,7 +296,7 @@ class InstanceOperatorWithGlobalAccess(StreamingOperator):
 
         if self.cache_accessible_streams:
             for stream in self.accessible_streams.values():
-                stream.set_caching(True)
+                stream.caching = True
 
         for stream_name, stream in multi_stream.items():
             stream = Stream(self.generator, gen_kwargs={"stream": stream, "multi_stream": self.accessible_streams})

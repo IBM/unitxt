@@ -3,10 +3,11 @@ from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
-from .generator_utils import ReusableGenerator
+from .dataclass import Dataclass, OptionalField
+from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 
 
-class Stream:
+class Stream(Dataclass):
     """A class for handling streaming data in a customizable way.
 
     This class provides methods for generating, caching, and manipulating streaming data.
@@ -17,17 +18,10 @@ class Stream:
         caching (bool): Whether the data is cached or not.
     """
 
-    def __init__(self, generator, gen_kwargs=None, caching=False):
-        """Initializes the Stream with the provided parameters.
-
-        Args:
-            generator (function): A generator function for streaming data.
-            gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. Defaults to None.
-            caching (bool, optional): Whether the data is cached or not. Defaults to False.
-        """
-        self.generator = generator
-        self.gen_kwargs = gen_kwargs if gen_kwargs is not None else {}
-        self.caching = caching
+    generator: callable
+    gen_kwargs: Dict[str, any] = OptionalField(default_factory=dict)
+    caching: bool = False
+    copying: bool = False
 
     def _get_initator(self):
         """Private method to get the correct initiator based on the streaming and caching attributes.
@@ -38,7 +32,10 @@ class Stream:
         if self.caching:
             return Dataset.from_generator
         else:
-            return ReusableGenerator
+            if self.copying:
+                return CopyingReusableGenerator
+            else:
+                return ReusableGenerator
 
     def _get_stream(self):
         """Private method to get the stream based on the initiator function.
@@ -47,9 +44,6 @@ class Stream:
             object: The stream object.
         """
         return self._get_initator()(self.generator, gen_kwargs=self.gen_kwargs)
-
-    def set_caching(self, caching):
-        self.caching = caching
 
     def __iter__(self):
         return iter(self._get_stream())
@@ -62,20 +56,6 @@ class Stream:
             if i >= n:
                 break
             yield instance
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(generator={self.generator.__name__}, gen_kwargs={self.gen_kwargs}, caching={self.caching})"
-
-
-def is_stream(obj):
-    return isinstance(obj, IterableDataset) or isinstance(obj, Stream) or isinstance(obj, Dataset)
-
-
-def iterable_starter(iterable, reusable_iterable=False):
-    if reusable_iterable:
-        return iter(iterable)
-    else:
-        return iter(deepcopy(iterable))
 
 
 class MultiStream(dict):
@@ -128,7 +108,7 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False):
+    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False):
         """Creates a MultiStream from a dictionary of ReusableGenerators.
 
         Args:
@@ -143,16 +123,17 @@ class MultiStream(dict):
         return cls(
             {
                 key: Stream(
-                    generator.get_generator(),
-                    gen_kwargs=generator.get_gen_kwargs(),
+                    generator.generator,
+                    gen_kwargs=generator.gen_kwargs,
                     caching=caching,
+                    copying=copying,
                 )
                 for key, generator in generators.items()
             }
         )
 
     @classmethod
-    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False, reusable_iterables=False):
+    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False, copying=False):
         """Creates a MultiStream from a dictionary of iterables.
 
         Args:
@@ -166,9 +147,9 @@ class MultiStream(dict):
         return cls(
             {
                 key: Stream(
-                    iterable_starter,
-                    gen_kwargs={"iterable": iterable, "reusable_iterable": reusable_iterables},
+                    iterable.__iter__,
                     caching=caching,
+                    copying=copying,
                 )
                 for key, iterable in iterables.items()
             }
