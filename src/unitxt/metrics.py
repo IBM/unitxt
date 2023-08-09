@@ -357,6 +357,7 @@ class Bleu(HuggingfaceMetric):
 
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
+    classes = None
 
     @abstractmethod
     def get_element_group(self, element):
@@ -391,6 +392,10 @@ class CustomF1(GlobalMetric):
         assert len(references) == len(predictions), (
             f"references size ({len(references)})" f" doesn't mach predictions sise ({len(references)})."
         )
+        if self.classes is None:
+            classes = set([self.get_element_group(e) for sublist in references for e in sublist])
+        else:
+            classes = self.classes
         groups_statistics = dict()
         for references_batch, predictions_batch in zip(references, predictions):
             grouped_references = self.group_elements(references_batch)
@@ -418,6 +423,7 @@ class CustomF1(GlobalMetric):
                 groups_statistics[group]["recall_denominator"] += rd
 
         result = {}
+        num_of_unknown_class_predictions = 0
         pn_total = pd_total = rn_total = rd_total = 0
         for group in groups_statistics.keys():
             pn, pd, rn, rd = (
@@ -426,13 +432,21 @@ class CustomF1(GlobalMetric):
                 groups_statistics[group]["recall_numerator"],
                 groups_statistics[group]["recall_denominator"],
             )
-            result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
             pn_total, pd_total, rn_total, rd_total = pn_total + pn, pd_total + pd, rn_total + rn, rd_total + rd
+            if group in classes:
+                result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
+            else:
+                num_of_unknown_class_predictions += pd
         try:
             result["f1_macro"] = sum(result.values()) / len(result.keys())
         except ZeroDivisionError:
             result["f1_macro"] = 1.0
 
+        amount_of_predictions = pd_total
+        if amount_of_predictions == 0:
+            result["in_classes_support"] = 1.0
+        else:
+            result["in_classes_support"] = 1.0 - num_of_unknown_class_predictions / amount_of_predictions
         result[f"f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
         return result
 
