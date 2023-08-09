@@ -133,13 +133,14 @@ class MultiStreamOperator(StreamingOperator):
 
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         with nested_seed():
-            return self._process_multi_stream(multi_stream)
+            result = self._process_multi_stream(multi_stream)
+            if self.caching is not None:
+                result.set_caching(self.caching)
+            return result
 
     def _process_multi_stream(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         result = self.process(multi_stream)
         assert isinstance(result, MultiStream), "MultiStreamOperator must return a MultiStream"
-        if self.caching is not None:
-            result.set_caching(self.caching)
         return result
 
     @abstractmethod
