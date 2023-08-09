@@ -18,3 +18,5 @@ jobs:
     - name: Create tag and push
       run: >-
         ./utils/create_tag_for_new_version
+      env:
+        GITHUB_TOKEN: ${{ secrets.PUSH_TO_GITHUB_TOKEN }}
