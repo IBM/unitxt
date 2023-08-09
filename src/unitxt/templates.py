@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import NonPositionalField
@@ -204,6 +204,7 @@ class SpanLabelingTemplate(MultiLabelTemplate):
     text_field: str = "text"
     span_label_format: str = "{span}: {label}"
     postprocessors = ["processors.to_span_label_pairs"]
+    labels_support = None
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         spans_starts = outputs[self.spans_starts_field]
@@ -213,7 +214,8 @@ class SpanLabelingTemplate(MultiLabelTemplate):
 
         spans = []
         for span_start, span_end, label in zip(spans_starts, spans_ends, labels):
-            spans.append((span_start, span_end, label))
+            if self.labels_support is None or label in self.labels_support:
+                spans.append((span_start, span_end, label))
 
         spans.sort(key=lambda span: span[0])
 
@@ -223,7 +225,8 @@ class SpanLabelingTemplate(MultiLabelTemplate):
 
         targets = []
         for span, label in zip(text_spans, labels):
-            targets.append(self.span_label_format.format(span=span, label=label))
+            if self.labels_support is None or label in self.labels_support:
+                targets.append(self.span_label_format.format(span=span, label=label))
 
         return super().process_outputs({"labels": targets})
 
