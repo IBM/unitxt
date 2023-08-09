@@ -5,10 +5,10 @@ from .collections import ItemPicker, RandomPicker
 from .operator import SourceOperator
 from .recipe import Recipe, SequentialRecipe
 from .schema import ToUnitxtGroup
-from .splitters import RandomSampler, SeparateSplit, SliceSplit, SpreadSplit
+from .splitters import Sampler, RandomSampler, SeparateSplit, SliceSplit, SpreadSplit
 from .stream import MultiStream
 from .templates import RenderTemplatedICL
-
+from .dataclass import OptionalField
 
 class CommonRecipe(Recipe, SourceOperator):
     card: TaskCard
@@ -17,14 +17,16 @@ class CommonRecipe(Recipe, SourceOperator):
     demos_pool_size: int = None
     demos_field: str = "demos"
     num_demos: int = None
-    sampler_type: str = "random"
+    sampler: Sampler = None
     instruction_item: Union[str, int] = None
     template_item: Union[str, int] = None
-
+    
     def verify(self):
-        assert self.sampler_type in ["random"], f"Uknown sampler type {self.sampler_type}"
+        super().verify()
 
     def prepare(self):
+            
+        
         steps = [
             self.card.loader,
         ]
@@ -44,8 +46,13 @@ class CommonRecipe(Recipe, SourceOperator):
             )
 
         if self.num_demos is not None:
-            if self.sampler_type == "random":
-                sampler = RandomSampler(sample_size=int(self.num_demos))
+            
+            sampler = self.card.sampler
+            
+            if self.sampler is not None:
+                sampler = self.sampler
+                
+            sampler.set_size(self.num_demos)
 
             steps.append(
                 SpreadSplit(
