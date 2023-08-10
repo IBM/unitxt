@@ -1,15 +1,12 @@
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from .artifact import Artifact
 from .collections import Collection
-from .instructions import InstructionsDict, InstructionsList
+from .dataclass import OptionalField
 from .loaders import Loader
-from .normalizers import NormalizeListFields
 from .operator import StreamingOperator
-from .operators import AddFields, MapInstanceValues
+from .splitters import RandomSampler, Sampler
 from .task import FormTask
-from .templates import TemplatesDict, TemplatesList
 
 
 class TaskCard(Artifact):
@@ -18,6 +15,7 @@ class TaskCard(Artifact):
     preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None
     templates: Collection = None
     instructions: Collection = None
+    sampler: Sampler = OptionalField(default_factory=RandomSampler)
 
 
 class ICLCard(Artifact):

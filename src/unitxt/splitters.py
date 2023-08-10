@@ -1,4 +1,5 @@
 import itertools
+from abc import abstractmethod
 from dataclasses import field
 from typing import Dict, List, Optional
 
@@ -78,7 +79,21 @@ class SliceSplit(Splitter):
 
 
 class Sampler(Artifact):
-    sample_size: int
+    sample_size: int = None
+
+    def prepare(self):
+        super().prepare()
+        self.set_size(self.sample_size)
+
+    def set_size(self, size):
+        if isinstance(size, str):
+            assert size.isdigit(), f"sample_size must be a natural number, got {self.sample_size}"
+            size = int(size)
+        self.sample_size = size
+
+    @abstractmethod
+    def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
+        pass
 
 
 class RandomSampler(Sampler):
