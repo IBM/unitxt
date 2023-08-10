@@ -3,24 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "cais/mmlu",
-        "name": "prehistory",
-        "data_dir": null,
-        "data_files": null
-    },
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "sentence1",
-            "numbers",
-            "topic"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
+        "name": "prehistory"
     },
     "preprocess_steps": [
         {
@@ -61,37 +44,29 @@
                     "Z"
                 ],
                 "topic": "prehistory"
-            },
-            "use_query": false,
-            "use_deepcopy": false
+            }
         },
         {
             "type": "rename_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": {
                 "numbering": "_numbering",
+                "topic": "topic",
                 "choices": "_choices",
-                "topic": "_topic",
                 "answer": "_answer",
                 "question": "sentence1"
-            },
-            "process_every_value": false,
-            "use_query": false
+            }
         },
         {
             "type": "take_by_field",
             "field": "_numbering",
             "index": "_answer",
-            "to_field": "number",
-            "use_query": false
+            "to_field": "number"
         },
         {
             "type": "take_by_field",
             "field": "_choices",
             "index": "_answer",
-            "to_field": "answer",
-            "use_query": false
+            "to_field": "answer"
         },
         {
             "type": "zip_field_values",
@@ -99,55 +74,57 @@
                 "_numbering",
                 "_choices"
             ],
-            "to_field": "choices",
-            "longest": false,
-            "use_query": false
+            "to_field": "choices"
         },
         {
             "type": "join_str",
+            "separator": ". ",
             "field": "choices/*",
             "to_field": "choices_list",
-            "field_to_field": null,
-            "process_every_value": true,
             "use_query": true,
-            "separator": ". "
+            "process_every_value": true
         },
         {
             "type": "take_by_field",
             "field": "choices_list",
             "index": "_answer",
-            "to_field": "number_and_answer",
-            "use_query": false
+            "to_field": "number_and_answer"
         },
         {
             "type": "join_str",
+            "separator": ",",
             "field": "choices/*/0",
             "to_field": "numbers",
-            "field_to_field": null,
-            "process_every_value": false,
-            "use_query": true,
-            "separator": ","
+            "use_query": true
         },
         {
             "type": "join_str",
+            "separator": " ",
             "field": "choices_list",
-            "to_field": "choices",
-            "field_to_field": null,
-            "process_every_value": false,
-            "use_query": false,
-            "separator": " "
+            "to_field": "choices"
         },
         {
             "type": "rename_fields",
-            "field": null,
-            "to_field": null,
             "field_to_field": {
                 "number": "label"
-            },
-            "process_every_value": false,
-            "use_query": false
+            }
         }
     ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "numbers",
+            "topic"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
     "templates": {
         "original": {
             "type": "input_output_template",
@@ -169,6 +146,5 @@
             "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Question: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
             "output_format": "{label}"
         }
-    },
-    "instructions": null
+    }
 }
