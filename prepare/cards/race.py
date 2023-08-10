@@ -38,29 +38,29 @@ from src.unitxt.test_utils.card import test_card
 # builder = load_dataset_builder(path='cais/mmlu')
 
 # numbering=tuple(str(x) for x in range(200))
-numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-expected_answer = 'number'  # 'number_and_answer' #'number'
-subsets = ['all', 'high', 'middle']
+numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+expected_answer = "number"  # 'number_and_answer' #'number'
+subsets = ["all", "high", "middle"]
 for subset in subsets:
     card = TaskCard(
-        loader=LoadHF(path='race', name=subset),
+        loader=LoadHF(path="race", name=subset),
         preprocess_steps=[
-            AddFields({'numbering': numbering, 'topic': 'reading comprehension'}),
-            IndexOf(search_in='numbering', index_of='answer', to_field='index'),
+            AddFields({"numbering": numbering, "topic": "reading comprehension"}),
+            IndexOf(search_in="numbering", index_of="answer", to_field="index"),
             *multiple_choice_preprocess(
-                context='article',
-                question='question',
-                numbering='numbering',
-                choices='options',
-                topic='topic',
-                label_index='index',
+                context="article",
+                question="question",
+                numbering="numbering",
+                choices="options",
+                topic="topic",
+                label_index="index",
             ),
         ],
         task=FormTask(
             **multiple_choice_inputs_outputs(context=True),
-            metrics=['metrics.accuracy'],
+            metrics=["metrics.accuracy"],
         ),
         templates=CONTEXT_MMLU_TEMPLATES,
     )
     test_card(card)
-    add_to_catalog(card, f'cards.race_{subset}', overwrite=True)
+    add_to_catalog(card, f"cards.race_{subset}", overwrite=True)
