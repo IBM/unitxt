@@ -204,7 +204,7 @@ class SpanLabelingTemplate(MultiLabelTemplate):
     text_field: str = "text"
     span_label_format: str = "{span}: {label}"
     postprocessors = ["processors.to_span_label_pairs"]
-    labels_support = None
+    labels_support: list = None
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         spans_starts = outputs[self.spans_starts_field]
