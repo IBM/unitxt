@@ -60,7 +60,13 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
             refs, pred = instance["references"], instance["prediction"]
 
-            instance_score = self._compute([refs], [pred])
+            try:
+                instance_score = self._compute([refs], [pred])
+            except:
+                instance_score = {"score": None}
+                if isinstance(self.main_score, str) and self.main_score is not None:
+                    instance_score[self.main_score] = None
+
             instance["score"]["instance"].update(instance_score)
 
             references.append(refs)
