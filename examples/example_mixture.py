@@ -10,7 +10,7 @@ fusion = WeightedFusion(
         "recipes.wnli_3_shot",
     ],
     weights=[1, 1],
-    total_examples=4,
+    max_total_examples=4,
 )
 
 add_to_catalog(fusion, "benchmarks.glue", overwrite=True)
