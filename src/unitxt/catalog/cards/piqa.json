@@ -2,7 +2,7 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "piqa"
+        "path": "sciq"
     },
     "preprocess_steps": [
         {
@@ -42,31 +42,44 @@
         {
             "type": "list_field_values",
             "fields": [
-                "sol1",
-                "sol2"
+                "distractor1",
+                "distractor2",
+                "distractor3",
+                "correct_answer"
             ],
             "to_field": "choices"
+        },
+        {
+            "type": "shuffle_field_values",
+            "field": "choices"
+        },
+        {
+            "type": "index_of",
+            "search_in": "choices",
+            "index_of": "correct_answer",
+            "to_field": "index"
         },
         {
             "type": "rename_fields",
             "field_to_field": {
                 "numbering": "_numbering",
                 "choices": "_choices",
-                "label": "_label",
+                "index": "_index",
                 "topic": "topic",
-                "goal": "sentence1"
+                "support": "context",
+                "question": "sentence1"
             }
         },
         {
             "type": "take_by_field",
             "field": "_numbering",
-            "index": "_label",
+            "index": "_index",
             "to_field": "number"
         },
         {
             "type": "take_by_field",
             "field": "_choices",
-            "index": "_label",
+            "index": "_index",
             "to_field": "answer"
         },
         {
@@ -88,7 +101,7 @@
         {
             "type": "take_by_field",
             "field": "choices_list",
-            "index": "_label",
+            "index": "_index",
             "to_field": "number_and_answer"
         },
         {
@@ -117,7 +130,8 @@
             "choices",
             "sentence1",
             "numbers",
-            "topic"
+            "topic",
+            "context"
         ],
         "outputs": [
             "label"
@@ -129,22 +143,22 @@
     "templates": {
         "original": {
             "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n                            {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n                            {context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
             "output_format": "{label}"
         },
         "helm": {
             "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Question: {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Context: {context}\nQuestion: {context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
             "output_format": "{label}"
         },
         "lm_eval_harness": {
             "type": "input_output_template",
-            "input_format": "Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "input_format": "Context: {context}\nQuestion: {context}\n{sentence1}.\nChoices:\n{choices}.\nAnswer:",
             "output_format": "{label}"
         },
         "fm-eval": {
             "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Question: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\n\n                            Context: {context}\nQuestion: {context}\n{sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
             "output_format": "{label}"
         }
     }
