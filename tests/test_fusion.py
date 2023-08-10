@@ -83,3 +83,24 @@ class TestFusion(unittest.TestCase):
         ]
 
         test_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
+
+    def test_over_bounded_weighted_fusion(self):
+        operator = WeightedFusion(
+            origins=[
+                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
+                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
+            ],
+            weights=[1, 1],
+            max_total_examples=10,
+        )
+
+        targets = [
+            {"x": "x1"},
+            {"x": "x2"},
+            {"x": "x3"},
+            {"x": "y1"},
+            {"x": "y2"},
+            {"x": "y3"},
+        ]
+
+        test_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")

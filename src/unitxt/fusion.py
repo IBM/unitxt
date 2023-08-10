@@ -76,12 +76,12 @@ class WeightedFusion(BaseFusion):
     Args:
         orgins: List of StreamSource objects.
         weights: List of weights for each origin.
-        total_examples: Total number of examples to return. If None, all examples are returned.
+        max_total_examples: Total number of examples to return. If None, all examples are returned.
     """
 
     origins: List[StreamSource] = None
     weights: List[float] = None
-    total_examples: int = None
+    max_total_examples: int = None
 
     def verify(self):
         super().verify()
@@ -93,7 +93,7 @@ class WeightedFusion(BaseFusion):
         weights = copy.deepcopy(self.weights)
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
-        while (self.total_examples is None or total_examples <= self.total_examples) and len(iterators) > 0:
+        while (self.max_total_examples is None or total_examples <= self.max_total_examples) and len(iterators) > 0:
             iterator = random.choices(population=iterators, weights=weights)[0]
             try:
                 yield next(iterator)
