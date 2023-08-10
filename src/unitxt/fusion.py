@@ -1,9 +1,11 @@
+import copy
 from abc import abstractmethod
 from dataclasses import asdict
 from typing import Generator, List, Optional
 
 from .card import ICLCard, TaskCard
 from .common import CommonRecipe
+from .dataclass import NonPositionalField
 from .operator import SourceOperator, StreamSource
 from .random_utils import random
 from .stream import MultiStream, Stream
@@ -17,7 +19,8 @@ class BaseFusion(SourceOperator):
         include_splits: List of splits to include. If None, all splits are included.
     """
 
-    include_splits: Optional[List[str]] = None
+    origins: List[StreamSource]
+    include_splits: Optional[List[str]] = NonPositionalField(default=None)
 
     @abstractmethod
     def fusion_generator(self, split) -> Generator:
@@ -51,14 +54,17 @@ class FixedFusion(BaseFusion):
         splits: List of splits to include. If None, all splits are included.
     """
 
-    examples_per_task: Optional[int] = None
+    max_instances_per_origin: Optional[int] = None
 
     def fusion_generator(self, split) -> Generator:
-        for origin in self.orgins:
+        for origin in self.origins:
             iterator = iter(origin()[split])
-            if self.examples_per_task is not None:
-                for i in range(self.examples_per_task):
-                    yield next(iterator)
+            if self.max_instances_per_origin is not None:
+                for _ in range(self.max_instances_per_origin):
+                    try:
+                        yield next(iterator)
+                    except StopIteration:
+                        break
             else:
                 yield from iterator
 
@@ -84,41 +90,15 @@ class WeightedFusion(BaseFusion):
         assert len(self.origins) == len(self.weights), "origins and weights must have the same length"
 
     def fusion_generator(self, split) -> Generator:
+        weights = copy.deepcopy(self.weights)
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
         while (self.total_examples is None or total_examples <= self.total_examples) and len(iterators) > 0:
-            iterator = random.choices(population=iterators, weights=self.weights)[0]
+            iterator = random.choices(population=iterators, weights=weights)[0]
             try:
                 yield next(iterator)
                 total_examples += 1
             except StopIteration:
-                iterators.remove(iterator)
-
-
-class TasksFusion(SourceOperator):
-    """
-    TasksFusion operator that combines multiple tasks into one.
-
-    Args:
-        tasks: List of TaskCard objects.
-        config: ICLCard object.
-        examples_per_task: Number of examples per task. If None, all examples are returned.
-        include_splits: List of splits to include. If None, all splits are included.
-    """
-
-    tasks: List[TaskCard]
-    config: ICLCard
-    examples_per_task: Optional[int] = None
-    include_splits: Optional[List[str]] = None
-
-    def prepare(self):
-        self.recipes = []
-        for task in self.tasks:
-            recipe = CommonRecipe(card=task, **asdict(self.config))
-
-        self.fusion = FixedFusion(
-            origins=self.recipes, examples_per_task=self.examples_per_task, include_splits=self.include_splits
-        )
-
-    def process(self) -> MultiStream:
-        return self.fusion()
+                index = iterators.index(iterator)
+                iterators.pop(index)
+                weights.pop(index)
