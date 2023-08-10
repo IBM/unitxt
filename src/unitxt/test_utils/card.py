@@ -56,7 +56,13 @@ def load_examples_from_common_recipe(card, tested_split):
     )
     multi_stream = recipe()
     stream = multi_stream[tested_split]
-    examples = list(stream.take(5))
+    try:
+        examples = list(stream.take(5))
+    except ValueError as e:
+        raise ValueError(
+            "Try setting streaming=False in LoadHF in your card. For example: LoadHF(path='glue', name='mrpc', streaming=False). Org error message:",
+            e,
+        )
     print("5 Examples: ")
     for example in examples:
         print_dict(example)

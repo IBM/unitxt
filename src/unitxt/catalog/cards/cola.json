@@ -1,0 +1,52 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "glue",
+        "name": "cola"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "unacceptable",
+                    "1": "acceptable"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "unacceptable",
+                    "acceptable"
+                ]
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence}, classify if it is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    }
+}
