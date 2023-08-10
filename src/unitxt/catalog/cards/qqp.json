@@ -1,0 +1,53 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "glue",
+        "name": "qqp"
+    },
+    "preprocess_steps": [
+        "splitters.large_no_test",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "not duplicated",
+                    "1": "duplicated"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "not duplicated",
+                    "duplicated"
+                ]
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "question1",
+            "question2"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this question: {question1}, classify if this question: {question2} is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "glue",
+        "name": "mrpc",
+        "streaming": false
+    },
+    "preprocess_steps": [
+        "splitters.default",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "not equivalent",
+                    "1": "equivalent"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "not equivalent",
+                    "equivalent"
+                ]
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "sentence2"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    }
+}
