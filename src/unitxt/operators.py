@@ -29,6 +29,7 @@ from .operator import (
     StreamingOperator,
     StreamInitializerOperator,
     StreamInstanceOperator,
+    StreamSource,
 )
 from .random_utils import random
 from .stream import MultiStream, Stream
@@ -46,6 +47,13 @@ class FromIterables(StreamInitializerOperator):
 
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
         return MultiStream.from_iterables(iterables)
+
+
+class IterableSource(StreamSource):
+    iterables: Dict[str, Iterable]
+
+    def __call__(self) -> MultiStream:
+        return MultiStream.from_iterables(self.iterables)
 
 
 class MapInstanceValues(StreamInstanceOperator):
