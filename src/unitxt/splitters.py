@@ -1,7 +1,7 @@
 import itertools
+from abc import abstractmethod
 from dataclasses import field
 from typing import Dict, List, Optional
-from abc import abstractmethod
 
 from .artifact import Artifact
 from .generator_utils import ReusableGenerator
@@ -80,17 +80,17 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
-    
+
     def prepare(self):
         super().prepare()
         self.set_size(self.sample_size)
-    
+
     def set_size(self, size):
         if isinstance(size, str):
             assert size.isdigit(), f"sample_size must be a natural number, got {self.sample_size}"
             size = int(size)
         self.sample_size = size
-    
+
     @abstractmethod
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         pass
@@ -100,6 +100,7 @@ class RandomSampler(Sampler):
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
         return random.sample(instances_pool, self.sample_size)
+
 
 class SpreadSplit(InstanceOperatorWithGlobalAccess):
     source_stream: str = None

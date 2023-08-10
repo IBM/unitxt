@@ -2,11 +2,12 @@ from typing import List, Optional, Union
 
 from .artifact import Artifact
 from .collections import Collection
+from .dataclass import OptionalField
 from .loaders import Loader
 from .operator import StreamingOperator
+from .splitters import RandomSampler, Sampler
 from .task import FormTask
-from .splitters import Sampler, RandomSampler
-from .dataclass import OptionalField
+
 
 class TaskCard(Artifact):
     loader: Loader

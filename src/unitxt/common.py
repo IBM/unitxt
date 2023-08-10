@@ -2,13 +2,14 @@ from typing import Union
 
 from .card import TaskCard
 from .collections import ItemPicker, RandomPicker
+from .dataclass import OptionalField
 from .operator import SourceOperator
 from .recipe import Recipe, SequentialRecipe
 from .schema import ToUnitxtGroup
-from .splitters import Sampler, RandomSampler, SeparateSplit, SliceSplit, SpreadSplit
+from .splitters import RandomSampler, Sampler, SeparateSplit, SliceSplit, SpreadSplit
 from .stream import MultiStream
 from .templates import RenderTemplatedICL
-from .dataclass import OptionalField
+
 
 class CommonRecipe(Recipe, SourceOperator):
     card: TaskCard
@@ -20,13 +21,11 @@ class CommonRecipe(Recipe, SourceOperator):
     sampler: Sampler = None
     instruction_item: Union[str, int] = None
     template_item: Union[str, int] = None
-    
+
     def verify(self):
         super().verify()
 
     def prepare(self):
-            
-        
         steps = [
             self.card.loader,
         ]
@@ -46,12 +45,11 @@ class CommonRecipe(Recipe, SourceOperator):
             )
 
         if self.num_demos is not None:
-            
             sampler = self.card.sampler
-            
+
             if self.sampler is not None:
                 sampler = self.sampler
-                
+
             sampler.set_size(self.num_demos)
 
             steps.append(
