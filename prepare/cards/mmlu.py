@@ -142,7 +142,7 @@ def multiple_choice_preprocess(
     """
 
     assert expected_answer in ["number", "number_and_answer", "answer"]
-    input_fields = [numbering, topic, choices, label_index]
+    input_fields = [numbering, choices, label_index]
     renames = {field: "_" + field for field in input_fields}
     renames[topic] = "topic"
     if context:

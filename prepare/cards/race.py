@@ -38,31 +38,29 @@ from src.unitxt.test_utils.card import test_card
 # builder = load_dataset_builder(path='cais/mmlu')
 
 # numbering=tuple(str(x) for x in range(200))
-numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-expected_answer = "number"  # 'number_and_answer' #'number'
-
-card = TaskCard(
-    loader=LoadHF(path="sciq"),
-    preprocess_steps=[
-        AddFields({"numbering": numbering, "topic": "physical commonsense"}),
-        ListFieldValues(fields=["distractor1", "distractor2", "distractor3", "correct_answer"], to_field="choices"),
-        ShuffleFieldValues(field="choices"),
-        IndexOf(search_in="choices", index_of="correct_answer", to_field="index"),
-        # ZipFieldValues(fields=['sol1', 'sol2'], to_field='choices'),
-        *multiple_choice_preprocess(
-            context="support",
-            question="question",
-            numbering="numbering",
-            choices="choices",
-            topic="topic",
-            label_index="index",
+numbering = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+expected_answer = 'number'  # 'number_and_answer' #'number'
+subsets = ['all', 'high', 'middle']
+for subset in subsets:
+    card = TaskCard(
+        loader=LoadHF(path='race', name=subset),
+        preprocess_steps=[
+            AddFields({'numbering': numbering, 'topic': 'reading comprehension'}),
+            IndexOf(search_in='numbering', index_of='answer', to_field='index'),
+            *multiple_choice_preprocess(
+                context='article',
+                question='question',
+                numbering='numbering',
+                choices='options',
+                topic='topic',
+                label_index='index',
+            ),
+        ],
+        task=FormTask(
+            **multiple_choice_inputs_outputs(context=True),
+            metrics=['metrics.accuracy'],
         ),
-    ],
-    task=FormTask(
-        **multiple_choice_inputs_outputs(context=True),
-        metrics=["metrics.accuracy"],
-    ),
-    templates=CONTEXT_MMLU_TEMPLATES,
-)
-test_card(card)
-add_to_catalog(card, f"cards.piqa", overwrite=True)
+        templates=CONTEXT_MMLU_TEMPLATES,
+    )
+    test_card(card)
+    add_to_catalog(card, f'cards.race_{subset}', overwrite=True)
