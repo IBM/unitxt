@@ -41,6 +41,7 @@ from .version import __file__ as _
 
 from .version import version
 
+
 def fetch(artifact_name):
     try:
         artifact, _ = fetch_artifact(artifact_name)
