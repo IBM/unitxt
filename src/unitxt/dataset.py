@@ -39,6 +39,7 @@ from .dict_utils import __file__ as _
 from .random_utils import __file__ as _
 from .version import __file__ as _
 
+from .version import version
 
 def fetch(artifact_name):
     try:
@@ -68,7 +69,7 @@ def parse(query: str):
 class Dataset(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
-    VERSION = datasets.Version("1.1.1")
+    VERSION = datasets.Version(version)
     builder_configs = {}
 
     @property
