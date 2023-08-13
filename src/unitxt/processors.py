@@ -18,8 +18,9 @@ class RegexParser(BaseFieldOperator):
 
     def process(self, text):
         if self.termination_regex is not None and re.fullmatch(self.termination_regex, text):
-             return []
+            return []
         matches = re.findall(self.regex, text)
         return matches
+
 
 # add_to_catalog(ToString('prediction'), 'processors', 'to_string')
