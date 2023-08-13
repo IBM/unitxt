@@ -2,7 +2,7 @@ from src.unitxt import add_to_catalog
 from src.unitxt.processors import RegexParser
 
 # parse string like "1:hlle, 2:world" list of tuples using regex
-regex = r"\s*([^,:]+?)\s*:\s*([^,:]+?)\s*(?=,|$)"
+regex = r"\s*((?:[^,:\\]|\\.)+?)\s*:\s*((?:[^,:\\]|\\.)+?)\s*(?=,|$)"
 
 # test regext parser
 parser = RegexParser(regex=regex)
