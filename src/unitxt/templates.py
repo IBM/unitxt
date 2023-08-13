@@ -197,12 +197,17 @@ class MultiLabelTemplate(InputOutputTemplate):
         labels_str = self.labels_seprator.join(labels)
         return super().process_outputs({"labels": labels_str})
 
+def escape_chars(s, chars_to_escape):
+    for char in chars_to_escape:
+        s = s.replace(char, f'\\{char}')
+    return s
 
 class SpanLabelingTemplate(MultiLabelTemplate):
     spans_starts_field: str = "spans_starts"
     spans_ends_field: str = "spans_ends"
     text_field: str = "text"
     span_label_format: str = "{span}: {label}"
+    escape_characters: List[str] = [":", ","]
     postprocessors = ["processors.to_span_label_pairs"]
     labels_support: list = None
 
@@ -221,7 +226,10 @@ class SpanLabelingTemplate(MultiLabelTemplate):
 
         text_spans = []
         for span in spans:
-            text_spans.append(text[span[0] : span[1]])
+            span_text = text[span[0] : span[1]]
+            if self.escape_characters is not None:
+                span_text = escape_chars(span_text, self.escape_characters)
+            text_spans.append(span_text)
 
         targets = []
         for span, label in zip(text_spans, labels):
