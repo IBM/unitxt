@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Any
 
 from .operator import BaseFieldOperator
 
@@ -30,6 +31,14 @@ class LoadJson(BaseFieldOperator):
             return json.loads(text)
         except json.JSONDecodeError:
             return []
+
+class ListToEmptyEntitiesTuples(BaseFieldOperator):
+    def process(self, lst):
+        try:
+            return [(str(item), "") for item in lst]
+        except json.JSONDecodeError:
+            return []
+        
 
 
 class DictOfListsToPairs(BaseFieldOperator):

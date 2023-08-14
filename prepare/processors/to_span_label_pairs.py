@@ -1,5 +1,5 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.processors import DictOfListsToPairs, LoadJson, RegexParser
+from src.unitxt.processors import DictOfListsToPairs, LoadJson, RegexParser, ListToEmptyEntitiesTuples
 
 # parse string like "1:hlle, 2:world" list of tuples using regex
 regex = r"\s*((?:[^,:\\]|\\.)+?)\s*:\s*((?:[^,:\\]|\\.)+?)\s*(?=,|$)"
@@ -42,3 +42,6 @@ print(converted)
 assert converted == [("david", "PER"), ("james", "PER")]
 add_to_catalog(parser, "processors.load_json", overwrite=True)
 add_to_catalog(operator, "processors.dict_of_lists_to_value_key_pairs", overwrite=True)
+
+operator = ListToEmptyEntitiesTuples()
+add_to_catalog(operator, "processors.list_to_empty_entity_tuples", overwrite=True)
