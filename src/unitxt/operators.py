@@ -507,8 +507,10 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """
 
     inputs_fields: str
+
     operators_field: str
     default_operators: List[str] = None
+    fields_to_treat_as_list: List[str] = NonPositionalField(default_factory=list)
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
@@ -525,7 +527,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
             operator = self.get_artifact(name)
             for field in self.inputs_fields:
                 value = instance[field]
-                if isinstance(value, list):
+                if field in self.fields_to_treat_as_list:
                     instance[field] = [operator.process(v) for v in value]
                 else:
                     instance[field] = operator.process(instance[field])
