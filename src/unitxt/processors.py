@@ -29,7 +29,7 @@ class LoadJson(BaseFieldOperator):
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            return {}
+            return []
 
 
 class DictOfListsToPairs(BaseFieldOperator):
