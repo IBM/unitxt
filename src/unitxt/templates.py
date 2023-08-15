@@ -154,6 +154,7 @@ class InputOutputTemplate(Template):
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
+        data = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in data.items()}
         return template.format(**data)
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
