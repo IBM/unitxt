@@ -98,7 +98,7 @@ class TestTemplates(unittest.TestCase):
 
         processed_targets = ['{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}', "None"]
 
-        post1_targets = [{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}, {}]
+        post1_targets = [{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}, []]
         post2_targets = [[("John,: Doe", "PER"), ("New York", "PER"), ("Goo:gle", "ORG")], []]
 
         for input, processed_target, post_target1, post_target2 in zip(
