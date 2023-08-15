@@ -6,3 +6,4 @@ absl-py
 rouge_score
 scikit-learn
 dpath
+jiwer
