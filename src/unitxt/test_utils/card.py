@@ -71,7 +71,7 @@ def load_examples_from_common_recipe(card, tested_split):
     return examples
 
 
-def test_with_eval(card, tested_split, strict=True):
+def test_with_eval(card, tested_split, strict=True, exact_match_score = 1.0, full_mismatch_score = 0.0):
     examples = load_examples_from_common_recipe(card, tested_split)
     # metric = evaluate.load('unitxt/metric')
     predictions = []
@@ -79,9 +79,9 @@ def test_with_eval(card, tested_split, strict=True):
         predictions.append(example["references"][0] if len(example["references"]) > 0 else [])
 
     results = _compute(predictions=predictions, references=examples)
-    if not math.isclose(results[0]["score"]["global"]["groups_mean_score"], 1.0):
+    if not exact_match_score == None and not math.isclose(results[0]["score"]["global"]["groups_mean_score"], exact_match_score):
         message = (
-            f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}."
+            f"Metric on examples equal predicions is no {exact_match_score}, but {results[0]['score']['global']['groups_mean_score']}."
             f" If you are using matthews_correlation, it is possible that this is because all your examples come from "
             f"one class. Consider setting strict=False"
         )
@@ -92,15 +92,14 @@ def test_with_eval(card, tested_split, strict=True):
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
-    if results[0]["score"]["global"]["groups_mean_score"] != 0.0:
+    if not full_mismatch_score == None and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score:
         print(
-            f"Warning: metric on rundom predicions is different than zero "
-            f"({results[0]['score']['global']['groups_mean_score']})"
+            f"Warning: metric on random predictions is not {full_mismatch_score}, but {results[0]['score']['global']['groups_mean_score']} "
         )
 
 
-def test_card(card, tested_split="train", strict=True):
+def test_card(card, tested_split="train", strict=True, exact_match_score = 1.0, full_mismatch_score = 0.0):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
-    test_with_eval(card, tested_split, strict=strict)
+    test_with_eval(card, tested_split, strict=strict, exact_match_score=exact_match_score, full_mismatch_score=full_mismatch_score)
