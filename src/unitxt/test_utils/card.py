@@ -81,7 +81,9 @@ def test_with_eval(card, tested_split, strict=True):
     results = _compute(predictions=predictions, references=examples)
     if not math.isclose(results[0]["score"]["global"]["groups_mean_score"], 1.0):
         message = (
-            f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}"
+            f"Metric on examples equal predicions is no 1.0, but {results[0]['score']['global']['groups_mean_score']}."
+            f" If you are using matthews_correlation, it is possible that this is because all your examples come from "
+            f"one class. Consider setting strict=False"
         )
         if strict:
             raise AssertionError(message)

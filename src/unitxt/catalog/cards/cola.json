@@ -36,7 +36,7 @@
             "label"
         ],
         "metrics": [
-            "metrics.accuracy"
+            "metrics.matthews_correlation"
         ]
     },
     "templates": {

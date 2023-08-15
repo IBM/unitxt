@@ -361,6 +361,25 @@ class Bleu(HuggingfaceMetric):
     scale = 1.0
 
 
+class MatthewsCorrelation(HuggingfaceMetric):
+    metric_name = "matthews_correlation"
+    main_score = "matthews_correlation"
+    str_to_id = {}
+    id_to_str = {}
+
+    def get_str_id(self, str):
+        if str not in self.str_to_id:
+            id = len(self.str_to_id)
+            self.str_to_id[str] = id
+        return self.str_to_id[str]
+
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        formatted_references = [self.get_str_id(reference[0]) for reference in references]
+        formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
+        result = self.metric.compute(predictions=formatted_predictions, references=formatted_references)
+        return result
+
+
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
     classes = None
