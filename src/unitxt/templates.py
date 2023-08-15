@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from dataclasses import field
 from typing import Any, Dict, List, Optional, Union
@@ -101,7 +102,8 @@ class CharacterSizeLimiter(Artifact):
 class RenderTemplatedICL(RenderAutoFormatTemplate):
     instruction: Instruction = None
     input_prefix: str = "Input: "
-    output_prefix: str = "Output: "
+    output_prefix: str = "Output:"
+    target_prefix: str = " "
     instruction_prefix: str = ""
     demos_field: str = None
     size_limiter: Artifact = None
@@ -127,6 +129,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
                 + demo_example["source"]
                 + self.input_output_separator
                 + self.output_prefix
+                + self.target_prefix
                 + demo_example["target"]
                 + self.demo_separator
             )
