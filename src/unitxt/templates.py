@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from dataclasses import field
 from typing import Any, Dict, List, Optional, Union
@@ -101,7 +102,8 @@ class CharacterSizeLimiter(Artifact):
 class RenderTemplatedICL(RenderAutoFormatTemplate):
     instruction: Instruction = None
     input_prefix: str = "Input: "
-    output_prefix: str = "Output: "
+    output_prefix: str = "Output:"
+    target_prefix: str = " "
     instruction_prefix: str = ""
     demos_field: str = None
     size_limiter: Artifact = None
@@ -127,6 +129,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
                 + demo_example["source"]
                 + self.input_output_separator
                 + self.output_prefix
+                + self.target_prefix
                 + demo_example["target"]
                 + self.demo_separator
             )
@@ -151,6 +154,7 @@ class InputOutputTemplate(Template):
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
+        data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
         return template.format(**data)
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
@@ -204,16 +208,13 @@ def escape_chars(s, chars_to_escape):
     return s
 
 
-class SpanLabelingTemplate(MultiLabelTemplate):
+class SpanLabelingBaseTemplate(MultiLabelTemplate):
     spans_starts_field: str = "spans_starts"
     spans_ends_field: str = "spans_ends"
     text_field: str = "text"
-    span_label_format: str = "{span}: {label}"
-    escape_characters: List[str] = [":", ","]
-    postprocessors = ["processors.to_span_label_pairs"]
     labels_support: list = None
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def extract_span_label_pairs(self, outputs):
         spans_starts = outputs[self.spans_starts_field]
         spans_ends = outputs[self.spans_ends_field]
         text = outputs[self.text_field]
@@ -222,23 +223,51 @@ class SpanLabelingTemplate(MultiLabelTemplate):
         spans = []
         for span_start, span_end, label in zip(spans_starts, spans_ends, labels):
             if self.labels_support is None or label in self.labels_support:
-                spans.append((span_start, span_end, label))
+                spans.append((span_start, span_end, text[span_start:span_end], label))
 
-        spans.sort(key=lambda span: span[0])
+        for span in sorted(spans):
+            if self.labels_support is None or span[3] in self.labels_support:
+                yield span[2], span[3]
 
-        text_spans = []
-        for span in spans:
-            span_text = text[span[0] : span[1]]
-            if self.escape_characters is not None:
-                span_text = escape_chars(span_text, self.escape_characters)
-            text_spans.append(span_text)
-
-        targets = []
-        for span, label in zip(text_spans, labels):
-            if self.labels_support is None or label in self.labels_support:
-                targets.append(self.span_label_format.format(span=span, label=label))
-
+    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+        span_lables_pairs = self.extract_span_label_pairs(outputs)
+        targets = self.span_label_pairs_to_targets(span_lables_pairs)
         return super().process_outputs({"labels": targets})
+
+    @abstractmethod
+    def span_label_pairs_to_targets(self, pairs):
+        pass
+
+
+class SpanLabelingTemplate(SpanLabelingBaseTemplate):
+    span_label_format: str = "{span}: {label}"
+    escape_characters: List[str] = [":", ","]
+    postprocessors = ["processors.to_span_label_pairs"]
+
+    def span_label_pairs_to_targets(self, span_label_pairs):
+        targets = []
+        for span, label in span_label_pairs:
+            if self.escape_characters is not None:
+                span = escape_chars(span, self.escape_characters)
+            target = self.span_label_format.format(span=span, label=label)
+            targets.append(target)
+        return targets
+
+
+class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
+    postprocessors = ["processors.load_json", "processors.dict_of_lists_to_value_key_pairs"]
+
+    def span_label_pairs_to_targets(self, span_label_pairs):
+        groups = {}
+        for span, label in span_label_pairs:
+            if label not in groups:
+                groups[label] = list()
+            groups[label].append(span)
+        if len(groups) > 0:
+            targets = [json.dumps(groups)]
+        else:
+            targets = []
+        return targets
 
 
 class AutoInputOutputTemplate(InputOutputTemplate):

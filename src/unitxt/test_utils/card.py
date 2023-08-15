@@ -81,7 +81,9 @@ def test_with_eval(card, tested_split, strict=True, exact_match_score = 1.0, ful
     results = _compute(predictions=predictions, references=examples)
     if not exact_match_score == None and not math.isclose(results[0]["score"]["global"]["groups_mean_score"], exact_match_score):
         message = (
-            f"Metric when predictions equal references is not {exact_match_score}, but {results[0]['score']['global']['groups_mean_score']}"
+            f"Metric when predictions equal references is not {exact_match_score}, but {results[0]['score']['global']['groups_mean_score']}."
+            f"If you are using matthews_correlation, it is possible that this is because all your examples come from "
+            f"one class. Consider setting strict=False"
         )
         if strict:
             raise AssertionError(message)
