@@ -8,6 +8,7 @@ import evaluate
 import nltk
 import numpy
 
+from .dataclass import InternalField
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -364,8 +365,7 @@ class Bleu(HuggingfaceMetric):
 class MatthewsCorrelation(HuggingfaceMetric):
     metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
-    str_to_id = {}
-    id_to_str = {}
+    str_to_id: dict = InternalField(default_factory=dict)
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
