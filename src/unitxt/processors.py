@@ -32,13 +32,13 @@ class LoadJson(BaseFieldOperator):
         except json.JSONDecodeError:
             return []
 
+
 class ListToEmptyEntitiesTuples(BaseFieldOperator):
     def process(self, lst):
         try:
             return [(str(item), "") for item in lst]
         except json.JSONDecodeError:
             return []
-        
 
 
 class DictOfListsToPairs(BaseFieldOperator):
