@@ -253,7 +253,7 @@ class F1(GlobalMetric):
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         assert all(
             len(reference) == 1 for reference in references
-        ), "One single reference per predictition are allowed in F1 metric"
+        ), "Only a single reference per prediction is allowed in F1 metric"
         self.str_to_id = {}
         self.id_to_str = {}
         formatted_references = [self.get_str_id(reference[0]) for reference in references]
@@ -355,6 +355,21 @@ class Rouge(HuggingfaceMetric):
         references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
 
+
+class Wer(HuggingfaceMetric):
+    metric_name = "wer"
+    main_score = "wer"
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(self.metric_name)
+
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only single reference per prediction is allowed in wer metric"
+        formatted_references = [ reference[0] for reference in references]
+        result = self.metric.compute(predictions=predictions, references=formatted_references)
+        return {self.main_score:result}
 
 class Bleu(HuggingfaceMetric):
     metric_name = "bleu"
