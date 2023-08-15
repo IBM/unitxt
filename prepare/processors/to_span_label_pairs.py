@@ -1,5 +1,10 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.processors import DictOfListsToPairs, LoadJson, RegexParser, ListToEmptyEntitiesTuples
+from src.unitxt.processors import (
+    DictOfListsToPairs,
+    ListToEmptyEntitiesTuples,
+    LoadJson,
+    RegexParser,
+)
 
 # parse string like "1:hlle, 2:world" list of tuples using regex
 regex = r"\s*((?:[^,:\\]|\\.)+?)\s*:\s*((?:[^,:\\]|\\.)+?)\s*(?=,|$)"
