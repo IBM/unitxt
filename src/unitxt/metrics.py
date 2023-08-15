@@ -372,6 +372,7 @@ class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
         return {"char_edit_dist_accuracy": (1 - edit_dist / max_length)}
 
 
+
 class Wer(HuggingfaceMetric):
     metric_name = "wer"
     main_score = "wer"
@@ -384,10 +385,9 @@ class Wer(HuggingfaceMetric):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only single reference per prediction is allowed in wer metric"
-        formatted_references = [reference[0] for reference in references]
+        formatted_references = [ reference[0] for reference in references]
         result = self.metric.compute(predictions=predictions, references=formatted_references)
-        return {self.main_score: result}
-
+        return {self.main_score:result}
 
 class Bleu(HuggingfaceMetric):
     metric_name = "bleu"
