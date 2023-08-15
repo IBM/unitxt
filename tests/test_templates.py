@@ -117,7 +117,7 @@ class TestTemplates(unittest.TestCase):
 
         predictions = ["{}", '{"d":{"b": "c"}}', '{dll:"dkk"}', '["djje", "djjjd"]']
 
-        post1_targets = [{}, {"d": {"b": "c"}}, {}, ["djje", "djjjd"]]
+        post1_targets = [{}, {"d": {"b": "c"}}, [], ["djje", "djjjd"]]
         post2_targets = [[], [("b", "d")], [], []]
 
         for pred, post_target1, post_target2 in zip(predictions, post1_targets, post2_targets):
