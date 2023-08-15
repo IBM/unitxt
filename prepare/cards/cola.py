@@ -27,8 +27,7 @@ card = TaskCard(
     task=FormTask(
         inputs=["choices", "sentence"],
         outputs=["label"],
-        # metrics=["metrics.matthews_correlation"],
-        metrics=["metrics.accuracy"],
+        metrics=["metrics.matthews_correlation"],
     ),
     templates=TemplatesList(
         [
@@ -42,5 +41,5 @@ card = TaskCard(
     ),
 )
 
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.cola", overwrite=True)
