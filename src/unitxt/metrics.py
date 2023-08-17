@@ -311,11 +311,12 @@ class F1MultiLabel(GlobalMetric):
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
+        print("references:" , references)
         labels = list(set([label for reference in references for label in reference]))
         for label in labels:
             assert (
                 not self.seperator in label
-            ), "Reference label (f{label}) can not contain multi label seperator (f{self.seperator}) "
+            ), f"Reference label ({label}) can not contain multi label seperator ({self.seperator}) "
             self.add_str_to_id(label)
         formatted_references = [self.get_one_hot_vector(reference) for reference in references]
         split_predictions = [
