@@ -368,7 +368,6 @@ class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
         edit_dist = eval(formatted_reference, formatted_prediction)
         return {"char_edit_dist_accuracy": (1 - edit_dist / max_length)}
 
-
 class Wer(HuggingfaceMetric):
     metric_name = "wer"
     main_score = "wer"
