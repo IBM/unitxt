@@ -287,7 +287,6 @@ class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
-    seperator = ","
 
     def prepare(self):
         super(F1MultiLabel, self).prepare()
@@ -310,18 +309,15 @@ class F1MultiLabel(GlobalMetric):
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
-        print("references:" , references)
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in F1 metric"
+        references = [reference[0] for reference in references]
         labels = list(set([label for reference in references for label in reference]))
         for label in labels:
-            assert (
-                not self.seperator in label
-            ), f"Reference label ({label}) can not contain multi label seperator ({self.seperator}) "
             self.add_str_to_id(label)
         formatted_references = [self.get_one_hot_vector(reference) for reference in references]
-        split_predictions = [
-            [label.strip() for label in prediction.split(self.seperator)] for prediction in predictions
-        ]
-        formatted_predictions = [self.get_one_hot_vector(prediction) for prediction in split_predictions]
+        formatted_predictions = [self.get_one_hot_vector(prediction) for prediction in predictions]
         result = self._metric.compute(
             predictions=formatted_predictions, references=formatted_references, average=self.average
         )

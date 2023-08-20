@@ -9,13 +9,13 @@ class ToString(BaseFieldOperator):
     def process(self, instance):
         return str(instance)
 
+
 class ToListByComma(BaseFieldOperator):
     def process(self, instance):
-        print(instance)
-        output = [ x.strip() for x in instance.split(',') ]
-        print(output)
+        output = [x.strip() for x in instance.split(",")]
         return output
-    
+
+
 class RegexParser(BaseFieldOperator):
     """
     A processor that uses regex in order to parse a string.
