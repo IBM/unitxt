@@ -7,6 +7,7 @@ from src.unitxt.templates import (
     InputOutputTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
+    MultiLabelTemplate
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.test_utils.metrics import apply_metric
@@ -38,6 +39,30 @@ class TestTemplates(unittest.TestCase):
         processed_targets = ["John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG", "None"]
 
         parsed_targets = [[("John\\,\\: Doe", "PER"), ("New York", "LOC"), ("Goo\\:gle", "ORG")], []]
+
+        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+            processed = template.process_outputs(input)
+            self.assertEqual(processed, processed_target)
+            parsed = parser.process(processed)
+            self.assertEqual(parsed, parsed_target)
+
+    def test_multi_label_template(self):
+        parser, _ = fetch_artifact("processors.to_list_by_comma")
+
+        template = MultiLabelTemplate()
+
+        inputs = [
+            {
+                "labels": ["cat","dog"]
+            },
+            {
+                "labels": ["man","woman","dog"]
+            },
+        ]
+
+        processed_targets = ["cat, dog","man, woman, dog"]
+
+        parsed_targets = [["cat","dog"],["man","woman","dog"]]
 
         for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
             processed = template.process_outputs(input)
