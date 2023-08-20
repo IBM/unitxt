@@ -354,14 +354,14 @@ class Rouge(HuggingfaceMetric):
         return super().compute(references, predictions)
 
 
-# Computes chat edit distance, ignoring repeating whitespace
+# Computes chat edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
     def compute(self, reference, prediction: str) -> dict:
-        formatted_prediction = " ".join(prediction.split())
-        formatted_reference = " ".join(reference.split())
+        formatted_prediction = "".join(prediction.split())
+        formatted_reference = "".join(reference.split())
         max_length = max(len(formatted_reference), len(formatted_prediction))
         if max_length == 0:
             return 0
