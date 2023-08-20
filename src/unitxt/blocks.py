@@ -28,6 +28,7 @@ from .task import FormTask
 from .templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
+    MultiLabelTemplate,
     OutputQuantizingTemplate,
     RenderAutoFormatTemplate,
     RenderFormatTemplate,
