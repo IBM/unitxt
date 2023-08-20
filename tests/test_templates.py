@@ -5,9 +5,9 @@ from src.unitxt.processors import RegexParser
 from src.unitxt.templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
+    MultiLabelTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
-    MultiLabelTemplate
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.test_utils.metrics import apply_metric
@@ -52,17 +52,13 @@ class TestTemplates(unittest.TestCase):
         template = MultiLabelTemplate()
 
         inputs = [
-            {
-                "labels": ["cat","dog"]
-            },
-            {
-                "labels": ["man","woman","dog"]
-            },
+            {"labels": ["cat", "dog"]},
+            {"labels": ["man", "woman", "dog"]},
         ]
 
-        processed_targets = ["cat, dog","man, woman, dog"]
+        processed_targets = ["cat, dog", "man, woman, dog"]
 
-        parsed_targets = [["cat","dog"],["man","woman","dog"]]
+        parsed_targets = [["cat", "dog"], ["man", "woman", "dog"]]
 
         for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
             processed = template.process_outputs(input)
