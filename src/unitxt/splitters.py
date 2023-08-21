@@ -103,7 +103,7 @@ class RandomSampler(Sampler):
 
 
 class DiverseLabelsSampler(Sampler):
-    choices: str = 'choices'
+    choices: str = "choices"
 
     def prepare(self):
         super().prepare()
