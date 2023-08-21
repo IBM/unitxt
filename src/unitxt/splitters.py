@@ -103,15 +103,15 @@ class RandomSampler(Sampler):
 
 
 class DiverseLabelsSampler(Sampler):
-
     def prepare(self):
         super().prepare()
         self.labels = None
 
     def examplar_repr(self, examplar):
-        assert 'inputs' in examplar and 'choices' in examplar['inputs'],\
-            'DiverseLabelsSampler assumes each examplar has choices field in it input'
-        examplar_outputs = next(iter(examplar['outputs'].values()))
+        assert (
+            "inputs" in examplar and "choices" in examplar["inputs"]
+        ), "DiverseLabelsSampler assumes each examplar has choices field in it input"
+        examplar_outputs = next(iter(examplar["outputs"].values()))
         return str([choise for choise in examplar["inputs"]["choices"] if choise in examplar_outputs])
 
     def divide_by_repr(self, examplars_pool):
@@ -129,6 +129,7 @@ class DiverseLabelsSampler(Sampler):
         all_labels = list(self.labels.keys())
         random.shuffle(all_labels)
         from collections import Counter
+
         total_allocated = 0
         allocations = Counter()
 
@@ -148,7 +149,7 @@ class DiverseLabelsSampler(Sampler):
 
         random.shuffle(result)
         return result
-    
+
 
 class SpreadSplit(InstanceOperatorWithGlobalAccess):
     source_stream: str = None
