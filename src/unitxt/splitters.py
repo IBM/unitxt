@@ -103,16 +103,18 @@ class RandomSampler(Sampler):
 
 
 class DiverseLabelsSampler(Sampler):
+    choices: str = 'choices'
+
     def prepare(self):
         super().prepare()
         self.labels = None
 
     def examplar_repr(self, examplar):
         assert (
-            "inputs" in examplar and "choices" in examplar["inputs"]
-        ), "DiverseLabelsSampler assumes each examplar has choices field in it input"
+            "inputs" in examplar and self.choices in examplar["inputs"]
+        ), f"DiverseLabelsSampler assumes each examplar has {self.choices} field in it input"
         examplar_outputs = next(iter(examplar["outputs"].values()))
-        return str([choise for choise in examplar["inputs"]["choices"] if choise in examplar_outputs])
+        return str([choice for choice in examplar["inputs"][self.choices] if choice in examplar_outputs])
 
     def divide_by_repr(self, examplars_pool):
         labels = dict()
