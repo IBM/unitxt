@@ -65,4 +65,4 @@ card = TaskCard(
     templates=CONTEXT_MMLU_TEMPLATES,
 )
 test_card(card)
-add_to_catalog(card, f"cards.piqa", overwrite=True)
+add_to_catalog(card, f"cards.sciq", overwrite=True)
