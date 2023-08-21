@@ -26,5 +26,3 @@ add_to_catalog(
     "splitters.test_only",
     overwrite=True,
 )
-
-
