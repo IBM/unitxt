@@ -102,6 +102,54 @@ class RandomSampler(Sampler):
         return random.sample(instances_pool, self.sample_size)
 
 
+class DiverseLabelsSampler(Sampler):
+
+    def prepare(self):
+        super().prepare()
+        self.labels = None
+
+    def examplar_repr(self, examplar):
+        assert 'inputs' in examplar and 'choices' in examplar['inputs'],\
+            'DiverseLabelsSampler assumes each examplar has choices field in it input'
+        examplar_outputs = next(iter(examplar['outputs'].values()))
+        return str([choise for choise in examplar["inputs"]["choices"] if choise in examplar_outputs])
+
+    def divide_by_repr(self, examplars_pool):
+        labels = dict()
+        for examplar in examplars_pool:
+            label_repr = self.examplar_repr(examplar)
+            if label_repr not in labels:
+                labels[label_repr] = []
+            labels[label_repr].append(examplar)
+        return labels
+
+    def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
+        if self.labels is None:
+            self.labels = self.divide_by_repr(instances_pool)
+        all_labels = list(self.labels.keys())
+        random.shuffle(all_labels)
+        from collections import Counter
+        total_allocated = 0
+        allocations = Counter()
+
+        while total_allocated < self.sample_size:
+            for label in all_labels:
+                if total_allocated < self.sample_size:
+                    if len(self.labels[label]) - allocations[label] > 0:
+                        allocations[label] += 1
+                        total_allocated += 1
+                else:
+                    break
+
+        result = []
+        for label, allocation in allocations.items():
+            sample = random.sample(self.labels[label], allocation)
+            result.extend(sample)
+
+        random.shuffle(result)
+        return result
+    
+
 class SpreadSplit(InstanceOperatorWithGlobalAccess):
     source_stream: str = None
     target_field: str = None
