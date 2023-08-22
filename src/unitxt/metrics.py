@@ -22,12 +22,12 @@ from .stream import MultiStream, Stream
 nltk.download("punkt")
 
 
-def absrtact_factory():
+def abstract_factory():
     return {}
 
 
 def abstract_field():
-    return field(default_factory=absrtact_factory)
+    return field(default_factory=abstract_factory)
 
 
 class UpdateStream(StreamInstanceOperator):
