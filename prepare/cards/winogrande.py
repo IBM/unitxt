@@ -39,6 +39,7 @@ for subtask in subtasks:
     card = TaskCard(
         loader=LoadHF(path="winogrande", name=f"winogrande_{subtask}"),
         preprocess_steps=[
+            "splitters.large_no_test",
             AddFields({"topic": "common sense", "numbering": numbering}),
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),
