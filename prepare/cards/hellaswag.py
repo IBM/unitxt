@@ -33,6 +33,7 @@ expected_answer = "number"  # 'number_and_answer' #'number'
 card = TaskCard(
     loader=LoadHF(path="hellaswag"),
     preprocess_steps=[
+        "splitters.large_no_test",
         AddFields({"numbering": numbering}),
         IndexOf(search_in="numbering", index_of="label", to_field="index"),
         *multiple_choice_preprocess(
