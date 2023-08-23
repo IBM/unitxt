@@ -6,6 +6,7 @@
         "name": "winogrande_m"
     },
     "preprocess_steps": [
+        "splitters.small_no_test",
         {
             "type": "add_fields",
             "fields": {
