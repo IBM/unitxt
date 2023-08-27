@@ -22,12 +22,12 @@ from .stream import MultiStream, Stream
 nltk.download("punkt")
 
 
-def absrtact_factory():
+def abstract_factory():
     return {}
 
 
 def abstract_field():
-    return field(default_factory=absrtact_factory)
+    return field(default_factory=abstract_factory)
 
 
 class UpdateStream(StreamInstanceOperator):
@@ -288,6 +288,7 @@ class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
+    classes_to_ignore = ["none"]
 
     def prepare(self):
         super(F1MultiLabel, self).prepare()
@@ -314,7 +315,11 @@ class F1MultiLabel(GlobalMetric):
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
         references = [reference[0] for reference in references]
-        labels = list(set([label for reference in references for label in reference]))
+        labels = [
+            l
+            for l in set([label for reference in references for label in reference])
+            if l not in self.classes_to_ignore
+        ]
         for label in labels:
             self.add_str_to_id(label)
         formatted_references = [self.get_one_hot_vector(reference) for reference in references]

@@ -39,6 +39,7 @@ for subtask in subtasks:
     card = TaskCard(
         loader=LoadHF(path="winogrande", name=f"winogrande_{subtask}"),
         preprocess_steps=[
+            "splitters.small_no_test",
             AddFields({"topic": "common sense", "numbering": numbering}),
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),
@@ -53,5 +54,5 @@ for subtask in subtasks:
         ),
         templates=MMLU_TEMPLATES,
     )
-    test_card(card)
+    test_card(card, tested_split="test")
     add_to_catalog(card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True)

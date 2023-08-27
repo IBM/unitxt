@@ -101,8 +101,8 @@ class CharacterSizeLimiter(Artifact):
 
 class RenderTemplatedICL(RenderAutoFormatTemplate):
     instruction: Instruction = None
-    input_prefix: str = "Input: "
-    output_prefix: str = "Output:"
+    input_prefix: str = ""
+    output_prefix: str = ""
     target_prefix: str = " "
     instruction_prefix: str = ""
     demos_field: str = None
