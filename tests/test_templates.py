@@ -66,6 +66,27 @@ class TestTemplates(unittest.TestCase):
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
 
+    def test_input_output_template(self):
+        parser, _ = fetch_artifact("processors.to_string_stripped")
+
+        template = InputOutputTemplate(output_format="{labels}")
+
+        inputs = [
+            {"labels": ["cat"]},
+            {"labels": [" man"]},
+            {"labels": ["dog\n"]},
+        ]
+
+        processed_targets = ["cat", " man", "dog\n"]
+
+        parsed_targets = ["cat", "man", "dog"]
+
+        for input, processed_target, parsed_target in zip(inputs, processed_targets, parsed_targets):
+            processed = template.process_outputs(input)
+            self.assertEqual(processed, processed_target)
+            parsed = parser.process(processed)
+            self.assertEqual(parsed, parsed_target)
+
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
 

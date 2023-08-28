@@ -10,6 +10,11 @@ class ToString(BaseFieldOperator):
         return str(instance)
 
 
+class ToStringStripped(BaseFieldOperator):
+    def process(self, instance):
+        return str(instance).strip()
+
+
 class ToListByComma(BaseFieldOperator):
     def process(self, instance):
         output = [x.strip() for x in instance.split(",")]
@@ -61,6 +66,3 @@ class DictOfListsToPairs(BaseFieldOperator):
             return result
         except:
             return []
-
-
-# add_to_catalog(ToString('prediction'), 'processors', 'to_string')
