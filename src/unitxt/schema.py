@@ -29,7 +29,7 @@ UNITXT_DATASET_SCHEMA = Features(
 class ToUnitxtGroup(StreamInstanceOperatorValidator):
     group: str
     metrics: List[str] = None
-    postprocessors: List[str] = field(default_factory=lambda: ["to_string"])
+    postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:

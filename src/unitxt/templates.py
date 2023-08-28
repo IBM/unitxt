@@ -151,7 +151,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string"])
+    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}

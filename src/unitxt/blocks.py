@@ -20,7 +20,7 @@ from .operators import (
     MapInstanceValues,
     RenameFields,
 )
-from .processors import ToString
+from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
