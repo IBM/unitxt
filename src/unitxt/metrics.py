@@ -337,7 +337,7 @@ class F1MultiLabel(GlobalMetric):
             labels_param = [1]
         else:
             labels_param = None
-            
+
         result = self._metric.compute(
             predictions=formatted_predictions,
             references=formatted_references,
