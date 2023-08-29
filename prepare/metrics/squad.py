@@ -37,11 +37,11 @@ metric = MetricPipeline(
 predictions = ["1976", "Beyoncé and", "climate change"]
 references = [["1905"], ["Beyoncé and Bruno Mars"], ["climate change"]]
 instance_targets = [
-    {"exact_match": 0.0, "f1": 0.0, "score": 0.0},
-    {"exact_match": 0.0, "f1": 0.67, "score": 0.67},
-    {"exact_match": 1.0, "f1": 1.0, "score": 1.0},
+    {"exact_match": 0.0, "f1": 0.0, "score": 0.0, "score_name": "f1"},
+    {"exact_match": 0.0, "f1": 0.67, "score": 0.67, "score_name": "f1"},
+    {"exact_match": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-global_target = {"exact_match": 0.33, "f1": 0.56, "score": 0.56}
+global_target = {"exact_match": 0.33, "f1": 0.56, "score": 0.56, "score_name": "f1"}
 
 outputs = test_metric(
     metric=metric,

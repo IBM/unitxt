@@ -65,7 +65,8 @@ class GlobalMetric(SingleStreamOperator, Metric):
             try:
                 instance_score = self._compute([refs], [pred])
             except:
-                instance_score = {"score": None}
+                instance_score = {"score": None, "score_name": self.main_score}
+
                 if isinstance(self.main_score, str) and self.main_score is not None:
                     instance_score[self.main_score] = None
 
