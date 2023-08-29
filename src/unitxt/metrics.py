@@ -320,16 +320,36 @@ class F1MultiLabel(GlobalMetric):
             for l in set([label for reference in references for label in reference])
             if l not in self.classes_to_ignore
         ]
+        # if no classes are left then F1 is not defined
+        # (e.g. only "none" in references)
+        if len(labels) == 0:
+            return {self.main_score: float("nan")}
+
         for label in labels:
             self.add_str_to_id(label)
         formatted_references = [self.get_one_hot_vector(reference) for reference in references]
         formatted_predictions = [self.get_one_hot_vector(prediction) for prediction in predictions]
+
+        # There is odd behavior in scikit-learn that when passing a one-hot vector with a single
+        # element, it is treated a class identifier. Therefore, we add labels=[1] to limit to only
+        # to this class.
+        if len(labels) == 1:
+            labels_param = [1]
+        else:
+            labels_param = None
+            
         result = self._metric.compute(
-            predictions=formatted_predictions, references=formatted_references, average=self.average
+            predictions=formatted_predictions,
+            references=formatted_references,
+            average=self.average,
+            labels=labels_param,
         )
         if isinstance(result["f1"], numpy.ndarray):
             from statistics import mean
 
+            assert len(result["f1"]) == len(
+                labels
+            ), f'F1 result ({result["f1"]}) has more entries than labels ({labels})'
             final_result = {self.main_score: mean(result["f1"])}
             for i, label in enumerate(labels):
                 final_result["f1_" + label] = result["f1"][i]
