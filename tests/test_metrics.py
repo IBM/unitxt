@@ -21,12 +21,12 @@ class TestMetrics(unittest.TestCase):
         references = [["B"], ["A"], ["C"]]
 
         instance_targets = [
-            {"accuracy": 0.0, "score": 0.0},
-            {"accuracy": 0.0, "score": 0.0},
-            {"accuracy": 1.0, "score": 1.0},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
         ]
 
-        global_target = {"accuracy": 1 / 3, "score": 1 / 3}
+        global_target = {"accuracy": 1 / 3, "score": 1 / 3, "score_name": "accuracy"}
 
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
@@ -39,9 +39,9 @@ class TestMetrics(unittest.TestCase):
         predictions = ["1976", "Beyonce", "climate change"]
         references = [["1976"], ["Beyoncé and Bruno Mars"], ["climate change"]]
         instance_targets = [
-            {"exact_match": 100.0, "f1": 100.0, "score": 100.0},
-            {"exact_match": 0.0, "f1": 0.0, "score": 0.0},
-            {"exact_match": 100.0, "f1": 100.0, "score": 100.0},
+            {"exact_match": 100.0, "f1": 100.0, "score": 100.0, "score_name": "f1"},
+            {"exact_match": 0.0, "f1": 0.0, "score": 0.0, "score_name": "f1"},
+            {"exact_match": 100.0, "f1": 100.0, "score": 100.0, "score_name": "f1"},
         ]
         global_target = 100 * 2 / 3
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
@@ -58,6 +58,8 @@ class TestMetrics(unittest.TestCase):
         global_target = 0.8333333
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro(self):
         metric = F1Macro()
@@ -74,6 +76,8 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
         self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro_with_ood_predictions(self):
         metric = F1Macro()
@@ -90,6 +94,8 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
         self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro_multilabel(self):
         metric = F1MacroMultiLabel()
@@ -106,6 +112,8 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
         self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_micro_multilabel(self):
         metric = F1MicroMultiLabel()
