@@ -1,4 +1,5 @@
 import unittest
+from math import isnan
 
 from src.unitxt.metrics import (
     F1,
@@ -120,18 +121,69 @@ class TestMetrics(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-    def test_f1_micro_multilabel_with_many_nones(self):
+    def test_f1_macro_multilabel_with_nones(self):
         metric = F1MacroMultiLabel()
-        global_target = 0.33333333333
+
+        references = [[["none"]]]
+        predictions = [["none"]]
+        global_target = float("nan")
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
+
+        references = [[["none"]]]
+        predictions = [["x", "y"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
+
+        references = [[["none"]]]
+        predictions = [["none", "x", "y"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
+
         references = [[["x"]], [["y"]]]
         predictions = [["x"], ["x"]]
-
+        global_target = 0.33333333333
+        # Recall(x) = 1.0 Precion(x) = 0.5   --> F1(x) = 0.66666
+        # recall(y) = 0.0 Precision(x) = NAN --> F1(y) = 0
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
         references = [[["none"]], [["x"]], [["y"]], [["none"]], [["none"]]]
         predictions = [["none"], ["x"], ["x"], ["none"], ["none"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
+    def test_f1_micro_multilabel_with_nones(self):
+        metric = F1MicroMultiLabel()
+        references = [[["none"]]]
+        predictions = [["cat", "dog"]]
+
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
+
+        references = [[["none"]]]
+        predictions = [["none"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
+
+        references = [[["sad"]], [["sad"]]]
+        predictions = [["dog", "fustrated"], ["sad"]]
+        # TP = 1 FN = 1 FP=0 .. precision=100 recall=0.5
+        # sad  TP=1  FP=1  FN=0  TN=1
+        #
+        # precision = TP / (FP + TP) = 1 / 2 = 0.5
+        # recall = TP /( FN + TP) =  1 / 1 = 1
+
+        global_target = 0.66666666
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+        references = [[["none"]], [["sad"]]]
+        predictions = [["dog", "fustrated"], ["sad"]]
+        # precision = TP / (FP + TP) = 1 / 1 = 1
+        # recall = TP /( FN + TP) =  1 / 1 = 1
+
+        global_target = 1
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
