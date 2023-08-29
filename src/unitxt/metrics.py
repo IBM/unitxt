@@ -86,6 +86,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
     def _compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.compute(references, predictions)
         result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
         return result
 
     @abstractmethod
@@ -131,6 +132,7 @@ class InstanceMetric(SingleStreamOperator, Metric):
                     global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
+                        global_score["score_name"] = self.main_score
 
         for instance in instances:
             yield instance
@@ -138,6 +140,7 @@ class InstanceMetric(SingleStreamOperator, Metric):
     def _compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.compute(references=references, predictions=predictions)
         result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
         return result
 
     @abstractmethod
@@ -147,7 +150,6 @@ class InstanceMetric(SingleStreamOperator, Metric):
 
 class Squad(GlobalMetric):
     _metric = None
-    reduction_map = {"mean": ["f1"]}
     main_score = "f1"
     metric = "squad"
 
@@ -172,6 +174,7 @@ class SingleReferenceInstanceMetric(InstanceMetric):
     def _compute(self, references: List[str], prediction: str) -> dict:
         result = self.compute(references[0], prediction)
         result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
         return result
 
     @abstractmethod
