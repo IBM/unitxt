@@ -16,6 +16,7 @@ instance_targets = [
         "translation_length": 4,
         "reference_length": 3,
         "score": 1.0,
+        "score_name": "bleu",
     },
     {
         "bleu": 0.0,
@@ -25,9 +26,10 @@ instance_targets = [
         "translation_length": 3,
         "reference_length": 3,
         "score": 0.0,
+        "score_name": "bleu",
     },
-    {"score": None, "bleu": None},
-    {"score": None, "bleu": None},
+    {"score": None, "bleu": None, "score_name": "bleu"},
+    {"score": None, "bleu": None, "score_name": "bleu"},
 ]
 
 global_target = {
@@ -38,6 +40,7 @@ global_target = {
     "translation_length": 9,
     "reference_length": 8,
     "score": 0.9,
+    "score_name": "bleu",
 }
 
 outputs = test_metric(

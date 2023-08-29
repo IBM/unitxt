@@ -24,12 +24,12 @@ predictions = ["1.0", " 2.0", "1.0"]
 references = [["-1.0"], ["1.0"], ["0.0"]]
 
 instance_targets = [
-    {"spearmanr": np.nan, "score": np.nan},
-    {"spearmanr": np.nan, "score": np.nan},
-    {"spearmanr": np.nan, "score": np.nan},
+    {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
+    {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
+    {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
 ]
 
-global_target = {"spearmanr": 0.87, "score": 0.87}
+global_target = {"spearmanr": 0.87, "score": 0.87, "score_name": "spearmanr"}
 
 outputs = test_metric(
     metric=metric,

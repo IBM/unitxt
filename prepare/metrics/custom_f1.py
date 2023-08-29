@@ -12,10 +12,31 @@ references = [[("Yaron", "Person"), ("Ran", "Person")], [("Yonatan", "Person")]]
 # total precision = 2/4, recall = 2/3
 # F1 = 2 * 1/2 * 2/3 / (1/2 + 2/3) = 0.57
 instance_targets = [
-    {"f1_Person": 0.5, "f1_macro": 0.5, "in_classes_support": 1.0, "f1_micro": 0.5, "score": 0.5},
-    {"f1_Person": 0.67, "f1_macro": 0.67, "in_classes_support": 1.0, "f1_micro": 0.67, "score": 0.67},
+    {
+        "f1_Person": 0.5,
+        "f1_macro": 0.5,
+        "in_classes_support": 1.0,
+        "f1_micro": 0.5,
+        "score": 0.5,
+        "score_name": "f1_micro",
+    },
+    {
+        "f1_Person": 0.67,
+        "f1_macro": 0.67,
+        "in_classes_support": 1.0,
+        "f1_micro": 0.67,
+        "score": 0.67,
+        "score_name": "f1_micro",
+    },
 ]
-global_target = {"f1_Person": 0.57, "f1_macro": 0.57, "in_classes_support": 1.0, "f1_micro": 0.57, "score": 0.57}
+global_target = {
+    "f1_Person": 0.57,
+    "f1_macro": 0.57,
+    "in_classes_support": 1.0,
+    "f1_micro": 0.57,
+    "score": 0.57,
+    "score_name": "f1_micro",
+}
 
 outputs = test_metric(
     metric=metric,
@@ -29,8 +50,24 @@ outputs = test_metric(
 predictions = [[("Amir", "Person"), ("Yaron", "Person")]]
 references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
 # Precision = 1/2, Recall = 1/3, F1 = 2 * 1/2 * 1/3 / (1/2 + 1/3) = 0.4
-instance_targets = [{"f1_Person": 0.4, "f1_macro": 0.4, "in_classes_support": 1.0, "f1_micro": 0.4, "score": 0.4}]
-global_target = {"f1_Person": 0.4, "f1_macro": 0.4, "in_classes_support": 1.0, "f1_micro": 0.4, "score": 0.4}
+instance_targets = [
+    {
+        "f1_Person": 0.4,
+        "f1_macro": 0.4,
+        "in_classes_support": 1.0,
+        "f1_micro": 0.4,
+        "score": 0.4,
+        "score_name": "f1_micro",
+    }
+]
+global_target = {
+    "f1_Person": 0.4,
+    "f1_macro": 0.4,
+    "in_classes_support": 1.0,
+    "f1_micro": 0.4,
+    "score": 0.4,
+    "score_name": "f1_micro",
+}
 
 outputs = test_metric(
     metric=metric,
@@ -43,8 +80,24 @@ outputs = test_metric(
 predictions = [[("Amir", "Person"), ("Yaron", "Person"), ("Yaron", "Person")]]
 references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
 # Precision = 1/3, Recall = 1/3, F1 = 2 * 1/3 * 1/3 / (1/3 + 1/3) = 0.333333
-instance_targets = [{"f1_Person": 0.33, "f1_macro": 0.33, "in_classes_support": 1.0, "f1_micro": 0.33, "score": 0.33}]
-global_target = {"f1_Person": 0.33, "f1_macro": 0.33, "in_classes_support": 1.0, "f1_micro": 0.33, "score": 0.33}
+instance_targets = [
+    {
+        "f1_Person": 0.33,
+        "f1_macro": 0.33,
+        "in_classes_support": 1.0,
+        "f1_micro": 0.33,
+        "score": 0.33,
+        "score_name": "f1_micro",
+    }
+]
+global_target = {
+    "f1_Person": 0.33,
+    "f1_macro": 0.33,
+    "in_classes_support": 1.0,
+    "f1_micro": 0.33,
+    "score": 0.33,
+    "score_name": "f1_micro",
+}
 
 outputs = test_metric(
     metric=metric,
@@ -57,8 +110,24 @@ outputs = test_metric(
 predictions = [[]]
 references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
 # Precision = 0/0=(by def for prediction)=1, Recall = 0/3, F1 = 2 * 1 * 0 / (1 + 0) = 0
-instance_targets = [{"f1_Person": 0.0, "f1_macro": 0.0, "in_classes_support": 1.0, "f1_micro": 0.0, "score": 0.0}]
-global_target = {"f1_Person": 0.0, "f1_macro": 0.0, "in_classes_support": 1.0, "f1_micro": 0.0, "score": 0.0}
+instance_targets = [
+    {
+        "f1_Person": 0.0,
+        "f1_macro": 0.0,
+        "in_classes_support": 1.0,
+        "f1_micro": 0.0,
+        "score": 0.0,
+        "score_name": "f1_micro",
+    }
+]
+global_target = {
+    "f1_Person": 0.0,
+    "f1_macro": 0.0,
+    "in_classes_support": 1.0,
+    "f1_micro": 0.0,
+    "score": 0.0,
+    "score_name": "f1_micro",
+}
 
 outputs = test_metric(
     metric=metric,
@@ -101,6 +170,7 @@ instance_targets = [
         "in_classes_support": 0.62,
         "f1_micro": 0.57,
         "score": 0.57,
+        "score_name": "f1_micro",
     },
 ]
 global_target = {
@@ -110,6 +180,7 @@ global_target = {
     "in_classes_support": 0.62,
     "f1_micro": 0.57,
     "score": 0.57,
+    "score_name": "f1_micro",
 }
 
 outputs = test_metric(
@@ -147,6 +218,7 @@ instance_targets = [
         "in_classes_support": 0.67,
         "f1_micro": 0.57,
         "score": 0.57,
+        "score_name": "f1_micro",
     },
 ]
 global_target = {
@@ -157,6 +229,7 @@ global_target = {
     "in_classes_support": 0.67,
     "f1_micro": 0.57,
     "score": 0.57,
+    "score_name": "f1_micro",
 }
 
 outputs = test_metric(

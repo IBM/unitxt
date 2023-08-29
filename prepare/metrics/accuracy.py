@@ -7,9 +7,13 @@ metric = Accuracy()
 predictions = ["A", "B", "C"]
 references = [["B"], ["A"], ["C"]]
 
-instance_targets = [{"accuracy": 0.0, "score": 0.0}, {"accuracy": 0.0, "score": 0.0}, {"accuracy": 1.0, "score": 1.0}]
+instance_targets = [
+    {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+    {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+    {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+]
 
-global_target = {"accuracy": 0.33, "score": 0.33}
+global_target = {"accuracy": 0.33, "score": 0.33, "score_name": "accuracy"}
 
 outputs = test_metric(
     metric=metric,
