@@ -7,8 +7,8 @@ from typing import Any, Dict, Generator, List, Optional
 import evaluate
 import nltk
 import numpy
-from scipy.stats import bootstrap
 from editdistance import eval
+from scipy.stats import bootstrap
 
 from .dataclass import InternalField
 from .operator import (
@@ -87,9 +87,10 @@ class GlobalMetric(SingleStreamOperator, Metric):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
             return numpy.apply_along_axis(
-                lambda x: self._compute([references[i] for i in x],
-                                        [predictions[i] for i in x])['score'],
-                axis=axis, arr=arr)
+                lambda x: self._compute([references[i] for i in x], [predictions[i] for i in x])["score"],
+                axis=axis,
+                arr=arr,
+            )
 
         ci = bootstrap((identifiers,), n_resamples=999, statistic=statistic).confidence_interval
         global_score[f"score_ci_low"] = ci.low
