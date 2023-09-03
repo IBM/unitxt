@@ -27,7 +27,8 @@ class TestMetrics(unittest.TestCase):
         ]
 
         global_target = {"accuracy": 1 / 3, "score": 1 / 3, "score_name": "accuracy",
-                         "accuracy_ci_high": 1.0, "accuracy_ci_low": 0.0}
+                         "accuracy_ci_high": 1.0, "accuracy_ci_low": 0.0,
+                         "score_ci_high": 1.0, "score_ci_low": 0.0}
 
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
