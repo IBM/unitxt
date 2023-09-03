@@ -92,8 +92,8 @@ class GlobalMetric(SingleStreamOperator, Metric):
                 axis=axis, arr=arr)
 
         ci = bootstrap((identifiers,), n_resamples=999, statistic=statistic).confidence_interval
-        global_score[f"{field}_ci_low"] = ci.low
-        global_score[f"{field}_ci_high"] = ci.high
+        global_score[f"score_ci_low"] = ci.low
+        global_score[f"score_ci_high"] = ci.high
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -156,7 +156,8 @@ class InstanceMetric(SingleStreamOperator, Metric):
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
-
+                        global_score["score_ci_low"] = ci[0]
+                        global_score["score_ci_high"] = ci[1]
         for instance in instances:
             yield instance
 
