@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, List, Optional
 import evaluate
 import nltk
 import numpy
+from scipy.stats import bootstrap
 from editdistance import eval
 
 from .dataclass import InternalField
@@ -80,6 +81,20 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
         global_score.update(result)
 
+        identifiers = list(range(len(predictions)))
+
+        def statistic(arr, axis):
+            # arr is a 2d array where each row is a resampling, so we
+            # iterate over the rows and compute the metric on each resampling
+            return numpy.apply_along_axis(
+                lambda x: self._compute([references[i] for i in x],
+                                        [predictions[i] for i in x])['score'],
+                axis=axis, arr=arr)
+
+        ci = bootstrap((identifiers,), n_resamples=999, statistic=statistic).confidence_interval
+        global_score[f"{field}_ci_low"] = ci.low
+        global_score[f"{field}_ci_high"] = ci.high
+
         for instance in instances:
             instance["score"]["global"] = global_score
             yield instance
@@ -130,7 +145,14 @@ class InstanceMetric(SingleStreamOperator, Metric):
                 from statistics import mean
 
                 for field in fields:
-                    global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
+                    scores = [instance["score"]["instance"][field] for instance in instances]
+                    global_score[field] = mean(scores)
+                    if numpy.allclose(scores, global_score[field]):
+                        ci = mean, mean
+                    else:
+                        ci = bootstrap((scores,), statistic=mean).confidence_interval
+                    global_score[f"{field}_ci_low"] = ci[0]
+                    global_score[f"{field}_ci_high"] = ci[1]
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
