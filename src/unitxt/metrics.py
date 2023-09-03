@@ -18,6 +18,7 @@ from .operator import (
     StreamInstanceOperator,
 )
 from .operators import CopyFields
+from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
 nltk.download("punkt")
@@ -48,6 +49,10 @@ class Metric(ABC):
 
 
 class GlobalMetric(SingleStreamOperator, Metric):
+
+    n_resamples = 10
+    confidence_level = 0.95
+
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
@@ -87,14 +92,17 @@ class GlobalMetric(SingleStreamOperator, Metric):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
             return numpy.apply_along_axis(
-                lambda x: self._compute([references[i] for i in x], [predictions[i] for i in x])["score"],
-                axis=axis,
-                arr=arr,
-            )
+                lambda x: self._compute([references[i] for i in x],
+                                        [predictions[i] for i in x])['score'],
+                axis=axis, arr=arr)
 
-        ci = bootstrap((identifiers,), n_resamples=999, statistic=statistic).confidence_interval
-        global_score[f"score_ci_low"] = ci.low
-        global_score[f"score_ci_high"] = ci.high
+        if self.n_resamples > 1 and len(predictions) > 1:
+            ci = bootstrap((identifiers,), n_resamples=self.n_resamples,
+                           statistic=statistic,
+                           confidence_level=self.confidence_level,
+                           random_state=get_seed()).confidence_interval
+            global_score[f"score_ci_low"] = ci.low
+            global_score[f"score_ci_high"] = ci.high
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -113,6 +121,9 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
 class InstanceMetric(SingleStreamOperator, Metric):
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+
+    n_resamples = 10
+    confidence_level = 0.95
 
     @property
     @abstractmethod
@@ -148,10 +159,10 @@ class InstanceMetric(SingleStreamOperator, Metric):
                 for field in fields:
                     scores = [instance["score"]["instance"][field] for instance in instances]
                     global_score[field] = mean(scores)
-                    if numpy.allclose(scores, global_score[field]):
-                        ci = mean, mean
-                    else:
-                        ci = bootstrap((scores,), statistic=mean).confidence_interval
+                    ci = bootstrap((scores,), statistic=mean,
+                                   n_resamples=self.n_resamples,
+                                   random_state=get_seed(),
+                                   confidence_level=self.confidence_level).confidence_interval
                     global_score[f"{field}_ci_low"] = ci[0]
                     global_score[f"{field}_ci_high"] = ci[1]
                     if field == self.main_score:
