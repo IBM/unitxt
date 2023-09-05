@@ -109,6 +109,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
     size_limiter: Artifact = None
     input_output_separator: str = "\n"
     demo_separator: str = "\n\n"
+    system_prompt: str = None
 
     def render(self, instance: Dict[str, object]) -> Dict[str, object]:
         demos = instance.pop(self.demos_field, [])
@@ -141,6 +142,9 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
             source += demo_str
 
         source += input_str
+
+        if self.system_prompt is not None:
+            source = self.system_prompt.format(source)
 
         return {
             **example,
