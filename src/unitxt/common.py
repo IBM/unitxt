@@ -22,6 +22,8 @@ class CommonRecipe(Recipe, SourceOperator):
     instruction_item: Union[str, int] = None
     template_item: Union[str, int] = None
     system_prompt: str = None
+    input_prefix: str = ""
+    output_prefix: str = ""
 
     def verify(self):
         super().verify()
@@ -84,6 +86,8 @@ class CommonRecipe(Recipe, SourceOperator):
             template=template,
             demos_field=self.demos_field,
             system_prompt=self.system_prompt,
+            input_prefix=self.input_prefix,
+            output_prefix=self.output_prefix,
         )
 
         steps.append(render)
