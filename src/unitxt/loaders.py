@@ -1,12 +1,13 @@
 import os
 from tempfile import TemporaryDirectory
-from typing import Mapping, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
+import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
 from .operator import SourceOperator
-from .stream import MultiStream
+from .stream import MultiStream, Stream
 
 try:
     import ibm_boto3
@@ -35,6 +36,21 @@ class LoadHF(Loader):
         )
 
         return MultiStream.from_iterables(dataset)
+
+
+class LoadCSV(Loader):
+    files: Dict[str, str]
+    chunksize: int = 1000
+
+    def load_csv(self, file):
+        for chunk in pd.read_csv(file, chunksize=self.chunksize):
+            for index, row in chunk.iterrows():
+                yield row.to_dict()
+
+    def process(self):
+        return MultiStream(
+            {name: Stream(generator=self.load_csv, gen_kwargs={"file": file}) for name, file in self.files.items()}
+        )
 
 
 class LoadFromIBMCloud(Loader):
