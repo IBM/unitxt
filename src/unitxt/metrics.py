@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, List, Optional
 import evaluate
 import nltk
 import numpy
+import numpy as np
 from editdistance import eval
 from scipy.stats import bootstrap
 
@@ -22,7 +23,7 @@ from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
 nltk.download("punkt")
-
+MAX_32BIT = 2**32 - 1
 
 def abstract_factory():
     return {}
@@ -49,8 +50,9 @@ class Metric(ABC):
 
 
 class GlobalMetric(SingleStreamOperator, Metric):
-    n_resamples = 10
+    n_resamples = 100
     confidence_level = 0.95
+    random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
@@ -90,22 +92,50 @@ class GlobalMetric(SingleStreamOperator, Metric):
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
-            return numpy.apply_along_axis(
-                lambda x: self._compute([references[i] for i in x], [predictions[i] for i in x])["score"],
+            def metric(sample_refs, sample_preds):
+                try:
+                    return self._compute(references=sample_refs, predictions=sample_preds)["score"]
+                except:
+                    # this happens in edge cases, or example, when the sampling creates a
+                    # sample where all strings are empty and this fails bleu.
+                    return np.nan
+            scores = numpy.apply_along_axis(
+                lambda x: metric(sample_refs=[references[i] for i in x], sample_preds=[predictions[i] for i in x]),
                 axis=axis,
                 arr=arr,
             )
 
+            # when running with bca interval (default), the statistic is called twice: with the
+            # original data and with the resamples. here we want to focus only on the latter.
+            if scores.size > 1:
+                # here we deal with samples on which the metric could not be computed. These are
+                # edge cases - for example, when the sample contains only empty strings. CI is about
+                # the distribution around the statistic (e.g. mean), it doesn't deal with cases in
+                # which the metric is not computable. So we prefer to ignore these edge cases. However,
+                # scipy expects the statistic() callback to return an array of the same size as the
+                # number of samples, so we can't just ignore the failures and return a smaller array.
+                # in addition, if we put np.nan for the errors, the ci itself becomes np.nan. So the
+                # solution here is to ignore the errors by replacing them with samplings from the
+                # successful cases.
+                error_indices = numpy.isnan(scores)
+                n_errors = sum(error_indices)
+                if n_errors > 0:
+                    new_scores = self.random_gen.choice(scores, n_errors, replace=True)
+                    scores = scores[~error_indices]
+                    scores = np.concatenate([scores, new_scores])
+
+            return scores
+
         if self.n_resamples > 1 and len(predictions) > 1:
             ci = bootstrap(
                 (identifiers,),
-                n_resamples=self.n_resamples,
                 statistic=statistic,
+                n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                random_state=get_seed(),
+                random_state=self.random_gen,
             ).confidence_interval
-            global_score[f"score_ci_low"] = ci.low
-            global_score[f"score_ci_high"] = ci.high
+            global_score[f"score_ci"] = {"low": ci.low,
+                                         "high": ci.high}
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -125,8 +155,9 @@ class GlobalMetric(SingleStreamOperator, Metric):
 class InstanceMetric(SingleStreamOperator, Metric):
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
-    n_resamples = 10
+    n_resamples = 1000
     confidence_level = 0.95
+    random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
     @property
     @abstractmethod
@@ -166,16 +197,16 @@ class InstanceMetric(SingleStreamOperator, Metric):
                         (scores,),
                         statistic=mean,
                         n_resamples=self.n_resamples,
-                        random_state=get_seed(),
                         confidence_level=self.confidence_level,
+                        random_state=self.random_gen,
                     ).confidence_interval
-                    global_score[f"{field}_ci_low"] = ci[0]
-                    global_score[f"{field}_ci_high"] = ci[1]
+                    global_score[f"{field}_ci"] = {'low': ci[0],
+                                                   'high': ci[1]}
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
-                        global_score["score_ci_low"] = ci[0]
-                        global_score["score_ci_high"] = ci[1]
+                        global_score["score_ci"] = {"low": ci[0],
+                                                    "high": ci[1]}
         for instance in instances:
             yield instance
 

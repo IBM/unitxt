@@ -15,7 +15,8 @@ instance_targets = [
     {"matthews_correlation": 0.0, "score": 0.0, "score_name": "matthews_correlation"},
 ]
 
-global_target = {"matthews_correlation": 0.5, "score": 0.5, "score_name": "matthews_correlation"}
+global_target = {"matthews_correlation": 0.5, "score": 0.5, "score_name": "matthews_correlation",
+                 'score_ci': {'low': 0.0, 'high': 1.0}}
 
 outputs = test_metric(
     metric=metric,

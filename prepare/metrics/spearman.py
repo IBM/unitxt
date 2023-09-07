@@ -29,7 +29,8 @@ instance_targets = [
     {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
 ]
 
-global_target = {"spearmanr": 0.87, "score": 0.87, "score_name": "spearmanr"}
+global_target = {"spearmanr": 0.87, "score": 0.87, "score_name": "spearmanr",
+                 'score_ci': {'low': np.nan, 'high': np.nan}}
 
 outputs = test_metric(
     metric=metric,
