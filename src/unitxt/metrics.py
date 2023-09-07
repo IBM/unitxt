@@ -96,7 +96,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
                 try:
                     return self._compute(references=sample_refs, predictions=sample_preds)["score"]
                 except:
-                    # this happens in edge cases, or example, when the sampling creates a
+                    # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
                     return np.nan
             scores = numpy.apply_along_axis(
@@ -109,14 +109,18 @@ class GlobalMetric(SingleStreamOperator, Metric):
             # original data and with the resamples. here we want to focus only on the latter.
             if scores.size > 1:
                 # here we deal with samples on which the metric could not be computed. These are
-                # edge cases - for example, when the sample contains only empty strings. CI is about
-                # the distribution around the statistic (e.g. mean), it doesn't deal with cases in
-                # which the metric is not computable. So we prefer to ignore these edge cases. However,
-                # scipy expects the statistic() callback to return an array of the same size as the
-                # number of samples, so we can't just ignore the failures and return a smaller array.
-                # in addition, if we put np.nan for the errors, the ci itself becomes np.nan. So the
-                # solution here is to ignore the errors by replacing them with samplings from the
-                # successful cases.
+                # edge cases - for example, when the sample contains only empty strings.
+                # CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
+                # cases in which the metric is not computable. Therefore, we ignore these edge cases
+                # as part of the computation of CI. The question is how to implement this policy.
+                # Options:
+                # 1. skip the errors and return a shorter array => this fails because Scipy demans
+                # this callback (i.e. the statistic() callback) to return an array of the same size
+                # as the number of resamples
+                # 2. Put np.nan for the errors => this fails because in such case the ci itself
+                # becomes np.nan. So one edge case can fail the whole CI computation.
+                # 3. Replace the errors with a sampling from the successful cases => this is what
+                # is implemented.
                 error_indices = numpy.isnan(scores)
                 n_errors = sum(error_indices)
                 if n_errors > 0:
