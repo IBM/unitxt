@@ -12,8 +12,12 @@ instance_targets = [
     {"wer": 0.5, "score": 0.5, "score_name": "wer"},  # 2 errors: remove 'an' and replace 'other' with 'another'
 ]
 
-global_target = {"wer": 0.38, "score": 0.38, "score_name": "wer",
-                 'score_ci': {'low': 0.25, 'high': 0.5}}  # Should by 0.375, but package rounds the scores
+global_target = {
+    "wer": 0.38,
+    "score": 0.38,
+    "score_name": "wer",
+    "score_ci": {"low": 0.25, "high": 0.5},
+}  # Should by 0.375, but package rounds the scores
 
 outputs = test_metric(
     metric=metric,

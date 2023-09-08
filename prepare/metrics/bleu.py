@@ -41,8 +41,7 @@ global_target = {
     "reference_length": 8,
     "score": 0.9,
     "score_name": "bleu",
-    'score_ci': {'low': 0.0,
-                 'high': 1.0}
+    "score_ci": {"low": 0.0, "high": 1.0},
 }
 
 outputs = test_metric(

@@ -35,8 +35,7 @@ global_target = {
     "rougeLsum": 0.83,
     "score": 0.83,
     "score_name": "rougeL",
-    'score_ci': {'low': 0.67,
-                 'high': 1.0}
+    "score_ci": {"low": 0.67, "high": 1.0},
 }
 
 outputs = test_metric(

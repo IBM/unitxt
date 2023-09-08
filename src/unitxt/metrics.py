@@ -25,6 +25,7 @@ from .stream import MultiStream, Stream
 nltk.download("punkt")
 MAX_32BIT = 2**32 - 1
 
+
 def abstract_factory():
     return {}
 
@@ -99,6 +100,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
                     return np.nan
+
             scores = numpy.apply_along_axis(
                 lambda x: metric(sample_refs=[references[i] for i in x], sample_preds=[predictions[i] for i in x]),
                 axis=axis,
@@ -138,8 +140,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
                 confidence_level=self.confidence_level,
                 random_state=self.random_gen,
             ).confidence_interval
-            global_score[f"score_ci"] = {"low": ci.low,
-                                         "high": ci.high}
+            global_score[f"score_ci"] = {"low": ci.low, "high": ci.high}
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -204,13 +205,11 @@ class InstanceMetric(SingleStreamOperator, Metric):
                         confidence_level=self.confidence_level,
                         random_state=self.random_gen,
                     ).confidence_interval
-                    global_score[f"{field}_ci"] = {'low': ci[0],
-                                                   'high': ci[1]}
+                    global_score[f"{field}_ci"] = {"low": ci[0], "high": ci[1]}
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
-                        global_score["score_ci"] = {"low": ci[0],
-                                                    "high": ci[1]}
+                        global_score["score_ci"] = {"low": ci[0], "high": ci[1]}
         for instance in instances:
             yield instance
 
