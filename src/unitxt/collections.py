@@ -1,21 +1,24 @@
+import typing
 from abc import abstractmethod
 from dataclasses import field
 
 from .artifact import Artifact
+from .dataclass import AbstractField
 from .random_utils import random
 
 
 class Collection(Artifact):
-    @abstractmethod
+    items: typing.Collection = AbstractField()
+
     def __getitem__(self, key):
-        pass
+        try:
+            return self.items[key]
+        except LookupError:
+            raise LookupError(f"Cannot find item {repr(key)} in {repr(self)}")
 
 
 class ListCollection(Collection):
     items: list = field(default_factory=list)
-
-    def __getitem__(self, index):
-        return self.items[index]
 
     def __len__(self):
         return len(self.items)
@@ -32,9 +35,6 @@ class ListCollection(Collection):
 
 class DictCollection(Collection):
     items: dict = field(default_factory=dict)
-
-    def __getitem__(self, key):
-        return self.items[key]
 
 
 class ItemPicker(Artifact):
