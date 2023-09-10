@@ -127,7 +127,7 @@ class Artifact(Dataclass):
 
     @final
     def __pre_init__(self, **kwargs):
-        self._init_dict = kwargs
+        self._init_dict = deepcopy(kwargs)
 
     @final
     def __post_init__(self):
