@@ -58,8 +58,13 @@ def parse(query: str):
     Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
     """
     result = {}
-    for kv in query.split(","):
+    kvs = query.split(",")
+    if len(kvs) == 0:
+        raise ValueError('Illegal query: "{query}" should contain at least one assignment of the form: key1=value1,key2=value2')
+    for kv in kvs:
         parts = kv.split("=")
+        if len(parts) != 2 or len(parts[0].strip()) == 0 or len(parts[1].strip()) == 0:
+            raise ValueError('Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.')
         if parts[1].isdigit():
             result[parts[0]] = int(parts[1])
         elif parts[1].replace(".", "", 1).isdigit():
@@ -85,6 +90,7 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 args = parse(self.config.name)
                 if "type" not in args:
                     args["type"] = "common_recipe"
+                Artifact.verify_is_artifact_dict(args)
                 recipe = Artifact.from_dict(args)
             self._generators = recipe()
         return self._generators
