@@ -60,7 +60,9 @@ def parse(query: str):
     result = {}
     kvs = query.split(",")
     if len(kvs) == 0:
-        raise ValueError('Illegal query: "{query}" should contain at least one assignment of the form: key1=value1,key2=value2')
+        raise ValueError(
+            'Illegal query: "{query}" should contain at least one assignment of the form: key1=value1,key2=value2'
+        )
     for kv in kvs:
         parts = kv.split("=")
         if len(parts) != 2 or len(parts[0].strip()) == 0 or len(parts[1].strip()) == 0:
