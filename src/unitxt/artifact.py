@@ -1,3 +1,4 @@
+import difflib
 import inspect
 import json
 import os
@@ -44,6 +45,32 @@ def map_values_in_place(object, mapper):
     return mapper(object)
 
 
+def get_closest_artifact_type(type):
+    artifact_type_options = list(Artifact._class_register.keys())
+    matches = difflib.get_close_matches(type, artifact_type_options)
+    if matches:
+        return matches[0]  # Return the closest match
+    return None
+
+
+class UnrecognizedArtifactType(ValueError):
+    def __init__(self, type) -> None:
+        closest_artifact_type = get_closest_artifact_type(type)
+        message = (
+            f"'{type}'  is not a recognized value for 'type' parameter."
+            "\n\n"
+            f"Did you mean '{closest_artifact_type}'?"
+        )
+        super().__init__(message)
+
+class MissingArtifactType(ValueError):
+    def __init__(self, dic) -> None:
+        message = (
+            f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+        )
+        super().__init__(message)
+
+
 class Artifact(Dataclass):
     type: str = Field(default=None, final=True, init=False)
 
@@ -58,11 +85,9 @@ class Artifact(Dataclass):
         if not isinstance(d, dict):
             raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
         if "type" not in d:
-            raise ValueError(f"Artifact dict must have 'type' field, got {d}.")
+            raise MissingArtifactType(d)
         if d["type"] not in cls._class_register:
-            raise ValueError(
-                f"""Artifact dict <{d}> with unrecognized artifact type: '{d["type"]}', should be one of {list(cls._class_register.keys())}."""
-            )
+            raise UnrecognizedArtifactType(d["type"])
 
     @classmethod
     def get_artifact_type(cls):
@@ -117,7 +142,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def from_dict(cls, d):
-        assert cls.is_artifact_dict(d), "Input must be a dict with type field"
+        cls.verify_is_artifact_dict(d)
         return cls._recursive_load(d)
 
     @classmethod
