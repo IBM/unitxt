@@ -63,11 +63,10 @@ class UnrecognizedArtifactType(ValueError):
         )
         super().__init__(message)
 
+
 class MissingArtifactType(ValueError):
     def __init__(self, dic) -> None:
-        message = (
-            f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
-        )
+        message = f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
         super().__init__(message)
 
 
