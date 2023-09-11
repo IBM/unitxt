@@ -18,11 +18,12 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
     instruction: Instruction = None
     format: ICLFormat = None
 
+    demos_pool_size: int = None
+    num_demos: int = None
+    
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
-    demos_pool_size: int = None
     demos_field: str = "demos"
-    num_demos: int = None
     sampler: Sampler = None
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
