@@ -93,7 +93,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 args = parse(self.config.name)
                 if "type" not in args:
                     args["type"] = "common_recipe"
-                Artifact.verify_is_artifact_dict(args)
                 recipe = Artifact.from_dict(args)
             self._generators = recipe()
         return self._generators
