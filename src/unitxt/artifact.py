@@ -52,6 +52,15 @@ class Artifact(Dataclass):
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d and d["type"] in cls._class_register
+    
+    @classmethod
+    def verify_is_artifact_dict(cls, d):
+        if not isinstance(d, dict):
+            raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
+        if "type" not in d:
+            raise ValueError(f"Artifact dict must have 'type' field, got {d}.")
+        if d["type"] not in cls._class_register:
+            raise ValueError(f"""Artifact dict <{d}> with unrecognized artifact type: '{d["type"]}', should be one of {list(cls._class_register.keys())}.""")
 
     @classmethod
     def get_artifact_type(cls):
