@@ -5,7 +5,6 @@ from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
 
 import evaluate
-import nltk
 import numpy
 
 from .dataclass import InternalField
@@ -18,7 +17,7 @@ from .operator import (
 from .operators import CopyFields
 from .stream import MultiStream, Stream
 
-nltk.download("punkt")
+
 
 
 def abstract_factory():
@@ -375,10 +374,16 @@ class Rouge(HuggingfaceMetric):
     metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
+    
+    def prepare(self):
+        super().prepare()
+        import nltk
+        nltk.download("punkt")
+        self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, predictions):
-        predictions = ["\n".join(nltk.sent_tokenize(prediction.strip())) for prediction in predictions]
-        references = [["\n".join(nltk.sent_tokenize(r.strip())) for r in reference] for reference in references]
+        predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
+        references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
 
 
