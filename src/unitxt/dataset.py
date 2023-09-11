@@ -64,15 +64,16 @@ def parse(query: str):
             'Illegal query: "{query}" should contain at least one assignment of the form: key1=value1,key2=value2'
         )
     for kv in kvs:
-        parts = kv.split("=")
-        if len(parts) != 2 or len(parts[0].strip()) == 0 or len(parts[1].strip()) == 0:
+        key_val = kv.split("=")
+        if len(key_val) != 2 or len(key_val[0].strip()) == 0 or len(key_val[1].strip()) == 0:
             raise ValueError('Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.')
-        if parts[1].isdigit():
-            result[parts[0]] = int(parts[1])
-        elif parts[1].replace(".", "", 1).isdigit():
-            result[parts[0]] = float(parts[1])
-
-        result[parts[0]] = parts[1]
+        key, val = key_val
+        if val.isdigit():
+            result[key] = int(val)
+        elif val.replace(".", "", 1).isdigit():
+            result[key] = float(val)
+        else:
+            result[key] = val
 
     return result
 
