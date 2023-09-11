@@ -18,8 +18,6 @@ from .operators import CopyFields
 from .stream import MultiStream, Stream
 
 
-
-
 def abstract_factory():
     return {}
 
@@ -374,10 +372,11 @@ class Rouge(HuggingfaceMetric):
     metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
-    
+
     def prepare(self):
         super().prepare()
         import nltk
+
         nltk.download("punkt")
         self.sent_tokenize = nltk.sent_tokenize
 

@@ -6,6 +6,7 @@ from src.unitxt.standard import StandardRecipe
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
 
+
 class TestRecipes(unittest.TestCase):
     def test_standard_recipe(self):
         recipe = StandardRecipe(
@@ -26,13 +27,13 @@ class TestRecipes(unittest.TestCase):
         for instance in stream["train"]:
             print_dict(instance)
             break
-        
+
     def test_standard_recipe_with_catalog(self):
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
-            instruction='instructions.models.llama',
-            template='templates.mmlu.lm_eval_harness',
-            format='formats.user_agent',
+            instruction="instructions.models.llama",
+            template="templates.mmlu.lm_eval_harness",
+            format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
         )
@@ -42,4 +43,3 @@ class TestRecipes(unittest.TestCase):
         for instance in stream["train"]:
             print_dict(instance)
             break
-        

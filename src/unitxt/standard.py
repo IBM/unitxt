@@ -20,7 +20,7 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
 
     demos_pool_size: int = None
     num_demos: int = None
-    
+
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
     demos_field: str = "demos"

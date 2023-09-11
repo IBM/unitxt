@@ -87,7 +87,7 @@ MMLU_TEMPLATES = TemplatesDict(
 for k, v in templates.items():
     template = InputOutputTemplate(input_format=v, output_format="{label}")
     add_to_catalog(template, f"templates.mmlu.{k.replace('-', '_')}", overwrite=True)
-    
+
 CONTEXT_MMLU_TEMPLATES = TemplatesDict(
     {
         key: InputOutputTemplate(
