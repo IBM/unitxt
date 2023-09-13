@@ -35,5 +35,10 @@
         }
     ],
     "task": "tasks.nli",
-    "templates": "templates.nli"
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            "templates.classification.nli.simple"
+        ]
+    }
 }

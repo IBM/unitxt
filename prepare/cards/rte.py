@@ -1,43 +1,42 @@
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
+    RenameFields,
     TaskCard,
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 
+nli_task = FormTask(
+    inputs=["choices", "premise", "hypothesis"],
+    outputs=["label"],
+    metrics=["metrics.accuracy"],
+)
+
+add_to_catalog(nli_task, "tasks.nli", overwrite=True)
+
 card = TaskCard(
     loader=LoadHF(path="glue", name="rte"),
     preprocess_steps=[
-        SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
+        "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],
             }
         ),
+        RenameFields(
+            field_to_field={
+                "sentence1": "premise",
+                "sentence2": "hypothesis",
+            }
+        ),
     ],
-    task=FormTask(
-        inputs=["choices", "sentence1", "sentence2"],
-        outputs=["label"],
-        metrics=["metrics.accuracy"],
-    ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
-                """.strip(),
-                output_format="{label}",
-            ),
-        ]
-    ),
+    task="tasks.nli",
+    templates=TemplatesList(["templates.classification.nli.simple"]),
 )
 
 test_card(card)
