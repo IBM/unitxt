@@ -28,13 +28,7 @@ card = TaskCard(
         outputs=["label"],
         metrics=["metrics.matthews_correlation"],
     ),
-    templates=TemplatesList(
-        [
-            "templates.classification.choices.simple",
-            "templates.classification.choices.simple2",
-            "templates.classification.choices.informed",
-        ]
-    ),
+    templates="templates.classification.choices.all",
 )
 
 test_card(card, strict=False)
