@@ -5,14 +5,7 @@
         "path": "squad"
     },
     "preprocess_steps": [
-        {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train[95%]",
-                "validation": "train[5%]",
-                "test": "validation"
-            }
-        },
+        "splitters.small_no_test",
         {
             "type": "copy_fields",
             "field_to_field": [
@@ -37,11 +30,5 @@
             "metrics.squad"
         ]
     },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            "templates.qa.contextual.simple",
-            "templates.qa.contextual.simple2"
-        ]
-    }
+    "templates": "templates.qa.contextual.all"
 }
