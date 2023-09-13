@@ -23,12 +23,8 @@ card = TaskCard(
     ),
     templates=TemplatesList(
         [
-            InputOutputTemplate(
-                input_format="""
-                    Given: {context}, answer {question}
-                """.strip(),
-                output_format="{answer}",
-            ),
+            "templates.qa.contextual.simple",
+            "templates.qa.contextual.simple2",
         ]
     ),
 )

@@ -40,11 +40,8 @@
     "templates": {
         "type": "templates_list",
         "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given: {context}, answer {question}",
-                "output_format": "{answer}"
-            }
+            "templates.qa.contextual.simple",
+            "templates.qa.contextual.simple2"
         ]
     }
 }
