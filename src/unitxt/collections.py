@@ -1,6 +1,6 @@
 import typing
-from abc import abstractmethod
 from dataclasses import field
+from typing import Dict, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
@@ -18,7 +18,7 @@ class Collection(Artifact):
 
 
 class ListCollection(Collection):
-    items: list = field(default_factory=list)
+    items: List[Artifact] = field(default_factory=list)
 
     def __len__(self):
         return len(self.items)
@@ -34,7 +34,7 @@ class ListCollection(Collection):
 
 
 class DictCollection(Collection):
-    items: dict = field(default_factory=dict)
+    items: Dict[str, Artifact] = field(default_factory=dict)
 
 
 class ItemPicker(Artifact):
