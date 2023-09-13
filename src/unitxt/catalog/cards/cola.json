@@ -45,12 +45,5 @@
             "metrics.matthews_correlation"
         ]
     },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            "templates.classification.choices.simple",
-            "templates.classification.choices.simple2",
-            "templates.classification.choices.informed"
-        ]
-    }
+    "templates": "templates.classification.choices.all"
 }
