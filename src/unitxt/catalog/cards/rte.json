@@ -6,14 +6,7 @@
         "name": "rte"
     },
     "preprocess_steps": [
-        {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train[95%]",
-                "validation": "train[5%]",
-                "test": "validation"
-            }
-        },
+        "splitters.small_no_test",
         {
             "type": "map_instance_values",
             "mappers": {
@@ -31,30 +24,20 @@
                     "not entailment"
                 ]
             }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "sentence1": "premise",
+                "sentence2": "hypothesis"
+            }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "sentence1",
-            "sentence2"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
+    "task": "tasks.nli",
     "templates": {
         "type": "templates_list",
         "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
-            }
+            "templates.classification.nli.simple"
         ]
     }
 }
