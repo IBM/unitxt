@@ -13,7 +13,7 @@ class TestRecipes(unittest.TestCase):
             card="cards.wnli",
             instruction=TextualInstruction(text="classify"),
             template=InputOutputTemplate(
-                input_format="{sentence1}",
+                input_format="{premise}",
                 output_format="{label}",
             ),
             format=ICLFormat(
@@ -21,7 +21,6 @@ class TestRecipes(unittest.TestCase):
                 output_prefix="Agent:",
             ),
         )
-
         stream = recipe()
 
         for instance in stream["train"]:
