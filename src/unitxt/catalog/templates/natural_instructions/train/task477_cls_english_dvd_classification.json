@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given product reviews about dvds. The goal is to classify the review as \"POS\" if the overall sentiment of the review is positive(the reviewer is satisfied) or as \"NEG\" if the overall sentiment of the review is negative(the reviewer is not satisfied).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

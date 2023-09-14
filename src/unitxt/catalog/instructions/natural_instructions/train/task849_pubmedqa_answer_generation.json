@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a passage which has a question and the context. You have to generate an answer to the question based on the information present in the context."
+}

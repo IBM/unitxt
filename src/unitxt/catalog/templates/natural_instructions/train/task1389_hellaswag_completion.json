@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a context and four options. Each option is a suggested ending for the context. You should read the context and pick the best ending for the context. Please answer with \"A\", \"B\", \"C\", and \"D\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

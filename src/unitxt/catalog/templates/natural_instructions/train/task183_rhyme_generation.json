@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given an input word generate a word that rhymes exactly with the input word. If not rhyme is found return \"No\"\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

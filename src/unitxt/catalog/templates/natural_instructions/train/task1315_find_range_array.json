@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a list of integers you need to calculate and return the range of the integers which is the difference between maximum and minimum element in the list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

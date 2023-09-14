@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given a sentence and your task is to generate a simplified sentence that focuses on lexical paraphrasing from the original sentence given in the input.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

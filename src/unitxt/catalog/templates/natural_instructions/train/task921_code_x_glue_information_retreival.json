@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: This task is to find the number of 'For' loops present in the given cpp program.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

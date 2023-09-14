@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a paragraph and a claim, classify it this way: If the claim contradicts the evidence present in the paragraph, classify the claim as '0'. If the claim has multiple supporting *AND* contradicting evidences, classify the claim as '1'. If the claim has supporting evidence and the paragraph is in overall favor of the claim, then classify the claim as '2'.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

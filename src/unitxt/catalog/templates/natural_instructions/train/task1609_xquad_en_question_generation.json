@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a paragraph, your job is to generate a question that can be answered from the passage. The answer to your question should be a single entity, person, time, etc. that can be extracted from the passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

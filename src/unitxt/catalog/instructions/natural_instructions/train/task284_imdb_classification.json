@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a review of movie. Your task is to classify given movie review into two categories: 1) positive, and 2) negative based on its content."
+}

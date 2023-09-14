@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given an unfinished English sentence, and you need to predict the rest of it.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

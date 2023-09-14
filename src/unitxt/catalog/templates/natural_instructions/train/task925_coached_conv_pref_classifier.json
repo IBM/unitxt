@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are provided with a list of converations between a \"USER\" and \"ASSISTANT\". Figure out if the conversation provided as \"classify_text\" is authored by \"USER\" or \"ASSISTANT\". There are maximum of 7 conversations between \"USER\" and \"ASSISTANT\" in each input\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

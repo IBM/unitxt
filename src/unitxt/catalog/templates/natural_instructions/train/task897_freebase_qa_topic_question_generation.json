@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given an open-ended topic (movie name, a persons name, an event, sports, etc) generate a simple trivia-type question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

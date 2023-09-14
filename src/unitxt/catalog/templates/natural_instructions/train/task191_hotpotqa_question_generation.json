@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a set of context paragraphs, some supporting facts and an answer of a question. Your task is to generate question for given answer based on set of context paragraphs, supporting facts and an answer.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

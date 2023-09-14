@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a comment, classify it into a 'hate' speech or 'not hate' speech. Answer using 'hate' or 'not hate'.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

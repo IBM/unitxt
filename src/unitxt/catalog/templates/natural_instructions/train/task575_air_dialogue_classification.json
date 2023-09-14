@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a dialogue from a conversation between an agent and a customer. Your task is to determine the speaker of the dialogue. Answer with \"agent\" or \"customer\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

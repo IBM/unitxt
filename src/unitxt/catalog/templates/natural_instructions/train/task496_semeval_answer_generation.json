@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given news headlines, an edited word and funniness labels. The original sentence has word with the given format {word}. Create new headlines by replacing {word} in the original sentence with edit word. Your task is to generate answer \"Yes\" if an edited sentence matches funniness label, otherwise generate answer \"No\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

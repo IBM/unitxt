@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Categorize the following sentence into one of the five different emotions: anger, confusion, joy, sadness and neutral.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

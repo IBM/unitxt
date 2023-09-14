@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given an input list A. You need to find all the elements of the list that are alphabets in the same order as they appear in the list A. Do not change their case/capitalization."
+}

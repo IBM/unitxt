@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a context sentence containing a blank (_). You are expected to fill the blank with one word to make the sentence convey a cultural anti-stereotype. Anti-stereotype is an idea that goes against a common belief about a particular group of people. Your answer must not contain more than one word.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

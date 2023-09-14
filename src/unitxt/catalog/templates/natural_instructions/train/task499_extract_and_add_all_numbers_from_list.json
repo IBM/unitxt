@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an input list A. You need to find all the elements of the list that are numbers and calculate their sum.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an input list. A list contains several comma-separated items written within brackets. You need to return the position of all the alphabetical elements in the given list in order. Assume the position of the 1st element to be 1. Return -1 if no alphabetical element is in the list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

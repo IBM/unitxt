@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you are given a sentence with one coordinating conjunction (for, and, nor, but, or, yet, and so). You must judge whether the order of two coordinated clausal conjoints have been inverted or not. Inversion would result in the sentence sounding unnatural. Label the instances as \"Original\" or \"Inversion\" based on your judgment.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

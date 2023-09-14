@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given two natural language statements with similar wording. You must choose the statement that makes less sense based on common sense knowledge. A '\n' separates the statements. Use \"first\" or \"second\" to indicate which sentence makes less sense.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

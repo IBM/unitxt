@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of dictionaries. A dictionary is a set of key-value pairs, where each key is unique and has a value associated with that key. You should sort the list of dictionaries from smallest to largest by their 'first' key. If there is two dictionaries with the same 'first' value then sort them by their 'second' key. Negative numbers should come before positive numbers.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

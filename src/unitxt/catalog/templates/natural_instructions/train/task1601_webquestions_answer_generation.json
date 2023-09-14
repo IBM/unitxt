@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Based on the given question and tppic, give an answer. The answer is available on on the internet. The questions are mostly centered around a single named entity.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

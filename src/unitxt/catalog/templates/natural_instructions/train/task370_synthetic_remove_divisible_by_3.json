@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of integers. You should remove all of the integers that are divisible by 3 from the list. If every integer in the input list is divisible by 3 then an empty list should be returned. Zero is divisible by 3.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

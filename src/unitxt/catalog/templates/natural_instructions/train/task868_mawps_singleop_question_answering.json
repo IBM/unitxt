@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a math word problem and you are supposed to apply a single mathematical operators like addition, subtraction, multiplication or division on the numbers embedded in the text to answer the following question and then only report final the numerical answer.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

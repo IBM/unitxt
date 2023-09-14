@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are shown a random response (from a computer or a human). Generate a language query such that it leads to this reply.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

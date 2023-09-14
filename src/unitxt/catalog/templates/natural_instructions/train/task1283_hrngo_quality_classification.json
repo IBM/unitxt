@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given an original reference as well as a system reference. Your task is to judge the quality of the system reference. If the utterance is grammatically correct and fluent output 1, else output 0.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

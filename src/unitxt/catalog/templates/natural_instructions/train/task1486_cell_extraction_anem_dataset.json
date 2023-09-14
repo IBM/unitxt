@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be given sentences in which you have to recognize the name of the body cells. A cell is a mass of cytoplasm that is bound externally by a cell membrane. Usually microscopic in size, cells are the smallest structural units of living matter and compose all living things. Although there might be several correct answers, you need to write one of them.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given an adjective, generate its antonym. An antonym of a word is a word opposite in meaning to it.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

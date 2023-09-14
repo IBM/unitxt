@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a set of context paragraph and some supporting facts to answer a question. Your task is to generate answer for given question based on set of context paragraphs and supporting facts."
+}

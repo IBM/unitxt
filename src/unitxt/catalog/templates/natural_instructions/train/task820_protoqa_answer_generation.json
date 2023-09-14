@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Write a correct answer for the question. You should reason about prototypical situations and provide the correct answer. Avoid answers that provide incomplete justification for the question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

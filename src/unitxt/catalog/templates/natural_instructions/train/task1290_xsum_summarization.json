@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an article. Your task is to summarize the article in a sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

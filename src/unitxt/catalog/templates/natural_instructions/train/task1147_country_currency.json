@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a country name and you need to return the currency of the given country.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

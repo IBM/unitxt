@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: The task is to read a passage and convert numbers in their text forms into digit forms. The text numbers can be used to represent Quantity, Dates and Time, Addresses or Positions.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

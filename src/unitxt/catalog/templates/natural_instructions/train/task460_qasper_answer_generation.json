@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be presented with a context from an academic paper and a question separated with a \n. You have to answer the question based on the context.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a question, and your task is to predict the context of the question. We assume that someone named X asked the question from Y. The context of the question means the previous situation that led X to ask this question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

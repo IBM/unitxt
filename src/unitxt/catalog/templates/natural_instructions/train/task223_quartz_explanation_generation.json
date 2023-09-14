@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a question and answer for that. The answer will fill in the blank or will complete the unfinished question. Your task is to provide an explanation based on the given question or fill-in-the-blank statement, and answer.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

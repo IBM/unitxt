@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given two strings A, B. Find the longest common substring in the strings A and B.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

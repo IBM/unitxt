@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of strings and you need to concatenate them.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

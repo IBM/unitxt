@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a sentence in English, provide the sentiment based on its empathetic direction. There are two possible classifications: positive (happy) or negative (offmychest).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

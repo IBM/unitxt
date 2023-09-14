@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Write the right answer to the question based on the context passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

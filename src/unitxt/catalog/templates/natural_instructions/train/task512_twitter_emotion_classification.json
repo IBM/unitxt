@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given Twitter posts. Your task is to label the post's emotion (as expressed by the user) as sadness, joy, love, anger, fear, or surprise.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

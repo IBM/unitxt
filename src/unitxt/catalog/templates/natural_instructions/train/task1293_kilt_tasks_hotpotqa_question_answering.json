@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a question. You have to answer the question based on your information.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

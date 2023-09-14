@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, You are given a review of Amazon's food products. Your task is to divide them into two classes: negative or positive, depending on the content of the review.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

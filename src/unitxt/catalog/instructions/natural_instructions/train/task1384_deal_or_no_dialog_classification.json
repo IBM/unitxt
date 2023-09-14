@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a negotiation between two participants, answer 'Yes' if both participants agree to the deal, otherwise answer 'No'."
+}

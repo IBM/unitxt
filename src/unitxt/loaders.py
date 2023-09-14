@@ -28,13 +28,27 @@ class LoadHF(Loader):
     data_dir: Optional[str] = None
     data_files: Optional[Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]] = None
     streaming: bool = True
+    field: Optional[str] = None
     cached = False
 
     def process(self):
-        dataset = hf_load_dataset(
-            self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=self.streaming
-        )
-
+        if self.field:
+            dataset = hf_load_dataset(
+                self.path,
+                name=self.name,
+                data_dir=self.data_dir,
+                data_files=self.data_files,
+                streaming=self.streaming,
+                field=self.field,
+            )
+        else:
+            dataset = hf_load_dataset(
+                self.path,
+                name=self.name,
+                data_dir=self.data_dir,
+                data_files=self.data_files,
+                streaming=self.streaming,
+            )
         return MultiStream.from_iterables(dataset)
 
 

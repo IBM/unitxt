@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a passage. You need to construct a question about the information present in the passage. Construct a question in such a way that (i) it is unambiguous, (ii) its answer is the whole paragraph. Avoid creating questions that can be answered correctly without actually understanding the paragraph.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

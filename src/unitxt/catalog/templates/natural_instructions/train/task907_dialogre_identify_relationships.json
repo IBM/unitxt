@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a dialog between 2 or more individuals. Within the dialog, there will be clues that indicate two individuals were or are dating. You will be prompted at the end to answer which Speaker (or named individual) is dating which other Speaker (or named individual).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

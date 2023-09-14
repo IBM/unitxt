@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given an article and an answer. Your task is to generate the question for the answer based on the given article.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

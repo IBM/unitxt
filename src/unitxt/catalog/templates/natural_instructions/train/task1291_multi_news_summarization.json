@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a text of many news articles seperated by special token \"|||||\". Your task is to summarize them.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

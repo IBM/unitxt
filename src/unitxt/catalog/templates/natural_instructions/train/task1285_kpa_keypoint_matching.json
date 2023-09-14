@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: The input contains a debate topic, an argument on the topic and a keypoint, separated by \"<sep>\". Your task is to answer if the keypoint matches the argument and summarizes exactly what the argument means, in the context of the given topic.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

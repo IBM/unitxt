@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Write a phrase, the answer to which is present in the passage. The answer to this question should be completely and unambiguously found in the passage. The query must be about a single or multiple linked entities.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

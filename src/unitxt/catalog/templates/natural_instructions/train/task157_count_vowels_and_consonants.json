@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you need to count the number of vowels (letters 'a', 'e', 'i', 'o', 'u') / consonants (all letters other than vowels) in the given sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

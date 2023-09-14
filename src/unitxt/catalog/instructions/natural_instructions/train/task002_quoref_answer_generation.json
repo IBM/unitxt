@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're expected to write answers to questions involving multiple references to the same entity. The answer to the question should be unambiguous and a phrase in the paragraph. Most questions can have only one correct answer."
+}

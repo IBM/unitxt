@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a piece of an article. Your task is to generate a short summary of the text. Try to give the summary in just one sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

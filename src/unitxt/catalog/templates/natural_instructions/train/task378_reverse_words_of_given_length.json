@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you need to reverse all words of a given length in the sentence. The number of letters in a word determine its length. For example, the length of the word \"apple\" is 5.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

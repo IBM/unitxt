@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Generate an explanation for the given claim using the provided supporting material from the paragraph. Please consider the following points while generating an output. 1) The claim will always have supporting proof in the paragraph, and the paragraph will have a clear point of view supporting the claim. 2) There can be instances where direct correlation to the claim is not available. Make use of the sentences in the paragraph to provide a corresponding output supporting the claim. 3) The explanation should be at least one and at most twelve sentences long."
+}

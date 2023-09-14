@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a question and answer options for that question. Using this information, you have to classify each text into different topics: medicine, nursery, psychology, chemistry, pharmacology, biology.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

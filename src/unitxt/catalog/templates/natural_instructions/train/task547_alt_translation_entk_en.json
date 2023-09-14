@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, given a sentence in English Tokens, your task is to convert it into the English language\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

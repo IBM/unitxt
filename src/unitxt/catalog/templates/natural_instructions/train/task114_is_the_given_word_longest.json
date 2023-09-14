@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you need to answer 'Yes' if the given word is the longest word (in terms of number of letters) in the given sentence, else answer 'No'. Note that there could be multiple longest words in a sentence as they can have the same length that is the largest across all words in that sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Write an inquisitive question about a specific text span in a given sentence such that the answer is not in the text."
+}

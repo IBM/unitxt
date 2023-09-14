@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Read the given query and classify it as a 'Good' or 'Bad' query depending on how well the query is formed, 'Bad' being the expected output for a not so well formed query and 'Good' being the expected output for a well formed query. A query may be wrong based on common sense or general facts, but if it is well formed, you should answer with Good.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

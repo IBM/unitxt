@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a context, a subject, a relation, and many options. Based on the context, from the options select the object entity that has the given relation with the subject. Answer with text (not indexes).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

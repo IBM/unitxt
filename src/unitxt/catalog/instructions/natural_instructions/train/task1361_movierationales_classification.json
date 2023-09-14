@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you must classify if a given review is positive/negative, indicating your answer as P or N."
+}

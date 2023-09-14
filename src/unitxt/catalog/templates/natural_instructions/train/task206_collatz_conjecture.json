@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of integers. For every element in the list, if the element is even you should divide by two, if the element is odd you should multiply by three then add one. The output should be a list of integers that is the result of applying that logic to the input list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

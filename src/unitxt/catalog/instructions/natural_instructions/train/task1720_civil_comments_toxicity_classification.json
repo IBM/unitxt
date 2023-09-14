@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Categorize the comment on the basis of toxicity. If the comment is toxic (harmful, malicious, derogatory, threat, insult, identity attck, etc.) output Yes, otherwise output No."
+}

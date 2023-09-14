@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you need to count the number of words in a sentence that end with the given letter. Answer with numbers and not words.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

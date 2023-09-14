@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a piece of text. Your task is to classify the text based on whether a religion or a person/group of people are receiving hate based on religion. If there is a hate based on religion in the text, answer with 'religious hate', otherwise, answer with 'not religious hate'.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

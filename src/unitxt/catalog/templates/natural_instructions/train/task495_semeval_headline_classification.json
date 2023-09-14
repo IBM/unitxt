@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given news headlines and an edited word. The original sentence has word within given format {word}. Create new headlines by replacing {word} in the original sentence with edit word. Classify news headlines into \"Funny\" and \"Not Funny\" that have been modified by humans using an edit word to make them funny.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

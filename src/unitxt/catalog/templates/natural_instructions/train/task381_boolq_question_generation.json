@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You will be given a passage, and your task is to generate a Yes/No question that is answerable based on the given passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

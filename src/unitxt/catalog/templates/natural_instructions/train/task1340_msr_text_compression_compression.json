@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a text, write a compressed version of it in a single sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

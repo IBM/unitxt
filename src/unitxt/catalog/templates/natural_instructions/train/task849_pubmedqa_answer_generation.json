@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a passage which has a question and the context. You have to generate an answer to the question based on the information present in the context.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

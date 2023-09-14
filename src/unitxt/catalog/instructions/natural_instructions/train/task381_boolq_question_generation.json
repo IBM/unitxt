@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You will be given a passage, and your task is to generate a Yes/No question that is answerable based on the given passage."
+}

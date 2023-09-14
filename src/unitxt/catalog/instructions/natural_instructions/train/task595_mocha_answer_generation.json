@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given a context passage, followed by a question that needs to be answered. Based on the paragraph, you must write unambiguous answers to the questions and your answer must refer to a specific phrase from the paragraph. If multiple answers seem to exist, write the answer that is the most plausible."
+}

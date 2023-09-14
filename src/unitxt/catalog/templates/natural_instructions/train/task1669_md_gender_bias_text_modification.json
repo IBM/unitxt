@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task if the pronoun is female or gender-neutral you are to replace it with a male pronoun. If there are no pronouns add a male-gendered word to the sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

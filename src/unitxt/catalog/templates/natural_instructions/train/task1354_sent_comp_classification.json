@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a text of news article and corresponding headline of an article. Your task is to give label \"match\" if headline is correct for article, otherwise give label \"no\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an input list A comprising of numbers and alphabets. You need to extract and sort the unique alphabets in the list. The alphabets in the input list will only be in lowercase. Return -1 if there is no alphabet in the input list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

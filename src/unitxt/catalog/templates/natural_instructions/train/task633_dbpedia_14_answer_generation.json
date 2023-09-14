@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a text which is the body of a document. You are given a question and options. Pick the correct number. Don't generate anything else apart from the numbers provided in options.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

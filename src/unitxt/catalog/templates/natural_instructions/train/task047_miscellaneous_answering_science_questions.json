@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this subtask, you will answer a simple science question. Please indicate the correct answer. If you're not sure about the answer, choose the last option \"I don't know\". Do not generate anything else apart from one of the following characters: 'A', 'B, 'C', 'D', 'E'. The \"A\"-\"D\" responses correspond to the answer options mentioned in the input. There is a 5th option \"E\" which should be used for questions for which you're not sure about the answer (e.g., when the questions do not provide enough information to answer).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

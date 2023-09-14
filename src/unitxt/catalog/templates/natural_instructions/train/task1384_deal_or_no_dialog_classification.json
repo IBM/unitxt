@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a negotiation between two participants, answer 'Yes' if both participants agree to the deal, otherwise answer 'No'.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

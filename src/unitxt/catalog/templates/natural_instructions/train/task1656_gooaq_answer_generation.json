@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a question as input, give its short_answer as the output\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

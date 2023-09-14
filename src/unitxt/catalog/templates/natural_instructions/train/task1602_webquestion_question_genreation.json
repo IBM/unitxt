@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a concept, and a list of answers. You should generate a question about the concept that leads to the given answer(s).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

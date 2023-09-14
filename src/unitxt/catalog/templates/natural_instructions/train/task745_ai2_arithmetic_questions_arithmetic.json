@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are provided with an arithmetic question. Your task is to compute the solution using the given arithmetic operations. The only arithmetic operators needed to answer the questions are'+'(addition) and'-'(subtraction). The answer should be correct to one decimal place.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

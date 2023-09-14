@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an input list A. You need to convert all the alphabets in the list with a number representing their position in the English alphabet. E.g., replace A by 1, B by 2, a by 1, b by 2, and so on.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

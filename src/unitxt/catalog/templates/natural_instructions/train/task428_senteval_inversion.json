@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you are given a sentence. You must judge whether there exist two consecutive words within the sentence with flipped orders, that is, whether the sentence will make sense and be correct if the order of two consecutive words changes. Label the instances as \"Inversion\" or \"Original\" based on your judgment.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

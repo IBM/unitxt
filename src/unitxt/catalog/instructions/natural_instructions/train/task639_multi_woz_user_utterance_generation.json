@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are shown a random response (from a computer or a human). Generate a language query such that it leads to this reply."
+}

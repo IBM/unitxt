@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of numbers. You should remove any number that is not an integer (whole number). If every number is not an whole number then an empty list (\"[]\") should be returned. Otherwise, answer with the list of whole numbers separated by comma inside brackets.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

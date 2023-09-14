@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given an article and an answer. Your task is to generate the fill-in-the-blank question for this answer based on the given article. The blanks are always at the end of the question, and can be filled with more than one word or phrase.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

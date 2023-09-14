@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a list of integers and an integer target, return a list of a pair of numbers in any order such that they add up to target. If there is no such pair of numbers, then return an empty list\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

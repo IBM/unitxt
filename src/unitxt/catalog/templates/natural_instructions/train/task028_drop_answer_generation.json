@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: This task involves creating answers to complex questions, from a given passage. Answering these questions, typically involve understanding multiple sentences. Make sure that your answer has the same type as the \"answer type\" mentioned in input. The provided \"answer type\" can be of any of the following types: \"span\", \"date\", \"number\". A \"span\" answer is a continuous phrase taken directly from the passage or question. You can directly copy-paste the text from the passage or the question for span type answers. If you find multiple spans, please add them all as a comma separated list. Please restrict each span to five words. A \"number\" type answer can include a digit specifying an actual value. For \"date\" type answers, use DD MM YYYY format e.g. 11 Jan 1992. If full date is not available in the passage you can write partial date such as 1992 or Jan 1992. If you find multiple spans, please add them all as a comma separated list. Please restrict each span to five words.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

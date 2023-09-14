@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Generate a correct and concise answer for the question based on the words in the context.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

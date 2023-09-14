@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given an open-domain question from an open movie database. Your task is to provide an answer to that question. Try to only include the answer. Do not put it in a sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

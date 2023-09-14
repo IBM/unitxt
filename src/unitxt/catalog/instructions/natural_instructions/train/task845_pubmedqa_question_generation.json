@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a passage with a context and an answer, construct a question on the basis of the information present in the passage. Construct the question in such a way that (i) it is unambiguous, (ii) it is answerable from the passage, (iii) its answer is unique (iv) it answer uses text phrases from the passage. Avoid creating questions that (i) can't be answered correctly without actually understanding the passage and (ii) uses the same words or phrases given in the passage."
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given news articles and you need to generate a highlight, i.e., a short summary, with a maximum length of 10 lines.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

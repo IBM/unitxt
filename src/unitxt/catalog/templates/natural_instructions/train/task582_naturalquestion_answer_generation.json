@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, You are given an open-domain question that can be answered based on factual information. Your task is to provide \\*short\\* answer (in a few words only) for the given question. The short answer can be one or more entities or it can also be boolean \\*yes\\* or \\*no\\*.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

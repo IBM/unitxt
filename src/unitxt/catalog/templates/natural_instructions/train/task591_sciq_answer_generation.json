@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a scientific question, generate a correct answer to it.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

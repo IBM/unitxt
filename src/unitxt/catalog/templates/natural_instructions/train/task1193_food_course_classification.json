@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given the name of an Indian food dish. You need to classify the dish as a \"main course\", \"dessert\" or \"snack\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

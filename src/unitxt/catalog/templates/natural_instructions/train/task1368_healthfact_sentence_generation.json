@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a paragraph, generate a claim that is supported by the given paragraph. 1) The claim must contain information from within the paragraph. 2) A sentence within the paragraph can be used as a claim. 3) The claim should not have contradictions within the paragraph. 4) The claim should be at most one sentence long.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

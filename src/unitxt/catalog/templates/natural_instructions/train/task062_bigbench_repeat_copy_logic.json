@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: This task evaluates for the ability to follow basic natural language instructions nested and performing a sequence of operations, including basic logic and conditionals.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

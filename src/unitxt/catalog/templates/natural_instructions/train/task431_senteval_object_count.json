@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you are given a sentence. You must judge whether the object of the main clause is singular(like: apple) or plural(like: apartments). Label the instances as \"Singular\" or \"Plural\" based on your judgment.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

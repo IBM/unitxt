@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Classify given movie review into two categories: positive, or negative based on its content.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

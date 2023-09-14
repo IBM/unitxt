@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be presented with a question and you have to answer the question based on your knowledge. Your answers should be as short as possible.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

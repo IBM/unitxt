@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given reviews from Amazon, classify those review based on their content into two classes: Negative or Positive.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

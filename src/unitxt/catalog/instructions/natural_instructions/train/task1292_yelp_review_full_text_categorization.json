@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given a review about a place. You need to provide a rating from \"1 star\" to \"5 stars\" for this place."
+}

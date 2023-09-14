@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be presented with a passage and have to answer a question based on your understanding of the events inferred from the passage. Try to find the best answer that is most likely to fill in \"_\". Note that the URLs in the text have been replaced with [Link].\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are shown a conversation between a user and system. Identify who has spoken the indicated sentence based on the conversation.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

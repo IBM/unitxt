@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an utterance, which is a part of a conversation between a user and an agent. Your job is to detect the speaker. The user usually commands the agent to schedule events, retrieve event information, and check the schedule. While the agent's response is an answer to the user's questions or follow-up questions on the user's command. Answer with \"User\" or \"Agent\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

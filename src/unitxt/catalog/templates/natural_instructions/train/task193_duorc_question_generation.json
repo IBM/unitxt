@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be shown an extract from a movie plot. You need to read the extract and create questions that can be answered from the extract. The questions should be well-formed and grammatically correct. The questions should be completely answerable from the given passage and should not require any external knowledge. Subjective questions are not allowed. Create questions that result in factoid answers. A simple rule of thumb to decide whether a question is factoid or not is to see if two different people with average reading/comprehension skills would come up with the same answer after reading the passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

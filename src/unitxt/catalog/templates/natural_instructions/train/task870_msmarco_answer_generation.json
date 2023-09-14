@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a passage and a query based on the passage, generate an unambiguous, concise and simple answer to the query from information in the passage. Note that the answer may not be present in exact form.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

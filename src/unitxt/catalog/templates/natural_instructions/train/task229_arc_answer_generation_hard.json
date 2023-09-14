@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a science question (hard-level) and four answer options (associated with \"A\", \"B\", \"C\", \"D\"). Your task is to find the correct answer based on scientific facts, knowledge, and reasoning. Do not generate anything else apart from one of the following characters: 'A', 'B, 'C', 'D'. There is only one correct answer for each question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

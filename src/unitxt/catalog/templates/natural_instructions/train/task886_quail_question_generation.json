@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Write a question from the passage such that it identifies a character (a person or a thing) in the passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

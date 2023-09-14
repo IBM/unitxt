@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given a dialogue between a customer and a flight booking agent with a gap in the conversation. Your job is to find the answer of the previous dialogue. Avoid using irrelevant extra information while creating the answer. The answer should be relevant to the question before the blank. If you fill the blank with a question, it should have an answer from the agent in the given dialogue. Fill the gap marked with underline."
+}

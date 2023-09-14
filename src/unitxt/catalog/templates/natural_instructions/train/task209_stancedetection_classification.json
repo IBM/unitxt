@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given the Target and Argument texts detect the stance that the argument has towards the topic. There are three types of stances \"in favor\", \"against\", and \"neutral\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a list of unique integers you need to swap the positions of maximum and minimum element in the list and return the updated list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

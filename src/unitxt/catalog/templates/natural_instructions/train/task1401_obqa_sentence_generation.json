@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a question and a corresponding answer. Your task is to generate a fact statement that is useful in answering the given question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

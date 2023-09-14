@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Categorize the comment on the basis of toxicity. If the comment is toxic (harmful, malicious, derogatory, threat, insult, identity attck, etc.) output Yes, otherwise output No.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

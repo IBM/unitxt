@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an input i,A where i is an integer and A is an array. You need to find every ith element of A starting with the 1st element.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

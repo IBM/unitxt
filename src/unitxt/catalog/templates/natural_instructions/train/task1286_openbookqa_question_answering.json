@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a multiple-choice question and you have to pick the correct option. Answer with option indexes (i.e., \"A\", \"B\", \"C\", and \"D\").\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

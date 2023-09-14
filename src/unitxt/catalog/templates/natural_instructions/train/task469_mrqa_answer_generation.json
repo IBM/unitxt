@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a question and a context passage, generate the answer having the word or phrase from the context passage. Here, the answer should be a shortest continous span from the passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

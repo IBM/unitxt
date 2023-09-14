@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You will be given a person's personality, and a history of a conversation this person has had. You will be given four candidate sentences to complete the conversation, based on the context. Choose one and answer with the text.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

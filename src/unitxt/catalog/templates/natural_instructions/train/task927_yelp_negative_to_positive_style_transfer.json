@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a negative review and your task is to convert it to a positive review by one or more making minimal changes. Avoid changing the context of the review.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

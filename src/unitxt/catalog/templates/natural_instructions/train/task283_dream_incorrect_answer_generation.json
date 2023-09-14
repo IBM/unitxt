@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you will be shown a conversation and a question. You need to write an implausible answer to the question. Even though there exist multiple wrong answers, we only need a single wrong answer. \"W\" and \"M\" in the conversations stand for \"woman\" and \"man\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

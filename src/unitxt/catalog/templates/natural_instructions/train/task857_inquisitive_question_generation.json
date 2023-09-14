@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Write an inquisitive question about a specific text span in a given sentence such that the answer is not in the text.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

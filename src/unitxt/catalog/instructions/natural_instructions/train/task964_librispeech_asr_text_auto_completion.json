@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given an unfinished English sentence, and you need to predict the rest of it."
+}

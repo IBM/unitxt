@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given an item and you need to check whether it is edible or not, return 1 if it is edible, else return 2.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

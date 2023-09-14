@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a text, write a compressed version of it in a single sentence."
+}

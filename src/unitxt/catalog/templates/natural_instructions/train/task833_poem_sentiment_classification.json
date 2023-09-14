@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you need to identify the sentiment of the given sentence as one of 'positive' or 'negative.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

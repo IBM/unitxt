@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: This task is about reading the given passage and the question, return an incorrect answer to the given question.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

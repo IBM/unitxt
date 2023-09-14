@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a context, a subject, a relation, and many options. Based on the context, from the options select the object entity that has the given relation with the subject. Answer with text (not indexes)."
+}

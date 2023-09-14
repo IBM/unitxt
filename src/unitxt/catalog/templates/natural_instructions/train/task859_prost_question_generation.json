@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Formulate questions about the information mentioned in a given passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

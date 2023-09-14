@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given the name of an Indian food dish. You need to return whether the dish is \"non vegetarian\" or \"vegetarian\". Do not answer with any words other than those two.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a sentence, generate what should be the most likely next statement. The next statement should be reasonable and logically correct.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a list of integers and an integer k. You need to find the kth largest element in the input list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a review about a place. You need to provide a rating from \"1 star\" to \"5 stars\" for this place.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

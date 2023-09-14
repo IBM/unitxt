@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Classify the given hotel review based on the sentiment it expresses into two classes: negative and positive.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

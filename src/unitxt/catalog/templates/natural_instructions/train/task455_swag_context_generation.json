@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a sentence, generate a most likely context or previous statement. The previous statement should be relevant to the given statement.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

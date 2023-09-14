@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Given a factoid/trivia type question, generate the topic of the question. The topic is the entity the question talks about.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a process, and a question. The process contains a sequence of steps that happen in order. The question asks about the effect of a certain event on another event. If the first event has a positive effect on the second event, answer with \"for\", if it has a negative effect, answer with \"against\". If there's no causal relationship between the two, answer with \"none\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

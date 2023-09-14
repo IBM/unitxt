@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a sentence. You must find the primary subject in the supplied sentence. The output must be a sub-sequence in the sentence.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: Indicate a text span in the passage about which an inquisitive question is asked. (note, don't answer the question).\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

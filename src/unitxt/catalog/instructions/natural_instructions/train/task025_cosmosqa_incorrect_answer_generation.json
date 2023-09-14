@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Craft one incorrect answer. In doing so, try to use words from the context as much as possible, or by using similar words used in the correct answer. DO NOT craft nonsensical or off-topic incorrect answers, such that the incorrect answers can be directly excluded without reasoning according to the context. Try to make your responses similar to the given correct answer. To this end, try to keep both the length and the style as similar as possible between the correct and the incorrect answer. To make your incorrect answers more difficult, try to incorporate words from context. To avoid being predictable or repetitive, try to add more variations and complexity."
+}

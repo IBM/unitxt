@@ -1,0 +1,53 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "data_files": "https://raw.githubusercontent.com/allenai/natural-instructions/master/tasks/task302_record_classification.json",
+        "field": "Instances",
+        "path": "json"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[90%]",
+                "validation": "train[5%]",
+                "test": "train[5%]"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "output/0",
+                    "target"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "input"
+        ],
+        "outputs": [
+            "target"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "instructions": {
+        "type": "instructions_list",
+        "items": [
+            "instructions.natural_instructions.train.task302_record_classification"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            "templates.natural_instructions.train.task302_record_classification"
+        ]
+    }
+}

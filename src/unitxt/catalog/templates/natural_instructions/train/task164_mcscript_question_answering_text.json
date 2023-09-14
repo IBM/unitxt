@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a paragraph (Passage), a question (Question) and two answer options (Option1 and Option2). Your task is to find the correct answer (and return the string of the correct option, not option1/2) for the given question from the given options and based on the given passage. Answer of the question can be found directly from the passage.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

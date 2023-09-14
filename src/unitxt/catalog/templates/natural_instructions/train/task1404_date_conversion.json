@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a date in a particular format and you need to convert to another format. If given format is \"dd/mm/yyyy\" then convert to \"mm/dd/yyyy\". If given format is \"mm/dd/yyyy\" then convert to \"dd/mm/yyyy\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

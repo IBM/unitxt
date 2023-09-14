@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a scientific passage and an answer, generate a question for the given answer."
+}

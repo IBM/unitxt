@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given context and an answer. Your task is to generate the question for this answer based on the given context with commonsense reasoning about social situations..\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you are given a small conversation between two persons and 4 options on how the conversation should continue. Your job is to choose the most reasonable option. The conversation and the options are separated by a newline character. Each dialogue in the conversation are separated by a comma. F and M indicate female and male, respectively.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

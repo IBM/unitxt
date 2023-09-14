@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a list of lists, of numbers. For every inner list, you should multiply every number in that list and put the results in your answer. The output should be a list of numbers with the same length as the number of the lists in the input list.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

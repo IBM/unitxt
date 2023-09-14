@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task you will be given a text passage from a trivia quiz. You should choose the category this question belongs to from these categories: History, Science, Social Science, Fine Arts, Literature. You can only choose one category, so if in doubt, please choose the closest match.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

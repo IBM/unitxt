@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: You are given a sentence, a question and two answer options ('A' and 'B'). Your task is to find the correct option for the given question. Write down the answer index: 'A' or 'B'.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

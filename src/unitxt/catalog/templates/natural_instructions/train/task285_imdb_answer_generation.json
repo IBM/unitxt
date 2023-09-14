@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a review of a movie and a boolean question whether this review has positive sentiment or negative sentiment. Your task is to generate answer \"yes\" when the tweet has that particular sentiment, otherwise generate answer \"no\".\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

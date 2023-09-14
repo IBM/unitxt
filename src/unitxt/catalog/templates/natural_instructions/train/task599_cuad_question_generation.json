@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given a passage that represents a legal contract or clause between multiple parties. Your job is to write questions that ask the basic details corresponding to the legal contracts or clauses. Avoid questions that can be answered correctly without actually understanding the paragraph, and which might have multiple answers. The answer to each question should be unambiguous.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

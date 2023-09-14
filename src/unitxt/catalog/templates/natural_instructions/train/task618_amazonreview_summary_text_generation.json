@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you're given reviews from Amazon's products. Your task is to generate the Summary of the review.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

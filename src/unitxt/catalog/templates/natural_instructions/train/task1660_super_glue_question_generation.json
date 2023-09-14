@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given Wikipedia articles on a range of topics, we ask you to write a question based on the content of the articles that can be answered in a binary manner i.e. True or False.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

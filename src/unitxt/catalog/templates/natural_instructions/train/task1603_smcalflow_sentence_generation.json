@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you have given an input which is user's command or question, based on that you have to return what will be Agent's response/reply for that particular user's command or question\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

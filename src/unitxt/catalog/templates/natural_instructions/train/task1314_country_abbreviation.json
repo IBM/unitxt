@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a country name and you need to return the abbrevation name of the given country.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

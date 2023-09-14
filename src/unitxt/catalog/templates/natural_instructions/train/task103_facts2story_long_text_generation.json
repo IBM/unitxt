@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, five ordered key facts are given. All the given facts are expressed in natural language. Your job is to generate a story 100 to 1000 words long, that includes all the facts given as input in their order of appearance while expanding upon them to produce a broader, yet coherent, narrative.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

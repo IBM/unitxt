@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, find the most appropriate number to replace the blank (indicated with _ ) and express it in words.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}

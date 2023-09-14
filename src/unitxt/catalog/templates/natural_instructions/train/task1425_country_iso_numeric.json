@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "##Instruction: In this task, you are given a country name, and you need to return the numeric International Organization for Standardization (ISO) code of the given country. The codes are three-digit numbers defined by the ISO to represent countries, dependent territories, and special areas of geographical interest.\n\n##Input: {input}\n\n##Output: ",
+    "output_format": "{target}"
+}
