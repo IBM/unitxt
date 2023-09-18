@@ -1,7 +1,8 @@
 import json
 import os
-from unitxt.artifact import Artifact
+
 import unitxt
+from unitxt.artifact import Artifact
 
 depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
 
@@ -9,7 +10,7 @@ depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
 def write_section(title, content, label, depth):
     if depth < 0 or depth > len(depth_levels) - 1:
         raise ValueError(f"Depth should be between 0 and {len(depth_levels)}, Got {depth}")
-    
+
     underline_char = depth_levels[depth]
     underline = underline_char * len(title)
     return f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n{content}\n\n|\n|\n\n"
@@ -35,7 +36,7 @@ def custom_walk(top, depth=0):
 
 
 def make_content(artifact, label, all_labels={}):
-    artifact_type = artifact['type']
+    artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
     class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{class_name}"
@@ -77,7 +78,7 @@ for path, is_dir, depth in custom_walk(start_directory):
             prints.append(section)
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
-target_file = os.path.join(current_directory, 'catalog.rst')
+target_file = os.path.join(current_directory, "catalog.rst")
 
 with open(target_file, "w+") as f:
     f.write("\n\n".join(prints))

@@ -212,7 +212,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`, :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`
+References: :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`, :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`
 
 |
 |
@@ -498,7 +498,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.classification.choices.simple <templates.classification.choices.simple>`, :ref:`templates.classification.choices.informed <templates.classification.choices.informed>`, :ref:`templates.classification.choices.simple2 <templates.classification.choices.simple2>`
+References: :ref:`templates.classification.choices.informed <templates.classification.choices.informed>`, :ref:`templates.classification.choices.simple <templates.classification.choices.simple>`, :ref:`templates.classification.choices.simple2 <templates.classification.choices.simple2>`
 
 |
 |
@@ -1412,7 +1412,7 @@ boolq
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -1656,7 +1656,7 @@ mrpc
           "type": "task_card"
       }
 
-References: :ref:`splitters.default <splitters.default>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.default <splitters.default>`
 
 |
 |
@@ -1848,7 +1848,7 @@ l
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2031,7 +2031,7 @@ m
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2214,7 +2214,7 @@ s
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2397,7 +2397,7 @@ xs
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2580,7 +2580,7 @@ xl
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2763,7 +2763,7 @@ debiased
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2820,7 +2820,7 @@ rte
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
+References: :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -2877,7 +2877,7 @@ qnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3008,7 +3008,7 @@ mnli
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
+References: :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -3350,7 +3350,7 @@ hellaswag
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
 
 |
 |
@@ -4064,7 +4064,7 @@ cola
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.choices.all <templates.classification.choices.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`
+References: :ref:`templates.classification.choices.all <templates.classification.choices.all>`, :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -4136,7 +4136,7 @@ qqp
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
 
 |
 |
@@ -4225,7 +4225,7 @@ ethos_binary
           "type": "task_card"
       }
 
-References: :ref:`splitters.test_only <splitters.test_only>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.test_only <splitters.test_only>`
 
 |
 |
@@ -4596,7 +4596,7 @@ sst2
           "type": "task_card"
       }
 
-References: :ref:`tasks.one_sent_classification <tasks.one_sent_classification>`, :ref:`templates.one_sent_classification <templates.one_sent_classification>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
+References: :ref:`templates.one_sent_classification <templates.one_sent_classification>`, :ref:`tasks.one_sent_classification <tasks.one_sent_classification>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -5178,7 +5178,7 @@ copa
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -14877,7 +14877,7 @@ wnli
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
+References: :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -15145,7 +15145,7 @@ squad
           "type": "task_card"
       }
 
-References: :ref:`metrics.squad <metrics.squad>`, :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
+References: :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`, :ref:`metrics.squad <metrics.squad>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
@@ -15218,7 +15218,7 @@ wsc
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`splitters.small_no_test <splitters.small_no_test>`
 
 |
 |
