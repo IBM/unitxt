@@ -24,6 +24,7 @@ release = "1.0.0"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx_tabs.tabs",
 ]
 
 templates_path = ["_templates"]
@@ -40,3 +41,5 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_nav_header_background": "#ff66ff",
 }
+
+import catalog
