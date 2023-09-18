@@ -8,7 +8,7 @@ from src.unitxt.metrics import (
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
-    Squad,
+    Squad, Rouge,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 
@@ -209,3 +209,20 @@ class TestMetrics(unittest.TestCase):
         global_target = 1
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_rouge(self):
+        metric = Rouge()
+        references = [["hello", "there"], ["general kenobi", "general yoda"]]
+        predictions = ["hello there", "general kenobi"]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = 5/6
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_rouge_l(self):
+        metric = Rouge(hf_compute_args={'use_aggregator': False,
+                                        'rouge_types': ['rougeL']})
+        references = [["hello", "there"], ["general kenobi", "general yoda"]]
+        predictions = ["hello there", "general kenobi"]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = [2/3, 1.0]
+        self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
