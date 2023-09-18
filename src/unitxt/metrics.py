@@ -220,13 +220,14 @@ class HuggingfaceMetric(GlobalMetric):
     metric_name: str = None
     main_score: str = None
     scale: float = 1.0
+    hf_compute_args: dict = {}
 
     def prepare(self):
         super().prepare()
         self.metric = evaluate.load(self.metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        result = self.metric.compute(predictions=predictions, references=references)
+        result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
         if self.scale != 1.0:
             for key in result:
                 if isinstance(result[key], float):
