@@ -377,6 +377,8 @@ class Rouge(HuggingfaceMetric):
     use_aggregator: bool = True
     rouge_types: List[str] = ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
 
+    sent_split_newline: bool = True
+
     def prepare(self):
         self.hf_compute_args = {
             'use_aggregator': self.use_aggregator,
@@ -390,8 +392,9 @@ class Rouge(HuggingfaceMetric):
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, predictions):
-        predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
-        references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
+        if self.sent_split_newline:
+            predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
+            references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
 
 
