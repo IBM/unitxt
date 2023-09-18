@@ -222,6 +222,7 @@ class TestMetrics(unittest.TestCase):
         metric = Rouge(use_aggregator=False, rouge_types=['rougeL'])
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
         predictions = ["hello there", "general kenobi"]
+
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = [2/3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
