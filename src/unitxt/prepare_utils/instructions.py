@@ -1,3 +1,5 @@
+from ..instructions import TextualInstruction
+
 sentence_classification_instructions = [
     "Predict the class of the following ({choices}):",
     "What is the type of the following? Types:{choices}",
