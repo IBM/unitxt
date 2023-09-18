@@ -1,6 +1,15 @@
 unitxt package
 ==============
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   unitxt.prepare_utils
+   unitxt.test_utils
+
 Submodules
 ----------
 
@@ -68,10 +77,26 @@ unitxt.dataset module
    :undoc-members:
    :show-inheritance:
 
+unitxt.dict\_utils module
+-------------------------
+
+.. automodule:: unitxt.dict_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 unitxt.file\_utils module
 -------------------------
 
 .. automodule:: unitxt.file_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.formats module
+---------------------
+
+.. automodule:: unitxt.formats
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,6 +113,14 @@ unitxt.generator\_utils module
 ------------------------------
 
 .. automodule:: unitxt.generator_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.hf\_utils module
+-----------------------
+
+.. automodule:: unitxt.hf_utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -164,6 +197,14 @@ unitxt.processors module
    :undoc-members:
    :show-inheritance:
 
+unitxt.random\_utils module
+---------------------------
+
+.. automodule:: unitxt.random_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 unitxt.recipe module
 --------------------
 
@@ -176,6 +217,14 @@ unitxt.register module
 ----------------------
 
 .. automodule:: unitxt.register
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.renderers module
+-----------------------
+
+.. automodule:: unitxt.renderers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -200,6 +249,14 @@ unitxt.splitters module
 -----------------------
 
 .. automodule:: unitxt.splitters
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.standard module
+----------------------
+
+.. automodule:: unitxt.standard
    :members:
    :undoc-members:
    :show-inheritance:
@@ -236,6 +293,14 @@ unitxt.text\_utils module
    :undoc-members:
    :show-inheritance:
 
+unitxt.type\_utils module
+-------------------------
+
+.. automodule:: unitxt.type_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 unitxt.utils module
 -------------------
 
@@ -248,6 +313,14 @@ unitxt.validate module
 ----------------------
 
 .. automodule:: unitxt.validate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.version module
+---------------------
+
+.. automodule:: unitxt.version
    :members:
    :undoc-members:
    :show-inheritance:
