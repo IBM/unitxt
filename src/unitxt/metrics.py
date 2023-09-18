@@ -374,7 +374,15 @@ class Rouge(HuggingfaceMetric):
     main_score = "rougeL"
     scale = 1.0
 
+    use_aggregator: bool = True
+    rouge_types: List[str] = ['rouge1', 'rouge2', 'rougeL', 'rougeLsum']
+
     def prepare(self):
+        self.hf_compute_args = {
+            'use_aggregator': self.use_aggregator,
+            'rouge_types': self.rouge_types
+        }
+
         super().prepare()
         import nltk
 

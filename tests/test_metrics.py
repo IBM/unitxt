@@ -219,8 +219,7 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_rouge_l(self):
-        metric = Rouge(hf_compute_args={'use_aggregator': False,
-                                        'rouge_types': ['rougeL']})
+        metric = Rouge(use_aggregator=False, rouge_types=['rougeL'])
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
         predictions = ["hello there", "general kenobi"]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
