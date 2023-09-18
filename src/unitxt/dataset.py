@@ -77,6 +77,15 @@ def parse(query: str):
 
     return result
 
+def get_dataset_artifact(dataset_str):
+    register_all_artifacts()
+    recipe = fetch(dataset_str)
+    if recipe is None:
+        args = parse(dataset_str)
+        if "type" not in args:
+            args["type"] = "common_recipe"
+        recipe = Artifact.from_dict(args)
+    return recipe
 
 class Dataset(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
@@ -86,15 +95,23 @@ class Dataset(datasets.GeneratorBasedBuilder):
 
     @property
     def generators(self):
-        register_all_artifacts()
         if not hasattr(self, "_generators") or self._generators is None:
-            recipe = fetch(self.config.name)
-            if recipe is None:
-                args = parse(self.config.name)
-                if "type" not in args:
-                    args["type"] = "common_recipe"
-                recipe = Artifact.from_dict(args)
-            self._generators = recipe()
+            try:
+                from unitxt.dataset import get_dataset_artifact as get_dataset_artifact_installed
+                unitxt_installed = True
+            except ImportError:
+                unitxt_installed = False
+            
+            
+            if unitxt_installed:
+                print("Loading with installed unitxt library...")
+                dataset = get_dataset_artifact_installed(self.config.name)
+            else:    
+                print("Loading with installed unitxt library...")
+                dataset = get_dataset_artifact(self.config.name)
+                
+            self._generators = dataset()
+            
         return self._generators
 
     def _info(self):
