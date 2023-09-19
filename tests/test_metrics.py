@@ -232,13 +232,13 @@ class TestMetrics(unittest.TestCase):
     def test_bleu(self):
         metric = Bleu()
         predictions = ["hello there general kenobi", "foo bari foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar"]]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         # TODO define target and add assert
 
     def test_sacrebleu(self):
         metric = SacreBleu()
         predictions = ["hello there general kenobi", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar"]]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         # TODO define target and add assert
