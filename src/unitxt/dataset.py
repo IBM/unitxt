@@ -44,6 +44,7 @@ from .standard import __file__ as _
 
 from .version import version
 
+__default_recipe__ = "common_recipe"
 
 def fetch(artifact_name):
     try:
@@ -84,7 +85,7 @@ def get_dataset_artifact(dataset_str):
     if recipe is None:
         args = parse(dataset_str)
         if "type" not in args:
-            args["type"] = "common_recipe"
+            args["type"] = __default_recipe__
         recipe = Artifact.from_dict(args)
     return recipe
 
