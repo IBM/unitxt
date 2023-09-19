@@ -9,8 +9,9 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     Rouge,
-    Squad,
+    Squad, Bleu, SacreBleu
 )
+
 from src.unitxt.test_utils.metrics import apply_metric
 
 
@@ -226,3 +227,17 @@ class TestMetrics(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = [2 / 3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
+    
+    def test_bleu(self):
+        metric = Bleu()
+        predictions = ["hello there general kenobi", "foo bari foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        # TODO define target and add assert
+
+    def test_sacrebleu(self):
+        metric = SacreBleu()
+        predictions = ["hello there general kenobi", "foo bar foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        # TODO define target and add assert
