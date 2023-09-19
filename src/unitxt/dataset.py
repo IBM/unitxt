@@ -23,7 +23,7 @@ from .operators import __file__ as _
 from .processors import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .register import register_all_artifacts
+from .register import register_all_artifacts, _reset_env_local_catalogs
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
@@ -81,6 +81,7 @@ def parse(query: str):
 
 
 def get_dataset_artifact(dataset_str):
+    _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = fetch(dataset_str)
     if recipe is None:
