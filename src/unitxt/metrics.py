@@ -438,6 +438,12 @@ class Bleu(HuggingfaceMetric):
     scale = 1.0
 
 
+class SacreBleu(HuggingfaceMetric):
+    metric_name = "sacrebleu"
+    main_score = "sacrebleu"
+    scale = 1.0
+
+
 class MatthewsCorrelation(HuggingfaceMetric):
     metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
