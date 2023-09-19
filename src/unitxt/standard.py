@@ -16,7 +16,7 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
-    format: ICLFormat = None
+    format: ICLFormat = ICLFormat()
 
     demos_pool_size: int = None
     num_demos: int = None
