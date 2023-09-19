@@ -220,13 +220,14 @@ class HuggingfaceMetric(GlobalMetric):
     metric_name: str = None
     main_score: str = None
     scale: float = 1.0
+    hf_compute_args: dict = {}
 
     def prepare(self):
         super().prepare()
         self.metric = evaluate.load(self.metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        result = self.metric.compute(predictions=predictions, references=references)
+        result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
         if self.scale != 1.0:
             for key in result:
                 if isinstance(result[key], float):
@@ -373,7 +374,14 @@ class Rouge(HuggingfaceMetric):
     main_score = "rougeL"
     scale = 1.0
 
+    use_aggregator: bool = True
+    rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+    sent_split_newline: bool = True
+
     def prepare(self):
+        self.hf_compute_args = {"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types}
+
         super().prepare()
         import nltk
 
@@ -381,8 +389,9 @@ class Rouge(HuggingfaceMetric):
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, predictions):
-        predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
-        references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
+        if self.sent_split_newline:
+            predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
+            references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
         return super().compute(references, predictions)
 
 
