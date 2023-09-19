@@ -46,6 +46,7 @@ from .version import version
 
 __default_recipe__ = "common_recipe"
 
+
 def fetch(artifact_name):
     try:
         artifact, _ = fetch_artifact(artifact_name)

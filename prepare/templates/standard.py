@@ -1,6 +1,5 @@
-from src.unitxt.templates import KeyValTemplate
-
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.templates import KeyValTemplate
 
 add_to_catalog(
     KeyValTemplate(),
