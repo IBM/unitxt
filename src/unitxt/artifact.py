@@ -26,11 +26,14 @@ class Artifactories(object):
     def __next__(self):
         return next(self.artifactories)
 
-    def register_atrifactory(self, artifactory):
+    def register_atrifactory(self, artifactory, is_env_artifactory=False):
         assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
         assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
         assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
         self.artifactories = [artifactory] + self.artifactories
+
+    def reset(self):
+        self.artifactories = []
 
 
 def map_values_in_place(object, mapper):
