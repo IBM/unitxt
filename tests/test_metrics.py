@@ -4,14 +4,14 @@ from math import isnan
 from src.unitxt.metrics import (
     F1,
     Accuracy,
+    Bleu,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
     Rouge,
-    Squad,
-    Bleu,
     SacreBleu,
+    Squad,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 
