@@ -1,9 +1,10 @@
+import copy
 import importlib
 import inspect
 import os
 
 from .artifact import Artifact, Artifactories
-from .catalog import PATHS_SEP, GithubCatalog, LocalCatalog
+from .catalog import PATHS_SEP, EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
 from .utils import Singleton
 
 UNITXT_ARTIFACTORIES_ENV_VAR = "UNITXT_ARTIFACTORIES"
@@ -21,7 +22,11 @@ non_registered_files = [
 
 
 def _register_catalog(catalog: LocalCatalog):
-    Artifactories().register_atrifactory(catalog)
+    Artifactories().register(catalog)
+
+
+def _unregister_catalog(catalog: LocalCatalog):
+    Artifactories().unregister(catalog)
 
 
 def register_local_catalog(catalog_path: str):
@@ -30,12 +35,23 @@ def register_local_catalog(catalog_path: str):
     _register_catalog(LocalCatalog(location=catalog_path))
 
 
+def _catalogs_list():
+    return list(a for a in Artifactories())
+
+
 def _register_all_catalogs():
     _register_catalog(GithubCatalog())
     _register_catalog(LocalCatalog())
+    _reset_env_local_catalogs()
+
+
+def _reset_env_local_catalogs():
+    for catalog in _catalogs_list():
+        if isinstance(catalog, EnvironmentLocalCatalog):
+            _unregister_catalog(catalog)
     if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
         for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
-            _register_catalog(LocalCatalog(location=path))
+            _register_catalog(EnvironmentLocalCatalog(location=path))
 
 
 def _register_all_artifacts():
