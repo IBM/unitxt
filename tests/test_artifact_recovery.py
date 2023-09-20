@@ -48,6 +48,11 @@ class TestArtifactRecovery(unittest.TestCase):
         with self.assertRaises(UnrecognizedArtifactType):
             artifact = Artifact.from_dict(args)
 
+        try:
+            artifact = Artifact.from_dict(args)
+        except UnrecognizedArtifactType as e:
+            print("The error message (not a real error):", e)
+
         class DummyExistForLoading(Artifact):
             pass
 
