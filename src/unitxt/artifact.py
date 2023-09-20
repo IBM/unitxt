@@ -86,7 +86,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "type" in d and d["type"] in cls._class_register
+        return isinstance(d, dict) and "type" in d
 
     @classmethod
     def verify_is_artifact_dict(cls, d):
@@ -155,13 +155,9 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path):
-        try:
-            with open(path, "r") as f:
-                d = json.load(f)
-            assert "type" in d, "Saved artifact must have a type field"
-            return cls._recursive_load(d)
-        except Exception as e:
-            raise Exception(f"{e}\n\nFailed to load artifact from {path} see above for more details.")
+        with open(path, "r") as f:
+            d = json.load(f)
+        return cls.from_dict(d)
 
     def prepare(self):
         pass
