@@ -48,10 +48,10 @@ class TestArtifactRecovery(unittest.TestCase):
         with self.assertRaises(UnrecognizedArtifactType):
             artifact = Artifact.from_dict(args)
 
-        class DummyExist(Artifact):
+        class DummyExistForLoading(Artifact):
             pass
 
         args = {
-            "type": "dummy_exist",
+            "type": "dummy_exist_for_loading",
         }
         artifact = Artifact.from_dict(args)
