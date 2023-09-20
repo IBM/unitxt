@@ -94,7 +94,7 @@ class Artifact(Dataclass):
             raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
         if "type" not in d:
             raise MissingArtifactType(d)
-        if d["type"] not in cls._class_register:
+        if not cls.is_registered_type(d["type"]):
             raise UnrecognizedArtifactType(d["type"])
 
     @classmethod
@@ -112,7 +112,7 @@ class Artifact(Dataclass):
 
         snake_case_key = camel_to_snake_case(artifact_class.__name__)
 
-        if snake_case_key in cls._class_register:
+        if cls.is_registered_type(snake_case_key):
             assert (
                 cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
@@ -134,6 +134,14 @@ class Artifact(Dataclass):
         with open(path, "r") as f:
             d = json.load(f)
         return cls.is_artifact_dict(d)
+
+    @classmethod
+    def is_registered_type(cls, type: str):
+        return type in cls._class_register
+
+    @classmethod
+    def is_registered_class(cls, clz: object):
+        return clz in set(cls._class_register.values)
 
     @classmethod
     def _recursive_load(cls, d):
