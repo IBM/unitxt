@@ -141,7 +141,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_registered_class(cls, clz: object):
-        return clz in set(cls._class_register.values)
+        return clz in set(cls._class_register.values())
 
     @classmethod
     def _recursive_load(cls, d):
