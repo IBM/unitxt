@@ -58,7 +58,7 @@ class RenderDemonstrations(RenderTemplate):
 
         processed_demos = []
         for demo_instance in demos:
-            if 'inputs' in demo_instance and 'outputs' in demo_instance:
+            if "inputs" in demo_instance and "outputs" in demo_instance:
                 demo_instance = super().process(demo_instance)
             processed_demos.append(demo_instance)
 
