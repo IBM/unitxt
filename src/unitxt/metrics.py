@@ -395,6 +395,22 @@ class Rouge(HuggingfaceMetric):
         return super().compute(references, predictions)
 
 
+class BertScore(HuggingfaceMetric):
+    metric_name = "bertscore"
+    main_score = "bertscore"
+    scale = 1.0
+
+    use_aggregator: bool = True
+    model_type: str = None
+
+    def prepare(self):
+        self.hf_compute_args = {"model_type": self.model_type}
+        super().prepare()
+
+    def compute(self, references, predictions):
+        return super().compute(references, predictions)
+
+
 # Computes chat edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
@@ -440,7 +456,7 @@ class Bleu(HuggingfaceMetric):
 
 class SacreBleu(HuggingfaceMetric):
     metric_name = "sacrebleu"
-    main_score = "sacrebleu"
+    main_score = "score"
     scale = 1.0
 
 
