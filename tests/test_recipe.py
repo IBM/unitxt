@@ -92,12 +92,15 @@ class TestRecipes(unittest.TestCase):
             print_dict(instance)
             break
 
-    def test_recipe_with_hf(self):
+    def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
         from datasets import load_dataset
 
         d = load_dataset(
             dataset_file,
             "type=standard_recipe_with_indexes,card=cards.wnli,template_card_index=0,demos_pool_size=5,num_demos=5,instruction=instructions.models.llama",
+            streaming=True,
         )
 
-        print_dict(d["train"][0])
+        iterator = iter(d["train"])
+        next(iterator)
+        print_dict(next(iterator))
