@@ -1,4 +1,5 @@
 import datasets
+import os
 
 from .artifact import Artifact, UnitxtArtifactNotFoundError
 from .artifact import __file__ as _
@@ -87,7 +88,7 @@ def get_dataset_artifact(dataset_str):
     if recipe is None:
         args = parse(dataset_str)
         if "type" not in args:
-            args["type"] = __default_recipe__
+            args["type"] = os.environ.get("UNITXT_DEFAULT_RECIPE", __default_recipe__)
         recipe = Artifact.from_dict(args)
     return recipe
 
