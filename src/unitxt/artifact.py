@@ -63,15 +63,12 @@ def get_closest_artifact_type(type):
 
 
 class UnrecognizedArtifactType(ValueError):
-    def __init__(self, type) -> None:   
+    def __init__(self, type) -> None:
         maybe_class = "".join(word.capitalize() for word in type.split("_"))
         message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         closest_artifact_type = get_closest_artifact_type(type)
         if closest_artifact_type is not None:
-            message += (
-                "\n\n"
-                f"Did you mean '{closest_artifact_type}'?"
-            )
+            message += "\n\n" f"Did you mean '{closest_artifact_type}'?"
         super().__init__(message)
 
 
