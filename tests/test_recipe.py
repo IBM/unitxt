@@ -1,5 +1,6 @@
 import unittest
 
+from src.unitxt import dataset_file
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
@@ -90,3 +91,13 @@ class TestRecipes(unittest.TestCase):
         for instance in stream["train"]:
             print_dict(instance)
             break
+
+    def test_recipe_with_hf(self):
+        from datasets import load_dataset
+
+        d = load_dataset(
+            dataset_file,
+            "type=standard_recipe_with_indexes,card=cards.wnli,template_card_index=0,demos_pool_size=100,num_demos=5,instruction=instructions.models.llama",
+        )
+
+        print_dict(d["train"][0])
