@@ -24,7 +24,7 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         if self.skip_rendered_instance:
             if (
-                "inpust" not in instance
+                "inputs" not in instance
                 and "outputs" not in instance
                 and "source" in instance
                 and "target" in instance
