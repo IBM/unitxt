@@ -89,7 +89,7 @@ class Artifact(Dataclass):
         return isinstance(d, dict) and "type" in d
 
     @classmethod
-    def verify_is_artifact_dict(cls, d):
+    def verify_artifact_dict(cls, d):
         if not isinstance(d, dict):
             raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
         if "type" not in d:
@@ -147,6 +147,7 @@ class Artifact(Dataclass):
         else:
             pass
         if cls.is_artifact_dict(d):
+            cls.verify_artifact_dict(d)
             instance = cls._class_register[d.pop("type")](**d)
             return instance
         else:
@@ -154,7 +155,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def from_dict(cls, d):
-        cls.verify_is_artifact_dict(d)
+        cls.verify_artifact_dict(d)
         return cls._recursive_load(d)
 
     @classmethod
