@@ -97,7 +97,7 @@ class TestRecipes(unittest.TestCase):
 
         d = load_dataset(
             dataset_file,
-            "type=standard_recipe_with_indexes,card=cards.wnli,template_card_index=0,demos_pool_size=5,num_demos=5,instruction=instructions.models.llama",
+            "type=standard_recipe_with_indexes,card=cards.wnli,format=formats.user_agent,template_card_index=0,demos_pool_size=5,num_demos=5,instruction=instructions.models.llama",
             streaming=True,
         )
 
