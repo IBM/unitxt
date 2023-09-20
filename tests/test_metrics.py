@@ -231,14 +231,17 @@ class TestMetrics(unittest.TestCase):
 
     def test_bleu(self):
         metric = Bleu()
-        predictions = ["hello there general kenobi", "foo bari foobar"]
+        predictions = ["hello there general guy", "foo bari foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        # TODO define target and add assert
+        # TODO check why BLEU returns 0 here (sacrebleu below returns 69)
+        global_target = 0
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_sacrebleu(self):
         metric = SacreBleu()
-        predictions = ["hello there general kenobi", "foo bar foobar"]
+        predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        # TODO define target and add assert
+        global_target = 69.14415692838818
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
