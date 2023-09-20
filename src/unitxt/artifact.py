@@ -8,7 +8,7 @@ from copy import deepcopy
 from typing import Any, Dict, List, Union, final
 
 from .dataclass import Dataclass, Field, asdict, fields
-from .text_utils import camel_to_snake_case, is_camel_case
+from .text_utils import camel_to_snake_case, is_camel_case, snake_case_to_camel
 from .type_utils import issubtype
 
 
@@ -65,8 +65,9 @@ def get_closest_artifact_type(type):
 class UnrecognizedArtifactType(ValueError):
     def __init__(self, type) -> None:
         closest_artifact_type = get_closest_artifact_type(type)
+        maybe_class = "".join(word.capitalize() for word in type.split("_"))
         message = (
-            f"'{type}'  is not a recognized value for 'type' parameter."
+            f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
             "\n\n"
             f"Did you mean '{closest_artifact_type}'?"
         )
