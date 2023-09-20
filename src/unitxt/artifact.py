@@ -122,6 +122,10 @@ class Artifact(Dataclass):
         cls._class_register[snake_case_key] = artifact_class
 
         return snake_case_key
+    
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.register_class(cls)
 
     @classmethod
     def is_artifact_file(cls, path):
