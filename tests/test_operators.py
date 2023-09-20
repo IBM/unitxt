@@ -10,6 +10,7 @@ from src.unitxt.operators import (
     FlattenInstances,
     JoinStr,
     MapInstanceValues,
+    RemoveFields,
     RenameFields,
     Shuffle,
     SplitByValue,
@@ -94,6 +95,19 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_fields(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": 1},
+            {"a": 2},
+        ]
+
+        test_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
 
     def test_unique_on_single_field(self):
         inputs = [

@@ -136,6 +136,22 @@ class AddFields(StreamInstanceOperator):
         return instance
 
 
+class RemoveFields(StreamInstanceOperator):
+    """
+    Adds specified fields to each instance in a stream.
+
+    Args:
+        fields (Dict[str, object]): The fields to add to each instance.
+    """
+
+    fields: List[str]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        for field in self.fields:
+            del instance[field]
+        return instance
+
+
 class FieldOperator(StreamInstanceOperator):
     """
     A general stream that processes the values of a field (or multiple ones
