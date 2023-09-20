@@ -26,11 +26,20 @@ class Artifactories(object):
     def __next__(self):
         return next(self.artifactories)
 
-    def register_atrifactory(self, artifactory):
+    def register(self, artifactory):
         assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
         assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
         assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
         self.artifactories = [artifactory] + self.artifactories
+
+    def unregister(self, artifactory):
+        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
+        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
+        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        self.artifactories.remove(artifactory)
+
+    def reset(self):
+        self.artifactories = []
 
 
 def map_values_in_place(object, mapper):
@@ -55,12 +64,11 @@ def get_closest_artifact_type(type):
 
 class UnrecognizedArtifactType(ValueError):
     def __init__(self, type) -> None:
+        maybe_class = "".join(word.capitalize() for word in type.split("_"))
+        message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         closest_artifact_type = get_closest_artifact_type(type)
-        message = (
-            f"'{type}'  is not a recognized value for 'type' parameter."
-            "\n\n"
-            f"Did you mean '{closest_artifact_type}'?"
-        )
+        if closest_artifact_type is not None:
+            message += "\n\n" f"Did you mean '{closest_artifact_type}'?"
         super().__init__(message)
 
 
@@ -77,15 +85,15 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "type" in d and d["type"] in cls._class_register
+        return isinstance(d, dict) and "type" in d
 
     @classmethod
-    def verify_is_artifact_dict(cls, d):
+    def verify_artifact_dict(cls, d):
         if not isinstance(d, dict):
             raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
         if "type" not in d:
             raise MissingArtifactType(d)
-        if d["type"] not in cls._class_register:
+        if not cls.is_registered_type(d["type"]):
             raise UnrecognizedArtifactType(d["type"])
 
     @classmethod
@@ -103,7 +111,7 @@ class Artifact(Dataclass):
 
         snake_case_key = camel_to_snake_case(artifact_class.__name__)
 
-        if snake_case_key in cls._class_register:
+        if cls.is_registered_type(snake_case_key):
             assert (
                 cls._class_register[snake_case_key] == artifact_class
             ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
@@ -114,6 +122,10 @@ class Artifact(Dataclass):
 
         return snake_case_key
 
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.register_class(cls)
+
     @classmethod
     def is_artifact_file(cls, path):
         if not os.path.exists(path) or not os.path.isfile(path):
@@ -121,6 +133,14 @@ class Artifact(Dataclass):
         with open(path, "r") as f:
             d = json.load(f)
         return cls.is_artifact_dict(d)
+
+    @classmethod
+    def is_registered_type(cls, type: str):
+        return type in cls._class_register
+
+    @classmethod
+    def is_registered_class(cls, clz: object):
+        return clz in set(cls._class_register.values())
 
     @classmethod
     def _recursive_load(cls, d):
@@ -134,6 +154,7 @@ class Artifact(Dataclass):
         else:
             pass
         if cls.is_artifact_dict(d):
+            cls.verify_artifact_dict(d)
             instance = cls._class_register[d.pop("type")](**d)
             return instance
         else:
@@ -141,18 +162,14 @@ class Artifact(Dataclass):
 
     @classmethod
     def from_dict(cls, d):
-        cls.verify_is_artifact_dict(d)
+        cls.verify_artifact_dict(d)
         return cls._recursive_load(d)
 
     @classmethod
     def load(cls, path):
-        try:
-            with open(path, "r") as f:
-                d = json.load(f)
-            assert "type" in d, "Saved artifact must have a type field"
-            return cls._recursive_load(d)
-        except Exception as e:
-            raise Exception(f"{e}\n\nFailed to load artifact from {path} see above for more details.")
+        with open(path, "r") as f:
+            d = json.load(f)
+        return cls.from_dict(d)
 
     def prepare(self):
         pass

@@ -34,9 +34,14 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         if self.remove_unnecessary_fields:
+            keys_to_delete = []
+
             for key in instance.keys():
                 if key not in UNITXT_DATASET_SCHEMA:
-                    del instance[key]
+                    keys_to_delete.append(key)
+
+            for key in keys_to_delete:
+                del instance[key]
 
         instance["group"] = self.group
         if self.metrics is not None:

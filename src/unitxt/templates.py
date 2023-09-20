@@ -181,6 +181,43 @@ class InputOutputTemplate(Template):
         return self.postprocessors
 
 
+class KeyValTemplate(Template):
+    pairs_seperator: str = ", "
+    key_val_seperator: str = ": "
+    use_keys_for_inputs: bool = True
+    outputs_key_val_seperator: str = ": "
+    use_keys_for_outputs: bool = False
+
+    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+
+    def process_dict(self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys) -> str:
+        dic = {k: ", ".join(v) if isinstance(v, list) else v for k, v in dic.items()}
+        pairs = []
+        for key, val in dic.items():
+            key_val = [key, val] if use_keys else [val]
+            pairs.append(key_val_sep.join(key_val))
+        return pairs_sep.join(pairs)
+
+    def process_inputs(self, inputs: Dict[str, object]) -> str:
+        return self.process_dict(
+            inputs,
+            key_val_sep=self.key_val_seperator,
+            pairs_sep=self.pairs_seperator,
+            use_keys=self.use_keys_for_inputs,
+        )
+
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
+        return self.process_dict(
+            outputs,
+            key_val_sep=self.key_val_seperator,
+            pairs_sep=self.pairs_seperator,
+            use_keys=self.use_keys_for_outputs,
+        )
+
+    def get_postprocessors(self) -> List[str]:
+        return self.postprocessors
+
+
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 

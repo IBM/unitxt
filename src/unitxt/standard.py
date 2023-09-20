@@ -14,9 +14,9 @@ from .templates import Template
 
 class StandardRecipe(Recipe, SourceSequntialOperator):
     card: TaskCard
-    template: Template
+    template: Template = None
     instruction: Instruction = None
-    format: ICLFormat = None
+    format: ICLFormat = ICLFormat()
 
     demos_pool_size: int = None
     num_demos: int = None
@@ -81,3 +81,23 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
                 postprocessors=postprocessors,
             )
         )
+
+
+class StandardRecipeWithIndexes(StandardRecipe):
+    instruction_card_index: int = None
+    template_card_index: int = None
+
+    def prepare(self):
+        assert (
+            self.template_card_index is None or self.template is None
+        ), "Specify either template or template_card_index"
+        if self.template_card_index is not None:
+            self.template = self.card.templates[int(self.template_card_index)]
+
+        assert (
+            self.instruction_card_index is None or self.instruction is None
+        ), "Specify either instruction or instruction_card_index"
+        if self.instruction_card_index is not None:
+            self.instruction = self.card.instructions[int(self.instruction_card_index)]
+
+        super().prepare()

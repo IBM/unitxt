@@ -40,3 +40,23 @@ class TestArtifactRecovery(unittest.TestCase):
             artifact = Artifact.from_dict(args)
         except Exception as e:
             print(e)
+
+    def test_subclass_registration_and_loading(self):
+        args = {
+            "type": "dummy_not_exist",
+        }
+        with self.assertRaises(UnrecognizedArtifactType):
+            artifact = Artifact.from_dict(args)
+
+        try:
+            artifact = Artifact.from_dict(args)
+        except UnrecognizedArtifactType as e:
+            print("The error message (not a real error):", e)
+
+        class DummyExistForLoading(Artifact):
+            pass
+
+        args = {
+            "type": "dummy_exist_for_loading",
+        }
+        artifact = Artifact.from_dict(args)

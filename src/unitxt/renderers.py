@@ -19,8 +19,19 @@ class Renderer(ABC):
 class RenderTemplate(Renderer, StreamInstanceOperator):
     template: Template
     random_reference: bool = False
+    skip_rendered_instance: bool = True
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        if self.skip_rendered_instance:
+            if (
+                "inputs" not in instance
+                and "outputs" not in instance
+                and "source" in instance
+                and "target" in instance
+                and "references" in instance
+            ):
+                return instance
+
         inputs = instance.pop("inputs")
         outputs = instance.pop("outputs")
 
@@ -58,8 +69,8 @@ class RenderDemonstrations(RenderTemplate):
 
         processed_demos = []
         for demo_instance in demos:
-            processed_demo = super().process(demo_instance)
-            processed_demos.append(processed_demo)
+            demo_instance = super().process(demo_instance)
+            processed_demos.append(demo_instance)
 
         instance[self.demos_field] = processed_demos
 
