@@ -10,11 +10,9 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     Rouge,
-    Squad,
-    Bleu,
     SacreBleu,
+    Squad,
 )
-
 from src.unitxt.test_utils.metrics import apply_metric
 
 
@@ -230,7 +228,7 @@ class TestMetrics(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = [2 / 3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
-    
+
     def test_bleu(self):
         metric = Bleu()
         predictions = ["hello there general guy", "foo bari foobar"]
