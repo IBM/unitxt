@@ -1,8 +1,10 @@
+import re
+import string
 import uuid
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
@@ -88,6 +90,54 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
     @abstractmethod
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        pass
+
+
+class BulkInstanceMetric(SingleStreamOperator, Metric):
+    main_score: str
+    reduction_map: Dict[str, List[str]]
+
+    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        global_score = {}
+        instances = []
+
+        references, predictions = map(list, zip(*[(instance["references"],
+                                                   instance["prediction"])
+                                                  for instance in stream]))
+
+        scores = self.compute(references=references, predictions=predictions)
+
+        for instance, score in zip(stream, scores):
+            if "score" not in instance:
+                instance["score"] = {"global": global_score, "instance": {}}
+            else:
+                global_score = instance["score"]["global"]
+
+            instance["score"]["instance"].update(score)
+
+            instances.append(instance)
+
+        for reduction, fields in self.reduction_map.items():
+            assert (
+                reduction in self.implemented_reductions
+            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+
+            if reduction == "mean":
+                from statistics import mean
+
+                for field in fields:
+                    global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
+                    if field == self.main_score:
+                        global_score["score"] = global_score[field]
+                        global_score["score_name"] = self.main_score
+
+        for instance in instances:
+            yield instance
+
+    @abstractmethod
+    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
         pass
 
 
@@ -233,6 +283,20 @@ class HuggingfaceMetric(GlobalMetric):
                 if isinstance(result[key], float):
                     result[key] /= self.scale
         return result
+
+
+class HuggingfaceBulkMetric(BulkInstanceMetric):
+
+    metric_name: str = None
+
+    hf_compute_args: dict = {}
+
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(self.metric_name)
+
+    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+        return self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
 
 
 class F1(GlobalMetric):
@@ -564,3 +628,124 @@ class NER(CustomF1):
 
     def get_element_representation(self, element):
         return str(element)
+
+
+def normalize_answer(s):
+    """Lower text and remove punctuation, articles and extra whitespace."""
+
+    def remove_articles(text):
+        return re.sub(r"\b(a|an|the)\b", " ", text)
+
+    def white_space_fix(text):
+        return " ".join(text.split())
+
+    def remove_punc(text):
+        exclude = set(string.punctuation)
+        return "".join(ch for ch in text if ch not in exclude)
+
+    def lower(text):
+        return text.lower()
+
+    return white_space_fix(remove_articles(remove_punc(lower(s))))
+
+
+class TokenOverlap(InstanceMetric):
+    reduction_map = {"mean": ["f1"]}
+    main_score = "f1"
+
+    def compute(self, references: List[Any], prediction: Any) -> dict:
+        results = [self._compute(reference, prediction)
+                   for reference in references]
+        return {measure: max(results, key=lambda x: x[i])
+                for i, measure in enumerate(['pr', 'rc', 'f1'])}
+
+    def _compute(self, reference: Any, prediction: Any) -> Tuple[float, float, float]:
+        prediction_tokens = normalize_answer(prediction).split()
+        reference_tokens = normalize_answer(reference).split()
+        common = Counter(prediction_tokens) & Counter(reference_tokens)
+        num_same = sum(common.values())
+        if num_same == 0:
+            pr, rc, f1 = 0, 0, 0
+        else:
+            pr = 1.0 * num_same / len(prediction_tokens)
+            rc = 1.0 * num_same / len(reference_tokens)
+            f1 = (2 * pr * rc) / (pr + rc)
+        return pr, rc, f1
+
+
+class BertScore(HuggingfaceBulkMetric):
+    metric_name = "bertscore"
+    main_score = "f1"
+    reduction_map = {"mean": ["f1", 'pr', 'rc']}
+
+    model_name: str
+
+    def prepare(self):
+        self.hf_compute_args = {"model_type": self.model_name}
+
+    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+        results = super().compute(references=references, predictions=predictions)
+        return results
+
+
+class SentenceBert(BulkInstanceMetric):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    batch_size: int = 32
+
+    model_name: str
+
+    def prepare(self):
+        from sentence_transformers import SentenceTransformer, util as sbert_util
+        self.model = SentenceTransformer(self.model_name)
+        self.util = sbert_util
+
+    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+        scores = []
+
+        # we are in a multi-reference case (each prediction may have multiple
+        # references), so we need to flatten the refs in order to compute the
+        # embeddings in one batch, but first we have to store the spans of
+        # reference groups, so we can recover it later on.
+        ref_group_boundaries = []
+        count = 0
+        for ref_group in references:
+            ref_group_boundaries.append((count, count + len(ref_group)))
+            count += len(ref_group)
+
+        # compute s-bert embeddings
+        preds_emb = self.model.encode(predictions)
+        refs_emb = self.model.encode([ref for ref_group in references for ref in ref_group])
+
+        # for each candidate, pick the reference with the highest score
+        for pred_emb, ref_group_bounds in zip(preds_emb, ref_group_boundaries):
+            refs_group_emb = refs_emb[ref_group_bounds[0]:ref_group_bounds[1]]
+            scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
+
+        return [{"score": score} for score in scores]
+
+
+class Reward(BulkInstanceMetric):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    batch_size: int = 32
+
+    model_name: str
+
+    def prepare(self):
+        from transformers import pipeline
+        self.pipe = pipeline("text-classification", model=self.model_name)
+
+    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+        # treat the references as the questions and the predictions as answers
+        questions = references
+        answers = predictions
+
+        # prepare for computation
+        inputs = [{"text": q, "text_pair": a}
+                  for q, a in zip(questions, answers)]
+
+        # compute the metric
+        # add function_to_apply="none" to disable sigmoid
+        return [r['score'] for r in self.pipe(inputs, batch_size=self.batch_size)]
+
