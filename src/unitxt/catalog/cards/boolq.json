@@ -9,56 +9,24 @@
         {
             "type": "add_fields",
             "fields": {
-                "topic": "boolean questions",
-                "answers": [
-                    "yes",
-                    "false"
+                "choices": [
+                    "False",
+                    "True"
                 ]
             }
         },
         {
             "type": "cast_fields",
             "fields": {
-                "answer": "str"
+                "answer": "int"
             }
-        },
-        {
-            "type": "rename_fields",
-            "field_to_field": {
-                "question": "question",
-                "answer": "label",
-                "passage": "context",
-                "answers": "answers",
-                "topic": "topic"
-            }
-        },
-        {
-            "type": "join_str",
-            "separator": ",",
-            "field": "answers",
-            "to_field": "answers"
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "question",
-            "label",
-            "context",
-            "topic"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
+    "task": "tasks.qa.multiple_choice.open",
     "templates": {
-        "clean": {
-            "type": "input_output_template",
-            "input_format": "Context: {context}\nQuestion: {question}.\nAnswer:",
-            "output_format": "{label}"
-        }
+        "type": "templates_list",
+        "items": [
+            "templates.qa.multiple_choice.lm_eval_harness"
+        ]
     }
 }

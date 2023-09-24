@@ -7,7 +7,6 @@
         "streaming": false
     },
     "preprocess_steps": [
-        "splitters.default",
         {
             "type": "map_instance_values",
             "mappers": {

@@ -4,7 +4,6 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card

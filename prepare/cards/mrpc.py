@@ -1,28 +1,18 @@
-import datasets as ds
-from src.unitxt import dataset
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
-
-default_splitter = SplitRandomMix({"train": "train", "validation": "validation", "test": "test"})
-add_to_catalog(default_splitter, "splitters.default", overwrite=True)
-
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="mrpc", streaming=False),
     preprocess_steps=[
-        "splitters.default",
         MapInstanceValues(mappers={"label": {"0": "not equivalent", "1": "equivalent"}}),
         AddFields(
             fields={

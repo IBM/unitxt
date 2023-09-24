@@ -5,7 +5,6 @@
         "path": "cnn_dailymail",
         "name": "3.0.0"
     },
-    "preprocess_steps": [],
     "task": {
         "type": "form_task",
         "inputs": [

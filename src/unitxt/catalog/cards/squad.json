@@ -17,18 +17,6 @@
             "use_query": true
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "context",
-            "question"
-        ],
-        "outputs": [
-            "answer"
-        ],
-        "metrics": [
-            "metrics.squad"
-        ]
-    },
+    "task": "tasks.qa.contextual",
     "templates": "templates.qa.contextual.all"
 }

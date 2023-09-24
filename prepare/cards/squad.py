@@ -1,4 +1,4 @@
-from src.unitxt.blocks import CopyFields, FormTask, LoadHF, SplitRandomMix, TaskCard
+from src.unitxt.blocks import CopyFields, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 
@@ -8,11 +8,7 @@ card = TaskCard(
         "splitters.small_no_test",
         CopyFields(field_to_field=[["answers/text", "answer"]], use_query=True),
     ],
-    task=FormTask(
-        inputs=["context", "question"],
-        outputs=["answer"],
-        metrics=["metrics.squad"],
-    ),
+    task="tasks.qa.contextual",
     templates="templates.qa.contextual.all",
 )
 
