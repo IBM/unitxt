@@ -1,20 +1,11 @@
 from typing import List, Union
 
-from src.unitxt.blocks import AddFields, FormTask, InputOutputTemplate, LoadHF, TaskCard
+from src.unitxt.blocks import AddFields, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operator import StreamingOperator
-from src.unitxt.operators import JoinStr, RenameFields, TakeByField, ZipFieldValues
 from src.unitxt.splitters import RenameSplits
-from src.unitxt.templates import TemplatesDict
+from src.unitxt.templates import TemplatesList
 from src.unitxt.test_utils.card import test_card
 
-# import huggingface_hub
-# from huggingface_hub.hf_api import DatasetInfo as HFDatasetInfo, HfApi
-# from huggingface_hub import DatasetFilter
-# api = HfApi()
-# analyzer = AnalyzerEngine()
-# datasets = list(api.list_datasets(filter=DatasetFilter(dataset_name='cais/mmlu')))
-# builder = load_dataset_builder(path='cais/mmlu')
 subtasks = [
     "abstract_algebra",
     "anatomy",
@@ -74,112 +65,31 @@ subtasks = [
     "virology",
     "world_religions",
 ]
-templates = {
-    "original": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "helm": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "lm_eval_harness": """Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:""".strip(),
-    "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:""".strip(),
-}
-MMLU_TEMPLATES = TemplatesDict(
-    {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.topical.mmlu",
+            "templates.qa.multiple_choice.topical.helm",
+            "templates.qa.multiple_choice.lm_eval_harness",
+            "templates.qa.multiple_choice.topical.fm_eval",
+        ]
+    ),
+    "templates.tasks.mmlu.all",
+    overwrite=True,
 )
-
-for k, v in templates.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}")
-    add_to_catalog(template, f"templates.mmlu.{k.replace('-', '_')}", overwrite=True)
-
-CONTEXT_MMLU_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=val.replace("Question:", "Context: {context}\nQuestion:").replace(
-                "{sentence1}", "{context}\n{sentence1}"
-            ),
-            output_format="{label}",
-        )
-        for key, val in templates.items()
-    }
-)
-
-
-def multiple_choice_outputs():
-    return ["label"]
-
-
-def multiple_choice_inputs_outputs(context=False):
-    return {"inputs": multiple_choice_inputs(context=context), "outputs": multiple_choice_outputs()}
-
-
-def multiple_choice_inputs(context=False):
-    inputs = ["choices", "sentence1", "numbers", "topic"]
-    if context:
-        inputs.append("context")
-    return inputs
-
-
-def multiple_choice_preprocess(
-    question: str,
-    numbering: str,
-    choices: str,
-    topic: str,
-    label_index: str,
-    context: str = None,
-    expected_answer: str = "number",
-) -> List[Union[StreamingOperator, str]]:
-    """
-    Processing to make a unified format of multiple choice questions
-    :param numbering: the field containing the numerals to use (e.g. ABCD [1,2,3,4])
-    :param choices: the field with the choices (e.g. ['apple','bannana']
-    :param topic: the field containing the topic of the question
-    :param label_index: in what index is the right index (consider using IndexOf function if you have the answer instead)
-    :param expected_answer: what format should the 'label' field be answer\number\number_and_answer
-    :return:
-    """
-
-    assert expected_answer in ["number", "number_and_answer", "answer"]
-    input_fields = [numbering, choices, label_index]
-    renames = {field: "_" + field for field in input_fields}
-    renames[topic] = "topic"
-    if context:
-        renames[context] = "context"
-    renames[question] = "sentence1"
-    return [
-        RenameFields(field_to_field=renames),
-        TakeByField(field=renames[numbering], index=renames[label_index], to_field="number"),
-        TakeByField(field=renames[choices], index=renames[label_index], to_field="answer"),
-        ZipFieldValues(fields=[renames[numbering], renames[choices]], to_field="choices"),
-        JoinStr(separator=". ", field="choices/*", to_field="choices_list", use_query=True, process_every_value=True),
-        TakeByField(field="choices_list", index=renames[label_index], to_field="number_and_answer"),
-        JoinStr(separator=",", field="choices/*/0", to_field="numbers", use_query=True),
-        JoinStr(separator=" ", field="choices_list", to_field="choices"),  # field_to_field
-        RenameFields(field_to_field={expected_answer: "label"}),
-    ]
 
 
 def main():
     for subtask in subtasks:
-        # numbering=tuple(str(x) for x in range(200))
-        numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        expected_answer = "number"  # "number_and_answer" #"number"
-
         card = TaskCard(
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
                 RenameSplits({"auxiliary_train": "train"}),
-                AddFields({"numbering": numbering, "topic": subtask.replace("_", " ")}),
-                *multiple_choice_preprocess(
-                    question="question",
-                    numbering="numbering",
-                    choices="choices",
-                    topic="topic",
-                    label_index="answer",
-                    expected_answer=expected_answer,
-                ),
+                AddFields({"topic": subtask.replace("_", " ")}),
             ],
-            task=FormTask(
-                **multiple_choice_inputs_outputs(),
-                metrics=["metrics.accuracy"],
-            ),
-            templates=MMLU_TEMPLATES,
+            task="tasks.qa.multiple_choice.topical",
+            templates="templates.tasks.mmlu.all",
         )
         test_card(card)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
