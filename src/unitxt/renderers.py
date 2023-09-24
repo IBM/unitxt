@@ -81,7 +81,10 @@ class RenderInstruction(Renderer, StreamInstanceOperator):
     instruction: Instruction
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        instance["instruction"] = self.instruction()
+        if self.instruction is not None:
+            instance["instruction"] = self.instruction()
+        else:
+            instance["instruction"] = ""
         return instance
 
 
