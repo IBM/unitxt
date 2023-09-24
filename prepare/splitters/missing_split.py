@@ -26,3 +26,9 @@ add_to_catalog(
     "splitters.test_only",
     overwrite=True,
 )
+
+add_to_catalog(
+    SplitRandomMix({"train": "test[10%]", "validation": "test[10%]", "test": "test[80%]"}),
+    "splitters.test_to_train_dev",
+    overwrite=True,
+)

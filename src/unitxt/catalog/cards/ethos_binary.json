@@ -25,7 +25,7 @@
                 "train": "test"
             }
         },
-        "splitters.test_only",
+        "splitters.test_to_train_dev",
         {
             "type": "map_instance_values",
             "mappers": {
