@@ -4,6 +4,7 @@ from src.unitxt.artifact import fetch_artifact
 from src.unitxt.processors import RegexParser
 from src.unitxt.templates import (
     AutoInputOutputTemplate,
+    InputOutputChoicesTemplate,
     InputOutputTemplate,
     MultiLabelTemplate,
     SpanLabelingJsonTemplate,
@@ -167,3 +168,44 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(post1, post_target1)
             post2 = postprocessor2.process(post1)
             self.assertEqual(post2, post_target2)
+
+    def test_input_output_choices_template(self):
+        template = InputOutputChoicesTemplate(
+            input_format="Text: {text}, Choices: {choices}.",
+            output_format="{label}",
+            enumerator="capitals",
+        )
+
+        choices = ["True", "False"]
+        inputs = [
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {"choices": choices, "label": 0},
+            },
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {"choices": choices, "label": "False"},
+            },
+            {
+                "inputs": {"choices": ["True", "small"], "text": "example A"},
+                "outputs": {"choices": ["True", "small"], "label": "small"},
+            },
+        ]
+
+        inputs_targets = [
+            "Text: example A, Choices: A. True, B. False.",
+            "Text: example A, Choices: A. True, B. False.",
+            "Text: example A, Choices: A. True, B. small.",
+        ]
+
+        outputs_targets = [
+            "True",
+            "False",
+            "small",
+        ]
+
+        for input, input_target, output_target in zip(inputs, inputs_targets, outputs_targets):
+            input_result = template.process_inputs(input["inputs"])
+            self.assertEqual(input_result, input_target)
+            output_result = template.process_outputs(input["outputs"])
+            self.assertEqual(output_result, output_target)

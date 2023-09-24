@@ -1,3 +1,4 @@
+import copy
 import json
 from abc import ABC, abstractmethod
 from dataclasses import field
@@ -179,6 +180,105 @@ class InputOutputTemplate(Template):
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
+
+
+class InputOutputChoicesTemplate(InputOutputTemplate):
+    choices_field: str = "choices"
+    choices_seperator: str = ", "
+    enumerator: str = None
+    enumerator_seperator = ". "
+    target_field: str = "label"
+    target_with_choice_text: bool = True
+    target_with_choice_numeral: bool = False
+    add_numerals_as_field: str = None
+
+    def prepare(self):
+        super().prepare()
+        if self.enumerator == "capitals":
+            self.enumerator = "ABCDEFGHIJKLMNOP"
+        if self.enumerator == "lowercase":
+            self.enumerator = "abcdefghijklmnop"
+        if self.enumerator == "numbers":
+            self.enumerator = [str(i + 1) for i in range(20)]
+        if self.enumerator == "roman":
+            self.enumerator = [
+                "I",
+                "II",
+                "III",
+                "IV",
+                "V",
+                "VI",
+                "VII",
+                "VIII",
+                "IX",
+                "X",
+                "XI",
+                "XII",
+                "XIII",
+                "XIV",
+                "XV",
+                "XVI",
+                "XVII",
+                "XVIII",
+                "XIX",
+                "XX",
+            ]
+
+    def process_inputs(self, inputs: Dict[str, object]) -> str:
+        try:
+            return self.process_template(self.input_format, inputs)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}"
+            )
+
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
+        from unitxt.text_utils import print_dict
+
+        print()
+        print_dict(outputs)
+        print()
+        target = outputs[self.target_field]
+
+        original_choices = outputs[self.choices_field]
+
+        if not isinstance(target, int):
+            target = original_choices.index(target)
+
+        processed_choices = self.process_choices(
+            original_choices, add_choice=self.target_with_choice_text, add_numeral=self.target_with_choice_numeral
+        )
+
+        target = processed_choices[target]
+
+        outputs[self.target_field] = target
+
+        return self.output_format.format(**outputs)
+
+    def process_template(self, template: str, data: Dict[str, object]) -> str:
+        original_choices = data[self.choices_field]
+        choices = self.process_choices(original_choices)
+        sep_choices = self.choices_seperator.join(choices)
+
+        if self.add_numerals_as_field is not None:
+            data[self.add_numerals_as_field] = self.process_choices(original_choices, add_choice=False)
+
+        return template.format(**{**data, self.choices_field: sep_choices})
+
+    def process_choices(self, choices, add_choice=True, add_numeral=True):
+        if self.enumerator is not None:
+            enumrated_choices = []
+            for i, choice in enumerate(choices):
+                res_choice = []
+                if add_numeral:
+                    res_choice.append(self.enumerator[i])
+                if add_choice:
+                    res_choice.append(choice)
+                choice = self.enumerator_seperator.join(res_choice)
+                enumrated_choices.append(choice)
+            return enumrated_choices
+        else:
+            return choices
 
 
 class KeyValTemplate(Template):
