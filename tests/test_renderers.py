@@ -14,7 +14,9 @@ from src.unitxt.test_utils.operators import test_operator
 
 template = InputOutputTemplate(input_format='This is my sentence: "{text}"', output_format="{label}")
 instruction = TextualInstruction("classify user sentence by its sentiment to either positive, or nagative.")
-format = ICLFormat(input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:")
+format = ICLFormat(
+    input_prefix="User: ", output_prefix="Agent: ", instruction_prefix="Instruction:", input_output_separator="\n"
+)
 
 
 class TestRenderers(unittest.TestCase):
@@ -72,10 +74,14 @@ class TestRenderers(unittest.TestCase):
 
         result = renderer.process(instance)
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: ',
             "target": "negative",
             "references": ["negative"],
         }
+        from src.unitxt.text_utils import print_dict
+
+        print_dict(result)
+        print_dict(target)
         self.assertDictEqual(result, target)
 
     def test_standard_renderer(self):
@@ -91,7 +97,7 @@ class TestRenderers(unittest.TestCase):
         }
 
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: ',
             "target": "negative",
             "references": ["negative"],
         }

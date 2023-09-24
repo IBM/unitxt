@@ -32,7 +32,7 @@ class TestRecipes(unittest.TestCase):
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
             instruction="instructions.models.llama",
-            template="templates.mmlu.lm_eval_harness",
+            template="templates.qa.multiple_choice.topical.mmlu",
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
