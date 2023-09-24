@@ -233,11 +233,6 @@ class InputOutputChoicesTemplate(InputOutputTemplate):
             )
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
-        from unitxt.text_utils import print_dict
-
-        print()
-        print_dict(outputs)
-        print()
         target = outputs[self.target_field]
 
         original_choices = outputs[self.choices_field]
