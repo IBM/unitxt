@@ -78,10 +78,11 @@ class RenderDemonstrations(RenderTemplate):
 
 
 class RenderInstruction(Renderer, StreamInstanceOperator):
-    instruction: Instruction
+    instruction: Instruction = None
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        instance["instruction"] = self.instruction()
+        if self.instruction is not None:
+            instance["instruction"] = self.instruction()
         return instance
 
 
