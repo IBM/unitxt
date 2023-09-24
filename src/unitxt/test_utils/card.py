@@ -49,7 +49,7 @@ def load_examples_from_common_recipe(card, tested_split):
     print("template_item", template_item)
     recipe = StandardRecipeWithIndexes(
         card=card,
-        demos_pool_size=100,
+        demos_pool_size=10,
         num_demos=3,
         template_card_index=template_item,
         instruction_card_index=0 if num_instructions else None,
