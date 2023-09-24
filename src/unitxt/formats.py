@@ -12,9 +12,9 @@ class SizeLimitingFormat(Format):
 class ICLFormat(SizeLimitingFormat):
     input_prefix: str = ""
     output_prefix: str = ""
-    target_prefix: str = " "
+    target_prefix: str = ""
     instruction_prefix: str = ""
-    input_output_separator: str = "\n"
+    input_output_separator: str = ""
     demo_separator: str = "\n\n"
 
     def single_source_str(self, source):

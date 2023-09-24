@@ -1,3 +1,4 @@
 {
-    "type": "icl_format"
+    "type": "icl_format",
+    "input_output_separator": "\n"
 }
