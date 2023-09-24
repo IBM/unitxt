@@ -1,0 +1,10 @@
+{
+    "type": "input_output_choices_template",
+    "input_format": "Question: {question}\nChoices:\n{choices}\nAnswer:",
+    "output_format": "{answer}",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "enumerator": "capitals",
+    "target_with_choice_text": false,
+    "target_with_choice_numeral": true
+}

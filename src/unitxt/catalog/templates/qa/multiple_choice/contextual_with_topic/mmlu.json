@@ -1,0 +1,10 @@
+{
+    "type": "input_output_choices_template",
+    "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{question}\nAnswers:\n{choices}\nAnswer:",
+    "output_format": "{answer}",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "enumerator": "capitals",
+    "target_with_choice_text": false,
+    "target_with_choice_numeral": true
+}

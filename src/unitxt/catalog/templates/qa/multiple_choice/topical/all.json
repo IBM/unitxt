@@ -1,0 +1,8 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.qa.multiple_choice.topical.fm_eval",
+        "templates.qa.multiple_choice.topical.mmlu",
+        "templates.qa.multiple_choice.topical.helm"
+    ]
+}
