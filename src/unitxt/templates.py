@@ -191,7 +191,7 @@ class KeyValTemplate(Template):
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
 
     def process_dict(self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys) -> str:
-        dic = {k: ", ".join(v) if isinstance(v, list) else v for k, v in dic.items()}
+        dic = {k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v for k, v in dic.items()}
         pairs = []
         for key, val in dic.items():
             key_val = [key, val] if use_keys else [val]
