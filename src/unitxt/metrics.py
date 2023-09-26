@@ -708,7 +708,8 @@ class SentenceBert(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        from sentence_transformers import SentenceTransformer, util as sbert_util
+        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import util as sbert_util
 
         self.model = SentenceTransformer(self.model_name)
         self.util = sbert_util
