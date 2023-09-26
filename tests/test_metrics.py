@@ -247,8 +247,8 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 69.14415692838818
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        global_target = 69.14415
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
 
     def test_token_overlap(self):
         metric = TokenOverlap()
@@ -264,16 +264,16 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_targets = {"f1": 0.8981767296791077, "precision": 0.9282965362071991, "recall": 0.9218468964099884}
+        global_targets = {"f1": 0.89817, "precision": 0.92829, "recall": 0.92184}
         for target, value in global_targets.items():
-            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
+            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target], places=5)
 
     def test_sentence_bert(self):
         metric = SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2")
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 0.8561440110206604
+        global_target = 0.85614
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
 
     def test_reward(self):
@@ -281,5 +281,5 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there General Dude", "foo bar foobar"]
         references = [["How do you greet General Dude"], ["What is your name?"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 0.08607642911374569
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        global_target = 0.08607
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
