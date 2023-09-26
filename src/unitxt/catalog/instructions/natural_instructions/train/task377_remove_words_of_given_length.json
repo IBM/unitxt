@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you need to remove all words of a given length in the sentence. The number of letters in a word determine its length, for example, the length of the word \"apple\" is 5."
+}

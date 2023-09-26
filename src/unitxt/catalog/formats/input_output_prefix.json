@@ -1,0 +1,5 @@
+{
+    "type": "icl_format",
+    "input_prefix": "input: ",
+    "output_prefix": "output: "
+}

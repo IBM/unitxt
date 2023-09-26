@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are provided with an \"Event\" and it's \"Intent\" related to PersonX. Determine the sentiment value of the given input as either \"Positive\", \"Negative\", and \"Unknown\". "
+}

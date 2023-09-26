@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a multiple-choice question and you have to pick the correct option. Answer with option indexes (i.e., \"A\", \"B\", \"C\", and \"D\")."
+}

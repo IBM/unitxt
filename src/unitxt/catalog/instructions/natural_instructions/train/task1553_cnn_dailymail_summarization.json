@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given news articles and you need to generate a highlight, i.e., a short summary, with a maximum length of 10 lines."
+}

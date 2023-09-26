@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you will be presented with a passage, and you need to write an **implausible** answer to to fill in the place of \"_\". Your answer should be incorrect, but should not be out of context. Try using words that are related to the context of the passage, but are not the correct answer.  Even though there exist multiple wrong answers, we only need a single wrong answer."
+}

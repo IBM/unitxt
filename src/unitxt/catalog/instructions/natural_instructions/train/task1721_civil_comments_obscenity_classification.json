@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Categorize the comment on the basis of obscenity. If the comment is obscene output Yes, otherwise output No."
+}

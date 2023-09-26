@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a comment, classify it into a 'hate' speech or 'not hate' speech. Answer using 'hate' or 'not hate'."
+}

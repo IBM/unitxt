@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you will be presented with a passage and have to answer a question based on your understanding of the events inferred from the passage. Among the entities, try to find the best entity that is most likely to fill in \"_\" and classify the answers based on options."
+}

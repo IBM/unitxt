@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a country name, and you need to return the country's surface area in terms of square kilometers. Up to two decimal places are allowed in your answer."
+}

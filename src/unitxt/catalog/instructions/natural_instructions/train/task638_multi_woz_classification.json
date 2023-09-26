@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are shown a conversation between a user and system. Identify who has spoken the indicated sentence based on the conversation."
+}

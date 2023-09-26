@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given an adjective, generate its antonym. An antonym of a word is a word opposite in meaning to it."
+}

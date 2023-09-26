@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given an input list A. You need to extract and sort the unique digits used in the list in ascending order. Return -1 if there is no digit in the list."
+}

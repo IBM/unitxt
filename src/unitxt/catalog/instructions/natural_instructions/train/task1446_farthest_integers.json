@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task you will be given a list of integers. You should find the maximum absolute difference between 2 integers in the list. The absolute difference is the absolute value of one integer subtracted by another. The output should be a single integer which is the largest possible absolute distance."
+}

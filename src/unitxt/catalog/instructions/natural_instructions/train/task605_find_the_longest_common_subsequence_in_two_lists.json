@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given two lists A,B. Find the longest common subsequence in the lists A and B."
+}

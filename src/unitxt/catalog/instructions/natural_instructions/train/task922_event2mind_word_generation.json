@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are provided with an \"Event\", \"Intent\" related to PersonX. Guess a reaction/reaction of PersonX about the given event and their intention."
+}

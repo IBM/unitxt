@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Your task is to generate the next utterance in a given dialogue. You will be given a few sentences describing the personality of the person who is making the dialogue, and a history of the dialogue after that. Each line in the history is said by one of the two participants in the conversation."
+}

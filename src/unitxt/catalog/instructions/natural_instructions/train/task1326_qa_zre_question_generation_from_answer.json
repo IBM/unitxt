@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Generate a question which can yield the answer mentioned in the input. Generated question must be answered by the answer provided in input, without using any extra knowledge."
+}

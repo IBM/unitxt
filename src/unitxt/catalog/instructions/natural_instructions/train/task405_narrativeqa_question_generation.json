@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You will be given a summary of a story. You need to create a question that can be answered from the story. You can create a question about characters, events, facts and beliefs, etc. Your question should be specific, try not to use pronouns instead of full names. As the stories are sometimes movie plots, they will contain actor names in parentheses. You should not use those names. Only use character names. Try to ask a question about all parts of the plot, not just the beginning."
+}

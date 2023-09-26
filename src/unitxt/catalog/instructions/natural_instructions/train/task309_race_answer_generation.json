@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given an article, a question which often contains a blank and four options (associated with \"A\", \"B\", \"C\", \"D\"). Your task is to find the correct answer (from the given options) for the question from the given article and return one of the options from \"A\", \"B\", \"C\", and \"D\". Do not generate anything else apart from one of the following characters: \"A\", \"B\", \"C\", \"D\". There is only one correct answer for each question."
+}

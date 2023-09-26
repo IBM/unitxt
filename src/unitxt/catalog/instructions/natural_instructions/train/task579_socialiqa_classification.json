@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given a context, a question, three options, and an answer. Your task is to classify whether the given answer is correct or not by providing 'Yes' or 'No', based on the context with commonsense reasoning about social situations."
+}
