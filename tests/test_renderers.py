@@ -53,7 +53,10 @@ class TestRenderers(unittest.TestCase):
 
         instance = {}
         result = renderer.process(instance)
-        target = {"instruction": "classify user sentence by its sentiment to either positive, or nagative."}
+        target = {
+            "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
+            "instruction_suffix": "",
+        }
         self.assertDictEqual(result, target)
 
     def test_render_format(self):
