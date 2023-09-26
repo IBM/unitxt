@@ -5,6 +5,7 @@ from src.unitxt.processors import RegexParser
 from src.unitxt.templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
+    KeyValTemplate,
     MultiLabelTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
@@ -167,3 +168,21 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(post1, post_target1)
             post2 = postprocessor2.process(post1)
             self.assertEqual(post2, post_target2)
+
+    def test_key_val_template_simple(self):
+        template = KeyValTemplate()
+
+        dic = {"hello": "world", "str_list": ["djjd", "djjd"]}
+
+        result = template.process_dict(dic, key_val_sep=": ", pairs_sep=", ", use_keys=True)
+        target = "hello: world, str_list: djjd, djjd"
+        self.assertEqual(result, target)
+
+    def test_key_val_template_int_list(self):
+        template = KeyValTemplate()
+
+        dic = {"hello": "world", "int_list": [0, 1]}
+
+        result = template.process_dict(dic, key_val_sep=": ", pairs_sep=", ", use_keys=True)
+        target = "hello: world, int_list: 0, 1"
+        self.assertEqual(result, target)
