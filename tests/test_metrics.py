@@ -15,7 +15,7 @@ from src.unitxt.metrics import (
     TokenOverlap,
     BertScore,
     SentenceBert,
-    Reward
+    Reward,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 
@@ -255,7 +255,7 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_targets = {"f1": 7/8, "precision": 7/8, "recall": 1}
+        global_targets = {"f1": 7 / 8, "precision": 7 / 8, "recall": 1}
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 
@@ -264,9 +264,7 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_targets = {"f1": 0.8981767296791077,
-                          "precision": 0.9282965362071991,
-                          "recall": 0.9218468964099884}
+        global_targets = {"f1": 0.8981767296791077, "precision": 0.9282965362071991, "recall": 0.9218468964099884}
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 

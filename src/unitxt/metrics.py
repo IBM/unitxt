@@ -104,9 +104,9 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
         instances = []
 
         # consume the stream
-        references, predictions = map(list, zip(*[(instance["references"],
-                                                   instance["prediction"])
-                                                  for instance in stream]))
+        references, predictions = map(
+            list, zip(*[(instance["references"], instance["prediction"]) for instance in stream])
+        )
 
         # compute the metric over all refs and preds
         instance_scores = self.compute(references=references, predictions=predictions)
@@ -293,7 +293,6 @@ class HuggingfaceMetric(GlobalMetric):
 
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
-
     metric_name: str
 
     hf_metric_fields: List[str]
@@ -671,10 +670,8 @@ class TokenOverlap(InstanceMetric):
     main_score = "f1"
 
     def compute(self, references: List[Any], prediction: Any) -> dict:
-        results = [self._compute_single_ref(reference, prediction)
-                   for reference in references]
-        return {measure: max(r[i] for r in results)
-                for i, measure in enumerate(['precision', 'recall', 'f1'])}
+        results = [self._compute_single_ref(reference, prediction) for reference in references]
+        return {measure: max(r[i] for r in results) for i, measure in enumerate(["precision", "recall", "f1"])}
 
     def _compute_single_ref(self, reference: Any, prediction: Any) -> Tuple[float, float, float]:
         prediction_tokens = normalize_answer(prediction).split()
@@ -693,7 +690,7 @@ class TokenOverlap(InstanceMetric):
 class BertScore(HuggingfaceBulkMetric):
     metric_name = "bertscore"
     main_score = "f1"
-    reduction_map = {"mean": ["f1", 'precision', 'recall']}
+    reduction_map = {"mean": ["f1", "precision", "recall"]}
     hf_metric_fields = ["f1", "precision", "recall"]
     model_name: str
 
@@ -712,6 +709,7 @@ class SentenceBert(BulkInstanceMetric):
     def prepare(self):
         super().prepare()
         from sentence_transformers import SentenceTransformer, util as sbert_util
+
         self.model = SentenceTransformer(self.model_name)
         self.util = sbert_util
 
@@ -734,7 +732,7 @@ class SentenceBert(BulkInstanceMetric):
 
         # for each candidate, pick the reference with the highest score
         for pred_emb, ref_group_bounds in zip(preds_emb, ref_group_boundaries):
-            refs_group_emb = refs_emb[ref_group_bounds[0]:ref_group_bounds[1]]
+            refs_group_emb = refs_emb[ref_group_bounds[0] : ref_group_bounds[1]]
             scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
 
         return [{"score": score} for score in scores]
@@ -749,6 +747,7 @@ class Reward(BulkInstanceMetric):
 
     def prepare(self):
         from transformers import pipeline
+
         self.pipe = pipeline("text-classification", model=self.model_name)
 
     def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
@@ -758,11 +757,9 @@ class Reward(BulkInstanceMetric):
         answers = predictions
 
         # prepare for computation
-        inputs = [{"text": q, "text_pair": a}
-                  for q, a in zip(questions, answers)]
+        inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
 
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
         # return [r['score'] for r in self.pipe(inputs, batch_size=self.batch_size)]
-
