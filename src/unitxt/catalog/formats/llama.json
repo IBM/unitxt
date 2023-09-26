@@ -1,8 +1,6 @@
 {
     "type": "icl_format",
-    "input_prefix": "User: ",
-    "output_prefix": "Agent: ",
     "target_prefix": "",
-    "prefix": "[INST] <<SYS>>\n",
+    "prefix": "[INST] ",
     "suffix": "[/INST]"
 }
