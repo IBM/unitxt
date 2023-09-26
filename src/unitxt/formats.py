@@ -45,4 +45,8 @@ class ICLFormat(SizeLimitingFormat):
 
         source += query_str
 
+        if "instruction_suffix" in instance:
+            instruction_suffix = instance.pop("instruction_suffix")
+            source += instruction_suffix
+
         return source

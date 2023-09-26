@@ -12,6 +12,7 @@ class Instruction(Artifact):
 
 class TextualInstruction(Instruction):
     text: str
+    suffix: str = ""
 
     def __call__(self) -> str:
         return self.text
