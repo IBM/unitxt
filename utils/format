@@ -1,5 +1,5 @@
 #!/bin/sh
 
-black .
-isort .
+black . --exclude="venv"
+isort . --extend-skip-glob="venv"
 #autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive .
