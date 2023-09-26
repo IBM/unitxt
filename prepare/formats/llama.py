@@ -3,7 +3,7 @@ from src.unitxt.formats import ICLFormat
 
 format = ICLFormat(
     target_prefix="",
-    prefix="[INST] ",
+    prefix="<s>[INST] ",
     suffix="[/INST]",
 )
 
