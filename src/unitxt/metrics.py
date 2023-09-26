@@ -103,13 +103,20 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
         global_score = {}
         instances = []
 
+        # consume the stream
         references, predictions = map(list, zip(*[(instance["references"],
                                                    instance["prediction"])
                                                   for instance in stream]))
 
-        scores = self.compute(references=references, predictions=predictions)
+        # compute the metric over all refs and preds
+        instance_scores = self.compute(references=references, predictions=predictions)
 
-        for instance, score in zip(stream, scores):
+        # add the score and score_name fields
+        for instance_score in instance_scores:
+            instance_score["score"] = instance_score[self.main_score]
+            instance_score["score_name"] = self.main_score
+
+        for instance, score in zip(stream, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": global_score, "instance": {}}
             else:
@@ -137,7 +144,7 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
             yield instance
 
     @abstractmethod
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+    def compute(self, references: List[List[Any]], predictions: List[Any]) -> Dict[str, Any]:
         pass
 
 
@@ -184,8 +191,8 @@ class InstanceMetric(SingleStreamOperator, Metric):
         for instance in instances:
             yield instance
 
-    def _compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        result = self.compute(references=references, predictions=predictions)
+    def _compute(self, references: List[str], prediction: str) -> dict:
+        result = self.compute(references=references, prediction=prediction)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
@@ -287,16 +294,26 @@ class HuggingfaceMetric(GlobalMetric):
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
 
-    metric_name: str = None
+    metric_name: str
 
+    hf_metric_fields: List[str]
     hf_compute_args: dict = {}
 
     def prepare(self):
         super().prepare()
         self.metric = evaluate.load(self.metric_name)
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
-        return self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+    def compute(self, references: List[List[str]], predictions: List[str]) -> List[Dict[str, Any]]:
+        scores = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+
+        # convert dict of lists to a list of dicts
+        results = [{} for _ in range(len(scores[self.hf_metric_fields[0]]))]
+        for key in self.hf_metric_fields:
+            values = scores[key]
+            for result_id, result in enumerate(results):
+                result[key] = values[result_id]
+
+        return results
 
 
 class F1(GlobalMetric):
@@ -650,16 +667,16 @@ def normalize_answer(s):
 
 
 class TokenOverlap(InstanceMetric):
-    reduction_map = {"mean": ["f1"]}
+    reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
 
     def compute(self, references: List[Any], prediction: Any) -> dict:
-        results = [self._compute(reference, prediction)
+        results = [self._compute_single_ref(reference, prediction)
                    for reference in references]
-        return {measure: max(results, key=lambda x: x[i])
-                for i, measure in enumerate(['pr', 'rc', 'f1'])}
+        return {measure: max(r[i] for r in results)
+                for i, measure in enumerate(['precision', 'recall', 'f1'])}
 
-    def _compute(self, reference: Any, prediction: Any) -> Tuple[float, float, float]:
+    def _compute_single_ref(self, reference: Any, prediction: Any) -> Tuple[float, float, float]:
         prediction_tokens = normalize_answer(prediction).split()
         reference_tokens = normalize_answer(reference).split()
         common = Counter(prediction_tokens) & Counter(reference_tokens)
@@ -676,16 +693,13 @@ class TokenOverlap(InstanceMetric):
 class BertScore(HuggingfaceBulkMetric):
     metric_name = "bertscore"
     main_score = "f1"
-    reduction_map = {"mean": ["f1", 'pr', 'rc']}
-
+    reduction_map = {"mean": ["f1", 'precision', 'recall']}
+    hf_metric_fields = ["f1", "precision", "recall"]
     model_name: str
 
     def prepare(self):
+        super().prepare()
         self.hf_compute_args = {"model_type": self.model_name}
-
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
-        results = super().compute(references=references, predictions=predictions)
-        return results
 
 
 class SentenceBert(BulkInstanceMetric):
@@ -696,6 +710,7 @@ class SentenceBert(BulkInstanceMetric):
     model_name: str
 
     def prepare(self):
+        super().prepare()
         from sentence_transformers import SentenceTransformer, util as sbert_util
         self.model = SentenceTransformer(self.model_name)
         self.util = sbert_util
@@ -738,7 +753,8 @@ class Reward(BulkInstanceMetric):
 
     def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
         # treat the references as the questions and the predictions as answers
-        questions = references
+        # assume a single reference
+        questions = [refs[0] for refs in references]
         answers = predictions
 
         # prepare for computation
@@ -747,5 +763,6 @@ class Reward(BulkInstanceMetric):
 
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
-        return [r['score'] for r in self.pipe(inputs, batch_size=self.batch_size)]
+        return self.pipe(inputs, batch_size=self.batch_size)
+        # return [r['score'] for r in self.pipe(inputs, batch_size=self.batch_size)]
 
