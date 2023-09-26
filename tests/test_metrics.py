@@ -4,18 +4,18 @@ from math import isnan
 from src.unitxt.metrics import (
     F1,
     Accuracy,
+    BertScore,
     Bleu,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
+    Reward,
     Rouge,
     SacreBleu,
+    SentenceBert,
     Squad,
     TokenOverlap,
-    BertScore,
-    SentenceBert,
-    Reward,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 
