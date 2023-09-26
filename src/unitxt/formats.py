@@ -10,18 +10,20 @@ class SizeLimitingFormat(Format):
 
 
 class ICLFormat(SizeLimitingFormat):
+    prefix: str = ""
     input_prefix: str = ""
     output_prefix: str = ""
     target_prefix: str = " "
     instruction_prefix: str = ""
     input_output_separator: str = "\n"
     demo_separator: str = "\n\n"
+    suffix: str = ""
 
     def single_source_str(self, source):
         return self.input_prefix + source + self.input_output_separator + self.output_prefix
 
     def format(self, instance, demos_instances=[]):
-        source = ""
+        source = self.prefix
 
         query_str = self.single_source_str(instance["source"])
 
@@ -44,5 +46,6 @@ class ICLFormat(SizeLimitingFormat):
             source += demo_str
 
         source += query_str
+        source += self.suffix
 
         return source
