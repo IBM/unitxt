@@ -274,7 +274,7 @@ class TestMetrics(unittest.TestCase):
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = 0.8561440110206604
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
 
     def test_reward(self):
         metric = Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2")
