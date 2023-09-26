@@ -2,7 +2,6 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.instructions import TextualInstruction
 
 instruction = TextualInstruction(
-    "<s>[INST] <<SYS>>\n"
     "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. "
     "Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. "
     "Please ensure that your responses are socially unbiased and positive in nature."
