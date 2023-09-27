@@ -20,12 +20,13 @@
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[10%]",
+                "validation": "train[10%]",
+                "test": "train[80%]"
             }
         },
-        "splitters.test_only",
         {
             "type": "map_instance_values",
             "mappers": {
