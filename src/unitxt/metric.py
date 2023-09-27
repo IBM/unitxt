@@ -154,4 +154,15 @@ class Metric(evaluate.Metric):
         )
 
     def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
-        return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+        try:
+            from unitxt.dataset import get_dataset_artifact as get_dataset_artifact_installed
+
+            unitxt_installed = True
+        except ImportError:
+            unitxt_installed = False
+        
+        if unitxt_installed:
+            from unitxt.metric import _compute as _compute_installed
+            return _compute_installed(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+        else:
+            return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
