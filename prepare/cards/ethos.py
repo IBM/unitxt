@@ -2,7 +2,7 @@ from src.unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import RenameFields
 from src.unitxt.prepare_utils.card_types import create_sentence_classification_card
-from src.unitxt.splitters import RenameSplits
+from src.unitxt.splitters import RenameSplits, SplitRandomMix
 from src.unitxt.templates import outputs_inputs2templates
 from src.unitxt.test_utils.card import test_card
 
@@ -12,7 +12,9 @@ card = create_sentence_classification_card(
     label2string={"0": "not hate speech", "1": "hate speech"},
     inputs=["text"],
     metrics=["metrics.accuracy"],
-    preprocess_steps=[RenameSplits(mapper={"train": "test"}), "splitters.test_only"],
+    preprocess_steps=[
+        SplitRandomMix({"train": "train[10%]", "validation": "train[10%]", "test": "train[80%]"}),
+    ],
     templates=outputs_inputs2templates(
         inputs=[
             """Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.""",
