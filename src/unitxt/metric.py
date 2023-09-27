@@ -38,7 +38,7 @@ from .operators import __file__ as _
 from .processors import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .register import register_all_artifacts
+from .register import register_all_artifacts, _reset_env_local_catalogs
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
@@ -124,6 +124,8 @@ UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": d
 
 
 def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+    _reset_env_local_catalogs()
+    register_all_artifacts()
     recipe = MetricRecipe()
 
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
@@ -160,9 +162,12 @@ class Metric(evaluate.Metric):
             unitxt_installed = True
         except ImportError:
             unitxt_installed = False
-        
+
         if unitxt_installed:
             from unitxt.metric import _compute as _compute_installed
-            return _compute_installed(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+
+            return _compute_installed(
+                predictions=predictions, references=references, flatten=flatten, split_name=split_name
+            )
         else:
             return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
