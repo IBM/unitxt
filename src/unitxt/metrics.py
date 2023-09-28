@@ -763,4 +763,3 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
-        # return [r['score'] for r in self.pipe(inputs, batch_size=self.batch_size)]
