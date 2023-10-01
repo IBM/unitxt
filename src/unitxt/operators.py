@@ -737,11 +737,17 @@ class EncodeLabels(StreamInstanceOperator):
         return instance
 
 
-class Balancer(Artifact):
-    pass
+class StreamRefiner(SingleStreamOperator):
+    max_total_instances: int = None
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        if self.max_total_instances is not None:
+            yield from stream.take(self.max_total_instances)
+        else:
+            yield from stream
 
 
-class DeterministicBalancer(SingleStreamOperator):
+class DeterministicBalancer(StreamRefiner):
     """
     A class used to balance streams deterministically.
 
@@ -755,26 +761,26 @@ class DeterministicBalancer(SingleStreamOperator):
     """
 
     fields: List[str]
-    streams: List[str]
 
     def signature(self, instance):
         return str(tuple(instance[field] for field in self.fields))
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        if stream_name not in self.streams:
-            yield from stream
-        else:
-            counter = collections.Counter()
+        counter = collections.Counter()
 
-            for instance in stream:
-                counter[self.signature(instance)] += 1
+        for instance in stream:
+            counter[self.signature(instance)] += 1
 
-            lowest_count = counter.most_common()[-1][-1]
+        lowest_count = counter.most_common()[-1][-1]
 
-            counter = collections.Counter()
+        max_total_instances = lowest_count
+        if self.max_total_instances is not None:
+            max_total_instances = min(lowest_count, self.max_total_instances // len(counter))
 
-            for instance in stream:
-                sign = self.signature(instance)
-                if counter[sign] < lowest_count:
-                    counter[sign] += 1
-                    yield instance
+        counter = collections.Counter()
+
+        for instance in stream:
+            sign = self.signature(instance)
+            if counter[sign] < max_total_instances:
+                counter[sign] += 1
+                yield instance

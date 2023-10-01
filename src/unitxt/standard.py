@@ -1,11 +1,11 @@
 from typing import List
 
 from .card import TaskCard
-from .dataclass import InternalField
+from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
-from .operators import Balancer
+from .operators import StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -19,7 +19,8 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
     instruction: Instruction = None
     format: ICLFormat = ICLFormat()
 
-    balancer: Balancer = None
+    max_total_instances: int = None
+    refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
     num_demos: int = None
@@ -75,8 +76,10 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
 
         self.steps.append(render)
 
-        if self.balancer is not None:
-            self.steps.append(self.balancer)
+        if self.max_total_instances is not None:
+            self.refiner.max_total_instances = self.max_total_instances
+
+        self.steps.append(self.refiner)
 
         postprocessors = render.get_postprocessors()
 
