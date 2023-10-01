@@ -155,6 +155,8 @@ class SingleStreamOperator(MultiStreamOperator):
     A single-stream operator is a type of `MultiStreamOperator` that operates on individual `Stream` objects within a `MultiStream`. It iterates through each `Stream` in the `MultiStream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each `Stream`.
     """
 
+    apply_to_streams: List[str] = None  # None apply to all streams
+
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}
         for stream_name, stream in multi_stream.items():
@@ -168,7 +170,10 @@ class SingleStreamOperator(MultiStreamOperator):
         return Stream(self._process_stream, gen_kwargs={"stream": stream, "stream_name": stream_name})
 
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
-        yield from self.process(stream, stream_name)
+        if self.apply_to_streams is None or stream_name in self.apply_to_streams:
+            yield from self.process(stream, stream_name)
+        else:
+            yield from stream
 
     @abstractmethod
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
