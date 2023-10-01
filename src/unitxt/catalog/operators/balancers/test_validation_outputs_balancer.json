@@ -2,5 +2,9 @@
     "type": "deterministic_balancer",
     "fields": [
         "target"
+    ],
+    "apply_to_streams": [
+        "validation",
+        "test"
     ]
 }
