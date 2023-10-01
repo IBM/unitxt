@@ -1,3 +1,4 @@
+import collections
 import importlib
 import inspect
 import uuid
@@ -734,3 +735,46 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
 
         return instance
+
+
+class Balancer(Artifact):
+    pass
+
+
+class DeterministicBalancer(SingleStreamOperator):
+    """
+    A class used to balance streams deterministically.
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in determining the signature of an instance.
+        streams (List[str]): A list of stream names to be processed by the balancer.
+
+    Usage:
+        balancer = DeterministicBalancer(fields=["field1", "field2"], streams=["stream1", "stream2"])
+        balanced_stream = balancer.process(stream)
+    """
+
+    fields: List[str]
+    streams: List[str]
+
+    def signature(self, instance):
+        return str(tuple(instance[field] for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        if stream_name not in self.streams:
+            yield from stream
+        else:
+            counter = collections.Counter()
+
+            for instance in stream:
+                counter[self.signature(instance)] += 1
+
+            lowest_count = counter.most_common()[-1][-1]
+
+            counter = collections.Counter()
+
+            for instance in stream:
+                sign = self.signature(instance)
+                if counter[sign] < lowest_count:
+                    counter[sign] += 1
+                    yield instance
