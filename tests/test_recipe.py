@@ -1,3 +1,4 @@
+import collections
 import unittest
 
 from src.unitxt import dataset_file
@@ -91,6 +92,24 @@ class TestRecipes(unittest.TestCase):
         for instance in stream["train"]:
             print_dict(instance)
             break
+
+    def test_standard_recipe_with_balancer(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            instruction="instructions.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            balancer="operators.balancers.outputs_balancer",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        stream = recipe()
+        counts = collections.Counter()
+        for instance in stream["train"]:
+            counts[instance["target"]] += 1
+
+        self.assertEqual(counts["entailment"], counts["not entailment"])
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
         from datasets import load_dataset
