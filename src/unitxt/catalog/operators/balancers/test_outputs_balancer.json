@@ -1,0 +1,10 @@
+{
+    "type": "deterministic_balancer",
+    "fields": [
+        "target"
+    ],
+    "streams": [
+        "validation",
+        "test"
+    ]
+}
