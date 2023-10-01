@@ -343,7 +343,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=DeterministicBalancer(fields=["a", "b"], streams=["test"]),
+            operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
             tester=self,

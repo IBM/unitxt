@@ -99,7 +99,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            balancer="operators.balancers.outputs_balancer",
+            refiner="operators.balancers.outputs_balancer",
             demos_pool_size=100,
             num_demos=3,
         )
@@ -110,6 +110,40 @@ class TestRecipes(unittest.TestCase):
             counts[instance["target"]] += 1
 
         self.assertEqual(counts["entailment"], counts["not entailment"])
+
+    def test_standard_recipe_with_balancer_and_size_limit(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            instruction="instructions.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            refiner="operators.balancers.outputs_balancer",
+            demos_pool_size=100,
+            max_total_instances=20,
+            num_demos=3,
+        )
+
+        stream = recipe()
+        counts = collections.Counter()
+        for instance in stream["train"]:
+            counts[instance["target"]] += 1
+
+        self.assertEqual(counts["entailment"], counts["not entailment"], 10)
+
+    def test_standard_recipe_with_size_limit(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            instruction="instructions.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=100,
+            max_total_instances=10,
+            num_demos=3,
+        )
+
+        stream = recipe()
+
+        self.assertEqual(len(list(stream["train"])), 10)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
         from datasets import load_dataset
