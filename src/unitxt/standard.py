@@ -5,6 +5,7 @@ from .dataclass import InternalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
+from .operators import Balancer
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -17,6 +18,8 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
     template: Template = None
     instruction: Instruction = None
     format: ICLFormat = ICLFormat()
+
+    balancer: Balancer = None
 
     demos_pool_size: int = None
     num_demos: int = None
@@ -71,6 +74,9 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
         )
 
         self.steps.append(render)
+
+        if self.balancer is not None:
+            self.steps.append(self.balancer)
 
         postprocessors = render.get_postprocessors()
 
