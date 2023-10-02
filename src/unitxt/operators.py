@@ -739,16 +739,10 @@ class EncodeLabels(StreamInstanceOperator):
 
 class StreamRefiner(SingleStreamOperator):
     max_instances: int = None
-    max_instances_per_stream: Dict[str, int] = OptionalField(default_factory=dict)
-
-    def get_max_instances(self, stream_name: str = None):
-        return self.max_instances_per_stream.get(stream_name, self.max_instances)
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        max_instances = self.get_max_instances(stream_name)
-
-        if max_instances is not None:
-            yield from stream.take(max_instances)
+        if self.max_instances is not None:
+            yield from stream.take(self.max_instances)
         else:
             yield from stream
 
@@ -772,8 +766,6 @@ class DeterministicBalancer(StreamRefiner):
         return str(tuple(instance[field] for field in self.fields))
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        max_instances = self.get_max_instances(stream_name)
-
         counter = collections.Counter()
 
         for instance in stream:
@@ -782,8 +774,8 @@ class DeterministicBalancer(StreamRefiner):
         lowest_count = counter.most_common()[-1][-1]
 
         max_total_instances_per_sign = lowest_count
-        if max_instances is not None:
-            max_total_instances_per_sign = min(lowest_count, max_instances // len(counter))
+        if self.max_instances is not None:
+            max_total_instances_per_sign = min(lowest_count, self.max_instances // len(counter))
 
         counter = collections.Counter()
 
