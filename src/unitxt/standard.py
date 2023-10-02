@@ -74,15 +74,6 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
                 )
             )
 
-        render = StandardRenderer(
-            instruction=self.instruction,
-            template=self.template,
-            format=self.format,
-            demos_field=self.demos_field,
-        )
-
-        self.steps.append(render)
-
         self.train_refiner.max_instances = self.max_train_instances
         self.steps.append(self.train_refiner)
 
@@ -91,6 +82,15 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
 
         self.test_refiner.max_instances = self.max_test_instances
         self.steps.append(self.test_refiner)
+
+        render = StandardRenderer(
+            instruction=self.instruction,
+            template=self.template,
+            format=self.format,
+            demos_field=self.demos_field,
+        )
+
+        self.steps.append(render)
 
         postprocessors = render.get_postprocessors()
 
