@@ -247,7 +247,7 @@ class TestMetrics(unittest.TestCase):
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 69.14416
+        global_target = 0.6914416
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
 
     def test_token_overlap(self):
