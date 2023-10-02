@@ -135,8 +135,6 @@ class StandardRecipe(StandardRecipeWithIndexes):
         template (Template, optional): Template object to be used for the recipe.
         instruction (Instruction, optional): Instruction object to be used for the recipe.
         format (ICLFormat, optional): ICLFormat object to be used for the recipe.
-        refiner (StreamRefiner, optional): StreamRefiner object to be used for the recipe.
-        max_instances (int, optional): Maximum instances for the refiner.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.
