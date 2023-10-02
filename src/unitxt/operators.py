@@ -763,7 +763,7 @@ class DeterministicBalancer(StreamRefiner):
     fields: List[str]
 
     def signature(self, instance):
-        return str(tuple(instance[field] for field in self.fields))
+        return str(tuple(dict_get(instance, field, use_dpath=True) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         counter = collections.Counter()
@@ -784,3 +784,16 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class LengthBalancer(DeterministicBalancer):
+    groups_borders: List[int]
+
+    def signature(self, instance):
+        total_len = 0
+        for field in self.fields:
+            total_len += len(dict_get(instance, field, use_dpath=True))
+        for i, val in enumerate(self.groups_borders):
+            if total_len < val:
+                return i
+        return i + 1

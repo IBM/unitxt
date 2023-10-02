@@ -99,7 +99,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            train_refiner="operators.balancers.balanced_targets",
+            train_refiner="operators.balancers.classification.by_label",
             demos_pool_size=100,
             num_demos=3,
         )
@@ -117,7 +117,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            train_refiner="operators.balancers.balanced_targets",
+            train_refiner="operators.balancers.classification.by_label",
             demos_pool_size=100,
             max_train_instances=20,
             num_demos=3,
