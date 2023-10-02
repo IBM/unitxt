@@ -781,14 +781,14 @@ class DeterministicBalancer(StreamRefiner):
 
         lowest_count = counter.most_common()[-1][-1]
 
-        max_total_instances = lowest_count
+        max_total_instances_per_sign = lowest_count
         if max_instances is not None:
-            max_total_instances = min(lowest_count, max_instances // len(counter))
+            max_total_instances_per_sign = min(lowest_count, max_instances // len(counter))
 
         counter = collections.Counter()
 
         for instance in stream:
             sign = self.signature(instance)
-            if counter[sign] < max_total_instances:
+            if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance

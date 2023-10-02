@@ -330,7 +330,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_detirministic_balancer(self):
+    def test_deterministic_balancer(self):
         inputs = [
             {"a": [1, 3], "b": 0, "id": 0},
             {"a": [1, 3], "b": 0, "id": 1},
