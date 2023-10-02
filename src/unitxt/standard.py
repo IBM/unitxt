@@ -19,15 +19,15 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     instruction: Instruction = None
     format: ICLFormat = ICLFormat()
 
-    max_instances: int = None
     max_train_instances: int = None
     max_validation_instances: int = None
     max_test_instances: int = None
 
-    refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
-    train_refiner: StreamRefiner = None
-    validation_refiner: StreamRefiner = None
-    test_refiner: StreamRefiner = None
+    train_refiner: StreamRefiner = OptionalField(default_factory=lambda: StreamRefiner(apply_to_streams=["train"]))
+    validation_refiner: StreamRefiner = OptionalField(
+        default_factory=lambda: StreamRefiner(apply_to_streams=["validation"])
+    )
+    test_refiner: StreamRefiner = OptionalField(default_factory=lambda: StreamRefiner(apply_to_streams=["test"]))
 
     demos_pool_size: int = None
     num_demos: int = None
@@ -83,33 +83,14 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
 
         self.steps.append(render)
 
-        self.refiner.max_instances = self.max_instances
+        self.train_refiner.max_instances = self.max_train_instances
+        self.steps.append(self.train_refiner)
 
-        if self.train_refiner is not None:
-            self.train_refiner.apply_to_streams = ["train"]
-            self.train_refiner.max_instances = self.max_train_instances or self.max_instances
-            self.steps.append(self.train_refiner)
-            self.refiner.dont_apply_to_streams.append("train")
-        elif self.max_train_instances is not None:
-            self.refiner.max_instances_per_stream["train"] = self.max_train_instances
+        self.validation_refiner.max_instances = self.max_validation_instances
+        self.steps.append(self.validation_refiner)
 
-        if self.validation_refiner is not None:
-            self.validation_refiner.apply_to_streams = ["validation"]
-            self.validation_refiner.max_instances = self.max_validation_instances or self.max_instances
-            self.steps.append(self.validation_refiner)
-            self.refiner.dont_apply_to_streams.append("validation")
-        elif self.max_validation_instances is not None:
-            self.refiner.max_instances_per_stream["validation"] = self.max_validation_instances
-
-        if self.test_refiner is not None:
-            self.test_refiner.apply_to_streams = ["test"]
-            self.test_refiner.max_instances = self.max_test_instances or self.max_instances
-            self.steps.append(self.test_refiner)
-            self.refiner.dont_apply_to_streams.append("test")
-        elif self.max_test_instances is not None:
-            self.refiner.max_instances_per_stream["test"] = self.max_test_instances
-
-        self.steps.append(self.refiner)
+        self.test_refiner.max_instances = self.max_test_instances
+        self.steps.append(self.test_refiner)
 
         postprocessors = render.get_postprocessors()
 

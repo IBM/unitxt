@@ -99,7 +99,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            refiner="operators.balancers.balanced_targets",
+            train_refiner="operators.balancers.balanced_targets",
             demos_pool_size=100,
             num_demos=3,
         )
@@ -117,9 +117,9 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            refiner="operators.balancers.balanced_targets",
+            train_refiner="operators.balancers.balanced_targets",
             demos_pool_size=100,
-            max_instances=20,
+            max_train_instances=20,
             num_demos=3,
         )
 
@@ -129,21 +129,6 @@ class TestRecipes(unittest.TestCase):
             counts[instance["target"]] += 1
 
         self.assertEqual(counts["entailment"], counts["not entailment"], 10)
-
-    def test_standard_recipe_with_size_limit(self):
-        recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
-            format="formats.user_agent",
-            demos_pool_size=100,
-            max_instances=10,
-            num_demos=3,
-        )
-
-        stream = recipe()
-
-        self.assertEqual(len(list(stream["train"])), 10)
 
     def test_standard_recipe_with_train_size_limit(self):
         recipe = StandardRecipeWithIndexes(
