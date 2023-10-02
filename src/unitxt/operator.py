@@ -156,6 +156,7 @@ class SingleStreamOperator(MultiStreamOperator):
     """
 
     apply_to_streams: List[str] = NonPositionalField(default=None)  # None apply to all streams
+    dont_apply_to_streams: List[str] = NonPositionalField(default_factory=list)
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}
@@ -169,8 +170,22 @@ class SingleStreamOperator(MultiStreamOperator):
     def _process_single_stream(self, stream: Stream, stream_name: str = None) -> Stream:
         return Stream(self._process_stream, gen_kwargs={"stream": stream, "stream_name": stream_name})
 
+    def is_should_be_processed(self, stream_name):
+        if (
+            self.apply_to_streams is not None
+            and stream_name in self.apply_to_streams
+            and stream_name in self.dont_apply_to_streams
+        ):
+            raise ValueError(
+                f"Stream '{stream_name}' can be in either apply_to_streams or dont_apply_to_streams not both."
+            )
+
+        return (
+            self.apply_to_streams is None or stream_name in self.apply_to_streams
+        ) and stream_name not in self.dont_apply_to_streams
+
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
-        if self.apply_to_streams is None or stream_name in self.apply_to_streams:
+        if self.is_should_be_processed(stream_name):
             yield from self.process(stream, stream_name)
         else:
             yield from stream

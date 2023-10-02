@@ -13,14 +13,21 @@ from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template
 
 
-class StandardRecipe(Recipe, SourceSequntialOperator):
+class BaseRecipe(Recipe, SourceSequntialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
     format: ICLFormat = ICLFormat()
 
-    max_total_instances: int = None
+    max_instances: int = None
+    max_train_instances: int = None
+    max_validation_instances: int = None
+    max_test_instances: int = None
+
     refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
+    train_refiner: StreamRefiner = None
+    validation_refiner: StreamRefiner = None
+    test_refiner: StreamRefiner = None
 
     demos_pool_size: int = None
     num_demos: int = None
@@ -76,8 +83,31 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
 
         self.steps.append(render)
 
-        if self.max_total_instances is not None:
-            self.refiner.max_total_instances = self.max_total_instances
+        self.refiner.max_instances = self.max_instances
+
+        if self.train_refiner is not None:
+            self.train_refiner.apply_to_streams = ["train"]
+            self.train_refiner.max_instances = self.max_train_instances or self.max_instances
+            self.steps.append(self.train_refiner)
+            self.refiner.dont_apply_to_streams.append("train")
+        elif self.max_train_instances is not None:
+            self.refiner.max_instances_per_stream["train"] = self.max_train_instances
+
+        if self.validation_refiner is not None:
+            self.validation_refiner.apply_to_streams = ["validation"]
+            self.validation_refiner.max_instances = self.max_validation_instances or self.max_instances
+            self.steps.append(self.validation_refiner)
+            self.refiner.dont_apply_to_streams.append("validation")
+        elif self.max_validation_instances is not None:
+            self.refiner.max_instances_per_stream["validation"] = self.max_validation_instances
+
+        if self.test_refiner is not None:
+            self.test_refiner.apply_to_streams = ["test"]
+            self.test_refiner.max_instances = self.max_test_instances or self.max_instances
+            self.steps.append(self.test_refiner)
+            self.refiner.dont_apply_to_streams.append("test")
+        elif self.max_test_instances is not None:
+            self.refiner.max_instances_per_stream["test"] = self.max_test_instances
 
         self.steps.append(self.refiner)
 
@@ -92,7 +122,7 @@ class StandardRecipe(Recipe, SourceSequntialOperator):
         )
 
 
-class StandardRecipeWithIndexes(StandardRecipe):
+class StandardRecipeWithIndexes(BaseRecipe):
     instruction_card_index: int = None
     template_card_index: int = None
 
@@ -110,3 +140,47 @@ class StandardRecipeWithIndexes(StandardRecipe):
             self.instruction = self.card.instructions[int(self.instruction_card_index)]
 
         super().prepare()
+
+
+class StandardRecipe(StandardRecipeWithIndexes):
+    """
+    This class represents a standard recipe for data processing and preperation.
+    This class can be used to prepare a recipe
+    with all necessary steps, refiners and renderers included. It allows to set various
+    parameters and steps in a sequential manner for preparing the recipe.
+
+    Attributes:
+        card (TaskCard): TaskCard object associated with the recipe.
+        template (Template, optional): Template object to be used for the recipe.
+        instruction (Instruction, optional): Instruction object to be used for the recipe.
+        format (ICLFormat, optional): ICLFormat object to be used for the recipe.
+        refiner (StreamRefiner, optional): StreamRefiner object to be used for the recipe.
+        max_instances (int, optional): Maximum instances for the refiner.
+        train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
+        max_train_instances (int, optional): Maximum training instances for the refiner.
+        validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.
+        max_validation_instances (int, optional): Maximum validation instances for the refiner.
+        test_refiner (StreamRefiner, optional): Test refiner to be used in the recipe.
+        max_test_instances (int, optional): Maximum test instances for the refiner.
+        demos_pool_size (int, optional): Size of the demos pool.
+        num_demos (int, optional): Number of demos to be used.
+        demos_pool_name (str, optional): Name of the demos pool. Default is "demos_pool".
+        demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
+        demos_field (str, optional): Field name for demos. Default is "demos".
+        sampler (Sampler, optional): Sampler object to be used in the recipe.
+        steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
+        instruction_card_index (int, optional): Index of instruction card to be used
+            for preparing the recipe.
+        template_card_index (int, optional): Index of template card to be used for
+            preparing the recipe.
+
+    Methods:
+        prepare(): This overridden method is used for preparing the recipe
+            by arranging all the steps, refiners, and renderers in a sequential manner.
+
+    Raises:
+        AssertionError: If both template and template_card_index, or instruction and instruction_card_index
+            are specified at the same time.
+    """
+
+    pass

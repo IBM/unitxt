@@ -99,7 +99,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            refiner="operators.balancers.outputs_balancer",
+            refiner="operators.balancers.balanced_targets",
             demos_pool_size=100,
             num_demos=3,
         )
@@ -117,9 +117,9 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            refiner="operators.balancers.outputs_balancer",
+            refiner="operators.balancers.balanced_targets",
             demos_pool_size=100,
-            max_total_instances=20,
+            max_instances=20,
             num_demos=3,
         )
 
@@ -137,13 +137,30 @@ class TestRecipes(unittest.TestCase):
             template="templates.key_val",
             format="formats.user_agent",
             demos_pool_size=100,
-            max_total_instances=10,
+            max_instances=10,
             num_demos=3,
         )
 
         stream = recipe()
 
         self.assertEqual(len(list(stream["train"])), 10)
+
+    def test_standard_recipe_with_train_size_limit(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            instruction="instructions.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=100,
+            max_train_instances=10,
+            max_test_instances=5,
+            num_demos=3,
+        )
+
+        stream = recipe()
+
+        self.assertEqual(len(list(stream["train"])), 10)
+        self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
         from datasets import load_dataset
