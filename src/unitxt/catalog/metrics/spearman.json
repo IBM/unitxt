@@ -26,7 +26,7 @@
     ],
     "metric": {
         "type": "huggingface_metric",
-        "metric_name": "spearmanr",
+        "hf_metric_name": "spearmanr",
         "main_score": "spearmanr"
     }
 }

@@ -27,7 +27,9 @@ metric = MetricPipeline(
             use_query=True,
         ),
     ],
-    metric=HuggingfaceMetric(hf_metric_name="squad", main_score="f1", scale=100.0, scaled_fields=["f1"]),
+    metric=HuggingfaceMetric(
+        hf_metric_name="squad", main_score="f1", scale=100.0, scaled_fields=["f1", "exact_match"]
+    ),
 )
 
 predictions = ["1976", "Beyoncé and", "climate change"]
