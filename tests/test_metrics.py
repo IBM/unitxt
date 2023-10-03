@@ -13,6 +13,7 @@ from src.unitxt.metrics import (
     Reward,
     Rouge,
     SacreBleu,
+    NormalizedSacreBleu,
     SentenceBert,
     Squad,
     TokenOverlap,
@@ -244,6 +245,14 @@ class TestMetrics(unittest.TestCase):
 
     def test_sacrebleu(self):
         metric = SacreBleu()
+        predictions = ["hello there general dude", "foo bar foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = 69.14416
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+
+    def test_normalized_sacrebleu(self):
+        metric = NormalizedSacreBleu()
         predictions = ["hello there general dude", "foo bar foobar"]
         references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)

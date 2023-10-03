@@ -274,33 +274,45 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
 
 class HuggingfaceMetric(GlobalMetric):
-    metric_name: str = None
-    main_score: str = None
-    scale: float = 1.0
+    hf_metric_name: str = None
+    main_score: str = None          # The main score returned from the metric
+    hf_main_score: str = None       # USed if HF returns uses a different score name for the main metric
+
+    scale: float = 1.0              # optional scaling of main results
+    scaled_fields = None
     hf_compute_args: dict = {}
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.metric_name)
+        self.metric = evaluate.load(self.hf_metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+        if ( self.hf_main_score ):
+            result[self.main_score] = result[self.hf_main_score ]
+            del result[self.hf_main_score ]
         if self.scale != 1.0:
-            for key in result:
-                if isinstance(result[key], float):
+            assert self.scaled_fields is not None,f"Scaling factor was set to {self.scale}, but no fields specified"
+            for key in self.scaled_fields:
+                assert key in result,f"Trying to scale field '{key}' which is not in results of metrics: {result}"
+                if isinstance(result[key], list ):
+                    assert all( isinstance(v,float) for v in result[key]), "Not all scaled field '{key}' values are floats: {result[key]}"
+                    result[key] = [ v / self.scale for v in result[key]]
+                else: 
+                    assert isinstance(result[key], float), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
         return result
 
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
-    metric_name: str
+    hf_metric_name: str
 
     hf_metric_fields: List[str]
     hf_compute_args: dict = {}
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.metric_name)
+        self.metric = evaluate.load(self.hf_metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> List[Dict[str, Any]]:
         scores = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
@@ -450,7 +462,7 @@ class F1MacroMultiLabel(F1MultiLabel):
 
 
 class Rouge(HuggingfaceMetric):
-    metric_name = "rouge"
+    hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
 
@@ -496,12 +508,8 @@ class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
 
 
 class Wer(HuggingfaceMetric):
-    metric_name = "wer"
+    hf_metric_name = "wer"
     main_score = "wer"
-
-    def prepare(self):
-        super().prepare()
-        self.metric = evaluate.load(self.metric_name)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         assert all(
@@ -513,19 +521,29 @@ class Wer(HuggingfaceMetric):
 
 
 class Bleu(HuggingfaceMetric):
-    metric_name = "bleu"
+    hf_metric_name = "bleu"
     main_score = "bleu"
     scale = 1.0
 
 
 class SacreBleu(HuggingfaceMetric):
-    metric_name = "sacrebleu"
-    main_score = "score"
+    hf_metric_name = "sacrebleu"
+    hf_main_score = "score"
+    main_score = "sacrebleu"
+    scale = 1.0
+
+ 
+class NormalizedSacreBleu(HuggingfaceMetric):
+    hf_metric_name = "sacrebleu"
+    hf_main_score = "score"
+    main_score = "sacrebleu"
     scale = 100.0
+    scaled_fields = ["sacrebleu","precisions"]
+
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
-    metric_name = "matthews_correlation"
+    hf_metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
     str_to_id: dict = InternalField(default_factory=dict)
 
@@ -688,7 +706,7 @@ class TokenOverlap(InstanceMetric):
 
 
 class BertScore(HuggingfaceBulkMetric):
-    metric_name = "bertscore"
+    hf_metric_name = "bertscore"
     main_score = "f1"
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     hf_metric_fields = ["f1", "precision", "recall"]
