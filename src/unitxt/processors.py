@@ -66,3 +66,11 @@ class DictOfListsToPairs(BaseFieldOperator):
             return result
         except:
             return []
+
+
+class TakeFirstNonEmptyLine(BaseFieldOperator):
+    def process(self, instance):
+        splitted = str(instance).strip().split("\n")
+        if len(splitted) == 0:
+            return ""
+        return splitted[0].strip()
