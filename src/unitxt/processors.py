@@ -70,4 +70,7 @@ class DictOfListsToPairs(BaseFieldOperator):
 
 class TakeFirstNonEmptyLine(BaseFieldOperator):
     def process(self, instance):
-        return str(instance).strip().split("\n")[0].strip()
+        splitted = str(instance).strip().split("\n")
+        if len(splitted) == 0:
+            return ''
+        return splitted[0].strip()
