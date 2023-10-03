@@ -7,8 +7,28 @@ metric = SacreBleu()
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
 references = [["hello there general kenobi", "hello there !"], ["goodbye ankh morpork", "ankh morpork"]]
 instance_targets = [
-    {'counts': [4, 3, 2, 1], 'totals': [4, 3, 2, 1], 'precisions': [100.0, 100.0, 100.0, 100.0], 'bp': 1.0, 'sys_len': 4, 'ref_len': 4, 'sacrebleu': 100.0, 'score': 100.0, 'score_name': 'sacrebleu'},
-    {'counts': [2, 1, 0, 0], 'totals': [6, 5, 4, 3], 'precisions': [33.33, 20.0, 12.5, 8.33], 'bp': 1.0, 'sys_len': 6, 'ref_len': 3, 'sacrebleu': 16.23, 'score': 16.23, 'score_name': 'sacrebleu'},
+    {
+        "counts": [4, 3, 2, 1],
+        "totals": [4, 3, 2, 1],
+        "precisions": [100.0, 100.0, 100.0, 100.0],
+        "bp": 1.0,
+        "sys_len": 4,
+        "ref_len": 4,
+        "sacrebleu": 100.0,
+        "score": 100.0,
+        "score_name": "sacrebleu",
+    },
+    {
+        "counts": [2, 1, 0, 0],
+        "totals": [6, 5, 4, 3],
+        "precisions": [33.33, 20.0, 12.5, 8.33],
+        "bp": 1.0,
+        "sys_len": 6,
+        "ref_len": 3,
+        "sacrebleu": 16.23,
+        "score": 16.23,
+        "score_name": "sacrebleu",
+    },
 ]
 
 global_target = {
