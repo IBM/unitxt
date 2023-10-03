@@ -279,7 +279,7 @@ class HuggingfaceMetric(GlobalMetric):
     hf_main_score: str = None  # USed if HF returns uses a different score name for the main metric
 
     scale: float = 1.0  # optional scaling of main results
-    scaled_fields = None
+    scaled_fields: list = None
     hf_compute_args: dict = {}
 
     def prepare(self):
