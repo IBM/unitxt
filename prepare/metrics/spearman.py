@@ -15,7 +15,7 @@ metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        metric_name="spearmanr",
+        hf_metric_name="spearmanr",
         main_score="spearmanr",
     ),
 )
