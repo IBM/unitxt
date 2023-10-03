@@ -9,7 +9,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 
-from .dataclass import InternalField
+from .dataclass import InternalField, OptionalField
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -280,11 +280,12 @@ class HuggingfaceMetric(GlobalMetric):
 
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
-    hf_compute_args: dict = {}
+    hf_compute_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.hf_metric_name)
+        self.metric = evaluate.load(self.hf_metric_name, experiment_id=self.experiment_id)
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
@@ -474,7 +475,7 @@ class Rouge(HuggingfaceMetric):
     sent_split_newline: bool = True
 
     def prepare(self):
-        self.hf_compute_args = {"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types}
+        self.hf_compute_args.update({"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types})
 
         super().prepare()
         import nltk
