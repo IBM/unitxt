@@ -38,14 +38,18 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     sampler: Sampler = None
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
-    
+
     def verify(self):
         super().verify()
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
-                raise ValueError("When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.")
+                raise ValueError(
+                    "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers."
+                )
             if self.demos_pool_size < self.num_demos:
-                raise ValueError(f"demos_pool_size must be bigger than num_demos={self.num_demos}, Got demos_pool_size={self.demos_pool_size}")
+                raise ValueError(
+                    f"demos_pool_size must be bigger than num_demos={self.num_demos}, Got demos_pool_size={self.demos_pool_size}"
+                )
 
     def prepare(self):
         self.steps = [
