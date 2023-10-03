@@ -275,10 +275,10 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
 class HuggingfaceMetric(GlobalMetric):
     hf_metric_name: str = None
-    main_score: str = None          # The main score returned from the metric
-    hf_main_score: str = None       # USed if HF returns uses a different score name for the main metric
+    main_score: str = None  # The main score returned from the metric
+    hf_main_score: str = None  # USed if HF returns uses a different score name for the main metric
 
-    scale: float = 1.0              # optional scaling of main results
+    scale: float = 1.0  # optional scaling of main results
     scaled_fields = None
     hf_compute_args: dict = {}
 
@@ -288,17 +288,19 @@ class HuggingfaceMetric(GlobalMetric):
 
     def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
         result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
-        if ( self.hf_main_score ):
-            result[self.main_score] = result[self.hf_main_score ]
-            del result[self.hf_main_score ]
+        if self.hf_main_score:
+            result[self.main_score] = result[self.hf_main_score]
+            del result[self.hf_main_score]
         if self.scale != 1.0:
-            assert self.scaled_fields is not None,f"Scaling factor was set to {self.scale}, but no fields specified"
+            assert self.scaled_fields is not None, f"Scaling factor was set to {self.scale}, but no fields specified"
             for key in self.scaled_fields:
-                assert key in result,f"Trying to scale field '{key}' which is not in results of metrics: {result}"
-                if isinstance(result[key], list ):
-                    assert all( isinstance(v,float) for v in result[key]), "Not all scaled field '{key}' values are floats: {result[key]}"
-                    result[key] = [ v / self.scale for v in result[key]]
-                else: 
+                assert key in result, f"Trying to scale field '{key}' which is not in results of metrics: {result}"
+                if isinstance(result[key], list):
+                    assert all(
+                        isinstance(v, float) for v in result[key]
+                    ), "Not all scaled field '{key}' values are floats: {result[key]}"
+                    result[key] = [v / self.scale for v in result[key]]
+                else:
                     assert isinstance(result[key], float), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
         return result
@@ -532,14 +534,13 @@ class SacreBleu(HuggingfaceMetric):
     main_score = "sacrebleu"
     scale = 1.0
 
- 
+
 class NormalizedSacreBleu(HuggingfaceMetric):
     hf_metric_name = "sacrebleu"
     hf_main_score = "score"
     main_score = "sacrebleu"
     scale = 100.0
-    scaled_fields = ["sacrebleu","precisions"]
-
+    scaled_fields = ["sacrebleu", "precisions"]
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
