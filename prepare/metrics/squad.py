@@ -28,9 +28,10 @@ metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        metric_name="squad",
+        hf_metric_name="squad",
         main_score="f1",
         scale=100.0,
+        scaled_fields=["f1"]
     ),
 )
 
