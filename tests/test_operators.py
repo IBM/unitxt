@@ -5,10 +5,12 @@ from src.unitxt.operators import (
     ApplyOperatorsField,
     CastFields,
     CopyFields,
+    DeterministicBalancer,
     EncodeLabels,
     FilterByValues,
     FlattenInstances,
     JoinStr,
+    LengthBalancer,
     MapInstanceValues,
     RemoveFields,
     RenameFields,
@@ -324,6 +326,44 @@ class TestOperators(unittest.TestCase):
 
         test_operator(
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_deterministic_balancer(self):
+        inputs = [
+            {"a": [1, 3], "b": 0, "id": 0},
+            {"a": [1, 3], "b": 0, "id": 1},
+            {"a": {"a": 1}, "b": "a", "id": 2},
+        ]
+
+        targets = [
+            {"a": [1, 3], "b": 0, "id": 0},
+            {"a": {"a": 1}, "b": "a", "id": 2},
+        ]
+
+        test_operator(
+            operator=DeterministicBalancer(fields=["a", "b"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_length_balancer(self):
+        inputs = [
+            {"a": [1, 3], "b": 0, "id": 0},
+            {"a": [1, 3], "b": 0, "id": 1},
+            {"a": [], "b": "a", "id": 2},
+        ]
+
+        targets = [
+            {"a": [1, 3], "b": 0, "id": 0},
+            {"a": [], "b": "a", "id": 2},
+        ]
+
+        test_operator(
+            operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
             inputs=inputs,
             targets=targets,
             tester=self,

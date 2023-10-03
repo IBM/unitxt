@@ -1,3 +1,4 @@
+import collections
 import importlib
 import inspect
 import uuid
@@ -18,7 +19,7 @@ from typing import (
 )
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField
+from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -734,3 +735,65 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(instance, field, new_values, use_dpath=True, set_multiple=True)
 
         return instance
+
+
+class StreamRefiner(SingleStreamOperator):
+    max_instances: int = None
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        if self.max_instances is not None:
+            yield from stream.take(self.max_instances)
+        else:
+            yield from stream
+
+
+class DeterministicBalancer(StreamRefiner):
+    """
+    A class used to balance streams deterministically.
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in determining the signature of an instance.
+        streams (List[str]): A list of stream names to be processed by the balancer.
+
+    Usage:
+        balancer = DeterministicBalancer(fields=["field1", "field2"], streams=["stream1", "stream2"])
+        balanced_stream = balancer.process(stream)
+    """
+
+    fields: List[str]
+
+    def signature(self, instance):
+        return str(tuple(dict_get(instance, field, use_dpath=True) for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        counter = collections.Counter()
+
+        for instance in stream:
+            counter[self.signature(instance)] += 1
+
+        lowest_count = counter.most_common()[-1][-1]
+
+        max_total_instances_per_sign = lowest_count
+        if self.max_instances is not None:
+            max_total_instances_per_sign = min(lowest_count, self.max_instances // len(counter))
+
+        counter = collections.Counter()
+
+        for instance in stream:
+            sign = self.signature(instance)
+            if counter[sign] < max_total_instances_per_sign:
+                counter[sign] += 1
+                yield instance
+
+
+class LengthBalancer(DeterministicBalancer):
+    segments_boundaries: List[int]
+
+    def signature(self, instance):
+        total_len = 0
+        for field in self.fields:
+            total_len += len(dict_get(instance, field, use_dpath=True))
+        for i, val in enumerate(self.segments_boundaries):
+            if total_len < val:
+                return i
+        return i + 1
