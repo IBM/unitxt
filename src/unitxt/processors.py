@@ -66,7 +66,8 @@ class DictOfListsToPairs(BaseFieldOperator):
             return result
         except:
             return []
-        
+
+
 class TakeFirstNonEmptyLine(BaseFieldOperator):
     def process(self, instance):
         return str(instance).strip().split("\n")[0].strip()
