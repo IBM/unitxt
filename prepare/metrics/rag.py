@@ -1,8 +1,7 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import BertScore, Reward, SacreBleu, SentenceBert, TokenOverlap
+from src.unitxt.metrics import BertScore, Reward, SentenceBert, TokenOverlap
 
 metrics = [
-    ("metrics.sacrebleu", SacreBleu()),
     (
         "metrics.token_overlap",
         TokenOverlap(),
