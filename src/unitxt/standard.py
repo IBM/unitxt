@@ -30,7 +30,7 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=lambda: StreamRefiner(apply_to_streams=["test"]))
 
     demos_pool_size: int = None
-    num_demos: int = None
+    num_demos: int = 0
 
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
@@ -38,6 +38,14 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     sampler: Sampler = None
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
+    
+    def verify(self):
+        super().verify()
+        if self.num_demos > 0:
+            if self.demos_pool_size is None or self.demos_pool_size < 1:
+                raise ValueError("When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.")
+            if self.demos_pool_size < self.num_demos:
+                raise ValueError(f"demos_pool_size must be bigger than num_demos={self.num_demos}, Got demos_pool_size={self.demos_pool_size}")
 
     def prepare(self):
         self.steps = [
@@ -58,7 +66,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
                 )
             )
 
-        if self.num_demos is not None:
+        if self.num_demos > 0:
+            assert self.demos_pool_size > self.num_demos, "demos pool must be bigger than "
             sampler = self.card.sampler
 
             if self.sampler is not None:
