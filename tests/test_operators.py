@@ -16,10 +16,12 @@ from src.unitxt.operators import (
     RenameFields,
     Shuffle,
     SplitByValue,
+    StreamRefiner,
     TakeByField,
     Unique,
     ZipFieldValues,
 )
+from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
 
 
@@ -330,6 +332,22 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_stream_refiner(self):
+        refiner = StreamRefiner()
+
+        ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
+
+        refiner.apply_to_streams = ["train"]
+        refiner.max_instances = 1
+
+        refined_ms = refiner(ms)
+
+        train = list(refined_ms["train"])
+        self.assertEqual(len(train), 1)
+
+        test = list(refined_ms["test"])
+        self.assertEqual(len(test), 2)
 
     def test_deterministic_balancer(self):
         inputs = [
