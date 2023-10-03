@@ -71,7 +71,6 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             )
 
         if self.num_demos > 0:
-            assert self.demos_pool_size > self.num_demos, "demos pool must be bigger than "
             sampler = self.card.sampler
 
             if self.sampler is not None:
