@@ -3,7 +3,7 @@
     "fields": [
         "outputs/labels"
     ],
-    "groups_borders": [
+    "segments_boundaries": [
         1
     ]
 }

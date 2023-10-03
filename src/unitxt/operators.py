@@ -787,13 +787,13 @@ class DeterministicBalancer(StreamRefiner):
 
 
 class LengthBalancer(DeterministicBalancer):
-    groups_borders: List[int]
+    segments_boundaries: List[int]
 
     def signature(self, instance):
         total_len = 0
         for field in self.fields:
             total_len += len(dict_get(instance, field, use_dpath=True))
-        for i, val in enumerate(self.groups_borders):
+        for i, val in enumerate(self.segments_boundaries):
             if total_len < val:
                 return i
         return i + 1
