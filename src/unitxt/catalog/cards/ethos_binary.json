@@ -5,19 +5,6 @@
         "path": "ethos",
         "name": "binary"
     },
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "sentence1"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
     "preprocess_steps": [
         {
             "type": "split_random_mix",
@@ -40,32 +27,44 @@
             "type": "add_fields",
             "fields": {
                 "choices": [
-                    "hate speech",
-                    "not hate speech"
+                    "not hate speech",
+                    "hate speech"
                 ]
-            }
-        },
-        {
-            "type": "rename_fields",
-            "field_to_field": {
-                "text": "sentence1"
             }
         }
     ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "text"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
     "templates": {
         "type": "templates_list",
         "items": [
             {
                 "type": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}. Classify if it contains hatespeech. Choices: {choices}.",
-                "output_format": "{label}"
+                "input_format": "Given this sentence: {text}. Classify if it contains hatespeech. Choices: {choices}.",
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line"
+                ]
             },
             {
                 "type": "input_output_template",
-                "input_format": "Does the following sentence contains hatespeech? Answer by choosing one of the options {choices}. sentence: {sentence1}.",
-                "output_format": "{label}"
+                "input_format": "Does the following sentence contains hatespeech? Answer only by choosing one of the options {choices}. sentence: {text}.",
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line"
+                ]
             }
         ]
-    },
-    "instructions": null
+    }
 }
