@@ -363,7 +363,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=LengthBalancer(fields=["a"], group_boundaries=[1]),
+            operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
             inputs=inputs,
             targets=targets,
             tester=self,
