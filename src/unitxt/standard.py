@@ -23,11 +23,9 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     max_validation_instances: int = None
     max_test_instances: int = None
 
-    train_refiner: StreamRefiner = OptionalField(default_factory=lambda: StreamRefiner(apply_to_streams=["train"]))
-    validation_refiner: StreamRefiner = OptionalField(
-        default_factory=lambda: StreamRefiner(apply_to_streams=["validation"])
-    )
-    test_refiner: StreamRefiner = OptionalField(default_factory=lambda: StreamRefiner(apply_to_streams=["test"]))
+    train_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
+    validation_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
+    test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
     num_demos: int = 0
@@ -87,12 +85,15 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             )
 
         self.train_refiner.max_instances = self.max_train_instances
+        self.train_refiner.apply_to_streams = ["train"]
         self.steps.append(self.train_refiner)
 
         self.validation_refiner.max_instances = self.max_validation_instances
+        self.validation_refiner.apply_to_streams = ["validation"]
         self.steps.append(self.validation_refiner)
 
         self.test_refiner.max_instances = self.max_test_instances
+        self.test_refiner.apply_to_streams = ["test"]
         self.steps.append(self.test_refiner)
 
         render = StandardRenderer(
