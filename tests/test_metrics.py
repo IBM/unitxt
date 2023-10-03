@@ -234,31 +234,6 @@ class TestMetrics(unittest.TestCase):
         global_target = [2 / 3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-    def test_bleu(self):
-        metric = Bleu()
-        predictions = ["hello there general guy", "foo bari foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        # TODO check why BLEU returns 0 here (sacrebleu below returns 69)
-        global_target = 0
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
-    def test_sacrebleu(self):
-        metric = SacreBleu()
-        predictions = ["hello there general dude", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 69.14416
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
-
-    def test_normalized_sacrebleu(self):
-        metric = NormalizedSacreBleu()
-        predictions = ["hello there general dude", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        global_target = 0.6914416
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
-
     def test_token_overlap(self):
         metric = TokenOverlap()
         predictions = ["hello there general dude", "foo bar foobar"]

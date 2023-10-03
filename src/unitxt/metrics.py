@@ -522,27 +522,6 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
-class Bleu(HuggingfaceMetric):
-    hf_metric_name = "bleu"
-    main_score = "bleu"
-    scale = 1.0
-
-
-class SacreBleu(HuggingfaceMetric):
-    hf_metric_name = "sacrebleu"
-    hf_main_score = "score"
-    main_score = "sacrebleu"
-    scale = 1.0
-
-
-class NormalizedSacreBleu(HuggingfaceMetric):
-    hf_metric_name = "sacrebleu"
-    hf_main_score = "score"
-    main_score = "sacrebleu"
-    scale = 100.0
-    scaled_fields = ["sacrebleu", "precisions"]
-
-
 class MatthewsCorrelation(HuggingfaceMetric):
     hf_metric_name = "matthews_correlation"
     main_score = "matthews_correlation"
