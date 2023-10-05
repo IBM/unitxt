@@ -1,3 +1,5 @@
 black
 isort
 autoflake
+pre-commit
+git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets
