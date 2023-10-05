@@ -4,7 +4,7 @@ Adding Stream Operators and Metrics
 =====================================
 
 In this section we will add brand new stream operators and metrics
-to use in our processing pipelines. 
+to use in our processing pipelines.
 
 Adding a new stream operator
 ----------------------------
@@ -32,7 +32,7 @@ testing suit:
 
         inputs = [{'a': 1}, {'a': 2}]
         targets = [{'a': 1, 'b': 2}, {'a': 2, 'b': 2}]
-        
+
         print(test_operator(operator, inputs, targets)) # True
 
 
@@ -52,7 +52,7 @@ Create a new class that extends the `Metric` or any other :ref:`Metric <metrics>
 
 Other base classes for metrics are: `InstanceMetric`, `GlobalMetric`.
 
-To test our metric work as expected we can use unitxt built in 
+To test our metric work as expected we can use unitxt built in
 testing suit:
 
     .. code-block:: python

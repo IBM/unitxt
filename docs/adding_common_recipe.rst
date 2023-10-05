@@ -1,16 +1,16 @@
 =================
-Adding Datasets 
+Adding Datasets
 =================
 
 In this tutorial, you will learn how to add a dataset to a local private catalog
-and how to load or share it with others. 
+and how to load or share it with others.
 
 .. note::
 
    To use this tutorial, you need to install `unitxt` with the following command:
 
    .. code-block:: bash
-   
+
       pip install unitxt
 
 The Task Card
@@ -72,12 +72,12 @@ For example, for `wnli` the card is defined as follows:
 
 .. note::
 
-   Read more about the stream operators such as `LoadHF`, `SplitRandomMix` 
+   Read more about the stream operators such as `LoadHF`, `SplitRandomMix`
    and `AddFields` in the :ref:`lib` unitxt section.
 
 
 
-It is recommended to save the card to a local catalog and load it 
+It is recommended to save the card to a local catalog and load it
 as explained in the next section.
 
 Adding the Dataset to the Catalog
@@ -89,22 +89,22 @@ Once the card is defined, it can be saved to a local catalog as follows:
 
     from unitxt import add_to_catalog
 
-    add_to_catalog(card, 'cards.wnli') # will be saved to a default catalog 
-                                       # if you want to save to a different 
+    add_to_catalog(card, 'cards.wnli') # will be saved to a default catalog
+                                       # if you want to save to a different
                                        # directory use the catalog_path argument
 .. note::
 
-   By default new artifact will be added to a local catalog stored 
+   By default new artifact will be added to a local catalog stored
    in the library directory. To use a different catalog,
    use the `catalog_path` argument.
 
    In order to load automatically from your new catalog remember to
-   register your new catalog by `unitxt.register_catalog('my_catalog')` 
+   register your new catalog by `unitxt.register_catalog('my_catalog')`
    or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
 
-Once the card is defined,a Common Recipe can be used to load the dataset. 
+Once the card is defined,a Common Recipe can be used to load the dataset.
 The Common Recipe can prepare the data in different ways, for example,
-through instructions or demonstrations. 
+through instructions or demonstrations.
 
 .. code-block:: python
 
