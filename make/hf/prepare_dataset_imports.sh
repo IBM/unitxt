@@ -7,7 +7,7 @@ for file in $dir_path/*.py; do
     # Extract the filename without extension
     file_name=$(basename -- "$file")
     file_name="${file_name%.*}"
-    
+
     # Skip the dataset.py and __init__.py files
     if [[ "$file_name" != "$target_file" && "$file_name" != "__init__" && "$file_name" != "metric" && "$file_name" != "dataset" ]]
     then

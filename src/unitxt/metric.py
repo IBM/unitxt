@@ -12,9 +12,12 @@ from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
 from .dataclass import __file__ as _
+from .dict_utils import __file__ as _
 from .file_utils import __file__ as _
+from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
+from .hf_utils import __file__ as _
 from .instructions import __file__ as _
 from .load import __file__ as _
 from .loaders import __file__ as _
@@ -28,35 +31,32 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
-    ApplyStreamOperatorsField,
     ApplyOperatorsField,
+    ApplyStreamOperatorsField,
     FlattenInstances,
     MergeStreams,
     SplitByValue,
 )
 from .operators import __file__ as _
 from .processors import __file__ as _
+from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .register import register_all_artifacts, _reset_env_local_catalogs
+from .register import _reset_env_local_catalogs, register_all_artifacts
+from .renderers import __file__ as _
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
+from .standard import __file__ as _
 from .stream import MultiStream, Stream
 from .stream import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .type_utils import __file__ as _
 from .utils import __file__ as _
 from .validate import __file__ as _
-from .type_utils import __file__ as _
-from .hf_utils import __file__ as _
-from .dict_utils import __file__ as _
-from .random_utils import __file__ as _
 from .version import __file__ as _
-from .renderers import __file__ as _
-from .formats import __file__ as _
-from .standard import __file__ as _
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
@@ -157,7 +157,9 @@ class Metric(evaluate.Metric):
 
     def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
         try:
-            from unitxt.dataset import get_dataset_artifact as get_dataset_artifact_installed
+            from unitxt.dataset import (
+                get_dataset_artifact as get_dataset_artifact_installed,
+            )
 
             unitxt_installed = True
         except ImportError:

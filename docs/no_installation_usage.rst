@@ -5,7 +5,7 @@ Loading Premade Dataset Recipes
 Loading a Premade Dataset Recipe
 ---------------------------------
 
-With unitxt you can load a dataset without installing the package simply 
+With unitxt you can load a dataset without installing the package simply
 by using the following code (loading wnli dataset in 3 shot format):
 
 .. code-block:: python
@@ -17,7 +17,7 @@ by using the following code (loading wnli dataset in 3 shot format):
 Loading Customized Data
 --------------------------
 
-Unitxt enable the loading of datasets in different forms if they have a dataset card stored in 
+Unitxt enable the loading of datasets in different forms if they have a dataset card stored in
 the unitxt catalog. For example, here we load wnli in 5 shots format:
 
 .. code-block:: python

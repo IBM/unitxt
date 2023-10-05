@@ -13,7 +13,7 @@
 
 ### Pull
 Always pull --rebase before pushing:
-    
+
     ```bash
     git pull --rebase
     ```
@@ -35,7 +35,7 @@ Example:
 Push into a new branch and open a PR.
 
 Example:
-    
+
         ```bash
         git push origin main:<my-new-branch-name>
         ```
