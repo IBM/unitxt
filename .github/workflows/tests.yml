@@ -28,7 +28,7 @@ jobs:
       run: pip install -r requirements/base.rqr
 
     - name: Install Requirements
-      run: pip install -r equirements/tests.rqr
+      run: pip install -r requirements/tests.rqr
 
     - name: Install the package that is required for testing and coverage calculation
       run: pip install coverage
