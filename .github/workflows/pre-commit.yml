@@ -1,15 +1,22 @@
-name: pre-commit
+name: Quality & Security Verification
 
 on:
-    push:
-        branches: [ main ]
-    pull_request:
-        branches: [ main ]
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  pre-commit:
+  format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.0
+      - uses: actions/checkout@v2
+      - name: Install requirements
+        run: |
+          pip install -r dev_requiremets.txt
+      - name: Install the pre-commit hooks
+        run: |
+            pre-commit install
+      - name: Validate all pre-commit verification were run correctly
+        run: |
+            pre-commit run --all-files
