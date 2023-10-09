@@ -20,6 +20,7 @@ from src.unitxt.operators import (
     TakeByField,
     Unique,
     ZipFieldValues,
+    AugmentWhitespace
 )
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
@@ -386,3 +387,14 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_augment_whitespace(self):
+        source =  "The dog ate my cat"
+        inputs =  [ { "source" : source} ]
+     
+        operator = AugmentWhitespace()
+        outputs = apply_operator(operator, inputs)
+        assert (outputs[0]['source'] != source), f"Source of f{outputs} is equal to f{source} and was not augmented"
+        normalized_output_source = outputs[0]['source'].split()
+        normalized_input_source = source.split()
+        assert ( normalized_output_source  == normalized_input_source ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
