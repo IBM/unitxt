@@ -108,7 +108,7 @@ def dict_get(dic, query, use_dpath=True, not_exist_ok=False, default=None):
         if not_exist_ok:
             return dic.get(query, default)
         else:
-            if (query in dic):
+            if query in dic:
                 return dic[query]
             else:
                 raise ValueError(f'query "{query}" did not match any item in dict: {dic}')

@@ -5,7 +5,7 @@ from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
-from .operators import StreamRefiner,Augmentor
+from .operators import Augmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -106,7 +106,7 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
         )
 
         self.steps.append(render)
-        
+
         self.steps.append(self.augmentor)
 
         postprocessors = render.get_postprocessors()
