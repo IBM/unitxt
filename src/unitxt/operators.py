@@ -253,6 +253,26 @@ class AddConstant(FieldOperator):
         return value + self.add
 
 
+class Augmentor(FieldOperator):
+    field = "source"
+    def process_value(self, value: Any) -> Any:
+        return value
+
+class AugmentWhitespace(Augmentor):
+    """
+    Replace whitespace with other whitespace
+    """
+    def process_value(self, value: Any) -> Any:
+        import re
+        words = re.split("(\s+)",value)
+        new_value = ""
+        for word in words:
+            if (word.isspace()):
+               new_value += random.choice(['\n','\t',' ']) * random.randint(1,3)
+            else:
+               new_value += word
+        return new_value
+
 class ShuffleFieldValues(FieldOperator):
     """
     Shuffles an iterable value

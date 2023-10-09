@@ -5,7 +5,7 @@ from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
-from .operators import StreamRefiner
+from .operators import StreamRefiner,Augmentor
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -34,6 +34,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     demos_taken_from: str = "train"
     demos_field: str = "demos"
     sampler: Sampler = None
+
+    augmentor: Augmentor = OptionalField(default_factory=Augmentor)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
@@ -104,6 +106,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
         )
 
         self.steps.append(render)
+        
+        self.steps.append(self.augmentor)
 
         postprocessors = render.get_postprocessors()
 
@@ -161,6 +165,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_field (str, optional): Field name for demos. Default is "demos".
         sampler (Sampler, optional): Sampler object to be used in the recipe.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
+        augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
         instruction_card_index (int, optional): Index of instruction card to be used
             for preparing the recipe.
         template_card_index (int, optional): Index of template card to be used for
