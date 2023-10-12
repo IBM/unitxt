@@ -44,3 +44,13 @@ Agent:"""
         target = """User:1+1
 Agent:"""
         self.assertEqual(result, target)
+
+    def test_icl_format_without_demonstrations_and_empty_instruction(self):
+        format = ICLFormat(input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:")
+
+        instance = {"source": "1+1", "target": "2", "instruction": ""}
+
+        result = format.format(instance)
+        target = """User:1+1
+Agent:"""
+        self.assertEqual(result, target)
