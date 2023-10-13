@@ -255,13 +255,11 @@ class AddConstant(FieldOperator):
 
 class Augmentor(StreamInstanceOperator):
     """
-    A stream that processes the values of either input fields  or 'source' passed to the model field passed to tthe user
+    A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
     Args:
-        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
-        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operator would happen in-place and replace "field" Defaults to None
-        field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
-        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
-        use_query (bool): Whether to use dpath style queries. Defaults to False
+        augment_model_input: Whether to augment the input to the model.
+        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the FormTask operator.
+
     """
 
     augment_task_input: bool = False
@@ -325,7 +323,8 @@ class NullAugmentor(Augmentor):
 
 class AugmentWhitespace(Augmentor):
     """
-    Replace whitespace with other whitespace
+    Augments the inputs by replace existing whitespace with other whitespace.
+    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
     """
 
     def process_value(self, value: Any) -> Any:
