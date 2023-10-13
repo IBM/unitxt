@@ -202,6 +202,7 @@ class Artifact(Dataclass):
             init_dict = self.to_dict()
             dumped = json.dumps(init_dict, indent=4)
             f.write(dumped)
+            f.write("\n")
 
 
 class ArtifactList(list, Artifact):
