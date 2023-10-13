@@ -253,8 +253,71 @@ class AddConstant(FieldOperator):
         return value + self.add
 
 
-class Augmentor(FieldOperator):
-    field = "source"
+class Augmentor(StreamInstanceOperator):
+    """
+    A stream that processes the values of either input fields  or 'source' passed to the model field passed to tthe user
+    Args:
+        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
+        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operator would happen in-place and replace "field" Defaults to None
+        field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
+        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
+        use_query (bool): Whether to use dpath style queries. Defaults to False
+    """
+
+    augment_task_input: bool = False
+    augment_model_input: bool = False
+
+    def verify(self):
+        assert not (
+            self.augment_task_input and self.augment_model_input
+        ), "Augmentor must set either 'augment_task_input' and 'augment_model_input' but not both"
+        assert (
+            self.augment_task_input or self.augment_model_input
+        ), "Augmentor must set either 'augment_task_input' or 'augment_model_input'"
+
+        super().verify()
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
+
+    def prepare(self):
+        pass
+
+    def set_task_input_fields(self, task_input_fields: List[str]):
+        self._task_input_fields = ["inputs/" + task_input_field for task_input_field in task_input_fields]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        if self.augment_task_input:
+            assert (
+                len(self._task_input_fields) > 0
+            ), "No augmentable input fields were defined in FormTask, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the FormTask."
+            fields = self._task_input_fields
+            assert not self.augment_model_input
+
+        if self.augment_model_input:
+            fields = ["source"]
+            assert not self.augment_task_input
+
+        for field in fields:
+            try:
+                old_value = dict_get(
+                    instance,
+                    field,
+                    use_dpath=True,
+                    default="",
+                    not_exist_ok=False,
+                )
+            except TypeError as e:
+                raise TypeError(f"Failed to get {field} from {instance}")
+            new_value = self.process_value(old_value)
+            dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
+        return instance
+
+
+class NullAugmentor(Augmentor):
+    def verify(self):
+        pass
 
     def process_value(self, value: Any) -> Any:
         return value
