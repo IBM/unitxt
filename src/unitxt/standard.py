@@ -5,7 +5,7 @@ from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
-from .operators import Augmentor, StreamRefiner
+from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -35,7 +35,7 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Augmentor = OptionalField(default_factory=Augmentor)
+    augmentor: Augmentor = OptionalField(default_factory=NullAugmentor)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
@@ -60,6 +60,10 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             self.steps.extend(self.card.preprocess_steps)
 
         self.steps.append(self.card.task)
+
+        if self.augmentor.augment_task_input:
+            self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
+            self.steps.append(self.augmentor)
 
         if self.demos_pool_size is not None:
             self.steps.append(
@@ -107,7 +111,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
 
         self.steps.append(render)
 
-        self.steps.append(self.augmentor)
+        if self.augmentor.augment_model_input:
+            self.steps.append(self.augmentor)
 
         postprocessors = render.get_postprocessors()
 
