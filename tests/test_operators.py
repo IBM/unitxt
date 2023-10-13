@@ -388,15 +388,35 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_augment_whitespace(self):
+    def test_augment_whitespace_model_input(self):
         source = "The dog ate my cat"
         inputs = [{"source": source}]
 
-        operator = AugmentWhitespace()
+        operator = AugmentWhitespace(augment_model_input=True)
         outputs = apply_operator(operator, inputs)
         assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
         normalized_output_source = outputs[0]["source"].split()
         normalized_input_source = source.split()
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_augment_whitespace_task_input_with_error(self):
+        text = "The dog ate my cat"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["sentence"])
+        with self.assertRaises(ValueError):
+            outputs = apply_operator(operator, inputs)
+
+    def test_augment_whitespace_task_input(self):
+        text = "The dog ate my cat"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        normalized_output_source = outputs[0]["inputs"]["text"].split()
+        normalized_input_source = text.split()
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
