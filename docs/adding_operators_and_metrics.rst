@@ -21,7 +21,7 @@ Create a new class that extends the `StreamInstanceOperator` or any other :ref:`
             def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
                 return {**instance, **self.fields}
 
-To test our operator work as expected we can use unitxt built in
+To test that our operator works as expected, we can use the unitxt built-in
 testing suit:
 
     .. code-block:: python
