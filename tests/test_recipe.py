@@ -131,7 +131,7 @@ class TestRecipes(unittest.TestCase):
 
         self.assertEqual(counts["entailment"], counts["not entailment"], 10)
 
-    def test_standard_recipe_with_augmentor(self):
+    def test_standard_recipe_with_augmentor_on_task_input(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.sst2",
             augmentor="augmentors.augment_whitespace_task_input",
@@ -155,6 +155,33 @@ class TestRecipes(unittest.TestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_standard_recipe_with_augmentor_on_model_input(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.sst2",
+            template_card_index=0,
+            max_train_instances=0,
+            max_test_instances=1,
+        )
+        original_source = list(recipe()["test"])[0]["source"]
+
+        recipe = StandardRecipeWithIndexes(
+            card="cards.sst2",
+            augmentor="augmentors.augment_whitespace_model_input",
+            template_card_index=0,
+            max_train_instances=0,
+            max_test_instances=1,
+        )
+        augmented_source = list(recipe()["test"])[0]["source"]
+
+        assert (
+            original_source != augmented_source
+        ), f"Augmented text '{augmented_source}' is equal to text without '{original_source}' and was not augmented"
+        normalized_augmented_source = augmented_source.split()
+        normalized_input_source = original_source.split()
+        assert (
+            normalized_augmented_source == normalized_input_source
+        ), f"{normalized_augmented_source} is not equal to f{normalized_input_source}"
 
     def test_standard_recipe_with_train_size_limit(self):
         recipe = StandardRecipeWithIndexes(
