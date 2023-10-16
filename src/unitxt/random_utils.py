@@ -6,7 +6,7 @@ import threading
 __default_seed__ = 42
 _thread_local = threading.local()
 _thread_local.seed = __default_seed__
-_thread_local.random = python_random.Random()
+_thread_local.random = python_random.Random(__default_seed__)
 random = _thread_local.random
 
 
