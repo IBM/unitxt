@@ -56,7 +56,9 @@ class LocalCatalog(Catalog):
             return False
         return os.path.exists(path) and os.path.isfile(path)
 
-    def save_artifact(self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False):
+    def save_artifact(
+        self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False, verbose: bool = True
+    ):
         assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
             assert (
@@ -65,7 +67,8 @@ class LocalCatalog(Catalog):
         path = self.path(artifact_identifier)
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
-        print(f"Artifact {artifact_identifier} saved to {path}")
+        if verbose:
+            print(f"Artifact {artifact_identifier} saved to {path}")
 
 
 class EnvironmentLocalCatalog(LocalCatalog):
@@ -101,12 +104,19 @@ def verify_legal_catalog_name(name):
 
 
 def add_to_catalog(
-    artifact: Artifact, name: str, catalog: Catalog = None, overwrite: bool = False, catalog_path: str = None
+    artifact: Artifact,
+    name: str,
+    catalog: Catalog = None,
+    overwrite: bool = False,
+    catalog_path: str = None,
+    verbose=True,
 ):
     if catalog is None:
         if catalog_path is None:
             catalog_path = default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
-    catalog.save_artifact(artifact, name, overwrite=overwrite)  # remove collection (its actually the dir).
+    catalog.save_artifact(
+        artifact, name, overwrite=overwrite, verbose=verbose
+    )  # remove collection (its actually the dir).
     # verify name

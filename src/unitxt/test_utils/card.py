@@ -15,7 +15,7 @@ TEMP_NAME = "tmp_name"
 
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
+        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
         assert os.path.exists(os.path.join(tmp_dir, TEMP_NAME + ".json")), "Card was not added to catalog"
 
 
@@ -26,7 +26,7 @@ def test_metrics_exist(card):
 
 def test_loading_from_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
+        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
         register_local_catalog(tmp_dir)
         card_, _ = fetch_artifact(TEMP_NAME)
         assert json.dumps(card_.to_dict(), sort_keys=True) == json.dumps(
