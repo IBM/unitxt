@@ -1,3 +1,4 @@
+import itertools
 import os
 from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
@@ -57,17 +58,39 @@ class LoadFromIBMCloud(Loader):
     endpoint_url_env: str
     aws_access_key_id_env: str
     aws_secret_access_key_env: str
+    loader_line_limit_env = "UNITEXT_IBM_COS_LOADER_LINE_LIMIT"
     bucket_name: str
     data_dir: str
     data_files: Sequence[str]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
-        print(f"Downloading {item_name} from {bucket_name} COS to {local_file}")
+        print(f"Downloading {item_name} from {bucket_name} COS")
         try:
             response = cos.Object(bucket_name, item_name).get()
             size = response["ContentLength"]
+            body = response["Body"]
         except Exception as e:
             raise Exception(f"Unabled to access {item_name} in {bucket_name} in COS", e)
+
+        loader_line_limit = os.getenv(self.loader_line_limit_env)
+        if loader_line_limit != None:
+            if item_name.endswith(".jsonl"):
+                assert (
+                    loader_line_limit.isnumeric()
+                ), f"{self.loader_line_limit_env} env variable was not set to numeric value ({loader_line_limit})"
+                loader_line_limit = int(loader_line_limit)
+                print(
+                    f"\n{self.loader_line_limit_env} env variable was set to limit number of lines to {loader_line_limit})"
+                )
+                first_lines = list(itertools.islice(body.iter_lines(), loader_line_limit))
+                with open(local_file, "wb") as downloaded_file:
+                    for line in first_lines:
+                        downloaded_file.write(line)
+                        downloaded_file.write(b"\n")
+                print(f"\nDownload Successful limited to {loader_line_limit} lines")
+                return
+            else:
+                print(f"{self.loader_line_limit_env} was set but line limit can only be placed on jsonl files")
 
         progress_bar = tqdm(total=size, unit="iB", unit_scale=True)
 
