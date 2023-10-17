@@ -29,7 +29,9 @@ class ICLFormat(SizeLimitingFormat):
 
         if "instruction" in instance:
             instruction = instance.pop("instruction")
-            source += self.instruction_prefix + instruction + self.demo_separator
+            assert "instruction" != None, f"instruction field can not be none : {instance}"
+            if instruction != "":
+                source += self.instruction_prefix + instruction + self.demo_separator
 
         for demo_instance in demos_instances:
             demo_str = (
