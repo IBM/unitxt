@@ -10,7 +10,8 @@ def first_randomization():
 
 
 class TestRandomUtils(unittest.TestCase):
-    def test_default_seed_similarity(self):
+    def test_default_seed(self):
+        set_seed("42")
         a = first_randomization()
         set_seed("43")
         b = first_randomization()
