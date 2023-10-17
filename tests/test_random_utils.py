@@ -11,9 +11,9 @@ def first_randomization():
 
 class TestRandomUtils(unittest.TestCase):
     def test_default_seed(self):
-        set_seed("42")
+        set_seed(42)
         a = first_randomization()
-        set_seed("43")
+        set_seed(43)
         b = first_randomization()
         set_seed(__default_seed__)
         c = first_randomization()
