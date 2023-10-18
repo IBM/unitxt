@@ -1,7 +1,8 @@
 import random as python_random
+import string
 import unittest
 
-from src.unitxt.random_utils import nested_seed, random
+from src.unitxt.random_utils import __default_seed__, nested_seed, random, set_seed
 
 
 def first_randomization():
@@ -9,6 +10,16 @@ def first_randomization():
 
 
 class TestRandomUtils(unittest.TestCase):
+    def test_default_seed(self):
+        set_seed(42)
+        a = first_randomization()
+        set_seed(43)
+        b = first_randomization()
+        set_seed(__default_seed__)
+        c = first_randomization()
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, c)
+
     def test_nested_level_difference(self):
         with nested_seed():
             with nested_seed():
