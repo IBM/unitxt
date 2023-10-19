@@ -1,6 +1,6 @@
 import datasets as ds
-from unitxt import dataset
-from unitxt.blocks import (
+from src.unitxt import dataset
+from src.unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
@@ -11,11 +11,11 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from unitxt.catalog import add_to_catalog
-from unitxt.splitters import RenameSplits
-from unitxt.test_utils.card import test_card
+from src.unitxt.catalog import add_to_catalog
+from src.unitxt.splitters import RenameSplits
+from src.unitxt.test_utils.card import test_card
 
-for lang in ['fr']:#, 'vi', 'zh', 'ar', 'bg', 'de', 'el', 'en', 'en', 'es', 'hi', 'ru', 'sw', 'th', 'tr', 'ur']:
+for lang in ['fr', 'vi', 'zh', 'ar', 'bg', 'de', 'el', 'en', 'en', 'es', 'hi', 'ru', 'sw', 'th', 'tr', 'ur']:
     card = TaskCard(
         loader=LoadHF(path="xnli", name=lang),
         preprocess_steps=[
@@ -33,4 +33,4 @@ for lang in ['fr']:#, 'vi', 'zh', 'ar', 'bg', 'de', 'el', 'en', 'en', 'es', 'hi'
     )
 
     test_card(card)
-    add_to_catalog(card, f"cards.xnli_{lang}", overwrite=True)
+    add_to_catalog(card, f"cards.xnli.{lang}", overwrite=True)
