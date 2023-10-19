@@ -38,9 +38,7 @@ for lang in [
         preprocess_steps=[
             RenameSplits({"validation_matched": "validation"}),
             "splitters.small_no_test",
-            MapInstanceValues(
-                mappers={"label": {"0": "entailment", "1": "neutral", "2": "contradiction"}}
-            ),
+            MapInstanceValues(mappers={"label": {"0": "entailment", "1": "neutral", "2": "contradiction"}}),
             AddFields(
                 fields={
                     "choices": ["entailment", "neutral", "contradiction"],
