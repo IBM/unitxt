@@ -29,7 +29,7 @@ from src.unitxt.operators import (
 )
 from src.unitxt.test_utils.card import test_card
 
-langs = ['pt','ru','zh','en','jp'] #,'fr'
+langs = ["pt", "ru", "zh", "en", "jp"]  # ,'fr'
 
 for lang in langs:
     # numbering=tuple(str(x) for x in range(200))
@@ -45,7 +45,11 @@ for lang in langs:
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
             *multiple_choice_preprocess(
-                question="sentence", numbering="numbering", choices="choices", topic="topic", label_index="answer"
+                question="sentence",
+                numbering="numbering",
+                choices="choices",
+                topic="topic",
+                label_index="answer",
             ),
         ],
         task=FormTask(
