@@ -100,7 +100,7 @@ class GithubCatalog(LocalCatalog):
 def verify_legal_catalog_name(name):
     assert re.match(
         r"^[\w" + COLLECTION_SEPARATOR + "]+$", name
-    ), 'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/").'
+    ), f'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/"). Name: {name}'
 
 
 def add_to_catalog(
