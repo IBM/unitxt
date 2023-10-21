@@ -9,5 +9,8 @@
     ],
     "metrics": [
         "metrics.accuracy"
+    ],
+    "augmentable_inputs": [
+        "sentence"
     ]
 }

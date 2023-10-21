@@ -69,7 +69,9 @@ def parse(query: str):
     for kv in kvs:
         key_val = kv.split("=")
         if len(key_val) != 2 or len(key_val[0].strip()) == 0 or len(key_val[1].strip()) == 0:
-            raise ValueError('Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.')
+            raise ValueError(
+                f'Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.'
+            )
         key, val = key_val
         if val.isdigit():
             result[key] = int(val)

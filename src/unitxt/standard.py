@@ -5,7 +5,7 @@ from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
 from .operator import SourceSequntialOperator, StreamingOperator
-from .operators import StreamRefiner
+from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -35,6 +35,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
+    augmentor: Augmentor = OptionalField(default_factory=NullAugmentor)
+
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
     def verify(self):
@@ -58,6 +60,10 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             self.steps.extend(self.card.preprocess_steps)
 
         self.steps.append(self.card.task)
+
+        if self.augmentor.augment_task_input:
+            self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
+            self.steps.append(self.augmentor)
 
         if self.demos_pool_size is not None:
             self.steps.append(
@@ -104,6 +110,9 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
         )
 
         self.steps.append(render)
+
+        if self.augmentor.augment_model_input:
+            self.steps.append(self.augmentor)
 
         postprocessors = render.get_postprocessors()
 
@@ -161,6 +170,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_field (str, optional): Field name for demos. Default is "demos".
         sampler (Sampler, optional): Sampler object to be used in the recipe.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
+        augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
         instruction_card_index (int, optional): Index of instruction card to be used
             for preparing the recipe.
         template_card_index (int, optional): Index of template card to be used for

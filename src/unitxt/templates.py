@@ -174,7 +174,7 @@ class InputOutputTemplate(Template):
             return self.process_template(self.output_format, outputs)
         except KeyError as e:
             raise KeyError(
-                f"Available inputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
+                f"Available outputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
             )
 
     def get_postprocessors(self) -> List[str]:
@@ -240,7 +240,7 @@ class MultiLabelTemplate(InputOutputTemplate):
         if len(labels) == 0:
             labels = [self.empty_label]
         labels_str = self.labels_seprator.join(labels)
-        return super().process_outputs({"labels": labels_str})
+        return super().process_outputs({self.labels_field: labels_str})
 
 
 def escape_chars(s, chars_to_escape):

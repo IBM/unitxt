@@ -29,9 +29,7 @@ one_sentence_classification_templates = TemplatesList(
 add_to_catalog(one_sentence_classification_templates, "templates.one_sent_classification", overwrite=True)
 
 one_sentence_classification_task = FormTask(
-    inputs=["choices", "sentence"],
-    outputs=["label"],
-    metrics=["metrics.accuracy"],
+    inputs=["choices", "sentence"], outputs=["label"], metrics=["metrics.accuracy"], augmentable_inputs=["sentence"]
 )
 add_to_catalog(one_sentence_classification_task, "tasks.one_sent_classification", overwrite=True)
 
