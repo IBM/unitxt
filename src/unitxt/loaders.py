@@ -20,6 +20,13 @@ except ImportError:
 
 
 class Loader(SourceOperator):
+    # The loader_limit an optional parameter used to control the maximum number of instances to load from the the source.
+    # It is usually provided to the loader via the recipe (see standard.py)
+    # The loader can use this value to limit the amount of data downloaded from the source
+    # to reduce loading time.  However, this may not always be possible, so the
+    # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
+    # stream after, after load is complete.
+    loader_limit: int = None
     pass
 
 
@@ -58,7 +65,6 @@ class LoadFromIBMCloud(Loader):
     endpoint_url_env: str
     aws_access_key_id_env: str
     aws_secret_access_key_env: str
-    loader_line_limit_env = "UNITEXT_IBM_COS_LOADER_LINE_LIMIT"
     bucket_name: str
     data_dir: str
     data_files: Sequence[str]
@@ -72,25 +78,15 @@ class LoadFromIBMCloud(Loader):
         except Exception as e:
             raise Exception(f"Unabled to access {item_name} in {bucket_name} in COS", e)
 
-        loader_line_limit = os.getenv(self.loader_line_limit_env)
-        if loader_line_limit != None:
+        if self.loader_limit != None:
             if item_name.endswith(".jsonl"):
-                assert (
-                    loader_line_limit.isnumeric()
-                ), f"{self.loader_line_limit_env} env variable was not set to numeric value ({loader_line_limit})"
-                loader_line_limit = int(loader_line_limit)
-                print(
-                    f"\n{self.loader_line_limit_env} env variable was set to limit number of lines to {loader_line_limit})"
-                )
-                first_lines = list(itertools.islice(body.iter_lines(), loader_line_limit))
+                first_lines = list(itertools.islice(body.iter_lines(), self.loader_limit))
                 with open(local_file, "wb") as downloaded_file:
                     for line in first_lines:
                         downloaded_file.write(line)
                         downloaded_file.write(b"\n")
-                print(f"\nDownload Successful limited to {loader_line_limit} lines")
+                print(f"\nDownload successful limited to {self.loader_limit} lines")
                 return
-            else:
-                print(f"{self.loader_line_limit_env} was set but line limit can only be placed on jsonl files")
 
         progress_bar = tqdm(total=size, unit="iB", unit_scale=True)
 

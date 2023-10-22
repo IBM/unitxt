@@ -19,6 +19,8 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
     instruction: Instruction = None
     format: ICLFormat = ICLFormat()
 
+    loader_limit: int = None
+
     max_train_instances: int = None
     max_validation_instances: int = None
     max_test_instances: int = None
@@ -50,11 +52,35 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
                 raise ValueError(
                     f"demos_pool_size must be bigger than num_demos={self.num_demos}, Got demos_pool_size={self.demos_pool_size}"
                 )
+            if self.loader_limit and self.demos_pool_size > self.loader_limit:
+                raise ValueError(
+                    f"demos_pool_size must be bigger than loader_limit{self.loader_limit}, Got demos_pool_size={self.demos_pool_size}"
+                )
+        if self.max_test_instances and self.loader_limit:
+            if self.max_test_instances > self.loader_limit:
+                raise ValueError(
+                    f"max_test_instances must be bigger than loader_limit{self.loader_limit}, Got max_test_instances={self.max_test_instances}"
+                )
+        if self.max_validation_instances and self.loader_limit:
+            if self.max_validation_instances > self.loader_limit:
+                raise ValueError(
+                    f"max_validation_instances must be bigger than loader_limit{self.loader_limit}, Got max_validation_instances={self.max_validation_instances}"
+                )
+        if self.max_train_instances and self.loader_limit:
+            if self.max_train_instances > self.loader_limit:
+                raise ValueError(
+                    f"max_train_instances must be bigger than loader_limit{self.loader_limit}, Got max_train_instances={self.max_train_instances}"
+                )
 
     def prepare(self):
         self.steps = [
             self.card.loader,
         ]
+
+        if self.loader_limit:
+            self.card.loader.loader_limit = self.loader_limit
+            print(f"Loader line limit was set to  {self.loader_limit}")
+            self.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         if self.card.preprocess_steps is not None:
             self.steps.extend(self.card.preprocess_steps)
@@ -156,6 +182,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         card (TaskCard): TaskCard object associated with the recipe.
         template (Template, optional): Template object to be used for the recipe.
         instruction (Instruction, optional): Instruction object to be used for the recipe.
+        loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
         format (ICLFormat, optional): ICLFormat object to be used for the recipe.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
