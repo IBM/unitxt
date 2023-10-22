@@ -350,6 +350,18 @@ class TestOperators(unittest.TestCase):
         test = list(refined_ms["test"])
         self.assertEqual(len(test), 2)
 
+    def test_deterministic_balancer_empty_stream(self):
+        inputs = []
+
+        targets = []
+
+        test_operator(
+            operator=DeterministicBalancer(fields=["a", "b"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_deterministic_balancer(self):
         inputs = [
             {"a": [1, 3], "b": 0, "id": 0},
