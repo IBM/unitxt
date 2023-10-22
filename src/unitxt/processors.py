@@ -74,3 +74,22 @@ class TakeFirstNonEmptyLine(BaseFieldOperator):
         if len(splitted) == 0:
             return ""
         return splitted[0].strip()
+
+
+class LowerCaseTillPunc(BaseFieldOperator):
+    def process(self, instance):
+        non_empty_line = instance.lower()
+        match = re.search(r"[.,!?;]", non_empty_line)
+        if match:
+            # Extract text up to the first punctuation
+            non_empty_line = non_empty_line[: match.start()]
+        return non_empty_line
+
+
+class HateOrNot(BaseFieldOperator):
+    def process(self, instance):
+        if "not hate speech" in instance.lower():
+            return "not hate speech"
+        if "hate speech" in instance.lower():
+            return "hate speech"
+        return instance
