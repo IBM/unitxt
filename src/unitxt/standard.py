@@ -10,7 +10,7 @@ from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
-from .templates import Template
+from .templates import Template, TemplatesDict
 
 
 class BaseRecipe(Recipe, SourceSequntialOperator):
@@ -158,10 +158,21 @@ class StandardRecipeWithIndexes(BaseRecipe):
     def prepare(self):
         assert (
             self.template_card_index is None or self.template is None
-        ), "Specify either template or template_card_index"
+        ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
+        assert (
+            not self.template_card_index is None or not self.template is None
+        ), "Specify either template or template_card_index in card"
         if self.template_card_index is not None:
-            self.template = self.card.templates[int(self.template_card_index)]
-
+            try:
+                self.template = self.card.templates[self.template_card_index]
+            except:
+                if type(self.card.templates) is TemplatesDict:
+                    options = self.card.templates.keys()
+                else:
+                    options = list(range(0, len(self.card.templates)))
+                raise ValueError(
+                    f"card_template_index {self.template_card_index} is not in card. Available options: {options}"
+                )
         assert (
             self.instruction_card_index is None or self.instruction is None
         ), "Specify either instruction or instruction_card_index"
