@@ -170,7 +170,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 else:
                     options = list(range(0, len(self.card.templates)))
                 raise ValueError(
-                    f"card_template_index {self.template_card_index} is not in card. Available options: {options}"
+                    f"card_template_index '{self.template_card_index}' is not in card. Available options: {options}"
                 )
         assert (
             self.instruction_card_index is None or self.instruction is None
