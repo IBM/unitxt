@@ -112,6 +112,21 @@ class TestRecipes(unittest.TestCase):
 
         self.assertEqual(counts["entailment"], counts["not entailment"])
 
+    def test_standard_recipe_with_loader_limit(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            instruction="instructions.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=1,
+            loader_limit=10,
+        )
+
+        stream = recipe()
+        self.assertEqual(len(list(stream["train"])), 5)
+        self.assertEqual(len(list(stream["test"])), 10)
+
     def test_standard_recipe_with_balancer_and_size_limit(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
