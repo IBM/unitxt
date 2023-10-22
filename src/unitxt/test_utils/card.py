@@ -8,6 +8,7 @@ from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
 from ..metric import _compute
 from ..standard import StandardRecipe
+from ..templates import TemplatesDict
 from ..text_utils import print_dict
 
 TEMP_NAME = "tmp_name"
@@ -34,13 +35,9 @@ def test_loading_from_catalog(card):
         ), "Card loaded is not equal to card stored"
 
 
-def load_examples_from_standard_recipe(card, tested_split, template_card_index=None):
-    if template_card_index == None:
-        if card.templates:
-            try:  # named templates (dict)
-                template_item = next(iter(card.templates.keys()))
-            except AttributeError:  # template list
-                template_item = 0
+def load_examples_from_standard_recipe(card, tested_split, template_card_index):
+    print("=" * 80)
+    print(f"Using template card index: {template_card_index}")
 
     num_instructions = len(card.instructions) if card.instructions else 0
     recipe = StandardRecipe(
@@ -70,9 +67,14 @@ def load_examples_from_standard_recipe(card, tested_split, template_card_index=N
 
 
 def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
-    num_templates = len(card.templates)
-    for template_item in range(0, num_templates):
-        examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+    if type(card.templates) is TemplatesDict:
+        for template_item in card.templates.keys():
+            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+    else:
+        num_templates = len(card.templates)
+        for template_item in range(0, num_templates):
+            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
