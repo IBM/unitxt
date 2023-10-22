@@ -56,18 +56,17 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
                 raise ValueError(
                     f"demos_pool_size must be bigger than loader_limit{self.loader_limit}, Got demos_pool_size={self.demos_pool_size}"
                 )
-        if self.max_test_instances and self.loader_limit:
-            if self.max_test_instances > self.loader_limit:
+
+        if self.loader_limit:
+            if self.max_test_instances and self.max_test_instances > self.loader_limit:
                 raise ValueError(
                     f"max_test_instances must be bigger than loader_limit{self.loader_limit}, Got max_test_instances={self.max_test_instances}"
                 )
-        if self.max_validation_instances and self.loader_limit:
-            if self.max_validation_instances > self.loader_limit:
+            if self.max_validation_instances and self.max_validation_instances > self.loader_limit:
                 raise ValueError(
                     f"max_validation_instances must be bigger than loader_limit{self.loader_limit}, Got max_validation_instances={self.max_validation_instances}"
                 )
-        if self.max_train_instances and self.loader_limit:
-            if self.max_train_instances > self.loader_limit:
+            if self.max_train_instances and self.max_train_instances > self.loader_limit:
                 raise ValueError(
                     f"max_train_instances must be bigger than loader_limit{self.loader_limit}, Got max_train_instances={self.max_train_instances}"
                 )
@@ -159,8 +158,8 @@ class StandardRecipeWithIndexes(BaseRecipe):
         assert (
             self.template_card_index is None or self.template is None
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-        assert (
-            not self.template_card_index is None or not self.template is None
+        assert not (
+            self.template_card_index is None and self.template is None
         ), "Specify either template or template_card_index in card"
         if self.template_card_index is not None:
             try:

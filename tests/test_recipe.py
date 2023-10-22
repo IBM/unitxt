@@ -127,6 +127,39 @@ class TestRecipes(unittest.TestCase):
         self.assertEqual(len(list(stream["train"])), 5)
         self.assertEqual(len(list(stream["test"])), 10)
 
+    def test_standard_recipe_with_loader_limit_errors(self):
+        with self.assertRaises(ValueError):
+            recipe = StandardRecipeWithIndexes(
+                card="cards.wnli",
+                template="templates.key_val",
+                max_test_instances=10,
+                loader_limit=9,
+            )
+
+        with self.assertRaises(ValueError):
+            recipe = StandardRecipeWithIndexes(
+                card="cards.wnli",
+                template="templates.key_val",
+                max_train_instances=10,
+                loader_limit=9,
+            )
+        with self.assertRaises(ValueError):
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.wnli",
+                max_validation_instances=10,
+                loader_limit=9,
+            )
+
+        with self.assertRaises(ValueError):
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.wnli",
+                num_demos=3,
+                demos_pool_size=10,
+                loader_limit=9,
+            )
+
     def test_standard_recipe_with_balancer_and_size_limit(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
