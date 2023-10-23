@@ -1,5 +1,9 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.processors import HateOrNot, LowerCaseTillPunc, TakeFirstNonEmptyLine
+from src.unitxt.processors import (
+    LowerCaseTillPunc,
+    StringOrNotString,
+    TakeFirstNonEmptyLine,
+)
 
 operator = TakeFirstNonEmptyLine()
 
@@ -9,6 +13,6 @@ operator2 = LowerCaseTillPunc()
 
 add_to_catalog(operator2, "processors.lower_case_till_punc", overwrite=True)
 
-operator3 = HateOrNot()
+operator3 = StringOrNotString(string="hate speech")
 
-add_to_catalog(operator3, "processors.hate_or_not", overwrite=True)
+add_to_catalog(operator3, "processors.string_or_not_hate", overwrite=True)

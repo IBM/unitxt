@@ -80,7 +80,7 @@
                 "output_format": "{label}",
                 "postprocessors": [
                     "processors.take_first_non_empty_line",
-                    "processors.hate_or_not"
+                    "processors.string_or_not_hate"
                 ]
             }
         ]
