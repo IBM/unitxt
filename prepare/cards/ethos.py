@@ -43,7 +43,7 @@ card = TaskCard(
             InputOutputTemplate(
                 input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as: ",
                 output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line", "processors.string_or_not_hate"],
+                postprocessors=["processors.take_first_non_empty_line", "processors.hate_speech_or_not_hate_speech"],
             ),
         ]
     ),
