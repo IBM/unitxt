@@ -86,10 +86,12 @@ class LowerCaseTillPunc(BaseFieldOperator):
         return non_empty_line
 
 
-class HateOrNot(BaseFieldOperator):
+class StringOrNotString(BaseFieldOperator):
+    string: str
+
     def process(self, instance):
-        if "not hate speech" in instance.lower():
-            return "not hate speech"
-        if "hate speech" in instance.lower():
-            return "hate speech"
+        if "not " + self.string.lower() in instance.lower():
+            return "not " + self.string.lower()
+        if self.string.lower() in instance.lower():
+            return self.string.lower()
         return instance
