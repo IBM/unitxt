@@ -4,7 +4,7 @@ import unittest
 from math import isnan
 
 import pandas as pd
-from src.unitxt.loaders import LoadCSV
+from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud
 
 
 class TestLoaders(unittest.TestCase):
@@ -27,3 +27,16 @@ class TestLoaders(unittest.TestCase):
             for file in ["train", "test"]:
                 for saved_instance, loaded_instance in zip(dfs[file].iterrows(), ms[file]):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+
+    def test_load_from_ibm_cos(self):
+        os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
+        os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
+        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
+        loader = LoadFromIBMCloud(
+            endpoint_url_env="DUMMY_URL_ENV",
+            aws_access_key_id_env="DUMMY_KEY_ENV",
+            aws_secret_access_key_env="DUMMY_SECRET_ENV",
+            bucket_name="DUMMY_BUCKET",
+            data_dir="DUMMY_DATA_DIR",
+            data_files="DUMMY_DATA_FILES",
+        )
