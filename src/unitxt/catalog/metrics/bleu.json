@@ -1,3 +1,6 @@
 {
-    "type": "bleu"
+    "type": "huggingface_metric",
+    "hf_metric_name": "bleu",
+    "main_score": "bleu",
+    "scale": 1.0
 }

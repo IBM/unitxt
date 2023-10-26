@@ -68,6 +68,10 @@ class LocalCatalog(Catalog):
         print(f"Artifact {artifact_identifier} saved to {path}")
 
 
+class EnvironmentLocalCatalog(LocalCatalog):
+    pass
+
+
 class GithubCatalog(LocalCatalog):
     name = "community"
     repo = "unitxt"

@@ -1,0 +1,6 @@
+{
+    "type": "icl_format",
+    "input_prefix": "<|user|>\n",
+    "output_prefix": "<|assistant|>\n",
+    "input_output_separator": "\n"
+}

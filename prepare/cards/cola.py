@@ -2,11 +2,9 @@ import datasets as ds
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
+    RenameFields,
     TaskCard,
     TemplatesList,
 )
@@ -18,6 +16,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
+        RenameFields(field_to_field={"sentence": "text"}),
         AddFields(
             fields={
                 "choices": ["unacceptable", "acceptable"],
@@ -25,20 +24,11 @@ card = TaskCard(
         ),
     ],
     task=FormTask(
-        inputs=["choices", "sentence"],
+        inputs=["choices", "text"],
         outputs=["label"],
         metrics=["metrics.matthews_correlation"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {sentence}, classify if it is {choices}.
-                """.strip(),
-                output_format="{label}",
-            ),
-        ]
-    ),
+    templates="templates.classification.choices.all",
 )
 
 test_card(card, strict=False)

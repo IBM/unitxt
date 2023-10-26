@@ -40,3 +40,5 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_nav_header_background": "#ff66ff",
 }
+
+import catalog

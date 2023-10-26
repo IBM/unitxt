@@ -12,7 +12,7 @@
 Unitxt: streamlining data processing
 =====================================
 
-Unitxt is a Python library for getting data prepared and ready for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. Our aspiration is to be simple, adaptable, and transparent. 
+Unitxt is a Python library for getting data prepared and ready for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. Our aspiration is to be simple, adaptable, and transparent.
 
 .. toctree::
    :maxdepth: 2
@@ -24,9 +24,9 @@ Unitxt is a Python library for getting data prepared and ready for utilization. 
    concepts
    adding_common_recipe
    adding_operators_and_metrics
-   modules
    operators
-   api_reference
+   modules
+   catalog
 
 
 

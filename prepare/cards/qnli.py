@@ -37,7 +37,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.nli",
-    templates="templates.nli",
+    templates="templates.classification.nli.all",
 )
 
 test_card(card)

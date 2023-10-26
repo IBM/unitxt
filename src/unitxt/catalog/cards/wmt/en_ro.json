@@ -1,0 +1,33 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "wmt16",
+        "name": "ro-en"
+    },
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "translation/en",
+                    "text"
+                ],
+                [
+                    "translation/ro",
+                    "translation"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "source_language": "english",
+                "target_language": "romanian"
+            }
+        }
+    ],
+    "task": "tasks.translation.directed",
+    "templates": "templates.translation.directed.all"
+}

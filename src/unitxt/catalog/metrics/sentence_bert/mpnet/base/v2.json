@@ -1,0 +1,4 @@
+{
+    "type": "sentence_bert",
+    "model_name": "sentence-transformers/all-mpnet-base-v2"
+}

@@ -4,11 +4,16 @@ from math import isnan
 from src.unitxt.metrics import (
     F1,
     Accuracy,
+    BertScore,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
+    Reward,
+    Rouge,
+    SentenceBert,
     Squad,
+    TokenOverlap,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 
@@ -215,3 +220,53 @@ class TestMetrics(unittest.TestCase):
         global_target = 1
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_rouge(self):
+        metric = Rouge()
+        references = [["hello", "there"], ["general kenobi", "general yoda"]]
+        predictions = ["hello there", "general kenobi"]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = 5 / 6
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_rouge_l(self):
+        metric = Rouge(use_aggregator=False, rouge_types=["rougeL"])
+        references = [["hello", "there"], ["general kenobi", "general yoda"]]
+        predictions = ["hello there", "general kenobi"]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = [2 / 3, 1.0]
+        self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_token_overlap(self):
+        metric = TokenOverlap()
+        predictions = ["hello there general dude", "foo bar foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_targets = {"f1": 7 / 8, "precision": 7 / 8, "recall": 1}
+        for target, value in global_targets.items():
+            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
+
+    def test_bert_score(self):
+        metric = BertScore(model_name="microsoft/deberta-xlarge-mnli")
+        predictions = ["hello there general dude", "foo bar foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_targets = {"f1": 0.89818, "precision": 0.92830, "recall": 0.92185}
+        for target, value in global_targets.items():
+            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target], places=5)
+
+    def test_sentence_bert(self):
+        metric = SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2")
+        predictions = ["hello there general dude", "foo bar foobar"]
+        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = 0.85614
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+
+    def test_reward(self):
+        metric = Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2")
+        predictions = ["hello there General Dude", "foo bar foobar"]
+        references = [["How do you greet General Dude"], ["What is your name?"]]
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        global_target = 0.08608
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)

@@ -83,7 +83,7 @@ squad_metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        metric_name="squad",
+        hf_metric_name="squad",
         main_score="f1",
         scale=100.0,
     ),
@@ -100,7 +100,7 @@ spearman_metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        metric_name="spearmanr",
+        hf_metric_name="spearmanr",
         main_score="spearmanr",
     ),
 )

@@ -1,0 +1,4 @@
+{
+    "type": "reward",
+    "model_name": "OpenAssistant/reward-model-deberta-v3-large-v2"
+}

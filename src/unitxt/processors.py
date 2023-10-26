@@ -66,3 +66,32 @@ class DictOfListsToPairs(BaseFieldOperator):
             return result
         except:
             return []
+
+
+class TakeFirstNonEmptyLine(BaseFieldOperator):
+    def process(self, instance):
+        splitted = str(instance).strip().split("\n")
+        if len(splitted) == 0:
+            return ""
+        return splitted[0].strip()
+
+
+class LowerCaseTillPunc(BaseFieldOperator):
+    def process(self, instance):
+        non_empty_line = instance.lower()
+        match = re.search(r"[.,!?;]", non_empty_line)
+        if match:
+            # Extract text up to the first punctuation
+            non_empty_line = non_empty_line[: match.start()]
+        return non_empty_line
+
+
+class StringOrNotString(BaseFieldOperator):
+    string: str
+
+    def process(self, instance):
+        if "not " + self.string.lower() in instance.lower():
+            return "not " + self.string.lower()
+        if self.string.lower() in instance.lower():
+            return self.string.lower()
+        return instance

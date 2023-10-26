@@ -1,0 +1,39 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "xnli",
+        "name": "ur"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "validation_matched": "validation"
+            }
+        },
+        "splitters.small_no_test",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "entailment",
+                    "1": "neutral",
+                    "2": "contradiction"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "entailment",
+                    "neutral",
+                    "contradiction"
+                ]
+            }
+        }
+    ],
+    "task": "tasks.nli",
+    "templates": "templates.classification.nli.all"
+}

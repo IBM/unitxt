@@ -1,0 +1,6 @@
+{
+    "type": "icl_format",
+    "input_prefix": "Human: ",
+    "output_prefix": "Assistant: ",
+    "input_output_separator": "\n"
+}

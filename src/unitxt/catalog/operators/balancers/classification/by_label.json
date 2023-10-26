@@ -1,0 +1,6 @@
+{
+    "type": "deterministic_balancer",
+    "fields": [
+        "outputs/label"
+    ]
+}

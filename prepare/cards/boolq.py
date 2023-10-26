@@ -32,7 +32,7 @@ from src.unitxt.operators import (
     TakeByField,
     ZipFieldValues,
 )
-from src.unitxt.templates import TemplatesDict
+from src.unitxt.templates import InputOutputTemplate, TemplatesDict
 from src.unitxt.test_utils.card import test_card
 
 answers = ["yes", "false"]
@@ -42,6 +42,7 @@ templates = {
     "clean": """Question: {question}.\nAnswer:
                     """.strip(),
 }
+
 QA_TEMPLATES = TemplatesDict(
     {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
 )

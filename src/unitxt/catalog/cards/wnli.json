@@ -5,22 +5,15 @@
         "path": "glue",
         "name": "wnli"
     },
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "sentence1",
-            "sentence2"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
     "preprocess_steps": [
         "splitters.small_no_test",
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "sentence1": "premise",
+                "sentence2": "hypothesis"
+            }
+        },
         {
             "type": "map_instance_values",
             "mappers": {
@@ -38,24 +31,8 @@
                     "not entailment"
                 ]
             }
-        },
-        {
-            "type": "rename_fields",
-            "field_to_field": {
-                "sentence1": "sentence1",
-                "sentence2": "sentence2"
-            }
         }
     ],
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
-            }
-        ]
-    },
-    "instructions": null
+    "task": "tasks.nli",
+    "templates": "templates.classification.nli.all"
 }

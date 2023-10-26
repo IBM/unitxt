@@ -1,4 +1,4 @@
-name: Test Python code
+name: Test Python Code
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  pytest:
+  run-full-tests-suit:
 
     runs-on: ubuntu-latest
     env:
@@ -25,7 +25,10 @@ jobs:
         cache: 'pip'
 
     - name: Install Requirements
-      run: pip install -r requirements.txt
+      run: pip install -r requirements/base.rqr
+
+    - name: Install Requirements
+      run: pip install -r requirements/tests.rqr
 
     - name: Install the package that is required for testing and coverage calculation
       run: pip install coverage

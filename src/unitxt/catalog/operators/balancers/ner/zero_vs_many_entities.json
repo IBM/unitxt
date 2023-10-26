@@ -1,0 +1,9 @@
+{
+    "type": "length_balancer",
+    "fields": [
+        "outputs/labels"
+    ],
+    "segments_boundaries": [
+        1
+    ]
+}

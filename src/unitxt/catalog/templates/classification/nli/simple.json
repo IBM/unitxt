@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Given this sentence: {premise}, classify if this sentence: {hypothesis} is {choices}.",
+    "output_format": "{label}"
+}

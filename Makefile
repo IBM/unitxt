@@ -19,7 +19,7 @@ format:
 new-version:
 	bash $(DIR)/utils/update_version $(version)
 
-docs-server:
+docs-server: docs
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
 
 profile:
@@ -41,4 +41,3 @@ metric:
 build:
 	format
 	pypi
-
