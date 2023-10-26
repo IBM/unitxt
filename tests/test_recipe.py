@@ -124,7 +124,7 @@ class TestRecipes(unittest.TestCase):
         )
 
         stream = recipe()
-        self.assertEqual(len(list(stream["train"])), 5)
+        self.assertEqual(len(list(stream["train"])), 5)  # 5 elements were moved to demo pool
         self.assertEqual(len(list(stream["test"])), 10)
 
     def test_standard_recipe_with_loader_limit_errors(self):
@@ -161,26 +161,38 @@ class TestRecipes(unittest.TestCase):
             )
 
     def test_standard_recipe_with_template_errors(self):
+        # Check some template was specified
         with self.assertRaises(AssertionError) as cm:
             recipe = StandardRecipeWithIndexes(card="cards.wnli")
         self.assertEqual(str(cm.exception), "Specify either template or template_card_index in card")
 
+        # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
             recipe = StandardRecipeWithIndexes(
                 card="cards.wnli", template="templates.key_val", template_card_index=100
             )
-        self.assertTrue("Specify either template" in str(cm.exception))
-        self.assertTrue("but not both" in str(cm.exception))
+        self.assertTrue(
+            not re.match("Specify either template (.*) or template_card_index (.*) but not both", str(cm.exception))
+            is None
+        )
 
+        # Also check if string index is used
         with self.assertRaises(AssertionError) as cm:
             recipe = StandardRecipeWithIndexes(
                 card="cards.wnli", template="templates.key_val", template_card_index="illegal_template"
             )
-        self.assertTrue("Specify either template" in str(cm.exception))
-        self.assertTrue("but not both" in str(cm.exception))
+        self.assertTrue(
+            not re.match("Specify either template (.*) or template_card_index (.*) but not both", str(cm.exception))
+            is None
+        )
 
+        # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
             recipe = StandardRecipeWithIndexes(card="cards.wnli", template_card_index="illegal_template")
+        self.assertTrue("is not in card" in str(cm.exception))
+
+        with self.assertRaises(ValueError) as cm:
+            recipe = StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
         self.assertTrue("is not in card" in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
