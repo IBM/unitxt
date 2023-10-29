@@ -265,13 +265,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         confidence_level=self.confidence_level,
                         random_state=self.random_gen,
                     ).confidence_interval
-                    global_score[f"{field}_ci_low"] = ci[0]
-                    global_score[f"{field}_ci_high"] = ci[1]
+                    global_score[f"{field}_ci_low"] = ci.low
+                    global_score[f"{field}_ci_high"] = ci.high
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
-                        global_score["score_ci_low"] = ci[0]
-                        global_score["score_ci_high"] = ci[1]
+                        global_score["score_ci_low"] = ci.low
+                        global_score["score_ci_high"] = ci.high
         for instance in instances:
             yield instance
 
