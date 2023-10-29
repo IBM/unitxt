@@ -256,8 +256,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 from statistics import mean
 
                 for field in fields:
-                    scores = [instance["score"]["instance"][field] for instance in instances]
                     global_score[field] = mean(scores)
+                    if field == self.main_score:
+                        global_score["score"] = global_score[field]
+                        global_score["score_name"] = self.main_score
+
+                for field in fields:
+                    scores = [instance["score"]["instance"][field] for instance in instances]
                     ci = bootstrap(
                         (scores,),
                         statistic=mean,
@@ -268,10 +273,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     global_score[f"{field}_ci_low"] = ci.low
                     global_score[f"{field}_ci_high"] = ci.high
                     if field == self.main_score:
-                        global_score["score"] = global_score[field]
-                        global_score["score_name"] = self.main_score
                         global_score["score_ci_low"] = ci.low
                         global_score["score_ci_high"] = ci.high
+
         for instance in instances:
             yield instance
 
