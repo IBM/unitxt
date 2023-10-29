@@ -57,6 +57,33 @@ class MetricWithConfidenceInterval(Metric, ABC):
     # check handling of seed being a string
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
+    def compute_confidence_interval(self, score_names: List[str], instances):
+        """
+        Compute instance-based confidence intervals.
+        score_names: List[str]
+            Compute a confidence interval for each score_name from this list.
+        instances:
+            The instances for which the confidence intervals are computed.
+        """
+        from statistics import mean
+        result = {}
+
+        for score_name in score_names:
+            scores = [instance["score"]["instance"][score_name] for instance in instances]
+            ci = bootstrap(
+                (scores,),
+                statistic=mean,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=self.random_gen,
+            ).confidence_interval
+            result[f"{score_name}_ci_low"] = ci.low
+            result[f"{score_name}_ci_high"] = ci.high
+            if score_name == self.main_score:
+                result["score_ci_low"] = ci.low
+                result["score_ci_high"] = ci.high
+        return result
+
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
@@ -213,6 +240,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
+                confidence_interval = self.compute_confidence_interval(fields, instances)
+                global_score.update(confidence_interval)
+
         for instance in instances:
             yield instance
 
@@ -256,25 +286,14 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 from statistics import mean
 
                 for field in fields:
+                    scores = [instance["score"]["instance"][field] for instance in instances]
                     global_score[field] = mean(scores)
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
-                for field in fields:
-                    scores = [instance["score"]["instance"][field] for instance in instances]
-                    ci = bootstrap(
-                        (scores,),
-                        statistic=mean,
-                        n_resamples=self.n_resamples,
-                        confidence_level=self.confidence_level,
-                        random_state=self.random_gen,
-                    ).confidence_interval
-                    global_score[f"{field}_ci_low"] = ci.low
-                    global_score[f"{field}_ci_high"] = ci.high
-                    if field == self.main_score:
-                        global_score["score_ci_low"] = ci.low
-                        global_score["score_ci_high"] = ci.high
+                confidence_interval = self.compute_confidence_interval(fields, instances)
+                global_score.update(confidence_interval)
 
         for instance in instances:
             yield instance
