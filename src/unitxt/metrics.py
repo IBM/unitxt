@@ -24,7 +24,7 @@ from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
 #nltk.download("punkt")
-#MAX_32BIT = 2**32 - 1
+MAX_32BIT = 2**32 - 1
 
 
 def abstract_factory():
@@ -51,10 +51,14 @@ class Metric(ABC):
         pass
 
 
-class GlobalMetric(SingleStreamOperator, Metric):
-    n_resamples = 100
+class MetricWithConfidenceInterval(Metric, ABC):
+    n_resamples = 100  # support None which turns calculation off
     confidence_level = 0.95
+    # check handling of seed being a string
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
+
+
+class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
@@ -142,6 +146,8 @@ class GlobalMetric(SingleStreamOperator, Metric):
                 random_state=self.random_gen,
             ).confidence_interval
             global_score[f"score_ci"] = {"low": ci.low, "high": ci.high}
+            # also write to score_name_ci, by taking the score_name from the global_scorre
+            # replace with ci_low and ci_high
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -158,7 +164,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
         pass
 
 
-class BulkInstanceMetric(SingleStreamOperator, Metric):
+class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -213,12 +219,8 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
         pass
 
 
-class InstanceMetric(SingleStreamOperator, Metric):
+class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
-
-    n_resamples = 1000
-    confidence_level = 0.95
-    random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
     @property
     @abstractmethod
