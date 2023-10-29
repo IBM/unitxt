@@ -23,6 +23,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
+# TODO check removal
 #nltk.download("punkt")
 MAX_32BIT = 2**32 - 1
 
@@ -52,9 +53,9 @@ class Metric(ABC):
 
 
 class MetricWithConfidenceInterval(Metric, ABC):
-    n_resamples = 100  # support None which turns calculation off
+    n_resamples = 100  # TODO support None which turns calculation off
     confidence_level = 0.95
-    # check handling of seed being a string
+    # TODO check handling of seed being a string
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
     def compute_confidence_interval(self, score_names: List[str], instances):
