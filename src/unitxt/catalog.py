@@ -100,7 +100,7 @@ class GithubCatalog(LocalCatalog):
 def verify_legal_catalog_name(name):
     assert re.match(
         r"^[\w" + COLLECTION_SEPARATOR + "]+$", name
-    ), f'Catalog name should be alphanumeric, ":" should specify dirs (instead of "/"). Name: {name}'
+    ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
 def add_to_catalog(
