@@ -58,9 +58,10 @@ class MetricWithConfidenceInterval(Metric, ABC):
     # TODO check handling of seed being a string
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
-    def compute_confidence_interval(self, score_names: List[str], instances):
+    def score_based_confidence_interval(self, score_names: List[str], instances):
         """
-        Compute instance-based confidence intervals.
+        Compute confidence intervals based on existing scores, already computed
+        on the input instances.
         score_names: List[str]
             Compute a confidence interval for each score_name from this list.
         instances:
@@ -85,44 +86,10 @@ class MetricWithConfidenceInterval(Metric, ABC):
                 result["score_ci_high"] = ci.high
         return result
 
-
-class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-
-    def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        references = []
-        predictions = []
-        global_score = {}
-
-        instances = []
-
-        for instance in stream:
-            if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
-
-            refs, pred = instance["references"], instance["prediction"]
-
-            try:
-                instance_score = self._compute([refs], [pred])
-            except:
-                instance_score = {"score": None, "score_name": self.main_score}
-
-                if isinstance(self.main_score, str) and self.main_score is not None:
-                    instance_score[self.main_score] = None
-
-            instance["score"]["instance"].update(instance_score)
-
-            references.append(refs)
-            predictions.append(pred)
-            instances.append(instance)
-
-        result = self._compute(references, predictions)
-
-        global_score.update(result)
-
-        identifiers = list(range(len(predictions)))
-
+    def compute_global_confidence_intervals(self, references, predictions):
+        """
+        Computed confidence intervals for a set of references and predictions.
+        """
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
@@ -165,7 +132,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             return scores
 
+        result = {}
         if self.n_resamples > 1 and len(predictions) > 1:
+            identifiers = list(range(len(predictions)))
             ci = bootstrap(
                 (identifiers,),
                 statistic=statistic,
@@ -173,11 +142,50 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 confidence_level=self.confidence_level,
                 random_state=self.random_gen,
             ).confidence_interval
-            global_score[f"score_ci_low"] = ci.low
-            global_score[f"score_ci_high"] = ci.high
-            score_name = global_score["score_name"]
-            global_score[f"{score_name}_ci_low"] = ci.low
-            global_score[f"{score_name}_ci_high"] = ci.high
+            result[f"score_ci_low"] = ci.low
+            result[f"score_ci_high"] = ci.high
+            score_name = result["score_name"]
+            result[f"{score_name}_ci_low"] = ci.low
+            result[f"{score_name}_ci_high"] = ci.high
+        return result
+
+
+class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        references = []
+        predictions = []
+        global_score = {}
+
+        instances = []
+
+        for instance in stream:
+            if "score" not in instance:
+                instance["score"] = {"global": global_score, "instance": {}}
+            else:
+                global_score = instance["score"]["global"]
+
+            refs, pred = instance["references"], instance["prediction"]
+
+            try:
+                instance_score = self._compute([refs], [pred])
+            except:
+                instance_score = {"score": None, "score_name": self.main_score}
+
+                if isinstance(self.main_score, str) and self.main_score is not None:
+                    instance_score[self.main_score] = None
+
+            instance["score"]["instance"].update(instance_score)
+
+            references.append(refs)
+            predictions.append(pred)
+            instances.append(instance)
+
+        result = self._compute(references, predictions)
+        global_score.update(result)
+
+        confidence_interval = self.compute_global_confidence_intervals(references, predictions)
+        global_score.update(confidence_interval)
 
         for instance in instances:
             instance["score"]["global"] = global_score
@@ -241,7 +249,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
-                confidence_interval = self.compute_confidence_interval(fields, instances)
+                confidence_interval = self.score_based_confidence_interval(fields, instances)
                 global_score.update(confidence_interval)
 
         for instance in instances:
@@ -293,7 +301,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
-                confidence_interval = self.compute_confidence_interval(fields, instances)
+                confidence_interval = self.score_based_confidence_interval(fields, instances)
                 global_score.update(confidence_interval)
 
         for instance in instances:
