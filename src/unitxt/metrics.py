@@ -264,6 +264,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+    n_resamples = 1000
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
     @property
@@ -427,6 +428,7 @@ class HuggingfaceMetric(GlobalMetric):
 
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
+    n_resamples = 1000
     hf_metric_name: str
 
     hf_metric_fields: List[str]
