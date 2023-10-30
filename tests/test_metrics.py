@@ -280,6 +280,23 @@ class TestMetrics(unittest.TestCase):
 
 class TestConfidenceIntervals(unittest.TestCase):
 
+    def test_confidence_interval_off(self):
+        """
+        Test that when metric.n_resamples is set to None, no confidence intervals
+        are computed
+        """
+
+        # Test one GlobalMetric and one InstanceMetric
+        for metric in [Accuracy(), F1Macro()]:
+            metric.n_resamples = None
+            outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
+
+            global_result = outputs[0]["score"]["global"]
+            # Check there are no confidence intervals in the result
+            for key in global_result:
+                self.assertTrue("ci_low" not in key)
+                self.assertTrue("ci_high"not in key)
+
     def test_instance_metric_confidence_interval(self):
         """
         Test the calculation of confidence intervals
@@ -295,13 +312,32 @@ class TestConfidenceIntervals(unittest.TestCase):
     def test_global_metric_confidence_interval(self):
         """
         Test the calculation of confidence intervals
-        for a global metric (F1Macro is used as an instance of
+        for global metrics (F1Macro and F1Micro are used as instances of
         a GlobalMetric)
         """
+        f1_macro_low, f1_macro_high = 0.8809213119223925, 0.9439681645177271
         self._test_confidence_interval(
             metric=F1Macro(),
-            expected_ci_low=0.8809213119223925,
-            expected_ci_high=0.9439681645177271,
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
+        )
+        f1_micro_low, f1_micro_high = 0.8439306358381503, 0.9223675337263242
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+
+        # Now reverse the order and check things don't change
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
         )
 
     def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
