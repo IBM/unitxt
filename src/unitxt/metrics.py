@@ -53,7 +53,7 @@ class Metric(ABC):
 
 
 class MetricWithConfidenceInterval(Metric, ABC):
-    n_resamples = 100  # TODO support None which turns calculation off
+    n_resamples = 100
     confidence_level = 0.95
     # TODO check handling of seed being a string
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
@@ -69,6 +69,9 @@ class MetricWithConfidenceInterval(Metric, ABC):
         """
         from statistics import mean
         result = {}
+
+        if self.n_resamples is None:
+            return result
 
         for score_name in score_names:
             scores = [instance["score"]["instance"][score_name] for instance in instances]
@@ -133,7 +136,7 @@ class MetricWithConfidenceInterval(Metric, ABC):
             return scores
 
         result = {}
-        if self.n_resamples > 1 and len(predictions) > 1:
+        if self.n_resamples is not None and self.n_resamples > 1 and len(predictions) > 1:
             identifiers = list(range(len(predictions)))
             ci = bootstrap(
                 (identifiers,),
