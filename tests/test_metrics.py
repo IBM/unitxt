@@ -1,6 +1,8 @@
 import unittest
 from math import isnan
 
+import numpy as np
+
 from src.unitxt.metrics import (
     F1,
     Accuracy,
@@ -284,27 +286,11 @@ class TestConfidenceIntervals(unittest.TestCase):
         for an instance metric (Accuracy is used as an instance of
         an InstanceMetric)
         """
-        metric = Accuracy()
-
-        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
-        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
-
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-
-        expected_global_result = {
-            'accuracy_ci_low': 0.71,
-            'accuracy_ci_high': 0.87,
-            'score_ci_low': 0.71,
-            'score_ci_high': 0.87,
-        }
-
-        global_result = outputs[0]["score"]["global"].copy()
-        # Only check the keys that are expected, i.e. exist in expected_global_result
-        global_result = {
-            key: value
-            for key, value in global_result.items() if key in expected_global_result
-        }
-        self.assertDictEqual(global_result, expected_global_result)
+        self._test_confidence_interval(
+            metric=Accuracy(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
 
     def test_global_metric_confidence_interval(self):
         """
@@ -312,24 +298,31 @@ class TestConfidenceIntervals(unittest.TestCase):
         for a global metric (F1Macro is used as an instance of
         a GlobalMetric)
         """
-        metric = F1Macro()
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=0.8809213119223925,
+            expected_ci_high=0.9439681645177271,
+        )
 
+    def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
+        """
+        Test the calculation of confidence intervals
+        for a given metric.
+        """
+        metric.random_gen = np.random.default_rng(42)
         predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
         references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
 
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
-        expected_ci_low = 0.8809213119223925
-        expected_ci_high = 0.9439681645177271
         expected_global_result = {
-            'f1_macro_ci_low': expected_ci_low,
-            'f1_macro_ci_high': expected_ci_high,
+            f'{metric.main_score}_ci_low': expected_ci_low,
+            f'{metric.main_score}_ci_high': expected_ci_high,
             'score_ci_low': expected_ci_low,
             'score_ci_high': expected_ci_high,
         }
 
         global_result = outputs[0]["score"]["global"].copy()
-        print(global_result)
         # Only check the keys that are expected, i.e. exist in expected_global_result
         global_result = {
             key: value
