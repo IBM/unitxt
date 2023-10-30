@@ -18,8 +18,10 @@ global_target = {
     "char_edit_dist_accuracy": 0.79,
     "score": 0.79,
     "score_name": "char_edit_dist_accuracy",
-    "char_edit_dist_accuracy_ci": {"low": 0.58, "high": 1.0},
-    "score_ci": {"low": 0.58, "high": 1.0},
+    "char_edit_dist_accuracy_ci_low": 0.58,
+    "char_edit_dist_accuracy_ci_high": 1.0,
+    "score_ci_low": 0.58,
+    "score_ci_high": 1.0,
 }
 
 outputs = test_metric(

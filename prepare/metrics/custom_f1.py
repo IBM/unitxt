@@ -36,7 +36,8 @@ global_target = {
     "f1_micro": 0.57,
     "score": 0.57,
     "score_name": "f1_micro",
-    "score_ci": {"low": 0.5, "high": 0.67},
+    "score_ci_low": 0.5,
+    "score_ci_high": 0.67,
 }
 
 outputs = test_metric(

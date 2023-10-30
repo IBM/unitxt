@@ -33,7 +33,8 @@ global_target = {
     "spearmanr": 0.87,
     "score": 0.87,
     "score_name": "spearmanr",
-    "score_ci": {"low": np.nan, "high": np.nan},
+    "score_ci_low": np.nan,
+    "score_ci_high": np.nan,
 }
 
 outputs = test_metric(
