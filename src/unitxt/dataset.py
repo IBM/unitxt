@@ -1,5 +1,6 @@
-import datasets
 import os
+
+import datasets
 
 from .artifact import Artifact, UnitxtArtifactNotFoundError
 from .artifact import __file__ as _
@@ -10,9 +11,12 @@ from .catalog import __file__ as _
 from .collections import __file__ as _
 from .common import __file__ as _
 from .dataclass import __file__ as _
+from .dict_utils import __file__ as _
 from .file_utils import __file__ as _
+from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
+from .hf_utils import __file__ as _
 from .instructions import __file__ as _
 from .load import __file__ as _
 from .loaders import __file__ as _
@@ -22,27 +26,23 @@ from .normalizers import __file__ as _
 from .operator import __file__ as _
 from .operators import __file__ as _
 from .processors import __file__ as _
+from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .register import register_all_artifacts, _reset_env_local_catalogs
+from .register import _reset_env_local_catalogs, register_all_artifacts
+from .renderers import __file__ as _
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
+from .standard import __file__ as _
 from .stream import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
+from .type_utils import __file__ as _
 from .utils import __file__ as _
 from .validate import __file__ as _
-from .type_utils import __file__ as _
-from .hf_utils import __file__ as _
-from .dict_utils import __file__ as _
-from .random_utils import __file__ as _
 from .version import __file__ as _
-from .renderers import __file__ as _
-from .formats import __file__ as _
-from .standard import __file__ as _
-
 from .version import version
 
 __default_recipe__ = "common_recipe"
@@ -69,7 +69,9 @@ def parse(query: str):
     for kv in kvs:
         key_val = kv.split("=")
         if len(key_val) != 2 or len(key_val[0].strip()) == 0 or len(key_val[1].strip()) == 0:
-            raise ValueError('Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.')
+            raise ValueError(
+                f'Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.'
+            )
         key, val = key_val
         if val.isdigit():
             result[key] = int(val)
@@ -103,7 +105,9 @@ class Dataset(datasets.GeneratorBasedBuilder):
     def generators(self):
         if not hasattr(self, "_generators") or self._generators is None:
             try:
-                from unitxt.dataset import get_dataset_artifact as get_dataset_artifact_installed
+                from unitxt.dataset import (
+                    get_dataset_artifact as get_dataset_artifact_installed,
+                )
 
                 unitxt_installed = True
             except ImportError:

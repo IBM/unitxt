@@ -3,6 +3,7 @@ import unittest
 from src.unitxt.operators import (
     AddFields,
     ApplyOperatorsField,
+    AugmentWhitespace,
     CastFields,
     CopyFields,
     DeterministicBalancer,
@@ -16,10 +17,12 @@ from src.unitxt.operators import (
     RenameFields,
     Shuffle,
     SplitByValue,
+    StreamRefiner,
     TakeByField,
     Unique,
     ZipFieldValues,
 )
+from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
 
 
@@ -331,6 +334,34 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+    def test_stream_refiner(self):
+        refiner = StreamRefiner()
+
+        ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
+
+        refiner.apply_to_streams = ["train"]
+        refiner.max_instances = 1
+
+        refined_ms = refiner(ms)
+
+        train = list(refined_ms["train"])
+        self.assertEqual(len(train), 1)
+
+        test = list(refined_ms["test"])
+        self.assertEqual(len(test), 2)
+
+    def test_deterministic_balancer_empty_stream(self):
+        inputs = []
+
+        targets = []
+
+        test_operator(
+            operator=DeterministicBalancer(fields=["a", "b"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_deterministic_balancer(self):
         inputs = [
             {"a": [1, 3], "b": 0, "id": 0},
@@ -368,3 +399,36 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_augment_whitespace_model_input(self):
+        source = "The dog ate my cat"
+        inputs = [{"source": source}]
+
+        operator = AugmentWhitespace(augment_model_input=True)
+        outputs = apply_operator(operator, inputs)
+        assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
+        normalized_output_source = outputs[0]["source"].split()
+        normalized_input_source = source.split()
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_augment_whitespace_task_input_with_error(self):
+        text = "The dog ate my cat"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["sentence"])
+        with self.assertRaises(ValueError):
+            outputs = apply_operator(operator, inputs)
+
+    def test_augment_whitespace_task_input(self):
+        text = "The dog ate my cat"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        normalized_output_source = outputs[0]["inputs"]["text"].split()
+        normalized_input_source = text.split()
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"

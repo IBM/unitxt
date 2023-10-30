@@ -253,6 +253,93 @@ class AddConstant(FieldOperator):
         return value + self.add
 
 
+class Augmentor(StreamInstanceOperator):
+    """
+    A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
+    Args:
+        augment_model_input: Whether to augment the input to the model.
+        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the FormTask operator.
+
+    """
+
+    augment_task_input: bool = False
+    augment_model_input: bool = False
+
+    def verify(self):
+        assert not (
+            self.augment_task_input and self.augment_model_input
+        ), "Augmentor must set either 'augment_task_input' and 'augment_model_input' but not both"
+        assert (
+            self.augment_task_input or self.augment_model_input
+        ), "Augmentor must set either 'augment_task_input' or 'augment_model_input'"
+
+        super().verify()
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
+
+    def prepare(self):
+        pass
+
+    def set_task_input_fields(self, task_input_fields: List[str]):
+        self._task_input_fields = ["inputs/" + task_input_field for task_input_field in task_input_fields]
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        if self.augment_task_input:
+            assert (
+                len(self._task_input_fields) > 0
+            ), "No augmentable input fields were defined in FormTask, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the FormTask."
+            fields = self._task_input_fields
+            assert not self.augment_model_input
+
+        if self.augment_model_input:
+            fields = ["source"]
+            assert not self.augment_task_input
+
+        for field in fields:
+            try:
+                old_value = dict_get(
+                    instance,
+                    field,
+                    use_dpath=True,
+                    default="",
+                    not_exist_ok=False,
+                )
+            except TypeError as e:
+                raise TypeError(f"Failed to get {field} from {instance}")
+            new_value = self.process_value(old_value)
+            dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
+        return instance
+
+
+class NullAugmentor(Augmentor):
+    def verify(self):
+        pass
+
+    def process_value(self, value: Any) -> Any:
+        return value
+
+
+class AugmentWhitespace(Augmentor):
+    """
+    Augments the inputs by replace existing whitespace with other whitespace.
+    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
+    """
+
+    def process_value(self, value: Any) -> Any:
+        import re
+
+        words = re.split("(\s+)", value)
+        new_value = ""
+        for word in words:
+            if word.isspace():
+                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+            else:
+                new_value += word
+        return new_value
+
+
 class ShuffleFieldValues(FieldOperator):
     """
     Shuffles an iterable value
@@ -770,6 +857,9 @@ class DeterministicBalancer(StreamRefiner):
 
         for instance in stream:
             counter[self.signature(instance)] += 1
+
+        if len(counter) == 0:
+            return
 
         lowest_count = counter.most_common()[-1][-1]
 

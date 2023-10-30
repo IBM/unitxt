@@ -1,0 +1,32 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+-   repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+    -   id: black
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.0  # Use the specific version you desire
+    hooks:
+    -   id: isort
+-   repo: https://github.com/ibm/detect-secrets
+    # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
+    # You are encouraged to use static refs such as tags, instead of branch name
+    #
+    # Running "pre-commit autoupdate" automatically updates rev to latest tag
+    rev: 0.13.1+ibm.61.dss
+    hooks:
+      - id: detect-secrets # pragma: whitelist secret
+        # Add options for detect-secrets-hook binary. You can run `detect-secrets-hook --help` to list out all possible options.
+        # You may also run `pre-commit run detect-secrets` to preview the scan result.
+        # when "--baseline" without "--use-all-plugins", pre-commit scan with just plugins in baseline file
+        # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
+        # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
+        args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]

@@ -1,11 +1,26 @@
+import os
+
 import setuptools
 from version import version
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
+requirements_dir = "requirements"
+extras_require = {}
+
+# Collecting all requirements from the .rqr files
+for file in os.listdir(requirements_dir):
+    if file.endswith(".rqr"):
+        key = file.rsplit(".")[0]  # Remove .rqr extension to get the key
+        with open(os.path.join(requirements_dir, file), "r") as f:
+            extras_require[key] = f.read().splitlines()
+
+# Adding the 'all' key
+all_requirements = []
+for req_list in extras_require.values():
+    all_requirements.extend(req_list)
+extras_require["all"] = list(set(all_requirements))  # Removing duplicates
 
 setuptools.setup(
     name="unitxt",
@@ -24,5 +39,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
-    install_requires=requirements,
+    install_requires=extras_require["base"],
 )

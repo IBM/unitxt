@@ -6,8 +6,9 @@ import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
-from ..common import CommonRecipe
 from ..metric import _compute
+from ..standard import StandardRecipe
+from ..templates import TemplatesDict
 from ..text_utils import print_dict
 
 TEMP_NAME = "tmp_name"
@@ -15,7 +16,7 @@ TEMP_NAME = "tmp_name"
 
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
+        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
         assert os.path.exists(os.path.join(tmp_dir, TEMP_NAME + ".json")), "Card was not added to catalog"
 
 
@@ -26,7 +27,7 @@ def test_metrics_exist(card):
 
 def test_loading_from_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir)
+        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
         register_local_catalog(tmp_dir)
         card_, _ = fetch_artifact(TEMP_NAME)
         assert json.dumps(card_.to_dict(), sort_keys=True) == json.dumps(
@@ -34,36 +35,30 @@ def test_loading_from_catalog(card):
         ), "Card loaded is not equal to card stored"
 
 
-def load_examples_from_common_recipe(card, tested_split):
-    if card.templates:
-        num_templates = len(card.templates)
+def load_examples_from_standard_recipe(card, tested_split, template_card_index):
+    print("=" * 80)
+    print(f"Using template card index: {template_card_index}")
 
-        try:  # named templates (dict)
-            template_item = next(iter(card.templates.keys()))
-        except AttributeError:  # template list
-            template_item = 0
-    else:
-        num_templates = 0
-        template_item = None
     num_instructions = len(card.instructions) if card.instructions else 0
-    recipe = CommonRecipe(
+    recipe = StandardRecipe(
         card=card,
         demos_pool_size=100,
         demos_taken_from=tested_split,
         num_demos=3,
-        template_item=template_item,
-        instruction_item=0 if num_instructions else None,
+        template_card_index=template_card_index,
+        instruction_card_index=0 if num_instructions else None,
+        loader_limit=200,
     )
     multi_stream = recipe()
     stream = multi_stream[tested_split]
     try:
-        examples = list(stream.take(5))
+        examples = list(stream.take(3))
     except ValueError as e:
         raise ValueError(
             "Try setting streaming=False in LoadHF in your card. For example: LoadHF(path='glue', name='mrpc', streaming=False). Org error message:",
             e,
         )
-    print("5 Examples: ")
+    print("3 Examples: ")
     for example in examples:
         print_dict(example)
         print("\n")
@@ -72,7 +67,14 @@ def load_examples_from_common_recipe(card, tested_split):
 
 
 def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
-    examples = load_examples_from_common_recipe(card, tested_split)
+    if type(card.templates) is TemplatesDict:
+        for template_item in card.templates.keys():
+            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+    else:
+        num_templates = len(card.templates)
+        for template_item in range(0, num_templates):
+            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:

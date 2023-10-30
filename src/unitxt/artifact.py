@@ -200,7 +200,9 @@ class Artifact(Dataclass):
     def save(self, path):
         with open(path, "w") as f:
             init_dict = self.to_dict()
-            json.dump(init_dict, f, indent=4)
+            dumped = json.dumps(init_dict, indent=4)
+            f.write(dumped)
+            f.write("\n")
 
 
 class ArtifactList(list, Artifact):

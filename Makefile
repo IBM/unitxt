@@ -41,4 +41,3 @@ metric:
 build:
 	format
 	pypi
-
