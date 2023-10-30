@@ -9,7 +9,7 @@ add_to_catalog(
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Given this sentence: {sentence}, classify if it is {choices}.",
+        input_format="Given this sentence: {text}, classify if it is {choices}.",
         output_format="{label}",
     ),
     "templates.classification.choices.simple2",
