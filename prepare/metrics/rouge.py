@@ -35,6 +35,8 @@ global_target = {
     "rougeLsum": 0.83,
     "score": 0.83,
     "score_name": "rougeL",
+    "rougeL_ci_low": 0.67,
+    "rougeL_ci_high": 1.0,
     "score_ci_low": 0.67,
     "score_ci_high": 1.0,
 }

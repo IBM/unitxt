@@ -33,6 +33,8 @@ global_target = {
     "spearmanr": 0.87,
     "score": 0.87,
     "score_name": "spearmanr",
+    "spearmanr_ci_low": np.nan,
+    "spearmanr_ci_high": np.nan,
     "score_ci_low": np.nan,
     "score_ci_high": np.nan,
 }

@@ -16,7 +16,10 @@ global_target = {
     "wer": 0.38,
     "score": 0.38,
     "score_name": "wer",
-    "score_ci": {"low": 0.25, "high": 0.5},
+    "wer_ci_low": 0.25,
+    "wer_ci_high": 0.5,
+    "score_ci_low": 0.25,
+    "score_ci_high": 0.5,
 }  # Should by 0.375, but package rounds the scores
 
 outputs = test_metric(
