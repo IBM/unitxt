@@ -2,7 +2,6 @@ import unittest
 from math import isnan
 
 import numpy as np
-
 from src.unitxt.metrics import (
     F1,
     Accuracy,
@@ -37,10 +36,7 @@ class TestMetrics(unittest.TestCase):
 
         global_result = outputs[0]["score"]["global"].copy()
         # Only check the keys that are expected, i.e. exist in expected_global_result
-        global_result = {
-            key: value
-            for key, value in global_result.items() if key in expected_global_result
-        }
+        global_result = {key: value for key, value in global_result.items() if key in expected_global_result}
         self.assertDictEqual(global_result, expected_global_result)
 
         instance_targets = [
@@ -279,7 +275,6 @@ class TestMetrics(unittest.TestCase):
 
 
 class TestConfidenceIntervals(unittest.TestCase):
-
     def test_confidence_interval_off(self):
         """
         Test that when metric.n_resamples is set to None, no confidence intervals
@@ -295,7 +290,7 @@ class TestConfidenceIntervals(unittest.TestCase):
             # Check there are no confidence intervals in the result
             for key in global_result:
                 self.assertTrue("ci_low" not in key)
-                self.assertTrue("ci_high"not in key)
+                self.assertTrue("ci_high" not in key)
 
     def test_instance_metric_confidence_interval(self):
         """
@@ -359,10 +354,10 @@ class TestConfidenceIntervals(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 
         expected_global_result = {
-            f'{metric.main_score}_ci_low': expected_ci_low,
-            f'{metric.main_score}_ci_high': expected_ci_high,
-            'score_ci_low': expected_ci_low,
-            'score_ci_high': expected_ci_high,
+            f"{metric.main_score}_ci_low": expected_ci_low,
+            f"{metric.main_score}_ci_high": expected_ci_high,
+            "score_ci_low": expected_ci_low,
+            "score_ci_high": expected_ci_high,
         }
 
         global_result = outputs[0]["score"]["global"].copy()
@@ -375,5 +370,7 @@ class TestConfidenceIntervals(unittest.TestCase):
                 # An output score that is not expected
                 # This is ok if the score_name is not related to confidence intervals
                 # Otherwise, there was some confidence interval calculation that was not supposed to occur.
-                self.assertTrue("ci_low" not in score_name and "ci_high" not in score_name,
-                                msg=f"Unexpected confidence interval score '{score_name}'.")
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )

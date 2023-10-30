@@ -24,7 +24,7 @@ from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
 # TODO check removal
-#nltk.download("punkt")
+# nltk.download("punkt")
 MAX_32BIT = 2**32 - 1
 
 
@@ -69,6 +69,7 @@ class MetricWithConfidenceInterval(Metric, ABC):
             The instances for which the confidence intervals are computed.
         """
         from statistics import mean
+
         result = {}
 
         if self.n_resamples is None:
@@ -94,6 +95,7 @@ class MetricWithConfidenceInterval(Metric, ABC):
         """
         Computed confidence intervals for a set of references and predictions.
         """
+
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
@@ -154,7 +156,6 @@ class MetricWithConfidenceInterval(Metric, ABC):
 
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
