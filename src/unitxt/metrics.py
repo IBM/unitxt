@@ -55,7 +55,8 @@ class Metric(ABC):
 class MetricWithConfidenceInterval(Metric, ABC):
     n_resamples = 100
     confidence_level = 0.95
-    # TODO check handling of seed being a string
+    # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+    # So use '& MAX_32BIT' to get a 32-bit seed.
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
     def score_based_confidence_interval(self, score_names: List[str], instances):
