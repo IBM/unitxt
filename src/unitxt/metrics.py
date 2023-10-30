@@ -252,7 +252,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
-                confidence_interval = self.score_based_confidence_interval(fields, instances)
+                confidence_interval = self.score_based_confidence_interval(
+                    score_names=[self.main_score], instances=instances
+                )
                 global_score.update(confidence_interval)
 
         for instance in instances:
@@ -305,7 +307,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
-                confidence_interval = self.score_based_confidence_interval(fields, instances)
+                confidence_interval = self.score_based_confidence_interval(
+                    score_names=[self.main_score], instances=instances
+                )
                 global_score.update(confidence_interval)
 
         for instance in instances:

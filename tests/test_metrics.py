@@ -309,6 +309,13 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_high=0.87,
         )
 
+    def test_instance_metric_with_multiple_scores_confidence_interval(self):
+        self._test_confidence_interval(
+            metric=TokenOverlap(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
     def test_global_metric_confidence_interval(self):
         """
         Test the calculation of confidence intervals
@@ -359,10 +366,14 @@ class TestConfidenceIntervals(unittest.TestCase):
         }
 
         global_result = outputs[0]["score"]["global"].copy()
-        # Only check the keys that are expected, i.e. exist in expected_global_result
-        global_result = {
-            key: value
-            for key, value in global_result.items() if key in expected_global_result
-        }
-        self.assertDictEqual(global_result, expected_global_result)
-
+        print(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                # The that the output value is as the expected value
+                self.assertAlmostEqual(score_value, expected_global_result[score_name], places=5)
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue("ci_low" not in score_name and "ci_high" not in score_name,
+                                msg=f"Unexpected confidence interval score '{score_name}'.")
