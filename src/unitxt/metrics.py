@@ -207,6 +207,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+    n_resamples = 1000
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -433,7 +434,6 @@ class HuggingfaceMetric(GlobalMetric):
 
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
-    n_resamples = 1000
     hf_metric_name: str
 
     hf_metric_fields: List[str]
