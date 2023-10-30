@@ -25,25 +25,27 @@ class TestMetrics(unittest.TestCase):
         predictions = ["A", "B", "C"]
         references = [["B"], ["A"], ["C"]]
 
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+
+        expected_global_result = {
+            "accuracy": 1 / 3,
+            "score": 1 / 3,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items() if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
         instance_targets = [
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
             {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
         ]
-
-        global_target = {
-            "accuracy": 1 / 3,
-            "score": 1 / 3,
-            "score_name": "accuracy",
-            "accuracy_ci_high": 1.0,
-            "accuracy_ci_low": 0.0,
-            "score_ci_high": 1.0,
-            "score_ci_low": 0.0,
-        }
-
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-
-        self.assertDictEqual(outputs[0]["score"]["global"], global_target)
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
@@ -272,3 +274,36 @@ class TestMetrics(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = 0.08608
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+
+
+class TestConfidenceIntervals(unittest.TestCase):
+
+    def test_instance_metric_confidence_interval(self):
+        """
+        Test the calculation of confidence intervals
+        for an instance metric (Accuracy is used as an instance of
+        an InstanceMetric)
+        """
+        metric = Accuracy()
+
+        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
+        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
+
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+
+        expected_global_result = {
+            'accuracy_ci_low': 0.71,
+            'accuracy_ci_high': 0.87,
+            'score_ci_low': 0.71,
+            'score_ci_high': 0.87,
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        print(global_result)
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items() if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
