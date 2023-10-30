@@ -299,6 +299,36 @@ class TestConfidenceIntervals(unittest.TestCase):
         }
 
         global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items() if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+    def test_global_metric_confidence_interval(self):
+        """
+        Test the calculation of confidence intervals
+        for a global metric (F1Macro is used as an instance of
+        a GlobalMetric)
+        """
+        metric = F1Macro()
+
+        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
+        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
+
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+
+        expected_ci_low = 0.8809213119223925
+        expected_ci_high = 0.9439681645177271
+        expected_global_result = {
+            'f1_macro_ci_low': expected_ci_low,
+            'f1_macro_ci_high': expected_ci_high,
+            'score_ci_low': expected_ci_low,
+            'score_ci_high': expected_ci_high,
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
         print(global_result)
         # Only check the keys that are expected, i.e. exist in expected_global_result
         global_result = {

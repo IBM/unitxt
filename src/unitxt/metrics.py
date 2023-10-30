@@ -89,7 +89,7 @@ class MetricWithConfidenceInterval(Metric, ABC):
                 result["score_ci_high"] = ci.high
         return result
 
-    def compute_global_confidence_intervals(self, references, predictions):
+    def compute_global_confidence_intervals(self, references, predictions, score_name):
         """
         Computed confidence intervals for a set of references and predictions.
         """
@@ -147,7 +147,6 @@ class MetricWithConfidenceInterval(Metric, ABC):
             ).confidence_interval
             result[f"score_ci_low"] = ci.low
             result[f"score_ci_high"] = ci.high
-            score_name = result["score_name"]
             result[f"{score_name}_ci_low"] = ci.low
             result[f"{score_name}_ci_high"] = ci.high
         return result
@@ -187,7 +186,8 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         result = self._compute(references, predictions)
         global_score.update(result)
 
-        confidence_interval = self.compute_global_confidence_intervals(references, predictions)
+        score_name = global_score["score_name"]
+        confidence_interval = self.compute_global_confidence_intervals(references, predictions, score_name)
         global_score.update(confidence_interval)
 
         for instance in instances:
