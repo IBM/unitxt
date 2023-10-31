@@ -11,7 +11,7 @@ register_local_catalog_for_tests()
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
-all_prepration_files = glob.glob(glob_query, recursive=True)
+all_preparation_files = glob.glob(glob_query, recursive=True)
 
 
 def import_module_from_file(file_path):
@@ -33,8 +33,9 @@ def import_module_from_file(file_path):
 class TestExamples(unittest.TestCase):
     def test_preprations(self):
         print(glob_query)
-        print(f"Testing prepration files: {all_prepration_files}")
-        for file in all_prepration_files:
+        print(f"Testing preparation files: {all_preparation_files}")
+        all_preparation_files.sort()
+        for file in all_preparation_files:
             with self.subTest(file=file):
                 print(f"Testing preparation file: {file}, current seed: {get_seed()}.")
                 # Fix the random seed before loading the module. This is because for metrics,
