@@ -34,6 +34,8 @@ class TestExamples(unittest.TestCase):
     def test_preprations(self):
         print(glob_query)
         print(f"Testing preparation files: {all_preparation_files}")
+        # Make sure the order in which the tests are run is deterministic
+        # Having a different order for local testing and github testing may cause diffs in results.
         all_preparation_files.sort()
         for file in all_preparation_files:
             with self.subTest(file=file):
