@@ -4,8 +4,8 @@ import os
 import sys
 import unittest
 
+from src.unitxt.random_utils import get_seed, set_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
-from unitxt.random_utils import get_seed, set_seed
 
 register_local_catalog_for_tests()
 
