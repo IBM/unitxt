@@ -5,6 +5,7 @@ import sys
 import unittest
 
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+from unitxt.random_utils import get_seed, set_seed
 
 register_local_catalog_for_tests()
 
@@ -35,7 +36,13 @@ class TestExamples(unittest.TestCase):
         print(f"Testing prepration files: {all_prepration_files}")
         for file in all_prepration_files:
             with self.subTest(file=file):
-                print(f"Testing preparation file: {file}")
+                print(f"Testing preparation file: {file}, current seed: {get_seed()}.")
+                # Fix the random seed before loading the module. This is because for metrics,
+                # a random generator member is used in confidence interval estimation. To make that
+                # estimated confidence interval deterministic, the seed used for initializing the
+                # random generator has to be fixed.
+                set_seed(17)
+                print(f"Seed was set to: {get_seed()}.")
                 import_module_from_file(file)
                 # with open(file, "r") as f:
                 #     exec(f.read())
