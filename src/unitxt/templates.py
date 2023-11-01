@@ -187,15 +187,19 @@ class YesNoTemplate(Template):
     input_format:
         Defines the format of the question.
     class_name:
-        Defines the name of the class that this template asks of. If the true label is equal to this
-        class name, then the expected output is self.yes_answer (by default, "Yes").
-        Otherwise the expected output is self.no_answer (by default, "No").
+        Defines the name of the class that this template asks of. If a gold label is equal to this
+        class name, then the correct output is self.yes_answer (by default, "Yes").
+        Otherwise the correct output is self.no_answer (by default, "No").
     label_field:
-        Defines the field which contains the true label of the input text. If the true label is equal to the
-        value in class_name, then the expected output is self.yes_answer (by default, "Yes").
-        Otherwise the expected output is self.no_answer (by default, "No").
+        Defines the field which contains the true label of the input text. If a gold label is equal to the
+        value in class_name, then the correct output is self.yes_answer (by default, "Yes").
+        Otherwise the correct output is self.no_answer (by default, "No").
     yes_answer:
-
+        The output value for when the gold label equals self.class_name.
+        Defaults to "Yes".
+    no_answer:
+        The output value for when the gold label differs from self.class_name.
+        Defaults to "No".
     """
 
     input_format: str = None
@@ -207,6 +211,7 @@ class YesNoTemplate(Template):
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
+            inputs["class_name"] = self.class_name
             data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
             return self.input_format.format(**data)
         except KeyError as e:
@@ -218,14 +223,13 @@ class YesNoTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_name = outputs[self.label_field]
-            if self.class_name.equals(gold_class_name):
+            if self.class_name == gold_class_name:
                 return self.yes_answer
             else:
                 return self.no_answer
         except KeyError as e:
             raise KeyError(
-                f"Available outputs are {outputs.keys()} but output format "
-                f"requires a different one: {self.output_format}."
+                f"Available outputs are {outputs.keys()} but required " f"label field is : {self.label_field}."
             ) from e
 
     def get_postprocessors(self) -> List[str]:
