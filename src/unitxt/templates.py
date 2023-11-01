@@ -223,7 +223,7 @@ class YesNoTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_name = outputs[self.label_field]
-            if self.class_name == gold_class_name:
+            if self.class_name in gold_class_name:
                 return self.yes_answer
             else:
                 return self.no_answer
