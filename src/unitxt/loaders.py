@@ -126,12 +126,10 @@ class LoadFromIBMCloud(Loader):
 
         with TemporaryDirectory() as temp_directory:
             for data_file in self.data_files:
-                # Build object key based on parameters. Slash character is not 
+                # Build object key based on parameters. Slash character is not
                 # allowed to be part of object key in IBM COS.
                 object_key = self.data_dir + "/" + data_file if self.data_dir is not None else data_file
-                self._download_from_cos(
-                    cos, self.bucket_name, object_key, temp_directory + "/" + data_file
-                )
+                self._download_from_cos(cos, self.bucket_name, object_key, temp_directory + "/" + data_file)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
         return MultiStream.from_iterables(dataset)
