@@ -89,6 +89,9 @@ class MapInstanceValues(StreamInstanceOperator):
             if value is not None:
                 value = str(value)  # make sure the value is a string
                 if self.strict:
+                    assert (
+                        value in mapper
+                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
                     dict_set(instance, key, mapper[value], use_dpath=self.use_query)
                 else:
                     if value in mapper:
