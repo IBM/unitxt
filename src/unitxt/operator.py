@@ -161,7 +161,10 @@ class SingleStreamOperator(MultiStreamOperator):
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}
         for stream_name, stream in multi_stream.items():
-            stream = self._process_single_stream(stream, stream_name)
+            if self._is_should_be_processed(stream_name):
+                stream = self._process_single_stream(stream, stream_name)
+            else:
+                stream = stream
             assert isinstance(stream, Stream), "SingleStreamOperator must return a Stream"
             result[stream_name] = stream
 
@@ -170,7 +173,7 @@ class SingleStreamOperator(MultiStreamOperator):
     def _process_single_stream(self, stream: Stream, stream_name: str = None) -> Stream:
         return Stream(self._process_stream, gen_kwargs={"stream": stream, "stream_name": stream_name})
 
-    def is_should_be_processed(self, stream_name):
+    def _is_should_be_processed(self, stream_name):
         if (
             self.apply_to_streams is not None
             and stream_name in self.apply_to_streams
@@ -185,10 +188,7 @@ class SingleStreamOperator(MultiStreamOperator):
         ) and stream_name not in self.dont_apply_to_streams
 
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
-        if self.is_should_be_processed(stream_name):
-            yield from self.process(stream, stream_name)
-        else:
-            yield from stream
+        yield from self.process(stream, stream_name)
 
     @abstractmethod
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
