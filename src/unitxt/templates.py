@@ -181,6 +181,57 @@ class InputOutputTemplate(Template):
         return self.postprocessors
 
 
+class YesNoTemplate(Template):
+    """
+    A template for generating binary Yes/No questions asking whether an input text is of a specific class.
+    input_format:
+        Defines the format of the question.
+    class_name:
+        Defines the name of the class that this template asks of. If the true label is equal to this
+        class name, then the expected output is self.yes_answer (by default, "Yes").
+        Otherwise the expected output is self.no_answer (by default, "No").
+    label_field:
+        Defines the field which contains the true label of the input text. If the true label is equal to the
+        value in class_name, then the expected output is self.yes_answer (by default, "Yes").
+        Otherwise the expected output is self.no_answer (by default, "No").
+    yes_answer:
+
+    """
+
+    input_format: str = None
+    class_name: str = None
+    label_field: str = None
+    yes_answer: str = "Yes"
+    no_answer: str = "No"
+    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+
+    def process_inputs(self, inputs: Dict[str, object]) -> str:
+        try:
+            data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
+            return self.input_format.format(**data)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {inputs.keys()} but input format "
+                f"requires a different one: {self.input_format}"
+            ) from e
+
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
+        try:
+            gold_class_name = outputs[self.label_field]
+            if self.class_name.equals(gold_class_name):
+                return self.yes_answer
+            else:
+                return self.no_answer
+        except KeyError as e:
+            raise KeyError(
+                f"Available outputs are {outputs.keys()} but output format "
+                f"requires a different one: {self.output_format}."
+            ) from e
+
+    def get_postprocessors(self) -> List[str]:
+        return self.postprocessors
+
+
 class KeyValTemplate(Template):
     pairs_seperator: str = ", "
     key_val_seperator: str = ": "
