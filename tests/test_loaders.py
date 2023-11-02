@@ -67,6 +67,6 @@ class TestLoaders(unittest.TestCase):
             data_dir="DUMMY_DATA_DIR",
             data_files=["train.csv", "test.csv"],
         )
-        with (patch.object(ibm_boto3, "resource", return_value=DummyS3())):
+        with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
             ms = loader()
             self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})

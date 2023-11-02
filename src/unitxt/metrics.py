@@ -236,12 +236,20 @@ class SingleReferenceInstanceMetric(InstanceMetric):
         pass
 
 
+# class Accuracy(SingleReferenceInstanceMetric):
+#     reduction_map = {"mean": ["accuracy"]}
+#     main_score = "accuracy"
+#
+#     def compute(self, reference, prediction: str) -> dict:
+#         return {"accuracy": float(str(reference) == str(prediction))}
+
+
 class Accuracy(SingleReferenceInstanceMetric):
     reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
 
     def compute(self, reference, prediction: str) -> dict:
-        return {"accuracy": float(str(reference) == str(prediction))}
+        return {"accuracy": float(prediction.lower() in reference)}
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
