@@ -161,30 +161,27 @@ class TestRecipes(unittest.TestCase):
             )
 
     def test_standard_recipe_with_no_demos_to_take(self):
-       
         recipe = StandardRecipeWithIndexes(
             template="templates.key_val",
             card="cards.xwinogrande.pt",
             num_demos=3,
             demos_pool_size=10,
         )
-        with self.assertRaises(Exception) as cm:   
-            list(recipe()['test'])
-            
+        with self.assertRaises(Exception) as cm:
+            list(recipe()["test"])
+
         self.assertEqual(str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'")
 
     def test_standard_recipe_with_no_test(self):
-       
         recipe = StandardRecipeWithIndexes(
             template="templates.key_val",
             card="cards.xwinogrande.pt",
             num_demos=3,
             demos_pool_size=10,
-            demos_taken_from="test"
+            demos_taken_from="test",
         )
-        results = list(recipe()['test'])
-        self.assertTrue( len(results) > 0 )
-
+        results = list(recipe()["test"])
+        self.assertTrue(len(results) > 0)
 
     def test_standard_recipe_with_template_errors(self):
         # Check some template was specified
