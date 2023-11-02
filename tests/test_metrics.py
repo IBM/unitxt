@@ -23,7 +23,7 @@ class TestMetrics(unittest.TestCase):
         metric = Accuracy()
 
         predictions = ["A", "B", "C"]
-        references = [["B"], ["A"], ["C"]]
+        references = [["B", "C"], ["A"], ["C", "B"]]
 
         instance_targets = [
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
