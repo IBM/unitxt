@@ -22,7 +22,6 @@ from src.unitxt.operators import (
     TakeByField,
     Unique,
     ZipFieldValues,
-    MergeStreams,
 )
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
