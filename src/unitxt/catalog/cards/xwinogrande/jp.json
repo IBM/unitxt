@@ -6,7 +6,6 @@
         "name": "jp"
     },
     "preprocess_steps": [
-        "splitters.small_no_dev",
         {
             "type": "add_fields",
             "fields": {

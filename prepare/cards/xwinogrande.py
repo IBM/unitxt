@@ -39,7 +39,6 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="Muennighoff/xwinograd", name=lang),
         preprocess_steps=[
-            "splitters.small_no_dev",
             AddFields({"topic": "common sense", "numbering": numbering}),
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),
