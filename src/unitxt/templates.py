@@ -223,6 +223,10 @@ class YesNoTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_name = outputs[self.label_field]
+            if not isinstance(gold_class_name, list) or not gold_class_name:
+                raise RuntimeError(
+                    f"Unexpected value for gold_class_name: '{gold_class_name}'. " f"Expected a non-empty list."
+                )
             if self.class_name in gold_class_name:
                 return self.yes_answer
             else:
