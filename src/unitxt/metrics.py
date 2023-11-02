@@ -241,7 +241,7 @@ class Accuracy(SingleReferenceInstanceMetric):
     main_score = "accuracy"
 
     def compute(self, reference, prediction: str) -> dict:
-        return {"accuracy": float(prediction.lower() in reference)}
+        return {"accuracy": float(prediction.lower() in reference.lower())}
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
