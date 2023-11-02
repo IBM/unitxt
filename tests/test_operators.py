@@ -13,6 +13,7 @@ from src.unitxt.operators import (
     JoinStr,
     LengthBalancer,
     MapInstanceValues,
+    MergeStreams,
     RemoveFields,
     RenameFields,
     Shuffle,
@@ -21,7 +22,6 @@ from src.unitxt.operators import (
     TakeByField,
     Unique,
     ZipFieldValues,
-    MergeStreams,
 )
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, test_operator
@@ -172,34 +172,36 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(input_dict, ouput_dict)
 
     def test_merge(self):
-         # Test with default params
-         input_multi_stream = MultiStream({"test":       [ {"field" : "test1"}], 
-                                     "validation"  : [{"field" : "validation1"}],
-                                     "train"       : [{"field" : "train1"}]})
-         output_multi_stream = MergeStreams()(input_multi_stream)
-         self.assertListEqual(list(output_multi_stream.keys()), ["all"]) 
-         all = list(output_multi_stream['all'])
-         expected_all = [ {"field" : "test1", "origin" : "test"} , {"field" : "validation1" , "origin" : "validation"} , {"field" : "train1", "origin" : "train"}]
-         self.assertEqual(len(all),len(expected_all))
-         for input_dict, output_dict in zip(all, expected_all):
+        # Test with default params
+        input_multi_stream = MultiStream(
+            {"test": [{"field": "test1"}], "validation": [{"field": "validation1"}], "train": [{"field": "train1"}]}
+        )
+        output_multi_stream = MergeStreams()(input_multi_stream)
+        self.assertListEqual(list(output_multi_stream.keys()), ["all"])
+        all = list(output_multi_stream["all"])
+        expected_all = [
+            {"field": "test1", "origin": "test"},
+            {"field": "validation1", "origin": "validation"},
+            {"field": "train1", "origin": "train"},
+        ]
+        self.assertEqual(len(all), len(expected_all))
+        for input_dict, output_dict in zip(all, expected_all):
             self.assertDictEqual(input_dict, output_dict)
 
-         # test with parameters
-         input_multi_stream = MultiStream({"test":       [ {"field" : "test1"}], 
-                                     "validation"  : [{"field" : "validation1"}],
-                                     "train"       : [{"field" : "train1"}]})
-         output_multi_stream = MergeStreams(streams_to_merge=["test","train"], 
-                                            new_stream_name="merged",
-                                            add_origin_stream_name=False)(input_multi_stream)
-         self.assertListEqual(list(output_multi_stream.keys()), ["merged"])
-         merged = list(output_multi_stream['merged'])
-         expected_merged = [ {"field" : "test1"} , {"field" : "train1"}]
-         self.assertEqual(len(merged),len(expected_merged))
-         for input_dict, output_dict in zip(merged, expected_merged):
+        # test with parameters
+        input_multi_stream = MultiStream(
+            {"test": [{"field": "test1"}], "validation": [{"field": "validation1"}], "train": [{"field": "train1"}]}
+        )
+        output_multi_stream = MergeStreams(
+            streams_to_merge=["test", "train"], new_stream_name="merged", add_origin_stream_name=False
+        )(input_multi_stream)
+        self.assertListEqual(list(output_multi_stream.keys()), ["merged"])
+        merged = list(output_multi_stream["merged"])
+        expected_merged = [{"field": "test1"}, {"field": "train1"}]
+        self.assertEqual(len(merged), len(expected_merged))
+        for input_dict, output_dict in zip(merged, expected_merged):
             self.assertDictEqual(input_dict, output_dict)
 
-        
-    
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
 
