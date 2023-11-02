@@ -135,6 +135,8 @@ def slice_streams(input_streams, mapping):
 
         def generator(new_stream, sources):
             for old_stream, slices in sources.items():
+                if not old_stream in input_streams:
+                    raise ValueError(f"'{old_stream}' is not available in input stream")
                 old_stream_content = input_streams[old_stream]
                 for start, end in slices:
                     yield from slice_stream(old_stream_content, start, end)
