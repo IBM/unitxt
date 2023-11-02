@@ -9,6 +9,7 @@ from src.unitxt.templates import (
     MultiLabelTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
+    YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.test_utils.metrics import apply_metric
@@ -87,6 +88,38 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
+
+    def test_yes_no_template_process_input(self):
+        template = YesNoTemplate(input_format="Is {text} of {class_name}?", class_name="news", label_field="labels")
+
+        proccessed_input_to_inputs = {
+            "Is text_a of news?": {"text": "text_a"},
+            "Is text_b of news?": {"text": "text_b"},
+        }
+        for expected_processed_input, inputs in proccessed_input_to_inputs.items():
+            processed = template.process_inputs(inputs)
+            self.assertEqual(expected_processed_input, processed)
+
+    def test_yes_no_template_process_output(self):
+        label_field = "labels"
+        class_name = "news"
+        yes_answer = "y"
+        no_answer = "n"
+        template = YesNoTemplate(
+            input_format="",
+            class_name=class_name,
+            label_field=label_field,
+            yes_answer=yes_answer,
+            no_answer=no_answer,
+        )
+
+        processed_output_to_outputs = {
+            no_answer: {label_field: ["sports"]},
+            yes_answer: {label_field: [class_name]},
+        }
+        for expected_processed_output, outputs in processed_output_to_outputs.items():
+            processed = template.process_outputs(outputs)
+            self.assertEqual(expected_processed_output, processed)
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
