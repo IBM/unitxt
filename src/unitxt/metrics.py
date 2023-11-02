@@ -226,6 +226,7 @@ class Squad(GlobalMetric):
 
 class SingleReferenceInstanceMetric(InstanceMetric):
     def _compute(self, references: List[str], prediction: str) -> dict:
+        assert len(references) == 1, "Expected only one reference , but received: {references}"
         result = self.compute(references[0], prediction)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
@@ -241,7 +242,7 @@ class Accuracy(InstanceMetric):
     main_score = "accuracy"
 
     def compute(self, references: List[str], prediction: str) -> dict:
-        result =  {self.main_score: float(str(prediction) in [str(reference) for reference in references] )}
+        result = {self.main_score: float(str(prediction) in [str(reference) for reference in references])}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
