@@ -100,6 +100,11 @@ class TestTemplates(unittest.TestCase):
             processed = template.process_inputs(inputs)
             self.assertEqual(expected_processed_input, processed)
 
+    def test_yes_no_template_process_input_missing_input_field(self):
+        template = YesNoTemplate(input_format="Expecting field {text} in input.", class_name="", label_field="")
+        with self.assertRaises(KeyError):
+            template.process_inputs(inputs={"wrong_field_name": "text_a"})
+
     def test_yes_no_template_process_output(self):
         label_field = "labels"
         class_name = "news"
@@ -120,6 +125,11 @@ class TestTemplates(unittest.TestCase):
         for expected_processed_output, outputs in processed_output_to_outputs.items():
             processed = template.process_outputs(outputs)
             self.assertEqual(expected_processed_output, processed)
+
+    def test_yes_no_template_process_output_missing_label_field(self):
+        template = YesNoTemplate(input_format="", class_name="", label_field="labels")
+        with self.assertRaises(KeyError):
+            template.process_outputs(outputs={})
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
