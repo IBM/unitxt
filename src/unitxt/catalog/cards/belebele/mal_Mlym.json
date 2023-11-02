@@ -6,7 +6,6 @@
         "name": "mal_Mlym"
     },
     "preprocess_steps": [
-        "splitters.test_only",
         {
             "type": "add_fields",
             "fields": {

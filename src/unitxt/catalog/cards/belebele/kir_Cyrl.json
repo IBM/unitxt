@@ -6,7 +6,6 @@
         "name": "kir_Cyrl"
     },
     "preprocess_steps": [
-        "splitters.test_only",
         {
             "type": "add_fields",
             "fields": {
