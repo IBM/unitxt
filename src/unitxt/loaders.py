@@ -66,7 +66,7 @@ class LoadFromIBMCloud(Loader):
     aws_access_key_id_env: str
     aws_secret_access_key_env: str
     bucket_name: str
-    data_dir: str
+    data_dir: str = None
     data_files: Sequence[str]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -126,9 +126,10 @@ class LoadFromIBMCloud(Loader):
 
         with TemporaryDirectory() as temp_directory:
             for data_file in self.data_files:
-                self._download_from_cos(
-                    cos, self.bucket_name, self.data_dir + "/" + data_file, temp_directory + "/" + data_file
-                )
+                # Build object key based on parameters. Slash character is not
+                # allowed to be part of object key in IBM COS.
+                object_key = self.data_dir + "/" + data_file if self.data_dir is not None else data_file
+                self._download_from_cos(cos, self.bucket_name, object_key, temp_directory + "/" + data_file)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
         return MultiStream.from_iterables(dataset)
