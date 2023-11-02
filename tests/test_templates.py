@@ -101,9 +101,15 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(expected_processed_input, processed)
 
     def test_yes_no_template_process_input_missing_input_field(self):
-        template = YesNoTemplate(input_format="Expecting field {text} in input.", class_name="", label_field="")
-        with self.assertRaises(KeyError):
-            template.process_inputs(inputs={"wrong_field_name": "text_a"})
+        input_format = "Expecting field {text} in input."
+        template = YesNoTemplate(input_format=input_format, class_name="", label_field="")
+        with self.assertRaises(KeyError) as cm:
+            wrong_field_name = "wrong_field_name"
+            template.process_inputs(inputs={wrong_field_name: "text_a"})
+            self.assertEquals(
+                f"Available inputs are {wrong_field_name} but input format requires a different one: {input_format}",
+                str(cm.exception),
+            )
 
     def test_yes_no_template_process_output(self):
         label_field = "labels"
@@ -128,16 +134,32 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(expected_processed_output, processed)
 
     def test_yes_no_template_process_output_missing_label_field(self):
-        template = YesNoTemplate(input_format="", class_name="", label_field="labels")
-        with self.assertRaises(KeyError):
-            template.process_outputs(outputs={})
+        label_field = "labels"
+        template = YesNoTemplate(input_format="", class_name="", label_field=label_field)
+        with self.assertRaises(KeyError) as cm:
+            outputs = {}
+            template.process_outputs(outputs=outputs)
+            self.assertEquals(
+                f"Available outputs are {outputs.keys()}, but required label field is: '{label_field}'.",
+                str(cm.exception),
+            )
 
     def test_yes_no_template_process_output_wrong_value_in_label_field(self):
         template = YesNoTemplate(input_format="", class_name="", label_field="labels")
-        with self.assertRaises(RuntimeError):
-            template.process_outputs(outputs={"labels": []})
-        with self.assertRaises(RuntimeError):
-            template.process_outputs(outputs={"labels": "non list value"})
+        with self.assertRaises(RuntimeError) as cm:
+            gold_class_names = []
+            template.process_outputs(outputs={"labels": gold_class_names})
+            self.assertEquals(
+                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list.",
+                str(cm.exception),
+            )
+        with self.assertRaises(RuntimeError) as cm:
+            gold_class_names = "non list value"
+            template.process_outputs(outputs={"labels": gold_class_names})
+            self.assertEquals(
+                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list.",
+                str(cm.exception),
+            )
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
