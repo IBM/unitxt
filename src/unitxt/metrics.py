@@ -226,7 +226,7 @@ class Squad(GlobalMetric):
 
 class SingleReferenceInstanceMetric(InstanceMetric):
     def _compute(self, references: List[str], prediction: str) -> dict:
-        assert len(references) == 1, "Expected only one reference , but received: {references}"
+        assert len(references) == 1, f"Expected only one reference , but received: {references}"
         result = self.compute(references[0], prediction)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
