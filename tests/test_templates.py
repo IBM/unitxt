@@ -121,6 +121,7 @@ class TestTemplates(unittest.TestCase):
         processed_output_to_outputs = {
             no_answer: {label_field: ["sports"]},
             yes_answer: {label_field: [class_name]},
+            yes_answer: {label_field: [class_name, "sports"]},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
             processed = template.process_outputs(outputs)
@@ -130,6 +131,13 @@ class TestTemplates(unittest.TestCase):
         template = YesNoTemplate(input_format="", class_name="", label_field="labels")
         with self.assertRaises(KeyError):
             template.process_outputs(outputs={})
+
+    def test_yes_no_template_process_output_wrong_value_in_label_field(self):
+        template = YesNoTemplate(input_format="", class_name="", label_field="labels")
+        with self.assertRaises(RuntimeError):
+            template.process_outputs(outputs={"labels": []})
+        with self.assertRaises(RuntimeError):
+            template.process_outputs(outputs={"labels": "non list value"})
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
