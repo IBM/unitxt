@@ -20,10 +20,10 @@ from src.unitxt.operators import (
     CopyFields,
     IndexOf,
     JoinStr,
+    ListFieldValues,
     RenameFields,
     TakeByField,
     ZipFieldValues,
-    ListFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
