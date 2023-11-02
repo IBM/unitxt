@@ -160,7 +160,7 @@ for lang in language_codes:
     card = TaskCard(
         loader=LoadHF(path="facebook/belebele", name=lang),
         preprocess_steps=[
-            "splitters.test_only",
+            # "splitters.test_only",
             AddFields({"numbering": numbering}),
             ListFieldValues(fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"], to_field="choices"),
             MapInstanceValues(mappers={"correct_answer_num": {"1": "A", "2": "B", "3": "C", "4": "D"}}),

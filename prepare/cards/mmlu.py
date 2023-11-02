@@ -90,22 +90,20 @@ for k, v in templates.items():
 
 
 def replace_if_context_not_there(s, oldvalue, newvalue):
-    if '{context}' in s: return s
+    if "{context}" in s:
+        return s
     else:
         return s.replace(oldvalue, newvalue)
-    
+
+
 CONTEXT_MMLU_TEMPLATES = TemplatesDict(
     {
         key: InputOutputTemplate(
             input_format=replace_if_context_not_there(
-                replace_if_context_not_there(
-                    val, 
-                    "Question:", 
-                    "Context: {context}\nQuestion:"
-                    ), 
-                "{sentence1}", 
-                "{context}\n{sentence1}"
-                ),
+                replace_if_context_not_there(val, "Question:", "Context: {context}\nQuestion:"),
+                "{sentence1}",
+                "{context}\n{sentence1}",
+            ),
             output_format="{label}",
         )
         for key, val in templates.items()
@@ -117,13 +115,15 @@ CONTEXT_MMLU_TEMPLATES_NO_INTRO = TemplatesDict(
         key: InputOutputTemplate(
             input_format=replace_if_context_not_there(
                 replace_if_context_not_there(
-                    val.replace("The following are multiple choice questions (with answers) about {topic}.", "").strip(),
-                    "Question:", 
-                    "Context: {context}\nQuestion:"
-                    ), 
-                "{sentence1}", 
-                "{context}\n{sentence1}"
+                    val.replace(
+                        "The following are multiple choice questions (with answers) about {topic}.", ""
+                    ).strip(),
+                    "Question:",
+                    "Context: {context}\nQuestion:",
                 ),
+                "{sentence1}",
+                "{context}\n{sentence1}",
+            ),
             output_format="{label}",
         )
         for key, val in templates.items()
