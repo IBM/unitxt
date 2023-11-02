@@ -182,6 +182,7 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
         except Exception:
             raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'")
 
+
 if __name__ == "__main__":
     # some tests
     import random
