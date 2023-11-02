@@ -6,7 +6,6 @@
         "name": "zho_Hant"
     },
     "preprocess_steps": [
-        "splitters.test_only",
         {
             "type": "add_fields",
             "fields": {

@@ -6,7 +6,6 @@
         "name": "kat_Geor"
     },
     "preprocess_steps": [
-        "splitters.test_only",
         {
             "type": "add_fields",
             "fields": {

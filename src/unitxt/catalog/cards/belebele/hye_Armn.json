@@ -6,7 +6,6 @@
         "name": "hye_Armn"
     },
     "preprocess_steps": [
-        "splitters.test_only",
         {
             "type": "add_fields",
             "fields": {
