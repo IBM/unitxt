@@ -225,7 +225,7 @@ class YesNoTemplate(Template):
             gold_class_names = outputs[self.label_field]
             if not isinstance(gold_class_names, list) or not gold_class_names:
                 raise RuntimeError(
-                    f"Unexpected value for gold_class_names: '{gold_class_names}'. " f"Expected a non-empty list."
+                    f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
                 )
             if self.class_name in gold_class_names:
                 return self.yes_answer
@@ -233,7 +233,7 @@ class YesNoTemplate(Template):
                 return self.no_answer
         except KeyError as e:
             raise KeyError(
-                f"Available outputs are {outputs.keys()} but required " f"label field is : {self.label_field}."
+                f"Available outputs are {outputs.keys()}, but required label field is: '{self.label_field}'."
             ) from e
 
     def get_postprocessors(self) -> List[str]:
