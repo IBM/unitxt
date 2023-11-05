@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 from .dataclass import InternalField
 from .formats import Format, ICLFormat
 from .instructions import Instruction
-from .operator import Operator, SequntialOperator, StreamInstanceOperator
+from .operator import Operator, SequentialOperator, StreamInstanceOperator
 from .random_utils import random
 from .templates import Template
 
@@ -101,7 +101,7 @@ class RenderFormat(Renderer, StreamInstanceOperator):
         return instance
 
 
-class StandardRenderer(Renderer, SequntialOperator):
+class StandardRenderer(Renderer, SequentialOperator):
     template: Template
     instruction: Instruction = None
     demos_field: str = None

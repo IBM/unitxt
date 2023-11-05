@@ -351,22 +351,39 @@ class InstanceOperatorWithGlobalAccess(StreamingOperator):
         pass
 
 
-class SequntialOperator(MultiStreamOperator):
+class SequentialOperator(MultiStreamOperator):
     """
     A class representing a sequential operator in the streaming system.
 
     A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
     """
 
+    max_steps = None
+
     steps: List[StreamingOperator] = field(default_factory=list)
 
+    def num_steps(self) -> int:
+        return len(self.steps)
+    
+    def set_max_steps(self,max_steps):
+        assert max_steps <= self.num_steps(), f"Max steps requested ({max_steps}) is larger than defined steps {self.num_steps()}"
+        assert max_steps >= 1 , f"Max steps requested ({max_steps}) is less than 1"       
+        self.max_steps = max_steps
+
+    def get_last_step_description(self):
+        last_step = self.max_steps-1 if not self.max_steps is None else len(self.steps)-1
+        return self.steps[last_step].__class__.__name__
+    
+    def _get_max_steps(self):
+        return self.max_steps if not self.max_steps is None else len(self.steps)
+
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        for operator in self.steps:
+        for operator in self.steps[0:self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
 
 
-class SourceSequntialOperator(SequntialOperator):
+class SourceSequentialOperator(SequentialOperator):
     """
     A class representing a source sequential operator in the streaming system.
 
@@ -377,13 +394,14 @@ class SourceSequntialOperator(SequntialOperator):
         return super().__call__()
 
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
+        assert(self.num_steps() > 0, "Calling process on a SourceSequentialOperator without any steps")
         multi_stream = self.steps[0]()
-        for operator in self.steps[1:]:
+        for operator in self.steps[1:self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
 
 
-class SequntialOperatorInitilizer(SequntialOperator):
+class SequentialOperatorInitilizer(SequentialOperator):
     """
     A class representing a sequential operator initializer in the streaming system.
 
@@ -395,10 +413,12 @@ class SequntialOperatorInitilizer(SequntialOperator):
             return self.process(*args, **kwargs)
 
     def process(self, *args, **kwargs) -> MultiStream:
+        assert(self.num_steps() > 0, "Calling process on a SequentialOperatorInitilizer without any steps")
+  
         assert isinstance(
             self.steps[0], StreamInitializerOperator
-        ), "The first step in a SequntialOperatorInitilizer must be a StreamInitializerOperator"
+        ), "The first step in a SequentialOperatorInitilizer must be a StreamInitializerOperator"
         multi_stream = self.steps[0](*args, **kwargs)
-        for operator in self.steps[1:]:
+        for operator in self.steps[1:self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
