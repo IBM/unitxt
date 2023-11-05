@@ -72,16 +72,17 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header):
     for stream_name in multi_stream.keys():
         stream = multi_stream[stream_name]
         num_instances = len(list(iter(stream)))
-        print(f"stream name '{stream_name}' has {num_instances} instances")
+        print(f"stream named '{stream_name}' has {num_instances} instances")
     print("")
     for stream_name in multi_stream.keys():
         stream = multi_stream[stream_name]
         examples = list(stream.take(num_examples))
         print("-" * 10)
-        print(f"Showing {len(examples)} examples from '{stream_name}'")
+        print(f"Showing {len(examples)} examples from stream '{stream_name}:'\n")
         for example in examples:
             print_dict(example)
             print("\n")
+    return examples
 
 
 def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=None):
