@@ -49,5 +49,5 @@ card = TaskCard(
     ),
 )
 
-test_card(card, demos_pools_size=20, loader_limit=1000)
+test_card(card, demos_pool_size=20, loader_limit=1000)
 add_to_catalog(card, "cards.ethos_binary", overwrite=True)
