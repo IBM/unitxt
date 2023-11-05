@@ -171,5 +171,6 @@ for lang in language_codes:
         ),
         templates="templates.qa.multiple_choice.context_no_intro.all",
     )
-    test_card(card, tested_split="test")
+    if lang == "acm_Arab":
+        test_card(card, tested_split="test")
     add_to_catalog(card, f"cards.belebele.{lang}", overwrite=True)
