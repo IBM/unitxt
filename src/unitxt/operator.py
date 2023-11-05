@@ -372,7 +372,7 @@ class SequentialOperator(MultiStreamOperator):
 
     def get_last_step_description(self):
         last_step = self.max_steps-1 if not self.max_steps is None else len(self.steps)-1
-        return self.steps[last_step].__class__.__name__
+        return self.steps[last_step].to_dict()
     
     def _get_max_steps(self):
         return self.max_steps if not self.max_steps is None else len(self.steps)
