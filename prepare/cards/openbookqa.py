@@ -34,7 +34,7 @@ numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 expected_answer = "number"  # 'number_and_answer' #'number'
 
 card = TaskCard(
-    loader=LoadHF(path="vietgpt/openbookqa_en"),
+    loader=LoadHF(path="openbookqa"),
     preprocess_steps=[
         AddFields(
             {

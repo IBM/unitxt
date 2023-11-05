@@ -270,7 +270,10 @@ class StreamInstanceOperatorValidator(StreamInstanceOperator):
 
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
         iterator = iter(stream)
-        first_instance = next(iterator)
+        try:
+            first_instance = next(iterator)
+        except StopIteration:
+            raise StopIteration(f"{stream_name} is empty")
         result = self._process_instance(first_instance, stream_name)
         self.validate(result)
         yield result
