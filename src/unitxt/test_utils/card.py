@@ -65,9 +65,8 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header):
         last_step_description_dict = recipe.get_last_step_description()
         print("=" * 80)
         print("=" * 8)
-        print("=" * 8, f"{max_steps} - after {last_step_description_dict['type']}")
+        print("=" * 8, recipe.get_last_step_description())
         print("=" * 8)
-        print(json.dumps(last_step_description_dict, indent=4))
     multi_stream = recipe()
     for stream_name in multi_stream.keys():
         stream = multi_stream[stream_name]
