@@ -81,6 +81,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
 
     def prepare(self):
+
+        self.card.loader.caching = True
         self.steps = [
             self.card.loader,
         ]
