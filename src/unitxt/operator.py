@@ -375,7 +375,7 @@ class SequentialOperator(MultiStreamOperator):
         self.max_steps = max_steps
 
     def get_last_step_description(self):
-        last_step = self.max_steps - 1 if not self.max_steps is None else len(self.steps) - 1
+        last_step = self.max_steps - 1 if self.max_steps is not None else len(self.steps) - 1
         description = str(self.steps[last_step])
         return re.sub(r"\w+=None, ", "", description)
 
