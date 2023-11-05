@@ -77,7 +77,7 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header):
         stream = multi_stream[stream_name]
         examples = list(stream.take(num_examples))
         print("-" * 10)
-        print(f"Showing {len(examples)} examples from stream '{stream_name}:'\n")
+        print(f"Showing {len(examples)} examples from stream '{stream_name}':\n")
         for example in examples:
             print_dict(example)
             print("\n")
