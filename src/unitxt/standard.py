@@ -9,8 +9,17 @@ from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
-from .splitters import CreateDemoSplit, Sampler, SeparateSplit
+from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template, TemplatesDict
+
+
+# Used to give meaningful name to recipe steps
+class CreateDemosPool(SeparateSplit):
+    pass
+
+
+class AddDemosField(SpreadSplit):
+    pass
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
@@ -92,7 +101,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.demos_pool_size is not None:
             self.steps.append(
-                SeparateSplit(
+                CreateDemosPool(
                     from_split=self.demos_taken_from,
                     to_split_names=[self.demos_pool_name, self.demos_taken_from],
                     to_split_sizes=[int(self.demos_pool_size)],
@@ -108,7 +117,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             sampler.set_size(self.num_demos)
 
             self.steps.append(
-                CreateDemoSplit(
+                AddDemosField(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
                     sampler=sampler,
