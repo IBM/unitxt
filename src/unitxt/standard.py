@@ -4,7 +4,7 @@ from .card import TaskCard
 from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
-from .operator import SourceSequntialOperator, StreamingOperator
+from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
@@ -13,7 +13,7 @@ from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template, TemplatesDict
 
 
-class BaseRecipe(Recipe, SourceSequntialOperator):
+class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
