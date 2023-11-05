@@ -9,7 +9,7 @@ from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
-from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .splitters import CreateDemoSplit, Sampler, SeparateSplit
 from .templates import Template, TemplatesDict
 
 

@@ -59,31 +59,29 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     return examples
 
 
-def debug_card(card, **kwargs):
-    recipe = StandardRecipe(card=card, **kwargs)
-
-    for max_steps in range(1, recipe.num_steps() + 1):
-        recipe.set_max_steps(max_steps)
+def print_recipe_output(recipe, max_steps, num_examples, print_header):
+    recipe.set_max_steps(max_steps)
+    if print_header:
         last_step_description_dict = recipe.get_last_step_description()
         print("=" * 80)
         print("=" * 8)
         print("=" * 8, f"{max_steps} - after {last_step_description_dict['type']}")
         print("=" * 8)
         print(json.dumps(last_step_description_dict, indent=4))
-        multi_stream = recipe()
-        for stream_name in multi_stream.keys():
-            stream = multi_stream[stream_name]
-            num_instances = len(list(stream.take(1000000)))
-            print(f"stream name '{stream_name}' has {num_instances} instances")
-        print("")
-        for stream_name in multi_stream.keys():
-            stream = multi_stream[stream_name]
-            examples = list(stream.take(1))
-            print("-" * 10)
-            print(f"{len(examples)} Example from '{stream_name}'")
-            for example in examples:
-                print_dict(example)
-                print("\n")
+    multi_stream = recipe()
+    for stream_name in multi_stream.keys():
+        stream = multi_stream[stream_name]
+        num_instances = len(list(iter(stream)))
+        print(f"stream name '{stream_name}' has {num_instances} instances")
+    print("")
+    for stream_name in multi_stream.keys():
+        stream = multi_stream[stream_name]
+        examples = list(stream.take(num_examples))
+        print("-" * 10)
+        print(f"Showing {len(examples)} examples from '{stream_name}'")
+        for example in examples:
+            print_dict(example)
+            print("\n")
 
 
 def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=None):
