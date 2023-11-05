@@ -396,7 +396,7 @@ class SourceSequentialOperator(SequentialOperator):
         return super().__call__()
 
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        assert (self.num_steps() > 0, "Calling process on a SourceSequentialOperator without any steps")
+        assert self.num_steps() > 0, "Calling process on a SourceSequentialOperator without any steps"
         multi_stream = self.steps[0]()
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
@@ -415,7 +415,7 @@ class SequentialOperatorInitilizer(SequentialOperator):
             return self.process(*args, **kwargs)
 
     def process(self, *args, **kwargs) -> MultiStream:
-        assert (self.num_steps() > 0, "Calling process on a SequentialOperatorInitilizer without any steps")
+        assert self.num_steps() > 0, "Calling process on a SequentialOperatorInitilizer without any steps"
 
         assert isinstance(
             self.steps[0], StreamInitializerOperator
