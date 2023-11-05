@@ -181,6 +181,65 @@ class InputOutputTemplate(Template):
         return self.postprocessors
 
 
+class YesNoTemplate(Template):
+    """
+    A template for generating binary Yes/No questions asking whether an input text is of a specific class.
+    input_format:
+        Defines the format of the question.
+    class_name:
+        Defines the name of the class that this template asks of. If a gold label is equal to this
+        class name, then the correct output is self.yes_answer (by default, "Yes").
+        Otherwise the correct output is self.no_answer (by default, "No").
+    label_field:
+        Defines the field which contains the true label of the input text. If a gold label is equal to the
+        value in class_name, then the correct output is self.yes_answer (by default, "Yes").
+        Otherwise the correct output is self.no_answer (by default, "No").
+    yes_answer:
+        The output value for when the gold label equals self.class_name.
+        Defaults to "Yes".
+    no_answer:
+        The output value for when the gold label differs from self.class_name.
+        Defaults to "No".
+    """
+
+    input_format: str = None
+    class_name: str = None
+    label_field: str = None
+    yes_answer: str = "Yes"
+    no_answer: str = "No"
+    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+
+    def process_inputs(self, inputs: Dict[str, object]) -> str:
+        try:
+            inputs["class_name"] = self.class_name
+            data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
+            return self.input_format.format(**data)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {inputs.keys()} but input format "
+                f"requires a different one: {self.input_format}"
+            ) from e
+
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
+        try:
+            gold_class_names = outputs[self.label_field]
+            if not isinstance(gold_class_names, list) or not gold_class_names:
+                raise RuntimeError(
+                    f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
+                )
+            if self.class_name in gold_class_names:
+                return self.yes_answer
+            else:
+                return self.no_answer
+        except KeyError as e:
+            raise KeyError(
+                f"Available outputs are {outputs.keys()}, but required label field is: '{self.label_field}'."
+            ) from e
+
+    def get_postprocessors(self) -> List[str]:
+        return self.postprocessors
+
+
 class KeyValTemplate(Template):
     pairs_seperator: str = ", "
     key_val_seperator: str = ": "
