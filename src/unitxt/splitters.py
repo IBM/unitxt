@@ -184,10 +184,6 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
             raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'")
 
 
-class CreateDemoSplit(SpreadSplit):
-    pass
-
-
 if __name__ == "__main__":
     # some tests
     import random
