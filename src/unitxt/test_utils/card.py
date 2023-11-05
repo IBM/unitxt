@@ -51,9 +51,10 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     recipe = StandardRecipe(card=card, template_card_index=template_card_index, **kwargs)
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
-            print_recipe_output(recipe, max_steps=max_steps, num_examples=1, print_header=True)
+            examples = print_recipe_output(recipe, max_steps=max_steps, num_examples=1, print_header=True)
     else:
-        print_recipe_output(recipe, max_steps=recipe.num_steps(), num_examples=3, print_header=False)
+        examples = print_recipe_output(recipe, max_steps=recipe.num_steps(), num_examples=3, print_header=False)
+    return examples
 
 
 def print_recipe_output(recipe, max_steps, num_examples, print_header):
@@ -69,16 +70,17 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header):
     for stream_name in multi_stream.keys():
         stream = multi_stream[stream_name]
         num_instances = len(list(iter(stream)))
-        print(f"stream name '{stream_name}' has {num_instances} instances")
+        print(f"stream named '{stream_name}' has {num_instances} instances")
     print("")
     for stream_name in multi_stream.keys():
         stream = multi_stream[stream_name]
         examples = list(stream.take(num_examples))
         print("-" * 10)
-        print(f"Showing {len(examples)} examples from '{stream_name}'")
+        print(f"Showing {len(examples)} examples from stream '{stream_name}:'\n")
         for example in examples:
             print_dict(example)
             print("\n")
+    return examples
 
 
 def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
