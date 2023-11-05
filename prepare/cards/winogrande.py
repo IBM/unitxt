@@ -54,5 +54,5 @@ for subtask in subtasks:
         ),
         templates=MMLU_TEMPLATES,
     )
-    test_card(card, tested_split="test")
+    test_card(card, demos_taken_from="test")
     add_to_catalog(card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True)
