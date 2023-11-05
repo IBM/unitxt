@@ -28,6 +28,11 @@ from src.unitxt.test_utils.operators import apply_operator, test_operator
 
 
 class TestOperators(unittest.TestCase):
+    def compare_streams(self, all, expected_all):
+        self.assertEqual(len(all), len(expected_all))
+        for input_dict, output_dict in zip(all, expected_all):
+            self.assertDictEqual(input_dict, output_dict)
+
     def test_map_instance_values(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -184,9 +189,7 @@ class TestOperators(unittest.TestCase):
             {"field": "validation1", "origin": "validation"},
             {"field": "train1", "origin": "train"},
         ]
-        self.assertEqual(len(all), len(expected_all))
-        for input_dict, output_dict in zip(all, expected_all):
-            self.assertDictEqual(input_dict, output_dict)
+        self.compare_streams(all, expected_all)
 
         # test with parameters
         input_multi_stream = MultiStream(
@@ -198,9 +201,7 @@ class TestOperators(unittest.TestCase):
         self.assertListEqual(list(output_multi_stream.keys()), ["merged"])
         merged = list(output_multi_stream["merged"])
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
-        self.assertEqual(len(merged), len(expected_merged))
-        for input_dict, output_dict in zip(merged, expected_merged):
-            self.assertDictEqual(input_dict, output_dict)
+        self.compare_streams(merged, expected_merged)
 
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
