@@ -65,15 +65,16 @@ def load_examples_from_standard_recipe(card, tested_split, template_card_index):
 
     return examples
 
-def debug_card(card,**kwargs):  
-    recipe = StandardRecipe(card=card,**kwargs)
-  
-    for max_steps in range(1,recipe.num_steps()+1):
+
+def debug_card(card, **kwargs):
+    recipe = StandardRecipe(card=card, **kwargs)
+
+    for max_steps in range(1, recipe.num_steps() + 1):
         recipe.set_max_steps(max_steps)
         last_step_description_dict = recipe.get_last_step_description()
         print("=" * 80)
         print("=" * 8)
-        print("=" * 8 , f"{max_steps} - after {last_step_description_dict['type']}")
+        print("=" * 8, f"{max_steps} - after {last_step_description_dict['type']}")
         print("=" * 8)
         print(json.dumps(last_step_description_dict, indent=4))
         multi_stream = recipe()
@@ -81,7 +82,7 @@ def debug_card(card,**kwargs):
             stream = multi_stream[stream_name]
             num_instances = len(list(stream.take(1000000)))
             print(f"stream name '{stream_name}' has {num_instances} instances")
-        print("")          
+        print("")
         for stream_name in multi_stream.keys():
             stream = multi_stream[stream_name]
             examples = list(stream.take(1))
