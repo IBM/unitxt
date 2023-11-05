@@ -9,7 +9,7 @@ from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
-from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .splitters import CreateDemoSplit, Sampler, SeparateSplit
 from .templates import Template, TemplatesDict
 
 
@@ -108,7 +108,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             sampler.set_size(self.num_demos)
 
             self.steps.append(
-                SpreadSplit(
+                CreateDemoSplit(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
                     sampler=sampler,
