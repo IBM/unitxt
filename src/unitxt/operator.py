@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
@@ -156,7 +157,7 @@ class SingleStreamOperator(MultiStreamOperator):
     """
 
     apply_to_streams: List[str] = NonPositionalField(default=None)  # None apply to all streams
-    dont_apply_to_streams: List[str] = NonPositionalField(default_factory=list)
+    dont_apply_to_streams: List[str] = NonPositionalField(default_factory=None)
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}
@@ -176,6 +177,7 @@ class SingleStreamOperator(MultiStreamOperator):
     def _is_should_be_processed(self, stream_name):
         if (
             self.apply_to_streams is not None
+            and self.dont_apply_to_streams is not None
             and stream_name in self.apply_to_streams
             and stream_name in self.dont_apply_to_streams
         ):
@@ -183,9 +185,9 @@ class SingleStreamOperator(MultiStreamOperator):
                 f"Stream '{stream_name}' can be in either apply_to_streams or dont_apply_to_streams not both."
             )
 
-        return (
-            self.apply_to_streams is None or stream_name in self.apply_to_streams
-        ) and stream_name not in self.dont_apply_to_streams
+        return (self.apply_to_streams is None or stream_name in self.apply_to_streams) and (
+            self.dont_apply_to_streams is None or stream_name not in self.dont_apply_to_streams
+        )
 
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
         yield from self.process(stream, stream_name)
@@ -374,7 +376,8 @@ class SequentialOperator(MultiStreamOperator):
 
     def get_last_step_description(self):
         last_step = self.max_steps - 1 if not self.max_steps is None else len(self.steps) - 1
-        return self.steps[last_step].to_dict()
+        description = str(self.steps[last_step])
+        return re.sub(r"\w+=None, ", "", description)
 
     def _get_max_steps(self):
         return self.max_steps if not self.max_steps is None else len(self.steps)
