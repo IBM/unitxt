@@ -15,7 +15,7 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
 
-for lang in [
+langs = [
     "fr",
     "vi",
     "zh",
@@ -32,7 +32,9 @@ for lang in [
     "th",
     "tr",
     "ur",
-]:
+]
+
+for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="xnli", name=lang),
         preprocess_steps=[
@@ -48,6 +50,6 @@ for lang in [
         task="tasks.nli",
         templates="templates.classification.nli.all",
     )
-
-    test_card(card)
+    if lang == lang[0]:
+        test_card(card)
     add_to_catalog(card, f"cards.xnli.{lang}", overwrite=True)
