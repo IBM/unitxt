@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given a set of queries separated by '\n', and your job is to find out the query which is not a well-formed or well-structured query in terms of grammar, punctuations, or spelling errors."
+}

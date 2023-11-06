@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Categorize the comment on the basis of sexual explicitness. If the comment is sexually explicit output Yes, otherwise output No."
+}

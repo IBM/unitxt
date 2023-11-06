@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a question and a corresponding answer. Your task is to generate a fact statement that is useful in answering the given question."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Write a correct answer for the question. You should reason about prototypical situations and provide the correct answer. Avoid answers that provide incomplete justification for the question."
+}

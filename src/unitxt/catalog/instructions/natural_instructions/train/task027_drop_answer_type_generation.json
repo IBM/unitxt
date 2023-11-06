@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "This task involves annotating the answer type to a given question that involve some kind of complex reasoning (including numerical reasoning). Note that the questions require looking at more than one part of the passage to answer. There are 3 possible answer types (i) spans, (ii) numbers and (iii) dates. If the answer can be found in the passage, label it as \"span\". If the answer is a number, label as \"number\". Similarly, label \"date\" if you think the answer to the given question is a date."
+}

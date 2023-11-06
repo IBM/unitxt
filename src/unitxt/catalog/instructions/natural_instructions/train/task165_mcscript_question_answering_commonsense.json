@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given a paragraph (Passage), a question (Question) and two answer options (Option1 and Option2). Your task is to choose the correct answer to the question based on the passage. Answer of the question cannot be found directly from the passage, it is indirectly indicated in the passage. Do not answer with words other than the two options, and do not answer with option titles(e.g. \"option1\" or \"1\" are not acceptable answers.)"
+}

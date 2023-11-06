@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you will be shown a prompt from a judicial decision and multiple holding statements derived from citations following text in a legal decision.  Holdings represent the governing legal rule when the law is applied to a particular set of facts. There are five answer choices for each citing text. The correct answer is the holding statement that corresponds to the citing text. The four incorrect answers are other holding statements. You should find the correct option. There is a <HOLDING> token in the position of the citing text prompt where the holding statement was extracted."
+}

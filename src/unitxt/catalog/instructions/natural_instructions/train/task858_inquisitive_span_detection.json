@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Indicate a text span in the passage about which an inquisitive question is asked. (note, don't answer the question)."
+}

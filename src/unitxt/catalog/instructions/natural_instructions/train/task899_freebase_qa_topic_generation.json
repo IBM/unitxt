@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a factoid/trivia type question, generate the topic of the question. The topic is the entity the question talks about."
+}

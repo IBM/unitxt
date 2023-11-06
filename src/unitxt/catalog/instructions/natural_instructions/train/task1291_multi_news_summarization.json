@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a text of many news articles seperated by special token \"|||||\". Your task is to summarize them."
+}

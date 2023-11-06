@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a string of characters. You need to remove duplicate characters from the string if any, and return the resulting string."
+}

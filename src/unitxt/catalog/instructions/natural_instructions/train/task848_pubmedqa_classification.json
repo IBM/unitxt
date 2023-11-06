@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a passage classify if the passage has a definite objective/aim/goal or not. Output '1' if the passage has a defininte objective/aim/goal and output '0' if the passage does not have a definite objective/aim/goal."
+}

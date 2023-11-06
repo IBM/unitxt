@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a sentence, generate what should be the most likely next statement. The next statement should be reasonable and logically correct."
+}

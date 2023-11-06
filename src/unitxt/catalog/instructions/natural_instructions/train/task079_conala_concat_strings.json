@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task you will be given a list of strings and you need to concatenate them."
+}

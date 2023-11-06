@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given Yelp reviews. The task is to classify a review as \"POSITIVE\" if the overall sentiment of the review is positive or as \"NEGATIVE\" if the overall sentiment of the review is negative."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given an item and you need to check whether it is edible or not, return 1 if it is edible, else return 2."
+}

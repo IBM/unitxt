@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a sentence, generate a most likely context or previous statement. The previous statement should be relevant to the given statement."
+}

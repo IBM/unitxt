@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a question and an answer. Answer \"Yes\" if the given answer correctly answers the question, otherwise answer \"No\"."
+}

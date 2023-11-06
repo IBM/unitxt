@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given an English sentence with a blank, and you need to predict the missing word. After completing, the whole sentence should be gramatically correct and non-ambiguous."
+}

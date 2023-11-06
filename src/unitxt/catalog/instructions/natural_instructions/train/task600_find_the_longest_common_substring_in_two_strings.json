@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given two strings A, B. Find the longest common substring in the strings A and B."
+}

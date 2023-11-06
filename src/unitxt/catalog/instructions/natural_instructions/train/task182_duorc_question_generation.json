@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you will be shown an extract from a movie plot. You need to read the extract and create questions that can be answered from the extract. Once you create a question you also need to provide the correct answer for it. Write your answer like \"Question: your question, Answer: your answer\". The questions should be well-formed and grammatically correct. The questions should be completely answerable from the given passage and should not require any external knowledge. Subjective questions are not allowed. Short answers containing words that are present in the passage are preferred. Create questions that result in factoid answers.  A simple rule of thumb to decide whether a question is a factoid or not is to see if two different people with average reading/comprehension skills would come up with the same answer after reading the passage."
+}

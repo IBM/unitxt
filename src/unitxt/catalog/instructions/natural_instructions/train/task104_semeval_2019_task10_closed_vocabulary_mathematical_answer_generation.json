@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "You are given a mathematical question described with a circumscribed mathematical vocabulary. Questions in this task usually contain some variables (e.g. X, Y), equations (e.g. X+Y=3) and some relationships (X is greater than Y). Often you need to find the value of the variable using equations and relationships. You are also given 4 or 5 answer options (associated with \"A\", \"B\", \"C\", \"D\", \"E\"). Do not generate anything else apart from one of the following characters: 'A', 'B, 'C', 'D', 'E'. LaTeX mathematical format (the standard way to express mathematical expressions in the typesetting software known as LaTeX) is used to express equations. Each question is solvable with high school math knowledge. Give only one answer for each question."
+}

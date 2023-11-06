@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a piece of financial news and its polarity, classify it into 'true' if the polarity is correct and classify into 'false' if the polarity is incorrect. Output must be 'true' or 'false'. "
+}

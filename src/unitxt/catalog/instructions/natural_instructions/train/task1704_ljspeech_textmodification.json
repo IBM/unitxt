@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "The task is to read a passage and convert numbers in their text forms into digit forms. The text numbers can be used to represent Quantity, Dates and Time, Addresses or Positions."
+}

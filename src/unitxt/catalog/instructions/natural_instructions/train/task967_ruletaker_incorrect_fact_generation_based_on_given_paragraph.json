@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a text paragraph and a fact, generate a statement that is using the content of the given paragraph yet, it is **incorrect** (i.e., it contradicts the statements of the input)."
+}

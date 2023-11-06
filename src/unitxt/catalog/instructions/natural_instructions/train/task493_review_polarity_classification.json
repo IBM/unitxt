@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given reviews from Amazon, classify those review based on their content into two classes: Negative or Positive."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you will be shown a passage. You need to write a fill-in-the-gap question based on your understanding of the events that might be inferred from the passage. Your question should be answerable based on the passage and only have one correct answer. Show the gap in your question with a _ ."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Classify given movie review into two categories: positive, or negative based on its content."
+}

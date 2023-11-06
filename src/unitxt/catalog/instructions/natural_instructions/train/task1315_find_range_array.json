@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a list of integers you need to calculate and return the range of the integers which is the difference between maximum and minimum element in the list."
+}

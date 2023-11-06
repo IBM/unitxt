@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a context passage, generate a question from the passage such that its answer is shortest continous span from the passage."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given an article and an answer. Your task is to generate the question for the answer based on the given article."
+}

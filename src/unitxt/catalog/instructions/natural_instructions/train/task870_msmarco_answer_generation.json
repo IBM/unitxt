@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a passage and a query based on the passage, generate an unambiguous, concise and simple answer to the query from information in the passage. Note that the answer may not be present in exact form."
+}

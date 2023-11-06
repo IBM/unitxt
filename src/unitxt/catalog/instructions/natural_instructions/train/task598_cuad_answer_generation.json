@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given a passage that represents a legal contract or clause between multiple parties, followed by a question that needs to be answered. Based on the paragraph, you must write the index where the answer starts. If multiple answers seem to exist, write the index of the answer that is the most plausible. If multiple indices must be used to answer the question, the output should be a common separated list of indices."
+}

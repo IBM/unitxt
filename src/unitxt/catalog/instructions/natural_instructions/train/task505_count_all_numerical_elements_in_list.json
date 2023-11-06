@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given an input list. A list contains several comma-separated items written within brackets. You need to return the count of all the numerical elements in the given list. Return 0 if no numerical element in the list."
+}

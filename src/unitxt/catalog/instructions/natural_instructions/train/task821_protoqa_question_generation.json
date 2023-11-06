@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Construct a question that every answer in the list is correct and reasonable for it."
+}

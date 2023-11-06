@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you are given a sentence. You are expected to recognize the name of company or organization. Although there might be several correct answers, you need to write one of them."
+}

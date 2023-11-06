@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "Given a hotel review and the corresponding polarity of review (i.e., Negative or Positive) identify if the polarity is correct. Write 'true' if it's correct, 'false' otherwise."
+}

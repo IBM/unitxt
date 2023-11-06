@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task if the pronoun is male or gender-neutral you are to replace it with a female pronoun. If there are no pronouns add a female-gendered word to the sentence."
+}

@@ -1,0 +1,4 @@
+{
+    "type": "textual_instruction",
+    "text": "In this task, you're given a review from Amazon and category of the product based on the review given by the user and your task is classify whether the given category match the review. Generate \"True\" if given review and its category match, otherwise generate \"False\"."
+}
