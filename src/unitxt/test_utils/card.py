@@ -53,11 +53,13 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         for max_steps in range(1, recipe.num_steps() + 1):
             examples = print_recipe_output(recipe, max_steps=max_steps, num_examples=1, print_header=True)
     else:
-        examples = print_recipe_output(recipe, max_steps=recipe.num_steps(), num_examples=3, print_header=False)
+        examples = print_recipe_output(
+            recipe, max_steps=recipe.num_steps(), num_examples=3, print_header=False, streams=["test"]
+        )
     return examples
 
 
-def print_recipe_output(recipe, max_steps, num_examples, print_header):
+def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=None):
     recipe.set_max_steps(max_steps)
     if print_header:
         last_step_description_dict = recipe.get_last_step_description()
@@ -72,13 +74,14 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header):
         print(f"stream named '{stream_name}' has {num_instances} instances")
     print("")
     for stream_name in multi_stream.keys():
-        stream = multi_stream[stream_name]
-        examples = list(stream.take(num_examples))
-        print("-" * 10)
-        print(f"Showing {len(examples)} examples from stream '{stream_name}':\n")
-        for example in examples:
-            print_dict(example)
-            print("\n")
+        if streams is None or stream_name in streams:
+            stream = multi_stream[stream_name]
+            examples = list(stream.take(num_examples))
+            print("-" * 10)
+            print(f"Showing {len(examples)} example(s) from stream '{stream_name}':\n")
+            for example in examples:
+                print_dict(example)
+                print("\n")
     return examples
 
 
