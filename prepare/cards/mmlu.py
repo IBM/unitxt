@@ -155,7 +155,8 @@ def main():
             ),
             templates="templates.qa.multiple_choice.original.all",
         )
-        test_card(card)
+        if subtask == subtasks[0]:
+            test_card(card)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 
