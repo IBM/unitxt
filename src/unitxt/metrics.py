@@ -566,9 +566,15 @@ class CustomF1(GlobalMetric):
     def calculate_groups_ratio(self, actual_group, total_group):
         return sum([min(actual_group[k], total_group[k]) for k in actual_group.keys()]), sum(actual_group.values())
 
+    def precision(self, pn, pd, rn, rd):
+        return 1.0 if pn == 0 and pd == 0 else pn / pd
+
+    def recall(self, pn, pd, rn, rd):
+        return 1.0 if rn == 0 and rd == 0 else rn / rd
+
     def f1(self, pn, pd, rn, rd):
-        precision = 1.0 if pn == 0 and pd == 0 else pn / pd
-        recall = 1.0 if rn == 0 and rd == 0 else rn / rd
+        precision = self.precision(pn, pd, rn, rd)
+        recall = self.recall(pn, pd, rn, rd)
         try:
             return 2 * precision * recall / (precision + recall)
         except ZeroDivisionError:
@@ -612,9 +618,11 @@ class CustomF1(GlobalMetric):
                 groups_statistics[group]["recall_numerator"] += rn
                 groups_statistics[group]["recall_denominator"] += rd
 
-        result = {}
         num_of_unknown_class_predictions = 0
         pn_total = pd_total = rn_total = rd_total = 0
+        f1_result = {}
+        recall_result = {}
+        precision_result = {}
         for group in groups_statistics.keys():
             pn, pd, rn, rd = (
                 groups_statistics[group]["precision_numerator"],
@@ -624,13 +632,21 @@ class CustomF1(GlobalMetric):
             )
             pn_total, pd_total, rn_total, rd_total = pn_total + pn, pd_total + pd, rn_total + rn, rd_total + rd
             if group in classes:
-                result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
+                f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
+                recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
+                precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
             else:
                 num_of_unknown_class_predictions += pd
+
+        result = f1_result
         try:
-            result["f1_macro"] = sum(result.values()) / len(result.keys())
+            result["f1_macro"] = sum(f1_result.values()) / len(result.keys())
+            result["recall_macro"] = sum(recall_result.values()) / len(recall_result.keys())
+            result["precision_macro"] = sum(precision_result.values()) / len(precision_result.keys())
         except ZeroDivisionError:
             result["f1_macro"] = 1.0
+            result["recall_macro"] = 1.0
+            result["micro_macro"] = 1.0
 
         amount_of_predictions = pd_total
         if amount_of_predictions == 0:
@@ -638,6 +654,8 @@ class CustomF1(GlobalMetric):
         else:
             result["in_classes_support"] = 1.0 - num_of_unknown_class_predictions / amount_of_predictions
         result[f"f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
+        result[f"recall_micro"] = self.recall(pn_total, pd_total, rn_total, rd_total)
+        result[f"precision_micro"] = self.precision(pn_total, pd_total, rn_total, rd_total)
         return result
 
 
