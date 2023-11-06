@@ -81,7 +81,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
 
     def prepare(self):
-
         self.steps = [
             self.card.loader,
         ]
