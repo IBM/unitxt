@@ -137,13 +137,13 @@ outputs = test_metric(
 # 1.3 class with no predictions
 predictions = [[]]
 references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
-# Precision = 0/0=(by def for prediction)=1, Recall = 0/3, F1 = 2 * 1 * 0 / (1 + 0) = 0
+# Precision = 0/0=(by def for prediction)=0, Recall = 0/3, F1 = 2 * 1 * 0 / (1 + 0) = 0
 instance_targets = [
     {
         "recall_micro": 0.0,
         "recall_macro": 0.0,
-        "precision_micro": 1.0,
-        "precision_macro": 1.0,
+        "precision_micro": 0.0,
+        "precision_macro": 0.0,
         "f1_Person": 0.0,
         "f1_macro": 0.0,
         "in_classes_support": 1.0,
@@ -155,8 +155,8 @@ instance_targets = [
 global_target = {
     "recall_micro": 0.0,
     "recall_macro": 0.0,
-    "precision_micro": 1.0,
-    "precision_macro": 1.0,
+    "precision_micro": 0.0,
+    "precision_macro": 0.0,
     "f1_Person": 0.0,
     "f1_macro": 0.0,
     "in_classes_support": 1.0,
@@ -263,7 +263,7 @@ instance_targets = [
         "recall_micro": 0.5,
         "recall_macro": 0.5,
         "precision_micro": 0.67,
-        "precision_macro": 1.0,
+        "precision_macro": 0.67,
         "f1_D": 0.0,
         "f1_C": 1.0,
         "f1_B": 0.67,
@@ -278,7 +278,7 @@ global_target = {
     "recall_micro": 0.5,
     "recall_macro": 0.5,
     "precision_micro": 0.67,
-    "precision_macro": 1.0,
+    "precision_macro": 0.67,
     "f1_D": 0.0,
     "f1_C": 1.0,
     "f1_B": 0.67,
@@ -297,5 +297,52 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+# 1.6 all predictions are out of domain
+
+predictions = [
+    [
+        ("a", "A"),
+    ]
+]
+references = [
+    [
+        ("b", "B"),
+    ]
+]
+
+instance_targets = [
+    {
+        "recall_micro": 0.0,
+        "recall_macro": 0.0,
+        "precision_micro": 0.0,
+        "precision_macro": 0.0,
+        "f1_B": 0.0,
+        "f1_macro": 0.0,
+        "in_classes_support": 0.0,
+        "f1_micro": 0.0,
+        "score": 0.0,
+        "score_name": "f1_micro",
+    },
+]
+global_target = {
+    "recall_micro": 0.0,
+    "recall_macro": 0.0,
+    "precision_micro": 0.0,
+    "precision_macro": 0.0,
+    "f1_B": 0.0,
+    "f1_macro": 0.0,
+    "in_classes_support": 0.0,
+    "f1_micro": 0.0,
+    "score": 0.0,
+    "score_name": "f1_micro",
+}
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
 
 add_to_catalog(metric, "metrics.ner", overwrite=True)
