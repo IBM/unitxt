@@ -25,8 +25,8 @@ from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import (
     MultiStreamOperator,
-    SequntialOperator,
-    SequntialOperatorInitilizer,
+    SequentialOperator,
+    SequentialOperatorInitilizer,
     StreamInitializerOperator,
 )
 from .operator import __file__ as _
@@ -99,7 +99,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 from .schema import UNITXT_DATASET_SCHEMA
 
 
-class MetricRecipe(SequntialOperatorInitilizer):
+class MetricRecipe(SequentialOperatorInitilizer):
     def prepare(self):
         register_all_artifacts()
         self.steps = [

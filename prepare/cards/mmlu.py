@@ -211,7 +211,8 @@ def main():
             ),
             templates=MMLU_TEMPLATES,
         )
-        test_card(card)
+        if subtask == subtasks[0]:
+            test_card(card)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 

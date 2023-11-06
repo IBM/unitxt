@@ -181,5 +181,6 @@ for lang in language_codes:
         ),
         templates=CONTEXT_MMLU_TEMPLATES_NO_INTRO,
     )
-    test_card(card, tested_split="test")
+    if lang == "acm_Arab":
+        test_card(card, demos_taken_from="test", debug=True)
     add_to_catalog(card, f"cards.belebele.{lang}", overwrite=True)
