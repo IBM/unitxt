@@ -24,7 +24,7 @@ class TestMetrics(unittest.TestCase):
         metric = Accuracy()
 
         predictions = ["A", "B", "C"]
-        references = [["B"], ["A"], ["C"]]
+        references = [["B", "C"], ["A"], ["B", "C"]]
 
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
 

@@ -170,14 +170,17 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
         return super().verify()
 
     def process(self, instance: Dict[str, object], multi_stream: MultiStream) -> Dict[str, object]:
-        if self.local_cache is None:
-            self.local_cache = list(multi_stream[self.source_stream])
+        try:
+            if self.local_cache is None:
+                self.local_cache = list(multi_stream[self.source_stream])
 
-        source_stream = self.local_cache
+            source_stream = self.local_cache
 
-        sampled_instances = self.sampler.sample(source_stream)
-        instance[self.target_field] = sampled_instances
-        return instance
+            sampled_instances = self.sampler.sample(source_stream)
+            instance[self.target_field] = sampled_instances
+            return instance
+        except Exception:
+            raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'")
 
 
 if __name__ == "__main__":

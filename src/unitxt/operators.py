@@ -89,6 +89,9 @@ class MapInstanceValues(StreamInstanceOperator):
             if value is not None:
                 value = str(value)  # make sure the value is a string
                 if self.strict:
+                    assert (
+                        value in mapper
+                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
                     dict_set(instance, key, mapper[value], use_dpath=self.use_query)
                 else:
                     if value in mapper:
@@ -768,16 +771,18 @@ class MergeStreams(MultiStreamOperator):
         origin_stream_name_field_name (str): The field name for the origin stream name.
     """
 
+    streams_to_merge: List[str] = None
     new_stream_name: str = "all"
     add_origin_stream_name: bool = True
     origin_stream_name_field_name: str = "origin"
 
     def merge(self, multi_stream):
         for stream_name, stream in multi_stream.items():
-            for instance in stream:
-                if self.add_origin_stream_name:
-                    instance[self.origin_stream_name_field_name] = stream_name
-                yield instance
+            if self.streams_to_merge is None or stream_name in self.streams_to_merge:
+                for instance in stream:
+                    if self.add_origin_stream_name:
+                        instance[self.origin_stream_name_field_name] = stream_name
+                    yield instance
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream({self.new_stream_name: Stream(self.merge, gen_kwargs={"multi_stream": multi_stream})})

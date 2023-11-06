@@ -2,7 +2,7 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "vietgpt/openbookqa_en"
+        "path": "openbookqa"
     },
     "preprocess_steps": [
         {

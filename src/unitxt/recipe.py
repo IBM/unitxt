@@ -1,9 +1,9 @@
-from .operator import SourceSequntialOperator
+from .operator import SourceSequentialOperator
 
 
 class Recipe:
     pass
 
 
-class SequentialRecipe(Recipe, SourceSequntialOperator):
+class SequentialRecipe(Recipe, SourceSequentialOperator):
     pass

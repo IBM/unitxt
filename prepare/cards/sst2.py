@@ -49,5 +49,5 @@ card = TaskCard(
     templates="templates.one_sent_classification",
 )
 
-test_card(card)
+test_card(card, debug=True)
 add_to_catalog(card, "cards.sst2", overwrite=True)

@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from src.unitxt.operator import SequntialOperator
+from src.unitxt.operator import SequentialOperator
 from src.unitxt.operators import AddFields, Apply, CopyFields
 from src.unitxt.test_utils.operators import test_operator
 
@@ -23,7 +23,7 @@ class TestFunctionOperators(unittest.TestCase):
         test_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
     def test_apply_function_operator_for_library_function(self):
-        operator = SequntialOperator(
+        operator = SequentialOperator(
             [
                 Apply(function=dict, to_field="t"),
                 CopyFields(field_to_field={"a": "t/a", "b": "t/b"}, use_query=True),
