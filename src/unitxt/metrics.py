@@ -548,6 +548,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
     classes = None
+    zero_division = 0.0
 
     @abstractmethod
     def get_element_group(self, element):
@@ -567,10 +568,10 @@ class CustomF1(GlobalMetric):
         return sum([min(actual_group[k], total_group[k]) for k in actual_group.keys()]), sum(actual_group.values())
 
     def precision(self, pn, pd, rn, rd):
-        return 1.0 if pn == 0 and pd == 0 else pn / pd
+        return self.zero_division if pn == 0 and pd == 0 else pn / pd
 
     def recall(self, pn, pd, rn, rd):
-        return 1.0 if rn == 0 and rd == 0 else rn / rd
+        return self.zero_division if rn == 0 and rd == 0 else rn / rd
 
     def f1(self, pn, pd, rn, rd):
         precision = self.precision(pn, pd, rn, rd)
@@ -578,7 +579,7 @@ class CustomF1(GlobalMetric):
         try:
             return 2 * precision * recall / (precision + recall)
         except ZeroDivisionError:
-            return 0.0
+            return self.zero_division
 
     def compute(self, references: List[Any], predictions: List[Any]) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
@@ -644,9 +645,9 @@ class CustomF1(GlobalMetric):
             result["recall_macro"] = sum(recall_result.values()) / len(recall_result.keys())
             result["precision_macro"] = sum(precision_result.values()) / len(precision_result.keys())
         except ZeroDivisionError:
-            result["f1_macro"] = 1.0
-            result["recall_macro"] = 1.0
-            result["micro_macro"] = 1.0
+            result["f1_macro"] = self.zero_division
+            result["recall_macro"] = self.zero_division
+            result["micro_macro"] = self.zero_division
 
         amount_of_predictions = pd_total
         if amount_of_predictions == 0:
