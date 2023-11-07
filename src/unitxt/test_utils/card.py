@@ -85,32 +85,6 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=N
     return examples
 
 
-def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=None):
-    recipe.set_max_steps(max_steps)
-    if print_header:
-        last_step_description_dict = recipe.get_last_step_description()
-        print("=" * 80)
-        print("=" * 8)
-        print("=" * 8, recipe.get_last_step_description())
-        print("=" * 8)
-    multi_stream = recipe()
-    for stream_name in multi_stream.keys():
-        stream = multi_stream[stream_name]
-        num_instances = len(list(iter(stream)))
-        print(f"stream named '{stream_name}' has {num_instances} instances")
-    print("")
-    for stream_name in multi_stream.keys():
-        if streams is None or stream_name in streams:
-            stream = multi_stream[stream_name]
-            examples = list(stream.take(num_examples))
-            print("-" * 10)
-            print(f"Showing {len(examples)} example(s) from stream '{stream_name}':\n")
-            for example in examples:
-                print_dict(example)
-                print("\n")
-    return examples
-
-
 def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
     if type(card.templates) is TemplatesDict:
         for template_item in card.templates.keys():
