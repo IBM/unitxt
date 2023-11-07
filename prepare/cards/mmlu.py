@@ -81,11 +81,18 @@ templates = {
     "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:""".strip(),
 }
 MMLU_TEMPLATES = TemplatesDict(
-    {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
+    {
+        key: InputOutputTemplate(
+            input_format=val, output_format="{label}", postprocessors=["processors.first_character"]
+        )
+        for key, val in templates.items()
+    }
 )
 
 for k, v in templates.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}")
+    template = InputOutputTemplate(
+        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+    )
     add_to_catalog(template, f"templates.mmlu.{k.replace('-', '_')}", overwrite=True)
 
 
@@ -105,6 +112,7 @@ CONTEXT_MMLU_TEMPLATES = TemplatesDict(
                 "{context}\n{sentence1}",
             ),
             output_format="{label}",
+            postprocessors=["processors.first_character"],
         )
         for key, val in templates.items()
     }
@@ -125,6 +133,7 @@ CONTEXT_MMLU_TEMPLATES_NO_INTRO = TemplatesDict(
                 "{context}\n{sentence1}",
             ),
             output_format="{label}",
+            postprocessors=["processors.first_character"],
         )
         for key, val in templates.items()
     }
