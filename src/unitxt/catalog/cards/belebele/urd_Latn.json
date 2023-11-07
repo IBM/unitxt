@@ -151,22 +151,34 @@
         "original": {
             "type": "input_output_template",
             "input_format": "{context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}"
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
         },
         "helm": {
             "type": "input_output_template",
             "input_format": "Context: {context}\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}"
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
         },
         "lm_eval_harness": {
             "type": "input_output_template",
             "input_format": "Context: {context}\nQuestion: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
-            "output_format": "{label}"
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
         },
         "fm-eval": {
             "type": "input_output_template",
             "input_format": "Context: {context}\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
-            "output_format": "{label}"
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
         }
     }
 }
