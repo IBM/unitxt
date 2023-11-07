@@ -8,3 +8,5 @@ scikit-learn
 dpath
 jiwer
 editdistance
+statsmodels
+scipy
