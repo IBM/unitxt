@@ -96,8 +96,8 @@ class TestTemplates(unittest.TestCase):
         template = YesNoTemplate(input_format="Is {text} of {class}?", class_field="class", label_field="labels")
 
         proccessed_input_to_inputs = {
-            "Is text_a of news?": {"text": "text_a", "class": "news"},
-            "Is text_b of news?": {"text": "text_b", "class": "news"},
+            "Is text_a of news?": {"text": "text_a", "class": ["news"]},
+            "Is text_b of news?": {"text": "text_b", "class": ["news"]},
         }
         for expected_processed_input, inputs in proccessed_input_to_inputs.items():
             processed = template.process_inputs(inputs)
@@ -112,7 +112,7 @@ class TestTemplates(unittest.TestCase):
         template = YesNoTemplate(input_format=input_format, class_field="class", label_field="")
         with self.assertRaises(KeyError) as cm:
             wrong_field_name = "wrong_field_name"
-            template.process_inputs(inputs={wrong_field_name: "news"})
+            template.process_inputs(inputs={wrong_field_name: ["news"]})
             self.assertEquals(
                 f"Available inputs are {wrong_field_name} but input format requires a different one: {input_format}",
                 str(cm.exception),
@@ -188,7 +188,7 @@ class TestTemplates(unittest.TestCase):
             )
 
         _test_with_wrong_labels_value(wrong_labels_value=[])  # list of labels values should not be empty
-        _test_with_wrong_labels_value(wrong_labels_value="non list value")
+        _test_with_wrong_labels_value(wrong_labels_value="non list value is an error")
 
     def test_yes_no_template_process_output_wrong_value_in_class_field(self):
         """
@@ -213,8 +213,8 @@ class TestTemplates(unittest.TestCase):
             )
 
         _test_with_wrong_class_value(wrong_class_value=[])  # list of class values should not be empty
-        _test_with_wrong_class_value(wrong_class_value="non list value")
-        _test_with_wrong_class_value(wrong_class_value=["list with", "two items"])
+        _test_with_wrong_class_value(wrong_class_value="non list value is an error")
+        _test_with_wrong_class_value(wrong_class_value=["list with", "two or more items is an error"])
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
