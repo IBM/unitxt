@@ -152,25 +152,21 @@ class TestTemplates(unittest.TestCase):
         class_field = "class"
         template = YesNoTemplate(input_format="", class_field=class_field, label_field=label_field)
 
-        correct_outputs = {
-            class_field: ["news"],
-            label_field: ["news", "sports"],
-        }
+        with self.assertRaises(RuntimeError) as cm:
+            outputs = {class_field: ["news"]}
+            template.process_outputs(outputs=outputs)
+        self.assertEquals(
+            f"Available outputs are {list(outputs.keys())}, missing required label field: '{label_field}'.",
+            str(cm.exception),
+        )
 
-        def _test_with_missing_output(missing_output_key):
-            # check for missing label_field
-            with self.assertRaises(KeyError) as cm:
-                outputs = correct_outputs.copy()
-                del outputs[missing_output_key]
-                template.process_outputs(outputs=outputs)
-                self.assertEquals(
-                    f"Available outputs are {outputs.keys()}, but required label field is: '{self.label_field}', "
-                    f"and required class field is '{self.class_field}'. One or both are missing.",
-                    str(cm.exception),
-                )
-
-        _test_with_missing_output(missing_output_key=label_field)
-        _test_with_missing_output(missing_output_key=class_field)
+        with self.assertRaises(RuntimeError) as cm:
+            outputs = {label_field: ["news", "sports"]}
+            template.process_outputs(outputs=outputs)
+        self.assertEquals(
+            f"Available outputs are {list(outputs.keys())}, missing required class field: '{class_field}'.",
+            str(cm.exception),
+        )
 
     def test_yes_no_template_process_output_wrong_value_in_label_field(self):
         """
