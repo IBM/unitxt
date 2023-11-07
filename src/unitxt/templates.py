@@ -221,29 +221,29 @@ class YesNoTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_names = outputs[self.label_field]
-            if not isinstance(gold_class_names, list) or not gold_class_names:
-                raise RuntimeError(
-                    f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
-                )
-            queried_class_names = outputs[self.class_field]
-            if (
-                not queried_class_names
-                or not isinstance(queried_class_names, list)
-                or not len(queried_class_names) == 1
-            ):
-                raise RuntimeError(
-                    f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
-                )
-            queried_class_name = queried_class_names[0]
-            if queried_class_name in gold_class_names:
-                return self.yes_answer
-            else:
-                return self.no_answer
         except KeyError as e:
-            raise KeyError(
-                f"Available outputs are {outputs.keys()}, but required label field is: '{self.label_field}', "
-                f"and required class field is '{self.class_field}'. One or both are missing."
+            raise RuntimeError(
+                f"Available outputs are {list(outputs.keys())}, missing required label field: '{self.label_field}'."
             ) from e
+        if not isinstance(gold_class_names, list) or not gold_class_names:
+            raise RuntimeError(
+                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
+            )
+        try:
+            queried_class_names = outputs[self.class_field]
+        except KeyError as e:
+            raise RuntimeError(
+                f"Available outputs are {list(outputs.keys())}, missing required class field: '{self.class_field}'."
+            ) from e
+        if not queried_class_names or not isinstance(queried_class_names, list) or not len(queried_class_names) == 1:
+            raise RuntimeError(
+                f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
+            )
+        queried_class_name = queried_class_names[0]
+        if queried_class_name in gold_class_names:
+            return self.yes_answer
+        else:
+            return self.no_answer
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
