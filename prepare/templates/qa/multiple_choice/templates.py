@@ -15,7 +15,9 @@ templates = {
 # )
 
 for k, v in templates.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}", postprocessors=["processors.first_character"])
+    template = InputOutputTemplate(
+        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+    )
     add_to_catalog(template, f"templates.qa.multiple_choice.original.{k}", overwrite=True)
 
 # with context
@@ -49,7 +51,9 @@ templates_with_context = {
 # )
 
 for k, v in templates_with_context.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}", postprocessors=["processors.first_character"])
+    template = InputOutputTemplate(
+        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+    )
     add_to_catalog(template, f"templates.qa.multiple_choice.context.{k}", overwrite=True)
 
 
@@ -67,7 +71,9 @@ templates_context_no_intro = {
 # )
 
 for k, v in templates_context_no_intro.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}", postprocessors=["processors.first_character"])
+    template = InputOutputTemplate(
+        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+    )
     add_to_catalog(template, f"templates.qa.multiple_choice.context_no_intro.{k}", overwrite=True)
 
 # no intro
@@ -81,7 +87,9 @@ templates_no_intro = {
 # )
 
 for k, v in templates_no_intro.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}", postprocessors=["processors.first_character"])
+    template = InputOutputTemplate(
+        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+    )
     add_to_catalog(template, f"templates.qa.multiple_choice.no_intro.{k}", overwrite=True)
 
 # add template aggragations
