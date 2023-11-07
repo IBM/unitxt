@@ -3,18 +3,9 @@ from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    LoadHF,
-    MapInstanceValues,
-    TaskCard,
-)
+from src.unitxt.blocks import AddFields, FormTask, LoadHF, MapInstanceValues, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
-    IndexOf,
-    ListFieldValues,
-)
+from src.unitxt.operators import IndexOf, ListFieldValues
 from src.unitxt.test_utils.card import test_card
 
 # numbering = tuple(str(x) for x in range(200))

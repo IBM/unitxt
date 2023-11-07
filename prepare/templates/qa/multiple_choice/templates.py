@@ -1,6 +1,6 @@
-from src.unitxt.templates import TemplatesDict, TemplatesList
 from src.unitxt.blocks import InputOutputTemplate
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.templates import TemplatesDict, TemplatesList
 
 templates = {
     "mmlu": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
