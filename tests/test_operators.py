@@ -480,7 +480,3 @@ class TestOperators(unittest.TestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
-
-
-if __name__ == "__main__":
-    unittest.main()
