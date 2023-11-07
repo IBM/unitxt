@@ -162,6 +162,7 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
         self.accessible_streams = [self.source_stream]
         self.cache_accessible_streams = True
         self.local_cache = None
+        self.sampler.prepare()
 
     def verify(self):
         assert self.source_stream is not None, "Source stream must be specified"
