@@ -34,7 +34,7 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 ### 🦄 Simplicity
 Everything is unitxt is simple and designed to feel natural and self explenatory.
 ### 🦄 Adaptability
-Adding new datasets, loading recpepies, instructions and formattors is possible and encoureged!
+Adding new datasets, loading recipes, instructions and formattors is possible and encoureged!
 ### 🦄 Transperancy
 The reosurces and formators of Unitxt are stored as shared datasets and therfore can easily reviewed by the crowed. Moreover, when assembling dataset with Unitxt it is very clear to others whats in it.
 
