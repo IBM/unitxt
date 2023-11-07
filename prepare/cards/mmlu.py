@@ -1,6 +1,13 @@
 from typing import List, Union
 
-from src.unitxt.blocks import AddFields, FormTask, InputOutputTemplate, LoadHF, TaskCard
+from src.unitxt.blocks import (
+    AddFields,
+    FormTask,
+    InputOutputTemplate,
+    LoadHF,
+    TaskCard,
+    TemplatesDict,
+)
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
 from src.unitxt.operators import JoinStr, RenameFields, TakeByField, ZipFieldValues
