@@ -135,9 +135,9 @@ class TestTemplates(unittest.TestCase):
         )
 
         processed_output_to_outputs = {
-            no_answer: {label_field: ["sports"], class_field: "news"},
-            yes_answer: {label_field: ["news"], class_field: "news"},
-            yes_answer: {label_field: ["news", "sports"], class_field: "news"},
+            no_answer: {label_field: ["sports"], class_field: ["news"]},
+            yes_answer: {label_field: ["news"], class_field: ["news"]},
+            yes_answer: {label_field: ["news", "sports"], class_field: ["news"]},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
             processed = template.process_outputs(outputs)
@@ -153,7 +153,7 @@ class TestTemplates(unittest.TestCase):
         template = YesNoTemplate(input_format="", class_field=class_field, label_field=label_field)
 
         correct_outputs = {
-            class_field: "news",
+            class_field: ["news"],
             label_field: ["news", "sports"],
         }
 
@@ -174,7 +174,7 @@ class TestTemplates(unittest.TestCase):
 
     def test_yes_no_template_process_output_wrong_value_in_label_field(self):
         """
-        Test the processing of the output of a YesNoTemplate, when the label_field or the
+        Test the processing of the output of a YesNoTemplate, when the label_field
         contains incorrect values.
         """
 
@@ -182,13 +182,39 @@ class TestTemplates(unittest.TestCase):
             template = YesNoTemplate(input_format="", class_field="", label_field="labels")
             with self.assertRaises(RuntimeError) as cm:
                 template.process_outputs(outputs={"labels": wrong_labels_value})
-                self.assertEquals(
-                    f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expected a non-empty list.",
-                    str(cm.exception),
-                )
+            self.assertEquals(
+                f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expected a non-empty list.",
+                str(cm.exception),
+            )
 
         _test_with_wrong_labels_value(wrong_labels_value=[])  # list of labels values should not be empty
         _test_with_wrong_labels_value(wrong_labels_value="non list value")
+
+    def test_yes_no_template_process_output_wrong_value_in_class_field(self):
+        """
+        Test the processing of the output of a YesNoTemplate, when the class_field
+        contains incorrect values.
+        """
+
+        def _test_with_wrong_class_value(wrong_class_value):
+            label_field = "labels"
+            class_field = "class"
+            template = YesNoTemplate(input_format="", class_field=class_field, label_field=label_field)
+            with self.assertRaises(RuntimeError) as cm:
+                template.process_outputs(
+                    outputs={
+                        label_field: ["news"],
+                        class_field: wrong_class_value,
+                    }
+                )
+            self.assertEquals(
+                f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a list with one item.",
+                str(cm.exception),
+            )
+
+        _test_with_wrong_class_value(wrong_class_value=[])  # list of class values should not be empty
+        _test_with_wrong_class_value(wrong_class_value="non list value")
+        _test_with_wrong_class_value(wrong_class_value=["list with", "two items"])
 
     def test_span_labeling_template_one_entity_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")

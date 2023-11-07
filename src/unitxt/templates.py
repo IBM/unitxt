@@ -225,7 +225,16 @@ class YesNoTemplate(Template):
                 raise RuntimeError(
                     f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
                 )
-            queried_class_name = outputs[self.class_field]
+            queried_class_names = outputs[self.class_field]
+            if (
+                not queried_class_names
+                or not isinstance(queried_class_names, list)
+                or not len(queried_class_names) == 1
+            ):
+                raise RuntimeError(
+                    f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
+                )
+            queried_class_name = queried_class_names[0]
             if queried_class_name in gold_class_names:
                 return self.yes_answer
             else:
