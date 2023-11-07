@@ -212,12 +212,19 @@ class FieldOperator(StreamInstanceOperator):
                     default=self.get_default,
                     not_exist_ok=self.not_exist_ok,
                 )
-            except TypeError as e:
-                raise TypeError(f"Failed to get {from_field} from {instance}")
-            if self.process_every_value:
-                new_value = [self.process_value(value) for value in old_value]
-            else:
-                new_value = self.process_value(old_value)
+            except Exception as e:
+                raise ValueError(
+                    f"{self.__class__.__name__}: Failed to get '{from_field}' from {instance} due to : {e}"
+                )
+            try:
+                if self.process_every_value:
+                    new_value = [self.process_value(value) for value in old_value]
+                else:
+                    new_value = self.process_value(old_value)
+            except Exception as e:
+                raise ValueError(
+                    f"{self.__class__.__name__}: Failed to process '{from_field}' from {instance} due to : {e}"
+                )
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
@@ -644,10 +651,10 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
 class FilterByValues(SingleStreamOperator):
     """
-    Filters a stream, yielding only instances that match specified values.
+    Filters a stream, yielding only instances that match specified values in the provided fields.
 
     Args:
-        values (Dict[str, Any]): The values that instances should match to be included in the output.
+        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
     """
 
     values: Dict[str, Any]
@@ -656,6 +663,46 @@ class FilterByValues(SingleStreamOperator):
         for instance in stream:
             if all(instance[key] == value for key, value in self.values.items()):
                 yield instance
+
+
+class FilterByListsOfValues(SingleStreamOperator):
+    """
+    Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
+
+    Args:
+        values (Dict[str, Any]): For each field, the list of values that instances should match to be included in the output.
+    """
+
+    values: Dict[str, Any]
+
+    def verify(self):
+        for key, value in self.values.items():
+            if not isinstance(value, list):
+                raise ValueError(f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'")
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        for instance in stream:
+            if any(instance[key] in value for key, value in self.values.items()):
+                yield instance
+
+
+class IntersectWithList(FieldOperator):
+    """
+    Intersects the value of a field, which must be a list, with a given list
+    Args:
+        allowed_values (list) - list to intersect
+    """
+
+    allowed_values: List[Any]
+
+    def verify(self):
+        if not isinstance(self.allowed_values, list):
+            raise ValueError(f"The allowed_values is not a list but '{self.allowed_values}'")
+
+    def process_value(self, value: Any) -> Any:
+        if not isinstance(value, list):
+            raise ValueError(f"The value in field is not a list but '{value}'")
+        return [e for e in value if e in self.allowed_values]
 
 
 class Unique(SingleStreamReducer):
