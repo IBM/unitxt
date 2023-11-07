@@ -1,5 +1,6 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.processors import (
+    FirstCharacter,
     LowerCaseTillPunc,
     StringOrNotString,
     TakeFirstNonEmptyLine,
