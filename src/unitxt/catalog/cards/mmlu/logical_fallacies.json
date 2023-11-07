@@ -125,26 +125,5 @@
             "metrics.accuracy"
         ]
     },
-    "templates": {
-        "original": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}"
-        },
-        "helm": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}"
-        },
-        "lm_eval_harness": {
-            "type": "input_output_template",
-            "input_format": "Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
-            "output_format": "{label}"
-        },
-        "fm-eval": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
-            "output_format": "{label}"
-        }
-    }
+    "templates": "templates.multiple_choice.original.all"
 }

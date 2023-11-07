@@ -1,0 +1,8 @@
+{
+    "type": "input_output_template",
+    "input_format": "Context: {context}\nQuestion: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+    "output_format": "{label}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}
