@@ -25,4 +25,9 @@ example = " A. This is the answer."
 print(parser.process(example))
 assert parser.process(example) == "A"
 
+example = "   "
+
+print(parser.process(example))
+assert parser.process(example) == ""
+
 add_to_catalog(parser, "processors.first_character", overwrite=True)
