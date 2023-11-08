@@ -52,8 +52,8 @@ class Metric(ABC):
         pass
 
 
-class MetricWithConfidenceInterval(Metric, ABC):
-    n_resamples = 100
+class MetricWithConfidenceInterval(Metric):
+    n_resamples: int = 100
     confidence_level = 0.95
     # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
     # So use '& MAX_32BIT' to get a 32-bit seed.
