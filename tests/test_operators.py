@@ -83,16 +83,24 @@ class TestOperators(unittest.TestCase):
         test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
 
     def test_filter_by_values(self):
-        inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-        ]
+        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
-            {"a": 1, "b": 2},
+            {"a": 1, "b": 3},
         ]
 
-        test_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByValues(required_values={"c": "5"}), inputs=inputs, targets=targets, tester=self
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        )
 
     def test_filter_by_list_of_values(self):
         inputs = [
@@ -107,14 +115,28 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=FilterByListsOfValues(values={"b": ["3", "4"]}), inputs=inputs, targets=targets, tester=self
+            operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
         with self.assertRaises(ValueError) as cm:
             test_operator(
-                operator=FilterByListsOfValues(values={"b": "5"}), inputs=inputs, targets=targets, tester=self
+                operator=FilterByListsOfValues(required_values={"b": "5"}), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByListsOfValues(required_values={"c": ["5"]}),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception), "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}"
+        )
 
     def test_intersect(self):
         inputs = [
@@ -139,6 +161,15 @@ class TestOperators(unittest.TestCase):
             test_operator(operator=Intersect(allowed_values=3), inputs=inputs, targets=targets, tester=self)
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=Intersect(allowed_values=["3"], process_every_value=True),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in Intersect operator")
+
         inputs = [
             {"label": "b"},
         ]
@@ -149,13 +180,12 @@ class TestOperators(unittest.TestCase):
                 targets=targets,
                 tester=self,
             )
-        print(cm.exception)
         self.assertEqual(
             str(cm.exception),
             "Intersect: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
         )
 
-    def test_remove_values_by_list(self):
+    def test_remove_values(self):
         inputs = [
             {"label": ["a", "b"]},
             {"label": ["a", "c", "d"]},
@@ -188,7 +218,6 @@ class TestOperators(unittest.TestCase):
                 targets=targets,
                 tester=self,
             )
-        print(cm.exception)
         self.assertEqual(
             str(cm.exception),
             "RemoveValues: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
@@ -201,7 +230,6 @@ class TestOperators(unittest.TestCase):
                 targets=targets,
                 tester=self,
             )
-        print(cm.exception)
         self.assertEqual(
             str(cm.exception),
             "RemoveValues: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
