@@ -682,6 +682,7 @@ class FilterByListsOfValues(SingleStreamOperator):
     required_values: Dict[str, List]
 
     def verify(self):
+        super().verify()
         for key, value in self.required_values.items():
             if not isinstance(value, list):
                 raise ValueError(f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'")
@@ -710,6 +711,7 @@ class Intersect(FieldOperator):
     allowed_values: List[Any]
 
     def verify(self):
+        super().verify()
         if self.process_every_value:
             raise ValueError(f"'process_every_value=True' is not supported in Intersect operator")
 
@@ -732,6 +734,7 @@ class RemoveValues(FieldOperator):
     unallowed_values: List[Any]
 
     def verify(self):
+        super().verify()
         if not isinstance(self.unallowed_values, list):
             raise ValueError(f"The unallowed_values is not a list but '{self.unallowed_values}'")
 

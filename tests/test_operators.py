@@ -158,12 +158,14 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(operator=Intersect(allowed_values=3), inputs=inputs, targets=targets, tester=self)
+            test_operator(
+                operator=Intersect(field="label", allowed_values=3), inputs=inputs, targets=targets, tester=self
+            )
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
         with self.assertRaises(ValueError) as cm:
             test_operator(
-                operator=Intersect(allowed_values=["3"], process_every_value=True),
+                operator=Intersect(field="label", allowed_values=["3"], process_every_value=True),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -205,7 +207,9 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(operator=RemoveValues(unallowed_values=3), inputs=inputs, targets=targets, tester=self)
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=3), inputs=inputs, targets=targets, tester=self
+            )
         self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
 
         inputs = [
