@@ -22,9 +22,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             OutputQuantizingTemplate(
-                input_format="""
-                   Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?
-                """.strip(),
+                input_format="Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?\n",
                 output_format="{label}",
                 quantum=0.2,
             ),

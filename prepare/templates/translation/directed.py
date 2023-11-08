@@ -3,7 +3,7 @@ from src.unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Translate from {source_language} to {target_language}: {text}", output_format="{translation}"
+        input_format="Translate from {source_language} to {target_language}: {text}\n", output_format="{translation}"
     ),
     "templates.translation.directed.simple",
     overwrite=True,

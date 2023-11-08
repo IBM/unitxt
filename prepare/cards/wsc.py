@@ -16,9 +16,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {text} classify if "{span2_text}" refers to "{span1_text}".
-                """.strip(),
+                input_format="""Given this sentence: {text} classify if "{span2_text}" refers to "{span1_text}"\n""",
                 output_format="{label}",
             ),
         ]

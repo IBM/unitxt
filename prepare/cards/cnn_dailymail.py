@@ -23,7 +23,7 @@ card = TaskCard(
     ),
     templates=TemplatesList(
         [
-            InputOutputTemplate(input_format="{article}", output_format="{highlights}"),
+            InputOutputTemplate(input_format="{article}\n", output_format="{highlights}"),
         ]
     ),
 )

@@ -46,7 +46,7 @@
         "items": [
             {
                 "type": "input_output_template",
-                "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
+                "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\"\n",
                 "output_format": "{label}"
             }
         ]

@@ -35,9 +35,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="""
-                    Given this question: {question1}, classify if this question: {question2} is {choices}.
-                """.strip(),
+                input_format="Given this question: {question1}, classify if this question: {question2} is {choices}\n",
                 output_format="{label}",
             ),
         ]

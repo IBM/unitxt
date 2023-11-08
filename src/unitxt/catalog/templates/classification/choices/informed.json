@@ -1,5 +1,5 @@
 {
     "type": "input_output_template",
-    "input_format": "Classify the follwoing text to one of the options: {choices}, Text: {text}",
+    "input_format": "Classify the follwoing text to one of the options: {choices}, Text: {text}\n",
     "output_format": "{label}"
 }

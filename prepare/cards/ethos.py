@@ -26,22 +26,22 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}.",
+                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}.\n",
                 output_format="{label}",
                 postprocessors=["processors.take_first_non_empty_line"],
             ),
             InputOutputTemplate(
-                input_format="Does the following sentence contains hate speech? Answer only by choosing one of the options {choices}. sentence: {text}.",
+                input_format="Does the following sentence contains hate speech? Answer only by choosing one of the options {choices}. sentence: {text}.\n",
                 output_format="{label}",
                 postprocessors=["processors.take_first_non_empty_line"],
             ),
             InputOutputTemplate(
-                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as: ",
+                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as:",
                 output_format="{label}",
                 postprocessors=["processors.take_first_non_empty_line", "processors.lower_case_till_punc"],
             ),
             InputOutputTemplate(
-                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as: ",
+                input_format="Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as:",
                 output_format="{label}",
                 postprocessors=["processors.take_first_non_empty_line", "processors.hate_speech_or_not_hate_speech"],
             ),

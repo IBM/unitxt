@@ -107,7 +107,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
     instruction_prefix: str = ""
     demos_field: str = None
     size_limiter: Artifact = None
-    input_output_separator: str = "\n"
+    input_output_separator: str = ""
     demo_separator: str = "\n\n"
     system_prompt: str = None
 

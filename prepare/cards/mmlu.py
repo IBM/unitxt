@@ -75,10 +75,10 @@ subtasks = [
     "world_religions",
 ]
 templates = {
-    "original": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "helm": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "lm_eval_harness": """Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:""".strip(),
-    "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:""".strip(),
+    "original": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer: """,
+    "helm": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer: """,
+    "lm_eval_harness": """Question: {sentence1}.\nChoices:\n{choices}.\nAnswer: """,
+    "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer: """,
 }
 MMLU_TEMPLATES = TemplatesDict(
     {

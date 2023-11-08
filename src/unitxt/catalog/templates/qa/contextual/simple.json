@@ -1,5 +1,5 @@
 {
     "type": "input_output_template",
-    "input_format": "Context: {context}\nQuestion: {question}",
+    "input_format": "Context: {context}\nQuestion: {question}\n",
     "output_format": "{answer}"
 }

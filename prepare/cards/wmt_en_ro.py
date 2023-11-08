@@ -24,7 +24,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="{en}",
+                input_format="{en}\n",
                 output_format="{ro}",
             ),
         ]

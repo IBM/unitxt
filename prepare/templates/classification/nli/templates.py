@@ -3,7 +3,7 @@ from src.unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Given this sentence: {premise}, classify if this sentence: {hypothesis} is {choices}.",
+        input_format="Given this sentence: {premise}, classify if this sentence: {hypothesis} is {choices}.\n",
         output_format="{label}",
     ),
     "templates.classification.nli.simple",

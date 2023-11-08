@@ -33,9 +33,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="""
-                    What was the {sentence1} of the following:\n{context}\nAnswers: {choices}\nAnswer:
-                """.strip(),
+                input_format="What was the {sentence1} of the following:\n{context}\nAnswers: {choices}\nAnswer: ",
                 output_format="{label}",
             ),
         ]

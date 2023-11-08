@@ -23,7 +23,7 @@
         "items": [
             {
                 "type": "input_output_template",
-                "input_format": "{article}",
+                "input_format": "{article}\n",
                 "output_format": "{highlights}"
             }
         ]

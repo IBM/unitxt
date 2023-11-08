@@ -46,7 +46,7 @@
         "items": [
             {
                 "type": "input_output_template",
-                "input_format": "{en}",
+                "input_format": "{en}\n",
                 "output_format": "{fr}"
             }
         ]

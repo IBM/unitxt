@@ -54,6 +54,6 @@ for subtask in subtasks:
         ),
         templates=MMLU_TEMPLATES,
     )
-    if subtask == subtask[0]:
+    if subtask == subtasks[0]:
         test_card(card, demos_taken_from="test")
     add_to_catalog(card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True)

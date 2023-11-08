@@ -34,9 +34,7 @@ card = TaskCard(
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
-                """.strip(),
+                input_format="Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.\n",
                 output_format="{label}",
             ),
         ]
