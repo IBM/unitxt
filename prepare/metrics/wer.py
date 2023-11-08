@@ -1,3 +1,4 @@
+import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import Wer
 from src.unitxt.test_utils.metrics import test_metric
@@ -16,10 +17,10 @@ global_target = {
     "wer": 0.38,
     "score": 0.38,
     "score_name": "wer",
-    "wer_ci_low": 0.25,
-    "wer_ci_high": 0.5,
-    "score_ci_low": 0.25,
-    "score_ci_high": 0.5,
+    "wer_ci_low": np.NaN,
+    "wer_ci_high": np.NaN,
+    "score_ci_low": np.NaN,
+    "score_ci_high": np.NaN,
 }  # Should by 0.375, but package rounds the scores
 
 outputs = test_metric(
