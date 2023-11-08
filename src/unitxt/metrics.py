@@ -60,6 +60,9 @@ class MetricWithConfidenceInterval(Metric):
     # So use '& MAX_32BIT' to get a 32-bit seed.
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
 
+    def _can_compute_confidence_intervals(self, num_predictions):
+        return self.n_resamples is not None and self.n_resamples > 1 and num_predictions > 1
+
     def score_based_confidence_interval(self, score_names: List[str], instances):
         """
         Compute confidence intervals based on existing scores, already computed
@@ -73,7 +76,7 @@ class MetricWithConfidenceInterval(Metric):
 
         result = {}
 
-        if self.n_resamples is None:
+        if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
 
         for score_name in score_names:
@@ -140,8 +143,9 @@ class MetricWithConfidenceInterval(Metric):
             return scores
 
         result = {}
-        if self.n_resamples is not None and self.n_resamples > 1 and len(predictions) > 1:
-            identifiers = list(range(len(predictions)))
+        num_predictions = len(predictions)
+        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
+            identifiers = list(range(num_predictions))
             ci = bootstrap(
                 (identifiers,),
                 statistic=statistic,
