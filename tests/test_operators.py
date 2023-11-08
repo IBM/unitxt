@@ -54,6 +54,21 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+    def test_map_instance_values_without_tester(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": "hi", "b": 2},
+            {"a": "bye", "b": 3},
+        ]
+
+        test_operator(
+            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        )
+
     def test_flatten_instances(self):
         inputs = [
             {"a": {"b": 1}},
