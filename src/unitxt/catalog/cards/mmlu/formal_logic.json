@@ -125,5 +125,5 @@
             "metrics.accuracy"
         ]
     },
-    "templates": "templates.multiple_choice.original.all"
+    "templates": "templates.qa.multiple_choice.original.all"
 }
