@@ -215,7 +215,7 @@ class FieldOperator(StreamInstanceOperator):
             except Exception as e:
                 raise ValueError(
                     f"{self.__class__.__name__}: Failed to get '{from_field}' from {instance} due to : {e}"
-                )
+                ) from e
             try:
                 if self.process_every_value:
                     new_value = [self.process_value(value) for value in old_value]
@@ -224,7 +224,7 @@ class FieldOperator(StreamInstanceOperator):
             except Exception as e:
                 raise ValueError(
                     f"{self.__class__.__name__}: Failed to process '{from_field}' from {instance} due to : {e}"
-                )
+                ) from e
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
