@@ -129,7 +129,7 @@ class PairedDifferenceTest:
             float
         """
         # assertion in case is used outside of signif_pair_diff
-        assert(len(samples_list) == 2, "McNemar's test can use only two samples")
+        assert len(samples_list) == 2, "McNemar's test can use only two samples"
         return mcnemar(table=self._handle_binary_data_contingency(samples_list), exact=True).pvalue
 
 
