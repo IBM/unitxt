@@ -174,7 +174,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
             try:
                 self.template = self.card.templates[self.template_card_index]
             except:
-                if type(self.card.templates) is TemplatesDict:
+                if isinstance(self.card.templates, dict):
                     options = self.card.templates.keys()
                 else:
                     options = list(range(0, len(self.card.templates)))

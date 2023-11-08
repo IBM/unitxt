@@ -186,10 +186,9 @@ class YesNoTemplate(Template):
     A template for generating binary Yes/No questions asking whether an input text is of a specific class.
     input_format:
         Defines the format of the question.
-    class_name:
-        Defines the name of the class that this template asks of. If a gold label is equal to this
-        class name, then the correct output is self.yes_answer (by default, "Yes").
-        Otherwise the correct output is self.no_answer (by default, "No").
+    class_field:
+        Defines the field that contains the name of the class that this template
+        asks of.
     label_field:
         Defines the field which contains the true label of the input text. If a gold label is equal to the
         value in class_name, then the correct output is self.yes_answer (by default, "Yes").
@@ -203,7 +202,7 @@ class YesNoTemplate(Template):
     """
 
     input_format: str = None
-    class_name: str = None
+    class_field: str = None
     label_field: str = None
     yes_answer: str = "Yes"
     no_answer: str = "No"
@@ -211,7 +210,6 @@ class YesNoTemplate(Template):
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
-            inputs["class_name"] = self.class_name
             data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
             return self.input_format.format(**data)
         except KeyError as e:
@@ -223,18 +221,29 @@ class YesNoTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_names = outputs[self.label_field]
-            if not isinstance(gold_class_names, list) or not gold_class_names:
-                raise RuntimeError(
-                    f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
-                )
-            if self.class_name in gold_class_names:
-                return self.yes_answer
-            else:
-                return self.no_answer
         except KeyError as e:
-            raise KeyError(
-                f"Available outputs are {outputs.keys()}, but required label field is: '{self.label_field}'."
+            raise RuntimeError(
+                f"Available outputs are {list(outputs.keys())}, missing required label field: '{self.label_field}'."
             ) from e
+        if not isinstance(gold_class_names, list) or not gold_class_names:
+            raise RuntimeError(
+                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
+            )
+        try:
+            queried_class_names = outputs[self.class_field]
+        except KeyError as e:
+            raise RuntimeError(
+                f"Available outputs are {list(outputs.keys())}, missing required class field: '{self.class_field}'."
+            ) from e
+        if not queried_class_names or not isinstance(queried_class_names, list) or not len(queried_class_names) == 1:
+            raise RuntimeError(
+                f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
+            )
+        queried_class_name = queried_class_names[0]
+        if queried_class_name in gold_class_names:
+            return self.yes_answer
+        else:
+            return self.no_answer
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors

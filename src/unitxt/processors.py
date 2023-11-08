@@ -86,6 +86,14 @@ class LowerCaseTillPunc(BaseFieldOperator):
         return non_empty_line
 
 
+class FirstCharacter(BaseFieldOperator):
+    def process(self, instance):
+        match = re.search(r"\s*(\w)", instance)
+        if match:
+            return match.groups(0)[0]
+        return ""
+
+
 class StringOrNotString(BaseFieldOperator):
     string: str
 
