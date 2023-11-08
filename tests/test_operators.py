@@ -93,7 +93,7 @@ class TestOperators(unittest.TestCase):
 
         test_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs, targets=targets, tester=self)
 
-    def test_filter_by_values(self):
+    def test_filter_by_list_of_values(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
