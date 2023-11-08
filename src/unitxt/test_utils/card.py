@@ -51,15 +51,22 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     recipe = StandardRecipe(card=card, template_card_index=template_card_index, **kwargs)
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
-            examples = print_recipe_output(recipe, max_steps=max_steps, num_examples=1, print_header=True)
+            examples = print_recipe_output(
+                recipe, max_steps=max_steps, num_examples=1, print_header=True, print_stream_size=True
+            )
     else:
         examples = print_recipe_output(
-            recipe, max_steps=recipe.num_steps(), num_examples=3, print_header=False, streams=["test"]
+            recipe,
+            max_steps=recipe.num_steps(),
+            num_examples=3,
+            print_header=False,
+            print_stream_size=False,
+            streams=["test"],
         )
     return examples
 
 
-def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=None):
+def print_recipe_output(recipe, max_steps, num_examples, print_header, print_stream_size, streams=None):
     recipe.set_max_steps(max_steps)
     if print_header:
         last_step_description_dict = recipe.get_last_step_description()
@@ -68,11 +75,12 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header, streams=N
         print("=" * 8, recipe.get_last_step_description())
         print("=" * 8)
     multi_stream = recipe()
-    for stream_name in multi_stream.keys():
-        stream = multi_stream[stream_name]
-        num_instances = len(list(iter(stream)))
-        print(f"stream named '{stream_name}' has {num_instances} instances")
-    print("")
+    if print_stream_size:
+        for stream_name in multi_stream.keys():
+            stream = multi_stream[stream_name]
+            num_instances = len(list(iter(stream)))
+            print(f"stream named '{stream_name}' has {num_instances} instances")
+        print("")
     for stream_name in multi_stream.keys():
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
