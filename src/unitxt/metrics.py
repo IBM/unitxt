@@ -12,6 +12,7 @@ import numpy as np
 from editdistance import eval
 from scipy.stats import bootstrap
 
+from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
 from .operator import (
     MultiStreamOperator,
@@ -45,7 +46,7 @@ class UpdateStream(StreamInstanceOperator):
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
-class Metric(ABC):
+class Metric(Artifact):
     @property
     @abstractmethod
     def main_score(self):
@@ -54,7 +55,7 @@ class Metric(ABC):
 
 class MetricWithConfidenceInterval(Metric):
     n_resamples: int = 100
-    confidence_level = 0.95
+    confidence_level: float = 0.95
     # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
     # So use '& MAX_32BIT' to get a 32-bit seed.
     random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
