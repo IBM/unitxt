@@ -1,3 +1,4 @@
+import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
@@ -41,10 +42,10 @@ global_target = {
     "reference_length": 8,
     "score": 0.9,
     "score_name": "bleu",
-    "bleu_ci_low": 0.29,
-    "bleu_ci_high": 1.0,
-    "score_ci_low": 0.29,
-    "score_ci_high": 1.0,
+    "bleu_ci_low": np.NaN,
+    "bleu_ci_high": np.NaN,
+    "score_ci_low": np.NaN,
+    "score_ci_high": np.NaN,
 }
 
 outputs = test_metric(

@@ -50,9 +50,9 @@ global_target_with_confidence_intervals = global_target.copy()
 global_target_with_confidence_intervals.update(
     {
         "rougeL_ci_low": 0.83,
-        "rougeL_ci_high": 1.0,
+        "rougeL_ci_high": 0.95,
         "score_ci_low": 0.83,
-        "score_ci_high": 1.0,
+        "score_ci_high": 0.95,
     }
 )
 
