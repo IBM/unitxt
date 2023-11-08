@@ -735,6 +735,9 @@ class RemoveValues(FieldOperator):
 
     def verify(self):
         super().verify()
+        if self.process_every_value:
+            raise ValueError(f"'process_every_value=True' is not supported in RemoveValues operator")
+
         if not isinstance(self.unallowed_values, list):
             raise ValueError(f"The unallowed_values is not a list but '{self.unallowed_values}'")
 
