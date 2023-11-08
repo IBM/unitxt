@@ -1,5 +1,8 @@
 from datasets import load_dataset_builder
-from prepare.cards.mmlu import MMLU_TEMPLATES, multiple_choice_preprocess
+from prepare.cards.mmlu import (
+    multiple_choice_inputs_outputs,
+    multiple_choice_preprocess,
+)
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -49,7 +52,7 @@ for subtask in subtasks:
             ],
             metrics=["metrics.accuracy"],
         ),
-        templates=MMLU_TEMPLATES,
+        templates="templates.qa.multiple_choice.original.all",
     )
     test_card(card)
     add_to_catalog(card, f'cards.ai2_arc.{subtask.replace("-", "_")}', overwrite=True)
