@@ -212,6 +212,15 @@ class TestOperators(unittest.TestCase):
             )
         self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
 
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=["3"], process_every_value=True),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in RemoveValues operator")
+
         inputs = [
             {"label": "b"},
         ]
