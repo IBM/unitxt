@@ -39,12 +39,18 @@ class LoadHF(Loader):
     cached = False
 
     def process(self):
-        dataset = hf_load_dataset(
-            self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=self.streaming
-        )
+        try:
+            dataset = hf_load_dataset(
+                self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=self.streaming
+            )
+        except NotImplementedError:
+            dataset = hf_load_dataset(
+                self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=False
+            )
+            for split in dataset.keys():
+                dataset[split] = dataset[split].to_iterable_dataset()
 
         return MultiStream.from_iterables(dataset)
-
 
 class LoadCSV(Loader):
     files: Dict[str, str]
