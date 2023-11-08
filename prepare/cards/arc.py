@@ -1,4 +1,8 @@
 from datasets import load_dataset_builder
+from prepare.cards.mmlu import (
+    multiple_choice_inputs_outputs,
+    multiple_choice_preprocess,
+)
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
