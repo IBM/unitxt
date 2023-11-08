@@ -2,7 +2,6 @@ from typing import List, Union
 
 from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
