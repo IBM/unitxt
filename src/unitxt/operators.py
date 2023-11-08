@@ -686,7 +686,7 @@ class FilterByListsOfValues(SingleStreamOperator):
                 yield instance
 
 
-class IntersectWithList(FieldOperator):
+class Intersect(FieldOperator):
     """
     Intersects the value of a field, which must be a list, with a given list
     Args:
@@ -703,6 +703,25 @@ class IntersectWithList(FieldOperator):
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
         return [e for e in value if e in self.allowed_values]
+
+
+class RemoveValues(FieldOperator):
+    """
+    Removes elements in a field, which must be a list, using a given list of unallowed
+    Args:
+        unallowed_values (list) - removed_values
+    """
+
+    unallowed_values: List[Any]
+
+    def verify(self):
+        if not isinstance(self.unallowed_values, list):
+            raise ValueError(f"The unallowed_values is not a list but '{self.unallowed_values}'")
+
+    def process_value(self, value: Any) -> Any:
+        if not isinstance(value, list):
+            raise ValueError(f"The value in field is not a list but '{value}'")
+        return [e for e in value if not e in self.unallowed_values]
 
 
 class Unique(SingleStreamReducer):

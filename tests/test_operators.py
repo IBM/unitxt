@@ -11,12 +11,13 @@ from src.unitxt.operators import (
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
-    IntersectWithList,
+    Intersect,
     JoinStr,
     LengthBalancer,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
+    RemoveValues,
     RenameFields,
     Shuffle,
     SplitByValue,
@@ -100,7 +101,7 @@ class TestOperators(unittest.TestCase):
             )
         self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
 
-    def test_intersect_with_list(self):
+    def test_intersect(self):
         inputs = [
             {"label": ["a", "b"]},
             {"label": ["a", "c", "d"]},
@@ -114,13 +115,13 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=IntersectWithList(field="label", allowed_values=["b", "f"]),
+            operator=Intersect(field="label", allowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(operator=IntersectWithList(allowed_values=3), inputs=inputs, targets=targets, tester=self)
+            test_operator(operator=Intersect(allowed_values=3), inputs=inputs, targets=targets, tester=self)
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
         inputs = [
@@ -128,7 +129,7 @@ class TestOperators(unittest.TestCase):
         ]
         with self.assertRaises(ValueError) as cm:
             test_operator(
-                operator=IntersectWithList(field="label", allowed_values=["c"]),
+                operator=Intersect(field="label", allowed_values=["c"]),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -136,12 +137,51 @@ class TestOperators(unittest.TestCase):
         print(cm.exception)
         self.assertEqual(
             str(cm.exception),
-            "IntersectWithList: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+            "Intersect: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        )
+
+    def test_remove_values_by_list(self):
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["b", "f"]},
+        ]
+
+        targets = [
+            {"label": ["a"]},
+            {"label": ["a", "c", "d"]},
+            {"label": []},
+        ]
+
+        test_operator(
+            operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        with self.assertRaises(ValueError) as cm:
+            test_operator(operator=RemoveValues(unallowed_values=3), inputs=inputs, targets=targets, tester=self)
+        self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
+
+        inputs = [
+            {"label": "b"},
+        ]
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=["c"]),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        print(cm.exception)
+        self.assertEqual(
+            str(cm.exception),
+            "RemoveValues: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
         )
 
         with self.assertRaises(ValueError) as cm:
             test_operator(
-                operator=IntersectWithList(field="label2", allowed_values=["c"]),
+                operator=RemoveValues(field="label2", unallowed_values=["c"]),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -149,7 +189,7 @@ class TestOperators(unittest.TestCase):
         print(cm.exception)
         self.assertEqual(
             str(cm.exception),
-            "IntersectWithList: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
+            "RemoveValues: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
         )
 
     def test_apply_value_operators_field(self):
