@@ -24,6 +24,11 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
+# The default number of resamples used to estimate the confidence intervals
+# global and instances metrics. Use None to disable confidence interval computation by default.
+_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
+_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+
 
 def abstract_factory():
     return {}
@@ -50,7 +55,9 @@ class Metric(Artifact):
 
 
 class MetricWithConfidenceInterval(Metric):
-    n_resamples: int = 100
+    # The number of resamples used to estimate the confidence intervals of this metric.
+    # Use None to disable confidence interval computation.
+    n_resamples: int = None
     confidence_level: float = 0.95
     # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
     # So use '& MAX_32BIT' to get a 32-bit seed.
@@ -158,6 +165,8 @@ class MetricWithConfidenceInterval(Metric):
 
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
+
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
@@ -210,7 +219,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = 1000
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -271,7 +280,8 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = 1000
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
     @property
