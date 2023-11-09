@@ -26,14 +26,14 @@ class TestDiverseLabelsSampler(unittest.TestCase):
         result = sampler.examplar_repr(examplar=self.new_examplar())
         self.assertEqual(str(expected_results), result)
 
-    def test_examplar_repr_with_string_for_output_choices(self):
+    def test_examplar_repr_with_string_for_input_choices(self):
         sampler = DiverseLabelsSampler()
-        examplar_output_choices = "a string which is a wrong value"
-        wrong_examplar = self.new_examplar(output_choices=examplar_output_choices)
+        examplar_input_choices = "a string which is a wrong value"
+        wrong_examplar = self.new_examplar(input_choices=examplar_input_choices)
         with self.assertRaises(ValueError) as cm:
             sampler.examplar_repr(examplar=wrong_examplar)
         self.assertEquals(
-            f"Unexpected examplar_outputs value '{examplar_output_choices}'. Expected a list.",
+            f"Unexpected input choices value '{examplar_input_choices}'. Expected a list.",
             str(cm.exception),
         )
 
