@@ -1,6 +1,5 @@
 from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
@@ -55,7 +54,7 @@ for lang in langs:
             **multiple_choice_inputs_outputs(),
             metrics=["metrics.accuracy"],
         ),
-        templates=MMLU_TEMPLATES,
+        templates="templates.qa.multiple_choice.original.all",
     )
     if lang == langs[0]:
         test_card(card, demos_taken_from="test")

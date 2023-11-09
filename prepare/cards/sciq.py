@@ -1,7 +1,5 @@
 from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    CONTEXT_MMLU_TEMPLATES,
-    MMLU_TEMPLATES,
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
@@ -62,7 +60,7 @@ card = TaskCard(
         **multiple_choice_inputs_outputs(context=True),
         metrics=["metrics.accuracy"],
     ),
-    templates=CONTEXT_MMLU_TEMPLATES,
+    templates="templates.qa.multiple_choice.context.all",
 )
 test_card(card)
 add_to_catalog(card, f"cards.sciq", overwrite=True)

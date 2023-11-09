@@ -1,0 +1,133 @@
+{
+    "type": "templates_list",
+    "items": [
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "{context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Question: {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Question: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "Context: {context}\nQuestion: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        },
+        {
+            "type": "input_output_template",
+            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
+            "output_format": "{label}",
+            "postprocessors": [
+                "processors.first_character"
+            ]
+        }
+    ]
+}
