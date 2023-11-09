@@ -122,6 +122,8 @@ class DiverseLabelsSampler(Sampler):
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
         examplar_outputs = next(iter(examplar["outputs"].values()))
+        if not isinstance(examplar_outputs, list):
+            raise ValueError(f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list.")
 
         return str([choice for choice in choices if choice in examplar_outputs])
 
