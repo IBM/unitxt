@@ -1,5 +1,5 @@
 {
     "type": "icl_format",
-    "input_prefix": "User:",
-    "output_prefix": "Agent:"
+    "input_prefix": "User: ",
+    "output_prefix": "Agent: "
 }
