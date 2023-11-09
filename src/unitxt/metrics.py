@@ -24,10 +24,6 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
-# TODO check removal
-# nltk.download("punkt")
-MAX_32BIT = 2**32 - 1
-
 
 def abstract_factory():
     return {}
@@ -58,7 +54,8 @@ class MetricWithConfidenceInterval(Metric):
     confidence_level: float = 0.95
     # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
     # So use '& MAX_32BIT' to get a 32-bit seed.
-    random_gen = np.random.default_rng(hash(get_seed()) & MAX_32BIT)
+    _MAX_32BIT = 2**32 - 1
+    random_gen = np.random.default_rng(hash(get_seed()) & _MAX_32BIT)
 
     def _can_compute_confidence_intervals(self, num_predictions):
         return self.n_resamples is not None and self.n_resamples > 1 and num_predictions > 1
