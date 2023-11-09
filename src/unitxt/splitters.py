@@ -117,7 +117,7 @@ class DiverseLabelsSampler(Sampler):
             raise ValueError(f"{self.choices} field is missing from '{inputs}'.")
         choices = inputs[self.choices]
         if not isinstance(choices, list):
-            raise ValueError(f"Unexpected choices value '{choices}'. Expected a list.")
+            raise ValueError(f"Unexpected input choices value '{choices}'. Expected a list.")
 
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
