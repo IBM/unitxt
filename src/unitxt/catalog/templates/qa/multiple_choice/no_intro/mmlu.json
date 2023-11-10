@@ -1,0 +1,8 @@
+{
+    "type": "input_output_template",
+    "input_format": "{sentence1}.\nAnswers: {choices}.\nAnswer:",
+    "output_format": "{label}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}
