@@ -73,6 +73,6 @@ class TestLoaders(unittest.TestCase):
 
     # just to see the code cover issue
     def test_load_from_HF(self):
-        loader = LoadHF(path="GEM/xlsum")
+        loader = LoadHF(path="GEM/xlsum", name="english")
         ms = loader.process()
         self.assertTrue(ms is not None)
