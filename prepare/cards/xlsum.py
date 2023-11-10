@@ -1,5 +1,6 @@
 from datasets import get_dataset_config_names
-configs = get_dataset_config_names('GEM/xlsum')  #the languages
+
+configs = get_dataset_config_names("GEM/xlsum")  # the languages
 # now configs is the list of all languages showing in the dataset
 
 from src.unitxt.blocks import (
@@ -7,7 +8,7 @@ from src.unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
     TaskCard,
-    TemplatesList
+    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -16,7 +17,7 @@ langs = configs
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path='GEM/xlsum', name=lang),
+        loader=LoadHF(path="GEM/xlsum", name=lang),
         preprocess_steps=[
             # SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
             # CopyFields(field_to_field=[["answers/text", "answer"]], use_query=True),
@@ -30,7 +31,7 @@ for lang in langs:
             [
                 InputOutputTemplate(input_format="{text}", output_format="{target}"),
             ]
-        )
+        ),
     )
     if lang == langs[0]:
         test_card(card, debug=True)
