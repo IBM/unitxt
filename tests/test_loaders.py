@@ -73,6 +73,6 @@ class TestLoaders(unittest.TestCase):
 
     # just to see the code cover issue
     def test_load_from_HF(self):
-        loader = LoadHF(path="GEM/xlsum", name="english")
+        loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
         ms = loader.process()
         self.assertTrue(ms is not None)
