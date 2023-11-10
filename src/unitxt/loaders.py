@@ -52,6 +52,7 @@ class LoadHF(Loader):
 
         return MultiStream.from_iterables(dataset)
 
+
 class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
