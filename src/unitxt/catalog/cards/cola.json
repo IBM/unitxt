@@ -17,12 +17,6 @@
             }
         },
         {
-            "type": "rename_fields",
-            "field_to_field": {
-                "sentence": "text"
-            }
-        },
-        {
             "type": "add_fields",
             "fields": {
                 "choices": [
@@ -36,7 +30,7 @@
         "type": "form_task",
         "inputs": [
             "choices",
-            "text"
+            "sentence"
         ],
         "outputs": [
             "label"
@@ -45,5 +39,14 @@
             "metrics.matthews_correlation"
         ]
     },
-    "templates": "templates.classification.choices.all"
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence}, classify if it is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    }
 }

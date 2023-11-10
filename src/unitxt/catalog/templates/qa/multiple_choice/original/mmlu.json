@@ -1,0 +1,8 @@
+{
+    "type": "input_output_template",
+    "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
+    "output_format": "{label}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}
