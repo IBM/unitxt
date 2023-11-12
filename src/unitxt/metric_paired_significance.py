@@ -1,14 +1,16 @@
 import numpy as np
 from itertools import combinations
 from statsmodels.stats.multitest import multipletests
+from statsmodels.stats.contingency_tables import mcnemar
 from scipy.stats import permutation_test, ttest_rel, norm
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
-from statsmodels.stats.contingency_tables import mcnemar
+from collections import namedtuple, defaultdict
+import networkx as nx
+from copy import deepcopy
 
-predictions = ["A", "B", "C"]
-references = [["B"], ["A"], ["C"]]
+COMMON_REPORT_FIELDS = ['model_names', 'metric_name', 'pvalues', 'alternative', 'permute', 'corrected', 'pvalue_is_signif', 'sample_means']
 
 def pval_trans(p):
     # from R emmeans module (emmeans:::.pval.tran)
@@ -43,8 +45,10 @@ class PairedDifferenceTest:
     receive across observations.
     """
 
-    # output of signif_pair_diff will be a dict with at least these fields
-    REQUIRED_REPORT_KEYS = ('pvalues', 'alternative', 'permute', 'corrected', 'pvalue_is_signif', 'sample_means')
+    # output of signif_pair_diff will be a namedtuple in one of these formats
+    PERMUTE_REPORT = namedtuple('DiffTest', ' '.join(COMMON_REPORT_FIELDS))
+    # additional fields for effect sizes available only if not permute
+    TTEST_REPORT = namedtuple('DiffTest', ' '.join(COMMON_REPORT_FIELDS + ['effect_sizes', 'effect_size_is_signif']))
 
     def __init__(self, nmodels=2, alpha=0.05, model_names=None):
         """
@@ -82,7 +86,6 @@ class PairedDifferenceTest:
         # list of equal-length samples greater than size 2
         len_elements = np.unique([len(vec) for vec in samples_list])
         assert (len(samples_list) == self.nmodels) and (len(np.unique(len_elements)) == 1) and (len_elements[0] >= 2)
-
 
     def _check_binary(self, samples_list):
         """
@@ -129,9 +132,6 @@ class PairedDifferenceTest:
         tbl = pd.crosstab(df[0], df[1], dropna=False).to_numpy()
         return tbl
 
-
-
-
     def mcnemar_test(self, samples_list):
         """
         Perform McNemar test and return a p-value and effect size
@@ -152,7 +152,6 @@ class PairedDifferenceTest:
         cohens_g = max(b/(b+c), c/(b+c)) - 0.5
         return mcnemar(table=tbl, exact=True).pvalue, cohens_g
 
-
     def iterate_pairs(self, samples_list=None):
         """
         Iterate over ordered combinations of samples or their indices (if samples_list is None)
@@ -166,11 +165,12 @@ class PairedDifferenceTest:
         # notice, the pair order is important if one-sided tests are used because it affects the hypothesis order
         return combinations(range(self.nmodels) if samples_list is None else samples_list, r=2)
 
-    def signif_pair_diff(self, samples_list, alternative='two-sided', permute=False, corrected=True):
+    def signif_pair_diff(self, samples_list, metric_name='unknown', alternative='two-sided', permute=False, corrected=True):
         """
         Conduct pairedd-observation est of difference in means between samples
         Args:
             samples_list: a list of 1-D numpy arrays
+            metric_name: string of metric name that samples correspond to
             alternative: alternative hypothesis to be used; one-sided (greater/less) should only be used if the arrays have been ordered
             permute: whether or not to use permutation test (requires some simulation)
             corrected: whether or not to apply a correction for control of false positive rate given the number of hypotheses (used when nmodels > 2)
@@ -182,7 +182,7 @@ class PairedDifferenceTest:
         assert alternative in ('greater', 'less', 'two-sided')
         if alternative != 'two-sided':
             flds = ('greater', 'descending') if alternative == 'greater' else ('less', 'ascending')
-            print("If 'alternative' is '{}, the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(flds[0], flds[1]))
+            print("If 'alternative' is '{}, the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(*flds))
         if self.nmodels == 2:
             # require more than 2 hypotheses (only if nmodels > 2) to be able to do a correction
             corrected = False
@@ -192,8 +192,8 @@ class PairedDifferenceTest:
         if self._can_use_mcnemar(samples_list, alternative):
             pvalue, eff_size = self.mcnemar_test(samples_list=samples_list)
             permute = False
-            res = {"pvalues": np.array([pvalue]), "pvalue_is_signif": np.array([pvalue <= self.alpha]),
-                   "effect_sizes": np.array([eff_size]), "effect_size_is_signif": np.array([eff_size >= 0.25])}
+            res = {'pvalues': np.array([pvalue]), 'pvalue_is_signif': np.array([pvalue <= self.alpha]),
+                   'effect_sizes': np.array([eff_size]), 'effect_size_is_signif': np.array([eff_size >= 0.25])}
 
         else:
             # most other cases if have continuous variables or more than 2 models to compare
@@ -211,76 +211,77 @@ class PairedDifferenceTest:
                 pvalues = np.array([vv.pvalue for vv in test_res])
                 # effect size is the statistic / sqrt(n); equivalent of Cohen's d statistic
                 # permutation test don't have effect sizes
-                res["effect_sizes"] = np.array([vv.statistic for vv in test_res]) / np.sqrt(np.sqrt(len(samples_list[0])))
+                res['effect_sizes'] = np.array([vv.statistic for vv in test_res]) / np.sqrt(np.sqrt(len(samples_list[0])))
                 if alternative == 'two-sided':
                     # magnitude in either direction
-                    res["effect_size_is_signif"] = np.abs(res["effect_sizes"]) >= 0.8
+                    res['effect_size_is_signif'] = np.abs(res['effect_sizes']) >= 0.8
                 else:
                     # has to be in the direction specified by the alternative
-                    res["effect_size_is_signif"] = res["effect_sizes"] >= 0.8 if alternative == 'greater' else res["effect_sizes"] <= 0.8
+                    res['effect_size_is_signif'] = res['effect_sizes'] >= 0.8 if alternative == 'greater' else res['effect_sizes'] <= 0.8
 
             if corrected:
                 mult_corr = multipletests(pvals=pvalues, alpha=self.alpha)
-                res.update({'pvalues': mult_corr[1], "pvalue_is_signif": mult_corr[0]})
+                res.update({'pvalues': mult_corr[1], 'pvalue_is_signif': mult_corr[0]})
             else:
-                res.update({"pvalues": pvalues, "pvalue_is_signif": pvalues <= self.alpha})
+                res.update({'pvalues': pvalues, 'pvalue_is_signif': pvalues <= self.alpha})
 
-        res.update({"corrected": corrected, "alternative": alternative, "permute": permute, 'sample_means': np.array([np.mean(vec) for vec in samples_list])})
+        res.update({'corrected': corrected, 'alternative': alternative, 'permute': permute, 'sample_means': np.array([np.mean(vec) for vec in samples_list]),
+                    'metric_name': metric_name, 'model_names': self.model_names})
 
-        return res
+        return self.PERMUTE_REPORT(*[res[kk] for kk in self.PERMUTE_REPORT._fields]) if permute else self.TTEST_REPORT(*[res[kk] for kk in self.TTEST_REPORT._fields])
 
-    @classmethod
-    def _is_valid_signif_results_dict(cls, test_res: dict):
+    def _is_valid_signif_report(self, test_res):
         '''
          Args:
-            test_res: a dict outputted from signif_pair_diff
+            test_res: a namedtuple outputted from signif_pair_diff, from the same item
 
         Returns:
             boolean
         '''
-        assert all([kk in test_res for kk in PairedDifferenceTest.REQUIRED_REPORT_KEYS])
+        assert isinstance(test_res, self.PERMUTE_REPORT) or isinstance(test_res, self.TTEST_REPORT)
+        assert len(self.model_names) == len(test_res.model_names)
+        assert all([ii == jj for ii, jj in zip(self.model_names, test_res.model_names)]), 'model_names lists must match'
 
-
-    def lineplot(self, test_res: dict):
-        self._is_valid_signif_results_dict(test_res)
+    def lineplot(self, test_res):
+        self._is_valid_signif_report(test_res)
         pal = sns.color_palette(palette="Spectral", n_colors=self.nmodels, as_cmap=True)(np.linspace(0, 1, self.nmodels))
-        level_order = np.argsort(test_res['sample_means'])[::-1]
+        level_order = np.argsort(test_res.sample_means[::-1])
         # pal now accepts the original sample index
         pal = [tuple(pal[ii]) for ii in level_order]
 
         tick_vals = np.unique(np.array([1e-5, 1e-4, 1e-3, 1e-2, 0.5, 0.1, 0.2, 0.5, 1.0, self.alpha]))
-        pval_range = np.array([test_res['pvalues'].min(), test_res['pvalues'].max()])
+        pval_range = np.array([test_res.pvalues.min(), test_res.pvalues.max()])
         tick_vals = np.array([vv for vv in tick_vals if vv >= pval_range[0] and vv <= pval_range[1]])
         xaxis_range = pval_trans(pval_range)
         obs_range_len = np.diff(xaxis_range)
         range_pad = 0.05
 
-        yaxis_range = np.array([test_res['sample_means'].min(), test_res['sample_means'].max()])
+        yaxis_range = np.array([test_res.sample_means.min(), test_res.sample_means.max()])
         yaxis_range = tuple(yaxis_range + range_pad * np.array([-1,1]) * np.diff(yaxis_range))
 
         xaxis_range = tuple(xaxis_range + range_pad * np.array([-1., 1]) * np.diff(xaxis_range))
 
         # transform the p-values so that the important (low) ones are separated out more
-        pval_transformed = pval_trans(test_res['pvalues'])
+        pval_transformed = pval_trans(test_res.pvalues)
 
         dfs = [pd.DataFrame({'pvalue': np.repeat(a=pp, repeats=2),
                              'pvalue_trans': np.repeat(a=ppt, repeats=2),
                              'group': np.array(idxs),
-                             'ends': test_res['sample_means'][np.array(idxs)], 'color': [pal[ii] for ii in idxs]})#.sort_values(by=['ends'])
-                            for idxs, pp, ppt in zip(self.iterate_pairs(), test_res['pvalues'], pval_transformed)]
+                             'ends': test_res.sample_means[np.array(idxs)], 'color': [pal[ii] for ii in idxs]})#.sort_values(by=['ends'])
+                            for idxs, pp, ppt in zip(self.iterate_pairs(), test_res.pvalues, pval_transformed)]
         for ii, df in enumerate(dfs):
             dfs[ii]["midpoint"] = np.repeat(np.max(df['ends']) - 0.5 * np.abs(np.diff(df['ends'])), 2)
 
-        g = sns.scatterplot(data=pd.DataFrame({"mean": test_res['sample_means'].mean(), "p-value": [-1, -1]}),
+        g = sns.scatterplot(data=pd.DataFrame({"mean": test_res.sample_means.mean(), "p-value": [-1, -1]}),
                             x="p-value", y="mean")
         # indicate significance area
         # g.axes.axvspan(axis_range[0], pval_trans(self.alpha), facecolor='lightgray')
         g.axes.axvline(x=pval_trans(self.alpha)[0], ymin=0, ymax=1, linestyle="dashed", color='black')
         # arrow always goes from the first to second
-        arrow_sym = '<->' if test_res['alternative'] == 'two-sided' else '->'
+        arrow_sym = '<->' if test_res.alternative == 'two-sided' else '->'
         symbol_dict = {'two-sided': '!=', 'less': '<', 'greater': '>'}
-        title = '{} test model A {} model B'.format(test_res['alternative'], symbol_dict[test_res['alternative']])
-        if test_res['alternative'] != 'two-sided':
+        title = '{} test model A {} model B'.format(test_res.alternative, symbol_dict[test_res.alternative])
+        if test_res.alternative != 'two-sided':
             title += '; arrow head goes A -> B'
 
         for segs in dfs:
@@ -288,7 +289,7 @@ class PairedDifferenceTest:
                 # g.axes.vlines(x=row['pvalue'], ymin=min(row['ends'], row['midpoint']), ymax=max(row['ends'], row['midpoint']), color=row["color"])
                 # if two-sided, each line segment has an arrow starting from the midpoint (xytext) and ending at the endpoint
                 # if one-sided, the first row has a segment without an arrow
-                arrow_sym = '->' if ((test_res['alternative'] == 'two-sided') or (ii == 1)) else '-'
+                arrow_sym = '->' if ((test_res.alternative == 'two-sided') or (ii == 1)) else '-'
                 plt.annotate(text='', xytext=(row['pvalue'], row['midpoint']), xy=(row['pvalue'], row['ends']), arrowprops=dict(arrowstyle=arrow_sym, shrinkA=0, shrinkB=0, color=row['color']))
         g.set(xlim=xaxis_range, ylim=yaxis_range, title=title)
         g.axes.set_xticks(ticks=pval_trans(tick_vals), labels=tick_vals)
@@ -296,42 +297,42 @@ class PairedDifferenceTest:
 
         # label sample means
         for lev, colpal in zip(level_order, pal):
-            g.text(x=xaxis_range[0], y=test_res["sample_means"][lev], s=self.model_names[lev], fontdict=dict(color=colpal, horizontalalignment="right"))
+            g.text(x=xaxis_range[0], y=test_res.sample_means[lev], s=self.model_names[lev], fontdict=dict(color=colpal, horizontalalignment="right"))
         plt.show()
 
+    def _is_valid_signif_report_list(self, test_results_list: list):
+        assert isinstance(test_results_list, list)
+        # verify same models are being compared, compare to the base
+        for vv in test_results_list:
+            self._is_valid_signif_report(vv)
 
-    @classmethod
-    def _is_valid_signif_dict_dict(cls, test_results_dicts: dict):
-        for vv in test_results_dicts.values():
-            cls._is_valid_signif_results_dict(vv)
-        # assume the same models are being compared
-        # all have same number of comparisons
-        assert len(set([len(vv['pvalues']) for vv in test_results_dicts.values()])) == 1
         # all have same correction
-        assert len(set([vv['corrected'] for vv in test_results_dicts.values()])) == 1
+        assert len(set([vv.corrected for vv in test_results_list])) == 1, "must all have same setting of 'corrected'"
         # all have same alternative
-        assert len(set([vv['alternative'] for vv in test_results_dicts.values()])) == 1
+        assert len(set([vv.alternative for vv in test_results_list])) == 1, "msust all have same setting of 'alternative"
+        # all different metric_names
+        assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
 
-    def metric_significance_heatmap(self, test_results_dicts: dict):
+    def multiple_metrics_significance_heatmap(self, test_results_list: list):
         """
-
+        Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
         Args:
-            test_results_dicts: dict of dicts, each of which is an output of signif_pair_diff
+            test_results_list: list where each element corresponds to a different metric_name result of signif_pair_diff on the same
+            set of models compared
 
         Returns:
 
         """
-        self._is_valid_signif_dict_dict(test_results_dicts)
-        nmetrics = len(test_results_dicts)
-        first_key = list(test_results_dicts.keys())[0]
-        ncomparisons = len(test_results_dicts[first_key]['pvalues'])
-        alternative = test_results_dicts[first_key]['alternative']
+        self._is_valid_signif_report_list(test_results_list)
+        alternative = test_results_list[0].alternative
 
         # combine in a matrix
 
-        symb = {'two-sided': 'vs', 'less': '<', 'greater': '>'}
-        symb_format = '{} ' + symb[alternative] + ' {}'
-        combined_results = pd.DataFrame({kk: vv['pvalues'] for kk, vv in test_results_dicts.items()},
+        alt_dict = {'two-sided': {'symbol': 'vs', 'name': 'two-sided'},
+                'less': {'symbol': '<', 'name': 'lower-tailed'},
+                'greater': {'symbol': '>', 'name': 'upper-tailed'}}
+        symb_format = '{} ' + alt_dict[alternative]['symbol'] + ' {}'
+        combined_results = pd.DataFrame({vv.metric_name: vv.pvalues for vv in test_results_list},
                                         index=[symb_format.format(a, b) for (a, b) in self.iterate_pairs()])
         combined_mat = combined_results.to_numpy()
         combined_mat[combined_mat > self.alpha] = np.nan
@@ -348,6 +349,66 @@ class PairedDifferenceTest:
         ax.set_yticks(np.arange(combined_mat.shape[0]))
         ax.set_yticklabels(combined_results.index)
         ax.set_ylabel('models compared')
-        plt.title('{} model comparison significant p-values'.format(alternative))
+        plt.title('{} model comparison significant p-values'.format(alt_dict[alternative]['name']))
+
+        plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
+                  rowLabels=list(range(len(test_results_list[0].model_names))),
+                  colLabels=['model name'], loc='bottom', cellLoc='left', colLoc='left', edges='open')
+        plt.subplots_adjust()#bottom=0.2)
         plt.show()
 
+    def metric_significant_pairs_graph(self, test_res, use_pvalues=True, model_name_split_char=None):
+        '''
+        Compare models across a given metric; show a graph where nodes correspond to models, and edgs are drawn
+        between pairs that have a significant difference result
+        Args:
+            test_res: object ouputted from signif_pair_diff
+            use_pvalues: boolean, if True use p-values, otherwise effect sizes, to decide if significant
+
+        '''
+        self._is_valid_signif_report(test_res)
+        # random seed so positions results are the same across runs
+        sd = 5
+        np.random.seed(sd)
+        edges = defaultdict(list)
+        criterion = 'pvalue' if use_pvalues else 'effect_size'
+        for pair, is_signif in zip(self.iterate_pairs(), getattr(test_res, '{}_is_signif'.format(criterion))):
+            if not is_signif:
+                # only plot not significant connections
+                edges[pair[0]].append(pair[1])
+
+        G = nx.DiGraph()
+        for node, others in edges.items():
+            if len(others):
+                for jj in others:
+                    G.add_edge(node, jj)
+            else:
+                G.add_node(node)
+
+        direction = {'two-sided': 'A vs B', 'less': 'A < B', 'greater': 'A > B'}
+        pos = nx.spring_layout(G, seed=sd, k=10 / np.sqrt(G.order()))
+        pos = {ii: np.array([pos[ii][0], sm]) for ii, sm in enumerate(test_res.sample_means)}
+
+        model_names = deepcopy(self.model_names)
+        if model_name_split_char is not None:
+            model_names = [mn.replace(model_name_split_char, "\n") for mn in model_names]
+        # rename the keys
+        pos = {mn: pos[ii] for ii, mn in enumerate(model_names)}
+
+        G = nx.relabel_nodes(G, mapping={ii: name for ii, name in enumerate(model_names)})
+        # retrieve plotted positions, one for each node (model)
+
+        x_coords = [cc[0] for cc in pos.values()]
+        x_margin = (max(x_coords) - min(x_coords)) * 0.25
+
+        fig, ax = plt.subplots(1, 1)
+        nx.draw_networkx(G, with_labels=True, pos=pos, ax=ax, node_color="lightblue", arrows=test_res.alternative != 'two-sided')
+        ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
+        ax.set_ylabel('mean model {}'.format(test_res.metric_name))
+        # add some space to x limits so label names don't
+        xlims = ax.get_xlim()
+        ax.set_xlim(xlims[0] - x_margin, xlims[1] + x_margin)
+        ax.set_title(
+            'Model {}: edges connect models with insignificant {} {}'.format(test_res.metric_name, direction[test_res.alternative], criterion.replace('_', ' ')))
+
+        plt.show()
