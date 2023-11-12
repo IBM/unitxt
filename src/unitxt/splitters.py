@@ -110,11 +110,22 @@ class DiverseLabelsSampler(Sampler):
         self.labels = None
 
     def examplar_repr(self, examplar):
-        assert (
-            "inputs" in examplar and self.choices in examplar["inputs"]
-        ), f"DiverseLabelsSampler assumes each examplar has {self.choices} field in it input"
+        if "inputs" not in examplar:
+            raise ValueError(f"'inputs' field is missing from '{examplar}'.")
+        inputs = examplar["inputs"]
+        if self.choices not in inputs:
+            raise ValueError(f"{self.choices} field is missing from '{inputs}'.")
+        choices = inputs[self.choices]
+        if not isinstance(choices, list):
+            raise ValueError(f"Unexpected input choices value '{choices}'. Expected a list.")
+
+        if "outputs" not in examplar:
+            raise ValueError(f"'outputs' field is missing from '{examplar}'.")
         examplar_outputs = next(iter(examplar["outputs"].values()))
-        return str([choice for choice in examplar["inputs"][self.choices] if choice in examplar_outputs])
+        if not isinstance(examplar_outputs, list):
+            raise ValueError(f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list.")
+
+        return str([choice for choice in choices if choice in examplar_outputs])
 
     def divide_by_repr(self, examplars_pool):
         labels = dict()
