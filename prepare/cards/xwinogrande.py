@@ -1,6 +1,5 @@
 from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
@@ -39,7 +38,6 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="Muennighoff/xwinograd", name=lang),
         preprocess_steps=[
-            "splitters.small_no_dev",
             AddFields({"topic": "common sense", "numbering": numbering}),
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),
@@ -56,7 +54,8 @@ for lang in langs:
             **multiple_choice_inputs_outputs(),
             metrics=["metrics.accuracy"],
         ),
-        templates=MMLU_TEMPLATES,
+        templates="templates.qa.multiple_choice.original.all",
     )
-    test_card(card, tested_split="test")
+    if lang == langs[0]:
+        test_card(card, demos_taken_from="test")
     add_to_catalog(card, f"cards.xwinogrande.{lang}", overwrite=True)

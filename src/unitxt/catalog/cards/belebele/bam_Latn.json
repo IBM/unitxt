@@ -1,0 +1,151 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "facebook/belebele",
+        "name": "bam_Latn"
+    },
+    "preprocess_steps": [
+        {
+            "type": "add_fields",
+            "fields": {
+                "numbering": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F",
+                    "G",
+                    "H",
+                    "I",
+                    "J",
+                    "K",
+                    "L",
+                    "M",
+                    "N",
+                    "O",
+                    "P",
+                    "Q",
+                    "R",
+                    "S",
+                    "T",
+                    "U",
+                    "V",
+                    "W",
+                    "X",
+                    "Y",
+                    "Z"
+                ]
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "mc_answer1",
+                "mc_answer2",
+                "mc_answer3",
+                "mc_answer4"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "correct_answer_num": {
+                    "1": "A",
+                    "2": "B",
+                    "3": "C",
+                    "4": "D"
+                }
+            }
+        },
+        {
+            "type": "index_of",
+            "search_in": "numbering",
+            "index_of": "correct_answer_num",
+            "to_field": "index"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "numbering": "_numbering",
+                "choices": "_choices",
+                "index": "_index",
+                "dialect": "topic",
+                "flores_passage": "context",
+                "question": "sentence1"
+            }
+        },
+        {
+            "type": "take_by_field",
+            "field": "_numbering",
+            "index": "_index",
+            "to_field": "number"
+        },
+        {
+            "type": "take_by_field",
+            "field": "_choices",
+            "index": "_index",
+            "to_field": "answer"
+        },
+        {
+            "type": "zip_field_values",
+            "fields": [
+                "_numbering",
+                "_choices"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "join_str",
+            "separator": ". ",
+            "field": "choices/*",
+            "to_field": "choices_list",
+            "use_query": true,
+            "process_every_value": true
+        },
+        {
+            "type": "take_by_field",
+            "field": "choices_list",
+            "index": "_index",
+            "to_field": "number_and_answer"
+        },
+        {
+            "type": "join_str",
+            "separator": ",",
+            "field": "choices/*/0",
+            "to_field": "numbers",
+            "use_query": true
+        },
+        {
+            "type": "join_str",
+            "separator": " ",
+            "field": "choices_list",
+            "to_field": "choices"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "number": "label"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "choices",
+            "sentence1",
+            "numbers",
+            "topic",
+            "context"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": "templates.qa.multiple_choice.context_no_intro.all"
+}

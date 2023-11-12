@@ -35,45 +35,76 @@ def test_loading_from_catalog(card):
         ), "Card loaded is not equal to card stored"
 
 
-def load_examples_from_standard_recipe(card, tested_split, template_card_index):
-    print("=" * 80)
+def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
+    print("*" * 80)
     print(f"Using template card index: {template_card_index}")
 
-    num_instructions = len(card.instructions) if card.instructions else 0
-    recipe = StandardRecipe(
-        card=card,
-        demos_pool_size=100,
-        demos_taken_from=tested_split,
-        num_demos=3,
-        template_card_index=template_card_index,
-        instruction_card_index=0 if num_instructions else None,
-        loader_limit=200,
-    )
-    multi_stream = recipe()
-    stream = multi_stream[tested_split]
-    try:
-        examples = list(stream.take(3))
-    except ValueError as e:
-        raise ValueError(
-            "Try setting streaming=False in LoadHF in your card. For example: LoadHF(path='glue', name='mrpc', streaming=False). Org error message:",
-            e,
-        )
-    print("3 Examples: ")
-    for example in examples:
-        print_dict(example)
-        print("\n")
+    if "num_demos" not in kwargs:
+        kwargs["num_demos"] = 3
 
+    if "demos_pool_size" not in kwargs:
+        kwargs["demos_pool_size"] = 20
+
+    if "loader_limit" not in kwargs:
+        kwargs["loader_limit"] = 200
+
+    recipe = StandardRecipe(card=card, template_card_index=template_card_index, **kwargs)
+    if debug:
+        for max_steps in range(1, recipe.num_steps() + 1):
+            examples = print_recipe_output(
+                recipe, max_steps=max_steps, num_examples=1, print_header=True, print_stream_size=True
+            )
+    else:
+        examples = print_recipe_output(
+            recipe,
+            max_steps=recipe.num_steps(),
+            num_examples=3,
+            print_header=False,
+            print_stream_size=False,
+            streams=["test"],
+        )
     return examples
 
 
-def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
+def print_recipe_output(recipe, max_steps, num_examples, print_header, print_stream_size, streams=None):
+    recipe.set_max_steps(max_steps)
+    if print_header:
+        last_step_description_dict = recipe.get_last_step_description()
+        print("=" * 80)
+        print("=" * 8)
+        print("=" * 8, recipe.get_last_step_description())
+        print("=" * 8)
+    multi_stream = recipe()
+    if print_stream_size:
+        for stream_name in multi_stream.keys():
+            stream = multi_stream[stream_name]
+            num_instances = len(list(iter(stream)))
+            print(f"stream named '{stream_name}' has {num_instances} instances")
+        print("")
+    for stream_name in multi_stream.keys():
+        if streams is None or stream_name in streams:
+            stream = multi_stream[stream_name]
+            examples = list(stream.take(num_examples))
+            print("-" * 10)
+            print(f"Showing {len(examples)} example(s) from stream '{stream_name}':\n")
+            for example in examples:
+                print_dict(example)
+                print("\n")
+    return examples
+
+
+def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
     if type(card.templates) is TemplatesDict:
         for template_item in card.templates.keys():
-            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+            examples = load_examples_from_standard_recipe(
+                card, template_card_index=template_item, debug=debug, **kwargs
+            )
     else:
         num_templates = len(card.templates)
         for template_item in range(0, num_templates):
-            examples = load_examples_from_standard_recipe(card, tested_split, template_item)
+            examples = load_examples_from_standard_recipe(
+                card, template_card_index=template_item, debug=debug, **kwargs
+            )
 
     # metric = evaluate.load('unitxt/metric')
     predictions = []
@@ -102,10 +133,15 @@ def test_with_eval(card, tested_split, strict=True, exact_match_score=1.0, full_
         )
 
 
-def test_card(card, tested_split="train", strict=True, exact_match_score=1.0, full_mismatch_score=0.0):
+def test_card(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
     test_with_eval(
-        card, tested_split, strict=strict, exact_match_score=exact_match_score, full_mismatch_score=full_mismatch_score
+        card,
+        debug=debug,
+        strict=strict,
+        exact_match_score=exact_match_score,
+        full_mismatch_score=full_mismatch_score,
+        **kwargs,
     )

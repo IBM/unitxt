@@ -8,13 +8,16 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
+    Intersect,
     JoinStr,
     LengthBalancer,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
+    RemoveValues,
     RenameFields,
     Shuffle,
     SplitByValue,
@@ -51,6 +54,21 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+    def test_map_instance_values_without_tester(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": "hi", "b": 2},
+            {"a": "bye", "b": 3},
+        ]
+
+        test_operator(
+            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        )
+
     def test_flatten_instances(self):
         inputs = [
             {"a": {"b": 1}},
@@ -65,16 +83,170 @@ class TestOperators(unittest.TestCase):
         test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
 
     def test_filter_by_values(self):
+        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 1, "b": 3},
+        ]
+
+        test_operator(
+            operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByValues(required_values={"c": "5"}), inputs=inputs, targets=targets, tester=self
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        )
+
+    def test_filter_by_list_of_values(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
         ]
 
         targets = [
-            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
         ]
 
-        test_operator(operator=FilterByValues(values={"a": 1}), inputs=inputs, targets=targets, tester=self)
+        test_operator(
+            operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByListsOfValues(required_values={"b": "5"}), inputs=inputs, targets=targets, tester=self
+            )
+        self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByListsOfValues(required_values={"c": ["5"]}),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception), "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}"
+        )
+
+    def test_intersect(self):
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["a", "b", "f"]},
+        ]
+
+        targets = [
+            {"label": ["b"]},
+            {"label": []},
+            {"label": ["b", "f"]},
+        ]
+
+        test_operator(
+            operator=Intersect(field="label", allowed_values=["b", "f"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=Intersect(field="label", allowed_values=3), inputs=inputs, targets=targets, tester=self
+            )
+        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=Intersect(field="label", allowed_values=["3"], process_every_value=True),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in Intersect operator")
+
+        inputs = [
+            {"label": "b"},
+        ]
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=Intersect(field="label", allowed_values=["c"]),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Intersect: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        )
+
+    def test_remove_values(self):
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["b", "f"]},
+        ]
+
+        targets = [
+            {"label": ["a"]},
+            {"label": ["a", "c", "d"]},
+            {"label": []},
+        ]
+
+        test_operator(
+            operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=3), inputs=inputs, targets=targets, tester=self
+            )
+        self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=["3"], process_every_value=True),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in RemoveValues operator")
+
+        inputs = [
+            {"label": "b"},
+        ]
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label", unallowed_values=["c"]),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "RemoveValues: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=RemoveValues(field="label2", unallowed_values=["c"]),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "RemoveValues: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
+        )
 
     def test_apply_value_operators_field(self):
         inputs = [

@@ -4,7 +4,7 @@ from .card import TaskCard
 from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
-from .operator import SourceSequntialOperator, StreamingOperator
+from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
@@ -13,7 +13,16 @@ from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template, TemplatesDict
 
 
-class BaseRecipe(Recipe, SourceSequntialOperator):
+# Used to give meaningful name to recipe steps
+class CreateDemosPool(SeparateSplit):
+    pass
+
+
+class AddDemosField(SpreadSplit):
+    pass
+
+
+class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
@@ -92,7 +101,7 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
 
         if self.demos_pool_size is not None:
             self.steps.append(
-                SeparateSplit(
+                CreateDemosPool(
                     from_split=self.demos_taken_from,
                     to_split_names=[self.demos_pool_name, self.demos_taken_from],
                     to_split_sizes=[int(self.demos_pool_size)],
@@ -108,7 +117,7 @@ class BaseRecipe(Recipe, SourceSequntialOperator):
             sampler.set_size(self.num_demos)
 
             self.steps.append(
-                SpreadSplit(
+                AddDemosField(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
                     sampler=sampler,
@@ -165,7 +174,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
             try:
                 self.template = self.card.templates[self.template_card_index]
             except:
-                if type(self.card.templates) is TemplatesDict:
+                if isinstance(self.card.templates, dict):
                     options = self.card.templates.keys()
                 else:
                     options = list(range(0, len(self.card.templates)))

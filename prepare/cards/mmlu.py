@@ -1,11 +1,17 @@
 from typing import List, Union
 
-from src.unitxt.blocks import AddFields, FormTask, InputOutputTemplate, LoadHF, TaskCard
+from src.unitxt.blocks import (
+    AddFields,
+    FormTask,
+    InputOutputTemplate,
+    LoadHF,
+    TaskCard,
+    TemplatesDict,
+)
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
 from src.unitxt.operators import JoinStr, RenameFields, TakeByField, ZipFieldValues
 from src.unitxt.splitters import RenameSplits
-from src.unitxt.templates import TemplatesDict
 from src.unitxt.test_utils.card import test_card
 
 # import huggingface_hub
@@ -74,31 +80,6 @@ subtasks = [
     "virology",
     "world_religions",
 ]
-templates = {
-    "original": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "helm": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
-    "lm_eval_harness": """Question: {sentence1}.\nChoices:\n{choices}.\nAnswer:""".strip(),
-    "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:""".strip(),
-}
-MMLU_TEMPLATES = TemplatesDict(
-    {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
-)
-
-for k, v in templates.items():
-    template = InputOutputTemplate(input_format=v, output_format="{label}")
-    add_to_catalog(template, f"templates.mmlu.{k.replace('-', '_')}", overwrite=True)
-
-CONTEXT_MMLU_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=val.replace("Question:", "Context: {context}\nQuestion:").replace(
-                "{sentence1}", "{context}\n{sentence1}"
-            ),
-            output_format="{label}",
-        )
-        for key, val in templates.items()
-    }
-)
 
 
 def multiple_choice_outputs():
@@ -179,9 +160,10 @@ def main():
                 **multiple_choice_inputs_outputs(),
                 metrics=["metrics.accuracy"],
             ),
-            templates=MMLU_TEMPLATES,
+            templates="templates.qa.multiple_choice.original.all",
         )
-        test_card(card)
+        if subtask == subtasks[0]:
+            test_card(card)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 

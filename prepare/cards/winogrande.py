@@ -1,6 +1,5 @@
 from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    MMLU_TEMPLATES,
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
@@ -52,7 +51,8 @@ for subtask in subtasks:
             **multiple_choice_inputs_outputs(),
             metrics=["metrics.accuracy"],
         ),
-        templates=MMLU_TEMPLATES,
+        templates="templates.qa.multiple_choice.original.all",
     )
-    test_card(card, tested_split="test")
+    if subtask == subtask[0]:
+        test_card(card, demos_taken_from="test")
     add_to_catalog(card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True)
