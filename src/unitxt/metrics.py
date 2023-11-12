@@ -523,6 +523,11 @@ class F1Macro(F1):
     main_score = "f1_macro"
 
 
+class F1Weighted(F1):
+    main_score = "f1_weighted"
+    average = "weighted"
+
+
 class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
