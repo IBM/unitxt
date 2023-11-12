@@ -5,14 +5,28 @@
         "path": "GEM/xlsum",
         "name": "gujarati"
     },
-    "preprocess_steps": [],
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "text": "document",
+                "target": "summary"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "text"
+            }
+        }
+    ],
     "task": {
         "type": "form_task",
         "inputs": [
-            "text"
+            "document"
         ],
         "outputs": [
-            "target"
+            "summary"
         ],
         "metrics": [
             "metrics.rouge"
@@ -23,8 +37,8 @@
         "items": [
             {
                 "type": "input_output_template",
-                "input_format": "{text}",
-                "output_format": "{target}"
+                "input_format": "{document}",
+                "output_format": "{summary}"
             }
         ]
     }
