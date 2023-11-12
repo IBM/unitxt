@@ -676,7 +676,7 @@ class FilterByListsOfValues(SingleStreamOperator):
     Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
 
     Args:
-        values (Dict[str, Any]): For each field, the list of values that instances should match to be included in the output.
+        required_values (Dict[str, List]): For each field, the list of values that instances should match to be included in the output.
     """
 
     required_values: Dict[str, List]
