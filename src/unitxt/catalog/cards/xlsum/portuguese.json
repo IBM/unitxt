@@ -1,0 +1,31 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "GEM/xlsum",
+        "name": "portuguese"
+    },
+    "preprocess_steps": [],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "text"
+        ],
+        "outputs": [
+            "target"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{text}",
+                "output_format": "{target}"
+            }
+        ]
+    }
+}
