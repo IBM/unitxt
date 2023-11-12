@@ -6,11 +6,15 @@
         "class"
     ],
     "outputs": [
+        "class",
         "label"
     ],
     "metrics": [
         "metrics.f1_micro_multi_label",
         "metrics.f1_macro_multi_label",
         "metrics.accuracy"
+    ],
+    "augmentable_inputs": [
+        "text"
     ]
 }

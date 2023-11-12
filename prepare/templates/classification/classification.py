@@ -3,7 +3,7 @@ from src.unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Classify the {type_of_class} of following {text_type} to one of these options: {classes}, Text: {text}",
+        input_format="Classify the {type_of_class} of following {text_type} to one of these options: {classes}. Text: {text}",
         output_format="{label}",
     ),
     "templates.classification.multi_class.default",

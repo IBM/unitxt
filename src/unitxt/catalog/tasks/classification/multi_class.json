@@ -13,5 +13,8 @@
         "metrics.f1_micro",
         "metrics.accuracy",
         "metrics.f1_macro"
+    ],
+    "augmentable_inputs": [
+        "text"
     ]
 }
