@@ -9,6 +9,7 @@ from src.unitxt.metrics import (
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
+    F1Weighted,
     Reward,
     Rouge,
     SentenceBert,
@@ -71,7 +72,7 @@ class TestMetrics(unittest.TestCase):
         references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
         predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
         # recall class 'dog'  = 2/3  = 0.666        precision= 2/2 = 1    f1 = 0.8
-        # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75 f1  =0.857142857143
+        # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75 f1 = 0.857142857143
         # macro f1 = (0.8+0.847)/2
         global_target = 0.82857142
         global_target_dog = 0.8
@@ -83,6 +84,20 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
         self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_weighted(self):
+        metric = F1Weighted()
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"], ["dog"], ["dog"]]
+        predictions = ["cat", "cat", "dog", "cat", "cat", "cat", "cat", "dog"]
+        # recall class 'dog'  = 2/5  = 0.4          precision= 2/2 = 1    f1 = 0.66666666
+        # recall class 'cat'  = 3/3  = 1            precision= 3/6 = 0.5  f1 = 0.57142857
+        # weighted f1 = (0.375 * 0.66666666) + (0.625 * 0.57142857) = 0.60714285
+        global_target = 0.60714285
+
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual("f1_weighted", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_weighted", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro_with_ood_predictions(self):
         metric = F1Macro()
