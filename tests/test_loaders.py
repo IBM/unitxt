@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud
+from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
 
 
 class DummyBody:
@@ -70,3 +70,9 @@ class TestLoaders(unittest.TestCase):
         with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
             ms = loader()
             self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})
+
+    # just to see the code cover issue
+    def test_load_from_HF(self):
+        loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
+        ms = loader.process()
+        self.assertEqual(ms.to_dataset()["train"][0]["url"], "https://www.bbc.com/igbo/afirika-43986554")
