@@ -53,22 +53,22 @@ class TestMetricSignifDifference(unittest.TestCase):
 
         # use default paired t-test
         res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided')
-        for observed, expected in zip(res_twosided["pvalues"], expected_pvalues_list[0]):
+        for observed, expected in zip(res_twosided.pvalues, expected_pvalues_list[0]):
             self.assertAlmostEqual(first=observed, second=expected)
         # the effect sizes are the same in the one and two-sided case, and only the non-permutation case
-        for observed, expected in zip(res_twosided["effect_sizes"], expected_effect_sizes):
+        for observed, expected in zip(res_twosided.effect_sizes, expected_effect_sizes):
             self.assertAlmostEqual(first=observed, second=expected)
 
         res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less')
-        for observed, expected in zip(res_onesided["pvalues"], expected_pvalues_list[1]):
+        for observed, expected in zip(res_onesided.pvalues, expected_pvalues_list[1]):
             self.assertAlmostEqual(first=observed, second=expected)
 
         # permutation results should be very similar to t-test but not identical, and should vary a bit each run due to permutation randomness
         res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided', permute=True)
-        for observed, expected in zip(res_twosided["pvalues"], expected_pvalues_list[2]):
+        for observed, expected in zip(res_twosided.pvalues, expected_pvalues_list[2]):
             self.assertAlmostEqual(first=observed, second=expected)
         res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less', permute=True)
-        for observed, expected in zip(res_onesided["pvalues"], expected_pvalues_list[3]):
+        for observed, expected in zip(res_onesided.pvalues, expected_pvalues_list[3]):
             self.assertAlmostEqual(first=observed, second=expected)
 
     def test_signif_same_distr_continuous(self):
@@ -116,46 +116,46 @@ class TestMetricSignifDifference(unittest.TestCase):
         # random generation of paired binary data
         binary_same = self.gen_binary_data(same_distr=True, nmodels=tester.nmodels)
         res = tester.signif_pair_diff(samples_list=binary_same)
-        self.assertAlmostEqual(first=res["pvalues"][0], second=0.1670684814453125)
-        self.assertAlmostEqual(first=res["effect_sizes"][0], second=0.1842105263157895)
+        self.assertAlmostEqual(first=res.pvalues[0], second=0.1670684814453125)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.1842105263157895)
 
         binary_diff = self.gen_binary_data(same_distr=False, nmodels=tester.nmodels)
         res = tester.signif_pair_diff(samples_list=binary_diff)
-        self.assertAlmostEqual(first=res["pvalues"][0], second=0.028959274291992188)
-        self.assertAlmostEqual(first=res["effect_sizes"][0], second=0.23076923076923073)
+        self.assertAlmostEqual(first=res.pvalues[0], second=0.028959274291992188)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.23076923076923073)
 
         # handle some corner cases where the samples do not result in a 2x2 contingency table automatically
         # contingency table is 1x1
         samples_list = [np.ones(shape=100), np.ones(shape=100)]
         res_1x1 = tester.signif_pair_diff(samples_list=samples_list)
         # p-value is 1 meaning there is no difference since both have same values exactly, with no variability
-        self.assertAlmostEqual(first=res_1x1["pvalues"][0], second=1.0)
-        self.assertAlmostEqual(first=res_1x1["effect_sizes"][0], second=0.0)
+        self.assertAlmostEqual(first=res_1x1.pvalues[0], second=1.0)
+        self.assertAlmostEqual(first=res_1x1.effect_sizes[0], second=0.0)
 
         # also 1x1 but different values 0 and 1
         samples_list = [np.ones(shape=100), np.zeros(shape=100)]
         res_1x1 = tester.signif_pair_diff(samples_list=samples_list)
         # p-value is essentially 0 because there is a complete difference and no variability
-        self.assertAlmostEqual(first=res_1x1["pvalues"][0], second=1.5777218104420236e-30)
-        self.assertAlmostEqual(first=res_1x1["effect_sizes"][0], second=0.49502487562189057)
+        self.assertAlmostEqual(first=res_1x1.pvalues[0], second=1.5777218104420236e-30)
+        self.assertAlmostEqual(first=res_1x1.effect_sizes[0], second=0.49502487562189057)
 
         # contingency table is 1x2
         samples_list = [np.ones(shape=100), np.repeat(a=[0, 1], repeats=[47, 53])]
         res_1x2 = tester.signif_pair_diff(samples_list=samples_list)
-        self.assertAlmostEqual(first=res_1x2["pvalues"][0], second=1.4210854715202004e-14)
-        self.assertAlmostEqual(first=res_1x2["effect_sizes"][0], second=0.4894736842105263)
+        self.assertAlmostEqual(first=res_1x2.pvalues[0], second=1.4210854715202004e-14)
+        self.assertAlmostEqual(first=res_1x2.effect_sizes[0], second=0.4894736842105263)
 
         # contingency table is 2x1
         samples_list = [np.repeat(a=[0, 1], repeats=[49, 51]), np.zeros(shape=100)]
         res_2x1 = tester.signif_pair_diff(samples_list=samples_list)
-        self.assertAlmostEqual(first=res_2x1["pvalues"][0], second=8.881784197001252e-16)
-        self.assertAlmostEqual(first=res_2x1["effect_sizes"][0], second= 0.49029126213592233)
+        self.assertAlmostEqual(first=res_2x1.pvalues[0], second=8.881784197001252e-16)
+        self.assertAlmostEqual(first=res_2x1.effect_sizes[0], second= 0.49029126213592233)
 
         # contingency table is 2x2 but with one combination missing, which needs a continuity correction
         samples_list = [np.repeat(a=[0,1], repeats=[50,50]), np.repeat(a=[0,1], repeats=[40,60])]
         res_2x2 = tester.signif_pair_diff(samples_list=samples_list)
-        self.assertAlmostEqual(first=res_2x2["pvalues"][0], second=0.001953125)
-        self.assertAlmostEqual(first=res_2x2["effect_sizes"][0], second=0.45238095238095233)
+        self.assertAlmostEqual(first=res_2x2.pvalues[0], second=0.001953125)
+        self.assertAlmostEqual(first=res_2x2.effect_sizes[0], second=0.45238095238095233)
 
 
     # def test_lineplot(self, alternative='two-sided'):
@@ -164,3 +164,4 @@ class TestMetricSignifDifference(unittest.TestCase):
     #     tester = PairedDifferenceTest(nmodels=self.nmodels)
     #     test_res = tester.signif_pair_diff(samples_list=model_res, alternative=alternative)
     #     tester.lineplot(test_res=test_res)
+
