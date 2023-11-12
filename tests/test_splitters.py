@@ -1,6 +1,6 @@
 import unittest
 
-from unitxt.splitters import DiverseLabelsSampler
+from src.unitxt.splitters import DiverseLabelsSampler
 
 
 class TestDiverseLabelsSampler(unittest.TestCase):
