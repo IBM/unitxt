@@ -11,16 +11,13 @@ classlabels = ds_builder.info.features["intent"]
 mappers = {}
 for i in range(len(classlabels.names)):
     mappers[str(i)] = classlabels.names[i]
-mappers = {"intent": mappers}
 
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
-    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -29,23 +26,12 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="AmazonScience/massive", name=lang),
         preprocess_steps=[
-            MapInstanceValues(mappers=mappers),
-            AddFields(
-                fields={
-                    "choices": classlabels.names,
-                }
-            ),
+            MapInstanceValues(mappers={"intent": mappers}),
+            RenameFields(field_to_field={"utt": "text", "intent": "label"}),
+            AddFields(fields={"classes": classlabels.names, "text_type": "sentence", "type_of_class": "intent"}),
         ],
-        task=FormTask(inputs=["choices", "utt"], outputs=["intent"], metrics=["metrics.accuracy"]),
-        templates=TemplatesList(
-            [
-                InputOutputTemplate(
-                    input_format="Given this sentence: {utt}. Classify it into one of the following classes. Choices: {choices}.",
-                    output_format="{intent}",
-                    postprocessors=["processors.take_first_non_empty_line"],
-                )
-            ]
-        ),
+        task="tasks.classification.multi_class",
+        templates="templates.classification.multi_class.all",
     )
     if lang == langs[0]:
         test_card(card, debug=False)

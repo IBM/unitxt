@@ -19,16 +19,18 @@ card = TaskCard(
         RenameFields(field_to_field={"sentence": "text"}),
         AddFields(
             fields={
-                "choices": ["unacceptable", "acceptable"],
+                "classes": ["unacceptable", "acceptable"],
+                "text_type": "text",
+                "type_of_class": "grammatical acceptability",
             }
         ),
     ],
     task=FormTask(
-        inputs=["choices", "text"],
+        inputs=["text", "text_type", "classes", "type_of_class"],
         outputs=["label"],
         metrics=["metrics.matthews_correlation"],
     ),
-    templates="templates.classification.choices.all",
+    templates="templates.classification.multi_class.all",
 )
 
 test_card(card, strict=False)
