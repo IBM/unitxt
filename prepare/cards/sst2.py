@@ -1,52 +1,21 @@
 import datasets as ds
 from src.unitxt import dataset
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    InputOutputTemplate,
-    LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
-    TaskCard,
-    TemplatesList,
-)
+from src.unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import RenameFields
+from src.unitxt.operators import AddFields, RenameFields
 from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
-
-one_sentence_classification_templates = TemplatesList(
-    [
-        InputOutputTemplate(
-            input_format="""
-                    Given this sentence: {sentence}, classify if it is {choices}.
-                """.strip(),
-            output_format="{label}",
-        ),
-    ]
-)
-add_to_catalog(one_sentence_classification_templates, "templates.one_sent_classification", overwrite=True)
-
-one_sentence_classification_task = FormTask(
-    inputs=["choices", "sentence"], outputs=["label"], metrics=["metrics.accuracy"], augmentable_inputs=["sentence"]
-)
-add_to_catalog(one_sentence_classification_task, "tasks.one_sent_classification", overwrite=True)
-
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="sst2"),
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),
-        AddFields(
-            fields={
-                "choices": ["negative", "positive"],
-            }
-        ),
+        RenameFields(field="sentence", to_field="text"),
+        AddFields(fields={"classes": ["negative", "positive"], "text_type": "sentence", "type_of_class": "sentiment"}),
     ],
-    task="tasks.one_sent_classification",
-    templates="templates.one_sent_classification",
+    task="tasks.classification.multi_class",
+    templates="templates.classification.multi_class.all",
 )
 
 test_card(card, debug=True)

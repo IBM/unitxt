@@ -1,5 +1,5 @@
 {
     "type": "input_output_template",
-    "input_format": "Text: {text}, Choices: {choices}.",
+    "input_format": "{text}",
     "output_format": "{label}"
 }
