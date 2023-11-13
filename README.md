@@ -32,7 +32,7 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 # Why Unitxt? 🦄
 
 ### 🦄 Simplicity
-Everything is unitxt is simple and designed to feel natural and self-explanatory.
+Everything in unitxt is simple and designed to feel natural and self-explanatory.
 ### 🦄 Adaptability
 Adding new datasets, loading recipes, instructions and formatters is possible and encouraged!
 ### 🦄 Transperancy
