@@ -6,6 +6,7 @@ from scipy.stats import permutation_test, ttest_rel, norm
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from collections import namedtuple, defaultdict
 import networkx as nx
 from copy import deepcopy
@@ -59,11 +60,12 @@ class PairedDifferenceTest:
         self.nmodels = max(2, int(nmodels))
         # desired false positive rate, criterion for pvalues
         self.alpha = float(np.clip(alpha, a_min=1e-10, a_max=0.5))
-        self.binary_values = np.array([0,1])
+        self.binary_values = np.array([0, 1])
         if model_names is None:
             self.model_names = ['model {}'.format(ii) for ii in range(1, self.nmodels+1)]
         else:
             assert len(model_names) == self.nmodels
+            assert len(set(model_names)) == self.nmodels, 'elements of model_names must be unique'
             self.model_names = model_names
 
     @staticmethod
@@ -357,37 +359,92 @@ class PairedDifferenceTest:
         plt.subplots_adjust()#bottom=0.2)
         plt.show()
 
-    def metric_significant_pairs_graph(self, test_res, use_pvalues=True, model_name_split_char=None):
+    def metric_significant_pairs_graph(self, test_res, node_color_levels=None, use_pvalues=True, model_name_split_char=None, weight_edges=False):
         '''
         Compare models across a given metric; show a graph where nodes correspond to models, and edgs are drawn
         between pairs that have a significant difference result
         Args:
             test_res: object ouputted from signif_pair_diff
+            node_color_levels: if not None, list of levels corresponding to model names to use for coloring nodes;
+                e.g., node_color_levels=['A', 'B', 'A']} means the 1st and 3rd nodes will have one color and the 2nd a different one
             use_pvalues: boolean, if True use p-values, otherwise effect sizes, to decide if significant
-
+            model_name_split_char: string used to split node names on when labeling
+            weight_edges: boolean, if True make less significant differences be shown by thicker edge lines
         '''
         self._is_valid_signif_report(test_res)
+        nnodes = len(self.model_names)
+        if node_color_levels is not None:
+            assert len(node_color_levels) == nnodes
+
         # random seed so positions results are the same across runs
         sd = 5
         np.random.seed(sd)
-        edges = defaultdict(list)
+        edges = {}
         criterion = 'pvalue' if use_pvalues else 'effect_size'
-        for pair, is_signif in zip(self.iterate_pairs(), getattr(test_res, '{}_is_signif'.format(criterion))):
+        for pair, is_signif, signif in zip(self.iterate_pairs(), getattr(test_res, '{}_is_signif'.format(criterion)), getattr(test_res, '{}s'.format(criterion))):
             if not is_signif:
+                if pair[0] not in edges:
+                    edges[pair[0]] = {'to': [], 'weight': []}
                 # only plot not significant connections
-                edges[pair[0]].append(pair[1])
+                edges[pair[0]]['to'].append(pair[1])
+                edges[pair[0]]['weight'].append(np.abs(signif))
 
+        # form the graph
         G = nx.DiGraph()
         for node, others in edges.items():
-            if len(others):
-                for jj in others:
-                    G.add_edge(node, jj)
+            if len(others['to']):
+                for ii, jj in enumerate(others['to']):
+                    G.add_edge(node, jj, weight=others['weight'][ii])
             else:
                 G.add_node(node)
+
+        for node in range(nnodes):
+            # add lone nodes that aren't connected to any others
+            if node not in G.nodes:
+                G.add_node(node)
+
+        if node_color_levels is not None:
+            nlevels = len(set(node_color_levels))
+            if nlevels > 1:
+                pal = sns.color_palette(palette="Spectral", n_colors=nlevels, as_cmap=True)(np.linspace(0, 1, nlevels))
+                # reorder levels by node order
+                level2node = defaultdict(list)
+                for ii, val in enumerate(node_color_levels):
+                    level2node[val].append(ii)
+                colors = [[] for ii in range(nnodes)]
+                for ii, val in enumerate(level2node):
+                    for node in level2node[val]:
+                        # take the ith color
+                        colors[node] = pal[ii]
+                # now reorder color vec by node order
+                node_color_levels_vec = [colors[node] for node in G.nodes]
+
+                color_legend = [Line2D([0], [0], marker='o', color='w', label=lab,
+                                       markerfacecolor=pal[ii], markersize=12) for ii, lab in enumerate(level2node)]
+            else:
+                # default same color for all
+                node_color_levels_vec = ['lightblue'] * nnodes
+                color_legend = None
+        else:
+            node_color_levels_vec = ['lightblue'] * nnodes
+            color_legend = None
 
         direction = {'two-sided': 'A vs B', 'less': 'A < B', 'greater': 'A > B'}
         pos = nx.spring_layout(G, seed=sd, k=10 / np.sqrt(G.order()))
         pos = {ii: np.array([pos[ii][0], sm]) for ii, sm in enumerate(test_res.sample_means)}
+
+        # widths
+        if weight_edges is False:
+            # the default width
+            edge_widths = [1.0] * nnodes
+        else:
+            # range of edge widths to draw
+            width_range = [0.5, 4]
+            signif_ranges = {'pvalue': [self.alpha, 1], 'effect_size': [0.8, 5]}
+
+            # translate the significance values into weights
+            weights = np.clip(a=[G[i][j]['weight'] for i, j in G.edges()], a_min=signif_ranges[criterion][0], a_max=signif_ranges[criterion][1])
+            edge_widths = width_range[0] + (weights - signif_ranges[criterion][0]) * np.diff(width_range) / np.diff(signif_ranges[criterion])
 
         model_names = deepcopy(self.model_names)
         if model_name_split_char is not None:
@@ -402,13 +459,19 @@ class PairedDifferenceTest:
         x_margin = (max(x_coords) - min(x_coords)) * 0.25
 
         fig, ax = plt.subplots(1, 1)
-        nx.draw_networkx(G, with_labels=True, pos=pos, ax=ax, node_color="lightblue", arrows=test_res.alternative != 'two-sided')
+        nx.draw_networkx(G, with_labels=True, pos=pos, ax=ax, node_color=node_color_levels_vec,
+                         arrows=test_res.alternative != 'two-sided', edge_color='gray', width=edge_widths)
         ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
         ax.set_ylabel('mean model {}'.format(test_res.metric_name))
         # add some space to x limits so label names don't
         xlims = ax.get_xlim()
         ax.set_xlim(xlims[0] - x_margin, xlims[1] + x_margin)
-        ax.set_title(
-            'Model {}: edges connect models with insignificant {} {}'.format(test_res.metric_name, direction[test_res.alternative], criterion.replace('_', ' ')))
+        title = '{}: edges connect models with insignificant {} {}'.format(test_res.metric_name,
+                                                                                 direction[test_res.alternative],
+                                                                                 criterion.replace('_', ' '))
+        ax.set_title(title + '\nthicker lines mean a less significant difference' if weight_edges else title)
 
+        if color_legend is not None:
+            plt.legend(handles=color_legend, bbox_to_anchor=(1.01, 1), loc="upper left")
+            plt.tight_layout()
         plt.show()
