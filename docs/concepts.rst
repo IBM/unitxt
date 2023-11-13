@@ -2,7 +2,24 @@
 Concepts
 ==============
 
-The main building blocks of the library are the `Stream`, `Operator` and the `Atifact` classes.
+Task
+----
+
+Unitext creates
+
+Template
+---------
+
+
+Dataset card
+-------------
+
+Metric
+------
+
+
+
+The main building blocks of the library are the `Stream`, `Operator` and the `Artifact` classes.
 
 Stream
 -------
@@ -20,7 +37,7 @@ Operator
 
 An operator is a class that takes multiple streams as input and produces multiple streams as output.
 Every modification of the data in the stream is done by an operator.
-Every opertor should be doing a single task and its name should reflect its operation.
+Every opertor should perform single task and its name should reflect its operation.
 
 .. image:: ../assets/flow_animation_3.gif
    :alt: Optional alt text
