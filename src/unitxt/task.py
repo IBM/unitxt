@@ -24,8 +24,8 @@ class FormTask(Tasker, StreamInstanceOperator):
             inputs = {key: instance[key] for key in self.inputs}
         except KeyError as e:
             raise KeyError(
-                f"Unexpected FormTask input column names: {list(key for key in self.inputs if key not in instance)}"
-                f"\n available names:{list(instance.keys())}\n given input names:{self.inputs}"
+                f"Unexpected FormTask input column names ({list(key for key in self.inputs if key not in instance)})."
+                f"The available input names: {list(instance.keys())}"
             )
         try:
             outputs = {key: instance[key] for key in self.outputs}
