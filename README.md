@@ -36,7 +36,7 @@ Everything in unitxt is simple and designed to feel natural and self-explanatory
 ### 🦄 Adaptability
 Adding new datasets, loading recipes, instructions and formatters is possible and encouraged!
 ### 🦄 Transperancy
-The reosurces and formatters of Unitxt are stored as shared datasets and therefore can easily reviewed by the crowd. Moreover, when assembling a dataset with Unitxt, it is very clear to others what's in it.
+The resources and formatters of Unitxt are stored as shared datasets and therefore can easily reviewed by the crowd. Moreover, when assembling a dataset with Unitxt, it is very clear to others what's in it.
 
 # Contributers
 
