@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -6,7 +7,7 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
+from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF, LoadJsonFiles
 
 
 class DummyBody:
@@ -54,6 +55,28 @@ class TestLoaders(unittest.TestCase):
             for file in ["train", "test"]:
                 for saved_instance, loaded_instance in zip(dfs[file].iterrows(), ms[file]):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+
+    def test_load_json_file(self):
+        # Using a context for the temporary directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            files = {}
+            dicts = {}
+
+            for file in ["train", "test"]:
+                path = os.path.join(tmp_dir, file + ".json")  # Adding a file extension
+                row_dicts = [{"a": "1", "b": "10"}, {"a": "2", "b": "20"}]  # Replace with your data
+                with open(path, "w") as file_out:
+                    json.dump(row_dicts, file_out)
+                dicts[file] = row_dicts
+                files[file] = path
+
+            loader = LoadJsonFiles(files=files)
+            ms = loader()
+
+            for file in ["train", "test"]:
+                for saved_instance, loaded_instance in zip(dicts[file], ms[file]):
+                    self.assertEqual(saved_instance["a"], loaded_instance["a"])
+                    self.assertEqual(saved_instance["b"], loaded_instance["b"])
 
     def test_load_from_ibm_cos(self):
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"

@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
@@ -65,6 +66,24 @@ class LoadCSV(Loader):
     def process(self):
         return MultiStream(
             {name: Stream(generator=self.load_csv, gen_kwargs={"file": file}) for name, file in self.files.items()}
+        )
+
+
+class LoadJsonFiles(Loader):
+    files: Dict[str, str]
+
+    def load_json_file(self, file):
+        with open(file) as json_file:
+            dicts = json.load(json_file)
+            for dict in dicts:
+                yield dict
+
+    def process(self):
+        return MultiStream(
+            {
+                name: Stream(generator=self.load_json_file, gen_kwargs={"file": file})
+                for name, file in self.files.items()
+            }
         )
 
 
