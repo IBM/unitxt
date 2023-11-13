@@ -35,6 +35,6 @@ for lang in langs:
             ]
         ),
     )
-    if lang == "english":
+    if lang == langs[0]:
         test_card(card, debug=False)
     add_to_catalog(card, f"cards.xlsum.{lang}", overwrite=True)

@@ -47,7 +47,7 @@ for lang in langs:
             ]
         ),
     )
-    if lang == "en-US":
+    if lang == langs[0]:
         test_card(card, debug=False)
     filename = lang.replace("-", "_")
     add_to_catalog(card, f"cards.amazon_mass.{filename}", overwrite=True)
