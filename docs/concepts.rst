@@ -52,7 +52,7 @@ Every operator or pipeline of operators should be saved as an artifact.
 
 Recipe
 -------
-A data prepration recipe consists of and is defined by a sequence of operators.
+A data preparation recipe consists of and is defined by a sequence of operators.
 <!--- The recipe can be easily understood by looking at the list of operations its consisted of. --->
 The recipe is saved as an artifact that can be shared between different projects, allowing
 reproducibility and transparent data preparation.
