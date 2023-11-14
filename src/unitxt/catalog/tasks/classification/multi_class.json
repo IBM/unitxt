@@ -1,0 +1,20 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "text",
+        "text_type",
+        "classes",
+        "type_of_class"
+    ],
+    "outputs": [
+        "label"
+    ],
+    "metrics": [
+        "metrics.f1_micro",
+        "metrics.accuracy",
+        "metrics.f1_macro"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
+}
