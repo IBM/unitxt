@@ -11,7 +11,7 @@ card = TaskCard(
     task=FormTask(
         inputs=["question"],
         outputs=["answer"],
-        metrics=["metrics.squad"],
+        metrics=["metrics.rouge"],
     ),
     templates="templates.qa.open.all",
 )
