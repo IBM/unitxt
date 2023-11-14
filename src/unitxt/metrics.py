@@ -393,7 +393,11 @@ class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
-    classes_to_ignore = ["none"]
+
+    classes_to_ignore = [
+        "none",  # none is the expected typical output when no classes are detected
+        "no",  # "no" is the expected output when a YesNoTemplate when no classes are detected
+    ]
 
     def prepare(self):
         super(F1MultiLabel, self).prepare()
@@ -423,7 +427,7 @@ class F1MultiLabel(GlobalMetric):
         labels = [
             l
             for l in set([label for reference in references for label in reference])
-            if l not in self.classes_to_ignore
+            if l.lower() not in self.classes_to_ignore
         ]
         # if no classes are left then F1 is not defined
         # (e.g. only "none" in references)
