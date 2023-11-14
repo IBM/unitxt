@@ -13,6 +13,8 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
+        "outputs": Value("string"),
+        "inputs": Value("string"),
     }
 )
 
