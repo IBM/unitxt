@@ -47,6 +47,12 @@ class Metric(ABC):
 
 
 class GlobalMetric(SingleStreamOperator, Metric):
+    """A class for computing metrics that require joint calculations over all instances and are not
+    just aggregation of scores of individuals instances.  For example, macro_F1 requires
+    calculation requires calculation of recall and precision per class, so all instances of the class
+    need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
+    """
+
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
@@ -310,19 +316,6 @@ class Squad(ReferenceBasedGlobalMetric):
         ]
 
         return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
-
-
-class SingleReferenceInstanceMetric(ReferenceBasedInstanceMetric):
-    def _compute(self, references: List[str], prediction: str) -> dict:
-        assert len(references) == 1, f"Expected only one reference , but received: {references}"
-        result = self.compute(references[0], prediction)
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
-
-    @abstractmethod
-    def compute(self, reference, prediction: str) -> dict:
-        pass
 
 
 class Accuracy(ReferenceBasedInstanceMetric):
@@ -589,18 +582,21 @@ class Rouge(HuggingfaceMetric):
 
 
 # Computes chat edit distance, ignoring whitespace
-class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
+class CharEditDistanceAccuracy(ReferenceBasedInstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
     def prepare(self):
+        super().prepare()
         import editdistance
 
         self.eval = editdistance.eval
 
-    def compute(self, reference, prediction: str) -> dict:
+    def compute(self, references, prediction: str) -> dict:
+        assert len(references) == 1, f"Expected only one reference , but received: {references}"
+
         formatted_prediction = "".join(prediction.split())
-        formatted_reference = "".join(reference.split())
+        formatted_reference = "".join(references[0].split())
         max_length = max(len(formatted_reference), len(formatted_prediction))
         if max_length == 0:
             return 0
