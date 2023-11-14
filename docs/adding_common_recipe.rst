@@ -94,7 +94,7 @@ Once the card is defined, it can be saved to a local catalog as follows:
                                        # directory use the catalog_path argument
 .. note::
 
-   By default new artifact will be added to a local catalog stored
+   By default, a new artifact will be added to a local catalog stored
    in the library directory. To use a different catalog,
    use the `catalog_path` argument.
 
