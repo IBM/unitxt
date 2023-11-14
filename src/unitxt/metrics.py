@@ -63,19 +63,27 @@ class GlobalMetric(SingleStreamOperator, Metric):
                 global_score = instance["score"]["global"]
 
             instance_references, instance_prediction = instance["references"], instance["prediction"]
-            instance_inputs, instance_outputs = None, None
+            references.append(instance_references)
+            predictions.append(instance_prediction)
+            instances.append(instance)
             if self.use_inputs_and_outputs:
                 assert (
                     "inputs" in instance
                 ), f"'inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
                 assert (
                     "outputs" in instance
-                ), f"'outputss' field expected in all instances of passed to metric {self.__class__.__name__}.  Provided instance: {instance}"
+                ), f"'outputs' field expected in all instances of passed to metric {self.__class__.__name__}.  Provided instance: {instance}"
                 instance_inputs, instance_outputs = instance["inputs"], instance["outputs"]
+                inputs.append(instance_inputs)
+                outputs.append(instance_outputs)
+
             try:
-                instance_score = self._compute(
-                    [instance_references], [instance_prediction], [instance_inputs], [instance_outputs]
-                )
+                if self.use_inputs_and_outputs:
+                    instance_score = self._compute(
+                        [instance_references], [instance_prediction], [instance_inputs], [instance_outputs]
+                    )
+                else:
+                    instance_score = self._compute([instance_references], [instance_prediction], None, None)
             except:
                 instance_score = {"score": None, "score_name": self.main_score}
 
@@ -83,12 +91,6 @@ class GlobalMetric(SingleStreamOperator, Metric):
                     instance_score[self.main_score] = None
 
             instance["score"]["instance"].update(instance_score)
-
-            references.append(instance_references)
-            predictions.append(instance_prediction)
-            inputs.append(instance_inputs)
-            outputs.append(instance_outputs)
-            instances.append(instance)
 
         if self.use_inputs_and_outputs:
             result = self._compute(references, predictions, inputs, outputs)
