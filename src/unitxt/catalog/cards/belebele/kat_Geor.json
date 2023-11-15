@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "kat_Geor"
+        "name": "default",
+        "split": "kat_Geor"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "kat_Geor": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

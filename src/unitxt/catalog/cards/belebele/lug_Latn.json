@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "lug_Latn"
+        "name": "default",
+        "split": "lug_Latn"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "lug_Latn": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
