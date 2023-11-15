@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "tel_Telu"
+        "name": "default",
+        "split": "tel_Telu"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "tel_Telu": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

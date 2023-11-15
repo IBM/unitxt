@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "mal_Mlym"
+        "name": "default",
+        "split": "mal_Mlym"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "mal_Mlym": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

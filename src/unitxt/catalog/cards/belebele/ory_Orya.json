@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "ory_Orya"
+        "name": "default",
+        "split": "ory_Orya"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "ory_Orya": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "tam_Taml"
+        "name": "default",
+        "split": "tam_Taml"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "tam_Taml": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
