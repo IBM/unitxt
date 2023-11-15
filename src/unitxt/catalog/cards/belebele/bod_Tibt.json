@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "bod_Tibt"
+        "name": "default",
+        "split": "bod_Tibt"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "bod_Tibt": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

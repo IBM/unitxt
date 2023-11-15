@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "mkd_Cyrl"
+        "name": "default",
+        "split": "mkd_Cyrl"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "mkd_Cyrl": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

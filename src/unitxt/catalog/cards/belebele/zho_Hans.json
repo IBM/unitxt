@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "zho_Hans"
+        "name": "default",
+        "split": "zho_Hans"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "zho_Hans": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
