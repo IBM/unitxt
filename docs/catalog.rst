@@ -798,7 +798,7 @@ multi_label
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`
 
 |
 |
@@ -837,7 +837,7 @@ multi_class
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_macro <metrics.f1_macro>`, :ref:`metrics.f1_micro <metrics.f1_micro>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.f1_micro <metrics.f1_micro>`, :ref:`metrics.f1_macro <metrics.f1_macro>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -876,7 +876,7 @@ binary
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`
 
 |
 |
@@ -1440,7 +1440,7 @@ squad
           "type": "task_card"
       }
 
-References: :ref:`metrics.squad <metrics.squad>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.squad <metrics.squad>`, :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`
 
 |
 |
@@ -1745,7 +1745,7 @@ openbookQA
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2404,7 +2404,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2565,7 +2565,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2726,7 +2726,7 @@ pt
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2887,7 +2887,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -3048,7 +3048,7 @@ jp
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -3503,7 +3503,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3561,7 +3561,7 @@ tr
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3619,7 +3619,7 @@ de
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3677,7 +3677,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3735,7 +3735,7 @@ ur
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3793,7 +3793,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3851,7 +3851,7 @@ fr
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3909,7 +3909,7 @@ el
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3967,7 +3967,7 @@ bg
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4025,7 +4025,7 @@ hi
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4083,7 +4083,7 @@ vi
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4141,7 +4141,7 @@ sw
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4199,7 +4199,7 @@ th
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4257,7 +4257,7 @@ es
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4315,7 +4315,7 @@ ar
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4372,7 +4372,7 @@ sst2
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -25178,7 +25178,7 @@ wnli
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -25584,7 +25584,7 @@ cola
           "type": "task_card"
       }
 
-References: :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -25681,7 +25681,7 @@ ethos_binary
           "type": "task_card"
       }
 
-References: :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`, :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`, :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`, :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`
 
 |
 |
@@ -28714,7 +28714,7 @@ ARC_Easy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28849,7 +28849,7 @@ ARC_Challenge
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29020,7 +29020,7 @@ m
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29182,7 +29182,7 @@ l
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29344,7 +29344,7 @@ s
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29506,7 +29506,7 @@ xl
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29668,7 +29668,7 @@ debiased
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29830,7 +29830,7 @@ xs
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30052,7 +30052,7 @@ piqa
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30359,7 +30359,7 @@ business_ethics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30507,7 +30507,7 @@ security_studies
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30655,7 +30655,7 @@ high_school_us_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30803,7 +30803,7 @@ moral_disputes
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30951,7 +30951,7 @@ philosophy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31099,7 +31099,7 @@ public_relations
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31247,7 +31247,7 @@ high_school_microeconomics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31395,7 +31395,7 @@ human_sexuality
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31543,7 +31543,7 @@ professional_accounting
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31691,7 +31691,7 @@ high_school_government_and_politics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31839,7 +31839,7 @@ sociology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31987,7 +31987,7 @@ conceptual_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32135,7 +32135,7 @@ human_aging
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32283,7 +32283,7 @@ high_school_psychology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32431,7 +32431,7 @@ jurisprudence
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32579,7 +32579,7 @@ moral_scenarios
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32727,7 +32727,7 @@ college_medicine
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32875,7 +32875,7 @@ high_school_world_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33023,7 +33023,7 @@ virology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33171,7 +33171,7 @@ high_school_statistics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33319,7 +33319,7 @@ nutrition
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33467,7 +33467,7 @@ abstract_algebra
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33615,7 +33615,7 @@ high_school_geography
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33763,7 +33763,7 @@ econometrics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33911,7 +33911,7 @@ marketing
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34059,7 +34059,7 @@ high_school_chemistry
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34207,7 +34207,7 @@ prehistory
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34355,7 +34355,7 @@ college_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34503,7 +34503,7 @@ management
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34651,7 +34651,7 @@ college_biology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34799,7 +34799,7 @@ high_school_biology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34947,7 +34947,7 @@ high_school_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35095,7 +35095,7 @@ logical_fallacies
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35243,7 +35243,7 @@ medical_genetics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35391,7 +35391,7 @@ machine_learning
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35539,7 +35539,7 @@ professional_psychology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35687,7 +35687,7 @@ global_facts
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35835,7 +35835,7 @@ us_foreign_policy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35983,7 +35983,7 @@ international_law
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36131,7 +36131,7 @@ clinical_knowledge
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36279,7 +36279,7 @@ high_school_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36427,7 +36427,7 @@ high_school_computer_science
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36575,7 +36575,7 @@ college_computer_science
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36723,7 +36723,7 @@ electrical_engineering
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36871,7 +36871,7 @@ college_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37019,7 +37019,7 @@ computer_security
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37167,7 +37167,7 @@ high_school_macroeconomics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37315,7 +37315,7 @@ professional_law
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37463,7 +37463,7 @@ astronomy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37611,7 +37611,7 @@ college_chemistry
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37759,7 +37759,7 @@ high_school_european_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -37907,7 +37907,7 @@ miscellaneous
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38055,7 +38055,7 @@ formal_logic
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38203,7 +38203,7 @@ elementary_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38351,7 +38351,7 @@ world_religions
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38499,7 +38499,7 @@ professional_medicine
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38647,7 +38647,7 @@ anatomy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -38886,7 +38886,7 @@ id_ID
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39060,7 +39060,7 @@ ar_SA
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39234,7 +39234,7 @@ tr_TR
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39408,7 +39408,7 @@ ms_MY
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39582,7 +39582,7 @@ hu_HU
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39756,7 +39756,7 @@ pt_PT
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -39930,7 +39930,7 @@ sl_SL
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40104,7 +40104,7 @@ sv_SE
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40278,7 +40278,7 @@ ko_KR
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40452,7 +40452,7 @@ ur_PK
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40626,7 +40626,7 @@ jv_ID
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40800,7 +40800,7 @@ es_ES
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -40974,7 +40974,7 @@ ja_JP
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -41148,7 +41148,7 @@ ta_IN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -41322,7 +41322,7 @@ zh_CN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -41496,7 +41496,7 @@ lv_LV
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -41670,7 +41670,7 @@ el_GR
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -41844,7 +41844,7 @@ it_IT
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42018,7 +42018,7 @@ th_TH
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42192,7 +42192,7 @@ hy_AM
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42366,7 +42366,7 @@ sw_KE
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42549,7 +42549,7 @@ all_1
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42723,7 +42723,7 @@ az_AZ
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -42897,7 +42897,7 @@ my_MM
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43071,7 +43071,7 @@ fi_FI
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43245,7 +43245,7 @@ cy_GB
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43419,7 +43419,7 @@ en_US
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43593,7 +43593,7 @@ ka_GE
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43767,7 +43767,7 @@ hi_IN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -43941,7 +43941,7 @@ vi_VN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44115,7 +44115,7 @@ tl_PH
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44289,7 +44289,7 @@ is_IS
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44463,7 +44463,7 @@ sq_AL
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44637,7 +44637,7 @@ af_ZA
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44811,7 +44811,7 @@ km_KH
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -44985,7 +44985,7 @@ kn_IN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -45159,7 +45159,7 @@ ml_IN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -45333,7 +45333,7 @@ ru_RU
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -45507,7 +45507,7 @@ nl_NL
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -45681,7 +45681,7 @@ he_IL
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -45855,7 +45855,7 @@ fa_IR
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46029,7 +46029,7 @@ nb_NO
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46203,7 +46203,7 @@ da_DK
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46377,7 +46377,7 @@ ca_ES
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46551,7 +46551,7 @@ de_DE
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46725,7 +46725,7 @@ zh_TW
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -46899,7 +46899,7 @@ bn_BD
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47073,7 +47073,7 @@ fr_FR
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47247,7 +47247,7 @@ am_ET
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47421,7 +47421,7 @@ ro_RO
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47595,7 +47595,7 @@ mn_MN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47769,7 +47769,7 @@ pl_PL
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -47943,7 +47943,7 @@ all
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -48117,7 +48117,7 @@ te_IN
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -48174,7 +48174,7 @@ rte
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -48475,7 +48475,7 @@ qnli
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
+References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -48796,7 +48796,7 @@ hellaswag
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -48988,7 +48988,7 @@ mnli
           "type": "task_card"
       }
 
-References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -50023,7 +50023,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.classification.multi_class.default <templates.classification.multi_class.default>`, :ref:`templates.classification.multi_class.empty <templates.classification.multi_class.empty>`
+References: :ref:`templates.classification.multi_class.empty <templates.classification.multi_class.empty>`, :ref:`templates.classification.multi_class.default <templates.classification.multi_class.default>`
 
 |
 |
@@ -50295,7 +50295,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`, :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`
+References: :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`
 
 |
 |
@@ -50440,7 +50440,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`
+References: :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`
 
 |
 |
@@ -50585,7 +50585,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`
+References: :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`
 
 |
 |
@@ -50730,7 +50730,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`
 
 |
 |
@@ -50963,7 +50963,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`, :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`
+References: :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`, :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`
 
 |
 |
@@ -51044,7 +51044,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.open.simple <templates.qa.open.simple>`, :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`
+References: :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`, :ref:`templates.qa.open.simple <templates.qa.open.simple>`
 
 |
 |
