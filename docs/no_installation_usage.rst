@@ -58,7 +58,7 @@ the unitxt catalog. For example, here we load wnli in 3 shots format:
 
   dataset = load_dataset('unitxt/data', 'card=cards.wnli,num_demos=3,demos_pool_size=100')
 
-Now the source source text (input to the model) of the first sample in the training set has in-context examples:
+Now the source text (input to the model) of the first sample in the training set has in-context examples:
 
 .. code-block:: python
 
