@@ -15,7 +15,6 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="{text}",
         output_format="{label}",
-        postprocessors=["processors.take_first_non_empty_line"],
     ),
     "templates.classification.multi_class.empty",
     overwrite=True,
