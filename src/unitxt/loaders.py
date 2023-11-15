@@ -49,6 +49,8 @@ class LoadHF(Loader):
                 streaming=self.streaming,
                 split=self.split,
             )
+            if self.split is not None:
+                dataset = {self.split: dataset}
         except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
             dataset = hf_load_dataset(
                 self.path,
@@ -58,12 +60,11 @@ class LoadHF(Loader):
                 streaming=False,
                 split=self.split,
             )
-
-        if self.split:
-            dataset = {self.split: dataset}
-        else:
-            for split in dataset.keys():
-                dataset[split] = dataset[split].to_iterable_dataset()
+            if self.split is not None:
+                for split in dataset.keys():
+                    dataset[split] = dataset[split].to_iterable_dataset()
+            else:
+                dataset = {self.split: dataset.to_iterable_dataset()}
 
         return MultiStream.from_iterables(dataset)
 
