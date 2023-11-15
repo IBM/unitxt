@@ -879,7 +879,7 @@ class Reward(ReferenceBasedBulkInstanceMetric):
 
 
 # Normalized Discounted Cumulative Gain
-class NDCG(GlobalMetric):
+class NDCG(ReferenceBasedGlobalMetric):
     main_score = "nDCG"
 
     def prepare(self):
