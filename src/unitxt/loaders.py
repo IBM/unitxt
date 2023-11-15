@@ -60,11 +60,11 @@ class LoadHF(Loader):
                 streaming=False,
                 split=self.split,
             )
-            if self.split is not None:
+            if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
             else:
-                dataset = {self.split: dataset.to_iterable_dataset()}
+                dataset = {self.split: dataset}
 
         return MultiStream.from_iterables(dataset)
 
