@@ -21,7 +21,7 @@ def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi
     return list(output_stream)
 
 
-def test_operator(
+def check_operator(
     operator: StreamingOperator, inputs: List[dict], targets: List[dict], tester=None, sort_outputs_by=None
 ):
     test_artfifact_saving_and_loading(operator, tester=tester)

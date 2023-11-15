@@ -10,7 +10,7 @@ from src.unitxt.renderers import (
     StandardRenderer,
 )
 from src.unitxt.templates import InputOutputTemplate
-from src.unitxt.test_utils.operators import test_operator
+from src.unitxt.test_utils.operators import check_operator
 
 template = InputOutputTemplate(input_format='This is my sentence: "{text}"', output_format="{label}")
 instruction = TextualInstruction("classify user sentence by its sentiment to either positive, or nagative.")
@@ -24,7 +24,13 @@ class TestRenderers(unittest.TestCase):
         instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
 
         result = renderer.process(instance)
-        target = {"source": 'This is my sentence: "was so bad"', "target": "negative", "references": ["negative"]}
+        target = {
+            "inputs": {"text": "was so bad"},
+            "outputs": {"label": "negative"},
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+        }
         self.assertDictEqual(result, target)
 
     def test_render_demonstrations(self):
@@ -41,8 +47,20 @@ class TestRenderers(unittest.TestCase):
 
         target = {
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "inputs": {"text": "was so good"},
+                    "outputs": {"label": "positive"},
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ]
         }
 
@@ -128,9 +146,11 @@ class TestRenderers(unittest.TestCase):
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {"text": "was so bad"},
+            "outputs": {"label": "negative"},
         }
 
-        test_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
+        check_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
 
     def test_temp(self):
         import datasets as ds

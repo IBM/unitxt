@@ -37,10 +37,38 @@ class TestExamples(unittest.TestCase):
         add_to_catalog(Accuracy(), "metrics.accuracy", overwrite=True)
 
         data = [
-            {"group": "group1", "references": ["333", "4"], "source": "source1", "target": "target1"},
-            {"group": "group1", "references": ["4"], "source": "source2", "target": "target2"},
-            {"group": "group2", "references": ["3"], "source": "source3", "target": "target3"},
-            {"group": "group2", "references": ["3"], "source": "source4", "target": "target4"},
+            {
+                "group": "group1",
+                "references": ["333", "4"],
+                "source": "source1",
+                "target": "target1",
+                "inputs": [],
+                "outputs": [],
+            },
+            {
+                "group": "group1",
+                "references": ["4"],
+                "source": "source2",
+                "target": "target2",
+                "inputs": [],
+                "outputs": [],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source3",
+                "target": "target3",
+                "inputs": [],
+                "outputs": [],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source4",
+                "target": "target4",
+                "inputs": [],
+                "outputs": [],
+            },
         ]
 
         for d in data:
@@ -62,7 +90,7 @@ class TestExamples(unittest.TestCase):
     def test_example5(self):
         dataset = load_dataset_hf(
             unitxt.dataset_file,
-            "card=cards.wnli,template_item=0",
+            "card=cards.wnli,template_card_index=0",
         )
 
         output = dataset["train"][0]
@@ -89,10 +117,38 @@ class TestExamples(unittest.TestCase):
 
     def test_example7(self):
         data = [
-            {"group": "group1", "references": ["333", "4"], "source": "source1", "target": "target1"},
-            {"group": "group1", "references": ["4"], "source": "source2", "target": "target2"},
-            {"group": "group2", "references": ["3"], "source": "source3", "target": "target3"},
-            {"group": "group2", "references": ["3"], "source": "source4", "target": "target4"},
+            {
+                "group": "group1",
+                "references": ["333", "4"],
+                "source": "source1",
+                "target": "target1",
+                "inputs": [{"key": "a", "value": "1"}],
+                "outputs": [{"key": "b", "value": "1"}],
+            },
+            {
+                "group": "group1",
+                "references": ["4"],
+                "source": "source2",
+                "target": "target2",
+                "inputs": [{"key": "a", "value": "2"}],
+                "outputs": [{"key": "b", "value": "2"}],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source3",
+                "target": "target3",
+                "inputs": [{"key": "a", "value": "3"}],
+                "outputs": [{"key": "b", "value": "3"}],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source4",
+                "target": "target4",
+                "inputs": [{"key": "a", "value": "4"}],
+                "outputs": [{"key": "b", "value": "4"}],
+            },
         ]
 
         for d in data:
@@ -130,7 +186,7 @@ class TestExamples(unittest.TestCase):
 
     def test_example8(self):
         dataset = unitxt.load_dataset("recipes.wnli_3_shot")
-
+        print(dataset["test"][0])
         metric = evaluate.load(unitxt.metric_file)
 
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
@@ -138,8 +194,6 @@ class TestExamples(unittest.TestCase):
     def test_evaluate(self):
         import evaluate
         from src import unitxt
-        from src.unitxt.catalog import add_to_catalog
-        from src.unitxt.common import CommonRecipe
         from src.unitxt.load import load_dataset
         from src.unitxt.text_utils import print_dict
 
@@ -156,9 +210,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(True)
 
     def test_load_dataset(self):
-        dataset = load_dataset(
-            unitxt.dataset_file, "card=cards.wnli,template_item=0", download_mode="force_redownload"
-        )
+        dataset = load_dataset(unitxt.dataset_file, "card=cards.wnli,template_card_index=0")
         print_dict(dataset["train"][0])
         target = {
             "metrics": ["metrics.accuracy"],
@@ -173,7 +225,7 @@ class TestExamples(unittest.TestCase):
     def test_full_flow_of_hf(self):
         dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_item=0,num_demos=5,demos_pool_size=100",
+            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
         )
         import evaluate

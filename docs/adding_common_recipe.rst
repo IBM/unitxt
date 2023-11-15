@@ -108,14 +108,13 @@ through instructions or demonstrations.
 
 .. code-block:: python
 
-    from unitxt.blocks import CommonRecipe
+    from unitxt.blocks import StandardRecipe
     from unitxt import load_dataset
 
-    recipe = CommonRecipe(
+    recipe = StandardRecipe(
         card='cards.wnli',
-        num_demos=5, # The number of demonstrations for in-context learning
-        demos_pool_size=100, # The size of the demonstration pool from which to sample the 5 demonstrations
-        instruction_item=0, # Which instruction from the ones available in the card
+        num_demos=3, # The number of demonstrations for in-context learning
+        demos_pool_size=100 # The size of the demonstration pool from which to sample the 5 demonstrations
     )
 
     dataset = load_dataset(recipe)

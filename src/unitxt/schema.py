@@ -13,8 +13,8 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
-        "outputs": Value("string"),
-        "inputs": Value("string"),
+        "outputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
+        "inputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
     }
 )
 
@@ -34,6 +34,9 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
+    def _to_key_value_pairs(self, dict: Dict[str, str]):
+        return [{"key": key, "value": str(value)} for key, value in dict.items()]
+
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         if self.remove_unnecessary_fields:
             keys_to_delete = []
@@ -44,13 +47,13 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
 
             for key in keys_to_delete:
                 del instance[key]
-
         instance["group"] = self.group
         if self.metrics is not None:
             instance["metrics"] = self.metrics
         if self.postprocessors is not None:
             instance["postprocessors"] = self.postprocessors
-
+        instance["inputs"] = self._to_key_value_pairs(instance["inputs"])
+        instance["outputs"] = self._to_key_value_pairs(instance["outputs"])
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: str = None):
@@ -59,5 +62,5 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
         assert isinstance(instance, dict), f"Instance should be a dict, got {type(instance)}"
         assert all(
             [key in instance for key in UNITXT_DATASET_SCHEMA]
-        ), f"Instance should have the following keys: {UNITXT_DATASET_SCHEMA}"
+        ), f"Instance should have the following keys: {UNITXT_DATASET_SCHEMA}. Instance is: {instance}"
         UNITXT_DATASET_SCHEMA.encode_example(instance)

@@ -27,7 +27,7 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream, Stream
-from src.unitxt.test_utils.operators import apply_operator, test_operator
+from src.unitxt.test_utils.operators import apply_operator, check_operator
 
 
 class TestOperators(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
             inputs=inputs,
             targets=targets,
@@ -65,7 +65,7 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
         )
 
@@ -80,7 +80,7 @@ class TestOperators(unittest.TestCase):
             {"a...b": 2},
         ]
 
-        test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
 
     def test_filter_by_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -89,12 +89,12 @@ class TestOperators(unittest.TestCase):
             {"a": 1, "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
         )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByValues(required_values={"c": "5"}), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(
@@ -114,7 +114,7 @@ class TestOperators(unittest.TestCase):
             {"a": 3, "b": 4},
         ]
 
-        test_operator(
+        check_operator(
             operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
             inputs=inputs,
             targets=targets,
@@ -122,13 +122,13 @@ class TestOperators(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByListsOfValues(required_values={"b": "5"}), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByListsOfValues(required_values={"c": ["5"]}),
                 inputs=inputs,
                 targets=targets,
@@ -151,20 +151,20 @@ class TestOperators(unittest.TestCase):
             {"label": ["b", "f"]},
         ]
 
-        test_operator(
+        check_operator(
             operator=Intersect(field="label", allowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=Intersect(field="label", allowed_values=3), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=Intersect(field="label", allowed_values=["3"], process_every_value=True),
                 inputs=inputs,
                 targets=targets,
@@ -176,7 +176,7 @@ class TestOperators(unittest.TestCase):
             {"label": "b"},
         ]
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=Intersect(field="label", allowed_values=["c"]),
                 inputs=inputs,
                 targets=targets,
@@ -200,20 +200,20 @@ class TestOperators(unittest.TestCase):
             {"label": []},
         ]
 
-        test_operator(
+        check_operator(
             operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label", unallowed_values=3), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label", unallowed_values=["3"], process_every_value=True),
                 inputs=inputs,
                 targets=targets,
@@ -225,7 +225,7 @@ class TestOperators(unittest.TestCase):
             {"label": "b"},
         ]
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label", unallowed_values=["c"]),
                 inputs=inputs,
                 targets=targets,
@@ -237,7 +237,7 @@ class TestOperators(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label2", unallowed_values=["c"]),
                 inputs=inputs,
                 targets=targets,
@@ -259,7 +259,7 @@ class TestOperators(unittest.TestCase):
             {"a": "222", "b": 3, "c": "processors.to_string"},
         ]
 
-        test_operator(
+        check_operator(
             operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
             inputs=inputs,
             targets=targets,
@@ -277,7 +277,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 3, "c": 3},
         ]
 
-        test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
 
     def test_remove_fields(self):
         inputs = [
@@ -290,7 +290,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2},
         ]
 
-        test_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
 
     def test_unique_on_single_field(self):
         inputs = [
@@ -412,7 +412,7 @@ class TestOperators(unittest.TestCase):
             {"a": 0.0, "b": 0},
         ]
 
-        test_operator(
+        check_operator(
             operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
             inputs=inputs,
             targets=targets,
@@ -439,7 +439,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
 
     def test_copy_paste_fields(self):
         inputs = [
@@ -449,7 +449,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": 1}, {"a": 2}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -464,7 +464,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -484,7 +484,7 @@ class TestOperators(unittest.TestCase):
             {"prediction": 2, "references": [0]},
         ]
 
-        test_operator(
+        check_operator(
             operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
         )
 
@@ -499,7 +499,7 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": "2,4"},
         ]
 
-        test_operator(
+        check_operator(
             operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
         )
 
@@ -514,7 +514,7 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
         ]
 
-        test_operator(
+        check_operator(
             operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
@@ -532,7 +532,7 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "c": 1},
         ]
 
-        test_operator(
+        check_operator(
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
@@ -560,7 +560,7 @@ class TestOperators(unittest.TestCase):
 
         targets = []
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -579,7 +579,7 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -598,7 +598,7 @@ class TestOperators(unittest.TestCase):
             {"a": [], "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
             inputs=inputs,
             targets=targets,

@@ -10,7 +10,6 @@ from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
-from .common import __file__ as _
 from .dataclass import __file__ as _
 from .dict_utils import __file__ as _
 from .file_utils import __file__ as _
