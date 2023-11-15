@@ -885,6 +885,7 @@ class NDCG(ReferenceBasedGlobalMetric):
     def prepare(self):
         from sklearn.metrics import ndcg_score
 
+        super().prepare()
         self.eval = ndcg_score
 
     def compute(self, references: List[List[float]], predictions: List[float]) -> dict:
