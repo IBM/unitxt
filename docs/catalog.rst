@@ -709,6 +709,132 @@ tasks
 
 
 
+.. _.tasks.classification:
+
+----------
+
+classification
+^^^^^^^^^^^^^^
+
+
+
+.. _tasks.classification.multi_label:
+
+----------
+
+multi_label
+"""""""""""
+
+.. note:: ID: ``tasks.classification.multi_label``  |  Type: :class:`FormTask <unitxt.task.FormTask>`
+
+   .. code-block:: json
+
+      {
+          "augmentable_inputs": [
+              "text"
+          ],
+          "inputs": [
+              "text",
+              "text_type",
+              "classes",
+              "type_of_classes"
+          ],
+          "metrics": [
+              "metrics.f1_micro_multi_label",
+              "metrics.accuracy",
+              "metrics.f1_macro_multi_label"
+          ],
+          "outputs": [
+              "labels"
+          ],
+          "type": "form_task"
+      }
+
+References: :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`
+
+|
+|
+
+
+
+.. _tasks.classification.multi_class:
+
+----------
+
+multi_class
+"""""""""""
+
+.. note:: ID: ``tasks.classification.multi_class``  |  Type: :class:`FormTask <unitxt.task.FormTask>`
+
+   .. code-block:: json
+
+      {
+          "augmentable_inputs": [
+              "text"
+          ],
+          "inputs": [
+              "text",
+              "text_type",
+              "classes",
+              "type_of_class"
+          ],
+          "metrics": [
+              "metrics.f1_micro",
+              "metrics.accuracy",
+              "metrics.f1_macro"
+          ],
+          "outputs": [
+              "label"
+          ],
+          "type": "form_task"
+      }
+
+References: :ref:`metrics.f1_micro <metrics.f1_micro>`, :ref:`metrics.f1_macro <metrics.f1_macro>`, :ref:`metrics.accuracy <metrics.accuracy>`
+
+|
+|
+
+
+
+.. _tasks.classification.binary:
+
+----------
+
+binary
+""""""
+
+.. note:: ID: ``tasks.classification.binary``  |  Type: :class:`FormTask <unitxt.task.FormTask>`
+
+   .. code-block:: json
+
+      {
+          "augmentable_inputs": [
+              "text"
+          ],
+          "inputs": [
+              "text",
+              "text_type",
+              "class"
+          ],
+          "metrics": [
+              "metrics.f1_micro_multi_label",
+              "metrics.f1_macro_multi_label",
+              "metrics.accuracy"
+          ],
+          "outputs": [
+              "class",
+              "label"
+          ],
+          "type": "form_task"
+      }
+
+References: :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`
+
+|
+|
+
+
+
 .. _.tasks.translation:
 
 ----------
@@ -745,41 +871,6 @@ directed
       }
 
 References: :ref:`metrics.bleu <metrics.bleu>`
-
-|
-|
-
-
-
-.. _tasks.one_sent_classification:
-
-----------
-
-one_sent_classification
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. note:: ID: ``tasks.one_sent_classification``  |  Type: :class:`FormTask <unitxt.task.FormTask>`
-
-   .. code-block:: json
-
-      {
-          "augmentable_inputs": [
-              "sentence"
-          ],
-          "inputs": [
-              "choices",
-              "sentence"
-          ],
-          "metrics": [
-              "metrics.accuracy"
-          ],
-          "outputs": [
-              "label"
-          ],
-          "type": "form_task"
-      }
-
-References: :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -1301,7 +1392,7 @@ squad
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.squad <metrics.squad>`, :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`
+References: :ref:`metrics.squad <metrics.squad>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.contextual.all <templates.qa.contextual.all>`
 
 |
 |
@@ -1451,7 +1542,7 @@ race_high
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
+References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -1606,7 +1697,7 @@ openbookQA
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2265,7 +2356,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2426,7 +2517,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2587,7 +2678,7 @@ pt
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2748,7 +2839,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2909,7 +3000,7 @@ jp
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -2970,7 +3061,7 @@ en_ro
           "type": "task_card"
       }
 
-References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
+References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
 
 |
 |
@@ -3022,7 +3113,7 @@ en_fr
           "type": "task_card"
       }
 
-References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
+References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
 
 |
 |
@@ -3074,7 +3165,7 @@ en_de
           "type": "task_card"
       }
 
-References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
+References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
 
 |
 |
@@ -3297,7 +3388,7 @@ race_middle
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
+References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -3364,7 +3455,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3422,7 +3513,7 @@ tr
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3480,7 +3571,7 @@ de
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3538,7 +3629,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3596,7 +3687,7 @@ ur
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3654,7 +3745,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3712,7 +3803,7 @@ fr
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3770,7 +3861,7 @@ el
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3828,7 +3919,7 @@ bg
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3886,7 +3977,7 @@ hi
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -3944,7 +4035,7 @@ vi
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4002,7 +4093,7 @@ sw
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4060,7 +4151,7 @@ th
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4118,7 +4209,7 @@ es
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4176,7 +4267,7 @@ ar
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -4212,21 +4303,28 @@ sst2
                   "type": "map_instance_values"
               },
               {
+                  "field": "sentence",
+                  "to_field": "text",
+                  "type": "rename_fields"
+              },
+              {
                   "fields": {
-                      "choices": [
+                      "classes": [
                           "negative",
                           "positive"
-                      ]
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "sentiment"
                   },
                   "type": "add_fields"
               }
           ],
-          "task": "tasks.one_sent_classification",
-          "templates": "templates.one_sent_classification",
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.one_sent_classification <tasks.one_sent_classification>`, :ref:`templates.one_sent_classification <templates.one_sent_classification>`
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -4405,7 +4503,7 @@ ita_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -4575,7 +4673,7 @@ sun_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -4745,7 +4843,7 @@ nob_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -4915,7 +5013,7 @@ zsm_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5085,7 +5183,7 @@ hye_Armn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5255,7 +5353,7 @@ mya_Mymr
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5425,7 +5523,7 @@ ilo_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5595,7 +5693,7 @@ sot_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5765,7 +5863,7 @@ srp_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -5935,7 +6033,7 @@ lao_Laoo
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6105,7 +6203,7 @@ uzn_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6275,7 +6373,7 @@ als_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6445,7 +6543,7 @@ khm_Khmr
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6615,7 +6713,7 @@ lvs_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6785,7 +6883,7 @@ rus_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -6955,7 +7053,7 @@ ben_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7125,7 +7223,7 @@ ben_Beng
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7295,7 +7393,7 @@ fin_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7465,7 +7563,7 @@ npi_Deva
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7635,7 +7733,7 @@ ell_Grek
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7805,7 +7903,7 @@ ron_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -7975,7 +8073,7 @@ tsn_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8145,7 +8243,7 @@ tha_Thai
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8315,7 +8413,7 @@ afr_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8485,7 +8583,7 @@ hau_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8655,7 +8753,7 @@ jav_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8825,7 +8923,7 @@ bul_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -8995,7 +9093,7 @@ arz_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -9165,7 +9263,7 @@ bam_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -9335,7 +9433,7 @@ sin_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -9505,7 +9603,7 @@ yor_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -9675,7 +9773,7 @@ tur_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -9845,7 +9943,7 @@ vie_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10015,7 +10113,7 @@ urd_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10185,7 +10283,7 @@ lin_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10355,7 +10453,7 @@ luo_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10525,7 +10623,7 @@ war_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10695,7 +10793,7 @@ nso_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -10865,7 +10963,7 @@ est_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11035,7 +11133,7 @@ mlt_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11205,7 +11303,7 @@ som_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11375,7 +11473,7 @@ tam_Taml
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11545,7 +11643,7 @@ apc_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11715,7 +11813,7 @@ ces_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -11885,7 +11983,7 @@ kir_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12055,7 +12153,7 @@ arb_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12225,7 +12323,7 @@ por_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12395,7 +12493,7 @@ ory_Orya
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12565,7 +12663,7 @@ swh_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12735,7 +12833,7 @@ azj_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -12905,7 +13003,7 @@ slv_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13075,7 +13173,7 @@ pol_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13245,7 +13343,7 @@ isl_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13415,7 +13513,7 @@ tso_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13585,7 +13683,7 @@ sin_Sinh
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13755,7 +13853,7 @@ swe_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -13925,7 +14023,7 @@ xho_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14095,7 +14193,7 @@ hat_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14265,7 +14363,7 @@ hin_Deva
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14435,7 +14533,7 @@ ind_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14605,7 +14703,7 @@ shn_Mymr
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14775,7 +14873,7 @@ fuv_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -14945,7 +15043,7 @@ pbt_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15115,7 +15213,7 @@ asm_Beng
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15285,7 +15383,7 @@ fra_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15455,7 +15553,7 @@ deu_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15625,7 +15723,7 @@ ssw_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15795,7 +15893,7 @@ hun_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -15965,7 +16063,7 @@ kaz_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16135,7 +16233,7 @@ ary_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16305,7 +16403,7 @@ kac_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16475,7 +16573,7 @@ acm_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16645,7 +16743,7 @@ eng_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16815,7 +16913,7 @@ pes_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -16985,7 +17083,7 @@ slk_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -17155,7 +17253,7 @@ kea_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -17325,7 +17423,7 @@ tir_Ethi
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -17495,7 +17593,7 @@ heb_Hebr
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -17665,7 +17763,7 @@ npi_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -17835,7 +17933,7 @@ pan_Guru
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18005,7 +18103,7 @@ zul_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18175,7 +18273,7 @@ wol_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18345,7 +18443,7 @@ mkd_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18515,7 +18613,7 @@ plt_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18685,7 +18783,7 @@ tel_Telu
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -18855,7 +18953,7 @@ grn_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19025,7 +19123,7 @@ snd_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19195,7 +19293,7 @@ mri_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19365,7 +19463,7 @@ sna_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19535,7 +19633,7 @@ khk_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19705,7 +19803,7 @@ ukr_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -19875,7 +19973,7 @@ cat_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20045,7 +20143,7 @@ zho_Hans
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20215,7 +20313,7 @@ mal_Mlym
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20385,7 +20483,7 @@ urd_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20555,7 +20653,7 @@ kat_Geor
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20725,7 +20823,7 @@ spa_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -20895,7 +20993,7 @@ lug_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21065,7 +21163,7 @@ arb_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21235,7 +21333,7 @@ kin_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21405,7 +21503,7 @@ nld_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21575,7 +21673,7 @@ hin_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21745,7 +21843,7 @@ jpn_Jpan
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -21915,7 +22013,7 @@ kan_Knda
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22085,7 +22183,7 @@ dan_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22255,7 +22353,7 @@ tgl_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22425,7 +22523,7 @@ zho_Hant
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22595,7 +22693,7 @@ guj_Gujr
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22765,7 +22863,7 @@ mar_Deva
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -22935,7 +23033,7 @@ lit_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23105,7 +23203,7 @@ hrv_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23275,7 +23373,7 @@ eus_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23445,7 +23543,7 @@ nya_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23615,7 +23713,7 @@ ckb_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23785,7 +23883,7 @@ ceb_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -23955,7 +24053,7 @@ kor_Hang
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24125,7 +24223,7 @@ amh_Ethi
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24295,7 +24393,7 @@ ibo_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24465,7 +24563,7 @@ ars_Arab
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24635,7 +24733,7 @@ tgk_Cyrl
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24805,7 +24903,7 @@ gaz_Latn
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -24975,7 +25073,7 @@ bod_Tibt
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.all <templates.qa.multiple_choice.context_no_intro.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -25032,7 +25130,7 @@ wnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -25195,7 +25293,7 @@ sciq
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
+References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -25402,19 +25500,29 @@ cola
                   "type": "map_instance_values"
               },
               {
+                  "field_to_field": {
+                      "sentence": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
                   "fields": {
-                      "choices": [
+                      "classes": [
                           "unacceptable",
                           "acceptable"
-                      ]
+                      ],
+                      "text_type": "text",
+                      "type_of_class": "grammatical acceptability"
                   },
                   "type": "add_fields"
               }
           ],
           "task": {
               "inputs": [
-                  "choices",
-                  "sentence"
+                  "text",
+                  "text_type",
+                  "classes",
+                  "type_of_class"
               ],
               "metrics": [
                   "metrics.matthews_correlation"
@@ -25424,20 +25532,11 @@ cola
               ],
               "type": "form_task"
           },
-          "templates": {
-              "items": [
-                  {
-                      "input_format": "Given this sentence: {sentence}, classify if it is {choices}.",
-                      "output_format": "{label}",
-                      "type": "input_output_template"
-                  }
-              ],
-              "type": "templates_list"
-          },
+          "templates": "templates.classification.multi_class.all",
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`
+References: :ref:`metrics.matthews_correlation <metrics.matthews_correlation>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -25481,31 +25580,21 @@ ethos_binary
               },
               {
                   "fields": {
-                      "choices": [
+                      "classes": [
                           "not hate speech",
                           "hate speech"
-                      ]
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "hate speech"
                   },
                   "type": "add_fields"
               }
           ],
-          "task": {
-              "inputs": [
-                  "choices",
-                  "text"
-              ],
-              "metrics": [
-                  "metrics.accuracy"
-              ],
-              "outputs": [
-                  "label"
-              ],
-              "type": "form_task"
-          },
+          "task": "tasks.classification.multi_class",
           "templates": {
               "items": [
                   {
-                      "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}.",
+                      "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}.",
                       "output_format": "{label}",
                       "postprocessors": [
                           "processors.take_first_non_empty_line"
@@ -25513,7 +25602,7 @@ ethos_binary
                       "type": "input_output_template"
                   },
                   {
-                      "input_format": "Does the following sentence contains hate speech? Answer only by choosing one of the options {choices}. sentence: {text}.",
+                      "input_format": "Does the following {text_type} contains {type_of_class}? Answer only by choosing one of the options {classes}. {text_type}: {text}.",
                       "output_format": "{label}",
                       "postprocessors": [
                           "processors.take_first_non_empty_line"
@@ -25521,7 +25610,7 @@ ethos_binary
                       "type": "input_output_template"
                   },
                   {
-                      "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as: ",
+                      "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                       "output_format": "{label}",
                       "postprocessors": [
                           "processors.take_first_non_empty_line",
@@ -25530,7 +25619,7 @@ ethos_binary
                       "type": "input_output_template"
                   },
                   {
-                      "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as: ",
+                      "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                       "output_format": "{label}",
                       "postprocessors": [
                           "processors.take_first_non_empty_line",
@@ -25544,7 +25633,7 @@ ethos_binary
           "type": "task_card"
       }
 
-References: :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`
+References: :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`
 
 |
 |
@@ -25688,7 +25777,7 @@ ARC_Easy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -25823,7 +25912,7 @@ ARC_Challenge
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -25994,7 +26083,7 @@ m
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -26156,7 +26245,7 @@ l
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -26318,7 +26407,7 @@ s
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -26480,7 +26569,7 @@ xl
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -26642,7 +26731,7 @@ debiased
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -26804,7 +26893,7 @@ xs
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27026,7 +27115,7 @@ piqa
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27176,7 +27265,7 @@ race_all
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
+References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27333,7 +27422,7 @@ business_ethics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27481,7 +27570,7 @@ security_studies
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27629,7 +27718,7 @@ high_school_us_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27777,7 +27866,7 @@ moral_disputes
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -27925,7 +28014,7 @@ philosophy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28073,7 +28162,7 @@ public_relations
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28221,7 +28310,7 @@ high_school_microeconomics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28369,7 +28458,7 @@ human_sexuality
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28517,7 +28606,7 @@ professional_accounting
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28665,7 +28754,7 @@ high_school_government_and_politics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28813,7 +28902,7 @@ sociology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -28961,7 +29050,7 @@ conceptual_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29109,7 +29198,7 @@ human_aging
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29257,7 +29346,7 @@ high_school_psychology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29405,7 +29494,7 @@ jurisprudence
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29553,7 +29642,7 @@ moral_scenarios
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29701,7 +29790,7 @@ college_medicine
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29849,7 +29938,7 @@ high_school_world_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -29997,7 +30086,7 @@ virology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30145,7 +30234,7 @@ high_school_statistics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30293,7 +30382,7 @@ nutrition
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30441,7 +30530,7 @@ abstract_algebra
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30589,7 +30678,7 @@ high_school_geography
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30737,7 +30826,7 @@ econometrics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -30885,7 +30974,7 @@ marketing
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31033,7 +31122,7 @@ high_school_chemistry
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31181,7 +31270,7 @@ prehistory
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31329,7 +31418,7 @@ college_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31477,7 +31566,7 @@ management
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31625,7 +31714,7 @@ college_biology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31773,7 +31862,7 @@ high_school_biology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -31921,7 +32010,7 @@ high_school_physics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32069,7 +32158,7 @@ logical_fallacies
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32217,7 +32306,7 @@ medical_genetics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32365,7 +32454,7 @@ machine_learning
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32513,7 +32602,7 @@ professional_psychology
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32661,7 +32750,7 @@ global_facts
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32809,7 +32898,7 @@ us_foreign_policy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -32957,7 +33046,7 @@ international_law
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33105,7 +33194,7 @@ clinical_knowledge
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33253,7 +33342,7 @@ high_school_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33401,7 +33490,7 @@ high_school_computer_science
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33549,7 +33638,7 @@ college_computer_science
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33697,7 +33786,7 @@ electrical_engineering
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33845,7 +33934,7 @@ college_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -33993,7 +34082,7 @@ computer_security
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34141,7 +34230,7 @@ high_school_macroeconomics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34289,7 +34378,7 @@ professional_law
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34437,7 +34526,7 @@ astronomy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34585,7 +34674,7 @@ college_chemistry
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34733,7 +34822,7 @@ high_school_european_history
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -34881,7 +34970,7 @@ miscellaneous
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35029,7 +35118,7 @@ formal_logic
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35177,7 +35266,7 @@ elementary_mathematics
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35325,7 +35414,7 @@ world_religions
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35473,7 +35562,7 @@ professional_medicine
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -35621,7 +35710,9421 @@ anatomy
           "type": "task_card"
       }
 
-References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+
+|
+|
+
+
+
+.. _.cards.amazon_mass:
+
+----------
+
+amazon_mass
+^^^^^^^^^^^
+
+
+
+.. _cards.amazon_mass.id_ID:
+
+----------
+
+id_ID
+"""""
+
+.. note:: ID: ``cards.amazon_mass.id_ID``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "id-ID",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ar_SA:
+
+----------
+
+ar_SA
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ar_SA``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ar-SA",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.tr_TR:
+
+----------
+
+tr_TR
+"""""
+
+.. note:: ID: ``cards.amazon_mass.tr_TR``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "tr-TR",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ms_MY:
+
+----------
+
+ms_MY
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ms_MY``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ms-MY",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.hu_HU:
+
+----------
+
+hu_HU
+"""""
+
+.. note:: ID: ``cards.amazon_mass.hu_HU``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "hu-HU",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.pt_PT:
+
+----------
+
+pt_PT
+"""""
+
+.. note:: ID: ``cards.amazon_mass.pt_PT``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "pt-PT",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.sl_SL:
+
+----------
+
+sl_SL
+"""""
+
+.. note:: ID: ``cards.amazon_mass.sl_SL``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "sl-SL",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.sv_SE:
+
+----------
+
+sv_SE
+"""""
+
+.. note:: ID: ``cards.amazon_mass.sv_SE``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "sv-SE",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ko_KR:
+
+----------
+
+ko_KR
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ko_KR``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ko-KR",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ur_PK:
+
+----------
+
+ur_PK
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ur_PK``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ur-PK",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.jv_ID:
+
+----------
+
+jv_ID
+"""""
+
+.. note:: ID: ``cards.amazon_mass.jv_ID``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "jv-ID",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.es_ES:
+
+----------
+
+es_ES
+"""""
+
+.. note:: ID: ``cards.amazon_mass.es_ES``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "es-ES",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ja_JP:
+
+----------
+
+ja_JP
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ja_JP``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ja-JP",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ta_IN:
+
+----------
+
+ta_IN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ta_IN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ta-IN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.zh_CN:
+
+----------
+
+zh_CN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.zh_CN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "zh-CN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.lv_LV:
+
+----------
+
+lv_LV
+"""""
+
+.. note:: ID: ``cards.amazon_mass.lv_LV``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "lv-LV",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.el_GR:
+
+----------
+
+el_GR
+"""""
+
+.. note:: ID: ``cards.amazon_mass.el_GR``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "el-GR",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.it_IT:
+
+----------
+
+it_IT
+"""""
+
+.. note:: ID: ``cards.amazon_mass.it_IT``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "it-IT",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.th_TH:
+
+----------
+
+th_TH
+"""""
+
+.. note:: ID: ``cards.amazon_mass.th_TH``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "th-TH",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.hy_AM:
+
+----------
+
+hy_AM
+"""""
+
+.. note:: ID: ``cards.amazon_mass.hy_AM``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "hy-AM",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.sw_KE:
+
+----------
+
+sw_KE
+"""""
+
+.. note:: ID: ``cards.amazon_mass.sw_KE``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "sw-KE",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _.cards.amazon_mass.all_1:
+
+----------
+
+all_1
+"""""
+
+
+
+.. _cards.amazon_mass.all_1.1:
+
+----------
+
+1
+'
+
+.. note:: ID: ``cards.amazon_mass.all_1.1``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "all_1.1",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.az_AZ:
+
+----------
+
+az_AZ
+"""""
+
+.. note:: ID: ``cards.amazon_mass.az_AZ``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "az-AZ",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.my_MM:
+
+----------
+
+my_MM
+"""""
+
+.. note:: ID: ``cards.amazon_mass.my_MM``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "my-MM",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.fi_FI:
+
+----------
+
+fi_FI
+"""""
+
+.. note:: ID: ``cards.amazon_mass.fi_FI``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "fi-FI",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.cy_GB:
+
+----------
+
+cy_GB
+"""""
+
+.. note:: ID: ``cards.amazon_mass.cy_GB``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "cy-GB",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.en_US:
+
+----------
+
+en_US
+"""""
+
+.. note:: ID: ``cards.amazon_mass.en_US``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "en-US",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ka_GE:
+
+----------
+
+ka_GE
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ka_GE``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ka-GE",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.hi_IN:
+
+----------
+
+hi_IN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.hi_IN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "hi-IN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.vi_VN:
+
+----------
+
+vi_VN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.vi_VN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "vi-VN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.tl_PH:
+
+----------
+
+tl_PH
+"""""
+
+.. note:: ID: ``cards.amazon_mass.tl_PH``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "tl-PH",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.is_IS:
+
+----------
+
+is_IS
+"""""
+
+.. note:: ID: ``cards.amazon_mass.is_IS``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "is-IS",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.sq_AL:
+
+----------
+
+sq_AL
+"""""
+
+.. note:: ID: ``cards.amazon_mass.sq_AL``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "sq-AL",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.af_ZA:
+
+----------
+
+af_ZA
+"""""
+
+.. note:: ID: ``cards.amazon_mass.af_ZA``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "af-ZA",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.km_KH:
+
+----------
+
+km_KH
+"""""
+
+.. note:: ID: ``cards.amazon_mass.km_KH``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "km-KH",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.kn_IN:
+
+----------
+
+kn_IN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.kn_IN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "kn-IN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ml_IN:
+
+----------
+
+ml_IN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ml_IN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ml-IN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ru_RU:
+
+----------
+
+ru_RU
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ru_RU``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ru-RU",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.nl_NL:
+
+----------
+
+nl_NL
+"""""
+
+.. note:: ID: ``cards.amazon_mass.nl_NL``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "nl-NL",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.he_IL:
+
+----------
+
+he_IL
+"""""
+
+.. note:: ID: ``cards.amazon_mass.he_IL``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "he-IL",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.fa_IR:
+
+----------
+
+fa_IR
+"""""
+
+.. note:: ID: ``cards.amazon_mass.fa_IR``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "fa-IR",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.nb_NO:
+
+----------
+
+nb_NO
+"""""
+
+.. note:: ID: ``cards.amazon_mass.nb_NO``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "nb-NO",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.da_DK:
+
+----------
+
+da_DK
+"""""
+
+.. note:: ID: ``cards.amazon_mass.da_DK``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "da-DK",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ca_ES:
+
+----------
+
+ca_ES
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ca_ES``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ca-ES",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.de_DE:
+
+----------
+
+de_DE
+"""""
+
+.. note:: ID: ``cards.amazon_mass.de_DE``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "de-DE",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.zh_TW:
+
+----------
+
+zh_TW
+"""""
+
+.. note:: ID: ``cards.amazon_mass.zh_TW``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "zh-TW",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.bn_BD:
+
+----------
+
+bn_BD
+"""""
+
+.. note:: ID: ``cards.amazon_mass.bn_BD``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "bn-BD",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.fr_FR:
+
+----------
+
+fr_FR
+"""""
+
+.. note:: ID: ``cards.amazon_mass.fr_FR``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "fr-FR",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.am_ET:
+
+----------
+
+am_ET
+"""""
+
+.. note:: ID: ``cards.amazon_mass.am_ET``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "am-ET",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.ro_RO:
+
+----------
+
+ro_RO
+"""""
+
+.. note:: ID: ``cards.amazon_mass.ro_RO``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ro-RO",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.mn_MN:
+
+----------
+
+mn_MN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.mn_MN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "mn-MN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.pl_PL:
+
+----------
+
+pl_PL
+"""""
+
+.. note:: ID: ``cards.amazon_mass.pl_PL``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "pl-PL",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.all:
+
+----------
+
+all
+"""
+
+.. note:: ID: ``cards.amazon_mass.all``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "all",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+
+|
+|
+
+
+
+.. _cards.amazon_mass.te_IN:
+
+----------
+
+te_IN
+"""""
+
+.. note:: ID: ``cards.amazon_mass.te_IN``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "te-IN",
+              "path": "AmazonScience/massive",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mappers": {
+                      "intent": {
+                          "0": "datetime_query",
+                          "1": "iot_hue_lightchange",
+                          "10": "qa_currency",
+                          "11": "transport_traffic",
+                          "12": "general_quirky",
+                          "13": "weather_query",
+                          "14": "audio_volume_up",
+                          "15": "email_addcontact",
+                          "16": "takeaway_order",
+                          "17": "email_querycontact",
+                          "18": "iot_hue_lightup",
+                          "19": "recommendation_locations",
+                          "2": "transport_ticket",
+                          "20": "play_audiobook",
+                          "21": "lists_createoradd",
+                          "22": "news_query",
+                          "23": "alarm_query",
+                          "24": "iot_wemo_on",
+                          "25": "general_joke",
+                          "26": "qa_definition",
+                          "27": "social_query",
+                          "28": "music_settings",
+                          "29": "audio_volume_other",
+                          "3": "takeaway_query",
+                          "30": "calendar_remove",
+                          "31": "iot_hue_lightdim",
+                          "32": "calendar_query",
+                          "33": "email_sendemail",
+                          "34": "iot_cleaning",
+                          "35": "audio_volume_down",
+                          "36": "play_radio",
+                          "37": "cooking_query",
+                          "38": "datetime_convert",
+                          "39": "qa_maths",
+                          "4": "qa_stock",
+                          "40": "iot_hue_lightoff",
+                          "41": "iot_hue_lighton",
+                          "42": "transport_query",
+                          "43": "music_likeness",
+                          "44": "email_query",
+                          "45": "play_music",
+                          "46": "audio_volume_mute",
+                          "47": "social_post",
+                          "48": "alarm_set",
+                          "49": "qa_factoid",
+                          "5": "general_greet",
+                          "50": "calendar_set",
+                          "51": "play_game",
+                          "52": "alarm_remove",
+                          "53": "lists_remove",
+                          "54": "transport_taxi",
+                          "55": "recommendation_movies",
+                          "56": "iot_coffee",
+                          "57": "music_query",
+                          "58": "play_podcasts",
+                          "59": "lists_query",
+                          "6": "recommendation_events",
+                          "7": "music_dislikeness",
+                          "8": "iot_wemo_off",
+                          "9": "cooking_recipe"
+                      }
+                  },
+                  "type": "map_instance_values"
+              },
+              {
+                  "field_to_field": {
+                      "intent": "label",
+                      "utt": "text"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "classes": [
+                          "datetime_query",
+                          "iot_hue_lightchange",
+                          "transport_ticket",
+                          "takeaway_query",
+                          "qa_stock",
+                          "general_greet",
+                          "recommendation_events",
+                          "music_dislikeness",
+                          "iot_wemo_off",
+                          "cooking_recipe",
+                          "qa_currency",
+                          "transport_traffic",
+                          "general_quirky",
+                          "weather_query",
+                          "audio_volume_up",
+                          "email_addcontact",
+                          "takeaway_order",
+                          "email_querycontact",
+                          "iot_hue_lightup",
+                          "recommendation_locations",
+                          "play_audiobook",
+                          "lists_createoradd",
+                          "news_query",
+                          "alarm_query",
+                          "iot_wemo_on",
+                          "general_joke",
+                          "qa_definition",
+                          "social_query",
+                          "music_settings",
+                          "audio_volume_other",
+                          "calendar_remove",
+                          "iot_hue_lightdim",
+                          "calendar_query",
+                          "email_sendemail",
+                          "iot_cleaning",
+                          "audio_volume_down",
+                          "play_radio",
+                          "cooking_query",
+                          "datetime_convert",
+                          "qa_maths",
+                          "iot_hue_lightoff",
+                          "iot_hue_lighton",
+                          "transport_query",
+                          "music_likeness",
+                          "email_query",
+                          "play_music",
+                          "audio_volume_mute",
+                          "social_post",
+                          "alarm_set",
+                          "qa_factoid",
+                          "calendar_set",
+                          "play_game",
+                          "alarm_remove",
+                          "lists_remove",
+                          "transport_taxi",
+                          "recommendation_movies",
+                          "iot_coffee",
+                          "music_query",
+                          "play_podcasts",
+                          "lists_query"
+                      ],
+                      "text_type": "sentence",
+                      "type_of_class": "intent"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": "tasks.classification.multi_class",
+          "templates": "templates.classification.multi_class.all",
+          "type": "task_card"
+      }
+
+References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
 
 |
 |
@@ -35678,7 +45181,7 @@ rte
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -35979,7 +45482,7 @@ qnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
 
 |
 |
@@ -36300,7 +45803,7 @@ hellaswag
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -36492,7 +45995,7 @@ mnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
 
 |
 |
@@ -37453,28 +46956,28 @@ References: :ref:`templates.classification.nli.simple <templates.classification.
 
 
 
-.. _.templates.classification.choices:
+.. _.templates.classification.multi_class:
 
 ----------
 
-choices
-"""""""
+multi_class
+"""""""""""
 
 
 
-.. _templates.classification.choices.simple:
+.. _templates.classification.multi_class.empty:
 
 ----------
 
-simple
-''''''
+empty
+'''''
 
-.. note:: ID: ``templates.classification.choices.simple``  |  Type: :class:`InputOutputTemplate <unitxt.templates.InputOutputTemplate>`
+.. note:: ID: ``templates.classification.multi_class.empty``  |  Type: :class:`InputOutputTemplate <unitxt.templates.InputOutputTemplate>`
 
    .. code-block:: json
 
       {
-          "input_format": "Text: {text}, Choices: {choices}.",
+          "input_format": "{text}",
           "output_format": "{label}",
           "type": "input_output_template"
       }
@@ -37485,19 +46988,19 @@ simple
 
 
 
-.. _templates.classification.choices.simple2:
+.. _templates.classification.multi_class.default:
 
 ----------
 
-simple2
+default
 '''''''
 
-.. note:: ID: ``templates.classification.choices.simple2``  |  Type: :class:`InputOutputTemplate <unitxt.templates.InputOutputTemplate>`
+.. note:: ID: ``templates.classification.multi_class.default``  |  Type: :class:`InputOutputTemplate <unitxt.templates.InputOutputTemplate>`
 
    .. code-block:: json
 
       {
-          "input_format": "Given this sentence: {text}, classify if it is {choices}.",
+          "input_format": "Classify the {type_of_class} of following {text_type} to one of these options: {classes}. Text: {text}",
           "output_format": "{label}",
           "type": "input_output_template"
       }
@@ -37508,50 +47011,26 @@ simple2
 
 
 
-.. _templates.classification.choices.informed:
-
-----------
-
-informed
-''''''''
-
-.. note:: ID: ``templates.classification.choices.informed``  |  Type: :class:`InputOutputTemplate <unitxt.templates.InputOutputTemplate>`
-
-   .. code-block:: json
-
-      {
-          "input_format": "Classify the follwoing text to one of the options: {choices}, Text: {text}",
-          "output_format": "{label}",
-          "type": "input_output_template"
-      }
-
-
-|
-|
-
-
-
-.. _templates.classification.choices.all:
+.. _templates.classification.multi_class.all:
 
 ----------
 
 all
 '''
 
-.. note:: ID: ``templates.classification.choices.all``  |  Type: :class:`TemplatesList <unitxt.templates.TemplatesList>`
+.. note:: ID: ``templates.classification.multi_class.all``  |  Type: :class:`TemplatesList <unitxt.templates.TemplatesList>`
 
    .. code-block:: json
 
       {
           "items": [
-              "templates.classification.choices.simple",
-              "templates.classification.choices.simple2",
-              "templates.classification.choices.informed"
+              "templates.classification.multi_class.default",
+              "templates.classification.multi_class.empty"
           ],
           "type": "templates_list"
       }
 
-References: :ref:`templates.classification.choices.informed <templates.classification.choices.informed>`, :ref:`templates.classification.choices.simple2 <templates.classification.choices.simple2>`, :ref:`templates.classification.choices.simple <templates.classification.choices.simple>`
+References: :ref:`templates.classification.multi_class.empty <templates.classification.multi_class.empty>`, :ref:`templates.classification.multi_class.default <templates.classification.multi_class.default>`
 
 |
 |
@@ -37823,7 +47302,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`
+References: :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`
 
 |
 |
@@ -37968,7 +47447,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`
+References: :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`
 
 |
 |
@@ -38113,7 +47592,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`, :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`
+References: :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`, :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`
 
 |
 |
@@ -38258,7 +47737,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`, :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`, :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`
 
 |
 |
@@ -38491,7 +47970,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`, :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`
+References: :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`, :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`
 
 |
 |
@@ -38572,35 +48051,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.open.simple <templates.qa.open.simple>`, :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`
-
-|
-|
-
-
-
-.. _templates.one_sent_classification:
-
-----------
-
-one_sent_classification
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. note:: ID: ``templates.one_sent_classification``  |  Type: :class:`TemplatesList <unitxt.templates.TemplatesList>`
-
-   .. code-block:: json
-
-      {
-          "items": [
-              {
-                  "input_format": "Given this sentence: {sentence}, classify if it is {choices}.",
-                  "output_format": "{label}",
-                  "type": "input_output_template"
-              }
-          ],
-          "type": "templates_list"
-      }
-
+References: :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`, :ref:`templates.qa.open.simple <templates.qa.open.simple>`
 
 |
 |

@@ -2,23 +2,6 @@
 Concepts
 ==============
 
-Task
-----
-
-Unitext creates
-
-Template
----------
-
-
-Dataset card
--------------
-
-Metric
-------
-
-
-
 The main building blocks of the library are the `Stream`, `Operator` and the `Artifact` classes.
 
 Stream
