@@ -348,6 +348,54 @@ char_edit_dist_accuracy
 
 
 
+.. _metrics.nDCG:
+
+----------
+
+nDCG
+^^^^
+
+.. note:: ID: ``metrics.nDCG``  |  Type: :class:`MetricPipeline <unitxt.metrics.MetricPipeline>`
+
+   .. code-block:: json
+
+      {
+          "main_score": "nDCG",
+          "metric": {
+              "type": "ndcg"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": [
+                      [
+                          "references/0",
+                          "references"
+                      ]
+                  ],
+                  "type": "copy_fields",
+                  "use_query": true
+              },
+              {
+                  "failure_defaults": {
+                      "prediction": 0.0
+                  },
+                  "fields": {
+                      "prediction": "float",
+                      "references": "float"
+                  },
+                  "type": "cast_fields",
+                  "use_nested_query": true
+              }
+          ],
+          "type": "metric_pipeline"
+      }
+
+
+|
+|
+
+
+
 .. _metrics.f1_macro_multi_label:
 
 ----------
@@ -750,7 +798,7 @@ multi_label
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`
 
 |
 |
@@ -789,7 +837,7 @@ multi_class
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_micro <metrics.f1_micro>`, :ref:`metrics.f1_macro <metrics.f1_macro>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.f1_macro <metrics.f1_macro>`, :ref:`metrics.f1_micro <metrics.f1_micro>`, :ref:`metrics.accuracy <metrics.accuracy>`
 
 |
 |
@@ -828,7 +876,7 @@ binary
           "type": "form_task"
       }
 
-References: :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`, :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.f1_macro_multi_label <metrics.f1_macro_multi_label>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`metrics.f1_micro_multi_label <metrics.f1_micro_multi_label>`
 
 |
 |
@@ -1542,7 +1590,7 @@ race_high
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
 
 |
 |
@@ -1697,7 +1745,7 @@ openbookQA
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -2356,7 +2404,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -2517,7 +2565,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -2678,7 +2726,7 @@ pt
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -2839,7 +2887,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -3000,7 +3048,7 @@ jp
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -3061,7 +3109,7 @@ en_ro
           "type": "task_card"
       }
 
-References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
+References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
 
 |
 |
@@ -3113,7 +3161,7 @@ en_fr
           "type": "task_card"
       }
 
-References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
+References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
 
 |
 |
@@ -3165,7 +3213,7 @@ en_de
           "type": "task_card"
       }
 
-References: :ref:`tasks.translation.directed <tasks.translation.directed>`, :ref:`templates.translation.directed.all <templates.translation.directed.all>`
+References: :ref:`templates.translation.directed.all <templates.translation.directed.all>`, :ref:`tasks.translation.directed <tasks.translation.directed>`
 
 |
 |
@@ -3388,7 +3436,7 @@ race_middle
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
 
 |
 |
@@ -3455,7 +3503,7 @@ zh
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3513,7 +3561,7 @@ tr
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3571,7 +3619,7 @@ de
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3629,7 +3677,7 @@ ru
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3687,7 +3735,7 @@ ur
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3745,7 +3793,7 @@ en
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3803,7 +3851,7 @@ fr
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3861,7 +3909,7 @@ el
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3919,7 +3967,7 @@ bg
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -3977,7 +4025,7 @@ hi
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4035,7 +4083,7 @@ vi
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4093,7 +4141,7 @@ sw
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4151,7 +4199,7 @@ th
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4209,7 +4257,7 @@ es
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4267,7 +4315,7 @@ ar
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -4324,7 +4372,7 @@ sst2
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -25130,7 +25178,7 @@ wnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -25293,7 +25341,7 @@ sciq
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
 
 |
 |
@@ -25633,7 +25681,2896 @@ ethos_binary
           "type": "task_card"
       }
 
-References: :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`
+References: :ref:`processors.take_first_non_empty_line <processors.take_first_non_empty_line>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`processors.hate_speech_or_not_hate_speech <processors.hate_speech_or_not_hate_speech>`, :ref:`processors.lower_case_till_punc <processors.lower_case_till_punc>`
+
+|
+|
+
+
+
+.. _.cards.xlsum:
+
+----------
+
+xlsum
+^^^^^
+
+
+
+.. _cards.xlsum.arabic:
+
+----------
+
+arabic
+""""""
+
+.. note:: ID: ``cards.xlsum.arabic``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "arabic",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.french:
+
+----------
+
+french
+""""""
+
+.. note:: ID: ``cards.xlsum.french``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "french",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.gujarati:
+
+----------
+
+gujarati
+""""""""
+
+.. note:: ID: ``cards.xlsum.gujarati``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "gujarati",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.pashto:
+
+----------
+
+pashto
+""""""
+
+.. note:: ID: ``cards.xlsum.pashto``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "pashto",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.tigrinya:
+
+----------
+
+tigrinya
+""""""""
+
+.. note:: ID: ``cards.xlsum.tigrinya``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "tigrinya",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.persian:
+
+----------
+
+persian
+"""""""
+
+.. note:: ID: ``cards.xlsum.persian``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "persian",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.kirundi:
+
+----------
+
+kirundi
+"""""""
+
+.. note:: ID: ``cards.xlsum.kirundi``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "kirundi",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.hausa:
+
+----------
+
+hausa
+"""""
+
+.. note:: ID: ``cards.xlsum.hausa``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "hausa",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.urdu:
+
+----------
+
+urdu
+""""
+
+.. note:: ID: ``cards.xlsum.urdu``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "urdu",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.nepali:
+
+----------
+
+nepali
+""""""
+
+.. note:: ID: ``cards.xlsum.nepali``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "nepali",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.scottish_gaelic:
+
+----------
+
+scottish_gaelic
+"""""""""""""""
+
+.. note:: ID: ``cards.xlsum.scottish_gaelic``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "scottish_gaelic",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.turkish:
+
+----------
+
+turkish
+"""""""
+
+.. note:: ID: ``cards.xlsum.turkish``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "turkish",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.vietnamese:
+
+----------
+
+vietnamese
+""""""""""
+
+.. note:: ID: ``cards.xlsum.vietnamese``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "vietnamese",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.spanish:
+
+----------
+
+spanish
+"""""""
+
+.. note:: ID: ``cards.xlsum.spanish``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "spanish",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.pidgin:
+
+----------
+
+pidgin
+""""""
+
+.. note:: ID: ``cards.xlsum.pidgin``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "pidgin",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.japanese:
+
+----------
+
+japanese
+""""""""
+
+.. note:: ID: ``cards.xlsum.japanese``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "japanese",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.uzbek:
+
+----------
+
+uzbek
+"""""
+
+.. note:: ID: ``cards.xlsum.uzbek``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "uzbek",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.oromo:
+
+----------
+
+oromo
+"""""
+
+.. note:: ID: ``cards.xlsum.oromo``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "oromo",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.portuguese:
+
+----------
+
+portuguese
+""""""""""
+
+.. note:: ID: ``cards.xlsum.portuguese``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "portuguese",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.igbo:
+
+----------
+
+igbo
+""""
+
+.. note:: ID: ``cards.xlsum.igbo``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "igbo",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.korean:
+
+----------
+
+korean
+""""""
+
+.. note:: ID: ``cards.xlsum.korean``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "korean",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.english:
+
+----------
+
+english
+"""""""
+
+.. note:: ID: ``cards.xlsum.english``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "english",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.somali:
+
+----------
+
+somali
+""""""
+
+.. note:: ID: ``cards.xlsum.somali``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "somali",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.bengali:
+
+----------
+
+bengali
+"""""""
+
+.. note:: ID: ``cards.xlsum.bengali``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "bengali",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.russian:
+
+----------
+
+russian
+"""""""
+
+.. note:: ID: ``cards.xlsum.russian``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "russian",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.serbian_latin:
+
+----------
+
+serbian_latin
+"""""""""""""
+
+.. note:: ID: ``cards.xlsum.serbian_latin``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "serbian_latin",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.ukrainian:
+
+----------
+
+ukrainian
+"""""""""
+
+.. note:: ID: ``cards.xlsum.ukrainian``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "ukrainian",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.chinese_simplified:
+
+----------
+
+chinese_simplified
+""""""""""""""""""
+
+.. note:: ID: ``cards.xlsum.chinese_simplified``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "chinese_simplified",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.kyrgyz:
+
+----------
+
+kyrgyz
+""""""
+
+.. note:: ID: ``cards.xlsum.kyrgyz``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "kyrgyz",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.swahili:
+
+----------
+
+swahili
+"""""""
+
+.. note:: ID: ``cards.xlsum.swahili``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "swahili",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.amharic:
+
+----------
+
+amharic
+"""""""
+
+.. note:: ID: ``cards.xlsum.amharic``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "amharic",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.sinhala:
+
+----------
+
+sinhala
+"""""""
+
+.. note:: ID: ``cards.xlsum.sinhala``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "sinhala",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.azerbaijani:
+
+----------
+
+azerbaijani
+"""""""""""
+
+.. note:: ID: ``cards.xlsum.azerbaijani``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "azerbaijani",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.serbian_cyrillic:
+
+----------
+
+serbian_cyrillic
+""""""""""""""""
+
+.. note:: ID: ``cards.xlsum.serbian_cyrillic``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "serbian_cyrillic",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.tamil:
+
+----------
+
+tamil
+"""""
+
+.. note:: ID: ``cards.xlsum.tamil``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "tamil",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.hindi:
+
+----------
+
+hindi
+"""""
+
+.. note:: ID: ``cards.xlsum.hindi``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "hindi",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.yoruba:
+
+----------
+
+yoruba
+""""""
+
+.. note:: ID: ``cards.xlsum.yoruba``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "yoruba",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.thai:
+
+----------
+
+thai
+""""
+
+.. note:: ID: ``cards.xlsum.thai``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "thai",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.burmese:
+
+----------
+
+burmese
+"""""""
+
+.. note:: ID: ``cards.xlsum.burmese``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "burmese",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.punjabi:
+
+----------
+
+punjabi
+"""""""
+
+.. note:: ID: ``cards.xlsum.punjabi``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "punjabi",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.chinese_traditional:
+
+----------
+
+chinese_traditional
+"""""""""""""""""""
+
+.. note:: ID: ``cards.xlsum.chinese_traditional``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "chinese_traditional",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.telugu:
+
+----------
+
+telugu
+""""""
+
+.. note:: ID: ``cards.xlsum.telugu``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "telugu",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.indonesian:
+
+----------
+
+indonesian
+""""""""""
+
+.. note:: ID: ``cards.xlsum.indonesian``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "indonesian",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.marathi:
+
+----------
+
+marathi
+"""""""
+
+.. note:: ID: ``cards.xlsum.marathi``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "marathi",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
+
+|
+|
+
+
+
+.. _cards.xlsum.welsh:
+
+----------
+
+welsh
+"""""
+
+.. note:: ID: ``cards.xlsum.welsh``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "name": "welsh",
+              "path": "GEM/xlsum",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "field_to_field": {
+                      "target": "summary",
+                      "text": "document"
+                  },
+                  "type": "rename_fields"
+              },
+              {
+                  "fields": {
+                      "text_type": "text"
+                  },
+                  "type": "add_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "document"
+              ],
+              "metrics": [
+                  "metrics.rouge"
+              ],
+              "outputs": [
+                  "summary"
+              ],
+              "type": "form_task"
+          },
+          "templates": {
+              "items": [
+                  {
+                      "input_format": "{document}",
+                      "output_format": "{summary}",
+                      "type": "input_output_template"
+                  }
+              ],
+              "type": "templates_list"
+          },
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.rouge <metrics.rouge>`
 
 |
 |
@@ -25777,7 +28714,7 @@ ARC_Easy
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -25912,7 +28849,7 @@ ARC_Challenge
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26083,7 +29020,7 @@ m
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26245,7 +29182,7 @@ l
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26407,7 +29344,7 @@ s
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26569,7 +29506,7 @@ xl
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26731,7 +29668,7 @@ debiased
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -26893,7 +29830,7 @@ xs
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -27115,7 +30052,7 @@ piqa
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -27265,7 +30202,7 @@ race_all
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.context.all <templates.qa.multiple_choice.context.all>`
 
 |
 |
@@ -27422,7 +30359,7 @@ business_ethics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -27570,7 +30507,7 @@ security_studies
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -27718,7 +30655,7 @@ high_school_us_history
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -27866,7 +30803,7 @@ moral_disputes
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28014,7 +30951,7 @@ philosophy
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28162,7 +31099,7 @@ public_relations
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28310,7 +31247,7 @@ high_school_microeconomics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28458,7 +31395,7 @@ human_sexuality
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28606,7 +31543,7 @@ professional_accounting
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28754,7 +31691,7 @@ high_school_government_and_politics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -28902,7 +31839,7 @@ sociology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29050,7 +31987,7 @@ conceptual_physics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29198,7 +32135,7 @@ human_aging
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29346,7 +32283,7 @@ high_school_psychology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29494,7 +32431,7 @@ jurisprudence
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29642,7 +32579,7 @@ moral_scenarios
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29790,7 +32727,7 @@ college_medicine
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -29938,7 +32875,7 @@ high_school_world_history
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30086,7 +33023,7 @@ virology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30234,7 +33171,7 @@ high_school_statistics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30382,7 +33319,7 @@ nutrition
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30530,7 +33467,7 @@ abstract_algebra
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30678,7 +33615,7 @@ high_school_geography
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30826,7 +33763,7 @@ econometrics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -30974,7 +33911,7 @@ marketing
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31122,7 +34059,7 @@ high_school_chemistry
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31270,7 +34207,7 @@ prehistory
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31418,7 +34355,7 @@ college_physics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31566,7 +34503,7 @@ management
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31714,7 +34651,7 @@ college_biology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -31862,7 +34799,7 @@ high_school_biology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32010,7 +34947,7 @@ high_school_physics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32158,7 +35095,7 @@ logical_fallacies
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32306,7 +35243,7 @@ medical_genetics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32454,7 +35391,7 @@ machine_learning
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32602,7 +35539,7 @@ professional_psychology
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32750,7 +35687,7 @@ global_facts
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -32898,7 +35835,7 @@ us_foreign_policy
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33046,7 +35983,7 @@ international_law
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33194,7 +36131,7 @@ clinical_knowledge
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33342,7 +36279,7 @@ high_school_mathematics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33490,7 +36427,7 @@ high_school_computer_science
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33638,7 +36575,7 @@ college_computer_science
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33786,7 +36723,7 @@ electrical_engineering
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -33934,7 +36871,7 @@ college_mathematics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34082,7 +37019,7 @@ computer_security
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34230,7 +37167,7 @@ high_school_macroeconomics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34378,7 +37315,7 @@ professional_law
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34526,7 +37463,7 @@ astronomy
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34674,7 +37611,7 @@ college_chemistry
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34822,7 +37759,7 @@ high_school_european_history
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -34970,7 +37907,7 @@ miscellaneous
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -35118,7 +38055,7 @@ formal_logic
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -35266,7 +38203,7 @@ elementary_mathematics
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -35414,7 +38351,7 @@ world_religions
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -35562,7 +38499,7 @@ professional_medicine
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -35710,7 +38647,63 @@ anatomy
           "type": "task_card"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
+
+|
+|
+
+
+
+.. _cards.almostEvilML_qa:
+
+----------
+
+almostEvilML_qa
+^^^^^^^^^^^^^^^
+
+.. note:: ID: ``cards.almostEvilML_qa``  |  Type: :class:`TaskCard <unitxt.card.TaskCard>`
+
+   .. code-block:: json
+
+      {
+          "loader": {
+              "path": "0x22almostEvil/multilingual-wikihow-qa-16k",
+              "type": "load_hf"
+          },
+          "preprocess_steps": [
+              {
+                  "mix": {
+                      "test": "train[5%]",
+                      "train": "train[90%]",
+                      "validation": "train[5%]"
+                  },
+                  "type": "split_random_mix"
+              },
+              {
+                  "field_to_field": {
+                      "INSTRUCTION": "question",
+                      "RESPONSE": "answer"
+                  },
+                  "type": "rename_fields"
+              }
+          ],
+          "task": {
+              "inputs": [
+                  "question"
+              ],
+              "metrics": [
+                  "metrics.squad"
+              ],
+              "outputs": [
+                  "answer"
+              ],
+              "type": "form_task"
+          },
+          "templates": "templates.qa.open.all",
+          "type": "task_card"
+      }
+
+References: :ref:`metrics.squad <metrics.squad>`, :ref:`templates.qa.open.all <templates.qa.open.all>`
 
 |
 |
@@ -35893,7 +38886,7 @@ id_ID
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36067,7 +39060,7 @@ ar_SA
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36241,7 +39234,7 @@ tr_TR
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36415,7 +39408,7 @@ ms_MY
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36589,7 +39582,7 @@ hu_HU
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36763,7 +39756,7 @@ pt_PT
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -36937,7 +39930,7 @@ sl_SL
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37111,7 +40104,7 @@ sv_SE
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37285,7 +40278,7 @@ ko_KR
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37459,7 +40452,7 @@ ur_PK
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37633,7 +40626,7 @@ jv_ID
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37807,7 +40800,7 @@ es_ES
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -37981,7 +40974,7 @@ ja_JP
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -38155,7 +41148,7 @@ ta_IN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -38329,7 +41322,7 @@ zh_CN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -38503,7 +41496,7 @@ lv_LV
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -38677,7 +41670,7 @@ el_GR
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -38851,7 +41844,7 @@ it_IT
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39025,7 +42018,7 @@ th_TH
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39199,7 +42192,7 @@ hy_AM
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39373,7 +42366,7 @@ sw_KE
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39556,7 +42549,7 @@ all_1
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39730,7 +42723,7 @@ az_AZ
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -39904,7 +42897,7 @@ my_MM
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40078,7 +43071,7 @@ fi_FI
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40252,7 +43245,7 @@ cy_GB
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40426,7 +43419,7 @@ en_US
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40600,7 +43593,7 @@ ka_GE
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40774,7 +43767,7 @@ hi_IN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -40948,7 +43941,7 @@ vi_VN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41122,7 +44115,7 @@ tl_PH
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41296,7 +44289,7 @@ is_IS
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41470,7 +44463,7 @@ sq_AL
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41644,7 +44637,7 @@ af_ZA
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41818,7 +44811,7 @@ km_KH
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -41992,7 +44985,7 @@ kn_IN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -42166,7 +45159,7 @@ ml_IN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -42340,7 +45333,7 @@ ru_RU
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -42514,7 +45507,7 @@ nl_NL
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -42688,7 +45681,7 @@ he_IL
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -42862,7 +45855,7 @@ fa_IR
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43036,7 +46029,7 @@ nb_NO
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43210,7 +46203,7 @@ da_DK
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43384,7 +46377,7 @@ ca_ES
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43558,7 +46551,7 @@ de_DE
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43732,7 +46725,7 @@ zh_TW
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -43906,7 +46899,7 @@ bn_BD
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44080,7 +47073,7 @@ fr_FR
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44254,7 +47247,7 @@ am_ET
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44428,7 +47421,7 @@ ro_RO
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44602,7 +47595,7 @@ mn_MN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44776,7 +47769,7 @@ pl_PL
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -44950,7 +47943,7 @@ all
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -45124,7 +48117,7 @@ te_IN
           "type": "task_card"
       }
 
-References: :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`, :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`
+References: :ref:`templates.classification.multi_class.all <templates.classification.multi_class.all>`, :ref:`tasks.classification.multi_class <tasks.classification.multi_class>`
 
 |
 |
@@ -45181,7 +48174,7 @@ rte
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -45482,7 +48475,7 @@ qnli
           "type": "task_card"
       }
 
-References: :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`tasks.nli <tasks.nli>`, :ref:`splitters.large_no_test <splitters.large_no_test>`
 
 |
 |
@@ -45803,7 +48796,7 @@ hellaswag
           "type": "task_card"
       }
 
-References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`, :ref:`metrics.accuracy <metrics.accuracy>`
+References: :ref:`splitters.large_no_test <splitters.large_no_test>`, :ref:`metrics.accuracy <metrics.accuracy>`, :ref:`templates.qa.multiple_choice.original.all <templates.qa.multiple_choice.original.all>`
 
 |
 |
@@ -45995,7 +48988,7 @@ mnli
           "type": "task_card"
       }
 
-References: :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`, :ref:`templates.classification.nli.all <templates.classification.nli.all>`
+References: :ref:`templates.classification.nli.all <templates.classification.nli.all>`, :ref:`splitters.small_no_test <splitters.small_no_test>`, :ref:`tasks.nli <tasks.nli>`
 
 |
 |
@@ -47030,7 +50023,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.classification.multi_class.empty <templates.classification.multi_class.empty>`, :ref:`templates.classification.multi_class.default <templates.classification.multi_class.default>`
+References: :ref:`templates.classification.multi_class.default <templates.classification.multi_class.default>`, :ref:`templates.classification.multi_class.empty <templates.classification.multi_class.empty>`
 
 |
 |
@@ -47302,7 +50295,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`
+References: :ref:`templates.qa.multiple_choice.context.helm <templates.qa.multiple_choice.context.helm>`, :ref:`templates.qa.multiple_choice.context.mmlu <templates.qa.multiple_choice.context.mmlu>`, :ref:`templates.qa.multiple_choice.context.fm_eval <templates.qa.multiple_choice.context.fm_eval>`, :ref:`templates.qa.multiple_choice.context.lm_eval_harness <templates.qa.multiple_choice.context.lm_eval_harness>`
 
 |
 |
@@ -47447,7 +50440,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`
+References: :ref:`templates.qa.multiple_choice.original.helm <templates.qa.multiple_choice.original.helm>`, :ref:`templates.qa.multiple_choice.original.mmlu <templates.qa.multiple_choice.original.mmlu>`, :ref:`templates.qa.multiple_choice.original.lm_eval_harness <templates.qa.multiple_choice.original.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.original.fm_eval <templates.qa.multiple_choice.original.fm_eval>`
 
 |
 |
@@ -47592,7 +50585,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`, :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`
+References: :ref:`templates.qa.multiple_choice.no_intro.fm_eval <templates.qa.multiple_choice.no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.no_intro.mmlu <templates.qa.multiple_choice.no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.no_intro.lm_eval_harness <templates.qa.multiple_choice.no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.no_intro.helm <templates.qa.multiple_choice.no_intro.helm>`
 
 |
 |
@@ -47737,7 +50730,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`, :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`
+References: :ref:`templates.qa.multiple_choice.context_no_intro.fm_eval <templates.qa.multiple_choice.context_no_intro.fm_eval>`, :ref:`templates.qa.multiple_choice.context_no_intro.mmlu <templates.qa.multiple_choice.context_no_intro.mmlu>`, :ref:`templates.qa.multiple_choice.context_no_intro.lm_eval_harness <templates.qa.multiple_choice.context_no_intro.lm_eval_harness>`, :ref:`templates.qa.multiple_choice.context_no_intro.helm <templates.qa.multiple_choice.context_no_intro.helm>`
 
 |
 |
@@ -47970,7 +50963,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`, :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`
+References: :ref:`templates.qa.contextual.simple <templates.qa.contextual.simple>`, :ref:`templates.qa.contextual.simple2 <templates.qa.contextual.simple2>`
 
 |
 |
@@ -48051,7 +51044,7 @@ all
           "type": "templates_list"
       }
 
-References: :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`, :ref:`templates.qa.open.simple <templates.qa.open.simple>`
+References: :ref:`templates.qa.open.simple <templates.qa.open.simple>`, :ref:`templates.qa.open.simple2 <templates.qa.open.simple2>`
 
 |
 |
