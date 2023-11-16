@@ -1,3 +1,4 @@
+import json
 import unittest
 
 from src.unitxt.operators import (
@@ -8,8 +9,10 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    FilterByCondsOnValues,
     FilterByListsOfValues,
     FilterByValues,
+    FindAndStoreMostCommonValues,
     FlattenInstances,
     Intersect,
     JoinStr,
@@ -100,6 +103,31 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        )
+
+    def test_filter_by_conds_on_values(self):
+        inputs = [{"a": "peace", "b": "morning"}, {"a": "sky", "b": "up"}, {"a": "hello", "b": "hurry"}]
+
+        targets = [
+            {"a": "hello", "b": "hurry"},
+        ]
+
+        operator = FilterByCondsOnValues(required_values={"a": 'lambda x: "e" in x', "b": 'lambda x: "u" in x'})
+        output = operator.process(inputs)
+        output_as_list = list(output)  # output is a generator
+        print(output_as_list)
+        self.assertEqual(targets, output_as_list, f"expected to see {targets}, but instead, got {output_as_list}")
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByCondsOnValues(required_values={"c": 'lambda x: "5" in x'}),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Required filter field ('c') in FilterByCondsOnValues is not found in {'a': 'peace', 'b': 'morning'}",
         )
 
     def test_filter_by_list_of_values(self):
@@ -374,6 +402,54 @@ class TestOperators(unittest.TestCase):
         merged = list(output_multi_stream["merged"])
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
         self.compare_streams(merged, expected_merged)
+
+    def test_find_and_store_most_common_values(self):
+        # Test with default params
+        input_multi_stream = MultiStream(
+            {
+                "test": [{"field": "test1"}],
+                "validation": [{"field": "validation1"}],
+                "train": [
+                    {"field": "train1"},
+                    {"field": "train1"},
+                    {"field": "train2"},
+                    {"field": "train2"},
+                    {"field": "train3"},
+                    {"field": "train3"},
+                    {"field": "train4"},
+                    {"field": "train4"},
+                    {"field": "train5"},
+                ],
+            }
+        )
+        output_multi_stream = FindAndStoreMostCommonValues(field_name="field").process(input_multi_stream)
+
+        expected_output = {
+            "test": [{"field": "test1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}],
+            "validation": [
+                {"field": "validation1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}
+            ],
+            "train": [
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train5", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+            ],
+        }
+
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output,
+            "expected to see \n"
+            + json.dumps(expected_output)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
 
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
