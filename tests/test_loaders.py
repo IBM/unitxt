@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud
+from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
 
 
 class DummyBody:
@@ -70,3 +70,31 @@ class TestLoaders(unittest.TestCase):
         with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
             ms = loader()
             self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})
+
+    def test_load_from_HF_compressed(self):
+        loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(ms.to_dataset()["train"][0]["url"], "https://www.bbc.com/igbo/afirika-43986554")
+        assert set(dataset.keys()) == set(["train", "validation", "test"]), f"Unexpected fold {dataset.keys()}"
+
+    def test_load_from_HF_compressed_split(self):
+        loader = LoadHF(path="GEM/xlsum", name="igbo", split="train")  # the smallest file
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(ms.to_dataset()["train"][0]["url"], "https://www.bbc.com/igbo/afirika-43986554")
+        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+
+    def test_load_from_HF(self):
+        loader = LoadHF(path="sst2")
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(dataset["train"][0]["sentence"], "hide new secretions from the parental units ")
+        assert set(dataset.keys()) == set(["train", "validation", "test"]), f"Unexpected fold {dataset.keys()}"
+
+    def test_load_from_HF_split(self):
+        loader = LoadHF(path="sst2", split="train")
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(dataset["train"][0]["sentence"], "hide new secretions from the parental units ")
+        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"

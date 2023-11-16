@@ -384,6 +384,11 @@ class F1Macro(F1):
     main_score = "f1_macro"
 
 
+class F1Weighted(F1):
+    main_score = "f1_weighted"
+    average = "weighted"
+
+
 class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
@@ -494,7 +499,7 @@ class Rouge(HuggingfaceMetric):
         return super().compute(references, predictions)
 
 
-# Computes chat edit distance, ignoring whitespace
+# Computes char edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(SingleReferenceInstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
@@ -785,3 +790,17 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
+
+
+# Normalized Discounted Cumulative Gain
+class NDCG(GlobalMetric):
+    main_score = "nDCG"
+
+    def prepare(self):
+        from sklearn.metrics import ndcg_score
+
+        self.eval = ndcg_score
+
+    def compute(self, references: List[List[float]], predictions: List[float]) -> dict:
+        scores_dict = {self.main_score: self.eval([references], [predictions])}
+        return scores_dict

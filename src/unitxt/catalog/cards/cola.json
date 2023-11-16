@@ -25,18 +25,22 @@
         {
             "type": "add_fields",
             "fields": {
-                "choices": [
+                "classes": [
                     "unacceptable",
                     "acceptable"
-                ]
+                ],
+                "text_type": "text",
+                "type_of_class": "grammatical acceptability"
             }
         }
     ],
     "task": {
         "type": "form_task",
         "inputs": [
-            "choices",
-            "text"
+            "text",
+            "text_type",
+            "classes",
+            "type_of_class"
         ],
         "outputs": [
             "label"
@@ -45,5 +49,5 @@
             "metrics.matthews_correlation"
         ]
     },
-    "templates": "templates.classification.choices.all"
+    "templates": "templates.classification.multi_class.all"
 }

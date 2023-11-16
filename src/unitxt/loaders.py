@@ -34,14 +34,37 @@ class LoadHF(Loader):
     path: str
     name: Optional[str] = None
     data_dir: Optional[str] = None
+    split: Optional[str] = None
     data_files: Optional[Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]] = None
     streaming: bool = True
     cached = False
 
     def process(self):
-        dataset = hf_load_dataset(
-            self.path, name=self.name, data_dir=self.data_dir, data_files=self.data_files, streaming=self.streaming
-        )
+        try:
+            dataset = hf_load_dataset(
+                self.path,
+                name=self.name,
+                data_dir=self.data_dir,
+                data_files=self.data_files,
+                streaming=self.streaming,
+                split=self.split,
+            )
+            if self.split is not None:
+                dataset = {self.split: dataset}
+        except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+            dataset = hf_load_dataset(
+                self.path,
+                name=self.name,
+                data_dir=self.data_dir,
+                data_files=self.data_files,
+                streaming=False,
+                split=self.split,
+            )
+            if self.split is None:
+                for split in dataset.keys():
+                    dataset[split] = dataset[split].to_iterable_dataset()
+            else:
+                dataset = {self.split: dataset}
 
         return MultiStream.from_iterables(dataset)
 

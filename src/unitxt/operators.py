@@ -215,7 +215,7 @@ class FieldOperator(StreamInstanceOperator):
             except Exception as e:
                 raise ValueError(
                     f"{self.__class__.__name__}: Failed to get '{from_field}' from {instance} due to : {e}"
-                )
+                ) from e
             try:
                 if self.process_every_value:
                     new_value = [self.process_value(value) for value in old_value]
@@ -224,7 +224,7 @@ class FieldOperator(StreamInstanceOperator):
             except Exception as e:
                 raise ValueError(
                     f"{self.__class__.__name__}: Failed to process '{from_field}' from {instance} due to : {e}"
-                )
+                ) from e
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
@@ -657,11 +657,17 @@ class FilterByValues(SingleStreamOperator):
         values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
     """
 
-    values: Dict[str, Any]
+    required_values: Dict[str, Any]
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         for instance in stream:
-            if all(instance[key] == value for key, value in self.values.items()):
+            filter = False
+            for key, value in self.required_values.items():
+                if not key in instance:
+                    raise ValueError(f"Required filter field ('{key}') in FilterByValues is not found in {instance}")
+                if instance[key] != value:
+                    filter = True
+            if not filter:
                 yield instance
 
 
@@ -670,19 +676,28 @@ class FilterByListsOfValues(SingleStreamOperator):
     Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
 
     Args:
-        values (Dict[str, Any]): For each field, the list of values that instances should match to be included in the output.
+        required_values (Dict[str, List]): For each field, the list of values that instances should match to be included in the output.
     """
 
-    values: Dict[str, Any]
+    required_values: Dict[str, List]
 
     def verify(self):
-        for key, value in self.values.items():
+        super().verify()
+        for key, value in self.required_values.items():
             if not isinstance(value, list):
                 raise ValueError(f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'")
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         for instance in stream:
-            if any(instance[key] in value for key, value in self.values.items()):
+            filter = False
+            for key, value in self.required_values.items():
+                if not key in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
+                    )
+                if instance[key] not in value:
+                    filter = True
+            if not filter:
                 yield instance
 
 
@@ -696,6 +711,10 @@ class Intersect(FieldOperator):
     allowed_values: List[Any]
 
     def verify(self):
+        super().verify()
+        if self.process_every_value:
+            raise ValueError(f"'process_every_value=True' is not supported in Intersect operator")
+
         if not isinstance(self.allowed_values, list):
             raise ValueError(f"The allowed_values is not a list but '{self.allowed_values}'")
 
@@ -715,6 +734,10 @@ class RemoveValues(FieldOperator):
     unallowed_values: List[Any]
 
     def verify(self):
+        super().verify()
+        if self.process_every_value:
+            raise ValueError(f"'process_every_value=True' is not supported in RemoveValues operator")
+
         if not isinstance(self.unallowed_values, list):
             raise ValueError(f"The unallowed_values is not a list but '{self.unallowed_values}'")
 
@@ -772,7 +795,7 @@ class SplitByValue(MultiStreamOperator):
             stream_unique_values = uniques[stream_name]
             for unique_values in stream_unique_values:
                 filtering_values = {field: value for field, value in zip(self.fields, unique_values)}
-                filtered_streams = FilterByValues(values=filtering_values)._process_single_stream(stream)
+                filtered_streams = FilterByValues(required_values=filtering_values)._process_single_stream(stream)
                 filtered_stream_name = stream_name + "_" + nested_tuple_to_string(unique_values)
                 result[filtered_stream_name] = filtered_streams
 

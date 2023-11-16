@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "shn_Mymr"
+        "name": "default",
+        "split": "shn_Mymr"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "shn_Mymr": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
@@ -147,38 +154,5 @@
             "metrics.accuracy"
         ]
     },
-    "templates": {
-        "original": {
-            "type": "input_output_template",
-            "input_format": "{context}\n{sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "helm": {
-            "type": "input_output_template",
-            "input_format": "Context: {context}\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer:",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "lm_eval_harness": {
-            "type": "input_output_template",
-            "input_format": "Context: {context}\nQuestion: {sentence1}.\nChoices:\n{choices}.\nAnswer:",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "fm-eval": {
-            "type": "input_output_template",
-            "input_format": "Context: {context}\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        }
-    }
+    "templates": "templates.qa.multiple_choice.context_no_intro.all"
 }

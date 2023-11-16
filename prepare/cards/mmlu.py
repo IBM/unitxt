@@ -1,11 +1,17 @@
 from typing import List, Union
 
-from src.unitxt.blocks import AddFields, FormTask, InputOutputTemplate, LoadHF, TaskCard
+from src.unitxt.blocks import (
+    AddFields,
+    FormTask,
+    InputOutputTemplate,
+    LoadHF,
+    TaskCard,
+    TemplatesDict,
+)
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
 from src.unitxt.operators import JoinStr, RenameFields, TakeByField, ZipFieldValues
 from src.unitxt.splitters import RenameSplits
-from src.unitxt.templates import TemplatesDict
 from src.unitxt.test_utils.card import test_card
 
 # import huggingface_hub
@@ -74,70 +80,6 @@ subtasks = [
     "virology",
     "world_religions",
 ]
-templates = {
-    "original": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer: """,
-    "helm": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer: """,
-    "lm_eval_harness": """Question: {sentence1}.\nChoices:\n{choices}.\nAnswer: """,
-    "fm-eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer: """,
-}
-MMLU_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=val, output_format="{label}", postprocessors=["processors.first_character"]
-        )
-        for key, val in templates.items()
-    }
-)
-
-for k, v in templates.items():
-    template = InputOutputTemplate(
-        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
-    )
-    add_to_catalog(template, f"templates.mmlu.{k.replace('-', '_')}", overwrite=True)
-
-
-def replace_if_context_not_there(s, oldvalue, newvalue):
-    if "{context}" in s:
-        return s
-    else:
-        return s.replace(oldvalue, newvalue)
-
-
-CONTEXT_MMLU_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=replace_if_context_not_there(
-                replace_if_context_not_there(val, "Question:", "Context: {context}\nQuestion:"),
-                "{sentence1}",
-                "{context}\n{sentence1}",
-            ),
-            output_format="{label}",
-            postprocessors=["processors.first_character"],
-        )
-        for key, val in templates.items()
-    }
-)
-
-CONTEXT_MMLU_TEMPLATES_NO_INTRO = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=replace_if_context_not_there(
-                replace_if_context_not_there(
-                    val.replace(
-                        "The following are multiple choice questions (with answers) about {topic}.", ""
-                    ).strip(),
-                    "Question:",
-                    "Context: {context}\nQuestion:",
-                ),
-                "{sentence1}",
-                "{context}\n{sentence1}",
-            ),
-            output_format="{label}",
-            postprocessors=["processors.first_character"],
-        )
-        for key, val in templates.items()
-    }
-)
 
 
 def multiple_choice_outputs():
@@ -218,7 +160,7 @@ def main():
                 **multiple_choice_inputs_outputs(),
                 metrics=["metrics.accuracy"],
             ),
-            templates=MMLU_TEMPLATES,
+            templates="templates.qa.multiple_choice.original.all",
         )
         if subtask == subtasks[0]:
             test_card(card)

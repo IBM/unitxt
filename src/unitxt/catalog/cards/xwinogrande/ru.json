@@ -138,6 +138,7 @@
             "metrics.accuracy"
         ]
     },
+<<<<<<< HEAD
     "templates": {
         "original": {
             "type": "input_output_template",
@@ -172,4 +173,7 @@
             ]
         }
     }
+=======
+    "templates": "templates.qa.multiple_choice.original.all"
+>>>>>>> origin/main
 }

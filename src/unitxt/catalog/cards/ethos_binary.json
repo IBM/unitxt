@@ -26,32 +26,26 @@
         {
             "type": "add_fields",
             "fields": {
-                "choices": [
+                "classes": [
                     "not hate speech",
                     "hate speech"
-                ]
+                ],
+                "text_type": "sentence",
+                "type_of_class": "hate speech"
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "choices",
-            "text"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
+    "task": "tasks.classification.multi_class",
     "templates": {
         "type": "templates_list",
         "items": [
             {
                 "type": "input_output_template",
+<<<<<<< HEAD
                 "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}.\n",
+=======
+                "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}.",
+>>>>>>> origin/main
                 "output_format": "{label}",
                 "postprocessors": [
                     "processors.take_first_non_empty_line"
@@ -59,7 +53,11 @@
             },
             {
                 "type": "input_output_template",
+<<<<<<< HEAD
                 "input_format": "Does the following sentence contains hate speech? Answer only by choosing one of the options {choices}. sentence: {text}.\n",
+=======
+                "input_format": "Does the following {text_type} contains {type_of_class}? Answer only by choosing one of the options {classes}. {text_type}: {text}.",
+>>>>>>> origin/main
                 "output_format": "{label}",
                 "postprocessors": [
                     "processors.take_first_non_empty_line"
@@ -67,7 +65,11 @@
             },
             {
                 "type": "input_output_template",
+<<<<<<< HEAD
                 "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as:",
+=======
+                "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
+>>>>>>> origin/main
                 "output_format": "{label}",
                 "postprocessors": [
                     "processors.take_first_non_empty_line",
@@ -76,7 +78,11 @@
             },
             {
                 "type": "input_output_template",
+<<<<<<< HEAD
                 "input_format": "Given this sentence: {text}. Classify if it contains hate speech. Choices: {choices}. I would classify this sentence as:",
+=======
+                "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
+>>>>>>> origin/main
                 "output_format": "{label}",
                 "postprocessors": [
                     "processors.take_first_non_empty_line",

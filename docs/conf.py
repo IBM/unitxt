@@ -41,4 +41,4 @@ html_theme_options = {
     "style_nav_header_background": "#ff66ff",
 }
 
-import catalog
+import docs.catalog
