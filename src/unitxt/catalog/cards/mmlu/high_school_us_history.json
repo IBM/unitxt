@@ -125,42 +125,5 @@
             "metrics.accuracy"
         ]
     },
-<<<<<<< HEAD
-    "templates": {
-        "original": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer: ",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "helm": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}.\nAnswers: {choices}.\nAnswer: ",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "lm_eval_harness": {
-            "type": "input_output_template",
-            "input_format": "Question: {sentence1}.\nChoices:\n{choices}.\nAnswer: ",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        },
-        "fm-eval": {
-            "type": "input_output_template",
-            "input_format": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer: ",
-            "output_format": "{label}",
-            "postprocessors": [
-                "processors.first_character"
-            ]
-        }
-    }
-=======
     "templates": "templates.qa.multiple_choice.original.all"
->>>>>>> origin/main
 }

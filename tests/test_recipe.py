@@ -20,8 +20,8 @@ class TestRecipes(unittest.TestCase):
                 output_format="{label}",
             ),
             format=ICLFormat(
-                input_prefix="User:",
-                output_prefix="Agent:",
+                input_prefix="User: ",
+                output_prefix="Agent: ",
             ),
         )
         stream = recipe()
