@@ -30,7 +30,7 @@ class TestStreamCaching(unittest.TestCase):
 
         self.assertEqual(list(stream)[0]["x"], list(stream)[0]["x"])
 
-    def check_operator_not_caching(self):
+    def test_operator_not_caching(self):
         operator = Apply(function=time.time, to_field="b", caching=False)
 
         inputs = [
@@ -44,7 +44,7 @@ class TestStreamCaching(unittest.TestCase):
         for target1, target2 in zip(targets1, targets2):
             self.assertNotEqual(target1["b"], target2["b"])
 
-    def check_operator_caching(self):
+    def test_operator_caching(self):
         operator = Apply(function=time.time, to_field="b", caching=True)
 
         inputs = [
