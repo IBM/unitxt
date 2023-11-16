@@ -7,4 +7,5 @@ from ..register import UNITXT_ARTIFACTORIES_ENV_VAR
 def register_local_catalog_for_tests():
     unitxt_dir = os.path.dirname(unitxt_file)
     catalog_dir = os.path.join(unitxt_dir, "catalog")
+    raise Exception(catalog_dir)
     os.environ[UNITXT_ARTIFACTORIES_ENV_VAR] = catalog_dir
