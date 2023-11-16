@@ -5,6 +5,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Given this sentence: {premise}, classify if this sentence: {hypothesis} is {choices}.",
         output_format="{label}",
+        postprocessors=["processors.take_first_non_empty_line","processors.lower_case_till_punc"],
     ),
     "templates.classification.nli.simple",
     overwrite=True,
