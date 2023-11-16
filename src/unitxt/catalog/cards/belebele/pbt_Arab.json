@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "pbt_Arab"
+        "name": "default",
+        "split": "pbt_Arab"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "pbt_Arab": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

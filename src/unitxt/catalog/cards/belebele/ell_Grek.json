@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "ell_Grek"
+        "name": "default",
+        "split": "ell_Grek"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "ell_Grek": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
