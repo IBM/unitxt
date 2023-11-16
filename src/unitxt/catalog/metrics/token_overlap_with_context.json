@@ -1,0 +1,26 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "inputs/context",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "references"
+            ],
+            "to_field": "references"
+        }
+    ],
+    "metric": {
+        "type": "token_overlap"
+    }
+}

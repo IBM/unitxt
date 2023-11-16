@@ -12,7 +12,6 @@ from src.unitxt.templates import (
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
-from src.unitxt.test_utils.metrics import apply_metric
 
 register_local_catalog_for_tests()
 

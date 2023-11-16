@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any, Dict, List
 
 from ..metrics import Metric
 from ..stream import MultiStream, Stream
@@ -21,14 +21,28 @@ def dict_equal(dict1, dict2):
     return json.dumps(dict1, sort_keys=True) == json.dumps(dict2, sort_keys=True)
 
 
-def apply_metric(metric: Metric, predictions: List[str], references: List[List[str]]):
+def apply_metric(
+    metric: Metric,
+    predictions: List[str],
+    references: List[List[str]],
+    inputs: List[dict] = None,
+    outputs: List[dict] = None,
+):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
-
-    test_iterable = [
-        {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
-    ]
+    assert inputs is None or isoftype(inputs, List[Any]), "inputs must be a list"
+    assert outputs is None or isoftype(outputs, List[Any]), "outputs must be a list"
+    if inputs is not None and outputs is not None:
+        test_iterable = [
+            {"prediction": prediction, "references": reference, "inputs": inputs, "outputs": outputs}
+            for prediction, reference, inputs, outputs in zip(predictions, references, inputs, outputs)
+        ]
+    else:
+        test_iterable = [
+            {"prediction": prediction, "references": reference}
+            for prediction, reference in zip(predictions, references)
+        ]
     multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
@@ -41,12 +55,14 @@ def test_metric(
     references: List[List[str]],
     instance_targets: List[dict],
     global_target: dict,
+    inputs: List[dict] = None,
+    outputs: List[dict] = None,
 ):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 
-    outputs = apply_metric(metric, predictions, references)
+    outputs = apply_metric(metric, predictions, references, inputs, outputs)
 
     errors = []
     global_score = round_floats(outputs[0]["score"]["global"])
