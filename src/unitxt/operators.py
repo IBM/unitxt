@@ -1,8 +1,9 @@
 import collections
 import importlib
-import inspect
+import math
 import uuid
 from abc import abstractmethod
+from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -675,6 +676,67 @@ class FilterByValues(SingleStreamOperator):
                     filter = True
             if not filter:
                 yield instance
+
+
+class FilterByCondsOnValues(SingleStreamOperator):
+    """
+    Filters a stream, yielding only instances that match conditions specified as stringed-lambda on values in the provided fields.
+
+    Args:
+        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
+    """
+
+    required_values: Dict[str, Any] = {}
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        for instance in stream:
+            filter = False
+            for key, value in self.required_values.items():
+                filtlambda = eval(value)
+                if not key in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByCondsOnValues is not found in {instance}"
+                    )
+                if not filtlambda(instance[key]):
+                    filter = True
+            if not filter:
+                yield instance
+
+
+class FindAndStoreMostCommonValues(MultiStreamOperator):
+    field_name: str
+    stream_name: Optional[str] = "train"
+    top_percent: Optional[int] = 80
+    min_relative_freq_percent: Optional[int] = 5
+    new_field: Optional[str] = "most_common_values_of_"
+    """
+    Given a MultiStream, a stream_name, and a field name, and two margins of commonality.
+    Do nothing (exception thrown) if the multistream does not contain a stream named stream_name, or if the multistream does not
+    contain a field (feature) named field_name.
+    Count the frequency of each value, over the stream named stream_name. Sort the values by frequency.
+    Discard each value that is not at the top_percent of that sorted list.
+    Discard each value whose frequency, expressed as percent of the number of rows in the stream, is below min_relative_freq_perent
+    Then, for all streams of the multistream, for all rows of each stream, add a new field, named
+    'new_field' whose value will be the sored list of the remaining values.
+    (that is each and every row in the multistream will carry that very same field-value pair.)
+    """
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        stream = multi_stream[self.stream_name]
+        all_values = []
+        for instance in stream:
+            all_values.append(instance[self.field_name])
+        counter = Counter(all_values)
+        how_many_in_top = math.ceil(self.top_percent * len(counter.most_common()) / 100)
+        top_values = counter.most_common(how_many_in_top)
+        min_frequency = math.floor(self.min_relative_freq_percent * len(all_values) / 100)
+        while top_values[-1][1] < min_frequency:
+            top_values.pop()
+        values_to_remain = [ele[0] for ele in top_values]
+        for name in multi_stream:
+            for instance in multi_stream[name]:
+                instance[self.new_field] = values_to_remain
+        return multi_stream
 
 
 class FilterByListsOfValues(SingleStreamOperator):
