@@ -412,8 +412,11 @@ class TestOperators(unittest.TestCase):
                 "train": [
                     {"field": "train1"},
                     {"field": "train1"},
+                    {"field": "train1"},
                     {"field": "train2"},
                     {"field": "train2"},
+                    {"field": "train2"},
+                    {"field": "train3"},
                     {"field": "train3"},
                     {"field": "train3"},
                     {"field": "train4"},
@@ -424,7 +427,7 @@ class TestOperators(unittest.TestCase):
         )
         output_multi_stream = FindAndStoreMostCommonValues(field_name="field").process(input_multi_stream)
 
-        expected_output = {
+        expected_output1 = {
             "test": [{"field": "test1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}],
             "validation": [
                 {"field": "validation1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}
@@ -432,8 +435,11 @@ class TestOperators(unittest.TestCase):
             "train": [
                 {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
                 {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
@@ -444,9 +450,41 @@ class TestOperators(unittest.TestCase):
 
         self.assertDictEqual(
             output_multi_stream,
-            expected_output,
-            "expected to see \n"
-            + json.dumps(expected_output)
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+
+        output_multi_stream = FindAndStoreMostCommonValues(field_name="field", min_relative_freq_percent=25).process(
+            input_multi_stream
+        )
+
+        expected_output2 = {
+            "test": [{"field": "test1", "most_common_values_of_": ["train1", "train2", "train3"]}],
+            "validation": [{"field": "validation1", "most_common_values_of_": ["train1", "train2", "train3"]}],
+            "train": [
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train5", "most_common_values_of_": ["train1", "train2", "train3"]},
+            ],
+        }
+
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output2,
+            "expected to see: \n"
+            + json.dumps(expected_output2)
             + "\n but instead, received: \n"
             + json.dumps(output_multi_stream),
         )
