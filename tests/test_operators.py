@@ -115,7 +115,6 @@ class TestOperators(unittest.TestCase):
         operator = FilterByCondsOnValues(required_values={"a": 'lambda x: "e" in x', "b": 'lambda x: "u" in x'})
         output = operator.process(inputs)
         output_as_list = list(output)  # output is a generator
-        print(output_as_list)
         self.assertEqual(targets, output_as_list, f"expected to see {targets}, but instead, got {output_as_list}")
 
         with self.assertRaises(ValueError) as cm:
