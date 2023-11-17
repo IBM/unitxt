@@ -14,10 +14,11 @@ from src.unitxt.templates import (
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.test_utils.metrics import apply_metric
 
-register_local_catalog_for_tests()
-
 
 class TestTemplates(unittest.TestCase):
+    def setUpClass(cls):
+        register_local_catalog_for_tests()
+
     def test_span_labeling_template_escaping(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs")
 

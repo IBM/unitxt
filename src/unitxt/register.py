@@ -51,6 +51,7 @@ def _reset_env_local_catalogs():
             _unregister_catalog(catalog)
     if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
         for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
+            print("Registering environment based catalog:", path)
             _register_catalog(EnvironmentLocalCatalog(location=path))
 
 
