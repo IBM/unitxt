@@ -7,10 +7,12 @@ from src import unitxt
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.text_utils import print_dict
 
-register_local_catalog_for_tests()
-
 
 class TestExamples(unittest.TestCase):
+    @classmethod
+    def setUp(cls):
+        register_local_catalog_for_tests()
+
     def test_example1(self):
         import examples.example1
 

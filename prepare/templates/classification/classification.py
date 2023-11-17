@@ -5,6 +5,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Classify the {type_of_class} of following {text_type} to one of these options: {classes}. Text: {text}",
         output_format="{label}",
+        postprocessors=["processors.take_first_non_empty_line", "processors.lower_case_till_punc"],
     ),
     "templates.classification.multi_class.default",
     overwrite=True,

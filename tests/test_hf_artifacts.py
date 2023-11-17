@@ -6,10 +6,12 @@ from src import unitxt
 from src.unitxt.hf_utils import get_missing_imports
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
-register_local_catalog_for_tests()
-
 
 class HFTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        register_local_catalog_for_tests()
+
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(unitxt.dataset_file, exclude=["dataset", "__init__"])
         self.assertEqual(missing_imports, [])
