@@ -6,6 +6,7 @@ from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 
 class TestExamples(unittest.TestCase):
+    @classmethod
     def setUpClass(cls):
         register_local_catalog_for_tests()
 

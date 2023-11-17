@@ -9,6 +9,7 @@ from src.unitxt.text_utils import print_dict
 
 
 class TestExamples(unittest.TestCase):
+    @classmethod
     def setUp(cls):
         register_local_catalog_for_tests()
 
