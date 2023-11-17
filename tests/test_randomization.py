@@ -4,10 +4,11 @@ from datasets import load_dataset
 from src import unitxt
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
-register_local_catalog_for_tests()
-
 
 class TestExamples(unittest.TestCase):
+    def setUpClass(cls):
+        register_local_catalog_for_tests()
+
     def test_dataset_is_deterministic_after_loading_other_dataset(self):
         print("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
