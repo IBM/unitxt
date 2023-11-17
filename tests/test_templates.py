@@ -16,6 +16,7 @@ from src.unitxt.test_utils.metrics import apply_metric
 
 
 class TestTemplates(unittest.TestCase):
+    @classmethod
     def setUpClass(cls):
         register_local_catalog_for_tests()
 

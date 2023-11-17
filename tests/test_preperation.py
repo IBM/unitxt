@@ -28,6 +28,7 @@ def import_module_from_file(file_path):
 
 
 class TestExamples(unittest.TestCase):
+    @classmethod
     def setUpClass(cls):
         register_local_catalog_for_tests()
 
