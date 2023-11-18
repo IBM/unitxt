@@ -702,7 +702,7 @@ class FindAndStoreMostCommonValues(MultiStreamOperator):
     stream_name: Optional[str] = "train"
     top_percent: Optional[int] = 80
     min_relative_freq_percent: Optional[int] = 5
-    new_field: Optional[str] = "most_common_values_of_"
+    new_field: Optional[str] = None
     """
     Given a MultiStream, a stream_name, and a field name, and two margins of commonality.
     Do nothing (exception thrown) if the multistream does not contain a stream named stream_name, or if the multistream does not
@@ -727,6 +727,8 @@ class FindAndStoreMostCommonValues(MultiStreamOperator):
         while top_values[-1][1] < min_frequency:
             top_values.pop()
         values_to_remain = [ele[0] for ele in top_values]
+        if self.new_field is None:
+            self.new_field = "most_common_values_of_" + self.field_name
         for name in multi_stream:
             for instance in multi_stream[name]:
                 instance[self.new_field] = values_to_remain
