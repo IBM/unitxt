@@ -427,23 +427,23 @@ class TestOperators(unittest.TestCase):
         output_multi_stream = FindAndStoreMostCommonValues(field_name="field").process(input_multi_stream)
 
         expected_output1 = {
-            "test": [{"field": "test1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}],
+            "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]}],
             "validation": [
-                {"field": "validation1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]}
+                {"field": "validation1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]}
             ],
             "train": [
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
-                {"field": "train5", "most_common_values_of_": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train5", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
             ],
         }
 
@@ -456,26 +456,27 @@ class TestOperators(unittest.TestCase):
             + json.dumps(output_multi_stream),
         )
 
+        # with minimum frequency limit
         output_multi_stream = FindAndStoreMostCommonValues(field_name="field", min_relative_freq_percent=25).process(
             input_multi_stream
         )
 
         expected_output2 = {
-            "test": [{"field": "test1", "most_common_values_of_": ["train1", "train2", "train3"]}],
-            "validation": [{"field": "validation1", "most_common_values_of_": ["train1", "train2", "train3"]}],
+            "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3"]}],
+            "validation": [{"field": "validation1", "most_common_values_of_field": ["train1", "train2", "train3"]}],
             "train": [
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train1", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train2", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train3", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train4", "most_common_values_of_": ["train1", "train2", "train3"]},
-                {"field": "train5", "most_common_values_of_": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train5", "most_common_values_of_field": ["train1", "train2", "train3"]},
             ],
         }
 
