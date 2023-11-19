@@ -706,44 +706,61 @@ class FilterByCondsOnValues(SingleStreamOperator):
 class ExtractFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
-    top_percent: Optional[int] = 100
-    min_frequency_percent: Optional[int] = 5
+    overall_top_frequency_percent: Optional[int] = 100
+    min_frequency_percent: Optional[int] = 0
     to_field: Optional[str] = None
     """
-    Extract the unique values of a field ('field') of a given stream ('stream_name') and store as a list in a new field ('to_field') in all streams.
+    Extract the unique values of a field ('field') of a given stream ('stream_name') and store (the most frequent of) them
+    as a list in a new field ('to_field') in all streams.
 
-    Sorts the values so that the most frequent values appear first.
-    Optionally can limit to the the values that cover a given 'top_precent' of instances, or limit to values that appear
-    at least minimum percent of the instances ('min_frequency_percent').
+    More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
+    When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
+    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    When 'min_frequency_percent' is larger than 0, remove from the remaining list any value whose relative frequency makes
+    less than 'min_frequency_percent' of the total number of rows in the stream.
 
     Examples:
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the possible values of field "label" and stores in field "classes" of each and every record in all streams.
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
+    field "label" and stores in field "classes" of each and every record in all streams.
 
-    (did not implement yet) ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) - extracts all the possible values of the labels field, which contains a list of value.
+    (did not implement yet, I did not understand) ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
+    extracts all the possible values of the labels field, which contains a list of value.
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes",top_precent=80) - extracts the most frequent possible values of the label field that cover atleast 80% of the samples, and stores in the "classes" field of all stream.
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
+    extracts the most frequent possible values of field 'label' that cover at least 80% of the samples,
+    and stores them in field 'classes' of all streams.
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) - extracts all possible values of the field "label" that cover atleast 5% of the instances. Stores the sorted list in field "classes" of each record in all streams.
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
+    extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
     """
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
         all_values = []
         for instance in stream:
-            all_values.append(instance[self.field_name])
+            all_values.append(instance[self.field])
         counter = Counter(all_values)
-        how_many_in_top = math.ceil(self.top_percent * len(counter.most_common()) / 100)
-        top_values = counter.most_common(how_many_in_top)
-        min_frequency = math.floor(self.min_relative_freq_percent * len(all_values) / 100)
-        while top_values[-1][1] < min_frequency:
-            top_values.pop()
-        values_to_keep = [ele[0] for ele in top_values]
-        if self.new_field is None:
-            self.new_field = "most_common_values_of_" + self.field_name
+        values_and_counts = counter.most_common()
+        if self.overall_top_frequency_percent < 100:
+            top_frequency = math.ceil(len(all_values) * self.overall_top_frequency_percent / 100)
+            sum_counts = 0
+            i = -1
+            while sum_counts < top_frequency:
+                i = i + 1
+                sum_counts += values_and_counts[i][1]
+            values_and_counts = counter.most_common(i + 1)
+        if self.min_frequency_percent > 0:
+            min_frequency = math.floor(self.min_frequency_percent * len(all_values) / 100)
+            while values_and_counts[-1][1] < min_frequency:
+                values_and_counts.pop()
+        values_to_keep = [ele[0] for ele in values_and_counts]
+        if self.to_field is None:
+            self.to_field = "most_common_values_of_" + self.field
         for name in multi_stream:
             for instance in multi_stream[name]:
-                instance[self.new_field] = values_to_keep
+                instance[self.to_field] = values_to_keep
         return multi_stream
 
 
