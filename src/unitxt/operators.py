@@ -1,8 +1,11 @@
 import collections
 import importlib
 import inspect
+import json
+import math
 import uuid
 from abc import abstractmethod
+from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -675,6 +678,100 @@ class FilterByValues(SingleStreamOperator):
                     filter = True
             if not filter:
                 yield instance
+
+
+class FilterByCondsOnValues(SingleStreamOperator):
+    """
+    Filters a stream, yielding only instances that match conditions specified as stringed-lambda on values in the provided fields.
+    Args:
+        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
+    """
+
+    required_values: Dict[str, Any] = {}
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        for instance in stream:
+            filter = False
+            for key, value in self.required_values.items():
+                filtlambda = eval(value)
+                if not key in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByCondsOnValues is not found in {instance}"
+                    )
+                if not filtlambda(instance[key]):
+                    filter = True
+            if not filter:
+                yield instance
+
+
+class ExtractFieldValues(MultiStreamOperator):
+    field: str
+    stream_name: str
+    overall_top_frequency_percent: Optional[int] = 100
+    min_frequency_percent: Optional[int] = 0
+    to_field: Optional[str] = None
+    process_every_value: Optional[bool] = True
+
+    """
+    Extract the unique values of a field ('field') of a given stream ('stream_name') and store (the most frequent of) them
+    as a list in a new field ('to_field') in all streams.
+
+    More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
+    When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
+    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    When 'min_frequency_percent' is larger than 0, remove from the remaining list any value whose relative frequency makes
+    less than 'min_frequency_percent' of the total number of rows in the stream.
+
+    Examples:
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
+    field "label" and stores in field "classes" of each and every record in all streams.
+
+    ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
+    in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
+    values in these lists, and report the most frequent values.
+    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
+    extracts the most frequent possible values of field 'label' that cover at least 80% of the samples,
+    and stores them in field 'classes' of all streams.
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
+    extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
+    """
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        stream = multi_stream[self.stream_name]
+        all_values = []
+        for instance in stream:
+            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+                all_values.append(
+                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
+                )  # convert to a tuple if list, to enable Counter
+            else:
+                all_values.extend(instance[self.field])
+        counter = Counter(all_values)
+        values_and_counts = counter.most_common()
+        if self.overall_top_frequency_percent < 100:
+            top_frequency = math.ceil(len(all_values) * self.overall_top_frequency_percent / 100)
+            sum_counts = 0
+            for i, p in enumerate(values_and_counts):
+                sum_counts += p[1]
+                if sum_counts >= top_frequency:
+                    break
+            values_and_counts = counter.most_common(i + 1)
+        if self.min_frequency_percent > 0:
+            min_frequency = math.floor(self.min_frequency_percent * len(all_values) / 100)
+            while values_and_counts[-1][1] < min_frequency:
+                values_and_counts.pop()
+        values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
+        if self.to_field is None:
+            self.to_field = "most_common_values_of_" + self.field
+        for name in multi_stream:
+            for instance in multi_stream[name]:
+                instance[self.to_field] = values_to_keep
+        return multi_stream
 
 
 class FilterByListsOfValues(SingleStreamOperator):
