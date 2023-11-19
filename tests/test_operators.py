@@ -402,7 +402,7 @@ class TestOperators(unittest.TestCase):
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
         self.compare_streams(merged, expected_merged)
 
-    def extract_values(self):
+    def test_extract_values(self):
         # Test with default params
         input_multi_stream = MultiStream(
             {
@@ -424,7 +424,9 @@ class TestOperators(unittest.TestCase):
                 ],
             }
         )
-        output_multi_stream = FindAndStoreMostCommonValues(field_name="field").process(input_multi_stream)
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90
+        ).process(input_multi_stream)
 
         expected_output1 = {
             "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]}],
@@ -457,9 +459,9 @@ class TestOperators(unittest.TestCase):
         )
 
         # with minimum frequency limit
-        output_multi_stream = FindAndStoreMostCommonValues(field_name="field", min_relative_freq_percent=25).process(
-            input_multi_stream
-        )
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, min_frequency_percent=25
+        ).process(input_multi_stream)
 
         expected_output2 = {
             "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3"]}],
