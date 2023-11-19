@@ -38,7 +38,7 @@ class UpdateStream(StreamInstanceOperator):
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(ABC):
-    use_inputs_and_outputs: bool = True
+    use_additional_inputs: bool = True
 
     @property
     @abstractmethod
@@ -56,8 +56,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
         predictions = []
-        inputs = []
-        outputs = []
+        additional_inputs = []
         global_score = {}
 
         instances = []
@@ -72,24 +71,18 @@ class GlobalMetric(SingleStreamOperator, Metric):
             references.append(instance_references)
             predictions.append(instance_prediction)
             instances.append(instance)
-            if self.use_inputs_and_outputs:
+            if self.use_additional_inputs:
                 assert (
-                    "inputs" in instance
-                ), f"'inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
-                assert (
-                    "outputs" in instance
-                ), f"'outputs' field expected in all instances of passed to metric {self.__class__.__name__}.  Provided instance: {instance}"
-                instance_inputs, instance_outputs = instance["inputs"], instance["outputs"]
-                inputs.append(instance_inputs)
-                outputs.append(instance_outputs)
-
+                    "additional_inputs" in instance
+                ), f"'additional_inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
+                instance_additional_inputs = instance["additional_inputs"]
+                additional_inputs.append(instance_additional_inputs)
             try:
-                if self.use_inputs_and_outputs:
-                    instance_score = self._compute(
-                        [instance_references], [instance_prediction], [instance_inputs], [instance_outputs]
-                    )
-                else:
-                    instance_score = self._compute([instance_references], [instance_prediction], None, None)
+                instance_score = self._compute(
+                    [instance_references],
+                    [instance_prediction],
+                    [instance_additional_inputs] if self.use_additional_inputs else None,
+                )
             except:
                 instance_score = {"score": None, "score_name": self.main_score}
 
@@ -98,10 +91,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
             instance["score"]["instance"].update(instance_score)
 
-        if self.use_inputs_and_outputs:
-            result = self._compute(references, predictions, inputs, outputs)
-        else:
-            result = self._compute(references, predictions, None, None)
+        result = self._compute(references, predictions, additional_inputs if self.use_additional_inputs else None)
 
         global_score.update(result)
 
@@ -109,17 +99,15 @@ class GlobalMetric(SingleStreamOperator, Metric):
             instance["score"]["global"] = global_score
             yield instance
 
-    def _compute(
-        self, references: List[List[str]], predictions: List[str], inputs: List[Any], outputs: List[Any]
-    ) -> dict:
-        result = self.compute_with_inputs_outputs(references, predictions, inputs, outputs)
+    def _compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Any]) -> dict:
+        result = self.compute_with_additional_inputs(references, predictions, additional_inputs)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
 
     @abstractmethod
-    def compute_with_inputs_outputs(
-        self, references: List[List[Any]], predictions: List[Any], inputs: List[Any], outputs: List[Any]
+    def compute_with_additional_inputs(
+        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]
     ) -> dict:
         pass
 
@@ -127,13 +115,12 @@ class GlobalMetric(SingleStreamOperator, Metric):
 class ReferenceBasedGlobalMetric(GlobalMetric):
     def prepare(self):
         super().prepare()
-        self.use_inputs_and_outputs = False
+        self.use_additional_inputs = False
 
-    def compute_with_inputs_outputs(
-        self, references: List[List[Any]], prediction: List[Any], inputs: List[Any], outputs: List[Any]
+    def compute_with_additional_inputs(
+        self, references: List[List[Any]], prediction: List[Any], additional_inputs: List[Any]
     ) -> dict:
-        assert inputs is None
-        assert outputs is None
+        assert additional_inputs is None
         return self.compute(references, prediction)
 
     @abstractmethod
@@ -156,13 +143,13 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
             list, zip(*[(instance["references"], instance["prediction"]) for instance in stream])
         )
 
-        inputs, outputs = None, None
-        if self.use_inputs_and_outputs:
-            inputs, outputs = map(list, zip(*[(instance["inputs"], instance["outputs"]) for instance in stream]))
+        additional_inputs = None
+        if self.use_additional_inputs:
+            additional_inputs = [instance["additional_inputs"] for instance in stream]
 
         # compute the metric over all refs and preds
-        instance_scores = self.compute_with_inputs_outputs(
-            references=references, predictions=predictions, inputs=inputs, outputs=outputs
+        instance_scores = self.compute_with_additional_inputs(
+            references=references, predictions=predictions, additional_inputs=additional_inputs
         )
 
         # add the score and score_name fields
@@ -198,8 +185,8 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
             yield instance
 
     @abstractmethod
-    def compute_with_inputs_outputs(
-        self, references: List[List[Any]], predictions: List[Any], inputs: List[Dict], outputs: List[Dict]
+    def compute_with_additional_inputs(
+        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]
     ) -> Dict[str, Any]:
         pass
 
@@ -207,13 +194,12 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
 class ReferenceBasedBulkInstanceMetric(BulkInstanceMetric):
     def prepare(self):
         super().prepare()
-        self.use_inputs_and_outputs = False
+        self.use_additional_inputs = False
 
-    def compute_with_inputs_outputs(
-        self, references: List[List[Any]], predictions: List[Any], inputs: List[Dict], outputs: List[Dict]
+    def compute_with_additional_inputs(
+        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]
     ) -> dict:
-        assert inputs is None
-        assert outputs is None
+        assert additional_inputs is None
         return self.compute(references, predictions)
 
     @abstractmethod
@@ -235,18 +221,15 @@ class InstanceMetric(SingleStreamOperator, Metric):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
-            inputs, outputs = None, None
-            if self.use_inputs_and_outputs:
+            additional_inputs = None
+            if self.use_additional_inputs:
                 assert (
-                    "inputs" in instance
-                ), f"'inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
-                assert (
-                    "outputs" in instance
-                ), f"'outputss' field expected in all instances of passed to metric {self.__class__.__name__}.  Provided instance: {instance}"
-                inputs, outputs = instance["inputs"], instance["outputs"]
+                    "additional_inputs" in instance
+                ), f"'additional_inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
+                additional_inputs = instance["additional_inputs"]
 
-            instance_score = self.compute_with_inputs_outputs(
-                references=refs, prediction=pred, inputs=inputs, outputs=outputs
+            instance_score = self.compute_with_additional_inputs(
+                references=refs, prediction=pred, additional_inputs=additional_inputs
             )
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
@@ -277,22 +260,21 @@ class InstanceMetric(SingleStreamOperator, Metric):
             yield instance
 
     @abstractmethod
-    def compute_with_inputs_outputs(self, references: List[Any], prediction: Any, inputs: Dict, outputs: Dict) -> dict:
+    def compute_with_additional_inputs(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
         pass
 
 
 class ReferenceBasedInstanceMetric(InstanceMetric):
     def prepare(self):
         super().prepare()
-        self.use_inputs_and_outputs = False
+        self.use_additional_inputs = False
 
-    def compute_with_inputs_outputs(self, references: List[Any], prediction: Any, inputs: Dict, outputs: Dict) -> dict:
-        assert inputs is None
-        assert outputs is None
+    def compute_with_additional_inputs(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
+        assert additional_inputs is None
         return self.compute(references, prediction)
 
     @abstractmethod
-    def compute(self, references: List[Any], prediction: Any, inputs: Dict, outputs: Dict) -> dict:
+    def compute(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
         pass
 
 
@@ -871,11 +853,11 @@ class Reward(ReferenceBasedBulkInstanceMetric):
         answers = predictions
 
         # prepare for computation
-        inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
+        additional_inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
 
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
-        return self.pipe(inputs, batch_size=self.batch_size)
+        return self.pipe(additional_inputs, batch_size=self.batch_size)
 
 
 # Normalized Discounted Cumulative Gain

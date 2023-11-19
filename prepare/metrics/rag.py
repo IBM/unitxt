@@ -7,7 +7,7 @@ from src.unitxt.metrics import (
     SentenceBert,
     TokenOverlap,
 )
-from src.unitxt.operators import CopyFields, ListFieldValues
+from src.unitxt.operators import CopyFields, ListFieldValues, RenameFields
 from src.unitxt.test_utils.metrics import test_metric
 
 metrics = [
@@ -24,24 +24,44 @@ for metric_id, metric in metrics:
 
 predictions = ["apple", "boy", "cat"]
 references = [["apple2"], ["boys"], ["dogs"]]
-inputs = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
-outputs = [{}, {}, {}]
+additional_inputs = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
 instance_targets = [  # nDCG is undefined at instance level
     {"f1": 0.67, "precision": 1.0, "recall": 0.5, "score": 0.67, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
     {"f1": 0, "precision": 0, "recall": 0, "score": 0, "score_name": "f1"},
 ]
 
-global_target = {"f1": 0.56, "precision": 0.67, "recall": 0.5, "score": 0.56, "score_name": "f1"}
+#   Currently rename fields does not delete the current fields
+
+global_target = {
+    "f1_overlap_with_context": 0.56,
+    "f1": 0.56,
+    "precision": 0.67,
+    "precision_overlap_with_context": 0.67,
+    "recall_overlap_with_context": 0.5,
+    "recall": 0.5,
+    "score": 0.56,
+    "score_name": "f1",
+}
 
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(field_to_field=[("inputs/context", "references")], use_query=True),
+        CopyFields(field_to_field=[("additional_inputs/context", "references")], use_query=True),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     # metric=SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2"),
     metric=TokenOverlap(),
+    postpreprocess_steps=[
+        CopyFields(
+            field_to_field=[
+                ("score/global/f1", "score/global/f1_overlap_with_context"),
+                ("score/global/recall", "score/global/recall_overlap_with_context"),
+                ("score/global/precision", "score/global/precision_overlap_with_context"),
+            ],
+            use_query=True,
+        ),
+    ],
 )
 
 outputs = test_metric(
@@ -50,8 +70,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
-    inputs=inputs,
-    outputs=outputs,
+    additional_inputs=additional_inputs,
 )
 
 add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)

@@ -44,32 +44,28 @@ class TestExamples(unittest.TestCase):
                 "references": ["333", "4"],
                 "source": "source1",
                 "target": "target1",
-                "inputs": [],
-                "outputs": [],
+                "additional_inputs": [],
             },
             {
                 "group": "group1",
                 "references": ["4"],
                 "source": "source2",
                 "target": "target2",
-                "inputs": [],
-                "outputs": [],
+                "additional_inputs": [],
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source3",
                 "target": "target3",
-                "inputs": [],
-                "outputs": [],
+                "additional_inputs": [],
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source4",
                 "target": "target4",
-                "inputs": [],
-                "outputs": [],
+                "additional_inputs": [],
             },
         ]
 
@@ -83,7 +79,7 @@ class TestExamples(unittest.TestCase):
 
         metric = evaluate.load(unitxt.metric_file)
 
-        results = metric.compute(predictions=predictions, references=data, flatten=True)
+        results = metric.compute(predictions=predictions, references=data, flatten=False)
 
         print_dict(results[0])
 
@@ -124,32 +120,28 @@ class TestExamples(unittest.TestCase):
                 "references": ["333", "4"],
                 "source": "source1",
                 "target": "target1",
-                "inputs": [{"key": "a", "value": "1"}],
-                "outputs": [{"key": "b", "value": "1"}],
+                "additional_inputs": [{"key": "a", "value": "1"}, {"key": "b", "value": "1"}],
             },
             {
                 "group": "group1",
                 "references": ["4"],
                 "source": "source2",
                 "target": "target2",
-                "inputs": [{"key": "a", "value": "2"}],
-                "outputs": [{"key": "b", "value": "2"}],
+                "additional_inputs": [{"key": "a", "value": "2"}, {"key": "b", "value": "2"}],
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source3",
                 "target": "target3",
-                "inputs": [{"key": "a", "value": "3"}],
-                "outputs": [{"key": "b", "value": "3"}],
+                "additional_inputs": [{"key": "a", "value": "3"}, {"key": "b", "value": "3"}],
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source4",
                 "target": "target4",
-                "inputs": [{"key": "a", "value": "4"}],
-                "outputs": [{"key": "b", "value": "4"}],
+                "additional_inputs": [{"key": "a", "value": "4"}, {"key": "b", "value": "4"}],
             },
         ]
 
@@ -161,7 +153,7 @@ class TestExamples(unittest.TestCase):
 
         metric = evaluate.load(unitxt.metric_file)
 
-        results = metric.compute(predictions=predictions, references=data, flatten=True)
+        results = metric.compute(predictions=predictions, references=data, flatten=False)
 
         output = results[0]
         print_dict(output)

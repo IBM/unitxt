@@ -6,7 +6,7 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "inputs/context",
+                    "additional_inputs/context",
                     "references"
                 ]
             ],
@@ -22,5 +22,25 @@
     ],
     "metric": {
         "type": "token_overlap"
-    }
+    },
+    "postpreprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "score/global/f1",
+                    "score/global/f1_overlap_with_context"
+                ],
+                [
+                    "score/global/recall",
+                    "score/global/recall_overlap_with_context"
+                ],
+                [
+                    "score/global/precision",
+                    "score/global/precision_overlap_with_context"
+                ]
+            ],
+            "use_query": true
+        }
+    ]
 }

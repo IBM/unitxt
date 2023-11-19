@@ -30,6 +30,7 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
+    Apply,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
     FlattenInstances,
@@ -98,11 +99,16 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 from .schema import UNITXT_DATASET_SCHEMA
 
 
+def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
+    return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
+
+
 class MetricRecipe(SequentialOperatorInitilizer):
     def prepare(self):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            Apply("additional_inputs", function=_from_key_value_pairs, to_field="additional_inputs"),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],
@@ -126,7 +132,7 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = MetricRecipe()
-
+    print("References", references)
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
     if flatten:
@@ -134,7 +140,6 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
         multi_stream = operator(multi_stream)
 
     stream = multi_stream[split_name]
-
     return list(stream)
 
 

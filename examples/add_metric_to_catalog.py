@@ -25,6 +25,6 @@ import evaluate
 
 metric = evaluate.load(unitxt.metric_url)
 
-results = metric.compute(predictions=predictions, references=data, flatten=True)
+results = metric.compute(predictions=predictions, references=data, flatten=False)
 
 print_dict(results[0])

@@ -13,8 +13,7 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
-        "outputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
-        "inputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
+        "additional_inputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
     }
 )
 
@@ -38,6 +37,9 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
         return [{"key": key, "value": str(value)} for key, value in dict.items()]
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        additional_inputs = instance["inputs"] | instance["outputs"]
+        instance["additional_inputs"] = self._to_key_value_pairs(additional_inputs)
+
         if self.remove_unnecessary_fields:
             keys_to_delete = []
 
@@ -52,8 +54,6 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
             instance["metrics"] = self.metrics
         if self.postprocessors is not None:
             instance["postprocessors"] = self.postprocessors
-        instance["inputs"] = self._to_key_value_pairs(instance["inputs"])
-        instance["outputs"] = self._to_key_value_pairs(instance["outputs"])
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: str = None):

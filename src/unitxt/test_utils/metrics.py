@@ -25,18 +25,16 @@ def apply_metric(
     metric: Metric,
     predictions: List[str],
     references: List[List[str]],
-    inputs: List[dict] = None,
-    outputs: List[dict] = None,
+    additional_inputs: List[dict] = None,
 ):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
-    assert inputs is None or isoftype(inputs, List[Any]), "inputs must be a list"
-    assert outputs is None or isoftype(outputs, List[Any]), "outputs must be a list"
-    if inputs is not None and outputs is not None:
+    assert additional_inputs is None or isoftype(additional_inputs, List[Any]), "inputs must be a list"
+    if additional_inputs is not None:
         test_iterable = [
-            {"prediction": prediction, "references": reference, "inputs": inputs, "outputs": outputs}
-            for prediction, reference, inputs, outputs in zip(predictions, references, inputs, outputs)
+            {"prediction": prediction, "references": reference, "additional_inputs": additional_inputs}
+            for prediction, reference, additional_inputs in zip(predictions, references, additional_inputs)
         ]
     else:
         test_iterable = [
@@ -55,14 +53,13 @@ def test_metric(
     references: List[List[str]],
     instance_targets: List[dict],
     global_target: dict,
-    inputs: List[dict] = None,
-    outputs: List[dict] = None,
+    additional_inputs: List[dict] = None,
 ):
     assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 
-    outputs = apply_metric(metric, predictions, references, inputs, outputs)
+    outputs = apply_metric(metric, predictions, references, additional_inputs)
 
     errors = []
     global_score = round_floats(outputs[0]["score"]["global"])
