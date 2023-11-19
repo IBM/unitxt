@@ -6,6 +6,7 @@ from prepare.cards.mmlu import (
 from src.unitxt.blocks import AddFields, FormTask, LoadHF, MapInstanceValues, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import IndexOf, ListFieldValues
+from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
 
 # numbering = tuple(str(x) for x in range(200))
@@ -139,9 +140,10 @@ language_codes = [
 
 for lang in language_codes:
     card = TaskCard(
-        loader=LoadHF(path="facebook/belebele", name=lang),
+        loader=LoadHF(path="facebook/belebele", name="default", split=lang),
         preprocess_steps=[
             # "splitters.test_only",
+            RenameSplits(mapper={lang: "test"}),
             AddFields({"numbering": numbering}),
             ListFieldValues(fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"], to_field="choices"),
             MapInstanceValues(mappers={"correct_answer_num": {"1": "A", "2": "B", "3": "C", "4": "D"}}),
@@ -162,6 +164,6 @@ for lang in language_codes:
         ),
         templates="templates.qa.multiple_choice.context_no_intro.all",
     )
-    if lang == "acm_Arab":
-        test_card(card, demos_taken_from="test", debug=False)
+    if lang == language_codes[0]:
+        test_card(card, demos_taken_from="test")
     add_to_catalog(card, f"cards.belebele.{lang}", overwrite=True)

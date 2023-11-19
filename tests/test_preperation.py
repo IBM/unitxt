@@ -7,8 +7,6 @@ import unittest
 from src.unitxt.random_utils import get_seed, set_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
-register_local_catalog_for_tests()
-
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
@@ -31,6 +29,10 @@ def import_module_from_file(file_path):
 
 
 class TestExamples(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        register_local_catalog_for_tests()
+
     def test_preprations(self):
         print(glob_query)
         print(f"Testing preparation files: {all_preparation_files}")

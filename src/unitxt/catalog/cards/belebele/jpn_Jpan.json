@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "jpn_Jpan"
+        "name": "default",
+        "split": "jpn_Jpan"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "jpn_Jpan": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {

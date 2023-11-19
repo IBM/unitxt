@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "kan_Knda"
+        "name": "default",
+        "split": "kan_Knda"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "kan_Knda": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
