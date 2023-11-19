@@ -1,3 +1,4 @@
+import json
 import unittest
 
 from src.unitxt.operators import (
@@ -8,6 +9,8 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    ExtractFieldValues,
+    FilterByCondsOnValues,
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
@@ -100,6 +103,27 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        )
+
+    def test_filter_by_conds_on_values(self):
+        inputs = [{"a": "peace", "b": "morning"}, {"a": "sky", "b": "up"}, {"a": "hello", "b": "hurry"}]
+        targets = [
+            {"a": "hello", "b": "hurry"},
+        ]
+        operator = FilterByCondsOnValues(required_values={"a": 'lambda x: "e" in x', "b": 'lambda x: "u" in x'})
+        output = operator.process(inputs)
+        output_as_list = list(output)  # output is a generator
+        self.assertEqual(targets, output_as_list, f"expected to see {targets}, but instead, got {output_as_list}")
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=FilterByCondsOnValues(required_values={"c": 'lambda x: "5" in x'}),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Required filter field ('c') in FilterByCondsOnValues is not found in {'a': 'peace', 'b': 'morning'}",
         )
 
     def test_filter_by_list_of_values(self):
@@ -374,6 +398,336 @@ class TestOperators(unittest.TestCase):
         merged = list(output_multi_stream["merged"])
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
         self.compare_streams(merged, expected_merged)
+
+    def test_extract_values(self):
+        input_multi_stream = MultiStream(
+            {
+                "test": [{"field": "test1"}],
+                "validation": [{"field": "validation1"}],
+                "train": [
+                    {"field": "train1"},
+                    {"field": "train1"},
+                    {"field": "train1"},
+                    {"field": "train2"},
+                    {"field": "train2"},
+                    {"field": "train2"},
+                    {"field": "train3"},
+                    {"field": "train3"},
+                    {"field": "train3"},
+                    {"field": "train4"},
+                    {"field": "train4"},
+                    {"field": "train5"},
+                ],
+            }
+        )
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90
+        ).process(input_multi_stream)
+        expected_output1 = {
+            "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]}],
+            "validation": [
+                {"field": "validation1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]}
+            ],
+            "train": [
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+                {"field": "train5", "most_common_values_of_field": ["train1", "train2", "train3", "train4"]},
+            ],
+        }
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+        # with minimum frequency limit
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, min_frequency_percent=25
+        ).process(input_multi_stream)
+        expected_output2 = {
+            "test": [{"field": "test1", "most_common_values_of_field": ["train1", "train2", "train3"]}],
+            "validation": [{"field": "validation1", "most_common_values_of_field": ["train1", "train2", "train3"]}],
+            "train": [
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train1", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train2", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train3", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train4", "most_common_values_of_field": ["train1", "train2", "train3"]},
+                {"field": "train5", "most_common_values_of_field": ["train1", "train2", "train3"]},
+            ],
+        }
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output2,
+            "expected to see: \n"
+            + json.dumps(expected_output2)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+        # with lists, treated as single elements
+        input_multi_stream = MultiStream(
+            {
+                "test": [{"field": ["a", "b", "c"]}],
+                "validation": [{"field": ["d", "e", "f"]}],
+                "train": [
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["t", "u", "v"]},
+                ],
+            }
+        )
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, process_every_value=False
+        ).process(input_multi_stream)
+
+        expected_output3 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+            ],
+        }
+
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output3,
+            "expected to see: \n"
+            + json.dumps(expected_output3)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+
+        # finally, with lists and with process_every_value=True
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, process_every_value=True
+        ).process(input_multi_stream)
+
+        expected_output4 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+            ],
+        }
+
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output4,
+            "expected to see: \n"
+            + json.dumps(expected_output4)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
 
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
