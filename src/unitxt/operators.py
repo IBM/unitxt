@@ -703,22 +703,28 @@ class FilterByCondsOnValues(SingleStreamOperator):
                 yield instance
 
 
-class FindAndStoreMostCommonValues(MultiStreamOperator):
-    field_name: str
-    stream_name: Optional[str] = "train"
-    top_percent: Optional[int] = 80
-    min_relative_freq_percent: Optional[int] = 5
-    new_field: Optional[str] = None
+class ExtractFieldValues(MultiStreamOperator):
+    field: str
+    stream_name: str
+    top_percent: Optional[int] = 100
+    min_frequency_percent: Optional[int] = 5
+    to_field: Optional[str] = None
     """
-    Given a MultiStream, a stream_name, and a field name, and two margins of commonality.
-    Do nothing (exception thrown) if the multistream does not contain a stream named stream_name, or if the multistream does not
-    contain a field (feature) named field_name.
-    Count the frequency of each value, over the stream named stream_name. Sort the values by frequency.
-    Discard each value that is not at the top_percent of that sorted list.
-    Discard each value whose frequency, expressed as percent of the number of rows in the stream, is below min_relative_freq_perent
-    Then, for all streams of the multistream, for all rows of each stream, add a new field, named
-    'new_field' whose value will be the sored list of the remaining values.
-    (that is each and every row in the multistream will carry that very same field-value pair.)
+    Extract the unique values of a field ('field') of a given stream ('stream_name') and store as a list in a new field ('to_field') in all streams.
+
+    Sorts the values so that the most frequent values appear first.
+    Optionally can limit to the the values that cover a given 'top_precent' of instances, or limit to values that appear
+    at least minimum percent of the instances ('min_frequency_percent').
+
+    Examples:
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the possible values of field "label" and stores in field "classes" of each and every record in all streams.
+
+    (did not implement yet) ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) - extracts all the possible values of the labels field, which contains a list of value.
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",top_precent=80) - extracts the most frequent possible values of the label field that cover atleast 80% of the samples, and stores in the "classes" field of all stream.
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) - extracts all possible values of the field "label" that cover atleast 5% of the instances. Stores the sorted list in field "classes" of each record in all streams.
     """
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -732,12 +738,12 @@ class FindAndStoreMostCommonValues(MultiStreamOperator):
         min_frequency = math.floor(self.min_relative_freq_percent * len(all_values) / 100)
         while top_values[-1][1] < min_frequency:
             top_values.pop()
-        values_to_remain = [ele[0] for ele in top_values]
+        values_to_keep = [ele[0] for ele in top_values]
         if self.new_field is None:
             self.new_field = "most_common_values_of_" + self.field_name
         for name in multi_stream:
             for instance in multi_stream[name]:
-                instance[self.new_field] = values_to_remain
+                instance[self.new_field] = values_to_keep
         return multi_stream
 
 
