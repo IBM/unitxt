@@ -740,10 +740,10 @@ class ExtractFieldValues(MultiStreamOperator):
         if self.overall_top_frequency_percent < 100:
             top_frequency = math.ceil(len(all_values) * self.overall_top_frequency_percent / 100)
             sum_counts = 0
-            i = -1
-            while sum_counts < top_frequency:
-                i = i + 1
-                sum_counts += values_and_counts[i][1]
+            for i, p in enumerate(values_and_counts):
+                sum_counts += p[1]
+                if sum_counts >= top_frequency:
+                    break
             values_and_counts = counter.most_common(i + 1)
         if self.min_frequency_percent > 0:
             min_frequency = math.floor(self.min_frequency_percent * len(all_values) / 100)
