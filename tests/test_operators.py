@@ -9,10 +9,10 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    ExtractFieldValues,
     FilterByCondsOnValues,
     FilterByListsOfValues,
     FilterByValues,
-    FindAndStoreMostCommonValues,
     FlattenInstances,
     Intersect,
     JoinStr,
@@ -402,7 +402,7 @@ class TestOperators(unittest.TestCase):
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
         self.compare_streams(merged, expected_merged)
 
-    def test_find_and_store_most_common_values(self):
+    def extract_values(self):
         # Test with default params
         input_multi_stream = MultiStream(
             {
