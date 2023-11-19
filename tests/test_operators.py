@@ -403,7 +403,6 @@ class TestOperators(unittest.TestCase):
         self.compare_streams(merged, expected_merged)
 
     def test_extract_values(self):
-        # Test with default params
         input_multi_stream = MultiStream(
             {
                 "test": [{"field": "test1"}],
@@ -491,265 +490,531 @@ class TestOperators(unittest.TestCase):
             + json.dumps(output_multi_stream),
         )
 
-    def test_shuffle(self):
-        inputs = [{"a": i} for i in range(15)]
+        # with lists, treated as single elements
+        input_multi_stream = MultiStream(
+            {
+                "test": [{"field": ["a", "b", "c"]}],
+                "validation": [{"field": ["d", "e", "f"]}],
+                "train": [
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["k", "l", "m"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["n", "o", "p"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["t", "u", "v"]},
+                ],
+            }
+        )
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, process_every_value=False
+        ).process(input_multi_stream)
 
-        outputs = apply_operator(operator=Shuffle(page_size=10), inputs=inputs)
+        expected_output3 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_values_of_field": [
+                        ["h", "i", "j"],
+                        ["k", "l", "m"],
+                        ["n", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+            ],
+        }
 
-        inputs = [instance["a"] for instance in inputs]
-        outputs = [instance["a"] for instance in outputs]
-
-        self.assertNotEqual(inputs, outputs)
-        self.assertSetEqual(set(inputs), set(outputs))
-
-        # test no mixing between pages:
-        page_1_inputs = inputs[:10]
-        page_2_inputs = inputs[10:]
-        page_1_outputs = outputs[:10]
-        page_2_outputs = outputs[10:]
-
-        self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
-        self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
-
-        inputs_outputs_intersection = set(page_1_inputs).intersection(set(page_2_outputs))
-        self.assertSetEqual(inputs_outputs_intersection, set())
-
-        inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
-        self.assertSetEqual(inputs_outputs_intersection, set())
-
-    def test_cast_fields(self):
-        inputs = [
-            {"a": "0.5", "b": "2"},
-            {"a": "fail", "b": "fail"},
-        ]
-
-        targets = [
-            {"a": 0.5, "b": 2},
-            {"a": 0.0, "b": 0},
-        ]
-
-        test_operator(
-            operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output3,
+            "expected to see: \n"
+            + json.dumps(expected_output3)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
         )
 
-    def test_test_cast_fields_casting_failure(self):
-        inputs = [
-            {"a": "0.5", "b": "2"},
-            {"a": "fail", "b": "fail"},
-        ]
+        # finally, with lists and with process_every_value=True
 
-        with self.assertRaises(ValueError):
-            outputs = apply_operator(operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs)
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train", field="field", overall_top_frequency_percent=90, process_every_value=True
+        ).process(input_multi_stream)
 
-    def test_rename_fields(self):
-        inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-        ]
+        expected_output4 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["k", "l", "m"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["n", "o", "p"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_values_of_field": ["h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
+                },
+            ],
+        }
 
-        targets = [
-            {"a": 1, "c": 2},
-            {"a": 2, "c": 3},
-        ]
-
-        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
-
-    def test_copy_paste_fields(self):
-        inputs = [
-            {"a": [1, 3]},
-            {"a": [2, 4]},
-        ]
-
-        targets = [{"a": 1}, {"a": 2}]
-
-        test_operator(
-            operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output4,
+            "expected to see: \n"
+            + json.dumps(expected_output4)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
         )
 
-    def test_copy_paste_same_name2(self):
-        inputs = [
-            {"a": "test"},
-            {"a": "pest"},
-        ]
 
-        targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
+def test_shuffle(self):
+    inputs = [{"a": i} for i in range(15)]
 
-        test_operator(
-            operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+    outputs = apply_operator(operator=Shuffle(page_size=10), inputs=inputs)
 
-    def test_label_encoder(self):
-        inputs = [
-            {"prediction": "red", "references": ["red", "blue"]},
-            {"prediction": "blue", "references": ["blue"]},
-            {"prediction": "green", "references": ["red"]},
-        ]
+    inputs = [instance["a"] for instance in inputs]
+    outputs = [instance["a"] for instance in outputs]
 
-        targets = [
-            {"prediction": 0, "references": [0, 1]},
-            {"prediction": 1, "references": [1]},
-            {"prediction": 2, "references": [0]},
-        ]
+    self.assertNotEqual(inputs, outputs)
+    self.assertSetEqual(set(inputs), set(outputs))
 
-        test_operator(
-            operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
-        )
+    # test no mixing between pages:
+    page_1_inputs = inputs[:10]
+    page_2_inputs = inputs[10:]
+    page_1_outputs = outputs[:10]
+    page_2_outputs = outputs[10:]
 
-    def test_join_str(self):
-        inputs = [
-            {"a": [1, 3]},
-            {"a": [2, 4]},
-        ]
+    self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
+    self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
 
-        targets = [
-            {"a": [1, 3], "b": "1,3"},
-            {"a": [2, 4], "b": "2,4"},
-        ]
+    inputs_outputs_intersection = set(page_1_inputs).intersection(set(page_2_outputs))
+    self.assertSetEqual(inputs_outputs_intersection, set())
 
-        test_operator(
-            operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
-        )
+    inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
+    self.assertSetEqual(inputs_outputs_intersection, set())
 
-    def test_zip_fields(self):
-        inputs = [
-            {"a": [1, 3], "b": [1, 3]},
-            {"a": [2, 4], "b": [2, 4]},
-        ]
 
-        targets = [
-            {"a": [1, 3], "b": [1, 3], "c": [(1, 1), (3, 3)]},
-            {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
-        ]
+def test_cast_fields(self):
+    inputs = [
+        {"a": "0.5", "b": "2"},
+        {"a": "fail", "b": "fail"},
+    ]
 
-        test_operator(
-            operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+    targets = [
+        {"a": 0.5, "b": 2},
+        {"a": 0.0, "b": 0},
+    ]
 
-    def test_take_by_field(self):
-        inputs = [
-            {"a": [1, 3], "b": 0},
-            {"a": {"a": 1}, "b": "a"},
-        ]
+    test_operator(
+        operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
 
-        targets = [
-            {"a": [1, 3], "b": 0, "c": 1},
-            {"a": {"a": 1}, "b": "a", "c": 1},
-        ]
 
-        test_operator(
-            operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+def test_test_cast_fields_casting_failure(self):
+    inputs = [
+        {"a": "0.5", "b": "2"},
+        {"a": "fail", "b": "fail"},
+    ]
 
-    def test_stream_refiner(self):
-        refiner = StreamRefiner()
+    with self.assertRaises(ValueError):
+        outputs = apply_operator(operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs)
 
-        ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
 
-        refiner.apply_to_streams = ["train"]
-        refiner.max_instances = 1
+def test_rename_fields(self):
+    inputs = [
+        {"a": 1, "b": 2},
+        {"a": 2, "b": 3},
+    ]
 
-        refined_ms = refiner(ms)
+    targets = [
+        {"a": 1, "c": 2},
+        {"a": 2, "c": 3},
+    ]
 
-        train = list(refined_ms["train"])
-        self.assertEqual(len(train), 1)
+    test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
 
-        test = list(refined_ms["test"])
-        self.assertEqual(len(test), 2)
 
-    def test_deterministic_balancer_empty_stream(self):
-        inputs = []
+def test_copy_paste_fields(self):
+    inputs = [
+        {"a": [1, 3]},
+        {"a": [2, 4]},
+    ]
 
-        targets = []
+    targets = [{"a": 1}, {"a": 2}]
 
-        test_operator(
-            operator=DeterministicBalancer(fields=["a", "b"]),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+    test_operator(
+        operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
 
-    def test_deterministic_balancer(self):
-        inputs = [
-            {"a": [1, 3], "b": 0, "id": 0},
-            {"a": [1, 3], "b": 0, "id": 1},
-            {"a": {"a": 1}, "b": "a", "id": 2},
-        ]
 
-        targets = [
-            {"a": [1, 3], "b": 0, "id": 0},
-            {"a": {"a": 1}, "b": "a", "id": 2},
-        ]
+def test_copy_paste_same_name2(self):
+    inputs = [
+        {"a": "test"},
+        {"a": "pest"},
+    ]
 
-        test_operator(
-            operator=DeterministicBalancer(fields=["a", "b"]),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+    targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-    def test_length_balancer(self):
-        inputs = [
-            {"a": [1, 3], "b": 0, "id": 0},
-            {"a": [1, 3], "b": 0, "id": 1},
-            {"a": [], "b": "a", "id": 2},
-        ]
+    test_operator(
+        operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
 
-        targets = [
-            {"a": [1, 3], "b": 0, "id": 0},
-            {"a": [], "b": "a", "id": 2},
-        ]
 
-        test_operator(
-            operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
+def test_label_encoder(self):
+    inputs = [
+        {"prediction": "red", "references": ["red", "blue"]},
+        {"prediction": "blue", "references": ["blue"]},
+        {"prediction": "green", "references": ["red"]},
+    ]
 
-    def test_augment_whitespace_model_input(self):
-        source = "The dog ate my cat"
-        inputs = [{"source": source}]
+    targets = [
+        {"prediction": 0, "references": [0, 1]},
+        {"prediction": 1, "references": [1]},
+        {"prediction": 2, "references": [0]},
+    ]
 
-        operator = AugmentWhitespace(augment_model_input=True)
+    test_operator(
+        operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
+    )
+
+
+def test_join_str(self):
+    inputs = [
+        {"a": [1, 3]},
+        {"a": [2, 4]},
+    ]
+
+    targets = [
+        {"a": [1, 3], "b": "1,3"},
+        {"a": [2, 4], "b": "2,4"},
+    ]
+
+    test_operator(
+        operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
+    )
+
+
+def test_zip_fields(self):
+    inputs = [
+        {"a": [1, 3], "b": [1, 3]},
+        {"a": [2, 4], "b": [2, 4]},
+    ]
+
+    targets = [
+        {"a": [1, 3], "b": [1, 3], "c": [(1, 1), (3, 3)]},
+        {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+    ]
+
+    test_operator(
+        operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
+
+
+def test_take_by_field(self):
+    inputs = [
+        {"a": [1, 3], "b": 0},
+        {"a": {"a": 1}, "b": "a"},
+    ]
+
+    targets = [
+        {"a": [1, 3], "b": 0, "c": 1},
+        {"a": {"a": 1}, "b": "a", "c": 1},
+    ]
+
+    test_operator(
+        operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
+
+
+def test_stream_refiner(self):
+    refiner = StreamRefiner()
+
+    ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
+
+    refiner.apply_to_streams = ["train"]
+    refiner.max_instances = 1
+
+    refined_ms = refiner(ms)
+
+    train = list(refined_ms["train"])
+    self.assertEqual(len(train), 1)
+
+    test = list(refined_ms["test"])
+    self.assertEqual(len(test), 2)
+
+
+def test_deterministic_balancer_empty_stream(self):
+    inputs = []
+
+    targets = []
+
+    test_operator(
+        operator=DeterministicBalancer(fields=["a", "b"]),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
+
+
+def test_deterministic_balancer(self):
+    inputs = [
+        {"a": [1, 3], "b": 0, "id": 0},
+        {"a": [1, 3], "b": 0, "id": 1},
+        {"a": {"a": 1}, "b": "a", "id": 2},
+    ]
+
+    targets = [
+        {"a": [1, 3], "b": 0, "id": 0},
+        {"a": {"a": 1}, "b": "a", "id": 2},
+    ]
+
+    test_operator(
+        operator=DeterministicBalancer(fields=["a", "b"]),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
+
+
+def test_length_balancer(self):
+    inputs = [
+        {"a": [1, 3], "b": 0, "id": 0},
+        {"a": [1, 3], "b": 0, "id": 1},
+        {"a": [], "b": "a", "id": 2},
+    ]
+
+    targets = [
+        {"a": [1, 3], "b": 0, "id": 0},
+        {"a": [], "b": "a", "id": 2},
+    ]
+
+    test_operator(
+        operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
+        inputs=inputs,
+        targets=targets,
+        tester=self,
+    )
+
+
+def test_augment_whitespace_model_input(self):
+    source = "The dog ate my cat"
+    inputs = [{"source": source}]
+
+    operator = AugmentWhitespace(augment_model_input=True)
+    outputs = apply_operator(operator, inputs)
+    assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
+    normalized_output_source = outputs[0]["source"].split()
+    normalized_input_source = source.split()
+    assert (
+        normalized_output_source == normalized_input_source
+    ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+
+def test_augment_whitespace_task_input_with_error(self):
+    text = "The dog ate my cat"
+    inputs = [{"inputs": {"text": text}}]
+    operator = AugmentWhitespace(augment_task_input=True)
+    operator.set_task_input_fields(["sentence"])
+    with self.assertRaises(ValueError):
         outputs = apply_operator(operator, inputs)
-        assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
-        normalized_output_source = outputs[0]["source"].split()
-        normalized_input_source = source.split()
-        assert (
-            normalized_output_source == normalized_input_source
-        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
 
-    def test_augment_whitespace_task_input_with_error(self):
-        text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["sentence"])
-        with self.assertRaises(ValueError):
-            outputs = apply_operator(operator, inputs)
 
-    def test_augment_whitespace_task_input(self):
-        text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["text"])
-        outputs = apply_operator(operator, inputs)
-        normalized_output_source = outputs[0]["inputs"]["text"].split()
-        normalized_input_source = text.split()
-        assert (
-            normalized_output_source == normalized_input_source
-        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+def test_augment_whitespace_task_input(self):
+    text = "The dog ate my cat"
+    inputs = [{"inputs": {"text": text}}]
+    operator = AugmentWhitespace(augment_task_input=True)
+    operator.set_task_input_fields(["text"])
+    outputs = apply_operator(operator, inputs)
+    normalized_output_source = outputs[0]["inputs"]["text"].split()
+    normalized_input_source = text.split()
+    assert (
+        normalized_output_source == normalized_input_source
+    ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
