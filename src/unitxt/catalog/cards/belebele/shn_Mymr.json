@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "shn_Mymr"
+        "name": "default",
+        "split": "shn_Mymr"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "shn_Mymr": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
