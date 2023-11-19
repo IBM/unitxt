@@ -703,6 +703,8 @@ class ExtractFieldValues(MultiStreamOperator):
     overall_top_frequency_percent: Optional[int] = 100
     min_frequency_percent: Optional[int] = 0
     to_field: Optional[str] = None
+    process_every_value: Optional[bool] = True
+
     """
     Extract the unique values of a field ('field') of a given stream ('stream_name') and store (the most frequent of) them
     as a list in a new field ('to_field') in all streams.
@@ -718,8 +720,10 @@ class ExtractFieldValues(MultiStreamOperator):
     ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
     field "label" and stores in field "classes" of each and every record in all streams.
 
-    (did not implement yet, I did not understand) ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
-    extracts all the possible values of the labels field, which contains a list of value.
+    ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
+    in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
+    values in these lists, and report the most frequent values.
+    if process_every_value=True, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
     extracts the most frequent possible values of field 'label' that cover at least 80% of the samples,
@@ -734,7 +738,12 @@ class ExtractFieldValues(MultiStreamOperator):
         stream = multi_stream[self.stream_name]
         all_values = []
         for instance in stream:
-            all_values.append(instance[self.field])
+            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+                all_values.append(
+                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
+                )  # convert to a tuple if list, to enable Counter
+            else:
+                all_values.extend(instance[self.field])
         counter = Counter(all_values)
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
@@ -749,7 +758,7 @@ class ExtractFieldValues(MultiStreamOperator):
             min_frequency = math.floor(self.min_frequency_percent * len(all_values) / 100)
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
-        values_to_keep = [ele[0] for ele in values_and_counts]
+        values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
         if self.to_field is None:
             self.to_field = "most_common_values_of_" + self.field
         for name in multi_stream:
