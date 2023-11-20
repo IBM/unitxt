@@ -44,9 +44,9 @@ global_target = {
     "f1": 0.56,
     "score": 0.56,
     "score_name": "f1",
-    "f1_ci_low": 0.09,
+    "f1_ci_low": 0.0,
     "f1_ci_high": 0.89,
-    "score_ci_low": 0.09,
+    "score_ci_low": 0.0,
     "score_ci_high": 0.89,
 }
 

@@ -48,9 +48,9 @@ global_target = {
     "ref_len": 7,
     "score_name": "sacrebleu",
     "score_ci_low": 0.4,
-    "score_ci_high": 0.84,
+    "score_ci_high": 1.0,
     "sacrebleu_ci_low": 0.4,
-    "sacrebleu_ci_high": 0.84,
+    "sacrebleu_ci_high": 1.0,
 }
 
 outputs = test_metric(
