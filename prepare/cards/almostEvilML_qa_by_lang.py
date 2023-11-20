@@ -37,4 +37,4 @@ for lang in langs:
         test_card(card, debug=False, loader_limit=16000)
         # because most of the records loaded by the loader are screened out by language,
         # and langs are not randomly spread over the dataset
-    add_to_catalog(card, f"cards.almostEvilML_qa.{lang}", overwrite=True)
+    add_to_catalog(card, f"cards.almostEvilML_qa_by_lang.{lang}", overwrite=True)

@@ -16,5 +16,5 @@ card = TaskCard(
     templates="templates.qa.open.all",
 )
 
-test_card(card, debug=True)
+test_card(card, False)
 add_to_catalog(card, "cards.almostEvilML_qa", overwrite=True)
