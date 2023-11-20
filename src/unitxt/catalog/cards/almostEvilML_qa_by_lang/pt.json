@@ -28,9 +28,9 @@
         {
             "type": "split_random_mix",
             "mix": {
-                "train": "train[80%]",
-                "validation": "train[10%]",
-                "test": "train[10%]"
+                "train": "train[90%]",
+                "validation": "train[5%]",
+                "test": "train[5%]"
             }
         },
         {
