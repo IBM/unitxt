@@ -21,7 +21,6 @@ from typing import (
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
-from .metrics import Metric, MetricPipeline
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -853,7 +852,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     calc_confidence_intervals: bool
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        from .metrics import MetricWithConfidenceInterval
+        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
 
         first_instance = stream.peak()
 
