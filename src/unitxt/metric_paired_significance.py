@@ -38,6 +38,13 @@ def pval_inv(x):
     return rtn
 
 
+def spectal_palette(n):
+    # return a list of tuples specifying n equally spaced colors in the Spectral colormap, used to code n levels
+    n = int(n)
+    assert n >= 1 and n <= 256
+    return sns.color_palette(palette="Spectral", n_colors=n, as_cmap=True)(np.linspace(0, 1, n))
+
+
 class PairedDifferenceTest:
     """
     Class to conduct test of statistical significance (from 0) in average differences between
@@ -184,7 +191,7 @@ class PairedDifferenceTest:
         assert alternative in ('greater', 'less', 'two-sided')
         if alternative != 'two-sided':
             flds = ('greater', 'descending') if alternative == 'greater' else ('less', 'ascending')
-            print("If 'alternative' is '{}, the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(*flds))
+            print("If 'alternative' is '{}', the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(*flds))
         if self.nmodels == 2:
             # require more than 2 hypotheses (only if nmodels > 2) to be able to do a correction
             corrected = False
@@ -246,22 +253,33 @@ class PairedDifferenceTest:
 
     def lineplot(self, test_res):
         self._is_valid_signif_report(test_res)
-        pal = sns.color_palette(palette="Spectral", n_colors=self.nmodels, as_cmap=True)(np.linspace(0, 1, self.nmodels))
-        level_order = np.argsort(test_res.sample_means[::-1])
-        # pal now accepts the original sample index
+        pal = spectal_palette(n=self.nmodels)
+        print(pal)
+
+        # print("SM")
+        # print(test_res.sample_means)
+        print(test_res.sample_means)
+        print(np.argsort(test_res.sample_means))
+
+        level_order = np.argsort(test_res.sample_means)[::-1]
+        print(test_res.sample_means)
+        print(level_order)
+        # pal now accepts the original sample index, but now ordered by the value of sample mean
         pal = [tuple(pal[ii]) for ii in level_order]
+
+        for colpal, sm, mn, lord in zip(pal, test_res.sample_means, self.model_names, level_order):
+            print((colpal, sm, mn, lord))
 
         tick_vals = np.unique(np.array([1e-5, 1e-4, 1e-3, 1e-2, 0.5, 0.1, 0.2, 0.5, 1.0, self.alpha]))
         pval_range = np.array([test_res.pvalues.min(), test_res.pvalues.max()])
         tick_vals = np.array([vv for vv in tick_vals if vv >= pval_range[0] and vv <= pval_range[1]])
-        xaxis_range = pval_trans(pval_range)
-        obs_range_len = np.diff(xaxis_range)
+
+        # pad the axes to have 5% empty space on each end
         range_pad = 0.05
-
+        xaxis_range = pval_trans(pval_range)
         yaxis_range = np.array([test_res.sample_means.min(), test_res.sample_means.max()])
-        yaxis_range = tuple(yaxis_range + range_pad * np.array([-1,1]) * np.diff(yaxis_range))
-
-        xaxis_range = tuple(xaxis_range + range_pad * np.array([-1., 1]) * np.diff(xaxis_range))
+        yaxis_range = tuple(yaxis_range + range_pad * np.array([-1, 1]) * np.diff(yaxis_range))
+        xaxis_range = tuple(xaxis_range + range_pad * np.array([-1, 1]) * np.diff(xaxis_range))
 
         # transform the p-values so that the important (low) ones are separated out more
         pval_transformed = pval_trans(test_res.pvalues)
@@ -278,9 +296,8 @@ class PairedDifferenceTest:
                             x="p-value", y="mean")
         # indicate significance area
         # g.axes.axvspan(axis_range[0], pval_trans(self.alpha), facecolor='lightgray')
-        g.axes.axvline(x=pval_trans(self.alpha)[0], ymin=0, ymax=1, linestyle="dashed", color='black')
+        g.axes.axvline(x=pval_trans(np.array([self.alpha]))[0], ymin=0, ymax=1, linestyle="dashed", color='black')
         # arrow always goes from the first to second
-        arrow_sym = '<->' if test_res.alternative == 'two-sided' else '->'
         symbol_dict = {'two-sided': '!=', 'less': '<', 'greater': '>'}
         title = '{} test model A {} model B'.format(test_res.alternative, symbol_dict[test_res.alternative])
         if test_res.alternative != 'two-sided':
@@ -296,10 +313,12 @@ class PairedDifferenceTest:
         g.set(xlim=xaxis_range, ylim=yaxis_range, title=title)
         g.axes.set_xticks(ticks=pval_trans(tick_vals), labels=tick_vals)
         g.axes.tick_params(right=True, left=True, labelright=True, labelleft=False)
-
+        print("SM")
+        print(test_res.sample_means)
         # label sample means
-        for lev, colpal in zip(level_order, pal):
-            g.text(x=xaxis_range[0], y=test_res.sample_means[lev], s=self.model_names[lev], fontdict=dict(color=colpal, horizontalalignment="right"))
+        for colpal, sm, mn, lord in zip(pal, test_res.sample_means, self.model_names, level_order):
+            print((colpal, sm, mn, lord))
+            g.text(x=xaxis_range[0], y=sm, s=mn, fontdict=dict(color=colpal, horizontalalignment="right"))
         plt.show()
 
     def _is_valid_signif_report_list(self, test_results_list: list):
@@ -311,16 +330,17 @@ class PairedDifferenceTest:
         # all have same correction
         assert len(set([vv.corrected for vv in test_results_list])) == 1, "must all have same setting of 'corrected'"
         # all have same alternative
-        assert len(set([vv.alternative for vv in test_results_list])) == 1, "msust all have same setting of 'alternative"
+        assert len(set([vv.alternative for vv in test_results_list])) == 1, "must all have same setting of 'alternative"
         # all different metric_names
         assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
 
-    def multiple_metrics_significance_heatmap(self, test_results_list: list):
+    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True):
         """
         Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
         Args:
             test_results_list: list where each element corresponds to a different metric_name result of signif_pair_diff on the same
             set of models compared
+            sort_rows: boolean, whether to sort rows so that the most significant comparisons appear at the top
 
         Returns:
 
@@ -334,27 +354,63 @@ class PairedDifferenceTest:
                 'less': {'symbol': '<', 'name': 'lower-tailed'},
                 'greater': {'symbol': '>', 'name': 'upper-tailed'}}
         symb_format = '{} ' + alt_dict[alternative]['symbol'] + ' {}'
+        # use 1-indexing for names rather than 0
         combined_results = pd.DataFrame({vv.metric_name: vv.pvalues for vv in test_results_list},
-                                        index=[symb_format.format(a, b) for (a, b) in self.iterate_pairs()])
-        combined_mat = combined_results.to_numpy()
-        combined_mat[combined_mat > self.alpha] = np.nan
+                                        index=[symb_format.format(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
+
+        # the original p-values only, in array form
+        combined_results_pvalues_arr = combined_results.to_numpy()
+        combined_results_pvalues_arr_with_nan = deepcopy(combined_results_pvalues_arr)
+        # set any insignificant results to NaN
+        combined_results_pvalues_arr_with_nan[combined_results_pvalues_arr > self.alpha] = np.nan
+
+        # color by sign
+        statistic_sign = pd.DataFrame({vv.metric_name: np.sign([vv.sample_means[ii] - vv.sample_means[jj] for ii, jj in self.iterate_pairs()])
+                                       for vv in test_results_list})
+        # recode so that high p-values (near alpha) get coded to near 0, and low-pvalues are coded to near alpha, but preserving the sign
+        # keep NaNs for coloring
+        recoded_pvalues_arr = np.multiply(self.alpha - combined_results_pvalues_arr_with_nan, statistic_sign.to_numpy())
+
+        if sort_rows:
+            # average p-value regardless of significance, lower values are more significant
+            score_ord = np.argsort(np.median(combined_results_pvalues_arr, axis=1))
+            recoded_pvalues_arr = recoded_pvalues_arr[score_ord, :]
+            combined_results_pvalues_arr_with_nan = combined_results_pvalues_arr_with_nan[score_ord, :]
+            combined_results = combined_results.iloc[score_ord]
+
         fig, ax = plt.subplots(1, 1)
-        img = ax.matshow(combined_mat, vmin=0, vmax=self.alpha, cmap="Oranges_r", aspect='auto')
-        fig.colorbar(img)
-        for (j, i), val in np.ndenumerate(combined_mat):
+        # this coloring uses the recoding
+        img = ax.matshow(recoded_pvalues_arr, vmin=-1 * self.alpha, vmax=self.alpha, cmap="bwr_r", aspect='auto')
+        # ticks of the recoded values for coloring
+        pvalue_ticks = np.linspace(start=-1 * self.alpha, stop=self.alpha, num=5) # tick positions
+        # labels: 0s (most extreme color at ends, with alpha in the middle)
+        lft = pvalue_ticks[2:]
+        pvalue_tick_labels = ['{:.3f}'.format(val) for val in np.concatenate((lft, lft[:2][::-1]))]
+
+        cbar = fig.colorbar(img)#, ticks=pvalue_ticks)
+
+        # label values using the actual p-values not the recoding
+        for (j, i), val in np.ndenumerate(combined_results_pvalues_arr_with_nan):
             if not np.isnan(val):
                 # use white if background would be too dark
                 ax.text(i, j, '{:.3f}'.format(val), ha='center', va='center', fontsize='large',
                         color='white' if val < 0.4 * self.alpha else 'black')
-        ax.set_xticks(np.arange(combined_mat.shape[1]))
-        ax.set_xticklabels(combined_results.columns)
-        ax.set_yticks(np.arange(combined_mat.shape[0]))
-        ax.set_yticklabels(combined_results.index)
+
+        cbar.ax.set_yticks(ticks=pvalue_ticks, labels=pvalue_tick_labels)
+
+        cbar_x_pos = [text.get_position()[0] for text in cbar.ax.get_yticklabels()][0]
+        cbar_y_pos = [np.mean(pvalue_ticks[0:2]), np.mean(pvalue_ticks[3:])]
+        cbar_annot = ['1st < 2nd', '1st > 2nd']
+        for yy, txt in zip(cbar_y_pos, cbar_annot):
+            cbar.ax.annotate(text=txt, xy=(cbar_x_pos, yy), xytext=(cbar_x_pos, yy), ha='left')
+
+        ax.set_xticks(ticks=np.arange(combined_results_pvalues_arr.shape[1]), labels=combined_results.columns)
+        ax.set_yticks(ticks=np.arange(len(combined_results)), labels=combined_results.index)
         ax.set_ylabel('models compared')
         plt.title('{} model comparison significant p-values'.format(alt_dict[alternative]['name']))
 
         plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
-                  rowLabels=list(range(len(test_results_list[0].model_names))),
+                  rowLabels=list(range(1, self.nmodels+1)),
                   colLabels=['model name'], loc='bottom', cellLoc='left', colLoc='left', edges='open')
         plt.subplots_adjust()#bottom=0.2)
         plt.show()
@@ -406,7 +462,7 @@ class PairedDifferenceTest:
         if node_color_levels is not None:
             nlevels = len(set(node_color_levels))
             if nlevels > 1:
-                pal = sns.color_palette(palette="Spectral", n_colors=nlevels, as_cmap=True)(np.linspace(0, 1, nlevels))
+                pal = spectal_palette(n=nlevels)
                 # reorder levels by node order
                 level2node = defaultdict(list)
                 for ii, val in enumerate(node_color_levels):
