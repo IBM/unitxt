@@ -1,0 +1,57 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "0x22almostEvil/multilingual-wikihow-qa-16k"
+    },
+    "preprocess_steps": [
+        {
+            "type": "apply",
+            "function": "__main__.extract_lang_from_METADATA",
+            "to_field": "extracted_language",
+            "_argv": [
+                "METADATA"
+            ]
+        },
+        {
+            "type": "filter_by_values",
+            "required_values": {
+                "extracted_language": "nl"
+            }
+        },
+        {
+            "type": "remove_fields",
+            "fields": [
+                "extracted_language"
+            ]
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[80%]",
+                "validation": "train[10%]",
+                "test": "train[10%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "INSTRUCTION": "question",
+                "RESPONSE": "answer"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "question"
+        ],
+        "outputs": [
+            "answer"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "templates": "templates.qa.open.all"
+}
