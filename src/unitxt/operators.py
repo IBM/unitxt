@@ -685,7 +685,7 @@ class ExtractFieldValues(MultiStreamOperator):
     stream_name: str
     overall_top_frequency_percent: Optional[int] = 100
     min_frequency_percent: Optional[int] = 0
-    to_field: Optional[str] = None
+    to_field: str
     process_every_value: Optional[bool] = True
 
     """
@@ -742,8 +742,6 @@ class ExtractFieldValues(MultiStreamOperator):
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
         values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
-        if self.to_field is None:
-            self.to_field = "most_common_values_of_" + self.field
         for name in multi_stream:
             for instance in multi_stream[name]:
                 instance[self.to_field] = values_to_keep
