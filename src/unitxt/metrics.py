@@ -64,6 +64,9 @@ class MetricWithConfidenceInterval(Metric):
     _MAX_32BIT = 2**32 - 1
     random_gen = np.random.default_rng(hash(get_seed()) & _MAX_32BIT)
 
+    def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
     def _can_compute_confidence_intervals(self, num_predictions):
         return self.n_resamples is not None and self.n_resamples > 1 and num_predictions > 1
 

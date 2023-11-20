@@ -21,6 +21,7 @@ from typing import (
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .metrics import MetricWithConfidenceInterval
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -829,6 +830,39 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             assert isinstance(operator, StreamingOperator), f"Operator {operator_name} must be a SingleStreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
+
+        yield from stream
+
+
+class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+    """
+    Applies metric operators to a stream based on a metric field specified in each instance.
+
+    Args:
+        metric_field (str): The field containing the metrics to be applied.
+        calc_confidence_intervals (bool): Whether the applied metric should calculate confidence intervals or not.
+    """
+
+    metric_field: str
+    calc_confidence_intervals: bool
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        first_instance = stream.peak()
+
+        metric_names = first_instance.get(self.metric_field, [])
+        if isinstance(metric_names, str):
+            metric_names = [metric_names]
+
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            assert isinstance(
+                metric, MetricWithConfidenceInterval
+            ), f"Operator {metric_name} must be a MetricWithConfidenceInterval"
+
+            if not self.calc_confidence_intervals:
+                metric.disable_confidence_interval_calculation()
+
+            stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 
