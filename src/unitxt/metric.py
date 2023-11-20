@@ -137,7 +137,7 @@ def _compute(
 ):
     _reset_env_local_catalogs()
     register_all_artifacts()
-    recipe = MetricRecipe(calc_confidence_intervals)
+    recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
