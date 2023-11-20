@@ -318,7 +318,12 @@ class Augmentor(StreamInstanceOperator):
                 )
             except TypeError as e:
                 raise TypeError(f"Failed to get {field} from {instance}")
-            new_value = self.process_value(old_value)
+
+            # We are setting a nested seed based on the value processed, to ensure that
+            # the augmentation randomizations do not effect other randomization choices and
+            # to make the augmentation randomization choices different for each text.
+            with nested_seed(str(hash(old_value))):
+                new_value = self.process_value(old_value)
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
@@ -342,12 +347,12 @@ class AugmentWhitespace(Augmentor):
 
         words = re.split("(\s+)", value)
         new_value = ""
-        with nested_seed():
-            for word in words:
-                if word.isspace():
-                    new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
-                else:
-                    new_value += word
+
+        for word in words:
+            if word.isspace():
+                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+            else:
+                new_value += word
         return new_value
 
 
