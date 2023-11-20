@@ -49631,7 +49631,7 @@ References: :ref:`metrics.accuracy <metrics.accuracy>`
 wnli_3_shot
 ^^^^^^^^^^^
 
-.. note:: ID: ``recipes.wnli_3_shot``  |  Type: :class:`CommonRecipe <unitxt.common.CommonRecipe>`
+.. note:: ID: ``recipes.wnli_3_shot``  |  Type: :class:`StandardRecipe <unitxt.standard.StandardRecipe>`
 
    .. code-block:: json
 
@@ -49639,8 +49639,8 @@ wnli_3_shot
           "card": "cards.wnli",
           "demos_pool_size": 100,
           "num_demos": 3,
-          "template_item": 0,
-          "type": "common_recipe"
+          "template_card_index": 0,
+          "type": "standard_recipe"
       }
 
 References: :ref:`cards.wnli <cards.wnli>`

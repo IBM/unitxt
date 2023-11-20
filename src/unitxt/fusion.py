@@ -4,7 +4,6 @@ from dataclasses import asdict
 from typing import Generator, List, Optional
 
 from .card import ICLCard, TaskCard
-from .common import CommonRecipe
 from .dataclass import NonPositionalField
 from .operator import SourceOperator, StreamSource
 from .random_utils import random

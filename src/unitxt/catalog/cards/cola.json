@@ -17,30 +17,20 @@
             }
         },
         {
-            "type": "rename_fields",
-            "field_to_field": {
-                "sentence": "text"
-            }
-        },
-        {
             "type": "add_fields",
             "fields": {
-                "classes": [
+                "choices": [
                     "unacceptable",
                     "acceptable"
-                ],
-                "text_type": "text",
-                "type_of_class": "grammatical acceptability"
+                ]
             }
         }
     ],
     "task": {
         "type": "form_task",
         "inputs": [
-            "text",
-            "text_type",
-            "classes",
-            "type_of_class"
+            "choices",
+            "sentence"
         ],
         "outputs": [
             "label"
@@ -49,5 +39,14 @@
             "metrics.matthews_correlation"
         ]
     },
-    "templates": "templates.classification.multi_class.all"
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this sentence: {sentence}, classify if it is {choices}.",
+                "output_format": "{label}"
+            }
+        ]
+    }
 }
