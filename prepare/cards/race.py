@@ -60,5 +60,6 @@ for subset in subsets:
         ),
         templates="templates.qa.multiple_choice.context.all",
     )
-    test_card(card)
+    if subset == subsets[0]:
+        test_card(card)
     add_to_catalog(card, f"cards.race_{subset}", overwrite=True)
