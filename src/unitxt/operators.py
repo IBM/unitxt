@@ -32,7 +32,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import random
+from .random_utils import nested_seed, random
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
@@ -342,11 +342,12 @@ class AugmentWhitespace(Augmentor):
 
         words = re.split("(\s+)", value)
         new_value = ""
-        for word in words:
-            if word.isspace():
-                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
-            else:
-                new_value += word
+        with nested_seed():
+            for word in words:
+                if word.isspace():
+                    new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+                else:
+                    new_value += word
         return new_value
 
 
