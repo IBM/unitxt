@@ -50,10 +50,9 @@ class TestExamples(unittest.TestCase):
         )
         self.maxDiff = None
         for split, i in [("train", 0), ("train", 1), ("test", 0), ("test", 1)]:
-            print("Split:", split)
-            print("Split:", i)
-            # Disable until fix is made
-            # self.assertEqual(self.normalize(wnli_1_dataset[split][i]['source']), self.normalize(wnli_2_dataset[split][i]['source']))
+            self.assertEqual(
+                self.normalize(wnli_1_dataset[split][i]["source"]), self.normalize(wnli_2_dataset[split][i]["source"])
+            )
 
 
 if __name__ == "__main__":
