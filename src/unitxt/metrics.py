@@ -59,10 +59,13 @@ class MetricWithConfidenceInterval(Metric):
     # Use None to disable confidence interval computation.
     n_resamples: int = None
     confidence_level: float = 0.95
-    # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
-    # So use '& MAX_32BIT' to get a 32-bit seed.
-    _MAX_32BIT = 2**32 - 1
-    random_gen = np.random.default_rng(hash(get_seed()) & _MAX_32BIT)
+
+    @staticmethod
+    def new_random_generator():
+        # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+        # So use '& MAX_32BIT' to get a 32-bit seed.
+        _MAX_32BIT = 2**32 - 1
+        return np.random.default_rng(hash(get_seed()) & _MAX_32BIT)
 
     def disable_confidence_interval_calculation(self):
         self.n_resamples = None
@@ -93,7 +96,7 @@ class MetricWithConfidenceInterval(Metric):
                 statistic=mean,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                random_state=self.random_gen,
+                random_state=self.new_random_generator(),
             ).confidence_interval
             result[f"{score_name}_ci_low"] = ci.low
             result[f"{score_name}_ci_high"] = ci.high
@@ -106,6 +109,8 @@ class MetricWithConfidenceInterval(Metric):
         """
         Computed confidence intervals for a set of references and predictions.
         """
+
+        random_gen = self.new_random_generator()
 
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
@@ -143,7 +148,7 @@ class MetricWithConfidenceInterval(Metric):
                 error_indices = numpy.isnan(scores)
                 n_errors = sum(error_indices)
                 if n_errors > 0:
-                    new_scores = self.random_gen.choice(scores, n_errors, replace=True)
+                    new_scores = random_gen.choice(scores, n_errors, replace=True)
                     scores = scores[~error_indices]
                     scores = np.concatenate([scores, new_scores])
 
@@ -158,7 +163,7 @@ class MetricWithConfidenceInterval(Metric):
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                random_state=self.random_gen,
+                random_state=random_gen,
             ).confidence_interval
             result[f"score_ci_low"] = ci.low
             result[f"score_ci_high"] = ci.high

@@ -366,7 +366,6 @@ class TestConfidenceIntervals(unittest.TestCase):
         Test the calculation of confidence intervals
         for a given metric.
         """
-        metric.random_gen = np.random.default_rng(42)
         predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
         references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
 
