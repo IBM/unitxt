@@ -413,13 +413,25 @@ class F1MultiLabel(GlobalMetric):
                 result[self.str_to_id[label]] = 1
         return result
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[List]) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
         assert all(
             len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 metric"
+        ), "Only a single reference per prediction is allowed in F1 multi label metric"
+
         references = [reference[0] for reference in references]
+
+        for reference in references:
+            assert isinstance(
+                references, list
+            ), f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference}"
+
+        for prediction in predictions:
+            assert isinstance(
+                prediction, list
+            ), f"Each prediction is expected to list of strings in F1 multi label metric. Received prediction: {prediction}"
+
         labels = [
             l
             for l in set([label for reference in references for label in reference])
