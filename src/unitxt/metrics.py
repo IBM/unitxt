@@ -413,7 +413,7 @@ class F1MultiLabel(GlobalMetric):
                 result[self.str_to_id[label]] = 1
         return result
 
-    def compute(self, references: List[List[str]], predictions: List[List]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[List[str]]) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
         assert all(
