@@ -32,7 +32,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import random
+from .random_utils import nested_seed, random
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
@@ -318,7 +318,12 @@ class Augmentor(StreamInstanceOperator):
                 )
             except TypeError as e:
                 raise TypeError(f"Failed to get {field} from {instance}")
-            new_value = self.process_value(old_value)
+
+            # We are setting a nested seed based on the value processed, to ensure that
+            # the augmentation randomizations do not effect other randomization choices and
+            # to make the augmentation randomization choices different for each text.
+            with nested_seed(str(hash(old_value))):
+                new_value = self.process_value(old_value)
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
@@ -342,6 +347,7 @@ class AugmentWhitespace(Augmentor):
 
         words = re.split("(\s+)", value)
         new_value = ""
+
         for word in words:
             if word.isspace():
                 new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
