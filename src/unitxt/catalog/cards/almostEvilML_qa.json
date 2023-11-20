@@ -30,7 +30,7 @@
             "answer"
         ],
         "metrics": [
-            "metrics.squad"
+            "metrics.rouge"
         ]
     },
     "templates": "templates.qa.open.all"
