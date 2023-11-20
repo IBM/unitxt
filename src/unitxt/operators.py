@@ -375,6 +375,27 @@ class JoinStr(FieldOperator):
 
 
 class Apply(StreamInstanceOperator):
+
+    """A class used to apply a python function and store the result in a field.
+
+    Args:
+        function (str): name of function.
+        to_field (str): the field to store the result
+        additional arguments are field names passed to the function
+
+    Examples:
+
+    Store in field  "b" the uppercase string of the value in field "a"
+    Apply("a", function=str.upper, to_field="b")
+
+    Dump the json representation of field "t" and store back in the same field.
+    Apply("t", function=json.dumps, to_field="t")
+
+    Set the time in a field 'b'.
+    Apply(function=time.time, to_field="b")
+
+    """
+
     __allow_unexpected_arguments__ = True
     function: Callable = NonPositionalField(required=True)
     to_field: str = NonPositionalField(required=True)
