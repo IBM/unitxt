@@ -252,15 +252,15 @@ class RenameFields(FieldOperator):
 
 class AddConstant(FieldOperator):
     """
-    Adds a number, similar to field + add
+    Adds a value, similar to  add + field
     Args:
-        add (float): sum to add
+        add: sum to add
     """
 
-    add: float
+    add: Any
 
     def process_value(self, value: Any) -> Any:
-        return value + self.add
+        return self.add + value
 
 
 class Augmentor(StreamInstanceOperator):
