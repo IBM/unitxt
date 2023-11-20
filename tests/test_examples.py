@@ -7,10 +7,12 @@ from src import unitxt
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.text_utils import print_dict
 
-register_local_catalog_for_tests()
-
 
 class TestExamples(unittest.TestCase):
+    @classmethod
+    def setUp(cls):
+        register_local_catalog_for_tests()
+
     def test_example1(self):
         import examples.example1
 
@@ -62,7 +64,7 @@ class TestExamples(unittest.TestCase):
     def test_example5(self):
         dataset = load_dataset_hf(
             unitxt.dataset_file,
-            "card=cards.wnli,template_item=0",
+            "card=cards.wnli,template_card_index=0",
         )
 
         output = dataset["train"][0]
@@ -139,7 +141,6 @@ class TestExamples(unittest.TestCase):
         import evaluate
         from src import unitxt
         from src.unitxt.catalog import add_to_catalog
-        from src.unitxt.common import CommonRecipe
         from src.unitxt.load import load_dataset
         from src.unitxt.text_utils import print_dict
 
@@ -148,7 +149,6 @@ class TestExamples(unittest.TestCase):
         import evaluate
 
         metric = evaluate.load(unitxt.metric_file)
-
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
 
         print_dict(results[0])
@@ -157,7 +157,7 @@ class TestExamples(unittest.TestCase):
 
     def test_load_dataset(self):
         dataset = load_dataset(
-            unitxt.dataset_file, "card=cards.wnli,template_item=0", download_mode="force_redownload"
+            unitxt.dataset_file, "card=cards.wnli,template_card_index=0", download_mode="force_redownload"
         )
         print_dict(dataset["train"][0])
         target = {
@@ -173,7 +173,7 @@ class TestExamples(unittest.TestCase):
     def test_full_flow_of_hf(self):
         dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_item=0,num_demos=5,demos_pool_size=100",
+            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
         )
         import evaluate

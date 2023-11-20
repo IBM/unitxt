@@ -1,7 +1,6 @@
 from .card import TaskCard
 from .catalog import LocalCatalog
 from .collections import ItemPicker, RandomPicker
-from .common import CommonRecipe
 from .instructions import (
     Instruction,
     InstructionsDict,

@@ -95,15 +95,15 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header, print_str
 
 def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
     if type(card.templates) is TemplatesDict:
-        for template_item in card.templates.keys():
+        for template_card_index in card.templates.keys():
             examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_item, debug=debug, **kwargs
+                card, template_card_index=template_card_index, debug=debug, **kwargs
             )
     else:
         num_templates = len(card.templates)
-        for template_item in range(0, num_templates):
+        for template_card_index in range(0, num_templates):
             examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_item, debug=debug, **kwargs
+                card, template_card_index=template_card_index, debug=debug, **kwargs
             )
 
     # metric = evaluate.load('unitxt/metric')

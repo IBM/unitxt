@@ -3,9 +3,16 @@
     "loader": {
         "type": "load_hf",
         "path": "facebook/belebele",
-        "name": "nso_Latn"
+        "name": "default",
+        "split": "nso_Latn"
     },
     "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "nso_Latn": "test"
+            }
+        },
         {
             "type": "add_fields",
             "fields": {
@@ -119,8 +126,16 @@
             "use_query": true
         },
         {
+            "type": "add_constant",
+            "field": "choices_list",
+            "to_field": "choices_list",
+            "add": [
+                ""
+            ]
+        },
+        {
             "type": "join_str",
-            "separator": " ",
+            "separator": "\n",
             "field": "choices_list",
             "to_field": "choices"
         },
