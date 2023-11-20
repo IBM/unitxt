@@ -10,7 +10,13 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
-from src.unitxt.operators import JoinStr, RenameFields, TakeByField, ZipFieldValues
+from src.unitxt.operators import (
+    AddConstant,
+    JoinStr,
+    RenameFields,
+    TakeByField,
+    ZipFieldValues,
+)
 from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
 
@@ -131,7 +137,8 @@ def multiple_choice_preprocess(
         JoinStr(separator=". ", field="choices/*", to_field="choices_list", use_query=True, process_every_value=True),
         TakeByField(field="choices_list", index=renames[label_index], to_field="number_and_answer"),
         JoinStr(separator=",", field="choices/*/0", to_field="numbers", use_query=True),
-        JoinStr(separator=" ", field="choices_list", to_field="choices"),  # field_to_field
+        AddConstant(field="choices_list", to_field="choices_list", add=[""]),
+        JoinStr(separator="\n", field="choices_list", to_field="choices"),  # field_to_field
         RenameFields(field_to_field={expected_answer: "label"}),
     ]
 
