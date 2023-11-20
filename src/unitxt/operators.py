@@ -21,6 +21,7 @@ from typing import (
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .metrics import Metric, MetricPipeline
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -862,12 +863,13 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
 
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
-            assert isinstance(
-                metric, MetricWithConfidenceInterval
-            ), f"Operator {metric_name} must be a MetricWithConfidenceInterval"
+            assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"
 
             if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
+                if isinstance(metric, MetricWithConfidenceInterval):
+                    metric.disable_confidence_interval_calculation()
+                elif isinstance(metric, MetricPipeline) and isinstance(metric.metric, MetricWithConfidenceInterval):
+                    metric.metric.disable_confidence_interval_calculation()
 
             stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
