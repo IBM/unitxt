@@ -145,10 +145,10 @@ class AddFields(StreamInstanceOperator):
 
 class RemoveFields(StreamInstanceOperator):
     """
-    Adds specified fields to each instance in a stream.
+    Remove specified fields to each instance in a stream.
 
     Args:
-        fields (Dict[str, object]): The fields to add to each instance.
+        fields (List[str]): The fields to remove from each instance.
     """
 
     fields: List[str]
@@ -675,30 +675,6 @@ class FilterByValues(SingleStreamOperator):
                 if not key in instance:
                     raise ValueError(f"Required filter field ('{key}') in FilterByValues is not found in {instance}")
                 if instance[key] != value:
-                    filter = True
-            if not filter:
-                yield instance
-
-
-class FilterByCondsOnValues(SingleStreamOperator):
-    """
-    Filters a stream, yielding only instances that match conditions specified as stringed-lambda on values in the provided fields.
-    Args:
-        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
-    """
-
-    required_values: Dict[str, Any] = {}
-
-    def process(self, stream: Stream, stream_name: str = None) -> Generator:
-        for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                filtlambda = eval(value)
-                if not key in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByCondsOnValues is not found in {instance}"
-                    )
-                if not filtlambda(instance[key]):
                     filter = True
             if not filter:
                 yield instance

@@ -10,7 +10,6 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     EncodeLabels,
     ExtractFieldValues,
-    FilterByCondsOnValues,
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
@@ -103,27 +102,6 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
-        )
-
-    def test_filter_by_conds_on_values(self):
-        inputs = [{"a": "peace", "b": "morning"}, {"a": "sky", "b": "up"}, {"a": "hello", "b": "hurry"}]
-        targets = [
-            {"a": "hello", "b": "hurry"},
-        ]
-        operator = FilterByCondsOnValues(required_values={"a": 'lambda x: "e" in x', "b": 'lambda x: "u" in x'})
-        output = operator.process(inputs)
-        output_as_list = list(output)  # output is a generator
-        self.assertEqual(targets, output_as_list, f"expected to see {targets}, but instead, got {output_as_list}")
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=FilterByCondsOnValues(required_values={"c": 'lambda x: "5" in x'}),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "Required filter field ('c') in FilterByCondsOnValues is not found in {'a': 'peace', 'b': 'morning'}",
         )
 
     def test_filter_by_list_of_values(self):
