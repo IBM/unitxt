@@ -323,7 +323,10 @@ class Augmentor(StreamInstanceOperator):
             # the augmentation randomizations do not effect other randomization choices and
             # to make the augmentation randomization choices different for each text.
             with nested_seed(str(hash(old_value))):
-                new_value = self.process_value(old_value)
+                try:
+                    new_value = self.process_value(old_value)
+                except:
+                    raise RuntimeError(f"Error augmenting value: {old_value} from {field} in instance: {instance}")
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
