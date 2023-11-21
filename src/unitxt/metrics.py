@@ -853,11 +853,11 @@ class Reward(ReferenceBasedBulkInstanceMetric):
         answers = predictions
 
         # prepare for computation
-        additional_inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
+        inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
 
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
-        return self.pipe(additional_inputs, batch_size=self.batch_size)
+        return self.pipe(inputs, batch_size=self.batch_size)
 
 
 # Normalized Discounted Cumulative Gain

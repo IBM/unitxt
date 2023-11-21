@@ -33,12 +33,12 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
-    def _to_key_value_pairs(self, dict: Dict[str, str]):
-        return [{"key": key, "value": str(value)} for key, value in dict.items()]
+    def _to_lists_of_keys_and_values(self, dict: Dict[str, str]):
+        return {"key": [key for key, _ in dict.items()], "value": [str(value) for _, value in dict.items()]}
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         additional_inputs = instance["inputs"] | instance["outputs"]
-        instance["additional_inputs"] = self._to_key_value_pairs(additional_inputs)
+        instance["additional_inputs"] = self._to_lists_of_keys_and_values(additional_inputs)
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []

@@ -132,7 +132,6 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = MetricRecipe()
-    print("References", references)
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
     if flatten:
