@@ -7,11 +7,21 @@
     "preprocess_steps": [
         {
             "type": "apply",
-            "function": "__main__.extract_lang_from_METADATA",
-            "to_field": "extracted_language",
+            "function": "json.loads",
+            "to_field": "metadata",
             "_argv": [
                 "METADATA"
             ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "metadata/language",
+                    "extracted_language"
+                ]
+            ],
+            "use_query": true
         },
         {
             "type": "filter_by_values",
@@ -22,7 +32,8 @@
         {
             "type": "remove_fields",
             "fields": [
-                "extracted_language"
+                "extracted_language",
+                "metadata"
             ]
         },
         {
