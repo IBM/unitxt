@@ -302,7 +302,7 @@ class TestConfidenceIntervals(unittest.TestCase):
 
         # Test one GlobalMetric and one InstanceMetric
         for metric in [Accuracy(), F1Macro()]:
-            metric.n_resamples = None
+            metric.disable_confidence_interval_calculation()
             outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
 
             global_result = outputs[0]["score"]["global"]
