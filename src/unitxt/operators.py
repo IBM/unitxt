@@ -731,28 +731,21 @@ class ExtractFieldValues(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
-        iterator = iter(stream)
-        instance = next(iterator, None)
-        assert instance, "stream 'stream_name' is empty of instances, nothing to count occurrences of."
-        field_is_a_list = isinstance(instance[self.field], list)
-        if (not field_is_a_list) and (self.process_every_value == True):
-            raise ValueError(
-                "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
-            )
         all_values = []
-        if field_is_a_list:
-            if self.process_every_value:
-                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value in 'field'
-                for instance in stream:
-                    all_values.extend(instance[self.field])
+        for instance in stream:
+            if (not isinstance(instance[self.field], list)) and (self.process_every_value == True):
+                raise ValueError(
+                    "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
+                )
+            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+                # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
+                all_values.append(
+                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
+                )  # convert to a tuple if list, to enable the use of Counter which would not accept
+                # a list as an entity to count its occurrences
             else:
-                # count occurrences of unique whole lists. Counter only allows to index into it by tuples, not by lists, so we convert
-                for instance in stream:
-                    all_values.append((*instance[self.field],))
-        else:
-            # the content of 'field' is a single value, append it to all_values
-            for instance in stream:
-                all_values.append(instance[self.field])
+                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
+                all_values.extend(instance[self.field])
         counter = Counter(
             all_values
         )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
