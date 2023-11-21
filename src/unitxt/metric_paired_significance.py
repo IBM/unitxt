@@ -334,14 +334,14 @@ class PairedDifferenceTest:
         # all different metric_names
         assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
 
-    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True):
+    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True):
         """
         Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
         Args:
             test_results_list: list where each element corresponds to a different metric_name result of signif_pair_diff on the same
             set of models compared
             sort_rows: boolean, whether to sort rows so that the most significant comparisons appear at the top
-
+            use_pvalues: boolean, if True use p-values otherwise effect sizes
         Returns:
 
         """
@@ -355,59 +355,90 @@ class PairedDifferenceTest:
                 'greater': {'symbol': '>', 'name': 'upper-tailed'}}
         symb_format = '{} ' + alt_dict[alternative]['symbol'] + ' {}'
         # use 1-indexing for names rather than 0
-        combined_results = pd.DataFrame({vv.metric_name: vv.pvalues for vv in test_results_list},
+        combined_results = pd.DataFrame({vv.metric_name: vv.pvalues if use_pvalues else vv.effect_sizes for vv in test_results_list},
                                         index=[symb_format.format(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
-
         # the original p-values only, in array form
-        combined_results_pvalues_arr = combined_results.to_numpy()
-        combined_results_pvalues_arr_with_nan = deepcopy(combined_results_pvalues_arr)
-        # set any insignificant results to NaN
-        combined_results_pvalues_arr_with_nan[combined_results_pvalues_arr > self.alpha] = np.nan
+        combined_results_arr = combined_results.to_numpy()
+        ncomparisons, nmetrics = combined_results_arr.shape
 
-        # color by sign
+        combined_results_are_signif = np.transpose(np.vstack([vv.pvalue_is_signif if use_pvalues else vv.effect_size_is_signif for vv in test_results_list]))
+        combined_results_arr_with_nan = deepcopy(combined_results_arr)
+        # set any insignificant results to NaN
+        combined_results_arr_with_nan[np.logical_not(combined_results_are_signif)] = np.nan
+
+        # color by sign (works for p-values and effect size)
         statistic_sign = pd.DataFrame({vv.metric_name: np.sign([vv.sample_means[ii] - vv.sample_means[jj] for ii, jj in self.iterate_pairs()])
                                        for vv in test_results_list})
-        # recode so that high p-values (near alpha) get coded to near 0, and low-pvalues are coded to near alpha, but preserving the sign
-        # keep NaNs for coloring
-        recoded_pvalues_arr = np.multiply(self.alpha - combined_results_pvalues_arr_with_nan, statistic_sign.to_numpy())
+
+        if use_pvalues:
+            # recode so that high p-values (near alpha) get coded to near 0, and low-pvalues are coded to near alpha, but preserving the sign
+            # keep NaNs for coloring
+            recoded_values_arr = np.multiply(self.alpha - combined_results_arr_with_nan, statistic_sign.to_numpy())
+        else:
+            # no recoding necessary because value of effect size already shows directly
+            recoded_values_arr = combined_results_arr_with_nan
 
         if sort_rows:
-            # average p-value regardless of significance, lower values are more significant
-            score_ord = np.argsort(np.median(combined_results_pvalues_arr, axis=1))
-            recoded_pvalues_arr = recoded_pvalues_arr[score_ord, :]
-            combined_results_pvalues_arr_with_nan = combined_results_pvalues_arr_with_nan[score_ord, :]
+            if use_pvalues:
+                # median p-value regardless of significance, lower values are more significant
+                score_ord = np.argsort(np.median(combined_results_arr, axis=1))
+            else:
+                # take absolute value first then reverse since higher values are more significant
+                score_ord = np.argsort(np.median(np.abs(combined_results_arr), axis=1))[::-1]
+
+            recoded_values_arr = recoded_values_arr[score_ord, :]
+            combined_results_arr_with_nan = combined_results_arr_with_nan[score_ord, :]
             combined_results = combined_results.iloc[score_ord]
 
         fig, ax = plt.subplots(1, 1)
-        # this coloring uses the recoding
-        img = ax.matshow(recoded_pvalues_arr, vmin=-1 * self.alpha, vmax=self.alpha, cmap="bwr_r", aspect='auto')
-        # ticks of the recoded values for coloring
-        pvalue_ticks = np.linspace(start=-1 * self.alpha, stop=self.alpha, num=5) # tick positions
-        # labels: 0s (most extreme color at ends, with alpha in the middle)
-        lft = pvalue_ticks[2:]
-        pvalue_tick_labels = ['{:.3f}'.format(val) for val in np.concatenate((lft, lft[:2][::-1]))]
+        # this coloring uses the recoding, ensure color range is symmetric
+        vmx = self.alpha if use_pvalues else np.nanmax(np.abs(combined_results_arr_with_nan))
+        img = ax.matshow(recoded_values_arr, vmin=-1 * vmx, vmax=vmx, cmap="bwr_r", aspect='auto')
 
-        cbar = fig.colorbar(img)#, ticks=pvalue_ticks)
+        # colorbar
+        cbar = fig.colorbar(img)
+
+        if use_pvalues:
+            # set 5 uniform ticks, which will be from -alpha, with 0 in middle, to alpha
+            # do this, rather than setting ticks manually, to ensure that regardless of the choice of alpha, the labeling of ticks is accurate
+            cbar.ax.locator_params(nbins=5)
+            cbar_ticks = cbar.ax.get_yticklabels()
+            # sometimes cbar get_ticks gives ticks outside of the range even though they don't appear on the plot
+            cbar_ticks = [tt for tt in cbar_ticks if -1 * vmx <= tt.get_position()[1] <= vmx]
+            mpt = np.floor(0.5*len(cbar_ticks)).astype(int)
+            # take the upper end of the ticks (including a midpoint right in the middle, since take floor)
+            rgt = cbar_ticks[mpt:]
+            cbar_tick_pos = np.array([self.alpha - tt.get_position()[1] for tt in rgt])
+            cbar_tick_labels = [tt.get_text() for tt in rgt]
+            # now reflect
+            cbar_tick_labels = cbar_tick_labels + cbar_tick_labels[::-1]
+            # positions are the n
+            cbar_tick_pos = np.concatenate((-1 * cbar_tick_pos, cbar_tick_pos[::-1]))
+            cbar.ax.set_yticks(ticks=cbar_tick_pos, labels=cbar_tick_labels)
+
+        # for effect size, values can be negative or positive, so pad positives with space
+        numfmt = '{:.3f}' if use_pvalues else '{: .3f}'
 
         # label values using the actual p-values not the recoding
-        for (j, i), val in np.ndenumerate(combined_results_pvalues_arr_with_nan):
+        for (j, i), val in np.ndenumerate(combined_results_arr_with_nan):
             if not np.isnan(val):
                 # use white if background would be too dark
-                ax.text(i, j, '{:.3f}'.format(val), ha='center', va='center', fontsize='large',
-                        color='white' if val < 0.4 * self.alpha else 'black')
+                ax.text(i, j, numfmt.format(val), ha='center', va='center', fontsize='large',
+                        color=('white' if val < 0.5 * vmx else 'black') if use_pvalues else ('white' if np.abs(val) > 0.5 * vmx else 'black'))
 
-        cbar.ax.set_yticks(ticks=pvalue_ticks, labels=pvalue_tick_labels)
-
-        cbar_x_pos = [text.get_position()[0] for text in cbar.ax.get_yticklabels()][0]
-        cbar_y_pos = [np.mean(pvalue_ticks[0:2]), np.mean(pvalue_ticks[3:])]
-        cbar_annot = ['1st < 2nd', '1st > 2nd']
+        # label the color bar so it is clear what the blue and red colors meant
+        yrg = [-0.5, ncomparisons-0.5]
+        dy = np.diff(yrg)
+        cbar_y_pos = [yrg[0] + 0.2 * dy, yrg[1] - 0.2 * dy]
+        cbar_x_pos = (nmetrics - 0.5) * 1.02
+        cbar_annot = ['1st > 2nd', '1st < 2nd']
         for yy, txt in zip(cbar_y_pos, cbar_annot):
-            cbar.ax.annotate(text=txt, xy=(cbar_x_pos, yy), xytext=(cbar_x_pos, yy), ha='left')
+            ax.annotate(text=txt, xy=(nmetrics - 1, yy), xytext=(cbar_x_pos, yy), rotation=90, va='center')
 
-        ax.set_xticks(ticks=np.arange(combined_results_pvalues_arr.shape[1]), labels=combined_results.columns)
-        ax.set_yticks(ticks=np.arange(len(combined_results)), labels=combined_results.index)
+        ax.set_xticks(ticks=np.arange(combined_results_arr.shape[1]), labels=combined_results.columns)
+        ax.set_yticks(ticks=np.arange(ncomparisons), labels=combined_results.index)
         ax.set_ylabel('models compared')
-        plt.title('{} model comparison significant p-values'.format(alt_dict[alternative]['name']))
+        plt.title('{} model comparison significant {}'.format(alt_dict[alternative]['name'], 'p-values' if use_pvalues else 'effect size'))
 
         plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
                   rowLabels=list(range(1, self.nmodels+1)),
