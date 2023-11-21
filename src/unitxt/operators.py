@@ -326,7 +326,7 @@ class Augmentor(StreamInstanceOperator):
                 try:
                     new_value = self.process_value(old_value)
                 except:
-                    raise RuntimeError(f"Error augmenting value: {old_value} from {field} in instance: {instance}")
+                    raise RuntimeError(f"Error augmenting value: {old_value} from {field} in instance: {instance}")  from e
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
