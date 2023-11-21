@@ -686,7 +686,7 @@ class ExtractFieldValues(MultiStreamOperator):
     overall_top_frequency_percent: Optional[int] = 100
     min_frequency_percent: Optional[int] = 0
     to_field: str
-    process_every_value: Optional[bool] = True
+    process_every_value: Optional[bool] = False
 
     """
     Extract the unique values of a field ('field') of a given stream ('stream_name') and store (the most frequent of) them
@@ -695,39 +695,62 @@ class ExtractFieldValues(MultiStreamOperator):
     More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
     When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
     the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
-    When 'min_frequency_percent' is larger than 0, remove from the remaining list any value whose relative frequency makes
+    When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
     less than 'min_frequency_percent' of the total number of rows in the stream.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
 
     Examples:
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
-    field "label" and stores in field "classes" of each and every record in all streams.
+    field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
+    every record in all streams.
 
     ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
     in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
-    values in these lists, and report the most frequent values.
+    value members in these lists, and report the most frequent values.
     if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
-    extracts the most frequent possible values of field 'label' that cover at least 80% of the samples,
-    and stores them in field 'classes' of all streams.
+    extracts the most frequent possible values of field 'label' that cover at least 80% of the rows of stream_name,
+    and stores them in field 'classes' of each record of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
     extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
     Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
     """
 
+    def verify(self):
+        assert (
+            self.overall_top_frequency_percent <= 100 and self.overall_top_frequency_percent >= 0
+        ), "'overall_top_frequency_percent' must be between 0 and 100"
+        assert (
+            self.min_frequency_percent <= 100 and self.min_frequency_percent >= 0
+        ), "'min_frequency_percent' must be between 0 and 100"
+        assert not (
+            self.overall_top_frequency_percent < 100 and self.min_frequency_percent > 0
+        ), "At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default value"
+        super().verify()
+
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
         all_values = []
         for instance in stream:
+            if (not isinstance(instance[self.field], list)) and (self.process_every_value == True):
+                raise ValueError(
+                    "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
+                )
             if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+                # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
                 all_values.append(
                     (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
-                )  # convert to a tuple if list, to enable Counter
+                )  # convert to a tuple if list, to enable the use of Counter which would not accept
+                # a list as an entity to count its occurrences
             else:
+                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
                 all_values.extend(instance[self.field])
-        counter = Counter(all_values)
+        counter = Counter(
+            all_values
+        )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
             top_frequency = math.ceil(len(all_values) * self.overall_top_frequency_percent / 100)
