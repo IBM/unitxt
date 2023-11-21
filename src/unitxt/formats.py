@@ -18,20 +18,37 @@ class ICLFormat(SizeLimitingFormat):
     input_output_separator: str = "\n"
     demo_separator: str = "\n\n"
     suffix: str = ""
+    add_instruction_at_start: bool = True
+    add_instruction_at_end: bool = False
 
     def single_source_str(self, source):
         return self.input_prefix + source + self.input_output_separator + self.output_prefix
 
+    def single_source_str_with_instruction(self, source, instruction):
+        return (
+            self.input_prefix
+            + instruction
+            + self.demo_separator
+            + source
+            + self.input_output_separator
+            + self.output_prefix
+        )
+
     def format(self, instance, demos_instances=[]):
         source = self.prefix
 
-        query_str = self.single_source_str(instance["source"])
-
+        instruction = ""
         if "instruction" in instance:
             instruction = instance.pop("instruction")
             assert "instruction" != None, f"instruction field can not be none : {instance}"
-            if instruction != "":
-                source += self.instruction_prefix + instruction + self.demo_separator
+
+        if self.add_instruction_at_start and instruction != "":
+            source += self.instruction_prefix + instruction + self.demo_separator
+
+        if self.add_instruction_at_end and instruction != "":
+            query_str = self.single_source_str_with_instruction(instance["source"], instruction)
+        else:
+            query_str = self.single_source_str(instance["source"])
 
         for demo_instance in demos_instances:
             demo_str = (
@@ -49,5 +66,5 @@ class ICLFormat(SizeLimitingFormat):
 
         source += query_str
         source += self.suffix
-
+        print(source)
         return source
