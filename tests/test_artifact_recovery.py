@@ -14,6 +14,16 @@ class TestArtifactRecovery(unittest.TestCase):
         }
         artifact = Artifact.from_dict(args)
 
+    def test_bad_artifact_recovery_missing_type(self):
+        args = {
+            "card": "cards.sst2",
+            "template_card_index": 1000,
+            "demos_pool_size": 100,
+            "num_demos": 0,
+        }
+        with self.assertRaises(MissingArtifactType):
+            artifact = Artifact.from_dict(args)
+
     def test_bad_artifact_recovery_bad_type(self):
         args = {
             "type": "standard_recipe",
