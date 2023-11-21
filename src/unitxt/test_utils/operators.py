@@ -21,8 +21,33 @@ def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi
     return list(output_stream)
 
 
+def test_operator_exception(
+    operator: StreamingOperator,
+    inputs: List[dict],
+    exception_text,
+    tester=None,
+):
+    assert isoftype(operator, StreamingOperator), "operator must be an Operator"
+    assert inputs is None or isoftype(inputs, List[dict]), "inputs must be a list of dicts or None for stream source"
+    try:
+        apply_operator(operator, inputs)
+    except Exception as e:
+        if tester is not None:
+            tester.assertEquals(str(e), exception_text)
+        elif str(e) != exception_text:
+            raise AssertionError(f"Expected exception text : {exception_text}. Got : {e}") from e
+        return
+
+    raise AssertionError(f"Did not receive expected exception {exception_text}")
+
+
 def test_operator(
-    operator: StreamingOperator, inputs: List[dict], targets: List[dict], tester=None, sort_outputs_by=None
+    operator: StreamingOperator,
+    inputs: List[dict],
+    targets: List[dict],
+    tester=None,
+    sort_outputs_by=None,
+    exception_text=None,
 ):
     test_artfifact_saving_and_loading(operator, tester=tester)
 
