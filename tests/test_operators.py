@@ -2,6 +2,7 @@ import unittest
 
 from src.unitxt.operators import (
     AddFields,
+    ApplyMetric,
     ApplyOperatorsField,
     AugmentWhitespace,
     CastFields,
@@ -347,6 +348,28 @@ class TestOperators(unittest.TestCase):
 
         for input_dict, ouput_dict in zip(inputs[1:], outputs_2):
             self.assertDictEqual(input_dict, ouput_dict)
+
+    def test_apply_metric(self):
+        metrics = ["metrics.accuracy", "metrics.f1_macro"]
+        inputs = [
+            {"prediction": "0", "references": ["1"], "metrics": metrics},
+            {"prediction": "1", "references": ["1"], "metrics": metrics},
+            {"prediction": "0", "references": ["2"], "metrics": metrics},
+            {"prediction": "0", "references": ["0"], "metrics": metrics},
+        ]
+        for calc_confidence_intervals in [True, False]:
+            output = apply_operator(
+                operator=ApplyMetric(metric_field="metrics", calc_confidence_intervals=calc_confidence_intervals),
+                inputs=inputs,
+            )
+            global_metric_result = output[0]["score"]["global"]
+            # the main score should be the first metric listed
+            self.assertEqual(global_metric_result["score"], 1 / 2)
+            self.assertEqual(global_metric_result["score_name"], "accuracy")
+            self.assertEqual(global_metric_result["accuracy"], 1 / 2)
+            self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
+            self.assertEqual("score_ci_low" in global_metric_result, calc_confidence_intervals)
+            self.assertEqual("score_ci_high" in global_metric_result, calc_confidence_intervals)
 
     def test_merge(self):
         # Test with default params
