@@ -37,7 +37,7 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
         return {"key": [key for key, _ in dict.items()], "value": [str(value) for _, value in dict.items()]}
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        additional_inputs = instance["inputs"] | instance["outputs"]
+        additional_inputs = {**instance["inputs"], **instance["outputs"]}
         instance["additional_inputs"] = self._to_lists_of_keys_and_values(additional_inputs)
 
         if self.remove_unnecessary_fields:
