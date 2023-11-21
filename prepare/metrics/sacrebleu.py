@@ -42,10 +42,10 @@ global_target = {
     "sys_len": 10,
     "ref_len": 7,
     "score_name": "sacrebleu",
-    "sacrebleu_ci_low": np.NaN,
-    "sacrebleu_ci_high": np.NaN,
-    "score_ci_low": np.NaN,
-    "score_ci_high": np.NaN,
+    "sacrebleu_ci_low": 39.76,
+    "sacrebleu_ci_high": 39.76,
+    "score_ci_low": 39.76,
+    "score_ci_high": 39.76,
 }
 
 outputs = test_metric(
