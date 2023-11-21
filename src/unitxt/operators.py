@@ -860,6 +860,12 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 
+        # Each metric operator computes its score and then sets the main score, overwriting
+        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+        # This will cause the first listed metric to run last, and the main score will be set
+        # by the first listed metric (as desired).
+        metric_names = list(reversed(metric_names))
+
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"

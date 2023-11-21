@@ -117,7 +117,6 @@ class MetricRecipe(SequentialOperatorInitilizer):
             ApplyMetric(
                 "metrics",
                 calc_confidence_intervals=self.calc_confidence_intervals,
-                # reversed=True,
             ),
             MultiStreamScoreMean(),
             MergeStreams(),
