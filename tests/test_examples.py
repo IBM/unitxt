@@ -196,7 +196,6 @@ class TestExamples(unittest.TestCase):
         import evaluate
 
         metric = evaluate.load(unitxt.metric_file)
-
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
 
         print_dict(results[0])
@@ -204,7 +203,9 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(True)
 
     def test_load_dataset(self):
-        dataset = load_dataset(unitxt.dataset_file, "card=cards.wnli,template_card_index=0")
+        dataset = load_dataset(
+            unitxt.dataset_file, "card=cards.wnli,template_card_index=0", download_mode="force_redownload"
+        )
         print_dict(dataset["train"][0])
         target = {
             "metrics": ["metrics.accuracy"],

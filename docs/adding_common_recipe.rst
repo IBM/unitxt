@@ -102,8 +102,8 @@ Once the card is defined, it can be saved to a local catalog as follows:
    register your new catalog by `unitxt.register_catalog('my_catalog')`
    or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
 
-Once the card is defined,a Common Recipe can be used to load the dataset.
-The Common Recipe can prepare the data in different ways, for example,
+Once the card is defined,a StandardRecipe can be used to load the dataset.
+The Standard Recipe can prepare the data in different ways, for example,
 through instructions or demonstrations.
 
 .. code-block:: python

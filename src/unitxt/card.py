@@ -25,4 +25,4 @@ class ICLCard(Artifact):
     num_demos: int = None
     sampler_type: str = "random"
     instruction_item: Union[str, int] = None
-    template_item: Union[str, int] = None
+    template_card_index: Union[str, int] = None
