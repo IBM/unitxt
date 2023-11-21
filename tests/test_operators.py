@@ -431,19 +431,19 @@ class TestOperators(unittest.TestCase):
             min_frequency_percent=25,
         ).process(input_multi_stream1)
         expected_output2 = {
-            "test": [{"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]}],
-            "validation": [{"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]}],
+            "test": [{"animal": "shark", "most_common_animals": ["dog", "cat"]}],
+            "validation": [{"animal": "cat", "most_common_animals": ["dog", "cat"]}],
             "train": [
-                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "sheep", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "sheep", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
+                {"animal": "shark", "most_common_animals": ["dog", "cat"]},
             ],
         }
         self.assertDictEqual(

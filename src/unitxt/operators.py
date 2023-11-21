@@ -1,8 +1,6 @@
 import collections
 import importlib
 import inspect
-import json
-import math
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -733,27 +731,33 @@ class ExtractFieldValues(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
+        iterator = iter(stream)
+        instance = next(iterator, None)
+        assert instance, "'train' stream is empty of rows, nothing to count occurrences of."
+        field_is_a_list = isinstance(instance[self.field], list)
+        if (not field_is_a_list) and (self.process_every_value == True):
+            raise ValueError(
+                "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
+            )
         all_values = []
-        for instance in stream:
-            if (not isinstance(instance[self.field], list)) and (self.process_every_value == True):
-                raise ValueError(
-                    "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
-                )
-            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
-                # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
-                all_values.append(
-                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
-                )  # convert to a tuple if list, to enable the use of Counter which would not accept
-                # a list as an entity to count its occurrences
+        if field_is_a_list:
+            if self.process_every_value:
+                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value in 'field'
+                for instance in stream:
+                    all_values.extend(instance[self.field])
             else:
-                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
-                all_values.extend(instance[self.field])
+                # count occurrences of unique whole lists. Counter only allows to index into it by tuples, not by lists, so we convert
+                for instance in stream:
+                    all_values.append((*instance[self.field],))
+        else:
+            for instance in stream:
+                all_values.append(instance[self.field])
         counter = Counter(
             all_values
         )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
-            top_frequency = math.ceil(len(all_values) * self.overall_top_frequency_percent / 100)
+            top_frequency = len(all_values) * self.overall_top_frequency_percent / 100.0
             sum_counts = 0
             for i, p in enumerate(values_and_counts):
                 sum_counts += p[1]
@@ -761,7 +765,7 @@ class ExtractFieldValues(MultiStreamOperator):
                     break
             values_and_counts = counter.most_common(i + 1)
         if self.min_frequency_percent > 0:
-            min_frequency = math.floor(self.min_frequency_percent * len(all_values) / 100)
+            min_frequency = self.min_frequency_percent * len(all_values) / 100.0
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
         values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
