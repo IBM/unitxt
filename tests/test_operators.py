@@ -27,7 +27,11 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream, Stream
-from src.unitxt.test_utils.operators import apply_operator, test_operator
+from src.unitxt.test_utils.operators import (
+    apply_operator,
+    test_operator,
+    test_operator_exception,
+)
 
 
 class TestOperators(unittest.TestCase):
@@ -637,3 +641,15 @@ class TestOperators(unittest.TestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_augment_whitespace_with_none_text_error(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        outputs = test_operator_exception(
+            operator,
+            inputs,
+            tester=self,
+            exception_text="Error processing instance 0 stream test due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+        )
