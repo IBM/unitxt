@@ -733,7 +733,7 @@ class ExtractFieldValues(MultiStreamOperator):
         stream = multi_stream[self.stream_name]
         iterator = iter(stream)
         instance = next(iterator, None)
-        assert instance, "'train' stream is empty of rows, nothing to count occurrences of."
+        assert instance, "stream 'stream_name' is empty of instances, nothing to count occurrences of."
         field_is_a_list = isinstance(instance[self.field], list)
         if (not field_is_a_list) and (self.process_every_value == True):
             raise ValueError(
@@ -750,6 +750,7 @@ class ExtractFieldValues(MultiStreamOperator):
                 for instance in stream:
                     all_values.append((*instance[self.field],))
         else:
+            # the content of 'field' is a single value, append it to all_values
             for instance in stream:
                 all_values.append(instance[self.field])
         counter = Counter(
