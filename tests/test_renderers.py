@@ -96,6 +96,24 @@ class TestRenderers(unittest.TestCase):
         }
         self.assertDictEqual(result, target)
 
+    def test_render_format_no_demos(self):
+        renderer = RenderFormat(format=format)
+
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
+        }
+
+        result = renderer.process(instance)
+        target = {
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
     def test_render_format_with_prefix_and_suffix(self):
         format_fix = ICLFormat(
             input_prefix="User: ",
