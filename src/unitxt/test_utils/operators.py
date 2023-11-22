@@ -33,7 +33,7 @@ def test_operator_exception(
         apply_operator(operator, inputs)
     except Exception as e:
         if tester is not None:
-            tester.assertEquals(str(e), exception_text)
+            tester.assertEqual(str(e), exception_text)
         elif str(e) != exception_text:
             raise AssertionError(f"Expected exception text : {exception_text}. Got : {e}") from e
         return
