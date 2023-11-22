@@ -23,4 +23,4 @@ outputs = test_metric(
     global_target=global_target,
 )
 
-add_to_catalog(metric, "metrics.accuracy", overwrite=True)
+add_to_catalog(metric, "metrics.substring_accuracy", overwrite=True)
