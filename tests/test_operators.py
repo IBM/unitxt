@@ -966,9 +966,41 @@ class TestOperators(unittest.TestCase):
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
         exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
-        outputs = test_operator_exception(
+        test_operator_exception(
             operator,
             inputs,
             tester=self,
             exception_text=exception_text,
         )
+
+    def test_test_operator_without_tester_param(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+
+        test_operator_exception(
+            operator,
+            inputs,
+            exception_text=exception_text,
+        )
+
+    def test_test_operator_unexpected_pass(self):
+        text = "Should be ok"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+
+        try:
+            test_operator_exception(
+                operator,
+                inputs,
+                exception_text=exception_text,
+            )
+        except Exception as e:
+            self.assertEqual(
+                str(e),
+                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+            )
