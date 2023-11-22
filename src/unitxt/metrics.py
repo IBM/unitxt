@@ -593,7 +593,7 @@ class CharEditDistanceAccuracy(ReferenceBasedInstanceMetric):
         formatted_reference = "".join(references[0].split())
         max_length = max(len(formatted_reference), len(formatted_prediction))
         if max_length == 0:
-            return 0
+            return {"char_edit_dist_accuracy": 0.0}
         edit_dist = self.eval(formatted_reference, formatted_prediction)
         return {"char_edit_dist_accuracy": (1 - edit_dist / max_length)}
 
