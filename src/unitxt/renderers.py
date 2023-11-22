@@ -52,7 +52,7 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
 
         instance.update(
             {
-                "source": source,
+                "source": source + self.template.get_input_output_seperator(),
                 "target": target,
                 "references": references,
             }

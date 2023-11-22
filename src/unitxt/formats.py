@@ -13,14 +13,17 @@ class ICLFormat(SizeLimitingFormat):
     prefix: str = ""
     input_prefix: str = ""
     output_prefix: str = ""
-    target_prefix: str = " "
     instruction_prefix: str = ""
-    input_output_separator: str = "\n"
+    input_output_separator: str = ""
     demo_separator: str = "\n\n"
     suffix: str = ""
 
     def single_source_str(self, source):
-        return self.input_prefix + source + self.input_output_separator + self.output_prefix
+        source_str = self.input_prefix + source
+        if not source_str.endswith(self.input_output_separator):
+            source_str += self.input_output_separator
+        source_str += self.output_prefix
+        return source_str
 
     def format(self, instance, demos_instances=[]):
         source = self.prefix
@@ -34,12 +37,7 @@ class ICLFormat(SizeLimitingFormat):
                 source += self.instruction_prefix + instruction + self.demo_separator
 
         for demo_instance in demos_instances:
-            demo_str = (
-                self.single_source_str(demo_instance["source"])
-                + self.target_prefix
-                + demo_instance["target"]
-                + self.demo_separator
-            )
+            demo_str = self.single_source_str(demo_instance["source"]) + demo_instance["target"] + self.demo_separator
 
             if self.size_limiter is not None:
                 if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):

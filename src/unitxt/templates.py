@@ -26,6 +26,10 @@ class Template(Artifact):
         pass
 
     @abstractmethod
+    def get_input_output_seperator(self) -> str:
+        pass
+
+    @abstractmethod
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         pass
 
@@ -50,6 +54,7 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
         outputs = instance.pop("outputs")
 
         source = self.template.process_inputs(inputs)
+        input_output_seperator = self.template.get_input_output_seperator()
         targets = self.template.process_outputs(outputs)
 
         if self.template.is_multi_reference:
@@ -64,9 +69,10 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
             references = [targets]
             target = targets
 
+        print("*****", source, "****", input_output_seperator)
         return {
             **instance,
-            "source": source,
+            "source": source + input_output_seperator,
             "target": target,
             "references": references,
         }
@@ -155,6 +161,7 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
+    input_output_seperator: str = "\n"
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
@@ -168,6 +175,9 @@ class InputOutputTemplate(Template):
             raise KeyError(
                 f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{self.input_format}'"
             )
+
+    def get_input_output_seperator(self) -> str:
+        return self.input_output_seperator
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
@@ -207,6 +217,7 @@ class YesNoTemplate(Template):
     yes_answer: str = "Yes"
     no_answer: str = "No"
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    input_output_seperator: str = "\n"
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
@@ -217,6 +228,9 @@ class YesNoTemplate(Template):
                 f"Available inputs are {inputs.keys()} but input format "
                 f"requires a different one: {self.input_format}"
             ) from e
+
+    def get_input_output_seperator(self) -> str:
+        return self.get_input_output_seperator
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
@@ -273,6 +287,9 @@ class KeyValTemplate(Template):
             pairs_sep=self.pairs_seperator,
             use_keys=self.use_keys_for_inputs,
         )
+
+    def get_input_output_seperator(self) -> str:
+        return "\n"
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         return self.process_dict(
