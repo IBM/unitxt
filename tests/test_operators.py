@@ -94,7 +94,7 @@ class TestOperators(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             test_operator(
                 operator=MapInstanceMultiLabelValues(
-                    mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=True
+                    mappers={"a": {"hi": "ciao", "2": "bye", "3": "seeya"}}, process_every_value=True, strict=True
                 ),
                 inputs=inputs_p_e_v,
                 targets=targets_p_e_v,
@@ -113,7 +113,7 @@ class TestOperators(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             test_operator(
                 operator=MapInstanceMultiLabelValues(
-                    mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=False, strict=True
+                    mappers={"a": {"1": "hi", "2": "bye"}, "b": {"2": "ciao"}}, process_every_value=False, strict=True
                 ),
                 inputs=inputs_n_p_e_v,
                 targets=targets_n_p_e_v,
