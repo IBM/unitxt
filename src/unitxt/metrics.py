@@ -860,8 +860,22 @@ class Reward(ReferenceBasedBulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
-# Normalized Discounted Cumulative Gain
-class NDCG(ReferenceBasedGlobalMetric):
+class NDCG(GlobalMetric):
+    """
+    Normalized Discounted Cumulative Gain: measures the quality of ranking with respect to ground truth ranking scores.
+
+    As this measures ranking, it is a global metric that can only be calculated over groups of instances. In the
+    common use case where the instances are grouped by different queries, i.e., where the task is to provide a
+    relevance score for a search result w.r.t. a query, an nDCG score is calculated per each query (specified in the
+    "query" input field of an instance) and the final score is the average across all queries.
+    Note that the expected scores are relevance scores (i.e., higher is better) and not rank indices. The absolute
+    value of the scores is only meaningful for the reference scores; for the predictions, only the ordering of the
+    scores affects the outcome - for example, predicted scores of [80, 1, 2] and [0.8, 0.5, 0.6] will receive
+    the same nDCG score w.r.t. a given set of reference scores.
+
+    See also https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+    """
+
     main_score = "nDCG"
 
     def prepare(self):
@@ -870,6 +884,31 @@ class NDCG(ReferenceBasedGlobalMetric):
         super().prepare()
         self.eval = ndcg_score
 
-    def compute(self, references: List[List[float]], predictions: List[float]) -> dict:
-        scores_dict = {self.main_score: self.eval([references], [predictions])}
+    def compute_with_additional_inputs(
+        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]
+    ) -> dict:
+        from collections import defaultdict
+        from statistics import mean
+
+        query_to_predictions_and_references = defaultdict(lambda: [[], []])
+        for reference, pred, inputs_dict in zip(references, predictions, additional_inputs):
+            query = inputs_dict.get("query")
+            query_to_predictions_and_references[query][0].append(pred)
+            query_to_predictions_and_references[query][1].append(reference)
+
+        scores = []
+        for q_predictions, q_references in query_to_predictions_and_references.values():
+            if len(q_references) == 1:
+                continue
+
+            if None in q_predictions:  # model failed to predict numeric scores for some instances
+                numeric_predictions = [pred for pred in q_predictions if pred is not None]
+                if len(numeric_predictions) <= 1:  # no meaningful ranking
+                    scores.append(0)
+                    continue
+                else:  # consider non-numeric model predictions as ranked last
+                    min_value = min(numeric_predictions)
+                    q_predictions = [1 + (pred - min_value) if pred is not None else 0 for pred in q_predictions]
+            scores.append(self.eval([q_references], [q_predictions]))
+        scores_dict = {self.main_score: mean(scores)}
         return scores_dict
