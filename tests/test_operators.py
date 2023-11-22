@@ -99,13 +99,12 @@ class TestOperators(unittest.TestCase):
             operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
         )
 
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=FilterByValues(required_values={"c": "5"}), inputs=inputs, targets=targets, tester=self
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        exception_text = "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}"
+        test_operator_exception(
+            operator=FilterByValues(required_values={"c": "5"}),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_filter_by_list_of_values(self):
@@ -181,16 +180,12 @@ class TestOperators(unittest.TestCase):
         inputs = [
             {"label": "b"},
         ]
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=Intersect(field="label", allowed_values=["c"]),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "Intersect: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        exception_text = "Error processing instance '0' from stream 'test' in Intersect due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        test_operator_exception(
+            operator=Intersect(field="label", allowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_remove_values(self):
@@ -230,28 +225,20 @@ class TestOperators(unittest.TestCase):
         inputs = [
             {"label": "b"},
         ]
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label", unallowed_values=["c"]),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "RemoveValues: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        test_operator_exception(
+            operator=RemoveValues(field="label", unallowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label2", unallowed_values=["c"]),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "RemoveValues: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        test_operator_exception(
+            operator=RemoveValues(field="label2", unallowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_apply_value_operators_field(self):
@@ -978,9 +965,10 @@ class TestOperators(unittest.TestCase):
         inputs = [{"inputs": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
         outputs = test_operator_exception(
             operator,
             inputs,
             tester=self,
-            exception_text="Error processing instance 0 stream test due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+            exception_text=exception_text,
         )
