@@ -248,6 +248,17 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class SubstringAccuracy(InstanceMetric):
+    # substring match of prediction to any of the references, not only exact match
+    reduction_map = {"mean": ["substring_accuracy"]}
+    main_score = "substring_accuracy"
+
+    def compute(self, references: List[str], prediction: str) -> dict:
+        result = {self.main_score: float(any([str(prediction) in str(reference) for reference in references]))}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
