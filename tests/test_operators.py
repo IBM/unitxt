@@ -180,7 +180,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
+            operator=FilterByListsOfValues(required_values={"b": [3, 4]}),
             inputs=inputs,
             targets=targets,
             tester=self,
