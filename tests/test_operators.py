@@ -349,28 +349,6 @@ class TestOperators(unittest.TestCase):
         for input_dict, ouput_dict in zip(inputs[1:], outputs_2):
             self.assertDictEqual(input_dict, ouput_dict)
 
-    def test_apply_metric(self):
-        metrics = ["metrics.accuracy", "metrics.f1_macro"]
-        inputs = [
-            {"prediction": "0", "references": ["1"], "metrics": metrics},
-            {"prediction": "1", "references": ["1"], "metrics": metrics},
-            {"prediction": "0", "references": ["2"], "metrics": metrics},
-            {"prediction": "0", "references": ["0"], "metrics": metrics},
-        ]
-        for calc_confidence_intervals in [True, False]:
-            output = apply_operator(
-                operator=ApplyMetric(metric_field="metrics", calc_confidence_intervals=calc_confidence_intervals),
-                inputs=inputs,
-            )
-            global_metric_result = output[0]["score"]["global"]
-            # the main score should be the first metric listed
-            self.assertEqual(global_metric_result["score"], 1 / 2)
-            self.assertEqual(global_metric_result["score_name"], "accuracy")
-            self.assertEqual(global_metric_result["accuracy"], 1 / 2)
-            self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
-            self.assertEqual("score_ci_low" in global_metric_result, calc_confidence_intervals)
-            self.assertEqual("score_ci_high" in global_metric_result, calc_confidence_intervals)
-
     def test_merge(self):
         # Test with default params
         input_multi_stream = MultiStream(
@@ -660,3 +638,55 @@ class TestOperators(unittest.TestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+
+class TestApplyMetric(unittest.TestCase):
+    def _test_apply_metric(self, metrics, expected_score_name, expected_score_value, calc_confidence_intervals=False):
+        inputs = [
+            {"prediction": "0", "references": ["1"], "metrics": metrics},
+            {"prediction": "1", "references": ["1"], "metrics": metrics},
+            {"prediction": "0", "references": ["2"], "metrics": metrics},
+            {"prediction": "0", "references": ["0"], "metrics": metrics},
+        ]
+        output = apply_operator(
+            operator=ApplyMetric(metric_field="metrics", calc_confidence_intervals=calc_confidence_intervals),
+            inputs=inputs,
+        )
+        global_metric_result = output[0]["score"]["global"]
+        self.assertEqual(global_metric_result["score"], expected_score_value)
+        self.assertEqual(global_metric_result["score_name"], expected_score_name)
+        self.assertEqual(global_metric_result[expected_score_name], expected_score_value)
+        self.assertEqual("score_ci_low" in global_metric_result, calc_confidence_intervals)
+        self.assertEqual("score_ci_high" in global_metric_result, calc_confidence_intervals)
+        return global_metric_result
+
+    def test_apply_metric_with_single_string_metric(self):
+        """
+        Test applying a metric for one metric, given as a string.
+        """
+        self._test_apply_metric(metrics="metrics.accuracy", expected_score_name="accuracy", expected_score_value=0.5)
+
+    def test_apply_metric_with_confience_intervals(self):
+        """
+        Test applying a metric for one metric, given as a string.
+        """
+        self._test_apply_metric(
+            metrics="metrics.accuracy",
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+            calc_confidence_intervals=True,
+        )
+
+    def test_apply_metric_with_a_metric_pipeline_and_no_confidence_intervals(self):
+        """
+        Test applying a metric for one metric, given as a string.
+        The metric here is a MetricPipeline
+        """
+        self._test_apply_metric(metrics="metrics.squad", expected_score_name="f1", expected_score_value=0.5)
+
+    def test_apply_metric_with_two_metrics_and_no_confidence_intervals(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=["metrics.accuracy", "metrics.f1_macro"], expected_score_name="accuracy", expected_score_value=0.5
+        )
+        # check that the second score is present too
+        self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
