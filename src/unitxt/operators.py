@@ -857,6 +857,9 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         first_instance = stream.peak()
 
         metric_names = first_instance.get(self.metric_field, [])
+        if not metric_names:
+            raise RuntimeError(f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'.")
+
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 

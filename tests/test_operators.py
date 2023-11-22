@@ -660,6 +660,18 @@ class TestApplyMetric(unittest.TestCase):
         self.assertEqual("score_ci_high" in global_metric_result, calc_confidence_intervals)
         return global_metric_result
 
+    def test_apply_metric_with_empty_metric(self):
+        """
+        Test applying a metric for one metric, given as a string.
+        """
+        try:
+            self._test_apply_metric(metrics="", expected_score_name="accuracy", expected_score_value=0.5)
+        except Exception as e:
+            self.assertEqual(
+                str(e),
+                "Missing metric names in field 'metrics' and instance '{'prediction': '0', 'references': ['1'], 'metrics': ''}'.",
+            )
+
     def test_apply_metric_with_single_string_metric(self):
         """
         Test applying a metric for one metric, given as a string.
