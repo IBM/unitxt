@@ -100,6 +100,77 @@ class MapInstanceValues(StreamInstanceOperator):
         return instance
 
 
+class MapInstanceMultiLabelValues(StreamInstanceOperator):
+    """A class used to map instance values into a stream.
+
+    This class is a type of StreamInstanceOperator,
+    it maps values of instances in a stream using predefined mappers.
+
+    Attributes:
+        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
+            Keys are the names of the fields to be mapped, and values are dictionaries
+            that define the mapping from old values to new values.
+        strict (bool): If True, the mapping is applied strictly. That means if a value
+            does not exist in the mapper, it will raise a KeyError. If False, values
+            that are not present in the mapper are kept as they are.
+        process_every_value (bool): Let 'm' denote the mapper associated with field 'f', and let 'v' be a key in 'm'.
+            When process_every_value=False: apply the mapping only if field 'f' content equals 'v'. In that case, replace
+            'v' by 'm[v]'.
+            When process_every_value=True: apply also if the content of 'f' is a list, one of whose members is 'v'.
+            In such a case, replace just member 'v' in the list, by 'm[v]', leaving the other members of the list as they are
+            (potentially, to be replaced by other values of 'm').
+    """
+
+    mappers: Dict[str, Dict[str, str]]
+    strict: bool = True
+    use_query: bool = False
+    process_every_value: bool = False
+
+    def verify(self):
+        # make sure the mappers are valid
+        for key, mapper in self.mappers.items():
+            assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
+            for k in mapper.keys():
+                assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
+
+    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+        for key, mapper in self.mappers.items():
+            value = dict_get(instance, key, use_dpath=self.use_query)
+            if value is not None:
+                # if (not isinstance(value, list)) and (self.process_every_value == True):
+                #     raise ValueError(
+                #         "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
+                #     )
+                if isinstance(value, list):
+                    if self.process_every_value:
+                        for i, val in enumerate(value):
+                            val = str(val)  # make sure the value is a string
+                            if self.strict:
+                                assert (
+                                    val in mapper
+                                ), f"value ({val}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                                value[i] = mapper[val]  # replace just that member of value (value is a list)
+                                dict_set(instance, key, value, use_dpath=self.use_query)
+                            else:
+                                if val in mapper:
+                                    value[i] = mapper[val]  # replace just that member of value (value is a list)
+                                    dict_set(instance, key, value, use_dpath=self.use_query)
+                    else:
+                        pass  # whole lists can not be mapped by a string to something mapper
+                else:  # value is not a list
+                    value = str(value)  # make sure the value is a string
+                    if self.strict:
+                        assert (
+                            value in mapper
+                        ), f"value ({value}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                        dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+                    else:
+                        if value in mapper:
+                            dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+
+        return instance
+
+
 class FlattenInstances(StreamInstanceOperator):
     """
     Flattens each instance in a stream, making nested dictionary entries into top-level entries.
@@ -404,7 +475,7 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[module_name]
+            return __builtins__[splitted]
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
@@ -693,10 +764,10 @@ class ExtractFieldValues(MultiStreamOperator):
 
     More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
     When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
-    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    the remaining values makes 'overall_top_frequency_percent' of the total number of instances in the stream.
     When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
-    less than 'min_frequency_percent' of the total number of rows in the stream.
-    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
+    less than 'min_frequency_percent' of the total number of instances in the stream.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default values.
 
     Examples:
 

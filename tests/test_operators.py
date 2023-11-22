@@ -16,6 +16,7 @@ from src.unitxt.operators import (
     Intersect,
     JoinStr,
     LengthBalancer,
+    MapInstanceMultiLabelValues,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
@@ -59,6 +60,65 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_map_instance_multi_label_values(self):
+        inputs_p_e_v = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        inputs_n_p_e_v = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets_p_e_v = [
+            {"a": ["hi", "bye", 3, 4], "b": 2},
+            {"a": "bye", "b": 3},
+        ]
+
+        targets_n_p_e_v = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": "bye", "b": 3},
+        ]
+
+        test_operator(
+            operator=MapInstanceMultiLabelValues(
+                mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=False
+            ),
+            inputs=inputs_p_e_v,
+            targets=targets_p_e_v,
+            tester=self,
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=MapInstanceMultiLabelValues(
+                    mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=True
+                ),
+                inputs=inputs_p_e_v,
+                targets=targets_p_e_v,
+                tester=self,
+            )
+
+        test_operator(
+            operator=MapInstanceMultiLabelValues(
+                mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=False, strict=False
+            ),
+            inputs=inputs_n_p_e_v,
+            targets=targets_n_p_e_v,
+            tester=self,
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            test_operator(
+                operator=MapInstanceMultiLabelValues(
+                    mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=False, strict=True
+                ),
+                inputs=inputs_n_p_e_v,
+                targets=targets_n_p_e_v,
+                tester=self,
+            )
 
     def test_map_instance_values_without_tester(self):
         inputs = [
