@@ -65,10 +65,11 @@ def check_operator(
         if len(errors) > 0:
             raise AssertionError("\n".join(errors))
 
-        return True
+        return outputs
     else:
         if inputs is None:
             inputs = [None] * len(targets)
         for input, output, target in zip(inputs, outputs, targets):
             with tester.subTest(operator=operator, input=input):
                 tester.assertDictEqual(output, target)
+        return outputs

@@ -273,6 +273,42 @@ class TestOperators(unittest.TestCase):
 
         check_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
 
+    def test_add_fields_with_query(self):
+        inputs = [
+            {"a": {"a": 1, "b": 2}, "b": 2},
+            {"a": {"a": 2, "b": 3}, "b": 3},
+        ]
+
+        targets = [
+            {"a": {"a": 1, "b": 2, "c": 5}, "b": 2},
+            {"a": {"a": 2, "b": 3, "c": 5}, "b": 3},
+        ]
+
+        check_operator(
+            operator=AddFields(fields={"a/c": 5}, use_query=True), inputs=inputs, targets=targets, tester=self
+        )
+
+    def test_add_fields_with_deep_copy(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        alist = [4]
+
+        targets = [
+            {"a": 1, "b": 2, "c": [4]},
+            {"a": 2, "b": 3, "c": [4]},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(fields={"c": alist}, use_deepcopy=True), inputs=inputs, targets=targets, tester=self
+        )
+
+        alist.append(5)
+
+        self.assertDictEqual(outputs[0], targets[0])
+
     def test_remove_fields(self):
         inputs = [
             {"a": 1, "b": 2},

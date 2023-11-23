@@ -118,10 +118,28 @@ class FlattenInstances(StreamInstanceOperator):
 
 class AddFields(StreamInstanceOperator):
     """
-    Adds specified fields to each instance in a stream.
+    Adds specified fields to each instance in a given stream or all streams (default)
+    If fields exist, updates them.
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
+        use_query (bool) : Use '/' to access inner fields
+        use_deepcopy (bool) : Deep copy the input value to avoid later modifications
+
+    Examples:
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
+        AddFields(fields={"classes": ["positive","negatives"]})
+
+        # Add a 'start' field under the 'span' field with a value of 0 to all streams
+        AddFields(fields={"span/start": 0}
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
+        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+
+        # Add a 'classes' field on a given list, prevent modification of original list
+        # from changing the instance.
+        AddFields(fields={"classes": alist}), use_deepcopy=True)
     """
 
     fields: Dict[str, object]
