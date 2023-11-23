@@ -36,15 +36,14 @@ instance_targets = [  # nDCG is undefined at instance level
 ]
 
 global_target = {
-    "nDCG": 0.61,
-    "nDCG_ci_high": 0.91,
-    "nDCG_ci_low": 0.0,
-    "score": 0.61,
-    "score_ci_high": 0.91,
-    "score_ci_low": 0.0,
+    "nDCG": 0.42,
+    "nDCG_ci_high": 0.66,
+    "nDCG_ci_low": 0.15,
+    "score": 0.42,
+    "score_ci_high": 0.66,
+    "score_ci_low": 0.15,
     "score_name": "nDCG",
 }
-
 outputs = test_metric(
     metric=metric,
     predictions=predictions,

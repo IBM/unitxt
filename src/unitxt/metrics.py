@@ -48,8 +48,6 @@ class UpdateStream(StreamInstanceOperator):
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(Artifact):
-    use_additional_inputs: bool = True
-
     @property
     @abstractmethod
     def main_score(self):
@@ -107,7 +105,7 @@ class MetricWithConfidenceInterval(Metric):
                 result["score_ci_high"] = ci.high
         return result
 
-    def compute_global_confidence_intervals(self, references, predictions, score_name):
+    def compute_global_confidence_intervals(self, references, predictions, additional_inputs, score_name):
         """
         Computed confidence intervals for a set of references and predictions.
         """
@@ -117,16 +115,23 @@ class MetricWithConfidenceInterval(Metric):
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
-            def metric(sample_refs, sample_preds):
+            def metric(sample_refs, sample_preds, sample_additional_inputs):
                 try:
-                    return self._compute(references=sample_refs, predictions=sample_preds)["score"]
-                except:
+                    return self._compute(
+                        references=sample_refs, predictions=sample_preds, additional_inputs=sample_additional_inputs
+                    )["score"]
+                except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
+                    print(f"Warning in {self.__class__.__name__}", e)
                     return np.nan
 
             scores = numpy.apply_along_axis(
-                lambda x: metric(sample_refs=[references[i] for i in x], sample_preds=[predictions[i] for i in x]),
+                lambda x: metric(
+                    sample_refs=[references[i] for i in x],
+                    sample_preds=[predictions[i] for i in x],
+                    sample_additional_inputs=[additional_inputs[i] for i in x],
+                ),
                 axis=axis,
                 arr=arr,
             )
@@ -201,17 +206,14 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             references.append(instance_references)
             predictions.append(instance_prediction)
             instances.append(instance)
-            if self.use_additional_inputs:
-                assert (
-                    "additional_inputs" in instance
-                ), f"'additional_inputs' field expected in all instances passed to metric {self.__class__.__name__}. Provided instance: {instance}"
-                instance_additional_inputs = instance["additional_inputs"]
-                additional_inputs.append(instance_additional_inputs)
+
+            instance_additional_inputs = instance["additional_inputs"] if "additional_inputs" in instance else {}
+            additional_inputs.append(instance_additional_inputs)
             try:
                 instance_score = self._compute(
                     [instance_references],
                     [instance_prediction],
-                    [instance_additional_inputs] if self.use_additional_inputs else None,
+                    [instance_additional_inputs],
                 )
             except:
                 instance_score = {"score": None, "score_name": self.main_score}
@@ -221,12 +223,14 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             instance["score"]["instance"].update(instance_score)
 
-        result = self._compute(references, predictions, additional_inputs if self.use_additional_inputs else None)
+        result = self._compute(references, predictions, additional_inputs)
 
         global_score.update(result)
 
         score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(references, predictions, score_name)
+        confidence_interval = self.compute_global_confidence_intervals(
+            references, predictions, additional_inputs, score_name
+        )
         global_score.update(confidence_interval)
 
         for instance in instances:
@@ -234,31 +238,13 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             yield instance
 
     def _compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Any]) -> dict:
-        result = self.compute_with_additional_inputs(references, predictions, additional_inputs)
+        result = self.compute(references, predictions, additional_inputs)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
 
     @abstractmethod
-    def compute_with_additional_inputs(
-        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]
-    ) -> dict:
-        pass
-
-
-class ReferenceBasedGlobalMetric(GlobalMetric):
-    def prepare(self):
-        super().prepare()
-        self.use_additional_inputs = False
-
-    def compute_with_additional_inputs(
-        self, references: List[List[Any]], prediction: List[Any], additional_inputs: List[Any]
-    ) -> dict:
-        assert additional_inputs is None
-        return self.compute(references, prediction)
-
-    @abstractmethod
-    def compute(self, references: List[List[Any]], prediction: List[Any]) -> dict:
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]) -> dict:
         pass
 
 
@@ -278,12 +264,12 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             list, zip(*[(instance["references"], instance["prediction"]) for instance in stream])
         )
 
-        additional_inputs = None
-        if self.use_additional_inputs:
-            additional_inputs = [instance["additional_inputs"] for instance in stream]
+        additional_inputs = [
+            instance["additional_inputs"] if "additional_inputs" in instance else {} for instance in stream
+        ]
 
         # compute the metric over all refs and preds
-        instance_scores = self.compute_with_additional_inputs(
+        instance_scores = self.compute(
             references=references, predictions=predictions, additional_inputs=additional_inputs
         )
 
@@ -325,25 +311,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             yield instance
 
     @abstractmethod
-    def compute_with_additional_inputs(
+    def compute(
         self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]
     ) -> Dict[str, Any]:
-        pass
-
-
-class ReferenceBasedBulkInstanceMetric(BulkInstanceMetric):
-    def prepare(self):
-        super().prepare()
-        self.use_additional_inputs = False
-
-    def compute_with_additional_inputs(
-        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]
-    ) -> dict:
-        assert additional_inputs is None
-        return self.compute(references, predictions)
-
-    @abstractmethod
-    def compute(self, references: List[List[Any]], prediction: List[Any]) -> dict:
         pass
 
 
@@ -363,16 +333,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
-            additional_inputs = None
-            if self.use_additional_inputs:
-                assert (
-                    "additional_inputs" in instance
-                ), f"'additional_inputs' field expected in all instances passed to metric {self.__class__.__name__}. Provided instance: {instance}"
-                additional_inputs = instance["additional_inputs"]
+            additional_inputs = instance["additional_inputs"] if "additional_inputs" in instance else {}
 
-            instance_score = self.compute_with_additional_inputs(
-                references=refs, prediction=pred, additional_inputs=additional_inputs
-            )
+            instance_score = self.compute(references=refs, prediction=pred, additional_inputs=additional_inputs)
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
             if "score" not in instance:
@@ -408,25 +371,11 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             yield instance
 
     @abstractmethod
-    def compute_with_additional_inputs(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
+    def compute(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
         pass
 
 
-class ReferenceBasedInstanceMetric(InstanceMetric):
-    def prepare(self):
-        super().prepare()
-        self.use_additional_inputs = False
-
-    def compute_with_additional_inputs(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
-        assert additional_inputs is None
-        return self.compute(references, prediction)
-
-    @abstractmethod
-    def compute(self, references: List[Any], prediction: Any) -> dict:
-        pass
-
-
-class Squad(ReferenceBasedGlobalMetric):
+class Squad(GlobalMetric):
     _metric = None
     main_score = "f1"
     metric = "squad"
@@ -435,7 +384,7 @@ class Squad(ReferenceBasedGlobalMetric):
         super().prepare()
         self._metric = evaluate.load(self.metric)
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Dict]) -> dict:
         ids = [str(uuid.uuid4()).replace("-", "") for _ in range(len(predictions))]
         formatted_predictions = [
             {"prediction_text": prediction, "id": ids[i]} for i, prediction in enumerate(predictions)
@@ -445,14 +394,17 @@ class Squad(ReferenceBasedGlobalMetric):
             for i, reference in enumerate(references)
         ]
 
-        return self._metric.compute(predictions=formatted_predictions, references=formatted_references)
+        return self._metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+        )
 
 
-class Accuracy(ReferenceBasedInstanceMetric):
+class Accuracy(InstanceMetric):
     reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
 
-    def compute(self, references: List[Any], prediction: Any) -> dict:
+    def compute(self, references: List[Any], prediction: Any, additional_inputs: List[Dict]) -> dict:
         result = {self.main_score: float(str(prediction) in [str(reference) for reference in references])}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
@@ -488,7 +440,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         return multi_stream
 
 
-class HuggingfaceMetric(ReferenceBasedGlobalMetric):
+class HuggingfaceMetric(GlobalMetric):
     hf_metric_name: str = None
     main_score: str = None  # The main score returned from the metric
     hf_main_score: str = None  # USed if HF returns uses a different score name for the main metric
@@ -502,7 +454,7 @@ class HuggingfaceMetric(ReferenceBasedGlobalMetric):
         super().prepare()
         self.metric = evaluate.load(self.hf_metric_name, experiment_id=self.experiment_id)
 
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> dict:
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]) -> dict:
         result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
         if self.hf_main_score:
             result[self.main_score] = result[self.hf_main_score]
@@ -522,7 +474,7 @@ class HuggingfaceMetric(ReferenceBasedGlobalMetric):
         return result
 
 
-class HuggingfaceBulkMetric(ReferenceBasedBulkInstanceMetric):
+class HuggingfaceBulkMetric(BulkInstanceMetric):
     hf_metric_name: str
 
     hf_metric_fields: List[str]
@@ -532,7 +484,9 @@ class HuggingfaceBulkMetric(ReferenceBasedBulkInstanceMetric):
         super().prepare()
         self.metric = evaluate.load(self.hf_metric_name)
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> List[Dict[str, Any]]:
+    def compute(
+        self, references: List[List[str]], predictions: List[str], additional_inputs: List[Any]
+    ) -> List[Dict[str, Any]]:
         scores = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
 
         # convert dict of lists to a list of dicts
@@ -545,7 +499,7 @@ class HuggingfaceBulkMetric(ReferenceBasedBulkInstanceMetric):
         return results
 
 
-class F1(ReferenceBasedGlobalMetric):
+class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -562,7 +516,7 @@ class F1(ReferenceBasedGlobalMetric):
             self.id_to_str[id] = str
         return self.str_to_id[str]
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Dict]) -> dict:
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
@@ -600,7 +554,7 @@ class F1Weighted(F1):
     average = "weighted"
 
 
-class F1MultiLabel(ReferenceBasedGlobalMetric):
+class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -624,7 +578,9 @@ class F1MultiLabel(ReferenceBasedGlobalMetric):
                 result[self.str_to_id[label]] = 1
         return result
 
-    def compute(self, references: List[List[str]], predictions: List[List[str]]) -> dict:
+    def compute(
+        self, references: List[List[str]], predictions: List[List[str]], additional_inputs: List[Dict]
+    ) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
         assert all(
@@ -716,15 +672,15 @@ class Rouge(HuggingfaceMetric):
         nltk.download("punkt")
         self.sent_tokenize = nltk.sent_tokenize
 
-    def compute(self, references, predictions):
+    def compute(self, references, predictions, additional_inputs: List[Dict]):
         if self.sent_split_newline:
             predictions = ["\n".join(self.sent_tokenize(prediction.strip())) for prediction in predictions]
             references = [["\n".join(self.sent_tokenize(r.strip())) for r in reference] for reference in references]
-        return super().compute(references, predictions)
+        return super().compute(references, predictions, additional_inputs)
 
 
 # Computes char edit distance, ignoring whitespace
-class CharEditDistanceAccuracy(ReferenceBasedInstanceMetric):
+class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
@@ -734,7 +690,7 @@ class CharEditDistanceAccuracy(ReferenceBasedInstanceMetric):
 
         self.eval = editdistance.eval
 
-    def compute(self, references, prediction: str) -> dict:
+    def compute(self, references, prediction: str, additional_inputs: List[Dict]) -> dict:
         assert len(references) == 1, f"Expected only one reference , but received: {references}"
 
         formatted_prediction = "".join(prediction.split())
@@ -750,7 +706,7 @@ class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Dict]) -> dict:
         assert all(
             len(reference) == 1 for reference in references
         ), "Only single reference per prediction is allowed in wer metric"
@@ -770,14 +726,14 @@ class MatthewsCorrelation(HuggingfaceMetric):
             self.str_to_id[str] = id
         return self.str_to_id[str]
 
-    def compute(self, references: List[List[str]], predictions: List[str]) -> dict:
+    def compute(self, references: List[List[str]], predictions: List[str], additional_inputs: List[Dict]) -> dict:
         formatted_references = [self.get_str_id(reference[0]) for reference in references]
         formatted_predictions = [self.get_str_id(prediction) for prediction in predictions]
         result = self.metric.compute(predictions=formatted_predictions, references=formatted_references)
         return result
 
 
-class CustomF1(ReferenceBasedGlobalMetric):
+class CustomF1(GlobalMetric):
     main_score = "f1_micro"
     classes = None
     zero_division = 0.0
@@ -813,7 +769,7 @@ class CustomF1(ReferenceBasedGlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
-    def compute(self, references: List[Any], predictions: List[Any]) -> dict:
+    def compute(self, references: List[Any], predictions: List[Any], additional_inputs: List[Dict]) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
         if isinstance(references[0], list) and isinstance(references[0][0], list):
             references = [element[0] for element in references]
@@ -919,11 +875,11 @@ def normalize_answer(s):
     return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
-class TokenOverlap(ReferenceBasedInstanceMetric):
+class TokenOverlap(InstanceMetric):
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
 
-    def compute(self, references: List[Any], prediction: Any) -> dict:
+    def compute(self, references: List[Any], prediction: Any, additional_inputs: List[Dict]) -> dict:
         results = [self._compute_single_ref(reference, prediction) for reference in references]
         return {measure: max(r[i] for r in results) for i, measure in enumerate(["precision", "recall", "f1"])}
 
@@ -953,7 +909,7 @@ class BertScore(HuggingfaceBulkMetric):
         self.hf_compute_args = {"model_type": self.model_name}
 
 
-class SentenceBert(ReferenceBasedBulkInstanceMetric):
+class SentenceBert(BulkInstanceMetric):
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
@@ -968,7 +924,7 @@ class SentenceBert(ReferenceBasedBulkInstanceMetric):
         self.model = SentenceTransformer(self.model_name)
         self.util = sbert_util
 
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]) -> List[Any]:
         scores = []
 
         # we are in a multi-reference case (each prediction may have multiple
@@ -993,7 +949,7 @@ class SentenceBert(ReferenceBasedBulkInstanceMetric):
         return [{"score": score} for score in scores]
 
 
-class Reward(ReferenceBasedBulkInstanceMetric):
+class Reward(BulkInstanceMetric):
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
@@ -1006,7 +962,7 @@ class Reward(ReferenceBasedBulkInstanceMetric):
 
         self.pipe = pipeline("text-classification", model=self.model_name)
 
-    def compute(self, references: List[List[Any]], predictions: List[Any]) -> List[Any]:
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]) -> List[Any]:
         # treat the references as the questions and the predictions as answers
         # assume a single reference
         questions = [refs[0] for refs in references]
@@ -1044,9 +1000,7 @@ class NDCG(GlobalMetric):
         super().prepare()
         self.eval = ndcg_score
 
-    def compute_with_additional_inputs(
-        self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]
-    ) -> dict:
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Any]) -> dict:
         from collections import defaultdict
         from statistics import mean
 

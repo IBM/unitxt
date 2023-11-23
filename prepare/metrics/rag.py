@@ -35,16 +35,19 @@ instance_targets = [
 # so we get both "precision" and "precision_overlap_with_context" in results
 
 global_target = {
-    "f1_overlap_with_context": 0.56,
     "f1": 0.56,
+    "f1_ci_high": 0.89,
+    "f1_ci_low": 0.0,
+    "f1_overlap_with_context": 0.56,
     "precision": 0.67,
     "precision_overlap_with_context": 0.67,
-    "recall_overlap_with_context": 0.5,
     "recall": 0.5,
+    "recall_overlap_with_context": 0.5,
     "score": 0.56,
+    "score_ci_high": 0.89,
+    "score_ci_low": 0.0,
     "score_name": "f1",
 }
-
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
