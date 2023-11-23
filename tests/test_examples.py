@@ -249,7 +249,3 @@ class TestExamples(unittest.TestCase):
         }
 
         # self.assertDictEqual(target, results[0])
-
-
-if __name__ == "__main__":
-    unittest.main()
