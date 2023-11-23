@@ -128,24 +128,19 @@ class TestRenderers(unittest.TestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
             "demos": [
                 {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
                 {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
             ],
         }
-
+        self.maxDiff = None
         result = renderer.process(instance)
         target = {
-            "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent: [/INST]',
+            "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: [/INST]',
             "target": "negative",
             "references": ["negative"],
         }
-        from src.unitxt.text_utils import print_dict
-
-        print_dict(result)
-        print_dict(target)
-        return
         self.assertDictEqual(result, target)
 
     def test_standard_renderer(self):
