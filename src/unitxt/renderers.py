@@ -36,6 +36,7 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
         outputs = instance.pop("outputs")
 
         source = self.template.process_inputs(inputs)
+        input_output_separator = self.template.get_input_output_separator()
         targets = self.template.process_outputs(outputs)
 
         if self.template.is_multi_reference:
@@ -52,7 +53,8 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
 
         instance.update(
             {
-                "source": source + self.template.get_input_output_seperator(),
+                "source": source,
+                "input_output_separator": input_output_separator,
                 "target": target,
                 "references": references,
             }

@@ -18,5 +18,5 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
 )
 
-test_card(card, debug=True)
+test_card(card, format="formats.user_agent", debug=False)
 add_to_catalog(card, "cards.sst2", overwrite=True)

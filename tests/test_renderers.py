@@ -9,12 +9,14 @@ from src.unitxt.renderers import (
     RenderTemplate,
     StandardRenderer,
 )
-from src.unitxt.templates import InputOutputTemplate
+from src.unitxt.templates import CompletionTemplate, InputOutputTemplate
 from src.unitxt.test_utils.operators import test_operator
 
 template = InputOutputTemplate(input_format='This is my sentence: "{text}"', output_format="{label}")
-instruction = TextualInstruction("classify user sentence by its sentiment to either positive, or nagative.")
-format = ICLFormat(input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:")
+completion_template = CompletionTemplate(input_format='The sentence "{text}" is ', output_format="{label}")
+
+instruction = TextualInstruction("classify user sentence by its sentiment to either positive, or negative.")
+format = ICLFormat(input_prefix="User: ", output_prefix="Agent: ", instruction_prefix="Instruction:")
 
 
 class TestRenderers(unittest.TestCase):
@@ -24,7 +26,24 @@ class TestRenderers(unittest.TestCase):
         instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
 
         result = renderer.process(instance)
-        target = {"source": 'This is my sentence: "was so bad"', "target": "negative", "references": ["negative"]}
+        target = {
+            "source": 'This is my sentence: "was so bad"',
+            "input_output_separator": "\n",
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+        renderer = RenderTemplate(template=completion_template)
+        instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
+
+        result = renderer.process(instance)
+        target = {
+            "source": 'The sentence "was so bad" is ',
+            "input_output_separator": "",
+            "target": "negative",
+            "references": ["negative"],
+        }
         self.assertDictEqual(result, target)
 
     def test_render_demonstrations(self):
@@ -41,8 +60,18 @@ class TestRenderers(unittest.TestCase):
 
         target = {
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "input_output_separator": "\n",
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "input_output_separator": "\n",
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ]
         }
 
@@ -53,7 +82,7 @@ class TestRenderers(unittest.TestCase):
 
         instance = {}
         result = renderer.process(instance)
-        target = {"instruction": "classify user sentence by its sentiment to either positive, or nagative."}
+        target = {"instruction": "classify user sentence by its sentiment to either positive, or negative."}
         self.assertDictEqual(result, target)
 
     def test_render_format(self):
@@ -61,18 +90,29 @@ class TestRenderers(unittest.TestCase):
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
+            "input_output_separator": "\n",
             "target": "negative",
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "input_output_separator": "\n",
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "input_output_separator": "\n",
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ],
         }
 
         result = renderer.process(instance)
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: ',
             "target": "negative",
             "references": ["negative"],
         }
@@ -81,8 +121,8 @@ class TestRenderers(unittest.TestCase):
     def test_render_format_with_prefix_and_suffix(self):
         format_fix = ICLFormat(
             input_prefix="User: ",
+            input_output_separator="\n",
             output_prefix="Agent: ",
-            target_prefix="",
             prefix="[INST] <<SYS>>\n",
             suffix="[/INST]",
         )
@@ -90,12 +130,23 @@ class TestRenderers(unittest.TestCase):
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
+            "input_output_separator": "koko",
             "target": "negative",
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "input_output_separator": "koko",
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "input_output_separator": "koko",
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ],
         }
 
@@ -114,7 +165,7 @@ class TestRenderers(unittest.TestCase):
 
     def test_standard_renderer(self):
         renderer = StandardRenderer(template=template, instruction=instruction, format=format, demos_field="demos")
-
+        self.maxDiff = None
         instance = {
             "inputs": {"text": "was so bad"},
             "outputs": {"label": "negative"},
@@ -125,56 +176,9 @@ class TestRenderers(unittest.TestCase):
         }
 
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: ',
             "target": "negative",
             "references": ["negative"],
         }
 
         test_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
-
-    def test_temp(self):
-        import datasets as ds
-        from src.unitxt.blocks import (
-            AddFields,
-            FormTask,
-            InputOutputTemplate,
-            LoadHF,
-            MapInstanceValues,
-            NormalizeListFields,
-            SplitRandomMix,
-            TaskCard,
-            TemplatesList,
-        )
-        from src.unitxt.catalog import add_to_catalog
-        from src.unitxt.test_utils.card import test_card
-
-        card = TaskCard(
-            loader=LoadHF(path="glue", name="cola"),
-            preprocess_steps=[
-                "splitters.small_no_test",
-                MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
-                AddFields(
-                    fields={
-                        "choices": ["unacceptable", "acceptable"],
-                    }
-                ),
-            ],
-            task=FormTask(
-                inputs=["choices", "sentence"],
-                outputs=["label"],
-                metrics=["metrics.matthews_correlation"],
-            ),
-            templates=TemplatesList(
-                [
-                    InputOutputTemplate(
-                        input_format="""
-                            Given this sentence: {sentence}, classify if it is {choices}.
-                        """.strip(),
-                        output_format="{label}",
-                    ),
-                ]
-            ),
-        )
-
-        test_card(card, strict=False)
-        add_to_catalog(card, "cards.cola", overwrite=True)
