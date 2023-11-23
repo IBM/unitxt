@@ -19,7 +19,7 @@ class ICLFormat(SizeLimitingFormat):
     demo_separator: str = "\n\n"
     suffix: str = ""
     add_instruction_at_start: bool = True
-    add_instruction_at_end: bool = False
+    add_instruction_after_demos: bool = False
 
     def single_source_str(self, source):
         return self.input_prefix + source + self.input_output_separator + self.output_prefix
@@ -45,7 +45,7 @@ class ICLFormat(SizeLimitingFormat):
         if self.add_instruction_at_start and instruction != "":
             source += self.instruction_prefix + instruction + self.demo_separator
 
-        if self.add_instruction_at_end and instruction != "":
+        if self.add_instruction_after_demos and instruction != "":
             query_str = self.single_source_str_with_instruction(instance["source"], instruction)
         else:
             query_str = self.single_source_str(instance["source"])
