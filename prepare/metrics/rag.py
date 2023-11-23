@@ -25,13 +25,14 @@ for metric_id, metric in metrics:
 predictions = ["apple", "boy", "cat"]
 references = [["apple2"], ["boys"], ["dogs"]]
 additional_inputs = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
-instance_targets = [  # nDCG is undefined at instance level
+instance_targets = [
     {"f1": 0.67, "precision": 1.0, "recall": 0.5, "score": 0.67, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
     {"f1": 0, "precision": 0, "recall": 0, "score": 0, "score_name": "f1"},
 ]
 
-#   Currently rename fields does not delete the current fields
+# Currently rename fields does not delete the current fields,
+# so we get both "precision" and "precision_overlap_with_context" in results
 
 global_target = {
     "f1_overlap_with_context": 0.56,
@@ -50,7 +51,6 @@ metric = MetricPipeline(
         CopyFields(field_to_field=[("additional_inputs/context", "references")], use_query=True),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
-    # metric=SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2"),
     metric=TokenOverlap(),
     postpreprocess_steps=[
         CopyFields(

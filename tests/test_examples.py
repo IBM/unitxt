@@ -79,7 +79,7 @@ class TestExamples(unittest.TestCase):
 
         metric = evaluate.load(unitxt.metric_file)
 
-        results = metric.compute(predictions=predictions, references=data, flatten=False)
+        results = metric.compute(predictions=predictions, references=data, flatten=True)
 
         print_dict(results[0])
 
@@ -153,7 +153,7 @@ class TestExamples(unittest.TestCase):
 
         metric = evaluate.load(unitxt.metric_file)
 
-        results = metric.compute(predictions=predictions, references=data, flatten=False)
+        results = metric.compute(predictions=predictions, references=data, flatten=True)
 
         output = results[0]
         print_dict(output)
@@ -180,7 +180,6 @@ class TestExamples(unittest.TestCase):
 
     def test_example8(self):
         dataset = unitxt.load_dataset("recipes.wnli_3_shot")
-        print(dataset["test"][0])
         metric = evaluate.load(unitxt.metric_file)
 
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])

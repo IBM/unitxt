@@ -91,7 +91,6 @@ def get_dataset_artifact(dataset_str):
         if "type" not in args:
             args["type"] = os.environ.get("UNITXT_DEFAULT_RECIPE", __default_recipe__)
         recipe = Artifact.from_dict(args)
-    print(recipe)
     return recipe
 
 

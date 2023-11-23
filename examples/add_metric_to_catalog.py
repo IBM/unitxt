@@ -15,6 +15,7 @@ data = [
 ]
 
 for d in data:
+    d["additonal_inputs"] = []
     d["metrics"] = ["metrics.accuracy"]
     d["postprocessors"] = ["processors.to_string"]
 
@@ -25,6 +26,6 @@ import evaluate
 
 metric = evaluate.load(unitxt.metric_url)
 
-results = metric.compute(predictions=predictions, references=data, flatten=False)
+results = metric.compute(predictions=predictions, references=data, flatten=True)
 
 print_dict(results[0])

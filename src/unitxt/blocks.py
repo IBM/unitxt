@@ -22,7 +22,6 @@ from .operators import (
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
-from .standard import StandardRecipe
 from .stream import MultiStream
 from .task import FormTask
 from .templates import (

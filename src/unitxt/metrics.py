@@ -74,7 +74,7 @@ class GlobalMetric(SingleStreamOperator, Metric):
             if self.use_additional_inputs:
                 assert (
                     "additional_inputs" in instance
-                ), f"'additional_inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
+                ), f"'additional_inputs' field expected in all instances passed to metric {self.__class__.__name__}. Provided instance: {instance}"
                 instance_additional_inputs = instance["additional_inputs"]
                 additional_inputs.append(instance_additional_inputs)
             try:
@@ -225,7 +225,7 @@ class InstanceMetric(SingleStreamOperator, Metric):
             if self.use_additional_inputs:
                 assert (
                     "additional_inputs" in instance
-                ), f"'additional_inputs' field expected in all instances of passed to metric {self.__class__.__name__}. Provided instance: {instance}"
+                ), f"'additional_inputs' field expected in all instances passed to metric {self.__class__.__name__}. Provided instance: {instance}"
                 additional_inputs = instance["additional_inputs"]
 
             instance_score = self.compute_with_additional_inputs(
@@ -274,7 +274,7 @@ class ReferenceBasedInstanceMetric(InstanceMetric):
         return self.compute(references, prediction)
 
     @abstractmethod
-    def compute(self, references: List[Any], prediction: Any, additional_inputs: Dict) -> dict:
+    def compute(self, references: List[Any], prediction: Any) -> dict:
         pass
 
 
@@ -575,7 +575,7 @@ class Rouge(HuggingfaceMetric):
         return super().compute(references, predictions)
 
 
-# Computes chat edit distance, ignoring whitespace
+# Computes char edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(ReferenceBasedInstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"

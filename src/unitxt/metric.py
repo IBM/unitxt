@@ -98,6 +98,11 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 from .schema import UNITXT_DATASET_SCHEMA
 
+# The additional_inputs field in the schema is defined as
+# Sequence({"key": Value(dtype="string"), "value": Value("string")})
+# When receiving instances from this scheme, the keys and values are returned as two separate
+# lists, and are converted to a dictionary.
+
 
 def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
     return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
