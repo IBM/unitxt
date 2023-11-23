@@ -30,6 +30,7 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
+    Apply,
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
