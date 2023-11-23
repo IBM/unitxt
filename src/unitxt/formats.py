@@ -39,7 +39,6 @@ class ICLFormat(SizeLimitingFormat):
                 source += self.instruction_prefix + instruction + self.demo_separator
 
         for demo_instance in demos_instances:
-            input_output_separator = demo_instance.pop("input_output_separator")
 
             demo_str = (
                 self.single_source_str(demo_instance["source"], input_output_separator)

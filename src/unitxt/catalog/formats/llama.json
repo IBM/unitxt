@@ -1,6 +1,5 @@
 {
     "type": "icl_format",
-    "target_prefix": "",
     "prefix": "<s>[INST] ",
     "suffix": "[/INST]"
 }

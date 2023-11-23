@@ -1002,7 +1002,6 @@ llama
       {
           "prefix": "<s>[INST] ",
           "suffix": "[/INST]",
-          "target_prefix": "",
           "type": "icl_format"
       }
 

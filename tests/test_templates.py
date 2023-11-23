@@ -115,7 +115,7 @@ class TestTemplates(unittest.TestCase):
         with self.assertRaises(KeyError) as cm:
             wrong_field_name = "wrong_field_name"
             template.process_inputs(inputs={wrong_field_name: ["news"]})
-            self.assertEquals(
+            self.assertEqual(
                 f"Available inputs are {wrong_field_name} but input format requires a different one: {input_format}",
                 str(cm.exception),
             )
@@ -157,7 +157,7 @@ class TestTemplates(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             outputs = {class_field: ["news"]}
             template.process_outputs(outputs=outputs)
-        self.assertEquals(
+        self.assertEqual(
             f"Available outputs are {list(outputs.keys())}, missing required label field: '{label_field}'.",
             str(cm.exception),
         )
@@ -165,7 +165,7 @@ class TestTemplates(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             outputs = {label_field: ["news", "sports"]}
             template.process_outputs(outputs=outputs)
-        self.assertEquals(
+        self.assertEqual(
             f"Available outputs are {list(outputs.keys())}, missing required class field: '{class_field}'.",
             str(cm.exception),
         )
@@ -180,7 +180,7 @@ class TestTemplates(unittest.TestCase):
             template = YesNoTemplate(input_format="", class_field="", label_field="labels")
             with self.assertRaises(RuntimeError) as cm:
                 template.process_outputs(outputs={"labels": wrong_labels_value})
-            self.assertEquals(
+            self.assertEqual(
                 f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expected a non-empty list.",
                 str(cm.exception),
             )
@@ -205,7 +205,7 @@ class TestTemplates(unittest.TestCase):
                         class_field: wrong_class_value,
                     }
                 )
-            self.assertEquals(
+            self.assertEqual(
                 f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a list with one item.",
                 str(cm.exception),
             )

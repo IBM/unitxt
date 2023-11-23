@@ -32,7 +32,7 @@ class TestDiverseLabelsSampler(unittest.TestCase):
         wrong_examplar = self.new_examplar(input_choices=examplar_input_choices)
         with self.assertRaises(ValueError) as cm:
             sampler.examplar_repr(examplar=wrong_examplar)
-        self.assertEquals(
+        self.assertEqual(
             f"Unexpected input choices value '{examplar_input_choices}'. Expected a list.",
             str(cm.exception),
         )
@@ -43,7 +43,7 @@ class TestDiverseLabelsSampler(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             sampler = DiverseLabelsSampler()
             sampler.examplar_repr(examplar=examplar)
-        self.assertEquals(
+        self.assertEqual(
             f"'{missing_field}' field is missing from '{examplar}'.",
             str(cm.exception),
         )
