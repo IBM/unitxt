@@ -71,54 +71,17 @@ class MapInstanceValues(StreamInstanceOperator):
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
-    """
+        process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
+            is to be applied to their individual elements. If False, mapping is only applied to a field
+            containing a single value.
 
-    mappers: Dict[str, Dict[str, str]]
-    strict: bool = True
-    use_query = False
+    Examples: MapInstanceValues with mappers={"a": {"1": "hi", "2": "bye"}}, and c,
+        and process_every_value = True, will map the individual elements of field "a", and output
+        {"a": ["hi", "bye"], "b": "2"}. If strict = True, input {"a": ["1", "2", "3"], "b": 2} will raise a KeyError,
+        because "3" is missing from the mapper of "a".  When process_every_value = False, then the mapping would
+        not be applied on "a", and if Strict = True, a KeyError will be raised, because the value of "a", which is a
+        list, is not a key in the mapper of "a".
 
-    def verify(self):
-        # make sure the mappers are valid
-        for key, mapper in self.mappers.items():
-            assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            for k, v in mapper.items():
-                assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
-
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        for key, mapper in self.mappers.items():
-            value = dict_get(instance, key, use_dpath=self.use_query)
-            if value is not None:
-                value = str(value)  # make sure the value is a string
-                if self.strict:
-                    assert (
-                        value in mapper
-                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-                else:
-                    if value in mapper:
-                        dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-        return instance
-
-
-class MapInstanceMultiLabelValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
-
-    This class is a type of StreamInstanceOperator,
-    it maps values of instances in a stream using predefined mappers.
-
-    Attributes:
-        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
-            Keys are the names of the fields to be mapped, and values are dictionaries
-            that define the mapping from old values to new values.
-        strict (bool): If True, the mapping is applied strictly. That means if a value
-            does not exist in the mapper, it will raise a KeyError. If False, values
-            that are not present in the mapper are kept as they are.
-        process_every_value (bool): Let 'm' denote the mapper associated with field 'f', and let 'v' be a key in 'm'.
-            When process_every_value=False: apply the mapping only if field 'f' content equals 'v'. In that case, replace
-            'v' by 'm[v]'.
-            When process_every_value=True: apply also if the content of 'f' is a list, one of whose members is 'v'.
-            In such a case, replace just member 'v' in the list, by 'm[v]', leaving the other members of the list as they are
-            (potentially, to be replaced by other values of 'm').
     """
 
     mappers: Dict[str, Dict[str, str]]
@@ -137,29 +100,32 @@ class MapInstanceMultiLabelValues(StreamInstanceOperator):
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
-                # if (not isinstance(value, list)) and (self.process_every_value == True):
-                #     raise ValueError(
-                #         "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
-                #     )
+                if (self.process_every_value == True) and (not isinstance(value, list)):
+                    raise ValueError(
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                    )
                 if isinstance(value, list):
                     if self.process_every_value:
                         for i, val in enumerate(value):
                             val = str(val)  # make sure the value is a string
-                            if self.strict:
-                                assert (
-                                    val in mapper
-                                ), f"value ({val}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                            if self.strict and (not val in mapper):
+                                raise KeyError(
+                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                                )
                             if val in mapper:
                                 value[i] = mapper[val]  # replace just that member of value (value is a list)
                                 dict_set(instance, key, value, use_dpath=self.use_query)
-                    else:
-                        pass  # whole lists can not be mapped by a string to something mapper
-                else:  # value is not a list
+                    else:  # field is a list, and process_every_value == False
+                        if self.strict:  # whole lists can not be mapped by a string to something mapper
+                            raise KeyError(
+                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
+                            )
+                else:  # value is not a list, implying process_every_value == False
                     value = str(value)  # make sure the value is a string
-                    if self.strict:
-                        assert (
-                            value in mapper
-                        ), f"value ({value}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                    if self.strict and (not value in mapper):
+                        raise KeyError(
+                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                        )
                     if value in mapper:
                         dict_set(instance, key, mapper[value], use_dpath=self.use_query)
 
@@ -504,7 +470,7 @@ class ListFieldValues(StreamInstanceOperator):
     Concatanates values of multiple fields into a list to list(fields)
     """
 
-    fields: str
+    fields: List[str]
     to_field: str
     use_query: bool = False
 

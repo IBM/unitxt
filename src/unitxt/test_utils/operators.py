@@ -52,7 +52,9 @@ def test_operator(
 
     outputs = apply_operator(operator, inputs)
 
-    assert len(list(outputs)) == len(targets), "outputs and targets must have the same number of instances"
+    assert len(list(outputs)) == len(
+        targets
+    ), f"outputs '{list(outputs)}' and targets '{list(targets)}' must have the same number of instances"
 
     if sort_outputs_by is not None:
         outputs = sorted(outputs, key=lambda x: x[sort_outputs_by])

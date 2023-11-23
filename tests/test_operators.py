@@ -17,7 +17,7 @@ from src.unitxt.operators import (
     Intersect,
     JoinStr,
     LengthBalancer,
-    MapInstanceMultiLabelValues,
+    ListFieldValues,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
@@ -46,13 +46,13 @@ class TestOperators(unittest.TestCase):
 
     def test_map_instance_values(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
+            {"a": "1", "b": "2"},
+            {"a": "2", "b": "3"},
         ]
 
         targets = [
-            {"a": "hi", "b": 2},
-            {"a": "bye", "b": 3},
+            {"a": "hi", "b": "2"},
+            {"a": "bye", "b": "3"},
         ]
 
         test_operator(
@@ -62,10 +62,25 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_map_instance_multi_label_values(self):
+        with self.assertRaises(ValueError):
+            test_operator(
+                operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+        with self.assertRaises(ValueError):
+            test_operator(
+                operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
+                inputs=inputs + [{"a": "3", "b": "4"}],
+                targets=targets,
+                tester=self,
+            )
+
         inputs_p_e_v = [
             {"a": [1, 2, 3, 4], "b": 2},
-            {"a": 2, "b": 3},
+            # {"a": 2, "b": 3},
         ]
 
         inputs_n_p_e_v = [
@@ -75,7 +90,7 @@ class TestOperators(unittest.TestCase):
 
         targets_p_e_v = [
             {"a": ["hi", "bye", 3, 4], "b": 2},
-            {"a": "bye", "b": 3},
+            # {"a": "bye", "b": 3},
         ]
 
         targets_n_p_e_v = [
@@ -84,17 +99,15 @@ class TestOperators(unittest.TestCase):
         ]
 
         test_operator(
-            operator=MapInstanceMultiLabelValues(
-                mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=False
-            ),
+            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=False),
             inputs=inputs_p_e_v,
             targets=targets_p_e_v,
             tester=self,
         )
 
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(ValueError):
             test_operator(
-                operator=MapInstanceMultiLabelValues(
+                operator=MapInstanceValues(
                     mappers={"a": {"hi": "ciao", "2": "bye", "3": "seeya"}}, process_every_value=True, strict=True
                 ),
                 inputs=inputs_p_e_v,
@@ -103,7 +116,7 @@ class TestOperators(unittest.TestCase):
             )
 
         test_operator(
-            operator=MapInstanceMultiLabelValues(
+            operator=MapInstanceValues(
                 mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=False, strict=False
             ),
             inputs=inputs_n_p_e_v,
@@ -111,9 +124,9 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(ValueError):
             test_operator(
-                operator=MapInstanceMultiLabelValues(
+                operator=MapInstanceValues(
                     mappers={"a": {"1": "hi", "2": "bye"}, "b": {"2": "ciao"}}, process_every_value=False, strict=True
                 ),
                 inputs=inputs_n_p_e_v,
@@ -134,6 +147,24 @@ class TestOperators(unittest.TestCase):
 
         test_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        )
+
+    def test_list_field_values(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "ab": [1, 2]},
+            {"a": 2, "b": 3, "ab": [2, 3]},
+        ]
+
+        test_operator(
+            operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_flatten_instances(self):
