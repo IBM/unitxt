@@ -149,12 +149,9 @@ class MapInstanceMultiLabelValues(StreamInstanceOperator):
                                 assert (
                                     val in mapper
                                 ), f"value ({val}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                            if val in mapper:
                                 value[i] = mapper[val]  # replace just that member of value (value is a list)
                                 dict_set(instance, key, value, use_dpath=self.use_query)
-                            else:
-                                if val in mapper:
-                                    value[i] = mapper[val]  # replace just that member of value (value is a list)
-                                    dict_set(instance, key, value, use_dpath=self.use_query)
                     else:
                         pass  # whole lists can not be mapped by a string to something mapper
                 else:  # value is not a list
@@ -163,10 +160,8 @@ class MapInstanceMultiLabelValues(StreamInstanceOperator):
                         assert (
                             value in mapper
                         ), f"value ({value}) in instance is not found in mapper ({mapper}, associated with field {key}).  The instance is {instance}"
+                    if value in mapper:
                         dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-                    else:
-                        if value in mapper:
-                            dict_set(instance, key, mapper[value], use_dpath=self.use_query)
 
         return instance
 
