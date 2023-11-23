@@ -2,7 +2,7 @@ from src.unitxt import add_to_catalog
 from src.unitxt.metrics import Rouge
 from src.unitxt.test_utils.metrics import test_metric
 
-metric = Rouge()
+metric = Rouge(n_resamples=None)
 
 predictions = ["hello there", "general kenobi"]
 references = [["hello", "there"], ["general kenobi", "general yoda"]]
@@ -44,5 +44,24 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-
 add_to_catalog(metric, "metrics.rouge", overwrite=True)
+
+global_target_with_confidence_intervals = global_target.copy()
+global_target_with_confidence_intervals.update(
+    {
+        "rougeL_ci_low": 0.83,
+        "rougeL_ci_high": 0.83,
+        "score_ci_low": 0.83,
+        "score_ci_high": 0.83,
+    }
+)
+
+metric_with_confidence_intervals = Rouge()
+outputs = test_metric(
+    metric=metric_with_confidence_intervals,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target_with_confidence_intervals,
+)
+add_to_catalog(metric_with_confidence_intervals, "metrics.rouge_with_confidence_intervals", overwrite=True)

@@ -17,7 +17,6 @@ metric = MetricPipeline(
     metric=NDCG(),
 )
 
-
 predictions = ["1.0", " 2 ", "1.0", "0", "1.7", 3, "0", "oops", "1", "failed", "failed again"]
 references = [["4"], ["0"], ["1.0"], [4], ["0"], ["1"], ["1.0"], ["3"], ["2"], [4], [1]]
 inputs = (
@@ -30,7 +29,21 @@ instance_targets = [{"nDCG": None, "score": None, "score_name": "nDCG"}] * len( 
     predictions
 )
 
-global_target = {"nDCG": 0.42, "score": 0.42, "score_name": "nDCG"}
+instance_targets = [  # nDCG is undefined at instance level
+    {"nDCG": None, "score": None, "score_name": "nDCG"},
+    {"nDCG": None, "score": None, "score_name": "nDCG"},
+    {"nDCG": None, "score": None, "score_name": "nDCG"},
+]
+
+global_target = {
+    "nDCG": 0.61,
+    "nDCG_ci_high": 0.91,
+    "nDCG_ci_low": 0.0,
+    "score": 0.61,
+    "score_ci_high": 0.91,
+    "score_ci_low": 0.0,
+    "score_name": "nDCG",
+}
 
 outputs = test_metric(
     metric=metric,

@@ -30,7 +30,7 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
-    Apply,
+    ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
     FlattenInstances,
@@ -109,6 +109,8 @@ def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
 
 
 class MetricRecipe(SequentialOperatorInitilizer):
+    calc_confidence_intervals: bool = True
+
     def prepare(self):
         register_all_artifacts()
         self.steps = [
@@ -121,9 +123,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
                 default_operators=["processors.to_string_stripped"],
             ),
             SplitByValue(["group"]),
-            ApplyStreamOperatorsField(
+            ApplyMetric(
                 "metrics",
-                reversed=True,
+                calc_confidence_intervals=self.calc_confidence_intervals,
             ),
             MultiStreamScoreMean(),
             MergeStreams(),
@@ -133,10 +135,17 @@ class MetricRecipe(SequentialOperatorInitilizer):
 UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
 
 
-def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+def _compute(
+    predictions: List[str],
+    references: Iterable,
+    flatten: bool = False,
+    split_name: str = "all",
+    calc_confidence_intervals: bool = True,
+):
     _reset_env_local_catalogs()
     register_all_artifacts()
-    recipe = MetricRecipe()
+    recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
+
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
     if flatten:
@@ -150,6 +159,8 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
+    calc_confidence_intervals: bool = True
+
     def _info(self):
         return evaluate.MetricInfo(
             description="_DESCRIPTION",
@@ -177,7 +188,17 @@ class Metric(evaluate.Metric):
             from unitxt.metric import _compute as _compute_installed
 
             return _compute_installed(
-                predictions=predictions, references=references, flatten=flatten, split_name=split_name
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
+                calc_confidence_intervals=self.calc_confidence_intervals,
             )
         else:
-            return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+            return _compute(
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
+                calc_confidence_intervals=self.calc_confidence_intervals,
+            )

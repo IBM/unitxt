@@ -14,7 +14,15 @@ instance_targets = [
     {"char_edit_dist_accuracy": 1.00, "score": 1.00, "score_name": "char_edit_dist_accuracy"},
 ]
 
-global_target = {"char_edit_dist_accuracy": 0.79, "score": 0.79, "score_name": "char_edit_dist_accuracy"}
+global_target = {
+    "char_edit_dist_accuracy": 0.79,
+    "score": 0.79,
+    "score_name": "char_edit_dist_accuracy",
+    "char_edit_dist_accuracy_ci_low": 0.58,
+    "char_edit_dist_accuracy_ci_high": 1.0,
+    "score_ci_low": 0.58,
+    "score_ci_high": 1.0,
+}
 
 outputs = test_metric(
     metric=metric,

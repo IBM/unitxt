@@ -8,7 +8,11 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
+import numpy as np
+from editdistance import eval
+from scipy.stats import bootstrap
 
+from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
 from .operator import (
     MultiStreamOperator,
@@ -17,7 +21,13 @@ from .operator import (
     StreamInstanceOperator,
 )
 from .operators import CopyFields
+from .random_utils import get_seed
 from .stream import MultiStream, Stream
+
+# The default number of resamples used to estimate the confidence intervals
+# global and instances metrics. Use None to disable confidence interval computation by default.
+_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
+_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
 
 
 def abstract_factory():
@@ -37,7 +47,7 @@ class UpdateStream(StreamInstanceOperator):
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
-class Metric(ABC):
+class Metric(Artifact):
     use_additional_inputs: bool = True
 
     @property
@@ -46,12 +56,132 @@ class Metric(ABC):
         pass
 
 
-class GlobalMetric(SingleStreamOperator, Metric):
+class MetricWithConfidenceInterval(Metric):
+    # The number of resamples used to estimate the confidence intervals of this metric.
+    # Use None to disable confidence interval computation.
+    n_resamples: int = None
+    confidence_level: float = 0.95
+
+    @staticmethod
+    def new_random_generator():
+        # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+        # So use '& MAX_32BIT' to get a 32-bit seed.
+        _MAX_32BIT = 2**32 - 1
+        return np.random.default_rng(hash(get_seed()) & _MAX_32BIT)
+
+    def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
+    def _can_compute_confidence_intervals(self, num_predictions):
+        return self.n_resamples is not None and self.n_resamples > 1 and num_predictions > 1
+
+    def score_based_confidence_interval(self, score_names: List[str], instances):
+        """
+        Compute confidence intervals based on existing scores, already computed
+        on the input instances.
+        score_names: List[str]
+            Compute a confidence interval for each score_name from this list.
+        instances:
+            The instances for which the confidence intervals are computed.
+        """
+        from statistics import mean
+
+        result = {}
+
+        if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
+            return result
+
+        for score_name in score_names:
+            scores = [instance["score"]["instance"][score_name] for instance in instances]
+            ci = bootstrap(
+                (scores,),
+                statistic=mean,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=self.new_random_generator(),
+            ).confidence_interval
+            result[f"{score_name}_ci_low"] = ci.low
+            result[f"{score_name}_ci_high"] = ci.high
+            if score_name == self.main_score:
+                result["score_ci_low"] = ci.low
+                result["score_ci_high"] = ci.high
+        return result
+
+    def compute_global_confidence_intervals(self, references, predictions, score_name):
+        """
+        Computed confidence intervals for a set of references and predictions.
+        """
+
+        random_gen = self.new_random_generator()
+
+        def statistic(arr, axis):
+            # arr is a 2d array where each row is a resampling, so we
+            # iterate over the rows and compute the metric on each resampling
+            def metric(sample_refs, sample_preds):
+                try:
+                    return self._compute(references=sample_refs, predictions=sample_preds)["score"]
+                except:
+                    # this happens in edge cases, for example, when the sampling creates a
+                    # sample where all strings are empty and this fails bleu.
+                    return np.nan
+
+            scores = numpy.apply_along_axis(
+                lambda x: metric(sample_refs=[references[i] for i in x], sample_preds=[predictions[i] for i in x]),
+                axis=axis,
+                arr=arr,
+            )
+
+            # when running with bca interval (default), the statistic is called twice: with the
+            # original data and with the resamples. here we want to focus only on the latter.
+            if scores.size > 1:
+                # here we deal with samples on which the metric could not be computed. These are
+                # edge cases - for example, when the sample contains only empty strings.
+                # CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
+                # cases in which the metric is not computable. Therefore, we ignore these edge cases
+                # as part of the computation of CI. The question is how to implement this policy.
+                # Options:
+                # 1. skip the errors and return a shorter array => this fails because Scipy demans
+                # this callback (i.e. the statistic() callback) to return an array of the same size
+                # as the number of resamples
+                # 2. Put np.nan for the errors => this fails because in such case the ci itself
+                # becomes np.nan. So one edge case can fail the whole CI computation.
+                # 3. Replace the errors with a sampling from the successful cases => this is what
+                # is implemented.
+                error_indices = numpy.isnan(scores)
+                n_errors = sum(error_indices)
+                if n_errors > 0:
+                    new_scores = random_gen.choice(scores, n_errors, replace=True)
+                    scores = scores[~error_indices]
+                    scores = np.concatenate([scores, new_scores])
+
+            return scores
+
+        result = {}
+        num_predictions = len(predictions)
+        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
+            identifiers = list(range(num_predictions))
+            ci = bootstrap(
+                (identifiers,),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=random_gen,
+            ).confidence_interval
+            result[f"score_ci_low"] = ci.low
+            result[f"score_ci_high"] = ci.high
+            result[f"{score_name}_ci_low"] = ci.low
+            result[f"{score_name}_ci_high"] = ci.high
+        return result
+
+
+class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     """A class for computing metrics that require joint calculations over all instances and are not
     just aggregation of scores of individuals instances.  For example, macro_F1 requires
     calculation requires calculation of recall and precision per class, so all instances of the class
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
+
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         references = []
@@ -95,6 +225,10 @@ class GlobalMetric(SingleStreamOperator, Metric):
 
         global_score.update(result)
 
+        score_name = global_score["score_name"]
+        confidence_interval = self.compute_global_confidence_intervals(references, predictions, score_name)
+        global_score.update(confidence_interval)
+
         for instance in instances:
             instance["score"]["global"] = global_score
             yield instance
@@ -128,7 +262,8 @@ class ReferenceBasedGlobalMetric(GlobalMetric):
         pass
 
 
-class BulkInstanceMetric(SingleStreamOperator, Metric):
+class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -181,6 +316,11 @@ class BulkInstanceMetric(SingleStreamOperator, Metric):
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
 
+                confidence_interval = self.score_based_confidence_interval(
+                    score_names=[self.main_score], instances=instances
+                )
+                global_score.update(confidence_interval)
+
         for instance in instances:
             yield instance
 
@@ -207,7 +347,9 @@ class ReferenceBasedBulkInstanceMetric(BulkInstanceMetric):
         pass
 
 
-class InstanceMetric(SingleStreamOperator, Metric):
+class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
     @property
@@ -251,10 +393,16 @@ class InstanceMetric(SingleStreamOperator, Metric):
                 from statistics import mean
 
                 for field in fields:
-                    global_score[field] = mean([instance["score"]["instance"][field] for instance in instances])
+                    scores = [instance["score"]["instance"][field] for instance in instances]
+                    global_score[field] = mean(scores)
                     if field == self.main_score:
                         global_score["score"] = global_score[field]
                         global_score["score_name"] = self.main_score
+
+                confidence_interval = self.score_based_confidence_interval(
+                    score_names=[self.main_score], instances=instances
+                )
+                global_score.update(confidence_interval)
 
         for instance in instances:
             yield instance
