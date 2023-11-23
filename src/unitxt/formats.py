@@ -46,9 +46,10 @@ class ICLFormat(SizeLimitingFormat):
                 + self.demo_separator
             )
 
-            if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):
-                    continue
+            # Disabled unimplemented functionality
+            #             if self.size_limiter is not None:
+            #                if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):
+            #                    continue
 
             source += demo_str
 
