@@ -3,6 +3,7 @@ import importlib
 import inspect
 import uuid
 from abc import abstractmethod
+from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -142,10 +143,10 @@ class AddFields(StreamInstanceOperator):
 
 class RemoveFields(StreamInstanceOperator):
     """
-    Adds specified fields to each instance in a stream.
+    Remove specified fields to each instance in a stream.
 
     Args:
-        fields (Dict[str, object]): The fields to add to each instance.
+        fields (List[str]): The fields to remove from each instance.
     """
 
     fields: List[str]
@@ -213,18 +214,14 @@ class FieldOperator(StreamInstanceOperator):
                     not_exist_ok=self.not_exist_ok,
                 )
             except Exception as e:
-                raise ValueError(
-                    f"{self.__class__.__name__}: Failed to get '{from_field}' from {instance} due to : {e}"
-                ) from e
+                raise ValueError(f"Failed to get '{from_field}' from {instance} due to : {e}") from e
             try:
                 if self.process_every_value:
                     new_value = [self.process_value(value) for value in old_value]
                 else:
                     new_value = self.process_value(old_value)
             except Exception as e:
-                raise ValueError(
-                    f"{self.__class__.__name__}: Failed to process '{from_field}' from {instance} due to : {e}"
-                ) from e
+                raise ValueError(f"Failed to process '{from_field}' from {instance} due to : {e}") from e
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
@@ -323,7 +320,12 @@ class Augmentor(StreamInstanceOperator):
             # the augmentation randomizations do not effect other randomization choices and
             # to make the augmentation randomization choices different for each text.
             with nested_seed(str(hash(old_value))):
-                new_value = self.process_value(old_value)
+                try:
+                    new_value = self.process_value(old_value)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Error augmenting value '{old_value}' from '{field}' in instance: {instance}"
+                    ) from e
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
@@ -677,6 +679,97 @@ class FilterByValues(SingleStreamOperator):
                 yield instance
 
 
+class ExtractFieldValues(MultiStreamOperator):
+    field: str
+    stream_name: str
+    overall_top_frequency_percent: Optional[int] = 100
+    min_frequency_percent: Optional[int] = 0
+    to_field: str
+    process_every_value: Optional[bool] = False
+
+    """
+    Extract the unique values of a field ('field') of a given stream ('stream_name') and store (the most frequent of) them
+    as a list in a new field ('to_field') in all streams.
+
+    More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
+    When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
+    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
+    less than 'min_frequency_percent' of the total number of rows in the stream.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
+
+    Examples:
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
+    field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
+    every record in all streams.
+
+    ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
+    in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
+    value members in these lists, and report the most frequent values.
+    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
+    extracts the most frequent possible values of field 'label' that cover at least 80% of the rows of stream_name,
+    and stores them in field 'classes' of each record of all streams.
+
+    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
+    extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
+    """
+
+    def verify(self):
+        assert (
+            self.overall_top_frequency_percent <= 100 and self.overall_top_frequency_percent >= 0
+        ), "'overall_top_frequency_percent' must be between 0 and 100"
+        assert (
+            self.min_frequency_percent <= 100 and self.min_frequency_percent >= 0
+        ), "'min_frequency_percent' must be between 0 and 100"
+        assert not (
+            self.overall_top_frequency_percent < 100 and self.min_frequency_percent > 0
+        ), "At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default value"
+        super().verify()
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        stream = multi_stream[self.stream_name]
+        all_values = []
+        for instance in stream:
+            if (not isinstance(instance[self.field], list)) and (self.process_every_value == True):
+                raise ValueError(
+                    "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
+                )
+            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+                # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
+                all_values.append(
+                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
+                )  # convert to a tuple if list, to enable the use of Counter which would not accept
+                # a list as an entity to count its occurrences
+            else:
+                # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
+                all_values.extend(instance[self.field])
+        counter = Counter(
+            all_values
+        )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
+        values_and_counts = counter.most_common()
+        if self.overall_top_frequency_percent < 100:
+            top_frequency = len(all_values) * self.overall_top_frequency_percent / 100.0
+            sum_counts = 0
+            for i, p in enumerate(values_and_counts):
+                sum_counts += p[1]
+                if sum_counts >= top_frequency:
+                    break
+            values_and_counts = counter.most_common(i + 1)
+        if self.min_frequency_percent > 0:
+            min_frequency = self.min_frequency_percent * len(all_values) / 100.0
+            while values_and_counts[-1][1] < min_frequency:
+                values_and_counts.pop()
+        values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
+        for name in multi_stream:
+            for instance in multi_stream[name]:
+                instance[self.to_field] = values_to_keep
+        return multi_stream
+
+
 class FilterByListsOfValues(SingleStreamOperator):
     """
     Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
@@ -835,6 +928,51 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             assert isinstance(operator, StreamingOperator), f"Operator {operator_name} must be a SingleStreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
+
+        yield from stream
+
+
+class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+    """
+    Applies metric operators to a stream based on a metric field specified in each instance.
+
+    Args:
+        metric_field (str): The field containing the metrics to be applied.
+        calc_confidence_intervals (bool): Whether the applied metric should calculate confidence intervals or not.
+    """
+
+    metric_field: str
+    calc_confidence_intervals: bool
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
+
+        first_instance = stream.peak()
+
+        metric_names = first_instance.get(self.metric_field, [])
+        if not metric_names:
+            raise RuntimeError(f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'.")
+
+        if isinstance(metric_names, str):
+            metric_names = [metric_names]
+
+        # Each metric operator computes its score and then sets the main score, overwriting
+        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+        # This will cause the first listed metric to run last, and the main score will be set
+        # by the first listed metric (as desired).
+        metric_names = list(reversed(metric_names))
+
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"
+
+            if not self.calc_confidence_intervals:
+                if isinstance(metric, MetricWithConfidenceInterval):
+                    metric.disable_confidence_interval_calculation()
+                elif isinstance(metric, MetricPipeline) and isinstance(metric.metric, MetricWithConfidenceInterval):
+                    metric.metric.disable_confidence_interval_calculation()
+
+            stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 

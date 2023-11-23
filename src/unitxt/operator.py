@@ -248,8 +248,17 @@ class StreamInstanceOperator(SingleStreamOperator):
     """
 
     def _process_stream(self, stream: Stream, stream_name: str = None) -> Generator:
-        for instance in stream:
-            yield self._process_instance(instance, stream_name)
+        try:
+            index = None
+            for index, instance in enumerate(stream):
+                yield self._process_instance(instance, stream_name)
+        except Exception as e:
+            if index == None:
+                raise e
+            else:
+                raise ValueError(
+                    f"Error processing instance '{index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
+                ) from e
 
     def _process_instance(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         return self.process(instance, stream_name)
