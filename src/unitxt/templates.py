@@ -213,9 +213,8 @@ class YesNoTemplate(Template):
             data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
             return self.input_format.format(**data)
         except KeyError as e:
-            raise KeyError(
-                f"Available inputs are {inputs.keys()} but input format "
-                f"requires a different one: {self.input_format}"
+            raise RuntimeError(
+                f"Available inputs are {list(inputs.keys())} but input format requires a different one: {self.input_format}"
             ) from e
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
