@@ -1003,6 +1003,51 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+    """
+    Applies metric operators to a stream based on a metric field specified in each instance.
+
+    Args:
+        metric_field (str): The field containing the metrics to be applied.
+        calc_confidence_intervals (bool): Whether the applied metric should calculate confidence intervals or not.
+    """
+
+    metric_field: str
+    calc_confidence_intervals: bool
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
+
+        first_instance = stream.peak()
+
+        metric_names = first_instance.get(self.metric_field, [])
+        if not metric_names:
+            raise RuntimeError(f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'.")
+
+        if isinstance(metric_names, str):
+            metric_names = [metric_names]
+
+        # Each metric operator computes its score and then sets the main score, overwriting
+        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+        # This will cause the first listed metric to run last, and the main score will be set
+        # by the first listed metric (as desired).
+        metric_names = list(reversed(metric_names))
+
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"
+
+            if not self.calc_confidence_intervals:
+                if isinstance(metric, MetricWithConfidenceInterval):
+                    metric.disable_confidence_interval_calculation()
+                elif isinstance(metric, MetricPipeline) and isinstance(metric.metric, MetricWithConfidenceInterval):
+                    metric.metric.disable_confidence_interval_calculation()
+
+            stream = metric(MultiStream({"tmp": stream}))["tmp"]
+
+        yield from stream
+
+
 class AddFieldNamePrefix(StreamInstanceOperator):
     """
     Adds a prefix to each field name in each instance of a stream.
