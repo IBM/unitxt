@@ -1,3 +1,4 @@
+import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import Wer
 from src.unitxt.test_utils.metrics import test_metric
@@ -12,7 +13,15 @@ instance_targets = [
     {"wer": 0.5, "score": 0.5, "score_name": "wer"},  # 2 errors: remove 'an' and replace 'other' with 'another'
 ]
 
-global_target = {"wer": 0.38, "score": 0.38, "score_name": "wer"}  # Should by 0.375, but package rounds the scores
+global_target = {
+    "wer": 0.38,
+    "score": 0.38,
+    "score_name": "wer",
+    "wer_ci_low": 0.38,
+    "wer_ci_high": 0.38,
+    "score_ci_low": 0.38,
+    "score_ci_high": 0.38,
+}  # Should by 0.375, but package rounds the scores
 
 outputs = test_metric(
     metric=metric,
