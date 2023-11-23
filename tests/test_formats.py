@@ -12,8 +12,16 @@ class TestFormats(unittest.TestCase):
             input_output_separator="\n",
         )
 
-        instance = {"source": "1+1", "target": "2", "instruction": "solve the math excercises"}
-        demos_instances = [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
+        instance = {
+            "source": "1+1",
+            "input_output_separator": "\n",
+            "target": "2",
+            "instruction": "solve the math excercises",
+        }
+        demos_instances = [
+            {"source": "1+2", "input_output_separator": "\n", "target": "3"},
+            {"source": "4-2", "input_output_separator": "\n", "target": "2"},
+        ]
 
         result = format.format(instance, demos_instances=demos_instances)
         target = """Instruction:solve the math excercises
@@ -36,7 +44,13 @@ Agent: """
             input_output_separator="\n",
         )
 
-        instance = {"source": "1+1", "target": "2", "instruction": "solve the math excercises"}
+        # i
+        instance = {
+            "source": "1+1",
+            "input_output_separator": "koko",
+            "target": "2",
+            "instruction": "solve the math excercises",
+        }
 
         result = format.format(instance)
         target = """Instruction: solve the math excercises
@@ -50,13 +64,14 @@ Agent: """
             input_prefix="User: ",
             output_prefix="Agent: ",
             instruction_prefix="Instruction: ",
-            input_output_separator="\n",
+            input_output_separator="\n***\n",
         )
 
-        instance = {"source": "1+1\n", "target": "2"}
+        instance = {"source": "1+1", "input_output_separator": "koko", "target": "2"}
 
         result = format.format(instance)
         target = """User: 1+1
+***
 Agent: """
         self.assertEqual(result, target)
 
@@ -65,12 +80,13 @@ Agent: """
             input_prefix="User: ",
             output_prefix="Agent: ",
             instruction_prefix="Instruction: ",
-            input_output_separator="\n",
+            input_output_separator="",
         )
 
-        instance = {"source": "1+1", "target": "2", "instruction": ""}
+        instance = {"source": "1+1", "input_output_separator": "\n***\n", "target": "2", "instruction": ""}
 
         result = format.format(instance)
         target = """User: 1+1
+***
 Agent: """
         self.assertEqual(result, target)

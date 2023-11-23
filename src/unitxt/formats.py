@@ -14,13 +14,13 @@ class ICLFormat(SizeLimitingFormat):
     input_prefix: str = ""
     output_prefix: str = ""
     instruction_prefix: str = ""
-    input_output_separator: str = ""
+    input_output_separator: str = None
     demo_separator: str = "\n\n"
     suffix: str = ""
 
     def single_source_str(self, source, input_output_separator):
         source_str = self.input_prefix + source
-        if self.input_output_separator != "":
+        if self.input_output_separator is not None and self.input_output_separator != "":
             source_str += self.input_output_separator
         else:
             source_str += input_output_separator
