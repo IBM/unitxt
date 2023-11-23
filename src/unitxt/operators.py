@@ -214,18 +214,14 @@ class FieldOperator(StreamInstanceOperator):
                     not_exist_ok=self.not_exist_ok,
                 )
             except Exception as e:
-                raise ValueError(
-                    f"{self.__class__.__name__}: Failed to get '{from_field}' from {instance} due to : {e}"
-                ) from e
+                raise ValueError(f"Failed to get '{from_field}' from {instance} due to : {e}") from e
             try:
                 if self.process_every_value:
                     new_value = [self.process_value(value) for value in old_value]
                 else:
                     new_value = self.process_value(old_value)
             except Exception as e:
-                raise ValueError(
-                    f"{self.__class__.__name__}: Failed to process '{from_field}' from {instance} due to : {e}"
-                ) from e
+                raise ValueError(f"Failed to process '{from_field}' from {instance} due to : {e}") from e
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
             dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
@@ -324,7 +320,12 @@ class Augmentor(StreamInstanceOperator):
             # the augmentation randomizations do not effect other randomization choices and
             # to make the augmentation randomization choices different for each text.
             with nested_seed(str(hash(old_value))):
-                new_value = self.process_value(old_value)
+                try:
+                    new_value = self.process_value(old_value)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Error augmenting value '{old_value}' from '{field}' in instance: {instance}"
+                    ) from e
             dict_set(instance, field, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
@@ -927,6 +928,51 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             assert isinstance(operator, StreamingOperator), f"Operator {operator_name} must be a SingleStreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
+
+        yield from stream
+
+
+class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+    """
+    Applies metric operators to a stream based on a metric field specified in each instance.
+
+    Args:
+        metric_field (str): The field containing the metrics to be applied.
+        calc_confidence_intervals (bool): Whether the applied metric should calculate confidence intervals or not.
+    """
+
+    metric_field: str
+    calc_confidence_intervals: bool
+
+    def process(self, stream: Stream, stream_name: str = None) -> Generator:
+        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
+
+        first_instance = stream.peak()
+
+        metric_names = first_instance.get(self.metric_field, [])
+        if not metric_names:
+            raise RuntimeError(f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'.")
+
+        if isinstance(metric_names, str):
+            metric_names = [metric_names]
+
+        # Each metric operator computes its score and then sets the main score, overwriting
+        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+        # This will cause the first listed metric to run last, and the main score will be set
+        # by the first listed metric (as desired).
+        metric_names = list(reversed(metric_names))
+
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"
+
+            if not self.calc_confidence_intervals:
+                if isinstance(metric, MetricWithConfidenceInterval):
+                    metric.disable_confidence_interval_calculation()
+                elif isinstance(metric, MetricPipeline) and isinstance(metric.metric, MetricWithConfidenceInterval):
+                    metric.metric.disable_confidence_interval_calculation()
+
+            stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 
