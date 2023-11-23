@@ -66,5 +66,4 @@ class ICLFormat(SizeLimitingFormat):
 
         source += query_str
         source += self.suffix
-        print(source)
         return source
