@@ -9,7 +9,7 @@ from .artifact import test_artfifact_saving_and_loading
 
 def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi_stream=False, return_stream=False):
     if inputs is not None:
-        multi_stream = MultiStream({"test": inputs})
+        multi_stream = MultiStream.from_iterables({"test": inputs}, copying=True)
         output_multi_stream = operator(multi_stream)
     else:
         output_multi_stream = operator()

@@ -13,7 +13,15 @@ instance_targets = [
     {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
 ]
 
-global_target = {"accuracy": 0.33, "score": 0.33, "score_name": "accuracy"}
+global_target = {
+    "accuracy": 0.33,
+    "score": 0.33,
+    "score_name": "accuracy",
+    "accuracy_ci_low": 0.0,
+    "accuracy_ci_high": 1.0,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+}
 
 outputs = test_metric(
     metric=metric,
