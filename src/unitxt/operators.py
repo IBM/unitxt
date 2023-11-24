@@ -116,7 +116,7 @@ class MapInstanceValues(StreamInstanceOperator):
                                 value[i] = mapper[val]  # replace just that member of value (value is a list)
                                 dict_set(instance, key, value, use_dpath=self.use_query)
                     else:  # field is a list, and process_every_value == False
-                        if self.strict:  # whole lists can not be mapped by a string to something mapper
+                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
                             raise KeyError(
                                 f"A whole list ({value}) in the instance can not be mapped by a field mapper."
                             )

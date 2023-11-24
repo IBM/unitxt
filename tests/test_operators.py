@@ -45,6 +45,8 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(input_dict, output_dict)
 
     def test_map_instance_values(self):
+        mappers = {"a": {"1": "hi", "2": "bye"}}
+
         inputs = [
             {"a": "1", "b": "2"},
             {"a": "2", "b": "3"},
@@ -55,42 +57,59 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": "3"},
         ]
 
+        # simple value substitute
         test_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
+            operator=MapInstanceValues(mappers=mappers),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
+        # process_every_value=True would not accept non-list inputs
         with self.assertRaises(ValueError):
             test_operator(
-                operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True),
+                operator=MapInstanceValues(mappers=mappers, process_every_value=True),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
 
-        with self.assertRaises(ValueError):
-            test_operator(
-                operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
-                inputs=inputs + [{"a": "3", "b": "4"}],
-                targets=targets,
-                tester=self,
-            )
+        # strict is True by default, input value "3" in field "a" is missing from the mapper of "a"
+        with self.assertRaises(KeyError) as ke:
+            operator = MapInstanceValues(mappers=mappers)
+            operator.process(instance={"a": "3", "b": "4"})
 
         inputs_p_e_v = [
             {"a": [1, 2, 3, 4], "b": 2},
-            # {"a": 2, "b": 3},
-        ]
-
-        inputs_n_p_e_v = [
-            {"a": [1, 2, 3, 4], "b": 2},
-            {"a": 2, "b": 3},
+            {"a": [2], "b": 3},
         ]
 
         targets_p_e_v = [
             {"a": ["hi", "bye", 3, 4], "b": 2},
-            # {"a": "bye", "b": 3},
+            {"a": ["bye"], "b": 3},
+        ]
+
+        # simple mapping of individual elements in the list. strict is False here, to ignore absence of "3" from the mapper of "a"
+        test_operator(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True, strict=False),
+            inputs=inputs_p_e_v,
+            targets=targets_p_e_v,
+            tester=self,
+        )
+
+        # simple mapping of individual elements in the list. with strict=True, the absence of "3" from the mapper of "a" is not overlooked
+        with self.assertRaises(KeyError):
+            operator = MapInstanceValues(mappers=mappers, process_every_value=True)
+            operator.process(instance={"a": [1, 2, 3, 4], "b": 2})
+
+        # input list can not be ignored with strict=True, and process_every_value=False
+        with self.assertRaises(KeyError):
+            operator = MapInstanceValues(mappers=mappers, strict=True, process_every_value=False)
+            operator.process(instance={"a": [1, 2, 3, 4], "b": 2})
+
+        inputs_n_p_e_v = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": 2, "b": 3},
         ]
 
         targets_n_p_e_v = [
@@ -98,41 +117,13 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
+        # with strict=False, and process_every_value=False, lists are ignored
         test_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True, strict=False),
-            inputs=inputs_p_e_v,
-            targets=targets_p_e_v,
-            tester=self,
-        )
-
-        with self.assertRaises(ValueError):
-            test_operator(
-                operator=MapInstanceValues(
-                    mappers={"a": {"hi": "ciao", "2": "bye", "3": "seeya"}}, process_every_value=True, strict=True
-                ),
-                inputs=inputs_p_e_v,
-                targets=targets_p_e_v,
-                tester=self,
-            )
-
-        test_operator(
-            operator=MapInstanceValues(
-                mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=False, strict=False
-            ),
+            operator=MapInstanceValues(mappers=mappers, process_every_value=False, strict=False),
             inputs=inputs_n_p_e_v,
             targets=targets_n_p_e_v,
             tester=self,
         )
-
-        with self.assertRaises(ValueError):
-            test_operator(
-                operator=MapInstanceValues(
-                    mappers={"a": {"1": "hi", "2": "bye"}, "b": {"2": "ciao"}}, process_every_value=False, strict=True
-                ),
-                inputs=inputs_n_p_e_v,
-                targets=targets_n_p_e_v,
-                tester=self,
-            )
 
     def test_map_instance_values_without_tester(self):
         inputs = [
