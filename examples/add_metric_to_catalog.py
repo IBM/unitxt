@@ -15,6 +15,7 @@ data = [
 ]
 
 for d in data:
+    d["additional_inputs"] = {}
     d["metrics"] = ["metrics.accuracy"]
     d["postprocessors"] = ["processors.to_string"]
 
