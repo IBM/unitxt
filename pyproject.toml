@@ -23,3 +23,7 @@ profile = "black"
 extend_skip_glob = ["venv"]
 src_paths = ["isort", "test"]
 skip = ["src/unitxt/dataset.py", "src/unitxt/metric.py"]
+
+[tool.pydocstyle]
+convention = "google"
+add_select = ["D101"]

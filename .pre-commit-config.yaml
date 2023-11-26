@@ -7,15 +7,21 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
-    -   id: check-added-large-files
--   repo: https://github.com/psf/black
-    rev: 22.10.0
-    hooks:
-    -   id: black
+    -   id: check-json
+    # -   id: check-added-large-files
+
 -   repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.10.0  # Use the specific version you desire
     hooks:
     -   id: isort
+        args: ['--profile', 'black', '--line-length', '88']
+
+-   repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+    -   id: black
+        args: [--line-length=88]
+
 -   repo: https://github.com/ibm/detect-secrets
     # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
     # You are encouraged to use static refs such as tags, instead of branch name
@@ -30,3 +36,41 @@ repos:
         # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
         # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
         args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]
+
+# -   repo: https://github.com/asottile/blacken-docs
+#     rev: v1.10.0  # Update this to the version you want
+#     hooks:
+#     -   id: blacken-docs
+
+-   repo: https://github.com/myint/autoflake
+    rev: v1.4  # Use the ref you want to point at
+    hooks:
+    -   id: autoflake
+        args: ['--remove-all-unused-imports', '--in-place']
+        exclude: ^src/unitxt/metric\.py|src/unitxt/dataset\.py|src/unitxt/blocks\.py|src/unitxt/__init__\.py
+
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+    -   id: flake8
+        args: ['--exclude=dataset.py,metric.py,blocks.py,test_dataclass.py,__init__.py',  '--max-line-length=88', '--ignore=E501,W503,E203,W605,E722']
+        files: ^src/|prepare/|tests/
+
+# -   repo: https://github.com/PyCQA/bandit
+#     rev: 1.7.0  # Update this to the version you want
+#     hooks:
+#     -   id: bandit
+
+-   repo: https://github.com/myint/docformatter
+    rev: v1.4  # Update this to the version you want
+    hooks:
+    -   id: docformatter
+        args: ['--pre-summary-newline', '--in-place']
+
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 5.1.1  # Use the ref you want to point at
+    hooks:
+    -   id: pydocstyle
+        args:
+        - --select= #D101
+        files: ^src/
