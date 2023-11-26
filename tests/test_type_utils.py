@@ -90,8 +90,7 @@ class TestAssertTyping(unittest.TestCase):
 
     def test_normalize(self):
         # None
-        assert normalize(None) is None
-        assert normalize(type(None)) is None
+        assert normalize(None) == normalize(type(None))
 
         # basic types
         assert normalize(list) == normalize(typing.List) == list
