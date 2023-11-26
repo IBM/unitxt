@@ -31,7 +31,7 @@ instance_targets = [
     {"f1": 0, "precision": 0, "recall": 0, "score": 0, "score_name": "f1"},
 ]
 
-# Currently rename fields does not delete the current fields,
+# Currently CopyFields does not delete the source fields,
 # so we get both "precision" and "precision_overlap_with_context" in results
 
 global_target = {
