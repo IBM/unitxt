@@ -1115,10 +1115,9 @@ class TestOperators(unittest.TestCase):
         ]
 
         with self.assertRaises(ValueError):
-            outputs = apply_operator(
+            _ = apply_operator(
                 operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs
             )
-        return outputs
 
     def test_rename_fields(self):
         inputs = [
