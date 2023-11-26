@@ -118,10 +118,28 @@ class FlattenInstances(StreamInstanceOperator):
 
 class AddFields(StreamInstanceOperator):
     """
-    Adds specified fields to each instance in a stream.
+    Adds specified fields to each instance in a given stream or all streams (default)
+    If fields exist, updates them.
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
+        use_query (bool) : Use '/' to access inner fields
+        use_deepcopy (bool) : Deep copy the input value to avoid later modifications
+
+    Examples:
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
+        AddFields(fields={"classes": ["positive","negatives"]})
+
+        # Add a 'start' field under the 'span' field with a value of 0 to all streams
+        AddFields(fields={"span/start": 0}
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
+        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+
+        # Add a 'classes' field on a given list, prevent modification of original list
+        # from changing the instance.
+        AddFields(fields={"classes": alist}), use_deepcopy=True)
     """
 
     fields: Dict[str, object]
@@ -383,6 +401,27 @@ class JoinStr(FieldOperator):
 
 
 class Apply(StreamInstanceOperator):
+
+    """A class used to apply a python function and store the result in a field.
+
+    Args:
+        function (str): name of function.
+        to_field (str): the field to store the result
+        additional arguments are field names passed to the function
+
+    Examples:
+
+    Store in field  "b" the uppercase string of the value in field "a"
+    Apply("a", function=str.upper, to_field="b")
+
+    Dump the json representation of field "t" and store back in the same field.
+    Apply("t", function=json.dumps, to_field="t")
+
+    Set the time in a field 'b'.
+    Apply(function=time.time, to_field="b")
+
+    """
+
     __allow_unexpected_arguments__ = True
     function: Callable = NonPositionalField(required=True)
     to_field: str = NonPositionalField(required=True)
