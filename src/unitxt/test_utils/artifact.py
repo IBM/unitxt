@@ -10,7 +10,9 @@ TEMP_NAME = "tmp_name"
 
 def test_artfifact_saving_and_loading(artifact, tester=None):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(artifact, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
+        add_to_catalog(
+            artifact, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False
+        )
         register_local_catalog(tmp_dir)
         loaded_artifact, _ = fetch_artifact(TEMP_NAME)
         if tester is not None:

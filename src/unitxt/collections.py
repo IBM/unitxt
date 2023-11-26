@@ -43,7 +43,11 @@ class ItemPicker(Artifact):
     def __call__(self, collection: Collection):
         try:
             return collection[int(self.item)]
-        except (SyntaxError, KeyError, ValueError) as e:  # in case picking from a dictionary
+        except (
+            SyntaxError,
+            KeyError,
+            ValueError,
+        ):  # in case picking from a dictionary
             return collection[self.item]
 
 

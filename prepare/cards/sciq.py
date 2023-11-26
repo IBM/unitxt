@@ -1,30 +1,10 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    InputOutputTemplate,
-    LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
-    TaskCard,
-    TemplatesList,
-)
+from src.unitxt.blocks import AddFields, FormTask, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
-    CopyFields,
-    IndexOf,
-    JoinStr,
-    ListFieldValues,
-    RenameFields,
-    ShuffleFieldValues,
-    TakeByField,
-    ZipFieldValues,
-)
+from src.unitxt.operators import IndexOf, ListFieldValues, ShuffleFieldValues
 from src.unitxt.test_utils.card import test_card
 
 # import huggingface_hub
@@ -43,7 +23,10 @@ card = TaskCard(
     loader=LoadHF(path="sciq"),
     preprocess_steps=[
         AddFields({"numbering": numbering, "topic": "physical commonsense"}),
-        ListFieldValues(fields=["distractor1", "distractor2", "distractor3", "correct_answer"], to_field="choices"),
+        ListFieldValues(
+            fields=["distractor1", "distractor2", "distractor3", "correct_answer"],
+            to_field="choices",
+        ),
         ShuffleFieldValues(field="choices"),
         IndexOf(search_in="choices", index_of="correct_answer", to_field="index"),
         # ZipFieldValues(fields=['sol1', 'sol2'], to_field='choices'),
@@ -63,4 +46,4 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.context.all",
 )
 test_card(card)
-add_to_catalog(card, f"cards.sciq", overwrite=True)
+add_to_catalog(card, "cards.sciq", overwrite=True)

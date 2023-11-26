@@ -1,28 +1,10 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    InputOutputTemplate,
-    LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
-    TaskCard,
-    TemplatesList,
-)
+from src.unitxt.blocks import AddFields, FormTask, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
-    CopyFields,
-    IndexOf,
-    JoinStr,
-    RenameFields,
-    TakeByField,
-    ZipFieldValues,
-)
+from src.unitxt.operators import IndexOf
 from src.unitxt.test_utils.card import test_card
 
 numbering = tuple(str(x) for x in range(200))
@@ -36,7 +18,11 @@ card = TaskCard(
         AddFields({"numbering": numbering}),
         IndexOf(search_in="numbering", index_of="label", to_field="index"),
         *multiple_choice_preprocess(
-            question="ctx", numbering="numbering", choices="endings", topic="activity_label", label_index="index"
+            question="ctx",
+            numbering="numbering",
+            choices="endings",
+            topic="activity_label",
+            label_index="index",
         ),
     ],
     task=FormTask(
@@ -46,4 +32,4 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.original.all",
 )
 test_card(card)
-add_to_catalog(card, f"cards.hellaswag", overwrite=True)
+add_to_catalog(card, "cards.hellaswag", overwrite=True)

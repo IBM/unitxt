@@ -7,7 +7,10 @@ from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="super_glue", name="wsc"),
-    preprocess_steps=["splitters.small_no_test", *addClassificationChoices("label", {"0": "False", "1": "True"})],
+    preprocess_steps=[
+        "splitters.small_no_test",
+        *addClassificationChoices("label", {"0": "False", "1": "True"}),
+    ],
     task=FormTask(
         inputs=["choices", "text", "span1_text", "span2_text"],
         outputs=["label"],

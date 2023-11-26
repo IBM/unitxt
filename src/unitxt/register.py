@@ -1,4 +1,3 @@
-import copy
 import importlib
 import inspect
 import os
@@ -31,7 +30,9 @@ def _unregister_catalog(catalog: LocalCatalog):
 
 def register_local_catalog(catalog_path: str):
     assert os.path.exists(catalog_path), f"Catalog path {catalog_path} does not exist."
-    assert os.path.isdir(catalog_path), f"Catalog path {catalog_path} is not a directory."
+    assert os.path.isdir(
+        catalog_path
+    ), f"Catalog path {catalog_path} is not a directory."
     _register_catalog(LocalCatalog(location=catalog_path))
 
 
@@ -59,7 +60,11 @@ def _register_all_artifacts():
     file_name = os.path.basename(__file__)
 
     for file in os.listdir(dir):
-        if file.endswith(".py") and file not in non_registered_files and file != file_name:
+        if (
+            file.endswith(".py")
+            and file not in non_registered_files
+            and file != file_name
+        ):
             module_name = file.replace(".py", "")
 
             module = importlib.import_module("." + module_name, __package__)

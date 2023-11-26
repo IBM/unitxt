@@ -12,7 +12,7 @@ class TestArtifactRecovery(unittest.TestCase):
             "demos_pool_size": 100,
             "num_demos": 0,
         }
-        artifact = Artifact.from_dict(args)
+        Artifact.from_dict(args)
 
     def test_bad_artifact_recovery_missing_type(self):
         args = {
@@ -22,7 +22,7 @@ class TestArtifactRecovery(unittest.TestCase):
             "num_demos": 0,
         }
         with self.assertRaises(MissingArtifactType):
-            artifact = Artifact.from_dict(args)
+            Artifact.from_dict(args)
 
     def test_bad_artifact_recovery_bad_type(self):
         args = {
@@ -33,10 +33,10 @@ class TestArtifactRecovery(unittest.TestCase):
             "num_demos": 0,
         }
         with self.assertRaises(UnrecognizedArtifactType):
-            artifact = Artifact.from_dict(args)
+            Artifact.from_dict(args)
 
         try:
-            artifact = Artifact.from_dict(args)
+            Artifact.from_dict(args)
         except Exception as e:
             print(e)
 
@@ -45,10 +45,10 @@ class TestArtifactRecovery(unittest.TestCase):
             "type": "dummy_not_exist",
         }
         with self.assertRaises(UnrecognizedArtifactType):
-            artifact = Artifact.from_dict(args)
+            Artifact.from_dict(args)
 
         try:
-            artifact = Artifact.from_dict(args)
+            Artifact.from_dict(args)
         except UnrecognizedArtifactType as e:
             print("The error message (not a real error):", e)
 
@@ -58,4 +58,4 @@ class TestArtifactRecovery(unittest.TestCase):
         args = {
             "type": "dummy_exist_for_loading",
         }
-        artifact = Artifact.from_dict(args)
+        Artifact.from_dict(args)

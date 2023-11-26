@@ -1,11 +1,9 @@
 import collections
 import importlib
-import inspect
 import uuid
 from abc import abstractmethod
 from collections import Counter
 from copy import deepcopy
-from dataclasses import field
 from itertools import zip_longest
 from typing import (
     Any,
@@ -20,10 +18,9 @@ from typing import (
 )
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField, OptionalField
+from .dataclass import Field, NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
-    MultiStream,
     MultiStreamOperator,
     PagedStreamOperator,
     SingleStreamOperator,
@@ -59,7 +56,8 @@ class IterableSource(StreamSource):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
+    """
+    A class used to map instance values into a stream.
 
     This class is a type of StreamInstanceOperator,
     it maps values of instances in a stream using predefined mappers.
@@ -80,11 +78,17 @@ class MapInstanceValues(StreamInstanceOperator):
     def verify(self):
         # make sure the mappers are valid
         for key, mapper in self.mappers.items():
-            assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
+            assert isinstance(
+                mapper, dict
+            ), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
             for k, v in mapper.items():
-                assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
+                assert isinstance(
+                    k, str
+                ), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
@@ -102,7 +106,8 @@ class MapInstanceValues(StreamInstanceOperator):
 
 class FlattenInstances(StreamInstanceOperator):
     """
-    Flattens each instance in a stream, making nested dictionary entries into top-level entries.
+    Flattens each instance in a stream, making nested dictionary entries into
+    top-level entries.
 
     Args:
         parent_key (str): A prefix to use for the flattened keys. Defaults to an empty string.
@@ -112,7 +117,9 @@ class FlattenInstances(StreamInstanceOperator):
     parent_key: str = ""
     sep: str = "_"
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
@@ -128,7 +135,9 @@ class AddFields(StreamInstanceOperator):
     use_query: bool = False
     use_deepcopy: bool = False
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         if self.use_query:
             for key, value in self.fields.items():
                 if self.use_deepcopy:
@@ -151,7 +160,9 @@ class RemoveFields(StreamInstanceOperator):
 
     fields: List[str]
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         for field in self.fields:
             del instance[field]
         return instance
@@ -179,14 +190,18 @@ class FieldOperator(StreamInstanceOperator):
     def verify(self):
         super().verify()
 
-        assert self.field is not None or self.field_to_field is not None, "Must supply a field to work on"
+        assert (
+            self.field is not None or self.field_to_field is not None
+        ), "Must supply a field to work on"
         assert (
             self.to_field is None or self.field_to_field is None
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
-        assert self._field_to_field, f"the from and to fields must be defined got: {self._field_to_field}"
+        assert (
+            self._field_to_field
+        ), f"the from and to fields must be defined got: {self._field_to_field}"
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
@@ -203,7 +218,9 @@ class FieldOperator(StreamInstanceOperator):
             except AttributeError:
                 self._field_to_field = self.field_to_field
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
@@ -214,29 +231,39 @@ class FieldOperator(StreamInstanceOperator):
                     not_exist_ok=self.not_exist_ok,
                 )
             except Exception as e:
-                raise ValueError(f"Failed to get '{from_field}' from {instance} due to : {e}") from e
+                raise ValueError(
+                    f"Failed to get '{from_field}' from {instance} due to : {e}"
+                ) from e
             try:
                 if self.process_every_value:
                     new_value = [self.process_value(value) for value in old_value]
                 else:
                     new_value = self.process_value(old_value)
             except Exception as e:
-                raise ValueError(f"Failed to process '{from_field}' from {instance} due to : {e}") from e
+                raise ValueError(
+                    f"Failed to process '{from_field}' from {instance} due to : {e}"
+                ) from e
             if self.use_query and is_subpath(from_field, to_field):
                 dict_delete(instance, from_field)
-            dict_set(instance, to_field, new_value, use_dpath=self.use_query, not_exist_ok=True)
+            dict_set(
+                instance,
+                to_field,
+                new_value,
+                use_dpath=self.use_query,
+                not_exist_ok=True,
+            )
         return instance
 
 
 class RenameFields(FieldOperator):
-    """
-    Renames fields
-    """
+    """Renames fields."""
 
     def process_value(self, value: Any) -> Any:
         return value
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         res = super().process(instance=instance, stream_name=stream_name)
         vals = [x[1] for x in self._field_to_field]
         for key, _ in self._field_to_field:
@@ -262,11 +289,13 @@ class AddConstant(FieldOperator):
 
 class Augmentor(StreamInstanceOperator):
     """
-    A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
+    A stream that augments the values of either the task input fields before
+    rendering with the template,  or the  input passed to the model after
+    rendering of the template.
+
     Args:
         augment_model_input: Whether to augment the input to the model.
         augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the FormTask operator.
-
     """
 
     augment_task_input: bool = False
@@ -290,9 +319,13 @@ class Augmentor(StreamInstanceOperator):
         pass
 
     def set_task_input_fields(self, task_input_fields: List[str]):
-        self._task_input_fields = ["inputs/" + task_input_field for task_input_field in task_input_fields]
+        self._task_input_fields = [
+            "inputs/" + task_input_field for task_input_field in task_input_fields
+        ]
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         if self.augment_task_input:
             assert (
                 len(self._task_input_fields) > 0
@@ -313,7 +346,7 @@ class Augmentor(StreamInstanceOperator):
                     default="",
                     not_exist_ok=False,
                 )
-            except TypeError as e:
+            except TypeError:
                 raise TypeError(f"Failed to get {field} from {instance}")
 
             # We are setting a nested seed based on the value processed, to ensure that
@@ -341,7 +374,9 @@ class NullAugmentor(Augmentor):
 class AugmentWhitespace(Augmentor):
     """
     Augments the inputs by replace existing whitespace with other whitespace.
-    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
+
+    Currently each whitespace is replaced by a random choice of 1-3
+    whitespace charaters (spcae, tab, newline).
     """
 
     def process_value(self, value: Any) -> Any:
@@ -359,9 +394,7 @@ class AugmentWhitespace(Augmentor):
 
 
 class ShuffleFieldValues(FieldOperator):
-    """
-    Shuffles an iterable value
-    """
+    """Shuffles an iterable value."""
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
@@ -404,7 +437,7 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[module_name]
+            return __builtins__[splitted[0]]
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
@@ -423,7 +456,9 @@ class Apply(StreamInstanceOperator):
             self.function = self.str_to_function(self.function)
         self._init_dict["function"] = self.function_to_str(self.function)
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         argv = [instance[arg] for arg in self._argv]
         kwargs = {key: instance[val] for key, val in self._kwargs}
 
@@ -434,15 +469,15 @@ class Apply(StreamInstanceOperator):
 
 
 class ListFieldValues(StreamInstanceOperator):
-    """
-    Concatanates values of multiple fields into a list to list(fields)
-    """
+    """Concatanates values of multiple fields into a list to list(fields)"""
 
     fields: str
     to_field: str
     use_query: bool = False
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         values = []
         for field in self.fields:
             values.append(dict_get(instance, field, use_dpath=self.use_query))
@@ -451,16 +486,16 @@ class ListFieldValues(StreamInstanceOperator):
 
 
 class ZipFieldValues(StreamInstanceOperator):
-    """
-    Zips values of multiple fields similar to list(zip(*fields))
-    """
+    """Zips values of multiple fields similar to list(zip(*fields))"""
 
     fields: str
     to_field: str
     longest: bool = False
     use_query: bool = False
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         values = []
         for field in self.fields:
             values.append(dict_get(instance, field, use_dpath=self.use_query))
@@ -473,16 +508,17 @@ class ZipFieldValues(StreamInstanceOperator):
 
 
 class IndexOf(StreamInstanceOperator):
-    """
-    Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)
-    """
+    """Finds the location of one value in another (iterable) value similar to
+    to_field=search_in.index(index_of)"""
 
     search_in: str
     index_of: str
     to_field: str
     use_query: bool = False
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         lst = dict_get(instance, self.search_in, use_dpath=self.use_query)
         item = dict_get(instance, self.index_of, use_dpath=self.use_query)
         instance[self.to_field] = lst.index(item)
@@ -490,9 +526,8 @@ class IndexOf(StreamInstanceOperator):
 
 
 class TakeByField(StreamInstanceOperator):
-    """
-    Takes value from one field based on another field similar to field[index]
-    """
+    """Takes value from one field based on another field similar to
+    field[index]"""
 
     field: str
     index: str
@@ -503,7 +538,9 @@ class TakeByField(StreamInstanceOperator):
         if self.to_field is None:
             self.to_field = self.field
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         value = dict_get(instance, self.field, use_dpath=self.use_query)
         index_value = dict_get(instance, self.index, use_dpath=self.use_query)
         instance[self.to_field] = value[index_value]
@@ -526,7 +563,9 @@ class CopyFields(FieldOperator):
 class AddID(StreamInstanceOperator):
     id_field_name: str = "id"
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         instance[self.id_field_name] = str(uuid.uuid4()).replace("-", "")
         return instance
 
@@ -548,8 +587,8 @@ class CastFields(StreamInstanceOperator):
         "str": str,
         "bool": bool,
     }
-    fields: Dict[str, str] = field(default_factory=dict)
-    failure_defaults: Dict[str, object] = field(default_factory=dict)
+    fields: Dict[str, str] = Field(default_factory=dict)
+    failure_defaults: Dict[str, object] = Field(default_factory=dict)
     use_nested_query: bool = False
     cast_multiple: bool = False
 
@@ -566,7 +605,9 @@ class CastFields(StreamInstanceOperator):
     def _cast_multiple(self, values, type, field):
         values = [self._cast_single(value, type, field) for value in values]
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         for field, type in self.fields.items():
             value = dict_get(instance, field, use_dpath=self.use_nested_query)
             if self.cast_multiple:
@@ -596,7 +637,9 @@ class DivideAllFieldsBy(StreamInstanceOperator):
     strict: bool = False
     recursive: bool = True
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         return recursive_divide(instance, self.divisor, strict=self.strict)
 
 
@@ -620,7 +663,8 @@ class ArtifactFetcherMixin:
 
 class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """
-    Applies value operators to each instance in a stream based on specified fields.
+    Applies value operators to each instance in a stream based on specified
+    fields.
 
     Args:
         value_field (str): The field containing the value to be operated on.
@@ -634,7 +678,9 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     default_operators: List[str] = None
     fields_to_treat_as_list: List[str] = NonPositionalField(default_factory=list)
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
             assert (
@@ -659,7 +705,8 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
 class FilterByValues(SingleStreamOperator):
     """
-    Filters a stream, yielding only instances that match specified values in the provided fields.
+    Filters a stream, yielding only instances that match specified values in
+    the provided fields.
 
     Args:
         values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
@@ -671,8 +718,10 @@ class FilterByValues(SingleStreamOperator):
         for instance in stream:
             filter = False
             for key, value in self.required_values.items():
-                if not key in instance:
-                    raise ValueError(f"Required filter field ('{key}') in FilterByValues is not found in {instance}")
+                if key not in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
+                    )
                 if instance[key] != value:
                     filter = True
             if not filter:
@@ -720,7 +769,8 @@ class ExtractFieldValues(MultiStreamOperator):
 
     def verify(self):
         assert (
-            self.overall_top_frequency_percent <= 100 and self.overall_top_frequency_percent >= 0
+            self.overall_top_frequency_percent <= 100
+            and self.overall_top_frequency_percent >= 0
         ), "'overall_top_frequency_percent' must be between 0 and 100"
         assert (
             self.min_frequency_percent <= 100 and self.min_frequency_percent >= 0
@@ -734,14 +784,20 @@ class ExtractFieldValues(MultiStreamOperator):
         stream = multi_stream[self.stream_name]
         all_values = []
         for instance in stream:
-            if (not isinstance(instance[self.field], list)) and (self.process_every_value == True):
+            if (not isinstance(instance[self.field], list)) and (
+                self.process_every_value is True
+            ):
                 raise ValueError(
                     "'process_every_field' is allowed to change to 'True' only for fields whose contents are lists"
                 )
-            if (not isinstance(instance[self.field], list)) or (self.process_every_value == False):
+            if (not isinstance(instance[self.field], list)) or (
+                self.process_every_value is False
+            ):
                 # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
                 all_values.append(
-                    (*instance[self.field],) if isinstance(instance[self.field], list) else instance[self.field]
+                    (*instance[self.field],)
+                    if isinstance(instance[self.field], list)
+                    else instance[self.field]
                 )  # convert to a tuple if list, to enable the use of Counter which would not accept
                 # a list as an entity to count its occurrences
             else:
@@ -763,7 +819,10 @@ class ExtractFieldValues(MultiStreamOperator):
             min_frequency = self.min_frequency_percent * len(all_values) / 100.0
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
-        values_to_keep = [[*ele[0]] if isinstance(ele[0], tuple) else ele[0] for ele in values_and_counts]
+        values_to_keep = [
+            [*ele[0]] if isinstance(ele[0], tuple) else ele[0]
+            for ele in values_and_counts
+        ]
         for name in multi_stream:
             for instance in multi_stream[name]:
                 instance[self.to_field] = values_to_keep
@@ -772,7 +831,8 @@ class ExtractFieldValues(MultiStreamOperator):
 
 class FilterByListsOfValues(SingleStreamOperator):
     """
-    Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
+    Filters a stream, yielding only instances that  whose field values are
+    included in the specified value lists.
 
     Args:
         required_values (Dict[str, List]): For each field, the list of values that instances should match to be included in the output.
@@ -784,13 +844,15 @@ class FilterByListsOfValues(SingleStreamOperator):
         super().verify()
         for key, value in self.required_values.items():
             if not isinstance(value, list):
-                raise ValueError(f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'")
+                raise ValueError(
+                    f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'"
+                )
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         for instance in stream:
             filter = False
             for key, value in self.required_values.items():
-                if not key in instance:
+                if key not in instance:
                     raise ValueError(
                         f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
                     )
@@ -812,10 +874,14 @@ class Intersect(FieldOperator):
     def verify(self):
         super().verify()
         if self.process_every_value:
-            raise ValueError(f"'process_every_value=True' is not supported in Intersect operator")
+            raise ValueError(
+                "'process_every_value=True' is not supported in Intersect operator"
+            )
 
         if not isinstance(self.allowed_values, list):
-            raise ValueError(f"The allowed_values is not a list but '{self.allowed_values}'")
+            raise ValueError(
+                f"The allowed_values is not a list but '{self.allowed_values}'"
+            )
 
     def process_value(self, value: Any) -> Any:
         if not isinstance(value, list):
@@ -835,15 +901,19 @@ class RemoveValues(FieldOperator):
     def verify(self):
         super().verify()
         if self.process_every_value:
-            raise ValueError(f"'process_every_value=True' is not supported in RemoveValues operator")
+            raise ValueError(
+                "'process_every_value=True' is not supported in RemoveValues operator"
+            )
 
         if not isinstance(self.unallowed_values, list):
-            raise ValueError(f"The unallowed_values is not a list but '{self.unallowed_values}'")
+            raise ValueError(
+                f"The unallowed_values is not a list but '{self.unallowed_values}'"
+            )
 
     def process_value(self, value: Any) -> Any:
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
-        return [e for e in value if not e in self.unallowed_values]
+        return [e for e in value if e not in self.unallowed_values]
 
 
 class Unique(SingleStreamReducer):
@@ -854,7 +924,7 @@ class Unique(SingleStreamReducer):
         fields (List[str]): The fields that should be unique in each instance.
     """
 
-    fields: List[str] = field(default_factory=list)
+    fields: List[str] = Field(default_factory=list)
 
     @staticmethod
     def to_tuple(instance: dict, fields: List[str]) -> tuple:
@@ -877,13 +947,14 @@ class Unique(SingleStreamReducer):
 
 class SplitByValue(MultiStreamOperator):
     """
-    Splits a MultiStream into multiple streams based on unique values in specified fields.
+    Splits a MultiStream into multiple streams based on unique values in
+    specified fields.
 
     Args:
         fields (List[str]): The fields to use when splitting the MultiStream.
     """
 
-    fields: List[str] = field(default_factory=list)
+    fields: List[str] = Field(default_factory=list)
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         uniques = Unique(fields=self.fields)(multi_stream)
@@ -893,9 +964,15 @@ class SplitByValue(MultiStreamOperator):
         for stream_name, stream in multi_stream.items():
             stream_unique_values = uniques[stream_name]
             for unique_values in stream_unique_values:
-                filtering_values = {field: value for field, value in zip(self.fields, unique_values)}
-                filtered_streams = FilterByValues(required_values=filtering_values)._process_single_stream(stream)
-                filtered_stream_name = stream_name + "_" + nested_tuple_to_string(unique_values)
+                filtering_values = {
+                    field: value for field, value in zip(self.fields, unique_values)
+                }
+                filtered_streams = FilterByValues(
+                    required_values=filtering_values
+                )._process_single_stream(stream)
+                filtered_stream_name = (
+                    stream_name + "_" + nested_tuple_to_string(unique_values)
+                )
                 result[filtered_stream_name] = filtered_streams
 
         return MultiStream(result)
@@ -903,7 +980,8 @@ class SplitByValue(MultiStreamOperator):
 
 class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
     """
-    Applies stream operators to a stream based on specified fields in each instance.
+    Applies stream operators to a stream based on specified fields in each
+    instance.
 
     Args:
         field (str): The field containing the operators to be applied.
@@ -925,7 +1003,9 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
 
         for operator_name in operators:
             operator = self.get_artifact(operator_name)
-            assert isinstance(operator, StreamingOperator), f"Operator {operator_name} must be a SingleStreamOperator"
+            assert isinstance(
+                operator, StreamingOperator
+            ), f"Operator {operator_name} must be a SingleStreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
 
@@ -934,7 +1014,8 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
 
 class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     """
-    Applies metric operators to a stream based on a metric field specified in each instance.
+    Applies metric operators to a stream based on a metric field specified in
+    each instance.
 
     Args:
         metric_field (str): The field containing the metrics to be applied.
@@ -951,7 +1032,9 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
-            raise RuntimeError(f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'.")
+            raise RuntimeError(
+                f"Missing metric names in field '{self.metric_field}' and instance '{first_instance}'."
+            )
 
         if isinstance(metric_names, str):
             metric_names = [metric_names]
@@ -964,12 +1047,16 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
 
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
-            assert isinstance(metric, Metric), f"Operator {metric_name} must be a Metric"
+            assert isinstance(
+                metric, Metric
+            ), f"Operator {metric_name} must be a Metric"
 
             if not self.calc_confidence_intervals:
                 if isinstance(metric, MetricWithConfidenceInterval):
                     metric.disable_confidence_interval_calculation()
-                elif isinstance(metric, MetricPipeline) and isinstance(metric.metric, MetricWithConfidenceInterval):
+                elif isinstance(metric, MetricPipeline) and isinstance(
+                    metric.metric, MetricWithConfidenceInterval
+                ):
                     metric.metric.disable_confidence_interval_calculation()
 
             stream = metric(MultiStream({"tmp": stream}))["tmp"]
@@ -990,8 +1077,13 @@ class AddFieldNamePrefix(StreamInstanceOperator):
     def prepare(self):
         return super().prepare()
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-        return {self.prefix_dict[stream_name] + key: value for key, value in instance.items()}
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
+        return {
+            self.prefix_dict[stream_name] + key: value
+            for key, value in instance.items()
+        }
 
 
 class MergeStreams(MultiStreamOperator):
@@ -1018,7 +1110,13 @@ class MergeStreams(MultiStreamOperator):
                     yield instance
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        return MultiStream({self.new_stream_name: Stream(self.merge, gen_kwargs={"multi_stream": multi_stream})})
+        return MultiStream(
+            {
+                self.new_stream_name: Stream(
+                    self.merge, gen_kwargs={"multi_stream": multi_stream}
+                )
+            }
+        )
 
 
 class Shuffle(PagedStreamOperator):
@@ -1048,7 +1146,9 @@ class EncodeLabels(StreamInstanceOperator):
         self.encoder = {}
         return super()._process_multi_stream(multi_stream)
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         for field in self.fields:
             values = dict_get(instance, field, use_dpath=True)
             if not isinstance(values, list):
@@ -1088,7 +1188,9 @@ class DeterministicBalancer(StreamRefiner):
     fields: List[str]
 
     def signature(self, instance):
-        return str(tuple(dict_get(instance, field, use_dpath=True) for field in self.fields))
+        return str(
+            tuple(dict_get(instance, field, use_dpath=True) for field in self.fields)
+        )
 
     def process(self, stream: Stream, stream_name: str = None) -> Generator:
         counter = collections.Counter()
@@ -1103,7 +1205,9 @@ class DeterministicBalancer(StreamRefiner):
 
         max_total_instances_per_sign = lowest_count
         if self.max_instances is not None:
-            max_total_instances_per_sign = min(lowest_count, self.max_instances // len(counter))
+            max_total_instances_per_sign = min(
+                lowest_count, self.max_instances // len(counter)
+            )
 
         counter = collections.Counter()
 

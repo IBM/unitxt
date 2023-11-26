@@ -8,7 +8,9 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    InputOutputTemplate(input_format="answer the question: {question}", output_format="{answer}"),
+    InputOutputTemplate(
+        input_format="answer the question: {question}", output_format="{answer}"
+    ),
     "templates.qa.open.simple2",
     overwrite=True,
 )

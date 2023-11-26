@@ -9,16 +9,22 @@ depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
 
 def write_section(title, content, label, depth):
     if depth < 0 or depth > len(depth_levels) - 1:
-        raise ValueError(f"Depth should be between 0 and {len(depth_levels)}, Got {depth}")
+        raise ValueError(
+            f"Depth should be between 0 and {len(depth_levels)}, Got {depth}"
+        )
 
     underline_char = depth_levels[depth]
     underline = underline_char * len(title)
-    return f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n{content}\n\n|\n|\n\n"
+    return (
+        f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n{content}\n\n|\n|\n\n"
+    )
 
 
 def write_title(title, label, depth):
     if depth < 0 or depth > len(depth_levels) - 1:
-        raise ValueError(f"Depth should be between 0 and {len(depth_levels)}, Got {depth}")
+        raise ValueError(
+            f"Depth should be between 0 and {len(depth_levels)}, Got {depth}"
+        )
 
     underline_char = depth_levels[depth]
     underline = underline_char * len(title)
@@ -41,7 +47,9 @@ def make_content(artifact, label, all_labels={}):
     class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{class_name}"
     result = f".. note:: ID: ``{label}``  |  Type: :class:`{class_name} <{artifact_class_id}>`\n\n   .. code-block:: json\n\n      "
-    result += json.dumps(artifact, sort_keys=True, indent=4).replace("\n", "\n      ") + "\n"
+    result += (
+        json.dumps(artifact, sort_keys=True, indent=4).replace("\n", "\n      ") + "\n"
+    )
 
     references = []
     for l in all_labels:
@@ -66,7 +74,9 @@ for path, is_dir, depth in custom_walk(start_directory):
 for path, is_dir, depth in custom_walk(start_directory):
     rel_path = path.replace(start_directory, "")
     if is_dir:
-        prints.append(write_title(rel_path.split("/")[-1], rel_path.replace("/", "."), depth + 1))
+        prints.append(
+            write_title(rel_path.split("/")[-1], rel_path.replace("/", "."), depth + 1)
+        )
     else:
         if ".json" in rel_path:
             rel_path = rel_path.replace(".json", "")

@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Dict
 
 from .artifact import Artifact
+from .collections import ListCollection
 
 
 class Instruction(Artifact):
@@ -18,9 +19,6 @@ class TextualInstruction(Instruction):
 
     def __repr__(self):
         return self.text
-
-
-from .collections import ListCollection
 
 
 class InstructionsList(ListCollection):

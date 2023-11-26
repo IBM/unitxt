@@ -1,6 +1,6 @@
 from src.unitxt.blocks import InputOutputTemplate
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import TemplatesDict, TemplatesList
+from src.unitxt.templates import TemplatesList
 
 templates = {
     "mmlu": """The following are multiple choice questions (with answers) about {topic}.\n{sentence1}.\nAnswers: {choices}.\nAnswer:""".strip(),
@@ -16,9 +16,13 @@ templates = {
 
 for k, v in templates.items():
     template = InputOutputTemplate(
-        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+        input_format=v,
+        output_format="{label}",
+        postprocessors=["processors.first_character"],
     )
-    add_to_catalog(template, f"templates.qa.multiple_choice.original.{k}", overwrite=True)
+    add_to_catalog(
+        template, f"templates.qa.multiple_choice.original.{k}", overwrite=True
+    )
 
 # with context
 
@@ -52,14 +56,20 @@ templates_with_context = {
 
 for k, v in templates_with_context.items():
     template = InputOutputTemplate(
-        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+        input_format=v,
+        output_format="{label}",
+        postprocessors=["processors.first_character"],
     )
-    add_to_catalog(template, f"templates.qa.multiple_choice.context.{k}", overwrite=True)
+    add_to_catalog(
+        template, f"templates.qa.multiple_choice.context.{k}", overwrite=True
+    )
 
 
 # context no intro
 templates_context_no_intro = {
-    key: val.replace("The following are multiple choice questions (with answers) about {topic}.", "").strip()
+    key: val.replace(
+        "The following are multiple choice questions (with answers) about {topic}.", ""
+    ).strip()
     for key, val in templates_with_context.items()
 }
 
@@ -72,13 +82,19 @@ templates_context_no_intro = {
 
 for k, v in templates_context_no_intro.items():
     template = InputOutputTemplate(
-        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+        input_format=v,
+        output_format="{label}",
+        postprocessors=["processors.first_character"],
     )
-    add_to_catalog(template, f"templates.qa.multiple_choice.context_no_intro.{k}", overwrite=True)
+    add_to_catalog(
+        template, f"templates.qa.multiple_choice.context_no_intro.{k}", overwrite=True
+    )
 
 # no intro
 templates_no_intro = {
-    key: val.replace("The following are multiple choice questions (with answers) about {topic}.", "").strip()
+    key: val.replace(
+        "The following are multiple choice questions (with answers) about {topic}.", ""
+    ).strip()
     for key, val in templates.items()
 }
 
@@ -88,15 +104,20 @@ templates_no_intro = {
 
 for k, v in templates_no_intro.items():
     template = InputOutputTemplate(
-        input_format=v, output_format="{label}", postprocessors=["processors.first_character"]
+        input_format=v,
+        output_format="{label}",
+        postprocessors=["processors.first_character"],
     )
-    add_to_catalog(template, f"templates.qa.multiple_choice.no_intro.{k}", overwrite=True)
+    add_to_catalog(
+        template, f"templates.qa.multiple_choice.no_intro.{k}", overwrite=True
+    )
 
 # add template aggragations
 template_list = []
 for template_family in ["original", "context_no_intro", "no_intro", "context"]:
     family_list = [
-        f"templates.qa.multiple_choice.{template_family}.{template_type}" for template_type in templates.keys()
+        f"templates.qa.multiple_choice.{template_family}.{template_type}"
+        for template_type in templates.keys()
     ]
     add_to_catalog(
         TemplatesList(family_list),

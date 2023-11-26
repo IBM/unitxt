@@ -64,4 +64,8 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target_with_confidence_intervals,
 )
-add_to_catalog(metric_with_confidence_intervals, "metrics.rouge_with_confidence_intervals", overwrite=True)
+add_to_catalog(
+    metric_with_confidence_intervals,
+    "metrics.rouge_with_confidence_intervals",
+    overwrite=True,
+)

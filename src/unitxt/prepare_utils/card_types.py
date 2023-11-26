@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Union
 from ..card import TaskCard
 from ..instructions import InstructionsDict, InstructionsList
 from ..loaders import Loader
-from ..normalizers import NormalizeListFields
 from ..operator import StreamingOperator
 from ..operators import AddFields, MapInstanceValues, RenameFields
 from ..task import FormTask
@@ -37,12 +36,22 @@ def create_2sentences_classification_card(
     sentence2_col = "sentence2"
     preprocess_steps += [
         *addClassificationChoices(label_name, label2string),
-        RenameFields(field_to_field={inputs[0]: sentence1_col, inputs[1]: sentence2_col}),
+        RenameFields(
+            field_to_field={inputs[0]: sentence1_col, inputs[1]: sentence2_col}
+        ),
     ]
     if task is None:
-        task = FormTask(inputs=["choices"] + [sentence1_col, sentence2_col], outputs=[label_name], metrics=metrics)
+        task = FormTask(
+            inputs=["choices"] + [sentence1_col, sentence2_col],
+            outputs=[label_name],
+            metrics=metrics,
+        )
         return TaskCard(
-            loader=loader, task=task, preprocess_steps=preprocess_steps, templates=templates, instructions=instructions
+            loader=loader,
+            task=task,
+            preprocess_steps=preprocess_steps,
+            templates=templates,
+            instructions=instructions,
         )
 
 
@@ -78,7 +87,13 @@ def create_sentence_classification_card(
         RenameFields(field_to_field={inputs[0]: sentence_col}),
     ]
     if task is None:
-        task = FormTask(inputs=["choices"] + [sentence_col], outputs=[label_name], metrics=metrics)
+        task = FormTask(
+            inputs=["choices"] + [sentence_col], outputs=[label_name], metrics=metrics
+        )
         return TaskCard(
-            loader=loader, task=task, preprocess_steps=preprocess_steps, templates=templates, instructions=instructions
+            loader=loader,
+            task=task,
+            preprocess_steps=preprocess_steps,
+            templates=templates,
+            instructions=instructions,
         )

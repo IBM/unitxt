@@ -1,5 +1,4 @@
 import json
-import logging
 import math
 import os.path
 import tempfile
@@ -16,8 +15,12 @@ TEMP_NAME = "tmp_name"
 
 def test_adding_to_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
-        assert os.path.exists(os.path.join(tmp_dir, TEMP_NAME + ".json")), "Card was not added to catalog"
+        add_to_catalog(
+            card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False
+        )
+        assert os.path.exists(
+            os.path.join(tmp_dir, TEMP_NAME + ".json")
+        ), "Card was not added to catalog"
 
 
 def test_metrics_exist(card):
@@ -27,7 +30,9 @@ def test_metrics_exist(card):
 
 def test_loading_from_catalog(card):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        add_to_catalog(card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False)
+        add_to_catalog(
+            card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False
+        )
         register_local_catalog(tmp_dir)
         card_, _ = fetch_artifact(TEMP_NAME)
         assert json.dumps(card_.to_dict(), sort_keys=True) == json.dumps(
@@ -48,11 +53,17 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 200
 
-    recipe = StandardRecipe(card=card, template_card_index=template_card_index, **kwargs)
+    recipe = StandardRecipe(
+        card=card, template_card_index=template_card_index, **kwargs
+    )
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
             examples = print_recipe_output(
-                recipe, max_steps=max_steps, num_examples=1, print_header=True, print_stream_size=True
+                recipe,
+                max_steps=max_steps,
+                num_examples=1,
+                print_header=True,
+                print_stream_size=True,
             )
     else:
         examples = print_recipe_output(
@@ -66,10 +77,12 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     return examples
 
 
-def print_recipe_output(recipe, max_steps, num_examples, print_header, print_stream_size, streams=None):
+def print_recipe_output(
+    recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
+):
     recipe.set_max_steps(max_steps)
     if print_header:
-        last_step_description_dict = recipe.get_last_step_description()
+        # last_step_description_dict = recipe.get_last_step_description()
         print("=" * 80)
         print("=" * 8)
         print("=" * 8, recipe.get_last_step_description())
@@ -93,7 +106,14 @@ def print_recipe_output(recipe, max_steps, num_examples, print_header, print_str
     return examples
 
 
-def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
+def test_with_eval(
+    card,
+    debug=False,
+    strict=True,
+    exact_match_score=1.0,
+    full_mismatch_score=0.0,
+    **kwargs,
+):
     if type(card.templates) is TemplatesDict:
         for template_card_index in card.templates.keys():
             examples = load_examples_from_standard_recipe(
@@ -109,10 +129,12 @@ def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_m
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
-        predictions.append(example["references"][0] if len(example["references"]) > 0 else [])
+        predictions.append(
+            example["references"][0] if len(example["references"]) > 0 else []
+        )
 
     results = _compute(predictions=predictions, references=examples)
-    if not exact_match_score == None and not math.isclose(
+    if exact_match_score is not None and not math.isclose(
         results[0]["score"]["global"]["groups_mean_score"], exact_match_score
     ):
         message = (
@@ -127,13 +149,23 @@ def test_with_eval(card, debug=False, strict=True, exact_match_score=1.0, full_m
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
-    if not full_mismatch_score == None and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score:
+    if (
+        full_mismatch_score is not None
+        and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score
+    ):
         print(
             f"Warning: metric on random predictions is not {full_mismatch_score}, but {results[0]['score']['global']['groups_mean_score']} "
         )
 
 
-def test_card(card, debug=False, strict=True, exact_match_score=1.0, full_mismatch_score=0.0, **kwargs):
+def test_card(
+    card,
+    debug=False,
+    strict=True,
+    exact_match_score=1.0,
+    full_mismatch_score=0.0,
+    **kwargs,
+):
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)

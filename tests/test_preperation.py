@@ -1,10 +1,9 @@
 import glob
 import importlib.util
 import os
-import sys
 import unittest
 
-from src.unitxt.random_utils import get_seed, set_seed
+from src.unitxt.random_utils import get_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

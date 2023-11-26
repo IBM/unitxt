@@ -2,7 +2,7 @@ import json
 from typing import Any, List
 
 from ..metrics import GlobalMetric, Metric
-from ..stream import MultiStream, Stream
+from ..stream import MultiStream
 from ..type_utils import isoftype
 
 
@@ -27,7 +27,8 @@ def apply_metric(metric: Metric, predictions: List[str], references: List[List[s
     assert isoftype(references, List[Any]), "references must be a list"
 
     test_iterable = [
-        {"prediction": prediction, "references": reference} for prediction, reference in zip(predictions, references)
+        {"prediction": prediction, "references": reference}
+        for prediction, reference in zip(predictions, references)
     ]
     multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
     output_multi_stream = metric(multi_stream)

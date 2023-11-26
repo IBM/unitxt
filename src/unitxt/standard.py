@@ -10,7 +10,7 @@ from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
-from .templates import Template, TemplatesDict
+from .templates import Template
 
 
 # Used to give meaningful name to recipe steps
@@ -71,11 +71,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 raise ValueError(
                     f"max_test_instances must be bigger than loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
                 )
-            if self.max_validation_instances and self.max_validation_instances > self.loader_limit:
+            if (
+                self.max_validation_instances
+                and self.max_validation_instances > self.loader_limit
+            ):
                 raise ValueError(
                     f"max_validation_instances must be bigger than loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
                 )
-            if self.max_train_instances and self.max_train_instances > self.loader_limit:
+            if (
+                self.max_train_instances
+                and self.max_train_instances > self.loader_limit
+            ):
                 raise ValueError(
                     f"max_train_instances must be bigger than loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
@@ -192,10 +198,10 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
 class StandardRecipe(StandardRecipeWithIndexes):
     """
-    This class represents a standard recipe for data processing and preperation.
-    This class can be used to prepare a recipe
-    with all necessary steps, refiners and renderers included. It allows to set various
-    parameters and steps in a sequential manner for preparing the recipe.
+    This class represents a standard recipe for data processing and
+    preperation. This class can be used to prepare a recipe with all necessary
+    steps, refiners and renderers included. It allows to set various parameters
+    and steps in a sequential manner for preparing the recipe.
 
     Attributes:
         card (TaskCard): TaskCard object associated with the recipe.
@@ -230,5 +236,3 @@ class StandardRecipe(StandardRecipeWithIndexes):
         AssertionError: If both template and template_card_index, or instruction and instruction_card_index
             are specified at the same time.
     """
-
-    pass

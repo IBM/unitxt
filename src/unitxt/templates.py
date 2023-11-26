@@ -1,12 +1,13 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from .artifact import Artifact
+from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
-from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
+from .operator import StreamInstanceOperator
 from .random_utils import random
 from .text_utils import split_words
 
@@ -39,10 +40,14 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
     random_reference: bool = False
 
     def verify(self):
-        assert isinstance(self.template, Template), "Template must be an instance of Template"
+        assert isinstance(
+            self.template, Template
+        ), "Template must be an instance of Template"
         assert self.template is not None, "Template must be specified"
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         return self.render(instance)
 
     def render(self, instance: Dict[str, Any]) -> Dict[str, Any]:
@@ -118,7 +123,12 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 
         example = super().render(instance)
 
-        input_str = self.input_prefix + example["source"] + self.input_output_separator + self.output_prefix
+        input_str = (
+            self.input_prefix
+            + example["source"]
+            + self.input_output_separator
+            + self.output_prefix
+        )
 
         if self.instruction is not None:
             source += self.instruction_prefix + self.instruction() + self.demo_separator
@@ -136,7 +146,9 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
             )
 
             if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + input_str + example["target"]):
+                if not self.size_limiter.check(
+                    source + demo_str + input_str + example["target"]
+                ):
                     continue
 
             source += demo_str
@@ -155,7 +167,9 @@ class RenderTemplatedICL(RenderAutoFormatTemplate):
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
@@ -164,7 +178,7 @@ class InputOutputTemplate(Template):
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.input_format, inputs)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{self.input_format}'"
             )
@@ -172,7 +186,7 @@ class InputOutputTemplate(Template):
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.output_format, outputs)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Available outputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
             )
@@ -183,7 +197,9 @@ class InputOutputTemplate(Template):
 
 class YesNoTemplate(Template):
     """
-    A template for generating binary Yes/No questions asking whether an input text is of a specific class.
+    A template for generating binary Yes/No questions asking whether an input
+    text is of a specific class.
+
     input_format:
         Defines the format of the question.
     class_field:
@@ -206,11 +222,15 @@ class YesNoTemplate(Template):
     label_field: str = None
     yes_answer: str = "Yes"
     no_answer: str = "No"
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
         try:
-            data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
+            data = {
+                k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()
+            }
             return self.input_format.format(**data)
         except KeyError as e:
             raise KeyError(
@@ -235,7 +255,11 @@ class YesNoTemplate(Template):
             raise RuntimeError(
                 f"Available outputs are {list(outputs.keys())}, missing required class field: '{self.class_field}'."
             ) from e
-        if not queried_class_names or not isinstance(queried_class_names, list) or not len(queried_class_names) == 1:
+        if (
+            not queried_class_names
+            or not isinstance(queried_class_names, list)
+            or not len(queried_class_names) == 1
+        ):
             raise RuntimeError(
                 f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
             )
@@ -256,10 +280,17 @@ class KeyValTemplate(Template):
     outputs_key_val_seperator: str = ": "
     use_keys_for_outputs: bool = False
 
-    postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
-    def process_dict(self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys) -> str:
-        dic = {k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v for k, v in dic.items()}
+    def process_dict(
+        self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys
+    ) -> str:
+        dic = {
+            k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v
+            for k, v in dic.items()
+        }
         pairs = []
         for key, val in dic.items():
             key_val = [key, val] if use_keys else [val]
@@ -291,7 +322,8 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 
     def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
         quantized_outputs = {
-            key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
+            key: round(input_float / self.quantum) * self.quantum
+            for key, input_float in outputs.items()
         }
         return super().process_outputs(quantized_outputs)
 
@@ -364,7 +396,10 @@ class SpanLabelingTemplate(SpanLabelingBaseTemplate):
 
 
 class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
-    postprocessors = ["processors.load_json", "processors.dict_of_lists_to_value_key_pairs"]
+    postprocessors = [
+        "processors.load_json",
+        "processors.dict_of_lists_to_value_key_pairs",
+    ]
 
     def span_label_pairs_to_targets(self, span_label_pairs):
         groups = {}
@@ -383,7 +418,9 @@ class AutoInputOutputTemplate(InputOutputTemplate):
     def infer_input_format(self, inputs):
         input_format = ""
         for key in inputs.keys():
-            name = " ".join(word.lower().capitalize() for word in split_words(key) if word != " ")
+            name = " ".join(
+                word.lower().capitalize() for word in split_words(key) if word != " "
+            )
             input_format += name + ": " + "{" + key + "}" + "\n"
         self.input_format = input_format
 
@@ -400,18 +437,18 @@ class AutoInputOutputTemplate(InputOutputTemplate):
         return self.input_format is not None and self.output_format is not None
 
 
-from .collections import ListCollection
-
-
 class TemplatesList(ListCollection):
     def verify(self):
         for template in self.items:
             assert isinstance(template, Template)
 
 
-def outputs_inputs2templates(inputs: Union[str, List], outputs: Union[str, List]) -> TemplatesList:
+def outputs_inputs2templates(
+    inputs: Union[str, List], outputs: Union[str, List]
+) -> TemplatesList:
     """
-    combines input and output formats into their dot product
+    combines input and output formats into their dot product.
+
     :param inputs: list of input formats (or one)
     :param outputs: list of output formats (or one)
     :return: TemplatesList of InputOutputTemplate
@@ -436,7 +473,8 @@ def instructions2templates(
     instructions: List[TextualInstruction], templates: List[InputOutputTemplate]
 ) -> TemplatesList:
     """
-    Insert instructions into per demonstration templates
+    Insert instructions into per demonstration templates.
+
     :param instructions:
     :param templates: strings containing {instuction} where the instruction should be placed
     :return:
@@ -446,7 +484,9 @@ def instructions2templates(
         for template in templates:
             res_templates.append(
                 InputOutputTemplate(
-                    input_format=template.input_format.replace("{instruction}", instruction.text),
+                    input_format=template.input_format.replace(
+                        "{instruction}", instruction.text
+                    ),
                     output_format=template.output_format,
                 )
             )

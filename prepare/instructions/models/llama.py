@@ -11,4 +11,4 @@ instruction = TextualInstruction(
     "the answer to aquestion, please don’t share false information.\n"
     "<</SYS>>\n\n"
 )
-add_to_catalog(instruction, f"instructions.models.llama", overwrite=True)
+add_to_catalog(instruction, "instructions.models.llama", overwrite=True)

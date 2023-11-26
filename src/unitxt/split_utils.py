@@ -9,7 +9,8 @@ from .stream import Stream
 
 def parse_random_mix_string(input_str):
     """
-    Parses a string of format "source1[percentage1%]+source2[value2]+..." and returns a dictionary.
+    Parses a string of format "source1[percentage1%]+source2[value2]+..." and
+    returns a dictionary.
 
     Args:
         input_str (str): A string containing source names and their respective proportions. The format is
@@ -29,21 +30,28 @@ def parse_random_mix_string(input_str):
             {'dale': 0.9, 'oren': 0.7, 'mike': 1.0}
     """
 
-    if not re.fullmatch(r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)", input_str):
+    if not re.fullmatch(
+        r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)",
+        input_str,
+    ):
         raise ValueError(f"Invalid input format for split '{input_str}'")
 
     pattern = re.compile(r"([a-zA-Z]+)(\[\d*\.?\d*%?\])?")
     matches = pattern.findall(input_str)
 
     return {
-        name: float(value.strip("[]%")) / 100 if "%" in value else (float(value.strip("[]")) if value else 1.0)
+        name: float(value.strip("[]%")) / 100
+        if "%" in value
+        else (float(value.strip("[]")) if value else 1.0)
         for name, value in matches
     }
 
 
 def parse_slices_string(input_str):
     """
-    Parses a string of format "source1[value1:value2] + source2[value2:] + source3 + ..." and returns a dictionary:
+    Parses a string of format "source1[value1:value2] + source2[value2:] +
+    source3 + ..." and returns a dictionary:
+
     {"source1": [(value1,value2)], "source2": [(value2, None)], "source3": [(None,None)]...}
 
     If a source appears multiple times with different indices, all index pairs are included in the list.
@@ -82,7 +90,9 @@ def parse_slices_string(input_str):
             name = source
             start = end = None
         else:
-            raise ValueError(f'The input string "{input_str}" is not in the correct format.')
+            raise ValueError(
+                f'The input string "{input_str}" is not in the correct format.'
+            )
 
         if name not in result_dict:
             result_dict[name] = [(start, end)]
@@ -107,7 +117,8 @@ def slice_stream(stream, start, end):
 
 def slice_streams(input_streams, mapping):
     """
-    Slices multiple input streams according to a mapping and chains the results together.
+    Slices multiple input streams according to a mapping and chains the results
+    together.
 
     Args:
         input_streams (dict): A dictionary where the keys are the names of the input streams
@@ -135,7 +146,7 @@ def slice_streams(input_streams, mapping):
 
         def generator(new_stream, sources):
             for old_stream, slices in sources.items():
-                if not old_stream in input_streams:
+                if old_stream not in input_streams:
                     raise ValueError(f"'{old_stream}' is not available in input stream")
                 old_stream_content = input_streams[old_stream]
                 for start, end in slices:
@@ -205,7 +216,9 @@ def build_stream_routing(mapping):
             if total_weights[old_stream] < 1:
                 stream_mapping[old_stream][None] = 1 - total_weights[old_stream]
 
-    stream_mapping = {k: (list(v.keys()), list(v.values())) for k, v in stream_mapping.items()}
+    stream_mapping = {
+        k: (list(v.keys()), list(v.values())) for k, v in stream_mapping.items()
+    }
     return stream_mapping
 
 
@@ -225,7 +238,9 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
     return {mapping.get(key, key): val for key, val in input_streams.items()}
 
 
-def random_mix_generator(new_stream_name, new_stream_sources, stream_routing, input_streams):
+def random_mix_generator(
+    new_stream_name, new_stream_sources, stream_routing, input_streams
+):
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
         with nested_seed(old_stream_name) as rand:

@@ -20,7 +20,12 @@ class ICLFormat(SizeLimitingFormat):
     suffix: str = ""
 
     def single_source_str(self, source):
-        return self.input_prefix + source + self.input_output_separator + self.output_prefix
+        return (
+            self.input_prefix
+            + source
+            + self.input_output_separator
+            + self.output_prefix
+        )
 
     def format(self, instance, demos_instances=[]):
         source = self.prefix
@@ -29,7 +34,9 @@ class ICLFormat(SizeLimitingFormat):
 
         if "instruction" in instance:
             instruction = instance.pop("instruction")
-            assert "instruction" != None, f"instruction field can not be none : {instance}"
+            assert (
+                instruction is not None
+            ), f"instruction field can not be none : {instance}"
             if instruction != "":
                 source += self.instruction_prefix + instruction + self.demo_separator
 
@@ -42,7 +49,9 @@ class ICLFormat(SizeLimitingFormat):
             )
 
             if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):
+                if not self.size_limiter.check(
+                    source + demo_str + query_str + instance["target"]
+                ):
                     continue
 
             source += demo_str

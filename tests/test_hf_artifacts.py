@@ -13,17 +13,23 @@ class HFTests(unittest.TestCase):
         register_local_catalog_for_tests()
 
     def test_dataset_imports(self):
-        missing_imports = get_missing_imports(unitxt.dataset_file, exclude=["dataset", "__init__"])
+        missing_imports = get_missing_imports(
+            unitxt.dataset_file, exclude=["dataset", "__init__"]
+        )
         self.assertEqual(missing_imports, [])
 
     def test_metric_imports(self):
-        missing_imports = get_missing_imports(unitxt.metric_file, exclude=["metric", "__init__", "dataset"])
+        missing_imports = get_missing_imports(
+            unitxt.metric_file, exclude=["metric", "__init__", "dataset"]
+        )
         self.assertEqual(missing_imports, [])
 
     def test_dataset_load(self):
-        dataset = load_dataset(
-            unitxt.dataset_file, "card=cards.wnli,template_card_index=0", download_mode="force_redownload"
+        _ = load_dataset(
+            unitxt.dataset_file,
+            "card=cards.wnli,template_card_index=0",
+            download_mode="force_redownload",
         )
 
     def test_metric_load(self):
-        metric = load(unitxt.metric_file)
+        _ = load(unitxt.metric_file)

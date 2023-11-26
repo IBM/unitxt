@@ -1,7 +1,4 @@
 from datasets import get_dataset_config_names
-
-langs = get_dataset_config_names("mlsum")  # the languages
-
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -13,6 +10,9 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
+
+langs = get_dataset_config_names("mlsum")  # the languages
+
 
 for lang in langs:
     card = TaskCard(
@@ -28,7 +28,9 @@ for lang in langs:
         ),
         templates=TemplatesList(
             [
-                InputOutputTemplate(input_format="{document}", output_format="{summary}"),
+                InputOutputTemplate(
+                    input_format="{document}", output_format="{summary}"
+                ),
             ]
         ),
     )

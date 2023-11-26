@@ -1,7 +1,6 @@
 import os
 import tempfile
 import unittest
-from math import isnan
 from unittest.mock import patch
 
 import ibm_boto3
@@ -52,7 +51,9 @@ class TestLoaders(unittest.TestCase):
             ms = loader()
 
             for file in ["train", "test"]:
-                for saved_instance, loaded_instance in zip(dfs[file].iterrows(), ms[file]):
+                for saved_instance, loaded_instance in zip(
+                    dfs[file].iterrows(), ms[file]
+                ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
     def test_load_from_ibm_cos(self):
@@ -75,26 +76,44 @@ class TestLoaders(unittest.TestCase):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
         ms = loader.process()
         dataset = ms.to_dataset()
-        self.assertEqual(ms.to_dataset()["train"][0]["url"], "https://www.bbc.com/igbo/afirika-43986554")
-        assert set(dataset.keys()) == set(["train", "validation", "test"]), f"Unexpected fold {dataset.keys()}"
+        self.assertEqual(
+            ms.to_dataset()["train"][0]["url"],
+            "https://www.bbc.com/igbo/afirika-43986554",
+        )
+        assert set(dataset.keys()) == set(
+            ["train", "validation", "test"]
+        ), f"Unexpected fold {dataset.keys()}"
 
     def test_load_from_HF_compressed_split(self):
-        loader = LoadHF(path="GEM/xlsum", name="igbo", split="train")  # the smallest file
+        loader = LoadHF(
+            path="GEM/xlsum", name="igbo", split="train"
+        )  # the smallest file
         ms = loader.process()
         dataset = ms.to_dataset()
-        self.assertEqual(ms.to_dataset()["train"][0]["url"], "https://www.bbc.com/igbo/afirika-43986554")
+        self.assertEqual(
+            ms.to_dataset()["train"][0]["url"],
+            "https://www.bbc.com/igbo/afirika-43986554",
+        )
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
 
     def test_load_from_HF(self):
         loader = LoadHF(path="sst2")
         ms = loader.process()
         dataset = ms.to_dataset()
-        self.assertEqual(dataset["train"][0]["sentence"], "hide new secretions from the parental units ")
-        assert set(dataset.keys()) == set(["train", "validation", "test"]), f"Unexpected fold {dataset.keys()}"
+        self.assertEqual(
+            dataset["train"][0]["sentence"],
+            "hide new secretions from the parental units ",
+        )
+        assert set(dataset.keys()) == set(
+            ["train", "validation", "test"]
+        ), f"Unexpected fold {dataset.keys()}"
 
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
         ms = loader.process()
         dataset = ms.to_dataset()
-        self.assertEqual(dataset["train"][0]["sentence"], "hide new secretions from the parental units ")
+        self.assertEqual(
+            dataset["train"][0]["sentence"],
+            "hide new secretions from the parental units ",
+        )
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"

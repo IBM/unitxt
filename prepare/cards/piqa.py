@@ -1,26 +1,7 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import multiple_choice_preprocess
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    InputOutputTemplate,
-    LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
-    TaskCard,
-    TemplatesList,
-)
+from src.unitxt.blocks import AddFields, FormTask, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
-    CopyFields,
-    IndexOf,
-    JoinStr,
-    ListFieldValues,
-    RenameFields,
-    TakeByField,
-    ZipFieldValues,
-)
+from src.unitxt.operators import ListFieldValues
 from src.unitxt.test_utils.card import test_card
 
 # import huggingface_hub
@@ -42,7 +23,11 @@ card = TaskCard(
         ListFieldValues(fields=["sol1", "sol2"], to_field="choices"),
         # ZipFieldValues(fields=["sol1", "sol2"], to_field="choices"),
         *multiple_choice_preprocess(
-            question="goal", numbering="numbering", choices="choices", topic="topic", label_index="label"
+            question="goal",
+            numbering="numbering",
+            choices="choices",
+            topic="topic",
+            label_index="label",
         ),
     ],
     task=FormTask(
@@ -55,4 +40,4 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.original.all",
 )
 test_card(card)
-add_to_catalog(card, f"cards.piqa", overwrite=True)
+add_to_catalog(card, "cards.piqa", overwrite=True)

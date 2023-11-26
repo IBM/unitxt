@@ -80,7 +80,9 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
         result = {}
         for stream_name, stream in multi_stream.items():
-            result[stream_name] = Stream(self.spread_results, gen_kwargs={"stream": stream, "score": mean_score})
+            result[stream_name] = Stream(
+                self.spread_results, gen_kwargs={"stream": stream, "score": mean_score}
+            )
 
         return MultiStream(result)
 
@@ -90,9 +92,16 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
         for prediction, original in zip(predictions, references):
             yield {**original, "prediction": prediction}
 
-    def process(self, predictions: List[str], references: Iterable, split_name: str = "all") -> MultiStream:
+    def process(
+        self, predictions: List[str], references: Iterable, split_name: str = "all"
+    ) -> MultiStream:
         return MultiStream(
-            {split_name: Stream(self.zip, gen_kwargs={"predictions": predictions, "references": references})}
+            {
+                split_name: Stream(
+                    self.zip,
+                    gen_kwargs={"predictions": predictions, "references": references},
+                )
+            }
         )
 
 
@@ -100,7 +109,6 @@ from .schema import UNITXT_DATASET_SCHEMA
 
 
 class MetricRecipe(SequentialOperatorInitilizer):
-
     calc_confidence_intervals: bool = True
 
     def prepare(self):
@@ -123,7 +131,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
         ]
 
 
-UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
+UNITXT_METRIC_SCHEMA = Features(
+    {"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)}
+)
 
 
 def _compute(
@@ -137,7 +147,9 @@ def _compute(
     register_all_artifacts()
     recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
-    multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
+    multi_stream = recipe(
+        predictions=predictions, references=references, split_name=split_name
+    )
 
     if flatten:
         operator = FlattenInstances()
@@ -151,7 +163,6 @@ def _compute(
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
-
     calc_confidence_intervals: bool = True
 
     def _info(self):
@@ -167,7 +178,13 @@ class Metric(evaluate.Metric):
             ],
         )
 
-    def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+    def _compute(
+        self,
+        predictions: List[str],
+        references: Iterable,
+        flatten: bool = False,
+        split_name: str = "all",
+    ):
         try:
             from unitxt.dataset import (
                 get_dataset_artifact as get_dataset_artifact_installed,

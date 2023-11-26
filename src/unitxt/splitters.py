@@ -1,18 +1,9 @@
 import itertools
 from abc import abstractmethod
-from dataclasses import field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .artifact import Artifact
-from .generator_utils import ReusableGenerator
 from .operator import InstanceOperatorWithGlobalAccess, MultiStreamOperator
-from .stream import MultiStream
-
-
-class Splitter(MultiStreamOperator):
-    pass
-
-
 from .random_utils import random
 from .split_utils import (
     parse_random_mix_string,
@@ -21,6 +12,11 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
+from .stream import MultiStream
+
+
+class Splitter(MultiStreamOperator):
+    pass
 
 
 class RenameSplits(Splitter):
@@ -43,8 +39,10 @@ class SplitRandomMix(Splitter):
 class SeparateSplit(Splitter):
     """
     Separates a split (e.g. train) into several splits (e.g. train1, train2)
-    sizes must indicate the size of every split except the last. If no size is give for the last split,
-     it includes all the examples not allocated to any split.
+    sizes must indicate the size of every split except the last.
+
+    If no size is give for the last split, it includes all the examples
+    not allocated to any split.
     """
 
     from_split: str
@@ -59,9 +57,15 @@ class SeparateSplit(Splitter):
         return super().verify()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        mapping = {key: {key: [(None, None)]} for key in multi_stream.keys() if key != self.from_split}
+        mapping = {
+            key: {key: [(None, None)]}
+            for key in multi_stream.keys()
+            if key != self.from_split
+        }
         so_far = 0
-        for name, size in itertools.zip_longest(self.to_split_names, self.to_split_sizes):
+        for name, size in itertools.zip_longest(
+            self.to_split_names, self.to_split_sizes
+        ):
             mapping[name] = {self.from_split: [(so_far, size)]}
             if size:
                 so_far += size
@@ -87,17 +91,23 @@ class Sampler(Artifact):
 
     def set_size(self, size):
         if isinstance(size, str):
-            assert size.isdigit(), f"sample_size must be a natural number, got {self.sample_size}"
+            assert (
+                size.isdigit()
+            ), f"sample_size must be a natural number, got {self.sample_size}"
             size = int(size)
         self.sample_size = size
 
     @abstractmethod
-    def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def sample(
+        self, instances_pool: List[Dict[str, object]]
+    ) -> List[Dict[str, object]]:
         pass
 
 
 class RandomSampler(Sampler):
-    def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def sample(
+        self, instances_pool: List[Dict[str, object]]
+    ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
         return random.sample(instances_pool, self.sample_size)
 
@@ -117,13 +127,17 @@ class DiverseLabelsSampler(Sampler):
             raise ValueError(f"{self.choices} field is missing from '{inputs}'.")
         choices = inputs[self.choices]
         if not isinstance(choices, list):
-            raise ValueError(f"Unexpected input choices value '{choices}'. Expected a list.")
+            raise ValueError(
+                f"Unexpected input choices value '{choices}'. Expected a list."
+            )
 
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
         examplar_outputs = next(iter(examplar["outputs"].values()))
         if not isinstance(examplar_outputs, list):
-            raise ValueError(f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list.")
+            raise ValueError(
+                f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list."
+            )
 
         return str([choice for choice in choices if choice in examplar_outputs])
 
@@ -136,7 +150,9 @@ class DiverseLabelsSampler(Sampler):
             labels[label_repr].append(examplar)
         return labels
 
-    def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def sample(
+        self, instances_pool: List[Dict[str, object]]
+    ) -> List[Dict[str, object]]:
         if self.labels is None:
             self.labels = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels.keys())
@@ -181,7 +197,9 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
         assert self.sampler is not None, "Sampler must be specified"
         return super().verify()
 
-    def process(self, instance: Dict[str, object], multi_stream: MultiStream) -> Dict[str, object]:
+    def process(
+        self, instance: Dict[str, object], multi_stream: MultiStream
+    ) -> Dict[str, object]:
         try:
             if self.local_cache is None:
                 self.local_cache = list(multi_stream[self.source_stream])
@@ -192,50 +210,6 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
             instance[self.target_field] = sampled_instances
             return instance
         except Exception as e:
-            raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'") from e
-
-
-if __name__ == "__main__":
-    # some tests
-    import random
-
-    random.seed(0)
-    splitter = SplitRandomMix(
-        mix={
-            "train": "train[90%]+validation[50%]",
-            "validation": "train[10%]+validation[50%]",
-            "test": "test",
-        }
-    )
-
-    def generator(name, size):
-        for i in range(size):
-            yield {"text": f"{name}_{i}"}
-
-    stream = MultiStream.from_generators(
-        {
-            "train": ReusableGenerator(generator, gen_kwargs={"name": "train", "size": 10}),
-            "validation": ReusableGenerator(generator, gen_kwargs={"name": "validation", "size": 10}),
-            "test": ReusableGenerator(generator, gen_kwargs={"name": "test", "size": 10}),
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
-
-    splitter = SliceSplit(
-        slices={
-            "train": "train[:2]+train[2:4]",
-            "validation": "train[4:6]",
-            "test": "train[6:]+test",
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
+            raise Exception(
+                f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'"
+            ) from e

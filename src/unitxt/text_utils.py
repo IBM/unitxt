@@ -1,9 +1,11 @@
 import re
+import shutil
 
 
 def split_words(s):
     """
-    Splits a string into words based on PascalCase, camelCase, snake_case, kebab-case, and numbers attached to strings.
+    Splits a string into words based on PascalCase, camelCase, snake_case,
+    kebab-case, and numbers attached to strings.
 
     Args:
         s (str): The string to be split.
@@ -69,12 +71,10 @@ def camel_to_snake_case(s):
     return s
 
 
-import shutil
-
-
 def print_dict(d, indent=0, indent_delta=4, max_chars=None):
     """
-    Prints a dictionary in a formatted manner, taking into account the terminal width.
+    Prints a dictionary in a formatted manner, taking into account the terminal
+    width.
 
     Args:
         d (dict): The dictionary to be printed.
@@ -82,7 +82,9 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
         max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
     """
-    max_chars = max_chars or shutil.get_terminal_size()[0] - 10  # Get terminal size if max_chars not set
+    max_chars = (
+        max_chars or shutil.get_terminal_size()[0] - 10
+    )  # Get terminal size if max_chars not set
     indent_str = " " * indent
     indent_delta_str = " " * indent_delta
 
@@ -111,7 +113,8 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
     """
-    Converts a nested tuple to a string, with elements separated by underscores.
+    Converts a nested tuple to a string, with elements separated by
+    underscores.
 
     Args:
         nested_tuple (tuple): The nested tuple to be converted.

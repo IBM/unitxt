@@ -1,4 +1,4 @@
-from src.unitxt.blocks import CopyFields, FormTask, LoadHF, SplitRandomMix, TaskCard
+from src.unitxt.blocks import CopyFields, FormTask, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 

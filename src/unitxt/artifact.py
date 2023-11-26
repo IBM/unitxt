@@ -3,11 +3,11 @@ import inspect
 import json
 import os
 import pkgutil
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, List, Union, final
+from typing import Dict, List, Union, final
 
-from .dataclass import Dataclass, Field, asdict, fields
+from .dataclass import Dataclass, Field, fields
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
 
@@ -27,15 +27,27 @@ class Artifactories(object):
         return next(self.artifactories)
 
     def register(self, artifactory):
-        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
-        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
-        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        assert isinstance(
+            artifactory, Artifactory
+        ), "Artifactory must be an instance of Artifactory"
+        assert hasattr(
+            artifactory, "__contains__"
+        ), "Artifactory must have __contains__ method"
+        assert hasattr(
+            artifactory, "__getitem__"
+        ), "Artifactory must have __getitem__ method"
         self.artifactories = [artifactory] + self.artifactories
 
     def unregister(self, artifactory):
-        assert isinstance(artifactory, Artifactory), "Artifactory must be an instance of Artifactory"
-        assert hasattr(artifactory, "__contains__"), "Artifactory must have __contains__ method"
-        assert hasattr(artifactory, "__getitem__"), "Artifactory must have __getitem__ method"
+        assert isinstance(
+            artifactory, Artifactory
+        ), "Artifactory must be an instance of Artifactory"
+        assert hasattr(
+            artifactory, "__contains__"
+        ), "Artifactory must have __contains__ method"
+        assert hasattr(
+            artifactory, "__getitem__"
+        ), "Artifactory must have __getitem__ method"
         self.artifactories.remove(artifactory)
 
     def reset(self):
@@ -74,7 +86,9 @@ class UnrecognizedArtifactType(ValueError):
 
 class MissingArtifactType(ValueError):
     def __init__(self, dic) -> None:
-        message = f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+        message = (
+            f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+        )
         super().__init__(message)
 
 
@@ -90,7 +104,9 @@ class Artifact(Dataclass):
     @classmethod
     def verify_artifact_dict(cls, d):
         if not isinstance(d, dict):
-            raise ValueError(f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'.")
+            raise ValueError(
+                f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
+            )
         if "type" not in d:
             raise MissingArtifactType(d)
         if not cls.is_registered_type(d["type"]):
@@ -186,7 +202,9 @@ class Artifact(Dataclass):
         self.type = self.register_class(self.__class__)
 
         for field in fields(self):
-            if issubtype(field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]):
+            if issubtype(
+                field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]
+            ):
                 value = getattr(self, field.name)
                 value = map_values_in_place(value, maybe_recover_artifact)
                 setattr(self, field.name, value)

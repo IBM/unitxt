@@ -32,7 +32,9 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         if self.remove_unnecessary_fields:
             keys_to_delete = []
 
@@ -53,8 +55,10 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
 
     def validate(self, instance: Dict[str, Any], stream_name: str = None):
         # verify the instance has the required schema
-        assert instance is not None, f"Instance is None"
-        assert isinstance(instance, dict), f"Instance should be a dict, got {type(instance)}"
+        assert instance is not None, "Instance is None"
+        assert isinstance(
+            instance, dict
+        ), f"Instance should be a dict, got {type(instance)}"
         assert all(
             [key in instance for key in UNITXT_DATASET_SCHEMA]
         ), f"Instance should have the following keys: {UNITXT_DATASET_SCHEMA}"

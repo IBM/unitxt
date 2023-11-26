@@ -19,17 +19,19 @@ class FormTask(Tasker, StreamInstanceOperator):
                 augmentable_input in self.inputs
             ), f"augmentable_input f{augmentable_input} is not part of {self.inputs}"
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         try:
             inputs = {key: instance[key] for key in self.inputs}
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Unexpected FormTask input column names ({list(key for key in self.inputs if key not in instance)})."
                 f"The available input names: {list(instance.keys())}"
             )
         try:
             outputs = {key: instance[key] for key in self.outputs}
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
                 f"Unexpected FormTask output column names: {list(key for key in self.outputs if key not in instance)}"
                 f" \n available names:{list(instance.keys())}\n given output names:{self.outputs}"
@@ -49,7 +51,9 @@ class MultipleChoiceTask(FormTask):
     use_text_in_target: bool = False
     alphabet: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    def process_single_choice(self, choice: str, index: int, use_text: bool = True) -> str:
+    def process_single_choice(
+        self, choice: str, index: int, use_text: bool = True
+    ) -> str:
         try:
             processed_choice = f"{self.alphabet[index]}"
         except IndexError:
@@ -67,9 +71,13 @@ class MultipleChoiceTask(FormTask):
         return self.choices_separator.join(processed_choices)
 
     def process_target(self, choices, target_index):
-        return self.process_single_choice(choices[target_index], target_index, use_text=self.use_text_in_target)
+        return self.process_single_choice(
+            choices[target_index], target_index, use_text=self.use_text_in_target
+        )
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: str = None
+    ) -> Dict[str, Any]:
         result = super().process(instance, stream_name)
         target_key, target_value = next(iter(result["outputs"].items()))
         choices = result["inputs"][self.choices_field]

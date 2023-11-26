@@ -4,15 +4,11 @@ from src.unitxt.splitters import DiverseLabelsSampler
 
 
 class TestDiverseLabelsSampler(unittest.TestCase):
-    """
-    Tests for the DiverseLabelsSampler object.
-    """
+    """Tests for the DiverseLabelsSampler object."""
 
     @staticmethod
     def new_examplar(input_choices=["class_a", "class_b"], output_choices=["class_a"]):
-        """
-        return an examplar in a correct format.
-        """
+        """return an examplar in a correct format."""
         return {
             "inputs": {"choices": input_choices},
             "outputs": {

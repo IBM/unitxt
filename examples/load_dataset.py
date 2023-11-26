@@ -1,5 +1,4 @@
 from datasets import load_dataset
-from src import unitxt
 from src.unitxt.text_utils import print_dict
 
 dataset = load_dataset(

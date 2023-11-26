@@ -18,7 +18,7 @@ class TestExamples(unittest.TestCase):
             download_mode="force_redownload",
         )
         print("Loading squad")
-        squad_dataset = load_dataset(
+        _ = load_dataset(
             unitxt.dataset_file,
             "card=cards.rte,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
@@ -51,7 +51,8 @@ class TestExamples(unittest.TestCase):
         self.maxDiff = None
         for split, i in [("train", 0), ("train", 1), ("test", 0), ("test", 1)]:
             self.assertEqual(
-                self.normalize(wnli_1_dataset[split][i]["source"]), self.normalize(wnli_2_dataset[split][i]["source"])
+                self.normalize(wnli_1_dataset[split][i]["source"]),
+                self.normalize(wnli_2_dataset[split][i]["source"]),
             )
 
 

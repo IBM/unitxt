@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -8,7 +7,8 @@ from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 
 
 class Stream(Dataclass):
-    """A class for handling streaming data in a customizable way.
+    """
+    A class for handling streaming data in a customizable way.
 
     This class provides methods for generating, caching, and manipulating streaming data.
 
@@ -24,7 +24,9 @@ class Stream(Dataclass):
     copying: bool = False
 
     def _get_initator(self):
-        """Private method to get the correct initiator based on the streaming and caching attributes.
+        """
+        Private method to get the correct initiator based on the streaming and
+        caching attributes.
 
         Returns:
             function: The correct initiator function.
@@ -38,7 +40,8 @@ class Stream(Dataclass):
                 return ReusableGenerator
 
     def _get_stream(self):
-        """Private method to get the stream based on the initiator function.
+        """
+        Private method to get the stream based on the initiator function.
 
         Returns:
             object: The stream object.
@@ -59,7 +62,8 @@ class Stream(Dataclass):
 
 
 class MultiStream(dict):
-    """A class for handling multiple streams of data in a dictionary-like format.
+    """
+    A class for handling multiple streams of data in a dictionary-like format.
 
     This class extends dict and its values should be instances of the Stream class.
 
@@ -68,7 +72,8 @@ class MultiStream(dict):
     """
 
     def __init__(self, data=None):
-        """Initializes the MultiStream with the provided data.
+        """
+        Initializes the MultiStream with the provided data.
 
         Args:
             data (dict, optional): A dictionary of Stream objects. Defaults to None.
@@ -82,7 +87,8 @@ class MultiStream(dict):
         super().__init__(data)
 
     def get_generator(self, key):
-        """Gets a generator for a specified key.
+        """
+        Gets a generator for a specified key.
 
         Args:
             key (str): The key for the generator.
@@ -102,12 +108,20 @@ class MultiStream(dict):
 
     def to_dataset(self) -> DatasetDict:
         return DatasetDict(
-            {key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
+            {
+                key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key})
+                for key in self.keys()
+            }
         )
 
     def to_iterable_dataset(self) -> IterableDatasetDict:
         return IterableDatasetDict(
-            {key: IterableDataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
+            {
+                key: IterableDataset.from_generator(
+                    self.get_generator, gen_kwargs={"key": key}
+                )
+                for key in self.keys()
+            }
         )
 
     def __setitem__(self, key, value):
@@ -116,8 +130,11 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False):
-        """Creates a MultiStream from a dictionary of ReusableGenerators.
+    def from_generators(
+        cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False
+    ):
+        """
+        Creates a MultiStream from a dictionary of ReusableGenerators.
 
         Args:
             generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
@@ -141,8 +158,11 @@ class MultiStream(dict):
         )
 
     @classmethod
-    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False, copying=False):
-        """Creates a MultiStream from a dictionary of iterables.
+    def from_iterables(
+        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+    ):
+        """
+        Creates a MultiStream from a dictionary of iterables.
 
         Args:
             iterables (Dict[str, Iterable]): A dictionary of iterables.

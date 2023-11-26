@@ -30,7 +30,7 @@ def dpath_set_one(dic, query_path, value):
 
 
 def dict_delete(dic, query_path):
-    n = dpath.delete(dic, query_path)
+    _ = dpath.delete(dic, query_path)
 
 
 def dict_creator(current, segments, i, hints=()):
@@ -60,7 +60,9 @@ def dict_creator(current, segments, i, hints=()):
         else:
             segment_next = None
 
-        if isinstance(segment_next, int) or (isinstance(segment_next, str) and segment_next.isdecimal()):
+        if isinstance(segment_next, int) or (
+            isinstance(segment_next, str) and segment_next.isdecimal()
+        ):
             current[segment] = []
         else:
             current[segment] = {}
@@ -72,7 +74,9 @@ def dpath_set(dic, query_path, value, not_exist_ok=True):
         dpath.new(dic, query_path, value, creator=dict_creator)
     else:
         if len(paths) != 1:
-            raise ValueError(f'query "{query_path}" matched {len(paths)} items in dict: {dic}. should match only one.')
+            raise ValueError(
+                f'query "{query_path}" matched {len(paths)} items in dict: {dic}. should match only one.'
+            )
         for path in paths:
             dpath_set_one(dic, path, value)
 
@@ -81,7 +85,9 @@ def dpath_set_multiple(dic, query_path, values, not_exist_ok=True):
     paths = [p for p, _ in dpath.search(dic, query_path, yielded=True)]
     if len(paths) == 0:
         if not_exist_ok:
-            raise ValueError(f"Cannot set multiple values to non-existing path: {query_path}")
+            raise ValueError(
+                f"Cannot set multiple values to non-existing path: {query_path}"
+            )
         raise ValueError(f'query "{query_path}" did not match any item in dict: {dic}')
     else:
         if len(paths) != len(values):
@@ -111,7 +117,9 @@ def dict_get(dic, query, use_dpath=True, not_exist_ok=False, default=None):
             if query in dic:
                 return dic[query]
             else:
-                raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
+                raise ValueError(
+                    f'query "{query}" did not match any item in dict: {dic}'
+                )
 
 
 def dict_set(dic, query, value, use_dpath=True, not_exist_ok=True, set_multiple=False):
