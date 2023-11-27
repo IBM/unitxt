@@ -1,5 +1,4 @@
 from src.unitxt import add_to_catalog, load_dataset
-from src.unitxt.blocks import LoadHF
 from src.unitxt.fusion import WeightedFusion
 from src.unitxt.text_utils import print_dict
 

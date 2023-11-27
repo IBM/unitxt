@@ -21,7 +21,7 @@ def apply_operator(operator: StreamingOperator, inputs: List[dict], return_multi
     return list(output_stream)
 
 
-def test_operator_exception(
+def check_operator_exception(
     operator: StreamingOperator,
     inputs: List[dict],
     exception_text,
@@ -41,7 +41,7 @@ def test_operator_exception(
     raise AssertionError(f"Did not receive expected exception {exception_text}")
 
 
-def test_operator(
+def check_operator(
     operator: StreamingOperator, inputs: List[dict], targets: List[dict], tester=None, sort_outputs_by=None
 ):
     test_artfifact_saving_and_loading(operator, tester=tester)
@@ -69,10 +69,11 @@ def test_operator(
         if len(errors) > 0:
             raise AssertionError("\n".join(errors))
 
-        return True
+        return outputs
     else:
         if inputs is None:
             inputs = [None] * len(targets)
         for input, output, target in zip(inputs, outputs, targets):
             with tester.subTest(operator=operator, input=input):
                 tester.assertDictEqual(output, target)
+        return outputs

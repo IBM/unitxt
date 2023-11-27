@@ -32,8 +32,8 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
             ):
                 return instance
 
-        inputs = instance.pop("inputs")
-        outputs = instance.pop("outputs")
+        inputs = instance["inputs"]
+        outputs = instance["outputs"]
 
         source = self.template.process_inputs(inputs)
         targets = self.template.process_outputs(outputs)
