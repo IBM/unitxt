@@ -1,3 +1,4 @@
+import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import CastFields, CopyFields
 from src.unitxt.metrics import NDCG, MetricPipeline
@@ -25,15 +26,9 @@ inputs = (
     + [{"query": "something else"}]
     + [{"query": "these will fail"}] * 2
 )
-instance_targets = [{"nDCG": None, "score": None, "score_name": "nDCG"}] * len(  # nDCG is undefined at instance level
-    predictions
-)
-
 instance_targets = [  # nDCG is undefined at instance level
-    {"nDCG": None, "score": None, "score_name": "nDCG"},
-    {"nDCG": None, "score": None, "score_name": "nDCG"},
-    {"nDCG": None, "score": None, "score_name": "nDCG"},
-]
+    {"nDCG": np.nan, "score": np.nan, "score_name": "nDCG"}
+] * len(predictions)
 
 global_target = {
     "nDCG": 0.42,
