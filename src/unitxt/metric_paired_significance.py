@@ -251,27 +251,19 @@ class PairedDifferenceTest:
         assert len(self.model_names) == len(test_res.model_names)
         assert all([ii == jj for ii, jj in zip(self.model_names, test_res.model_names)]), 'model_names lists must match'
 
-    def lineplot(self, test_res):
+    def pvalue_lineplot(self, test_res):
         self._is_valid_signif_report(test_res)
         pal = spectal_palette(n=self.nmodels)
-        print(pal)
 
-        # print("SM")
-        # print(test_res.sample_means)
-        print(test_res.sample_means)
-        print(np.argsort(test_res.sample_means))
+        level_order = np.argsort(test_res.sample_means).tolist()
+        level_order = [level_order.index(ii) for ii in range(self.nmodels)]
 
-        level_order = np.argsort(test_res.sample_means)[::-1]
-        print(test_res.sample_means)
-        print(level_order)
         # pal now accepts the original sample index, but now ordered by the value of sample mean
         pal = [tuple(pal[ii]) for ii in level_order]
 
-        for colpal, sm, mn, lord in zip(pal, test_res.sample_means, self.model_names, level_order):
-            print((colpal, sm, mn, lord))
-
         tick_vals = np.unique(np.array([1e-5, 1e-4, 1e-3, 1e-2, 0.5, 0.1, 0.2, 0.5, 1.0, self.alpha]))
-        pval_range = np.array([test_res.pvalues.min(), test_res.pvalues.max()])
+        # make sure the axis range contains all pvalues including the alpha
+        pval_range = np.array([min(test_res.pvalues.min(), self.alpha), max(test_res.pvalues.max(), self.alpha)])
         tick_vals = np.array([vv for vv in tick_vals if vv >= pval_range[0] and vv <= pval_range[1]])
 
         # pad the axes to have 5% empty space on each end
@@ -283,17 +275,20 @@ class PairedDifferenceTest:
 
         # transform the p-values so that the important (low) ones are separated out more
         pval_transformed = pval_trans(test_res.pvalues)
+        linewidths = [2, 0.5]
 
         dfs = [pd.DataFrame({'pvalue': np.repeat(a=pp, repeats=2),
                              'pvalue_trans': np.repeat(a=ppt, repeats=2),
                              'group': np.array(idxs),
-                             'ends': test_res.sample_means[np.array(idxs)], 'color': [pal[ii] for ii in idxs]})#.sort_values(by=['ends'])
-                            for idxs, pp, ppt in zip(self.iterate_pairs(), test_res.pvalues, pval_transformed)]
+                             'ends': test_res.sample_means[np.array(idxs)], 'color': [pal[ii] for ii in idxs],
+                             'is_signif': [iss, iss]})
+                            for idxs, pp, ppt, iss in zip(self.iterate_pairs(), test_res.pvalues, pval_transformed, test_res.pvalue_is_signif)]
         for ii, df in enumerate(dfs):
             dfs[ii]["midpoint"] = np.repeat(np.max(df['ends']) - 0.5 * np.abs(np.diff(df['ends'])), 2)
 
+        fig, ax = plt.subplots(1, 1, figsize=(9, 5))
         g = sns.scatterplot(data=pd.DataFrame({"mean": test_res.sample_means.mean(), "p-value": [-1, -1]}),
-                            x="p-value", y="mean")
+                            x="p-value", y="mean", ax=ax)
         # indicate significance area
         # g.axes.axvspan(axis_range[0], pval_trans(self.alpha), facecolor='lightgray')
         g.axes.axvline(x=pval_trans(np.array([self.alpha]))[0], ymin=0, ymax=1, linestyle="dashed", color='black')
@@ -309,16 +304,20 @@ class PairedDifferenceTest:
                 # if two-sided, each line segment has an arrow starting from the midpoint (xytext) and ending at the endpoint
                 # if one-sided, the first row has a segment without an arrow
                 arrow_sym = '->' if ((test_res.alternative == 'two-sided') or (ii == 1)) else '-'
-                plt.annotate(text='', xytext=(row['pvalue'], row['midpoint']), xy=(row['pvalue'], row['ends']), arrowprops=dict(arrowstyle=arrow_sym, shrinkA=0, shrinkB=0, color=row['color']))
+                plt.annotate(text='', xytext=(row['pvalue'], row['midpoint']), xy=(row['pvalue'], row['ends']),
+                             arrowprops=dict(arrowstyle=arrow_sym, shrinkA=0, shrinkB=0, color=row['color'], linewidth=linewidths[0] if row['is_signif'] else linewidths[1]))
         g.set(xlim=xaxis_range, ylim=yaxis_range, title=title)
         g.axes.set_xticks(ticks=pval_trans(tick_vals), labels=tick_vals)
         g.axes.tick_params(right=True, left=True, labelright=True, labelleft=False)
-        print("SM")
-        print(test_res.sample_means)
+
         # label sample means
         for colpal, sm, mn, lord in zip(pal, test_res.sample_means, self.model_names, level_order):
-            print((colpal, sm, mn, lord))
             g.text(x=xaxis_range[0], y=sm, s=mn, fontdict=dict(color=colpal, horizontalalignment="right"))
+
+        color_legend = [Line2D([0], [0], color='red', label=lab, linewidth=lw) for lab, lw in zip(['significant', 'not significant'], linewidths)]
+        color_legend.append(Line2D([0], [0], color='black', label='threshold', linestyle='dashed'))
+        plt.legend(handles=color_legend, bbox_to_anchor=(1.1, 1), loc='upper left', fontsize='x-small')
+        plt.tight_layout()
         plt.show()
 
     def _is_valid_signif_report_list(self, test_results_list: list):
