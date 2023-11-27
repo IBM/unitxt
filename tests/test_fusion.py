@@ -3,7 +3,7 @@ import unittest
 
 from src.unitxt.fusion import FixedFusion, WeightedFusion
 from src.unitxt.operators import IterableSource
-from src.unitxt.test_utils.operators import test_operator
+from src.unitxt.test_utils.operators import check_operator
 
 
 class TestFusion(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        test_operator(operator, inputs=None, targets=targets, tester=self)
+        check_operator(operator, inputs=None, targets=targets, tester=self)
 
     def test_bounded_fixed_fusion(self):
         operator = FixedFusion(
@@ -42,7 +42,7 @@ class TestFusion(unittest.TestCase):
             {"x": "y2"},
         ]
 
-        test_operator(operator, inputs=None, targets=targets, tester=self)
+        check_operator(operator, inputs=None, targets=targets, tester=self)
 
     def test_over_bounded_fixed_fusion(self):
         operator = FixedFusion(
@@ -62,7 +62,7 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        test_operator(operator, inputs=None, targets=targets, tester=self)
+        check_operator(operator, inputs=None, targets=targets, tester=self)
 
     def test_unbounded_weighted_fusion(self):
         operator = WeightedFusion(
@@ -82,7 +82,7 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        test_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
+        check_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
 
     def test_over_bounded_weighted_fusion(self):
         operator = WeightedFusion(
@@ -103,4 +103,4 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        test_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
+        check_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
