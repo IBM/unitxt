@@ -113,8 +113,8 @@ through instructions or demonstrations.
 
     recipe = StandardRecipe(
         card='cards.wnli',
-        num_demos=5, # The number of demonstrations for in-context learning
-        demos_pool_size=100, # The size of the demonstration pool from which to sample the 5 demonstrations
+        num_demos=3, # The number of demonstrations for in-context learning
+        demos_pool_size=100 # The size of the demonstration pool from which to sample the 5 demonstrations
     )
 
     dataset = load_dataset(recipe)

@@ -12,7 +12,6 @@ from src.unitxt.templates import (
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
-from src.unitxt.test_utils.metrics import apply_metric
 
 
 class TestTemplates(unittest.TestCase):
@@ -112,13 +111,13 @@ class TestTemplates(unittest.TestCase):
         """
         input_format = "Expecting field {class} in input."
         template = YesNoTemplate(input_format=input_format, class_field="class", label_field="")
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(RuntimeError) as cm:
             wrong_field_name = "wrong_field_name"
             template.process_inputs(inputs={wrong_field_name: ["news"]})
-            self.assertEquals(
-                f"Available inputs are {wrong_field_name} but input format requires a different one: {input_format}",
-                str(cm.exception),
-            )
+        self.assertEquals(
+            f"Available inputs are ['{wrong_field_name}'] but input format requires a different one: {input_format}",
+            str(cm.exception),
+        )
 
     def test_yes_no_template_process_output(self):
         """
