@@ -1024,5 +1024,5 @@ class NDCG(GlobalMetric):
                     min_value = min(numeric_predictions)
                     q_predictions = [1 + (pred - min_value) if pred is not None else 0 for pred in q_predictions]
             scores.append(self.eval([q_references], [q_predictions]))
-        scores_dict = {self.main_score: mean(scores)}
+        scores_dict = {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
         return scores_dict
