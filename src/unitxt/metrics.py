@@ -218,7 +218,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             except:
                 instance_score = {"score": None, "score_name": self.main_score}
 
-                if isinstance(self.main_score, str) and self.main_score is not None:
+                if isinstance(self.main_score, str):
                     instance_score[self.main_score] = None
 
             instance["score"]["instance"].update(instance_score)
