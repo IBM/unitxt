@@ -26,13 +26,13 @@ class TestArtifactRecovery(unittest.TestCase):
 
     def test_bad_artifact_recovery_bad_type(self):
         args = {
-            "type": "commmon_recipe",
+            "type": "standard_recipe",
             "card": "cards.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,
             "num_demos": 0,
         }
-        with self.assertRaises(UnrecognizedArtifactType):
+        with self.assertRaises(ValueError):
             artifact = Artifact.from_dict(args)
 
         try:
