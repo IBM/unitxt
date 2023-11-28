@@ -9,7 +9,7 @@ from src.unitxt.renderers import (
     RenderTemplate,
     StandardRenderer,
 )
-from src.unitxt.templates import InputOutputTemplate
+from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import check_operator
 
 template = InputOutputTemplate(input_format='This is my sentence: "{text}"', output_format="{label}")
@@ -30,6 +30,21 @@ class TestRenderers(unittest.TestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+    def test_render_multi_reference_template(self):
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderTemplate(template=template)
+        instance = {"inputs": {"text": "who was he?"}, "outputs": {"answer": ["Dan", "Yossi"]}}
+
+        result = renderer.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
         }
         self.assertDictEqual(result, target)
 
@@ -60,6 +75,40 @@ class TestRenderers(unittest.TestCase):
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(result, target)
+
+    def test_render_demonstrations_multi_reference(self):
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderDemonstrations(template=template, demos_field="demos")
+
+        instance = {
+            "demos": [
+                {"inputs": {"text": "who was he?"}, "outputs": {"answer": ["Dan", "Yossi"]}},
+                {"inputs": {"text": "who was she?"}, "outputs": {"answer": ["Shira", "Yael"]}},
+            ]
+        }
+
+        result = renderer.process(instance)
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "source": "This is my sentence: who was he?",
+                    "target": "Dan",
+                    "references": ["Dan", "Yossi"],
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "source": "This is my sentence: who was she?",
+                    "target": "Shira",
+                    "references": ["Shira", "Yael"],
                 },
             ]
         }
@@ -161,6 +210,31 @@ class TestRenderers(unittest.TestCase):
             "references": ["negative"],
             "inputs": {"text": "was so bad"},
             "outputs": {"label": "negative"},
+        }
+
+        check_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
+
+    def test_standard_renderer_multi_reference(self):
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        instruction = TextualInstruction("answer the question")
+
+        renderer = StandardRenderer(template=template, instruction=instruction, format=format, demos_field="demos")
+
+        instance = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "demos": [
+                {"inputs": {"text": "who was she?"}, "outputs": {"answer": ["Shira", "Yael"]}},
+                {"inputs": {"text": "who was he?"}, "outputs": {"answer": ["Codi", "Bodi"]}},
+            ],
+        }
+
+        target = {
+            "source": "Instruction:answer the question\n\nUser:This is my sentence: who was she?\nAgent: Shira\n\nUser:This is my sentence: who was he?\nAgent: Codi\n\nUser:This is my sentence: who was he?\nAgent:",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
         }
 
         check_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
