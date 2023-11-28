@@ -48,7 +48,7 @@ def check_operator(
 
     assert isoftype(operator, StreamingOperator), "operator must be an Operator"
     assert inputs is None or isoftype(inputs, List[dict]), "inputs must be a list of dicts or None for stream source"
-    assert isoftype(targets, List[dict]), "outputs must be a list of dicts"
+    assert isoftype(targets, List[dict]), "targets must be a list of dicts"
 
     outputs = apply_operator(operator, inputs)
 
@@ -59,7 +59,7 @@ def check_operator(
         errors = []
         for output, target in zip(outputs, targets):
             if json.dumps(output, sort_keys=True) != json.dumps(target, sort_keys=True):
-                errors.append(f"input and output must be equal, got <{output}> =/= <{target}>")
+                errors.append(f"output and target must be equal, got <{output}> =/= <{target}>")
 
         if len(errors) > 0:
             raise AssertionError("\n".join(errors))
