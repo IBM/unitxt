@@ -66,7 +66,7 @@ def check_operator(
 
         return outputs
     else:
-        if len(outputs) != len(targets):
+        if len(list(outputs)) != len(list(targets)):
             raise AssertionError("outputs and targets differ in length")
         if inputs is None:
             inputs = [None] * len(targets)
