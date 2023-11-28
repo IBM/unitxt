@@ -158,10 +158,10 @@ class InputOutputTemplate(Template):
     postprocessors: List[str] = field(default_factory=lambda: ["processors.to_string_stripped"])
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
-        data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
         return template.format(**data)
 
     def process_inputs(self, inputs: Dict[str, object]) -> str:
+        inputs = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
         try:
             return self.process_template(self.input_format, inputs)
         except KeyError as e:
