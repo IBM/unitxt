@@ -443,7 +443,8 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[module_name]
+            return __builtins__[splitted[0]]
+
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
