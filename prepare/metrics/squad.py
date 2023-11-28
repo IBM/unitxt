@@ -39,7 +39,16 @@ instance_targets = [
     {"exact_match": 0.0, "f1": 0.67, "score": 0.67, "score_name": "f1"},
     {"exact_match": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-global_target = {"exact_match": 0.33, "f1": 0.56, "score": 0.56, "score_name": "f1"}
+global_target = {
+    "exact_match": 0.33,
+    "f1": 0.56,
+    "score": 0.56,
+    "score_name": "f1",
+    "f1_ci_low": 0.0,
+    "f1_ci_high": 0.89,
+    "score_ci_low": 0.0,
+    "score_ci_high": 0.89,
+}
 
 outputs = test_metric(
     metric=metric,

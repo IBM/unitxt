@@ -32,13 +32,14 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
             ):
                 return instance
 
-        inputs = instance.pop("inputs")
-        outputs = instance.pop("outputs")
+        inputs = instance["inputs"]
+        outputs = instance["outputs"]
 
         source = self.template.process_inputs(inputs)
         targets = self.template.process_outputs(outputs)
 
         if self.template.is_multi_reference:
+            assert isinstance(targets, list), f"{targets} must be a list"
             references = targets
             if self.random_reference:
                 target = random.choice(references)

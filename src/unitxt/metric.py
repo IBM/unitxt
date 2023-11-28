@@ -30,6 +30,8 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
+    Apply,
+    ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
     FlattenInstances,
@@ -97,12 +99,24 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 from .schema import UNITXT_DATASET_SCHEMA
 
+# The additional_inputs field in the schema is defined as
+# Sequence({"key": Value(dtype="string"), "value": Value("string")})
+# When receiving instances from this scheme, the keys and values are returned as two separate
+# lists, and are converted to a dictionary.
+
+
+def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
+    return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
+
 
 class MetricRecipe(SequentialOperatorInitilizer):
+    calc_confidence_intervals: bool = True
+
     def prepare(self):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            Apply("additional_inputs", function=_from_key_value_pairs, to_field="additional_inputs"),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],
@@ -110,9 +124,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
                 default_operators=["processors.to_string_stripped"],
             ),
             SplitByValue(["group"]),
-            ApplyStreamOperatorsField(
+            ApplyMetric(
                 "metrics",
-                reversed=True,
+                calc_confidence_intervals=self.calc_confidence_intervals,
             ),
             MultiStreamScoreMean(),
             MergeStreams(),
@@ -122,10 +136,16 @@ class MetricRecipe(SequentialOperatorInitilizer):
 UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
 
 
-def _compute(predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+def _compute(
+    predictions: List[str],
+    references: Iterable,
+    flatten: bool = False,
+    split_name: str = "all",
+    calc_confidence_intervals: bool = True,
+):
     _reset_env_local_catalogs()
     register_all_artifacts()
-    recipe = MetricRecipe()
+    recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
     multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
 
@@ -134,13 +154,14 @@ def _compute(predictions: List[str], references: Iterable, flatten: bool = False
         multi_stream = operator(multi_stream)
 
     stream = multi_stream[split_name]
-
     return list(stream)
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
+    calc_confidence_intervals: bool = True
+
     def _info(self):
         return evaluate.MetricInfo(
             description="_DESCRIPTION",
@@ -168,7 +189,17 @@ class Metric(evaluate.Metric):
             from unitxt.metric import _compute as _compute_installed
 
             return _compute_installed(
-                predictions=predictions, references=references, flatten=flatten, split_name=split_name
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
+                calc_confidence_intervals=self.calc_confidence_intervals,
             )
         else:
-            return _compute(predictions=predictions, references=references, flatten=flatten, split_name=split_name)
+            return _compute(
+                predictions=predictions,
+                references=references,
+                flatten=flatten,
+                split_name=split_name,
+                calc_confidence_intervals=self.calc_confidence_intervals,
+            )

@@ -97,7 +97,7 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
             line_width = max_chars - indent
             # Split value by newline characters and handle each line separately
             lines = str_value.split("\n")
-            print(f"{indent_str}{key}:")
+            print(f"{indent_str}{key} ({type(value).__name__}):")
             for line in lines:
                 if len(line) + len(indent_str) + indent_delta > line_width:
                     # Split long lines into multiple lines

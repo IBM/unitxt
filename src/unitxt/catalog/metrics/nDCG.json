@@ -19,7 +19,7 @@
                 "references": "float"
             },
             "failure_defaults": {
-                "prediction": 0.0
+                "prediction": null
             },
             "use_nested_query": true
         }

@@ -1,6 +1,7 @@
 import unittest
 from math import isnan
 
+import numpy as np
 from src.unitxt.metrics import (
     F1,
     Accuracy,
@@ -26,17 +27,24 @@ class TestMetrics(unittest.TestCase):
         predictions = ["A", "B", "C"]
         references = [["B", "C"], ["A"], ["B", "C"]]
 
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+
+        expected_global_result = {
+            "accuracy": 1 / 3,
+            "score": 1 / 3,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {key: value for key, value in global_result.items() if key in expected_global_result}
+        self.assertDictEqual(global_result, expected_global_result)
+
         instance_targets = [
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
             {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
         ]
-
-        global_target = {"accuracy": 1 / 3, "score": 1 / 3, "score_name": "accuracy"}
-
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-
-        self.assertDictEqual(outputs[0]["score"]["global"], global_target)
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
@@ -239,7 +247,11 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_rouge_l(self):
-        metric = Rouge(use_aggregator=False, rouge_types=["rougeL"])
+        metric = Rouge(
+            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
+            use_aggregator=False,
+            rouge_types=["rougeL"],
+        )
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
         predictions = ["hello there", "general kenobi"]
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
@@ -279,3 +291,104 @@ class TestMetrics(unittest.TestCase):
         outputs = apply_metric(metric=metric, predictions=predictions, references=references)
         global_target = 0.08608
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+
+
+class TestConfidenceIntervals(unittest.TestCase):
+    def test_confidence_interval_off(self):
+        """
+        Test that when metric.n_resamples is set to None, no confidence intervals
+        are computed
+        """
+
+        # Test one GlobalMetric and one InstanceMetric
+        for metric in [Accuracy(), F1Macro()]:
+            metric.disable_confidence_interval_calculation()
+            outputs = apply_metric(metric=metric, predictions=["A"], references=[["A"]])
+
+            global_result = outputs[0]["score"]["global"]
+            # Check there are no confidence intervals in the result
+            for key in global_result:
+                self.assertTrue("ci_low" not in key)
+                self.assertTrue("ci_high" not in key)
+
+    def test_instance_metric_confidence_interval(self):
+        """
+        Test the calculation of confidence intervals
+        for an instance metric (Accuracy is used as an instance of
+        an InstanceMetric)
+        """
+        self._test_confidence_interval(
+            metric=Accuracy(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_instance_metric_with_multiple_scores_confidence_interval(self):
+        self._test_confidence_interval(
+            metric=TokenOverlap(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_global_metric_confidence_interval(self):
+        """
+        Test the calculation of confidence intervals
+        for global metrics (F1Macro and F1Micro are used as instances of
+        a GlobalMetric)
+        """
+        f1_macro_low, f1_macro_high = 0.8809213119223925, 0.9439681645177271
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
+        )
+        f1_micro_low, f1_micro_high = 0.8439306358381503, 0.9223675337263242
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+
+        # Now reverse the order and check things don't change
+        self._test_confidence_interval(
+            metric=F1Micro(),
+            expected_ci_low=f1_micro_low,
+            expected_ci_high=f1_micro_high,
+        )
+        self._test_confidence_interval(
+            metric=F1Macro(),
+            expected_ci_low=f1_macro_low,
+            expected_ci_high=f1_macro_high,
+        )
+
+    def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
+        """
+        Test the calculation of confidence intervals
+        for a given metric.
+        """
+        predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
+        references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
+
+        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+
+        expected_global_result = {
+            f"{metric.main_score}_ci_low": expected_ci_low,
+            f"{metric.main_score}_ci_high": expected_ci_high,
+            "score_ci_low": expected_ci_low,
+            "score_ci_high": expected_ci_high,
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        print(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                # The that the output value is as the expected value
+                self.assertAlmostEqual(score_value, expected_global_result[score_name], places=5)
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )
