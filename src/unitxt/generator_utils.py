@@ -22,36 +22,28 @@ class ReusableGenerator(Dataclass):
 
 
 class CopyingReusableGenerator(ReusableGenerator):
+    copying: bool = True
+
     def __iter__(self):
         for instance in self.activate():
             yield copy.deepcopy(instance)
 
 
-# if __name__ == "__main__":
-#     from itertools import chain, islice
+class MemoryCachingReusableGenerator(ReusableGenerator):
 
-#     # Creating objects of MyIterable
-#     iterable1 = ReusableGenerator(range, gen_argv=[1, 4])
-#     iterable2 = ReusableGenerator(range, gen_argv=[4, 7])
+    caching: bool = True
+    copying = False
+    cache: Optional[List[Any]] = None
 
-#     # Using itertools.chain
-#     chained = list(chain(iterable1, iterable2))
-#     print(chained)  # Prints: [1, 2, 3, 4, 5, 6]
+    def __iter__(self):
+        if self.cache is None:
+            self.cache = []
+            for instance in super().__iter__():
+                self.cache.append(instance)
+                yield instance
+        else:
+            yield from self.cache
 
-#     # Using itertools.islice
-#     sliced = list(islice(ReusableGenerator(range, gen_argv=[1, 7]), 1, 4))
-#     print(sliced)  # Prints: [2, 3, 4]
 
-#     # now same test with generators
-#     def generator(start, end):
-#         for i in range(start, end):
-#             yield i
-
-#     iterable1 = ReusableGenerator(generator, gen_argv=[1, 4])
-#     iterable2 = ReusableGenerator(generator, gen_argv=[4, 7])
-
-#     chained = list(chain(iterable1, iterable2))
-#     print(chained)  # Prints: [1, 2, 3, 4, 5, 6]
-
-#     sliced = list(islice(ReusableGenerator(generator, gen_argv=[1, 7]), 1, 4))
-#     print(sliced)  # Prints: [2, 3, 4]
+class CopyingMemoryCachingReusableGenerator(MemoryCachingReusableGenerator):
+    copying: bool = True

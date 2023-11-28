@@ -3,7 +3,7 @@ import time
 import unittest
 
 from src.unitxt.operators import Apply
-from src.unitxt.stream import Stream
+from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import apply_operator, check_operator
 
 
@@ -30,28 +30,51 @@ class TestStreamCaching(unittest.TestCase):
 
         self.assertEqual(list(stream)[0]["x"], list(stream)[0]["x"])
 
-    def test_operator_not_caching(self):
-        operator = Apply(function=time.time, to_field="b", caching=False)
-
-        inputs = [
-            {"a": "a"},
-            {"a": "b"},
-        ]
-
-        targets1 = apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
-        targets2 = apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
-
-        for target1, target2 in zip(targets1, targets2):
-            self.assertNotEqual(target1["b"], target2["b"])
-
     def test_operator_caching(self):
-        operator = Apply(function=time.time, to_field="b", caching=True)
+        operator = Apply(function=time.time, to_field="a", caching=True)
 
         inputs = [
             {"a": "a"},
             {"a": "b"},
         ]
 
-        targets = apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
+        multi_stream_input = MultiStream.from_iterables({"test": inputs}, copying=True)
+        multi_stream = operator(multi_stream_input)
+        output1 = list(multi_stream["test"])
+        output2 = list(multi_stream["test"])
 
-        # check_operator(operator=operator, inputs=copy.deepcopy(inputs), targets=targets, tester=self)
+        self.assertEqual(output1, output2)
+
+    def test_operator_caching_on_disk(self):
+        operator = Apply(function=time.time, to_field="a", caching=False)
+
+        inputs = [
+            {"a": "a"},
+            {"a": "b"},
+        ]
+
+        multi_stream_input = MultiStream.from_iterables({"test": inputs}, copying=True)
+        multi_stream = operator(multi_stream_input)
+        for stream in multi_stream.values():
+            stream.caching = True
+            stream.cache_on_disk = True
+        output1 = list(multi_stream["test"])
+        output2 = list(multi_stream["test"])
+
+        self.assertEqual(output1, output2)
+
+    def test_operator_not_caching(self):
+
+        operator = Apply(function=time.time, to_field="a", caching=False)
+
+        inputs = [
+            {"a": "a"},
+            {"a": "b"},
+        ]
+
+        multi_stream_input = MultiStream.from_iterables({"test": inputs}, copying=True)
+        multi_stream = operator(multi_stream_input)
+        output1 = list(multi_stream["test"])
+        output2 = list(multi_stream["test"])
+
+        self.assertNotEqual(output1, output2)

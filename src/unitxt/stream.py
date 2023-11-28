@@ -4,7 +4,12 @@ from typing import Dict, Iterable
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .dataclass import Dataclass, OptionalField
-from .generator_utils import CopyingReusableGenerator, ReusableGenerator
+from .generator_utils import (
+    CopyingMemoryCachingReusableGenerator,
+    CopyingReusableGenerator,
+    MemoryCachingReusableGenerator,
+    ReusableGenerator,
+)
 
 
 class Stream(Dataclass):
@@ -21,7 +26,9 @@ class Stream(Dataclass):
     generator: callable
     gen_kwargs: Dict[str, any] = OptionalField(default_factory=dict)
     caching: bool = False
+    cache_on_disk: bool = False
     copying: bool = False
+    _stream: any = None
 
     def _get_initator(self):
         """Private method to get the correct initiator based on the streaming and caching attributes.
@@ -30,7 +37,13 @@ class Stream(Dataclass):
             function: The correct initiator function.
         """
         if self.caching:
-            return Dataset.from_generator
+            if self.cache_on_disk:
+                return Dataset.from_generator
+            else:
+                if self.copying:
+                    return CopyingMemoryCachingReusableGenerator
+                else:
+                    return MemoryCachingReusableGenerator
         else:
             if self.copying:
                 return CopyingReusableGenerator
@@ -43,7 +56,10 @@ class Stream(Dataclass):
         Returns:
             object: The stream object.
         """
-        return self._get_initator()(self.generator, gen_kwargs=self.gen_kwargs)
+        if self._stream is None:
+            self._stream = self._get_initator()(self.generator, gen_kwargs=self.gen_kwargs)
+
+        return self._stream
 
     def __iter__(self):
         return iter(self._get_stream())

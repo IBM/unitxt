@@ -168,8 +168,10 @@ class SingleStreamOperator(MultiStreamOperator):
                 stream = stream
             assert isinstance(stream, Stream), "SingleStreamOperator must return a Stream"
             result[stream_name] = stream
-
-        return MultiStream(result)
+        multi_stream = MultiStream(result)
+        if self.caching is not None:
+            multi_stream.set_caching(self.caching)
+        return multi_stream
 
     def _process_single_stream(self, stream: Stream, stream_name: str = None) -> Stream:
         return Stream(self._process_stream, gen_kwargs={"stream": stream, "stream_name": stream_name})
