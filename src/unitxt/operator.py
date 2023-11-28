@@ -323,7 +323,7 @@ class BaseFieldOperator(Artifact):
         pass
 
 
-class InstanceOperatorWithGlobalAccess(StreamingOperator):
+class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
     """
     A class representing an instance operator with global access in the streaming system.
 
@@ -332,24 +332,14 @@ class InstanceOperatorWithGlobalAccess(StreamingOperator):
     In order to make this efficient and to avoid qudratic complexity, it caches the accessible streams by default.
     """
 
-    accessible_streams: Union[MultiStream, List[str]] = None
-    cache_accessible_streams: bool = True
+    # cached_streams: Union[MultiStream, List[str]] = None
+    # cache_accessible_streams: bool = True
 
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         result = {}
 
-        if isinstance(self.accessible_streams, list):
-            # cache the accessible streams:
-            self.accessible_streams = MultiStream(
-                {stream_name: multi_stream[stream_name] for stream_name in self.accessible_streams}
-            )
-
-        if self.cache_accessible_streams:
-            for stream in self.accessible_streams.values():
-                stream.caching = True
-
         for stream_name, stream in multi_stream.items():
-            stream = Stream(self.generator, gen_kwargs={"stream": stream, "multi_stream": self.accessible_streams})
+            stream = Stream(self.generator, gen_kwargs={"stream": stream, "multi_stream": multi_stream})
             result[stream_name] = stream
 
         return MultiStream(result)
