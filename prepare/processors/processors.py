@@ -1,6 +1,7 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.processors import (
     FirstCharacter,
+    LowerCase,
     LowerCaseTillPunc,
     StringOrNotString,
     TakeFirstNonEmptyLine,
@@ -17,6 +18,10 @@ add_to_catalog(operator2, "processors.lower_case_till_punc", overwrite=True)
 operator3 = StringOrNotString(string="hate speech")
 
 add_to_catalog(operator3, "processors.hate_speech_or_not_hate_speech", overwrite=True)
+
+operator4 = LowerCase()
+
+add_to_catalog(operator4, "processors.lower_case", overwrite=True)
 
 parser = FirstCharacter()
 
