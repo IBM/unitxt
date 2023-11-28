@@ -1,15 +1,19 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
+from src.unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
-    InputOutputTemplate(input_format="Context: {context}\nQuestion: {question}", output_format="{answer}"),
+    MultiReferenceTemplate(
+        input_format="Context: {context}\nQuestion: {question}", output_format="{answers}", references_field="answers"
+    ),
     "templates.qa.contextual.simple",
     overwrite=True,
 )
 
 add_to_catalog(
-    InputOutputTemplate(
-        input_format="based on this text: {context}\n answer the question: {question}", output_format="{answer}"
+    MultiReferenceTemplate(
+        input_format="based on this text: {context}\n answer the question: {question}",
+        output_format="{answers}",
+        references_field="answers",
     ),
     "templates.qa.contextual.simple2",
     overwrite=True,
