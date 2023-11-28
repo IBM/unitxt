@@ -4,7 +4,7 @@ from dataclasses import field
 from typing import Dict, List, Optional
 
 from .artifact import Artifact
-from .operator import InstanceOperator, MultiStreamOperator
+from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .stream import MultiStream
 
 
@@ -163,7 +163,7 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class SpreadSplit(InstanceOperator):
+class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     source_stream: str = None
     target_field: str = None
     sampler: Sampler = None
