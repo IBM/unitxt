@@ -4,7 +4,7 @@ import unittest
 
 from src.unitxt.operators import Apply
 from src.unitxt.stream import Stream
-from src.unitxt.test_utils.operators import apply_operator, test_operator
+from src.unitxt.test_utils.operators import apply_operator, check_operator
 
 
 class TestStreamCaching(unittest.TestCase):
@@ -54,4 +54,4 @@ class TestStreamCaching(unittest.TestCase):
 
         targets = apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
 
-        # test_operator(operator=operator, inputs=copy.deepcopy(inputs), targets=targets, tester=self)
+        # check_operator(operator=operator, inputs=copy.deepcopy(inputs), targets=targets, tester=self)

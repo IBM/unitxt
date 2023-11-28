@@ -32,8 +32,8 @@ from src.unitxt.operators import (
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.operators import (
     apply_operator,
-    test_operator,
-    test_operator_exception,
+    check_operator,
+    check_operator_exception,
 )
 
 
@@ -54,7 +54,7 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
             inputs=inputs,
             targets=targets,
@@ -72,7 +72,7 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
         )
 
@@ -87,7 +87,7 @@ class TestOperators(unittest.TestCase):
             {"a...b": 2},
         ]
 
-        test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
 
     def test_filter_by_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -96,12 +96,12 @@ class TestOperators(unittest.TestCase):
             {"a": 1, "b": 3},
         ]
 
-        test_operator(
+        check_operator(
             operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
         )
 
         exception_text = "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}"
-        test_operator_exception(
+        check_operator_exception(
             operator=FilterByValues(required_values={"c": "5"}),
             inputs=inputs,
             exception_text=exception_text,
@@ -120,7 +120,7 @@ class TestOperators(unittest.TestCase):
             {"a": 3, "b": 4},
         ]
 
-        test_operator(
+        check_operator(
             operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
             inputs=inputs,
             targets=targets,
@@ -128,13 +128,13 @@ class TestOperators(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByListsOfValues(required_values={"b": "5"}), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByListsOfValues(required_values={"c": ["5"]}),
                 inputs=inputs,
                 targets=targets,
@@ -157,20 +157,20 @@ class TestOperators(unittest.TestCase):
             {"label": ["b", "f"]},
         ]
 
-        test_operator(
+        check_operator(
             operator=Intersect(field="label", allowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=Intersect(field="label", allowed_values=3), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=Intersect(field="label", allowed_values=["3"], process_every_value=True),
                 inputs=inputs,
                 targets=targets,
@@ -182,7 +182,7 @@ class TestOperators(unittest.TestCase):
             {"label": "b"},
         ]
         exception_text = "Error processing instance '0' from stream 'test' in Intersect due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
-        test_operator_exception(
+        check_operator_exception(
             operator=Intersect(field="label", allowed_values=["c"]),
             inputs=inputs,
             exception_text=exception_text,
@@ -202,20 +202,20 @@ class TestOperators(unittest.TestCase):
             {"label": []},
         ]
 
-        test_operator(
+        check_operator(
             operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label", unallowed_values=3), inputs=inputs, targets=targets, tester=self
             )
         self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=RemoveValues(field="label", unallowed_values=["3"], process_every_value=True),
                 inputs=inputs,
                 targets=targets,
@@ -227,7 +227,7 @@ class TestOperators(unittest.TestCase):
             {"label": "b"},
         ]
         exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
-        test_operator_exception(
+        check_operator_exception(
             operator=RemoveValues(field="label", unallowed_values=["c"]),
             inputs=inputs,
             exception_text=exception_text,
@@ -235,7 +235,7 @@ class TestOperators(unittest.TestCase):
         )
 
         exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
-        test_operator_exception(
+        check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
             exception_text=exception_text,
@@ -253,7 +253,7 @@ class TestOperators(unittest.TestCase):
             {"a": "222", "b": 3, "c": "processors.to_string"},
         ]
 
-        test_operator(
+        check_operator(
             operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
             inputs=inputs,
             targets=targets,
@@ -271,7 +271,43 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 3, "c": 3},
         ]
 
-        test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+
+    def test_add_fields_with_query(self):
+        inputs = [
+            {"a": {"a": 1, "b": 2}, "b": 2},
+            {"a": {"a": 2, "b": 3}, "b": 3},
+        ]
+
+        targets = [
+            {"a": {"a": 1, "b": 2, "c": 5}, "b": 2},
+            {"a": {"a": 2, "b": 3, "c": 5}, "b": 3},
+        ]
+
+        check_operator(
+            operator=AddFields(fields={"a/c": 5}, use_query=True), inputs=inputs, targets=targets, tester=self
+        )
+
+    def test_add_fields_with_deep_copy(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        alist = [4]
+
+        targets = [
+            {"a": 1, "b": 2, "c": [4]},
+            {"a": 2, "b": 3, "c": [4]},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(fields={"c": alist}, use_deepcopy=True), inputs=inputs, targets=targets, tester=self
+        )
+
+        alist.append(5)
+
+        self.assertDictEqual(outputs[0], targets[0])
 
     def test_remove_fields(self):
         inputs = [
@@ -284,7 +320,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2},
         ]
 
-        test_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
 
     def test_unique_on_single_field(self):
         inputs = [
@@ -735,7 +771,7 @@ class TestOperators(unittest.TestCase):
             {"a": 0.0, "b": 0},
         ]
 
-        test_operator(
+        check_operator(
             operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
             inputs=inputs,
             targets=targets,
@@ -762,7 +798,7 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
+        check_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
 
     def test_copy_paste_fields(self):
         inputs = [
@@ -772,7 +808,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": 1}, {"a": 2}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -787,7 +823,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -807,7 +843,7 @@ class TestOperators(unittest.TestCase):
             {"prediction": 2, "references": [0]},
         ]
 
-        test_operator(
+        check_operator(
             operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
         )
 
@@ -822,7 +858,7 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": "2,4"},
         ]
 
-        test_operator(
+        check_operator(
             operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
         )
 
@@ -837,7 +873,7 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
         ]
 
-        test_operator(
+        check_operator(
             operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
@@ -855,7 +891,7 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "c": 1},
         ]
 
-        test_operator(
+        check_operator(
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
@@ -883,7 +919,7 @@ class TestOperators(unittest.TestCase):
 
         targets = []
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -902,7 +938,7 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -921,7 +957,7 @@ class TestOperators(unittest.TestCase):
             {"a": [], "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
             inputs=inputs,
             targets=targets,
@@ -967,7 +1003,7 @@ class TestOperators(unittest.TestCase):
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
         exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
-        test_operator_exception(
+        check_operator_exception(
             operator,
             inputs,
             tester=self,
@@ -981,7 +1017,7 @@ class TestOperators(unittest.TestCase):
         operator.set_task_input_fields(["text"])
         exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
 
-        test_operator_exception(
+        check_operator_exception(
             operator,
             inputs,
             exception_text=exception_text,
@@ -995,7 +1031,7 @@ class TestOperators(unittest.TestCase):
         exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
 
         try:
-            test_operator_exception(
+            check_operator_exception(
                 operator,
                 inputs,
                 exception_text=exception_text,

@@ -17,9 +17,14 @@ class ICLFormat(SizeLimitingFormat):
     input_output_separator: str = None
     demo_separator: str = "\n\n"
     suffix: str = ""
+    add_instruction_at_start: bool = True
+    add_instruction_after_demos: bool = False
 
-    def single_source_str(self, source, input_output_separator):
-        source_str = self.input_prefix + source
+    def single_source_str(self, source, input_output_separator, instruction=None):
+        source_str = self.input_prefix
+        if instruction is not None and instruction != "":
+            source_str += self.instruction_prefix + instruction + self.demo_separator
+        source_str += source
         if self.input_output_separator is not None and self.input_output_separator != "":
             source_str += self.input_output_separator
         else:
@@ -30,18 +35,26 @@ class ICLFormat(SizeLimitingFormat):
     def format(self, instance, demos_instances=[]):
         source = self.prefix
         input_output_separator = instance.pop("input_output_separator")
-        query_str = self.single_source_str(instance["source"], input_output_separator)
 
+        instruction = ""
         if "instruction" in instance:
             instruction = instance.pop("instruction")
             assert "instruction" != None, f"instruction field can not be none : {instance}"
-            if instruction != "":
-                source += self.instruction_prefix + instruction + self.demo_separator
+
+        if self.add_instruction_at_start and instruction != "":
+            source += self.instruction_prefix + instruction + self.demo_separator
+
+        if self.add_instruction_after_demos and instruction != "":
+            query_str = self.single_source_str(
+                instance["source"], input_output_separator=input_output_separator, instruction=instruction
+            )
+        else:
+            query_str = self.single_source_str(instance["source"], input_output_separator=input_output_separator)
 
         for demo_instance in demos_instances:
 
             demo_str = (
-                self.single_source_str(demo_instance["source"], input_output_separator)
+                self.single_source_str(demo_instance["source"], input_output_separator=input_output_separator)
                 + demo_instance["target"]
                 + self.demo_separator
             )
@@ -55,5 +68,4 @@ class ICLFormat(SizeLimitingFormat):
 
         source += query_str
         source += self.suffix
-
         return source
