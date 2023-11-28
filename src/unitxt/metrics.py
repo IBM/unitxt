@@ -249,12 +249,13 @@ class Accuracy(InstanceMetric):
 
 
 class SubstringAccuracy(InstanceMetric):
-    # substring match of prediction to any of the references, not only exact match
+    # substring (not exact) match of any of the true values to the prediction;
+    # enforces that the predicted answer should be at detailed as the true values
     reduction_map = {"mean": ["substring_accuracy"]}
     main_score = "substring_accuracy"
 
     def compute(self, references: List[str], prediction: str) -> dict:
-        result = {self.main_score: float(any([str(prediction) in str(reference) for reference in references]))}
+        result = {self.main_score: float(any([str(reference) in str(prediction) for reference in references]))}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
