@@ -288,7 +288,7 @@ class KeyValTemplate(Template):
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
         quantized_outputs = {
             key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
         }
@@ -302,12 +302,20 @@ class MultiLabelTemplate(InputOutputTemplate):
     output_format = "{labels}"
     empty_label = "None"
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
         labels = outputs[self.labels_field]
         if len(labels) == 0:
             labels = [self.empty_label]
         labels_str = self.labels_seprator.join(labels)
         return super().process_outputs({self.labels_field: labels_str})
+
+
+class MultiReferenceTemplate(InputOutputTemplate):
+    references_field: str = "references"
+    is_multi_reference = True
+
+    def process_outputs(self, outputs: Dict[str, object]) -> List[str]:
+        return outputs[self.references_field]
 
 
 def escape_chars(s, chars_to_escape):
