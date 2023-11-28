@@ -61,7 +61,6 @@ def check_operator(
 
     if tester is None:
         errors = []
-
         for output, target in zip(outputs, targets):
             if json.dumps(output, sort_keys=True) != json.dumps(target, sort_keys=True):
                 errors.append(f"target and output must be equal, got <{output}> =/= <{target}>")
@@ -71,6 +70,7 @@ def check_operator(
 
         return outputs
     else:
+        assert len(list(outputs)) == len(list(targets)), "outputs and targets differ in length"
         if inputs is None:
             inputs = [None] * len(targets)
         for input, output, target in zip(inputs, outputs, targets):
