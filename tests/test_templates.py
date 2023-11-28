@@ -2,11 +2,13 @@ import unittest
 
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.processors import RegexParser
+from src.unitxt.renderers import RenderTemplate
 from src.unitxt.templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
+    MultiReferenceTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
     YesNoTemplate,
@@ -68,6 +70,22 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
+
+    def test_multi_reference_template(self):
+
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderTemplate(template=template)
+        instance = {"inputs": {"text": "who was he?"}, "outputs": {"answer": ["Dan", "Yossi"]}}
+
+        result = renderer.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+        }
+        self.assertDictEqual(result, target)
 
     def test_input_output_template(self):
         parser, _ = fetch_artifact("processors.to_string_stripped")
