@@ -75,13 +75,19 @@ class MapInstanceValues(StreamInstanceOperator):
             is to be applied to their individual elements. If False, mapping is only applied to a field
             containing a single value.
 
-    Examples: MapInstanceValues with mappers={"a": {"1": "hi", "2": "bye"}}, and process_every_value = True,
-        when processing instance {"a": ["1", "2"], "b": 2}, will map the individual elements of field "a",
-        and output {"a": ["hi", "bye"], "b": 2}.
-        If strict = True, input {"a": ["1", "2", "3"], "b": 2} will raise a KeyError, because "3" is missing from the
-        mapper of "a".  When process_every_value = False, then the mapping would not be applied on "a", and, if Strict = True,
-        a KeyError will be raised, because the value of "a", which is a list, is not a key in the mapper of "a".
+    Examples:
 
+        Replace '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}) will modify, for example,
+        instance {"a":"1", "b": 2} to become {"a":"hi", "b": 2}.
+        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, replacing each
+        such "1" with "hi" and "2" -- with "bye" can be achieved by employing
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True). This will modify,
+        for example, instance {"a": ["1", "2"], "b": 2} to become {"a": ["hi", "bye"], "b": 2}.
+
+        To ensure that all values of field 'a' are mapped in every instance, use
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True). Here, input instance
+        {"a":"3", "b": 2} will raise an exception, because "3" is not a key in the mapper of "a".
     """
 
     mappers: Dict[str, Dict[str, str]]

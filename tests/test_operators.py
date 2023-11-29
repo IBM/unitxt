@@ -67,25 +67,27 @@ class TestOperators(unittest.TestCase):
         )
 
         # process_every_value=True would not accept non-list inputs
-        with self.assertRaises(ValueError):
-            check_operator(
-                operator=MapInstanceValues(mappers=mappers, process_every_value=True),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instace = {'a': '1', 'b': '2'}",
+            tester=self,
+        )
 
         # strict is True by default, input value "3" in field "a" is missing from the mapper of "a"
-        with self.assertRaises(KeyError) as ke:
-            operator = MapInstanceValues(mappers=mappers)
-            operator.process(instance={"a": "3", "b": "4"})
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=[{"a": "3", "b": "4"}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
 
-        inputs_p_e_v = [
+        inputs_process_every_value = [
             {"a": [1, 2, 3, 4], "b": 2},
             {"a": [2], "b": 3},
         ]
 
-        targets_p_e_v = [
+        targets_process_every_value = [
             {"a": ["hi", "bye", 3, 4], "b": 2},
             {"a": ["bye"], "b": 3},
         ]
@@ -93,27 +95,33 @@ class TestOperators(unittest.TestCase):
         # simple mapping of individual elements in the list. strict is False here, to ignore absence of "3" from the mapper of "a"
         check_operator(
             operator=MapInstanceValues(mappers=mappers, process_every_value=True, strict=False),
-            inputs=inputs_p_e_v,
-            targets=targets_p_e_v,
+            inputs=inputs_process_every_value,
+            targets=targets_process_every_value,
             tester=self,
         )
 
         # simple mapping of individual elements in the list. with strict=True, the absence of "3" from the mapper of "a" is not overlooked
-        with self.assertRaises(KeyError):
-            operator = MapInstanceValues(mappers=mappers, process_every_value=True)
-            operator.process(instance={"a": [1, 2, 3, 4], "b": 2})
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
 
         # input list can not be ignored with strict=True, and process_every_value=False
-        with self.assertRaises(KeyError):
-            operator = MapInstanceValues(mappers=mappers, strict=True, process_every_value=False)
-            operator.process(instance={"a": [1, 2, 3, 4], "b": 2})
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, strict=True, process_every_value=False),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'A whole list ([1, 2, 3, 4]) in the instance can not be mapped by a field mapper.'",
+            tester=self,
+        )
 
-        inputs_n_p_e_v = [
+        inputs_not_process_every_value = [
             {"a": [1, 2, 3, 4], "b": 2},
             {"a": 2, "b": 3},
         ]
 
-        targets_n_p_e_v = [
+        targets_not_process_every_value = [
             {"a": [1, 2, 3, 4], "b": 2},
             {"a": "bye", "b": 3},
         ]
@@ -121,8 +129,8 @@ class TestOperators(unittest.TestCase):
         # with strict=False, and process_every_value=False, lists are ignored
         check_operator(
             operator=MapInstanceValues(mappers=mappers, process_every_value=False, strict=False),
-            inputs=inputs_n_p_e_v,
-            targets=targets_n_p_e_v,
+            inputs=inputs_not_process_every_value,
+            targets=targets_not_process_every_value,
             tester=self,
         )
 
