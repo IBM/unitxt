@@ -25,7 +25,7 @@ for lang in langs:
             AddFields(fields={"document_type": "document"}),
         ],
         task=FormTask(
-            inputs=["document","document_type"],
+            inputs=["document", "document_type"],
             outputs=["summary"],
             metrics=["metrics.rouge"],
         ),
