@@ -257,7 +257,7 @@ class StreamInstanceOperator(SingleStreamOperator):
                 raise e
             else:
                 raise ValueError(
-                    f"Error processing instance '{index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
+                    f"Error processing instance '{index}' from stream '{stream_name}' in {type(self).__name__} due to {type(e).__name__} presented above this error."
                 ) from e
 
     def _process_instance(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
