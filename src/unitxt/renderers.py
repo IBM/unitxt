@@ -5,7 +5,7 @@ from .dataclass import InternalField
 from .formats import Format, ICLFormat
 from .instructions import Instruction
 from .operator import Operator, SequentialOperator, StreamInstanceOperator
-from .random_utils import random
+from .random_utils import get_random
 from .templates import Template
 
 
@@ -34,7 +34,7 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
 
         inputs = instance["inputs"]
         outputs = instance["outputs"]
-
+        
         source = self.template.process_inputs(inputs)
         targets = self.template.process_outputs(outputs)
 
@@ -42,7 +42,7 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
             assert isinstance(targets, list), f"{targets} must be a list"
             references = targets
             if self.random_reference:
-                target = random.choice(references)
+                target = get_random().choice(references)
             else:
                 if len(references) == 0:
                     raise ValueError("No references found")
