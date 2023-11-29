@@ -169,8 +169,6 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     sampler: Sampler = None
 
     def prepare(self):
-        # self.cached_streams = [self.source_stream]
-        # self.cache_accessible_streams = True
         self.local_cache = None
         self.sampler.prepare()
 
