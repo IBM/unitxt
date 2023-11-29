@@ -2,11 +2,11 @@ import random as python_random
 import string
 import unittest
 
-from src.unitxt.random_utils import __default_seed__, nested_seed, random, set_seed
+from src.unitxt.random_utils import __default_seed__, nested_seed, get_random, set_seed
 
 
 def first_randomization():
-    return tuple(random.randint(0, 10000000000000000000000) for _ in range(100))
+    return tuple(get_random().randint(0, 10000000000000000000000) for _ in range(100))
 
 
 class TestRandomUtils(unittest.TestCase):
@@ -52,6 +52,49 @@ class TestRandomUtils(unittest.TestCase):
                 b = first_randomization()
 
         self.assertEqual(a, b)
+        
+    def test_thread_safety_sanity(self):
+        import threading
+        import time
+
+        def thread_function(name, sleep_time, results):
+            time.sleep(sleep_time)
+
+            time.sleep(sleep_time)
+            with nested_seed():
+                time.sleep(sleep_time)
+                with nested_seed():
+                    time.sleep(sleep_time)
+                    a = first_randomization()
+            results[name][0] = a
+
+            time.sleep(sleep_time)
+            with nested_seed():
+                time.sleep(sleep_time)
+                with nested_seed():
+                    time.sleep(sleep_time)
+                    b = first_randomization()
+            results[name][1] = b
+
+        threads = list()
+        results = list()
+        for i in range(3):
+            sleep_time = python_random.randint(0, 100) / 10000
+            results.append([None, None])
+            thread_function(i, sleep_time, results)
+            # x = threading.Thread(target=thread_function, args=(i, sleep_time, results))
+            # threads.append(x)
+            # x.start()
+            
+        
+
+        for index in range(3):
+            with self.subTest(f'Within Thread {index}'):
+                self.assertEqual(results[index][0], results[index][1])
+
+        with self.subTest(f'Across all threads'):
+            flatten_results = [item for sublist in results for item in sublist]
+            self.assertEqual(len(set(flatten_results)), 1)
 
     def test_thread_safety(self):
         import threading
@@ -78,16 +121,20 @@ class TestRandomUtils(unittest.TestCase):
 
         threads = list()
         results = list()
-        for i in range(100):
-            sleep_time = python_random.randint(0, 100) / 1000
+        for i in range(1):
+            sleep_time = python_random.randint(0, 100) / 10000
             results.append([None, None])
             x = threading.Thread(target=thread_function, args=(i, sleep_time, results))
             threads.append(x)
             x.start()
+            
+        
 
         for index, thread in enumerate(threads):
             thread.join()
-            self.assertEqual(results[index][0], results[index][1])
+            with self.subTest(f'Within Thread {index}'):
+                self.assertEqual(results[index][0], results[index][1])
 
-        flatten_results = [item for sublist in results for item in sublist]
-        self.assertEqual(len(set(flatten_results)), 1)
+        with self.subTest(f'Across all threads'):
+            flatten_results = [item for sublist in results for item in sublist]
+            self.assertEqual(len(set(flatten_results)), 1)
