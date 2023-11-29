@@ -4,8 +4,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
-from .random_utils import random
-
+from .random_utils import get_random
 
 class Collection(Artifact):
     items: typing.Collection = AbstractField()
@@ -50,6 +49,6 @@ class ItemPicker(Artifact):
 class RandomPicker(Artifact):
     def __call__(self, collection: Collection):
         if isinstance(collection, ListCollection):
-            return random.choice(list(collection.items))
+            return get_random().choice(list(collection.items))
         elif isinstance(collection, DictCollection):
-            return random.choice(list(collection.items.values()))
+            return get_random().choice(list(collection.items.values()))
