@@ -20,6 +20,7 @@ from src.unitxt.operators import (
     Intersect,
     JoinStr,
     LengthBalancer,
+    ListFieldValues,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
@@ -1045,12 +1046,14 @@ class TestOperators(unittest.TestCase):
         # weighted suffixes
         suffixesDict = {"Q": 2, "R": 2, "S": 2, "T": 8}
         operator = AugmentSuffix(augment_model_input=True, suffixes=suffixesDict)
-        outputs = apply_operator(operator, inputs * 100)
-        assert len(outputs) == 100, f"outputs length {len(outputs)} is different from inputs length, which is 100."
+        outputs = apply_operator(operator, inputs * 500)
+        assert len(outputs) == 500, f"outputs length {len(outputs)} is different from inputs length, which is 500."
         actual_suffixes = [output["source"][-1] for output in outputs]
         counter = Counter(actual_suffixes)
         dic = dict(counter)
-        assert dic["T"] > 25, f'expected suffix "T" to be more frequent than {dic["T"]}'
+        assert (
+            dic["T"] > 125
+        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {dic["T"]}'
 
     def test_augment_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
@@ -1112,6 +1115,12 @@ class TestOperators(unittest.TestCase):
             str(ve.exception),
             "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Error augmenting value '   ' from 'inputs/text' in instance: {'inputs': {'text': '   '}}",
         )
+
+    def test_list_field_values(self):
+        in_instance = {"a": 1, "b": 2, "c": 3}
+        operator = ListFieldValues(fields=["a", "b"], to_field="ab")
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": 1, "b": 2, "c": 3, "ab": [1, 2]})
 
     def test_test_operator_without_tester_param(self):
         text = None

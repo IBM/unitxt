@@ -536,10 +536,10 @@ class Apply(StreamInstanceOperator):
 
 class ListFieldValues(StreamInstanceOperator):
     """
-    Concatanates values of multiple fields into a list to list(fields)
+    Concatenates values of multiple fields into a list, and assigns it to a new field
     """
 
-    fields: str
+    fields: List[str]
     to_field: str
     use_query: bool = False
 
