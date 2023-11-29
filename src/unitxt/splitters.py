@@ -12,7 +12,7 @@ class Splitter(MultiStreamOperator):
     pass
 
 
-from .random_utils import random
+from .random_utils import get_random
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -98,7 +98,7 @@ class Sampler(Artifact):
 class RandomSampler(Sampler):
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return random.sample(instances_pool, self.sample_size)
+        return get_random().sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -139,7 +139,7 @@ class DiverseLabelsSampler(Sampler):
         if self.labels is None:
             self.labels = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels.keys())
-        random.shuffle(all_labels)
+        get_random().shuffle(all_labels)
         from collections import Counter
 
         total_allocated = 0
@@ -156,10 +156,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = random.sample(self.labels[label], allocation)
+            sample = get_random().sample(self.labels[label], allocation)
             result.extend(sample)
 
-        random.shuffle(result)
+        get_random().shuffle(result)
         return result
 
 
