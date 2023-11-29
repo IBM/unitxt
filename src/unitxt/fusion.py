@@ -6,7 +6,7 @@ from typing import Generator, List, Optional
 from .card import ICLCard, TaskCard
 from .dataclass import NonPositionalField
 from .operator import SourceOperator, StreamSource
-from .random_utils import random
+from .random_utils import get_random
 from .stream import MultiStream, Stream
 
 
@@ -93,7 +93,7 @@ class WeightedFusion(BaseFusion):
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
         while (self.max_total_examples is None or total_examples <= self.max_total_examples) and len(iterators) > 0:
-            iterator = random.choices(population=iterators, weights=weights)[0]
+            iterator = get_random().choices(population=iterators, weights=weights)[0]
             try:
                 yield next(iterator)
                 total_examples += 1

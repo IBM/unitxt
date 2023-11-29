@@ -7,7 +7,7 @@ from .artifact import Artifact
 from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
 from .operator import StreamInstanceOperator
-from .random_utils import random
+from .random_utils import get_random
 from .text_utils import split_words
 
 
@@ -55,7 +55,7 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
         if self.template.is_multi_reference:
             references = targets
             if self.random_reference:
-                target = random.choice(references)
+                target = get_random().choice(references)
             else:
                 if len(references) == 0:
                     raise ValueError("No references found")
