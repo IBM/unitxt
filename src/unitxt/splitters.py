@@ -4,8 +4,7 @@ from dataclasses import field
 from typing import Dict, List, Optional
 
 from .artifact import Artifact
-from .generator_utils import ReusableGenerator
-from .operator import InstanceOperatorWithGlobalAccess, MultiStreamOperator
+from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .stream import MultiStream
 
 
@@ -164,14 +163,12 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class SpreadSplit(InstanceOperatorWithGlobalAccess):
+class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     source_stream: str = None
     target_field: str = None
     sampler: Sampler = None
 
     def prepare(self):
-        self.accessible_streams = [self.source_stream]
-        self.cache_accessible_streams = True
         self.local_cache = None
         self.sampler.prepare()
 
@@ -193,49 +190,3 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
             return instance
         except Exception as e:
             raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'") from e
-
-
-if __name__ == "__main__":
-    # some tests
-    import random
-
-    random.seed(0)
-    splitter = SplitRandomMix(
-        mix={
-            "train": "train[90%]+validation[50%]",
-            "validation": "train[10%]+validation[50%]",
-            "test": "test",
-        }
-    )
-
-    def generator(name, size):
-        for i in range(size):
-            yield {"text": f"{name}_{i}"}
-
-    stream = MultiStream.from_generators(
-        {
-            "train": ReusableGenerator(generator, gen_kwargs={"name": "train", "size": 10}),
-            "validation": ReusableGenerator(generator, gen_kwargs={"name": "validation", "size": 10}),
-            "test": ReusableGenerator(generator, gen_kwargs={"name": "test", "size": 10}),
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
-
-    splitter = SliceSplit(
-        slices={
-            "train": "train[:2]+train[2:4]",
-            "validation": "train[4:6]",
-            "test": "train[6:]+test",
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)

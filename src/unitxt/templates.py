@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import Artifact
 from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
-from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
+from .operator import StreamInstanceOperator
 from .random_utils import random
 from .text_utils import split_words
 
