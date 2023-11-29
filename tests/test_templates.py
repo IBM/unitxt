@@ -143,6 +143,7 @@ class TestTemplates(unittest.TestCase):
         for expected_processed_output, outputs in processed_output_to_outputs.items():
             processed = template.process_outputs(outputs)
             self.assertEqual(expected_processed_output, processed)
+        self.assertEqual(template.get_input_output_separator(), "\n")
 
     def test_yes_no_template_process_output_missing_fields(self):
         """

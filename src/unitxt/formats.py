@@ -52,7 +52,6 @@ class ICLFormat(SizeLimitingFormat):
             query_str = self.single_source_str(instance["source"], input_output_separator=input_output_separator)
 
         for demo_instance in demos_instances:
-
             demo_str = (
                 self.single_source_str(demo_instance["source"], input_output_separator=input_output_separator)
                 + demo_instance["target"]

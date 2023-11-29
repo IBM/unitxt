@@ -233,7 +233,7 @@ class YesNoTemplate(Template):
             ) from e
 
     def get_input_output_separator(self) -> str:
-        return self.get_input_output_separator
+        return self.input_output_separator
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
         try:
