@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import nested_seed, random
+from .random_utils import get_random, nested_seed
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
@@ -370,7 +370,7 @@ class AugmentWhitespace(Augmentor):
 
         for word in words:
             if word.isspace():
-                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+                new_value += get_random().choice(["\n", "\t", " "]) * get_random().randint(1, 3)
             else:
                 new_value += word
         return new_value
@@ -383,7 +383,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random.shuffle(res)
+        get_random().shuffle(res)
         return res
 
 
@@ -1071,7 +1071,7 @@ class Shuffle(PagedStreamOperator):
     """
 
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
-        random.shuffle(page)
+        get_random().shuffle(page)
         yield from page
 
 
