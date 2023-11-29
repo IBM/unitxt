@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import nested_seed, get_random
+from .random_utils import get_random, nested_seed
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
