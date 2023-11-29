@@ -332,9 +332,6 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
     In order to make this efficient and to avoid qudratic complexity, it caches the accessible streams by default.
     """
 
-    # cached_streams: Union[MultiStream, List[str]] = None
-    # cache_accessible_streams: bool = True
-
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         result = {}
 
