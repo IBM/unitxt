@@ -132,9 +132,15 @@ class TestRandomUtils(unittest.TestCase):
 
         for index, thread in enumerate(threads):
             thread.join()
+            
             with self.subTest(f'Within Thread {index}'):
+                self.assertIsNotNone(results[index][0])
+                self.assertIsNotNone(results[index][1])
                 self.assertEqual(results[index][0], results[index][1])
+             
 
         with self.subTest(f'Across all threads'):
             flatten_results = [item for sublist in results for item in sublist]
             self.assertEqual(len(set(flatten_results)), 1)
+
+        
