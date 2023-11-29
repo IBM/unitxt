@@ -6,6 +6,7 @@ from .artifact import Artifact
 from .dataclass import AbstractField
 from .random_utils import get_random
 
+
 class Collection(Artifact):
     items: typing.Collection = AbstractField()
 

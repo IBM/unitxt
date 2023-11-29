@@ -2,7 +2,7 @@ import random as python_random
 import string
 import unittest
 
-from src.unitxt.random_utils import __default_seed__, nested_seed, get_random, set_seed
+from src.unitxt.random_utils import __default_seed__, get_random, nested_seed, set_seed
 
 
 def first_randomization():
@@ -52,7 +52,7 @@ class TestRandomUtils(unittest.TestCase):
                 b = first_randomization()
 
         self.assertEqual(a, b)
-        
+
     def test_thread_safety_sanity(self):
         import threading
         import time
@@ -85,14 +85,12 @@ class TestRandomUtils(unittest.TestCase):
             # x = threading.Thread(target=thread_function, args=(i, sleep_time, results))
             # threads.append(x)
             # x.start()
-            
-        
 
         for index in range(3):
-            with self.subTest(f'Within Thread {index}'):
+            with self.subTest(f"Within Thread {index}"):
                 self.assertEqual(results[index][0], results[index][1])
 
-        with self.subTest(f'Across all threads'):
+        with self.subTest(f"Across all threads"):
             flatten_results = [item for sublist in results for item in sublist]
             self.assertEqual(len(set(flatten_results)), 1)
 
@@ -127,20 +125,15 @@ class TestRandomUtils(unittest.TestCase):
             x = threading.Thread(target=thread_function, args=(i, sleep_time, results))
             threads.append(x)
             x.start()
-            
-        
 
         for index, thread in enumerate(threads):
             thread.join()
-            
-            with self.subTest(f'Within Thread {index}'):
+
+            with self.subTest(f"Within Thread {index}"):
                 self.assertIsNotNone(results[index][0])
                 self.assertIsNotNone(results[index][1])
                 self.assertEqual(results[index][0], results[index][1])
-             
 
-        with self.subTest(f'Across all threads'):
+        with self.subTest(f"Across all threads"):
             flatten_results = [item for sublist in results for item in sublist]
             self.assertEqual(len(set(flatten_results)), 1)
-
-        
