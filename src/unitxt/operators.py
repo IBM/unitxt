@@ -376,6 +376,67 @@ class AugmentWhitespace(Augmentor):
         return new_value
 
 
+class AugmentSuffix(Augmentor):
+    """
+    Augments the input by appending to it a randonly selected (typically, whitespace) pattern.
+    Any existing trailig whitespace (if any), of the input is first discarded.
+    Then, a pattern is randomly selected from a given list of (pattern, weight) pairs.
+    Finally, the selected pattern is appended to the (potentially trimmed at its end) input.
+
+    Args:
+     suffixes : the potential white-space patterns to select from.
+        the dictionary version allowes to specify relative weights of the different patterns.
+
+    Examples:
+        to append a '\n' or a '\t' to the end of the input, employ
+        AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
+
+    """
+
+    suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
+
+    def verify(self):
+        assert isinstance(self.suffixes, list) or isinstance(
+            self.suffixes, dict
+        ), f"Argument 'suffixes' should be either a list or a dictionary, whereas it is of type {type(self.suffixes)}"
+
+        if isinstance(self.suffixes, dict):
+            for k, v in self.suffixes.items():
+                assert isinstance(k, str), f"suffixes should map strings, whereas key {str(k)} is of type {type(k)}"
+                assert isinstance(v, int), f"suffixes should map to ints, whereas value {str(v)} is of type {type(v)}"
+        else:
+            for k in self.suffixes:
+                assert isinstance(
+                    k, str
+                ), f"suffixes should be a list of strings, whereas member {str(k)} is of type {type(k)}"
+
+        super().verify()
+        self.next_pats = self.select_next_100_patterns()
+
+    def process_value(self, value: Any) -> Any:
+        assert value is not None, "input value should not be None"
+        new_value = str(value).rstrip()
+        assert len(new_value) > 0, f"nothing left of input value {str(value)} after trimming trailing whitespaces"
+        if len(self.next_pats) == 0:
+            self.next_pats = self.select_next_100_patterns()
+        new_value += self.next_pats.pop()
+
+        return new_value
+
+    def select_next_100_patterns(self) -> List[str]:
+        import random
+
+        pats = self.suffixes if isinstance(self.suffixes, list) else [k for k in self.suffixes.keys()]
+        total_weight = len(pats) if isinstance(self.suffixes, list) else sum([v for k, v in self.suffixes.items()])
+        weights = (
+            [1.0 / total_weight] * len(pats)
+            if isinstance(self.suffixes, list)
+            else [float(self.suffixes[p]) / total_weight for p in pats]
+        )
+        hundred_selections = random.choices(pats, weights, k=100)
+        return hundred_selections
+
+
 class ShuffleFieldValues(FieldOperator):
     """
     Shuffles an iterable value
