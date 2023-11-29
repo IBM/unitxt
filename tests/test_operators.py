@@ -3,6 +3,7 @@ import unittest
 
 from src.unitxt.operators import (
     AddFields,
+    Apply,
     ApplyMetric,
     ApplyOperatorsField,
     AugmentWhitespace,
@@ -815,6 +816,25 @@ class TestOperators(unittest.TestCase):
                 to_field="most_common_individuals",
                 min_frequency_percent=-2,
             ).process(input_multi_stream1)
+
+    def test_apply(self):
+        in_instance = {"a": "lower"}
+        operator = Apply("a", function=str.upper, to_field="b")
+        st_from_upper = operator.function_to_str(str.upper)
+        self.assertEqual(st_from_upper, "str.upper")
+        upper_from_st = operator.str_to_function(st_from_upper)
+        self.assertEqual("UPPER", upper_from_st("upper"))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": "lower", "b": "LOWER"})
+
+        in_instance = {"a": ["input", "list"]}
+        operator = Apply("a", function="tuple", to_field="b")
+        st_from_tuple = operator.function_to_str(tuple)
+        self.assertEqual(st_from_tuple, "builtins.tuple")
+        tuple_from_st = operator.str_to_function("tuple")
+        self.assertEqual((1, 2, 3), tuple_from_st([1, 2, 3]))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": ["input", "list"], "b": ("input", "list")})
 
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]

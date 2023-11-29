@@ -63,7 +63,7 @@ def check_operator(
         errors = []
         for output, target in zip(outputs, targets):
             if json.dumps(output, sort_keys=True) != json.dumps(target, sort_keys=True):
-                errors.append(f"target and output must be equal, got <{output}> =/= <{target}>")
+                errors.append(f"output and target must be equal, got <{output}> =/= <{target}>")
 
         if len(errors) > 0:
             raise AssertionError("\n".join(errors))

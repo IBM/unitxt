@@ -475,7 +475,8 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[splitted]
+            return __builtins__[splitted[0]]
+
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
@@ -773,20 +774,21 @@ class ExtractFieldValues(MultiStreamOperator):
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
     field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
-    every record in all streams.
+    every instance in all streams.
 
     ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
     in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
     value members in these lists, and report the most frequent values.
-    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
+    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field
+    'to_field' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
-    extracts the most frequent possible values of field 'label' that cover at least 80% of the rows of stream_name,
-    and stores them in field 'classes' of each record of all streams.
+    extracts the most frequent possible values of field 'label' that together cover at least 80% of the instances of stream_name,
+    and stores them in field 'classes' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
     extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
-    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each instance in all streams.
     """
 
     def verify(self):
