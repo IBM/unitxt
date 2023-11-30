@@ -76,9 +76,22 @@ class MultiStreamScoreMean(MultiStreamOperator):
             instance["score"]["global"]["groups_mean_score"] = score
             yield instance
 
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        mean_score = self.aggegate_results(multi_stream)
+    def spread_results_one_stream(self, stream: Stream):
+        for instance in stream:
+            instance["score"]["global"]["groups_mean_score"] = instance["score"]["global"]["score"]
+            yield instance
 
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        result = {}
+
+        # optimization in to avoid double calculation of metrics
+        # when aggregating results, if there is only one stream.
+        if len(multi_stream) == 1:
+            for stream_name, stream in multi_stream.items():
+                result[stream_name] = Stream(self.spread_results_one_stream, gen_kwargs={"stream": stream})
+            return MultiStream(result)
+
+        mean_score = self.aggegate_results(multi_stream)
         result = {}
         for stream_name, stream in multi_stream.items():
             result[stream_name] = Stream(self.spread_results, gen_kwargs={"stream": stream, "score": mean_score})

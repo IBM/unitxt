@@ -1,14 +1,14 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
+from src.unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
-    InputOutputTemplate(input_format="Question: {question}", output_format="{answer}"),
+    MultiReferenceTemplate(input_format="Question: {question}", references_field="answers"),
     "templates.qa.open.simple",
     overwrite=True,
 )
 
 add_to_catalog(
-    InputOutputTemplate(input_format="answer the question: {question}", output_format="{answer}"),
+    MultiReferenceTemplate(input_format="answer the question: {question}", references_field="answers"),
     "templates.qa.open.simple2",
     overwrite=True,
 )
