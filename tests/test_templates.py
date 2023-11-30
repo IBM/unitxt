@@ -87,6 +87,15 @@ class TestTemplates(unittest.TestCase):
         }
         self.assertDictEqual(result, target)
 
+    def test_multi_reference_template_verify_references_type(self):
+
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderTemplate(template=template)
+        instance = {"inputs": {"text": "who was he?"}, "outputs": {"answer": [0, "dkd"]}}
+
+        with self.assertRaises(ValueError):
+            renderer.process(instance)
+
     def test_input_output_template(self):
         parser, _ = fetch_artifact("processors.to_string_stripped")
 
