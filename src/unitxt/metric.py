@@ -102,11 +102,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 # The additional_inputs field in the schema is defined as
 # Sequence({"key": Value(dtype="string"), "value": Value("string")})
 # When receiving instances from this scheme, the keys and values are returned as two separate
-# lists, and are converted to a dictionary.
-
-
-def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
-    return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
+# lists.
 
 
 class MetricRecipe(SequentialOperatorInitilizer):
@@ -116,7 +112,6 @@ class MetricRecipe(SequentialOperatorInitilizer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
-            Apply("additional_inputs", function=_from_key_value_pairs, to_field="additional_inputs"),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],

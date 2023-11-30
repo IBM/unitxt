@@ -455,7 +455,9 @@ class HuggingfaceMetric(GlobalMetric):
         self.metric = evaluate.load(self.hf_metric_name, experiment_id=self.experiment_id)
 
     def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]) -> dict:
-        result = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+        result = self.metric.compute(
+            predictions=predictions, references=references, additional_inputs=additional_inputs, **self.hf_compute_args
+        )
         if self.hf_main_score:
             result[self.main_score] = result[self.hf_main_score]
             del result[self.hf_main_score]
@@ -487,7 +489,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
     def compute(
         self, references: List[List[str]], predictions: List[str], additional_inputs: List[Any]
     ) -> List[Dict[str, Any]]:
-        scores = self.metric.compute(predictions=predictions, references=references, **self.hf_compute_args)
+        scores = self.metric.compute(
+            predictions=predictions, references=references, additional_inputs=additional_inputs, **self.hf_compute_args
+        )
 
         # convert dict of lists to a list of dicts
         results = [{} for _ in range(len(scores[self.hf_metric_fields[0]]))]
