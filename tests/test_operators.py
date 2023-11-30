@@ -1035,7 +1035,7 @@ class TestOperators(unittest.TestCase):
         inputs = [{"inputs": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to RuntimeError presented above this error."
 
         check_operator_exception(
             operator,
