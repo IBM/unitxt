@@ -77,17 +77,19 @@ class MapInstanceValues(StreamInstanceOperator):
 
     Examples:
 
-        Replace '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}) will modify, for example,
-        instance {"a":"1", "b": 2} to become {"a":"hi", "b": 2}.
-        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, replacing each
-        such "1" with "hi" and "2" -- with "bye" can be achieved by employing
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True). This will modify,
-        for example, instance {"a": ["1", "2"], "b": 2} to become {"a": ["hi", "bye"], "b": 2}.
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
+        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
+        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
 
-        To ensure that all values of field 'a' are mapped in every instance, use
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True). Here, input instance
-        {"a":"3", "b": 2} will raise an exception, because "3" is not a key in the mapper of "a".
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
+        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
+        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
+        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
+        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
+        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
+        because "3" is not a key in the mapper of "a".
     """
 
     mappers: Dict[str, Dict[str, str]]
