@@ -9,6 +9,7 @@ from .instructions import Instruction, TextualInstruction
 from .operator import StreamInstanceOperator
 from .random_utils import get_random
 from .text_utils import split_words
+from .type_utils import isoftype
 
 
 class Renderer(ABC):
@@ -315,7 +316,12 @@ class MultiReferenceTemplate(InputOutputTemplate):
     is_multi_reference = True
 
     def process_outputs(self, outputs: Dict[str, object]) -> List[str]:
-        return outputs[self.references_field]
+        references = outputs[self.references_field]
+        if not isoftype(references, List[str]):
+            raise ValueError(
+                f"MultiReferenceTemplate requires that references field {self.references_field} is of type List[str]."
+            )
+        return references
 
 
 def escape_chars(s, chars_to_escape):
