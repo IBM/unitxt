@@ -2,7 +2,7 @@ import numpy as np
 from itertools import combinations
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.contingency_tables import mcnemar
-from scipy.stats import permutation_test, ttest_rel, norm
+from scipy.stats import permutation_test, ttest_rel, norm, gmean
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -333,7 +333,7 @@ class PairedDifferenceTest:
         # all different metric_names
         assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
 
-    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True):
+    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False):
         """
         Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
         Args:
@@ -341,6 +341,7 @@ class PairedDifferenceTest:
             set of models compared
             sort_rows: boolean, whether to sort rows so that the most significant comparisons appear at the top
             use_pvalues: boolean, if True use p-values otherwise effect sizes
+            hide_insignificant_rows: boolean, if True hide rows (compared pairs) that are not significant for any metric (would be white)
         Returns:
 
         """
@@ -358,7 +359,6 @@ class PairedDifferenceTest:
                                         index=[symb_format.format(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
         # the original p-values only, in array form
         combined_results_arr = combined_results.to_numpy()
-        ncomparisons, nmetrics = combined_results_arr.shape
 
         combined_results_are_signif = np.transpose(np.vstack([vv.pvalue_is_signif if use_pvalues else vv.effect_size_is_signif for vv in test_results_list]))
         combined_results_arr_with_nan = deepcopy(combined_results_arr)
@@ -379,15 +379,24 @@ class PairedDifferenceTest:
 
         if sort_rows:
             if use_pvalues:
-                # median p-value regardless of significance, lower values are more significant
-                score_ord = np.argsort(np.median(combined_results_arr, axis=1))
+                # geometric mean p-value regardless of significance, lower values are more significant
+                score_ord = np.argsort(np.apply_along_axis(arr=combined_results_arr, axis=1, func1d=gmean))
             else:
-                # take absolute value first then reverse since higher values are more significant
-                score_ord = np.argsort(np.median(np.abs(combined_results_arr), axis=1))[::-1]
+                # take absolute value (to ignore sign) first then reverse since higher values are more significant
+                score_ord = np.argsort(np.mean(np.abs(combined_results_arr), axis=1))[::-1]
 
             recoded_values_arr = recoded_values_arr[score_ord, :]
             combined_results_arr_with_nan = combined_results_arr_with_nan[score_ord, :]
             combined_results = combined_results.iloc[score_ord]
+
+        if hide_insignificant_rows:
+            # if any of results are not NaN (significant), then include
+            row_not_all_nan = np.any(a=np.logical_not(np.isnan(combined_results_arr_with_nan)), axis=1)
+            recoded_values_arr = recoded_values_arr[row_not_all_nan, :]
+            combined_results_arr_with_nan = combined_results_arr_with_nan[row_not_all_nan, :]
+            combined_results = combined_results.loc[row_not_all_nan]
+
+        ncomparisons, nmetrics = recoded_values_arr.shape
 
         fig, ax = plt.subplots(1, 1)
         # this coloring uses the recoding, ensure color range is symmetric
@@ -437,7 +446,10 @@ class PairedDifferenceTest:
         ax.set_xticks(ticks=np.arange(combined_results_arr.shape[1]), labels=combined_results.columns)
         ax.set_yticks(ticks=np.arange(ncomparisons), labels=combined_results.index)
         ax.set_ylabel('models compared')
-        plt.title('{} model comparison significant {}'.format(alt_dict[alternative]['name'], 'p-values' if use_pvalues else 'effect size'))
+        title = '{} model comparison significant {}'.format(alt_dict[alternative]['name'], 'p-values' if use_pvalues else 'effect size')
+        if hide_insignificant_rows:
+            title += "\ncomparisons with no significant differences are omitted"
+        plt.title(title)
 
         plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
                   rowLabels=list(range(1, self.nmodels+1)),
