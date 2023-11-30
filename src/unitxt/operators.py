@@ -1,6 +1,5 @@
 import collections
 import importlib
-import inspect
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -416,6 +415,65 @@ class AugmentWhitespace(Augmentor):
         return new_value
 
 
+class AugmentSuffix(Augmentor):
+    """
+    Augments the input by appending to it a randomly selected (typically, whitespace) pattern.
+
+    Args:
+     suffixes : the potential (typically, whitespace) patterns to select from.
+        The dictionary version allows to specify relative weights of the different patterns.
+     remove_existing_trailing_whitespaces : allows to first clean existing trailing whitespaces.
+        The selected pattern is then appended to the potentially trimmed at its end input.
+
+
+    Examples:
+        to append a '\n' or a '\t' to the end of the input, employ
+        AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
+        If '\n' is preferred over '\t', at 2:1 ratio, employ
+        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1})
+        which will append '\n' twice as often as '\t'.
+
+    """
+
+    suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
+    remove_existing_trailing_whitespaces: Optional[bool] = False
+
+    def verify(self):
+        assert isinstance(self.suffixes, list) or isinstance(
+            self.suffixes, dict
+        ), f"Argument 'suffixes' should be either a list or a dictionary, whereas it is of type {type(self.suffixes)}"
+
+        if isinstance(self.suffixes, dict):
+            for k, v in self.suffixes.items():
+                assert isinstance(k, str), f"suffixes should map strings, whereas key {str(k)} is of type {type(k)}"
+                assert isinstance(v, int), f"suffixes should map to ints, whereas value {str(v)} is of type {type(v)}"
+        else:
+            for k in self.suffixes:
+                assert isinstance(
+                    k, str
+                ), f"suffixes should be a list of strings, whereas member {str(k)} is of type {type(k)}"
+
+        self.pats = self.suffixes if isinstance(self.suffixes, list) else [k for k, v in self.suffixes.items()]
+        total_weight = (
+            len(self.pats) if isinstance(self.suffixes, list) else sum([v for k, v in self.suffixes.items()])
+        )
+        self.weights = (
+            [1.0 / total_weight] * len(self.pats)
+            if isinstance(self.suffixes, list)
+            else [float(self.suffixes[p]) / total_weight for p in self.pats]
+        )
+        super().verify()
+
+    def process_value(self, value: Any) -> Any:
+        assert value is not None, "input value should not be None"
+        new_value = str(value)
+        if self.remove_existing_trailing_whitespaces:
+            new_value = new_value.rstrip()
+        new_value += get_random().choices(self.pats, self.weights, k=1)[0]
+
+        return new_value
+
+
 class ShuffleFieldValues(FieldOperator):
     """
     Shuffles an iterable value
@@ -515,7 +573,7 @@ class Apply(StreamInstanceOperator):
 
 class ListFieldValues(StreamInstanceOperator):
     """
-    Concatanates values of multiple fields into a list to list(fields)
+    Concatenates values of multiple fields into a list, and assigns it to a new field
     """
 
     fields: List[str]
