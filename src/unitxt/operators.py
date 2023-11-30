@@ -1,6 +1,5 @@
 import collections
 import importlib
-import inspect
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -378,22 +377,26 @@ class AugmentWhitespace(Augmentor):
 
 class AugmentSuffix(Augmentor):
     """
-    Augments the input by appending to it a randonly selected (typically, whitespace) pattern.
-    Any existing trailig whitespace (if any), of the input is first discarded.
-    Then, a pattern is randomly selected from a given list of (pattern, weight) pairs.
-    Finally, the selected pattern is appended to the (potentially trimmed at its end) input.
+    Augments the input by appending to it a randomly selected (typically, whitespace) pattern.
 
     Args:
-     suffixes : the potential white-space patterns to select from.
-        the dictionary version allowes to specify relative weights of the different patterns.
+     suffixes : the potential (typically, whitespace) patterns to select from.
+        The dictionary version allows to specify relative weights of the different patterns.
+     remove_existing_trailing_whitespaces : allows to first clean existing trailing whitespaces.
+        The selected pattern is then appended to the potentially trimmed at its end input.
+
 
     Examples:
         to append a '\n' or a '\t' to the end of the input, employ
         AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
+        If '\n' is preferred over '\t', at 2:1 ratio, employ
+        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1})
+        which will append '\n' twice as often as '\t'.
 
     """
 
     suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
+    remove_existing_trailing_whitespaces: Optional[bool] = False
 
     def verify(self):
         assert isinstance(self.suffixes, list) or isinstance(
@@ -415,8 +418,9 @@ class AugmentSuffix(Augmentor):
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
-        new_value = str(value).rstrip()
-        assert len(new_value) > 0, f"nothing left of input value {str(value)} after trimming trailing whitespaces"
+        new_value = str(value)
+        if self.remove_existing_trailing_whitespaces:
+            new_value = new_value.rstrip()
         if len(self.next_pats) == 0:
             self.next_pats = self.select_next_100_patterns()
         new_value += self.next_pats.pop()
