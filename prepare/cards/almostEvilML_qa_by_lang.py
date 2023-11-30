@@ -2,7 +2,13 @@ import json
 
 from src.unitxt.blocks import FormTask, LoadHF, RenameFields, SplitRandomMix, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import Apply, CopyFields, FilterByValues, RemoveFields
+from src.unitxt.operators import (
+    Apply,
+    CopyFields,
+    FilterByValues,
+    ListFieldValues,
+    RemoveFields,
+)
 from src.unitxt.test_utils.card import test_card
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
@@ -18,11 +24,12 @@ for lang in langs:
             FilterByValues(required_values={"extracted_language": lang}),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix({"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}),
-            RenameFields(field_to_field={"INSTRUCTION": "question", "RESPONSE": "answer"}),
+            RenameFields(field_to_field={"INSTRUCTION": "question"}),
+            ListFieldValues(fields=["RESPONSE"], to_field="answers"),
         ],
         task=FormTask(
             inputs=["question"],
-            outputs=["answer"],
+            outputs=["answers"],
             metrics=["metrics.rouge"],
         ),
         templates="templates.qa.open.all",
