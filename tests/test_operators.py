@@ -18,6 +18,7 @@ from src.unitxt.operators import (
     Intersect,
     JoinStr,
     LengthBalancer,
+    ListFieldValues,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
@@ -45,20 +46,91 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(input_dict, output_dict)
 
     def test_map_instance_values(self):
+        mappers = {"a": {"1": "hi", "2": "bye"}}
+
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
+            {"a": "1", "b": "2"},
+            {"a": "2", "b": "3"},
         ]
 
         targets = [
-            {"a": "hi", "b": 2},
+            {"a": "hi", "b": "2"},
+            {"a": "bye", "b": "3"},
+        ]
+
+        # simple value substitute
+        check_operator(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # process_every_value=True would not accept non-list inputs
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instace = {'a': '1', 'b': '2'}",
+            tester=self,
+        )
+
+        # strict is True by default, input value "3" in field "a" is missing from the mapper of "a"
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=[{"a": "3", "b": "4"}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+
+        inputs_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": [2], "b": 3},
+        ]
+
+        targets_process_every_value = [
+            {"a": ["hi", "bye", 3, 4], "b": 2},
+            {"a": ["bye"], "b": 3},
+        ]
+
+        # simple mapping of individual elements in the list. strict is False here, to ignore absence of "3" from the mapper of "a"
+        check_operator(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True, strict=False),
+            inputs=inputs_process_every_value,
+            targets=targets_process_every_value,
+            tester=self,
+        )
+
+        # simple mapping of individual elements in the list. with strict=True, the absence of "3" from the mapper of "a" is not overlooked
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+
+        # input list can not be ignored with strict=True, and process_every_value=False
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, strict=True, process_every_value=False),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'A whole list ([1, 2, 3, 4]) in the instance can not be mapped by a field mapper.'",
+            tester=self,
+        )
+
+        inputs_not_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets_not_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
             {"a": "bye", "b": 3},
         ]
 
+        # with strict=False, and process_every_value=False, lists are ignored
         check_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
-            inputs=inputs,
-            targets=targets,
+            operator=MapInstanceValues(mappers=mappers, process_every_value=False, strict=False),
+            inputs=inputs_not_process_every_value,
+            targets=targets_not_process_every_value,
             tester=self,
         )
 
@@ -75,6 +147,24 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        )
+
+    def test_list_field_values(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "ab": [1, 2]},
+            {"a": 2, "b": 3, "ab": [2, 3]},
+        ]
+
+        check_operator(
+            operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_flatten_instances(self):

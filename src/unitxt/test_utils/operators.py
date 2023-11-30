@@ -52,6 +52,10 @@ def check_operator(
 
     outputs = apply_operator(operator, inputs)
 
+    assert len(list(outputs)) == len(
+        targets
+    ), f"outputs '{list(outputs)}' and targets '{targets}' must have the same number of instances"
+
     if sort_outputs_by is not None:
         outputs = sorted(outputs, key=lambda x: x[sort_outputs_by])
 
@@ -66,7 +70,6 @@ def check_operator(
 
         return outputs
     else:
-        assert len(list(outputs)) == len(list(targets)), "outputs and targets differ in length"
         if inputs is None:
             inputs = [None] * len(targets)
         for input, output, target in zip(inputs, outputs, targets):
