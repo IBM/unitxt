@@ -469,8 +469,7 @@ class AugmentSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_trailing_whitespaces:
             new_value = new_value.rstrip()
-        with nested_seed(str(hash(value))) as rand:
-            new_value += rand.choices(self.pats, self.weights, k=1)[0]
+        new_value += get_random().choices(self.pats, self.weights, k=1)[0]
 
         return new_value
 

@@ -1138,7 +1138,7 @@ class TestOperators(unittest.TestCase):
         # weighted suffixes
         suffixesDict = {"Q": 2, "R": 2, "S": 2, "T": 8}
         operator = AugmentSuffix(augment_model_input=True, suffixes=suffixesDict)
-        outputs = apply_operator(operator, inputs * 500)
+        outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
         assert len(outputs) == 500, f"outputs length {len(outputs)} is different from inputs length, which is 500."
         actual_suffixes = [output["source"][-1] for output in outputs]
         counter = Counter(actual_suffixes)
