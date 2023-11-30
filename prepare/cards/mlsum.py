@@ -19,10 +19,10 @@ for lang in langs:
         loader=LoadHF(path="mlsum", name=lang),
         preprocess_steps=[
             RenameFields(field_to_field={"text": "document"}),
-            AddFields(fields={"text_type": "text"}),
+            AddFields(fields={"document_type": "document"}),
         ],
         task=FormTask(
-            inputs=["document"],
+            inputs=["document", "document_type"],
             outputs=["summary"],
             metrics=["metrics.rouge"],
         ),
