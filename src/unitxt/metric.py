@@ -30,6 +30,7 @@ from .operator import (
 )
 from .operator import __file__ as _
 from .operators import (
+    Apply,
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
@@ -75,9 +76,22 @@ class MultiStreamScoreMean(MultiStreamOperator):
             instance["score"]["global"]["groups_mean_score"] = score
             yield instance
 
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        mean_score = self.aggegate_results(multi_stream)
+    def spread_results_one_stream(self, stream: Stream):
+        for instance in stream:
+            instance["score"]["global"]["groups_mean_score"] = instance["score"]["global"]["score"]
+            yield instance
 
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        result = {}
+
+        # optimization in to avoid double calculation of metrics
+        # when aggregating results, if there is only one stream.
+        if len(multi_stream) == 1:
+            for stream_name, stream in multi_stream.items():
+                result[stream_name] = Stream(self.spread_results_one_stream, gen_kwargs={"stream": stream})
+            return MultiStream(result)
+
+        mean_score = self.aggegate_results(multi_stream)
         result = {}
         for stream_name, stream in multi_stream.items():
             result[stream_name] = Stream(self.spread_results, gen_kwargs={"stream": stream, "score": mean_score})
@@ -98,15 +112,24 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 from .schema import UNITXT_DATASET_SCHEMA
 
+# The additional_inputs field in the schema is defined as
+# Sequence({"key": Value(dtype="string"), "value": Value("string")})
+# When receiving instances from this scheme, the keys and values are returned as two separate
+# lists, and are converted to a dictionary.
+
+
+def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
+    return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
+
 
 class MetricRecipe(SequentialOperatorInitilizer):
-
     calc_confidence_intervals: bool = True
 
     def prepare(self):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            Apply("additional_inputs", function=_from_key_value_pairs, to_field="additional_inputs"),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],
@@ -144,14 +167,12 @@ def _compute(
         multi_stream = operator(multi_stream)
 
     stream = multi_stream[split_name]
-
     return list(stream)
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 # @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
 class Metric(evaluate.Metric):
-
     calc_confidence_intervals: bool = True
 
     def _info(self):

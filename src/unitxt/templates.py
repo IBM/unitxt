@@ -6,9 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import Artifact
 from .dataclass import NonPositionalField
 from .instructions import Instruction, TextualInstruction
-from .operator import InstanceOperatorWithGlobalAccess, StreamInstanceOperator
-from .random_utils import random
+from .operator import StreamInstanceOperator
+from .random_utils import get_random
 from .text_utils import split_words
+from .type_utils import isoftype
 
 
 class Renderer(ABC):
@@ -55,7 +56,7 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
         if self.template.is_multi_reference:
             references = targets
             if self.random_reference:
-                target = random.choice(references)
+                target = get_random().choice(references)
             else:
                 if len(references) == 0:
                     raise ValueError("No references found")
@@ -213,9 +214,8 @@ class YesNoTemplate(Template):
             data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()}
             return self.input_format.format(**data)
         except KeyError as e:
-            raise KeyError(
-                f"Available inputs are {inputs.keys()} but input format "
-                f"requires a different one: {self.input_format}"
+            raise RuntimeError(
+                f"Available inputs are {list(inputs.keys())} but input format requires a different one: {self.input_format}"
             ) from e
 
     def process_outputs(self, outputs: Dict[str, object]) -> str:
@@ -289,7 +289,7 @@ class KeyValTemplate(Template):
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
         quantized_outputs = {
             key: round(input_float / self.quantum) * self.quantum for key, input_float in outputs.items()
         }
@@ -303,12 +303,25 @@ class MultiLabelTemplate(InputOutputTemplate):
     output_format = "{labels}"
     empty_label = "None"
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def process_outputs(self, outputs: Dict[str, object]) -> str:
         labels = outputs[self.labels_field]
         if len(labels) == 0:
             labels = [self.empty_label]
         labels_str = self.labels_seprator.join(labels)
         return super().process_outputs({self.labels_field: labels_str})
+
+
+class MultiReferenceTemplate(InputOutputTemplate):
+    references_field: str = "references"
+    is_multi_reference = True
+
+    def process_outputs(self, outputs: Dict[str, object]) -> List[str]:
+        references = outputs[self.references_field]
+        if not isoftype(references, List[str]):
+            raise ValueError(
+                f"MultiReferenceTemplate requires that references field {self.references_field} is of type List[str]."
+            )
+        return references
 
 
 def escape_chars(s, chars_to_escape):

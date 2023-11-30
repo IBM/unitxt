@@ -2,17 +2,18 @@ import unittest
 
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.processors import RegexParser
+from src.unitxt.renderers import RenderTemplate
 from src.unitxt.templates import (
     AutoInputOutputTemplate,
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
+    MultiReferenceTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
-from src.unitxt.test_utils.metrics import apply_metric
 
 
 class TestTemplates(unittest.TestCase):
@@ -70,6 +71,31 @@ class TestTemplates(unittest.TestCase):
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
 
+    def test_multi_reference_template(self):
+
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderTemplate(template=template)
+        instance = {"inputs": {"text": "who was he?"}, "outputs": {"answer": ["Dan", "Yossi"]}}
+
+        result = renderer.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+        }
+        self.assertDictEqual(result, target)
+
+    def test_multi_reference_template_verify_references_type(self):
+
+        template = MultiReferenceTemplate(input_format="This is my sentence: {text}", references_field="answer")
+        renderer = RenderTemplate(template=template)
+        instance = {"inputs": {"text": "who was he?"}, "outputs": {"answer": [0, "dkd"]}}
+
+        with self.assertRaises(ValueError):
+            renderer.process(instance)
+
     def test_input_output_template(self):
         parser, _ = fetch_artifact("processors.to_string_stripped")
 
@@ -112,13 +138,13 @@ class TestTemplates(unittest.TestCase):
         """
         input_format = "Expecting field {class} in input."
         template = YesNoTemplate(input_format=input_format, class_field="class", label_field="")
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(RuntimeError) as cm:
             wrong_field_name = "wrong_field_name"
             template.process_inputs(inputs={wrong_field_name: ["news"]})
-            self.assertEquals(
-                f"Available inputs are {wrong_field_name} but input format requires a different one: {input_format}",
-                str(cm.exception),
-            )
+        self.assertEquals(
+            f"Available inputs are ['{wrong_field_name}'] but input format requires a different one: {input_format}",
+            str(cm.exception),
+        )
 
     def test_yes_no_template_process_output(self):
         """

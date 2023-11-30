@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import nested_seed, random
+from .random_utils import get_random, nested_seed
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
@@ -71,32 +71,72 @@ class MapInstanceValues(StreamInstanceOperator):
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
+        process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
+            is to be applied to their individual elements. If False, mapping is only applied to a field
+            containing a single value.
+
+    Examples:
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
+        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
+        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
+        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
+        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
+        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
+        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
+        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
+        because "3" is not a key in the mapper of "a".
     """
 
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_query = False
+    use_query: bool = False
+    process_every_value: bool = False
 
     def verify(self):
         # make sure the mappers are valid
         for key, mapper in self.mappers.items():
             assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            for k, v in mapper.items():
+            for k in mapper.keys():
                 assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
-                value = str(value)  # make sure the value is a string
-                if self.strict:
-                    assert (
-                        value in mapper
-                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-                else:
+                if (self.process_every_value == True) and (not isinstance(value, list)):
+                    raise ValueError(
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                    )
+                if isinstance(value, list):
+                    if self.process_every_value:
+                        for i, val in enumerate(value):
+                            val = str(val)  # make sure the value is a string
+                            if self.strict and (not val in mapper):
+                                raise KeyError(
+                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                                )
+                            if val in mapper:
+                                value[i] = mapper[val]  # replace just that member of value (value is a list)
+                                dict_set(instance, key, value, use_dpath=self.use_query)
+                    else:  # field is a list, and process_every_value == False
+                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
+                            raise KeyError(
+                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
+                            )
+                else:  # value is not a list, implying process_every_value == False
+                    value = str(value)  # make sure the value is a string
+                    if self.strict and (not value in mapper):
+                        raise KeyError(
+                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                        )
                     if value in mapper:
                         dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+
         return instance
 
 
@@ -118,10 +158,28 @@ class FlattenInstances(StreamInstanceOperator):
 
 class AddFields(StreamInstanceOperator):
     """
-    Adds specified fields to each instance in a stream.
+    Adds specified fields to each instance in a given stream or all streams (default)
+    If fields exist, updates them.
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
+        use_query (bool) : Use '/' to access inner fields
+        use_deepcopy (bool) : Deep copy the input value to avoid later modifications
+
+    Examples:
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
+        AddFields(fields={"classes": ["positive","negatives"]})
+
+        # Add a 'start' field under the 'span' field with a value of 0 to all streams
+        AddFields(fields={"span/start": 0}
+
+        # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
+        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+
+        # Add a 'classes' field on a given list, prevent modification of original list
+        # from changing the instance.
+        AddFields(fields={"classes": alist}), use_deepcopy=True)
     """
 
     fields: Dict[str, object]
@@ -352,7 +410,7 @@ class AugmentWhitespace(Augmentor):
 
         for word in words:
             if word.isspace():
-                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+                new_value += get_random().choice(["\n", "\t", " "]) * get_random().randint(1, 3)
             else:
                 new_value += word
         return new_value
@@ -365,7 +423,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random.shuffle(res)
+        get_random().shuffle(res)
         return res
 
 
@@ -383,6 +441,27 @@ class JoinStr(FieldOperator):
 
 
 class Apply(StreamInstanceOperator):
+
+    """A class used to apply a python function and store the result in a field.
+
+    Args:
+        function (str): name of function.
+        to_field (str): the field to store the result
+        additional arguments are field names passed to the function
+
+    Examples:
+
+    Store in field  "b" the uppercase string of the value in field "a"
+    Apply("a", function=str.upper, to_field="b")
+
+    Dump the json representation of field "t" and store back in the same field.
+    Apply("t", function=json.dumps, to_field="t")
+
+    Set the time in a field 'b'.
+    Apply(function=time.time, to_field="b")
+
+    """
+
     __allow_unexpected_arguments__ = True
     function: Callable = NonPositionalField(required=True)
     to_field: str = NonPositionalField(required=True)
@@ -404,7 +483,8 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[module_name]
+            return __builtins__[splitted[0]]
+
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
@@ -438,7 +518,7 @@ class ListFieldValues(StreamInstanceOperator):
     Concatanates values of multiple fields into a list to list(fields)
     """
 
-    fields: str
+    fields: List[str]
     to_field: str
     use_query: bool = False
 
@@ -693,29 +773,30 @@ class ExtractFieldValues(MultiStreamOperator):
 
     More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
     When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
-    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    the remaining values makes 'overall_top_frequency_percent' of the total number of instances in the stream.
     When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
-    less than 'min_frequency_percent' of the total number of rows in the stream.
-    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
+    less than 'min_frequency_percent' of the total number of instances in the stream.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default values.
 
     Examples:
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
     field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
-    every record in all streams.
+    every instance in all streams.
 
     ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
     in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
     value members in these lists, and report the most frequent values.
-    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
+    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field
+    'to_field' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
-    extracts the most frequent possible values of field 'label' that cover at least 80% of the rows of stream_name,
-    and stores them in field 'classes' of each record of all streams.
+    extracts the most frequent possible values of field 'label' that together cover at least 80% of the instances of stream_name,
+    and stores them in field 'classes' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
     extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
-    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each instance in all streams.
     """
 
     def verify(self):
@@ -1030,7 +1111,7 @@ class Shuffle(PagedStreamOperator):
     """
 
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
-        random.shuffle(page)
+        get_random().shuffle(page)
         yield from page
 
 

@@ -39,10 +39,34 @@ class TestExamples(unittest.TestCase):
         add_to_catalog(Accuracy(), "metrics.accuracy", overwrite=True)
 
         data = [
-            {"group": "group1", "references": ["333", "4"], "source": "source1", "target": "target1"},
-            {"group": "group1", "references": ["4"], "source": "source2", "target": "target2"},
-            {"group": "group2", "references": ["3"], "source": "source3", "target": "target3"},
-            {"group": "group2", "references": ["3"], "source": "source4", "target": "target4"},
+            {
+                "group": "group1",
+                "references": ["333", "4"],
+                "source": "source1",
+                "target": "target1",
+                "additional_inputs": [],
+            },
+            {
+                "group": "group1",
+                "references": ["4"],
+                "source": "source2",
+                "target": "target2",
+                "additional_inputs": [],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source3",
+                "target": "target3",
+                "additional_inputs": [],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source4",
+                "target": "target4",
+                "additional_inputs": [],
+            },
         ]
 
         for d in data:
@@ -91,10 +115,34 @@ class TestExamples(unittest.TestCase):
 
     def test_example7(self):
         data = [
-            {"group": "group1", "references": ["333", "4"], "source": "source1", "target": "target1"},
-            {"group": "group1", "references": ["4"], "source": "source2", "target": "target2"},
-            {"group": "group2", "references": ["3"], "source": "source3", "target": "target3"},
-            {"group": "group2", "references": ["3"], "source": "source4", "target": "target4"},
+            {
+                "group": "group1",
+                "references": ["333", "4"],
+                "source": "source1",
+                "target": "target1",
+                "additional_inputs": [{"key": "a", "value": "1"}, {"key": "b", "value": "1"}],
+            },
+            {
+                "group": "group1",
+                "references": ["4"],
+                "source": "source2",
+                "target": "target2",
+                "additional_inputs": [{"key": "a", "value": "2"}, {"key": "b", "value": "2"}],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source3",
+                "target": "target3",
+                "additional_inputs": [{"key": "a", "value": "3"}, {"key": "b", "value": "3"}],
+            },
+            {
+                "group": "group2",
+                "references": ["3"],
+                "source": "source4",
+                "target": "target4",
+                "additional_inputs": [{"key": "a", "value": "4"}, {"key": "b", "value": "4"}],
+            },
         ]
 
         for d in data:
@@ -132,7 +180,6 @@ class TestExamples(unittest.TestCase):
 
     def test_example8(self):
         dataset = unitxt.load_dataset("recipes.wnli_3_shot")
-
         metric = evaluate.load(unitxt.metric_file)
 
         results = metric.compute(predictions=["none" for t in dataset["test"]], references=dataset["test"])
@@ -140,7 +187,6 @@ class TestExamples(unittest.TestCase):
     def test_evaluate(self):
         import evaluate
         from src import unitxt
-        from src.unitxt.catalog import add_to_catalog
         from src.unitxt.load import load_dataset
         from src.unitxt.text_utils import print_dict
 
@@ -203,7 +249,3 @@ class TestExamples(unittest.TestCase):
         }
 
         # self.assertDictEqual(target, results[0])
-
-
-if __name__ == "__main__":
-    unittest.main()
