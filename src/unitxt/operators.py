@@ -453,32 +453,26 @@ class AugmentSuffix(Augmentor):
                     k, str
                 ), f"suffixes should be a list of strings, whereas member {str(k)} is of type {type(k)}"
 
+        self.pats = self.suffixes if isinstance(self.suffixes, list) else [k for k, v in self.suffixes.items()]
+        total_weight = (
+            len(self.pats) if isinstance(self.suffixes, list) else sum([v for k, v in self.suffixes.items()])
+        )
+        self.weights = (
+            [1.0 / total_weight] * len(self.pats)
+            if isinstance(self.suffixes, list)
+            else [float(self.suffixes[p]) / total_weight for p in self.pats]
+        )
         super().verify()
-        self.next_pats = self.select_next_100_patterns()
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
         new_value = str(value)
         if self.remove_existing_trailing_whitespaces:
             new_value = new_value.rstrip()
-        if len(self.next_pats) == 0:
-            self.next_pats = self.select_next_100_patterns()
-        new_value += self.next_pats.pop()
+        with nested_seed(str(hash(value))) as rand:
+            new_value += rand.choices(self.pats, self.weights, k=1)[0]
 
         return new_value
-
-    def select_next_100_patterns(self) -> List[str]:
-        import random
-
-        pats = self.suffixes if isinstance(self.suffixes, list) else [k for k in self.suffixes.keys()]
-        total_weight = len(pats) if isinstance(self.suffixes, list) else sum([v for k, v in self.suffixes.items()])
-        weights = (
-            [1.0 / total_weight] * len(pats)
-            if isinstance(self.suffixes, list)
-            else [float(self.suffixes[p]) / total_weight for p in pats]
-        )
-        hundred_selections = random.choices(pats, weights, k=100)
-        return hundred_selections
 
 
 class ShuffleFieldValues(FieldOperator):
