@@ -70,32 +70,72 @@ class MapInstanceValues(StreamInstanceOperator):
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
+        process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
+            is to be applied to their individual elements. If False, mapping is only applied to a field
+            containing a single value.
+
+    Examples:
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
+        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
+        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
+        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
+        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
+        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
+        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
+        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
+        because "3" is not a key in the mapper of "a".
     """
 
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_query = False
+    use_query: bool = False
+    process_every_value: bool = False
 
     def verify(self):
         # make sure the mappers are valid
         for key, mapper in self.mappers.items():
             assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            for k, v in mapper.items():
+            for k in mapper.keys():
                 assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
-                value = str(value)  # make sure the value is a string
-                if self.strict:
-                    assert (
-                        value in mapper
-                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-                else:
+                if (self.process_every_value == True) and (not isinstance(value, list)):
+                    raise ValueError(
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                    )
+                if isinstance(value, list):
+                    if self.process_every_value:
+                        for i, val in enumerate(value):
+                            val = str(val)  # make sure the value is a string
+                            if self.strict and (not val in mapper):
+                                raise KeyError(
+                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                                )
+                            if val in mapper:
+                                value[i] = mapper[val]  # replace just that member of value (value is a list)
+                                dict_set(instance, key, value, use_dpath=self.use_query)
+                    else:  # field is a list, and process_every_value == False
+                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
+                            raise KeyError(
+                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
+                            )
+                else:  # value is not a list, implying process_every_value == False
+                    value = str(value)  # make sure the value is a string
+                    if self.strict and (not value in mapper):
+                        raise KeyError(
+                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                        )
                     if value in mapper:
                         dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+
         return instance
 
 
@@ -801,7 +841,7 @@ class ExtractFieldValues(MultiStreamOperator):
     the remaining values makes 'overall_top_frequency_percent' of the total number of instances in the stream.
     When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
     less than 'min_frequency_percent' of the total number of instances in the stream.
-    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default values.
 
     Examples:
 
