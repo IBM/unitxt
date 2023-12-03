@@ -7,4 +7,4 @@ format = ICLFormat(
     suffix="[/INST]",
 )
 
-add_to_catalog(format, f"formats.llama", overwrite=True)
+add_to_catalog(format, "formats.llama", overwrite=True)

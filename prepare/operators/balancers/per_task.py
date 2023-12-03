@@ -11,8 +11,12 @@ add_to_catalog(balancer, "operators.balancers.qa.by_answer", overwrite=True)
 
 balancer = LengthBalancer(fields=["outputs/labels"], segments_boundaries=[1])
 
-add_to_catalog(balancer, "operators.balancers.multi_label.zero_vs_many_labels", overwrite=True)
+add_to_catalog(
+    balancer, "operators.balancers.multi_label.zero_vs_many_labels", overwrite=True
+)
 
 balancer = LengthBalancer(fields=["outputs/labels"], segments_boundaries=[1])
 
-add_to_catalog(balancer, "operators.balancers.ner.zero_vs_many_entities", overwrite=True)
+add_to_catalog(
+    balancer, "operators.balancers.ner.zero_vs_many_entities", overwrite=True
+)

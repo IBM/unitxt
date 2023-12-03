@@ -1,13 +1,17 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.splitters import SliceSplit, SplitRandomMix
+from src.unitxt.splitters import SplitRandomMix
 
 add_to_catalog(
-    SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
+    SplitRandomMix(
+        {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
+    ),
     "splitters.small_no_test",
     overwrite=True,
 )
 add_to_catalog(
-    SplitRandomMix({"train": "train[99%]", "validation": "train[1%]", "test": "validation"}),
+    SplitRandomMix(
+        {"train": "train[99%]", "validation": "train[1%]", "test": "validation"}
+    ),
     "splitters.large_no_test",
     overwrite=True,
 )  # Note, this would be change in future version to a constant amount of examples (500) instead of 1% of the examples

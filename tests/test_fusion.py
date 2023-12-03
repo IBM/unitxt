@@ -1,4 +1,3 @@
-import json
 import unittest
 
 from src.unitxt.fusion import FixedFusion, WeightedFusion
@@ -82,7 +81,9 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        check_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
+        check_operator(
+            operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x"
+        )
 
     def test_over_bounded_weighted_fusion(self):
         operator = WeightedFusion(
@@ -103,4 +104,6 @@ class TestFusion(unittest.TestCase):
             {"x": "y3"},
         ]
 
-        check_operator(operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x")
+        check_operator(
+            operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x"
+        )
