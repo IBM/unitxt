@@ -261,15 +261,15 @@ class StreamInstanceOperator(SingleStreamOperator):
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
         try:
-            index = None
+            _index = None
             for _index, instance in enumerate(stream):
                 yield self._process_instance(instance, stream_name)
         except Exception as e:
-            if index is None:
+            if _index is None:
                 raise e
             else:
                 raise ValueError(
-                    f"Error processing instance '{index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
+                    f"Error processing instance '{_index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
                 ) from e
 
     def _process_instance(
