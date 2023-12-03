@@ -1,10 +1,13 @@
 import json
 import unittest
+from collections import Counter
 
 from src.unitxt.operators import (
     AddFields,
+    Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    AugmentSuffix,
     AugmentWhitespace,
     CastFields,
     CopyFields,
@@ -17,6 +20,7 @@ from src.unitxt.operators import (
     Intersect,
     JoinStr,
     LengthBalancer,
+    ListFieldValues,
     MapInstanceValues,
     MergeStreams,
     RemoveFields,
@@ -44,20 +48,91 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(input_dict, output_dict)
 
     def test_map_instance_values(self):
+        mappers = {"a": {"1": "hi", "2": "bye"}}
+
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
+            {"a": "1", "b": "2"},
+            {"a": "2", "b": "3"},
         ]
 
         targets = [
-            {"a": "hi", "b": 2},
+            {"a": "hi", "b": "2"},
+            {"a": "bye", "b": "3"},
+        ]
+
+        # simple value substitute
+        check_operator(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # process_every_value=True would not accept non-list inputs
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instace = {'a': '1', 'b': '2'}",
+            tester=self,
+        )
+
+        # strict is True by default, input value "3" in field "a" is missing from the mapper of "a"
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=[{"a": "3", "b": "4"}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+
+        inputs_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": [2], "b": 3},
+        ]
+
+        targets_process_every_value = [
+            {"a": ["hi", "bye", 3, 4], "b": 2},
+            {"a": ["bye"], "b": 3},
+        ]
+
+        # simple mapping of individual elements in the list. strict is False here, to ignore absence of "3" from the mapper of "a"
+        check_operator(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True, strict=False),
+            inputs=inputs_process_every_value,
+            targets=targets_process_every_value,
+            tester=self,
+        )
+
+        # simple mapping of individual elements in the list. with strict=True, the absence of "3" from the mapper of "a" is not overlooked
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+
+        # input list can not be ignored with strict=True, and process_every_value=False
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, strict=True, process_every_value=False),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'A whole list ([1, 2, 3, 4]) in the instance can not be mapped by a field mapper.'",
+            tester=self,
+        )
+
+        inputs_not_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets_not_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
             {"a": "bye", "b": 3},
         ]
 
+        # with strict=False, and process_every_value=False, lists are ignored
         check_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
-            inputs=inputs,
-            targets=targets,
+            operator=MapInstanceValues(mappers=mappers, process_every_value=False, strict=False),
+            inputs=inputs_not_process_every_value,
+            targets=targets_not_process_every_value,
             tester=self,
         )
 
@@ -74,6 +149,24 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        )
+
+    def test_list_field_values(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "ab": [1, 2]},
+            {"a": 2, "b": 3, "ab": [2, 3]},
+        ]
+
+        check_operator(
+            operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_flatten_instances(self):
@@ -121,7 +214,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
+            operator=FilterByListsOfValues(required_values={"b": [3, 4]}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -734,6 +827,25 @@ class TestOperators(unittest.TestCase):
                 min_frequency_percent=-2,
             ).process(input_multi_stream1)
 
+    def test_apply(self):
+        in_instance = {"a": "lower"}
+        operator = Apply("a", function=str.upper, to_field="b")
+        st_from_upper = operator.function_to_str(str.upper)
+        self.assertEqual(st_from_upper, "str.upper")
+        upper_from_st = operator.str_to_function(st_from_upper)
+        self.assertEqual("UPPER", upper_from_st("upper"))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": "lower", "b": "LOWER"})
+
+        in_instance = {"a": ["input", "list"]}
+        operator = Apply("a", function="tuple", to_field="b")
+        st_from_tuple = operator.function_to_str(tuple)
+        self.assertEqual(st_from_tuple, "builtins.tuple")
+        tuple_from_st = operator.str_to_function("tuple")
+        self.assertEqual((1, 2, 3), tuple_from_st([1, 2, 3]))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": ["input", "list"], "b": ("input", "list")})
+
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
 
@@ -1009,6 +1121,88 @@ class TestOperators(unittest.TestCase):
             tester=self,
             exception_text=exception_text,
         )
+
+    def test_augment_suffix_model_input(self):
+        source = "She is riding a black horse\t\t  "
+        inputs = [{"source": source}]
+        suffixes = ["Q", "R", "S", "T"]  # none at ending of source, when stripped on right from its white spaces
+
+        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixes)
+        outputs = apply_operator(operator, inputs)
+        assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
+        output0 = str(outputs[0]["source"]).rstrip("".join(suffixes))
+        assert output0 == source[: len(output0)], f"the prefix of {outputs[0]['source']} is not equal to {source}"
+        assert (
+            "\t\t " in output0
+        ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_trailing_whitespaces' is False,"
+        # weighted suffixes
+        suffixesDict = {"Q": 2, "R": 2, "S": 2, "T": 8}
+        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixesDict)
+        outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
+        assert len(outputs) == 500, f"outputs length {len(outputs)} is different from inputs length, which is 500."
+        actual_suffixes = [output["source"][-1] for output in outputs]
+        counter = Counter(actual_suffixes)
+        dic = dict(counter)
+        assert (
+            dic["T"] > 125
+        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {dic["T"]}'
+
+    def test_augment_suffix_task_input_with_error(self):
+        text = "She is riding a black horse\t\t  "
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator.set_task_input_fields(["sentence"])
+        with self.assertRaises(ValueError) as ve:
+            outputs = apply_operator(operator, inputs)
+        self.assertEqual(
+            str(ve.exception),
+            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: query \"inputs/sentence\" did not match any item in dict: {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+        )
+
+    def test_augment_suffix_task_input(self):
+        text = "She is riding a black horse  \t\t  "
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes, remove_existing_trailing_whitespaces=True)
+        operator.set_task_input_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        output0 = str(outputs[0]["inputs"]["text"]).rstrip("".join(suffixes))
+        assert not (
+            " \t\t " in output0
+        ), f"Trailing whitespaces should have been removed, but still found in the output: {output0}"
+        assert (
+            output0 == text[: len(output0)]
+        ), f"the prefix of {str(outputs[0]['inputs']['text'])} is not equal to the prefix of {text}"
+
+    def test_augment_suffix_with_non_string_suffixes_error(self):
+        text = "She is riding a black horse  \t\t  "
+        suffixes = [1, 2, "S", "T"]
+        with self.assertRaises(AssertionError) as ae:
+            operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        self.assertEqual(
+            str(ae.exception), "suffixes should be a list of strings, whereas member 1 is of type <class 'int'>"
+        )
+
+    def test_augment_suffix_with_none_input_error(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        check_operator_exception(
+            operator,
+            inputs,
+            tester=self,
+            exception_text=exception_text,
+        )
+
+    def test_list_field_values(self):
+        in_instance = {"a": 1, "b": 2, "c": 3}
+        operator = ListFieldValues(fields=["a", "b"], to_field="ab")
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": 1, "b": 2, "c": 3, "ab": [1, 2]})
 
     def test_test_operator_without_tester_param(self):
         text = None

@@ -22,10 +22,10 @@ for lang in langs:
         loader=LoadHF(path="GEM/xlsum", name=lang),
         preprocess_steps=[
             RenameFields(field_to_field={"text": "document", "target": "summary"}),
-            AddFields(fields={"text_type": "text"}),
+            AddFields(fields={"document_type": "document"}),
         ],
         task=FormTask(
-            inputs=["document"],
+            inputs=["document", "document_type"],
             outputs=["summary"],
             metrics=["metrics.rouge"],
         ),

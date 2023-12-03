@@ -4,8 +4,7 @@ from dataclasses import field
 from typing import Dict, List, Optional
 
 from .artifact import Artifact
-from .generator_utils import ReusableGenerator
-from .operator import InstanceOperatorWithGlobalAccess, MultiStreamOperator
+from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .stream import MultiStream
 
 
@@ -13,7 +12,7 @@ class Splitter(MultiStreamOperator):
     pass
 
 
-from .random_utils import random
+from .random_utils import get_random
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -99,7 +98,7 @@ class Sampler(Artifact):
 class RandomSampler(Sampler):
     def sample(self, instances_pool: List[Dict[str, object]]) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return random.sample(instances_pool, self.sample_size)
+        return get_random().sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -140,7 +139,7 @@ class DiverseLabelsSampler(Sampler):
         if self.labels is None:
             self.labels = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels.keys())
-        random.shuffle(all_labels)
+        get_random().shuffle(all_labels)
         from collections import Counter
 
         total_allocated = 0
@@ -157,21 +156,19 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = random.sample(self.labels[label], allocation)
+            sample = get_random().sample(self.labels[label], allocation)
             result.extend(sample)
 
-        random.shuffle(result)
+        get_random().shuffle(result)
         return result
 
 
-class SpreadSplit(InstanceOperatorWithGlobalAccess):
+class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     source_stream: str = None
     target_field: str = None
     sampler: Sampler = None
 
     def prepare(self):
-        self.accessible_streams = [self.source_stream]
-        self.cache_accessible_streams = True
         self.local_cache = None
         self.sampler.prepare()
 
@@ -193,49 +190,3 @@ class SpreadSplit(InstanceOperatorWithGlobalAccess):
             return instance
         except Exception as e:
             raise Exception(f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'") from e
-
-
-if __name__ == "__main__":
-    # some tests
-    import random
-
-    random.seed(0)
-    splitter = SplitRandomMix(
-        mix={
-            "train": "train[90%]+validation[50%]",
-            "validation": "train[10%]+validation[50%]",
-            "test": "test",
-        }
-    )
-
-    def generator(name, size):
-        for i in range(size):
-            yield {"text": f"{name}_{i}"}
-
-    stream = MultiStream.from_generators(
-        {
-            "train": ReusableGenerator(generator, gen_kwargs={"name": "train", "size": 10}),
-            "validation": ReusableGenerator(generator, gen_kwargs={"name": "validation", "size": 10}),
-            "test": ReusableGenerator(generator, gen_kwargs={"name": "test", "size": 10}),
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)
-
-    splitter = SliceSplit(
-        slices={
-            "train": "train[:2]+train[2:4]",
-            "validation": "train[4:6]",
-            "test": "train[6:]+test",
-        }
-    )
-
-    ds = splitter(stream)
-    for key, value in ds.items():
-        print(key)
-        for item in value:
-            print(item)

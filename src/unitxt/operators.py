@@ -1,6 +1,5 @@
 import collections
 import importlib
-import inspect
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -33,7 +32,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import nested_seed, random
+from .random_utils import get_random, nested_seed
 from .stream import MultiStream, Stream
 from .text_utils import nested_tuple_to_string
 from .utils import flatten_dict
@@ -71,32 +70,72 @@ class MapInstanceValues(StreamInstanceOperator):
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
+        process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
+            is to be applied to their individual elements. If False, mapping is only applied to a field
+            containing a single value.
+
+    Examples:
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
+        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
+        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
+        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
+        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
+        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
+        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
+        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
+        because "3" is not a key in the mapper of "a".
     """
 
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_query = False
+    use_query: bool = False
+    process_every_value: bool = False
 
     def verify(self):
         # make sure the mappers are valid
         for key, mapper in self.mappers.items():
             assert isinstance(mapper, dict), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            for k, v in mapper.items():
+            for k in mapper.keys():
                 assert isinstance(k, str), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
     def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
             value = dict_get(instance, key, use_dpath=self.use_query)
             if value is not None:
-                value = str(value)  # make sure the value is a string
-                if self.strict:
-                    assert (
-                        value in mapper
-                    ), f"value ({value}) in instance is not found in mapper ({mapper}).  The instance is {instance}"
-                    dict_set(instance, key, mapper[value], use_dpath=self.use_query)
-                else:
+                if (self.process_every_value == True) and (not isinstance(value, list)):
+                    raise ValueError(
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                    )
+                if isinstance(value, list):
+                    if self.process_every_value:
+                        for i, val in enumerate(value):
+                            val = str(val)  # make sure the value is a string
+                            if self.strict and (not val in mapper):
+                                raise KeyError(
+                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                                )
+                            if val in mapper:
+                                value[i] = mapper[val]  # replace just that member of value (value is a list)
+                                dict_set(instance, key, value, use_dpath=self.use_query)
+                    else:  # field is a list, and process_every_value == False
+                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
+                            raise KeyError(
+                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
+                            )
+                else:  # value is not a list, implying process_every_value == False
+                    value = str(value)  # make sure the value is a string
+                    if self.strict and (not value in mapper):
+                        raise KeyError(
+                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                        )
                     if value in mapper:
                         dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+
         return instance
 
 
@@ -370,9 +409,68 @@ class AugmentWhitespace(Augmentor):
 
         for word in words:
             if word.isspace():
-                new_value += random.choice(["\n", "\t", " "]) * random.randint(1, 3)
+                new_value += get_random().choice(["\n", "\t", " "]) * get_random().randint(1, 3)
             else:
                 new_value += word
+        return new_value
+
+
+class AugmentSuffix(Augmentor):
+    """
+    Augments the input by appending to it a randomly selected (typically, whitespace) pattern.
+
+    Args:
+     suffixes : the potential (typically, whitespace) patterns to select from.
+        The dictionary version allows to specify relative weights of the different patterns.
+     remove_existing_trailing_whitespaces : allows to first clean existing trailing whitespaces.
+        The selected pattern is then appended to the potentially trimmed at its end input.
+
+
+    Examples:
+        to append a '\n' or a '\t' to the end of the input, employ
+        AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
+        If '\n' is preferred over '\t', at 2:1 ratio, employ
+        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1})
+        which will append '\n' twice as often as '\t'.
+
+    """
+
+    suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
+    remove_existing_trailing_whitespaces: Optional[bool] = False
+
+    def verify(self):
+        assert isinstance(self.suffixes, list) or isinstance(
+            self.suffixes, dict
+        ), f"Argument 'suffixes' should be either a list or a dictionary, whereas it is of type {type(self.suffixes)}"
+
+        if isinstance(self.suffixes, dict):
+            for k, v in self.suffixes.items():
+                assert isinstance(k, str), f"suffixes should map strings, whereas key {str(k)} is of type {type(k)}"
+                assert isinstance(v, int), f"suffixes should map to ints, whereas value {str(v)} is of type {type(v)}"
+        else:
+            for k in self.suffixes:
+                assert isinstance(
+                    k, str
+                ), f"suffixes should be a list of strings, whereas member {str(k)} is of type {type(k)}"
+
+        self.pats = self.suffixes if isinstance(self.suffixes, list) else [k for k, v in self.suffixes.items()]
+        total_weight = (
+            len(self.pats) if isinstance(self.suffixes, list) else sum([v for k, v in self.suffixes.items()])
+        )
+        self.weights = (
+            [1.0 / total_weight] * len(self.pats)
+            if isinstance(self.suffixes, list)
+            else [float(self.suffixes[p]) / total_weight for p in self.pats]
+        )
+        super().verify()
+
+    def process_value(self, value: Any) -> Any:
+        assert value is not None, "input value should not be None"
+        new_value = str(value)
+        if self.remove_existing_trailing_whitespaces:
+            new_value = new_value.rstrip()
+        new_value += get_random().choices(self.pats, self.weights, k=1)[0]
+
         return new_value
 
 
@@ -383,7 +481,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random.shuffle(res)
+        get_random().shuffle(res)
         return res
 
 
@@ -443,7 +541,8 @@ class Apply(StreamInstanceOperator):
     def str_to_function(self, function_str: str) -> Callable:
         splitted = function_str.split(".", 1)
         if len(splitted) == 1:
-            return __builtins__[module_name]
+            return __builtins__[splitted[0]]
+
         else:
             module_name, function_name = splitted
             if module_name in __builtins__:
@@ -474,10 +573,10 @@ class Apply(StreamInstanceOperator):
 
 class ListFieldValues(StreamInstanceOperator):
     """
-    Concatanates values of multiple fields into a list to list(fields)
+    Concatenates values of multiple fields into a list, and assigns it to a new field
     """
 
-    fields: str
+    fields: List[str]
     to_field: str
     use_query: bool = False
 
@@ -732,29 +831,30 @@ class ExtractFieldValues(MultiStreamOperator):
 
     More specifically, sort all the unique values encountered in field 'field' by decreasing order of frequency.
     When 'overall_top_frequency_percent' is smaller than 100, trim the list from bottom, so that the total frequency of
-    the remaining values makes 'overall_top_frequency_percent' of the total number of rows in the stream.
+    the remaining values makes 'overall_top_frequency_percent' of the total number of instances in the stream.
     When 'min_frequency_percent' is larger than 0, remove from the list any value whose relative frequency makes
-    less than 'min_frequency_percent' of the total number of rows in the stream.
-    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is alloed to move from their default values.
+    less than 'min_frequency_percent' of the total number of instances in the stream.
+    At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default values.
 
     Examples:
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
     field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
-    every record in all streams.
+    every instance in all streams.
 
     ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
     in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
     value members in these lists, and report the most frequent values.
-    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field 'to_field'
+    if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field
+    'to_field' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
-    extracts the most frequent possible values of field 'label' that cover at least 80% of the rows of stream_name,
-    and stores them in field 'classes' of each record of all streams.
+    extracts the most frequent possible values of field 'label' that together cover at least 80% of the instances of stream_name,
+    and stores them in field 'classes' of each instance of all streams.
 
     ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
     extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
-    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each record in all streams.
+    Stores these values, sorted by decreasing order of frequency, in field 'classes' of each instance in all streams.
     """
 
     def verify(self):
@@ -1069,7 +1169,7 @@ class Shuffle(PagedStreamOperator):
     """
 
     def process(self, page: List[Dict], stream_name: str = None) -> Generator:
-        random.shuffle(page)
+        get_random().shuffle(page)
         yield from page
 
 
