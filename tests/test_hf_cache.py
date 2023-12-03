@@ -1,5 +1,4 @@
 import os.path
-import shutil
 import unittest
 from pathlib import Path
 
@@ -25,7 +24,9 @@ wnli_recipe = SequentialRecipe(
                 "test": "validation",
             }
         ),
-        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        MapInstanceValues(
+            mappers={"label": {"0": "entailment", "1": "not entailment"}}
+        ),
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],
@@ -46,9 +47,15 @@ wnli_recipe = SequentialRecipe(
 rte_recipe = SequentialRecipe(
     steps=[
         LoadHF(path="glue", name="rte"),
-        SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
-        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
-        AddFields(fields={"choices": ["entailment", "not entailment"], "dataset": "rte"}),
+        SplitRandomMix(
+            {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
+        ),
+        MapInstanceValues(
+            mappers={"label": {"0": "entailment", "1": "not entailment"}}
+        ),
+        AddFields(
+            fields={"choices": ["entailment", "not entailment"], "dataset": "rte"}
+        ),
         FormTask(
             inputs=["choices", "sentence1", "sentence2"],
             outputs=["label"],
@@ -66,7 +73,10 @@ squad_metric = MetricPipeline(
         AddFields(
             {
                 "prediction_template": {"prediction_text": "PRED", "id": "ID"},
-                "reference_template": {"answers": {"answer_start": [-1], "text": "REF"}, "id": "ID"},
+                "reference_template": {
+                    "answers": {"answer_start": [-1], "text": "REF"},
+                    "id": "ID",
+                },
             },
             use_deepcopy=True,
         ),

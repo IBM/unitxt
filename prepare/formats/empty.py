@@ -3,4 +3,4 @@ from src.unitxt.formats import ICLFormat
 
 format = ICLFormat()
 
-add_to_catalog(format, f"formats.empty", overwrite=True)
+add_to_catalog(format, "formats.empty", overwrite=True)

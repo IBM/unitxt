@@ -1,9 +1,10 @@
 import os
 
 import setuptools
+
 from version import version
 
-with open("README.md", "r") as fh:
+with open("README.md") as fh:
     long_description = fh.read()
 
 requirements_dir = "requirements"
@@ -13,7 +14,7 @@ extras_require = {}
 for file in os.listdir(requirements_dir):
     if file.endswith(".rqr"):
         key = file.rsplit(".")[0]  # Remove .rqr extension to get the key
-        with open(os.path.join(requirements_dir, file), "r") as f:
+        with open(os.path.join(requirements_dir, file)) as f:
             extras_require[key] = f.read().splitlines()
 
 # Adding the 'all' key

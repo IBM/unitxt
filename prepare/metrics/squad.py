@@ -1,4 +1,3 @@
-from src.unitxt import add_to_catalog
 from src.unitxt.blocks import AddFields, AddID, CopyFields
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
@@ -11,7 +10,10 @@ metric = MetricPipeline(
         AddFields(
             {
                 "prediction_template": {"prediction_text": "PRED", "id": "ID"},
-                "reference_template": {"answers": {"answer_start": [-1], "text": "REF"}, "id": "ID"},
+                "reference_template": {
+                    "answers": {"answer_start": [-1], "text": "REF"},
+                    "id": "ID",
+                },
             },
             use_deepcopy=True,
         ),
@@ -28,7 +30,10 @@ metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        hf_metric_name="squad", main_score="f1", scale=100.0, scaled_fields=["f1", "exact_match"]
+        hf_metric_name="squad",
+        main_score="f1",
+        scale=100.0,
+        scaled_fields=["f1", "exact_match"],
     ),
 )
 

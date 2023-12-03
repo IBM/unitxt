@@ -1,9 +1,12 @@
 import os
+from typing import Optional
 
 
-def get_all_files_in_dir(dir_path: str, recursive: bool = False, file_extension: str = None):
-    """
-    Get all files in a directory. Optionally recursively.
+def get_all_files_in_dir(
+    dir_path: str, recursive: bool = False, file_extension: Optional[str] = None
+):
+    """Get all files in a directory. Optionally recursively.
+
     Optionally filter by file extension.
 
     :param dir_path: The directory path to search for files.

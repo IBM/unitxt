@@ -1,10 +1,10 @@
+import logging
 import os
 
 import datasets
 
-from .artifact import Artifact, UnitxtArtifactNotFoundError
+from .artifact import Artifact, UnitxtArtifactNotFoundError, fetch_artifact
 from .artifact import __file__ as _
-from .artifact import fetch_artifact
 from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
@@ -56,9 +56,7 @@ def fetch(artifact_name):
 
 
 def parse(query: str):
-    """
-    Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary.
-    """
+    """Parses a query of the form 'key1=value1,key2=value2,...' into a dictionary."""
     result = {}
     kvs = query.split(",")
     if len(kvs) == 0:
@@ -67,7 +65,11 @@ def parse(query: str):
         )
     for kv in kvs:
         key_val = kv.split("=")
-        if len(key_val) != 2 or len(key_val[0].strip()) == 0 or len(key_val[1].strip()) == 0:
+        if (
+            len(key_val) != 2
+            or len(key_val[0].strip()) == 0
+            or len(key_val[1].strip()) == 0
+        ):
             raise ValueError(
                 f'Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.'
             )
@@ -98,7 +100,6 @@ class Dataset(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
     VERSION = datasets.Version(version)
-    builder_configs = {}
 
     @property
     def generators(self):
@@ -113,10 +114,10 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 unitxt_installed = False
 
             if unitxt_installed:
-                print("Loading with installed unitxt library...")
+                logging.info("Loading with installed unitxt library...")
                 dataset = get_dataset_artifact_installed(self.config.name)
             else:
-                print("Loading with installed unitxt library...")
+                logging.info("Loading with installed unitxt library...")
                 dataset = get_dataset_artifact(self.config.name)
 
             self._generators = dataset()
@@ -127,13 +128,18 @@ class Dataset(datasets.GeneratorBasedBuilder):
         return datasets.DatasetInfo()
 
     def _split_generators(self, _):
-        return [datasets.SplitGenerator(name=name, gen_kwargs={"split_name": name}) for name in self.generators.keys()]
+        return [
+            datasets.SplitGenerator(name=name, gen_kwargs={"split_name": name})
+            for name in self.generators.keys()
+        ]
 
     def _generate_examples(self, split_name):
         generator = self.generators[split_name]
-        for i, row in enumerate(generator):
-            yield i, row
+        yield from enumerate(generator)
 
-    def _download_and_prepare(self, dl_manager, verification_mode, **prepare_splits_kwargs):
-        result = super()._download_and_prepare(dl_manager, "no_checks", **prepare_splits_kwargs)
-        return result
+    def _download_and_prepare(
+        self, dl_manager, verification_mode, **prepare_splits_kwargs
+    ):
+        return super()._download_and_prepare(
+            dl_manager, "no_checks", **prepare_splits_kwargs
+        )

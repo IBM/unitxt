@@ -1,4 +1,3 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
@@ -6,25 +5,13 @@ from prepare.cards.mmlu import (
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
-    AddConstant,
-    CastFields,
-    CopyFields,
     IndexOf,
-    JoinStr,
-    ListFieldValues,
     RenameFields,
-    TakeByField,
-    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -41,10 +28,17 @@ card = TaskCard(
                 "numbering": numbering,
             },
         ),
-        RenameFields(field_to_field={"choices/text": "text", "choices/label": "numbering"}, use_query=True),
+        RenameFields(
+            field_to_field={"choices/text": "text", "choices/label": "numbering"},
+            use_query=True,
+        ),
         IndexOf(search_in="numbering", index_of="answerKey", to_field="index"),
         *multiple_choice_preprocess(
-            question="question_stem", numbering="numbering", choices="text", topic="topic", label_index="index"
+            question="question_stem",
+            numbering="numbering",
+            choices="text",
+            topic="topic",
+            label_index="index",
         ),
     ],
     task=FormTask(
@@ -54,4 +48,4 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.original.all",
 )
 test_card(card)
-add_to_catalog(card, f"cards.openbookQA", overwrite=True)
+add_to_catalog(card, "cards.openbookQA", overwrite=True)

@@ -8,7 +8,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../src"))
 
-import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -40,5 +39,3 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_nav_header_background": "#ff66ff",
 }
-
-import docs.catalog

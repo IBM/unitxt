@@ -2,7 +2,7 @@ import json
 import unittest
 
 from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import AddFields, Apply, CopyFields
+from src.unitxt.operators import Apply, CopyFields
 from src.unitxt.test_utils.operators import check_operator
 
 
@@ -47,4 +47,12 @@ class TestFunctionOperators(unittest.TestCase):
         operator = Apply("a", function=str.upper, to_field="b")
         dic = operator.to_dict()
 
-        self.assertDictEqual({"type": "apply", "function": "str.upper", "to_field": "b", "_argv": ("a",)}, dic)
+        self.assertDictEqual(
+            {
+                "type": "apply",
+                "function": "str.upper",
+                "to_field": "b",
+                "_argv": ("a",),
+            },
+            dic,
+        )

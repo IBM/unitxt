@@ -1,37 +1,22 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
-from datasets import load_dataset_builder
-from prepare.cards.mmlu import (
-    multiple_choice_inputs_outputs,
-    multiple_choice_preprocess,
-)
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 
 # numbering=tuple(str(x) for x in range(200))
 from src.unitxt.operator import StreamingOperator
 from src.unitxt.operators import (
-    AddConstant,
     CastFields,
-    CopyFields,
-    IndexOf,
     JoinStr,
-    ListFieldValues,
     RenameFields,
-    TakeByField,
-    ZipFieldValues,
 )
-from src.unitxt.templates import InputOutputTemplate, TemplatesDict
+from src.unitxt.templates import TemplatesDict
 from src.unitxt.test_utils.card import test_card
 
 answers = ["yes", "false"]
@@ -43,15 +28,18 @@ templates = {
 }
 
 QA_TEMPLATES = TemplatesDict(
-    {key: InputOutputTemplate(input_format=val, output_format="{label}") for key, val in templates.items()}
+    {
+        key: InputOutputTemplate(input_format=val, output_format="{label}")
+        for key, val in templates.items()
+    }
 )
 
 CONTEXT_QA_TEMPLATES = TemplatesDict(
     {
         key: InputOutputTemplate(
-            input_format=val.replace("Question:", "Context: {context}\nQuestion:").replace(
-                "{sentence1}", "{context}\n{sentence1}"
-            ),
+            input_format=val.replace(
+                "Question:", "Context: {context}\nQuestion:"
+            ).replace("{sentence1}", "{context}\n{sentence1}"),
             output_format="{label}",
         )
         for key, val in templates.items()
@@ -65,7 +53,9 @@ def question_answering_outputs():
 
 def question_answering_inputs_outputs(context=False, answers=False, topic=False):
     return {
-        "inputs": question_answering_inputs(context=context, answers=answers, topic=topic),
+        "inputs": question_answering_inputs(
+            context=context, answers=answers, topic=topic
+        ),
         "outputs": question_answering_outputs(),
     }
 
@@ -82,10 +72,14 @@ def question_answering_inputs(context=False, answers=False, topic=False):
 
 
 def question_answering_preprocess(
-    question: str, answer: str, context: str = None, answers: str = None, topic: str = None
+    question: str,
+    answer: str,
+    context: Optional[str] = None,
+    answers: Optional[str] = None,
+    topic: Optional[str] = None,
 ) -> List[Union[StreamingOperator, str]]:
-    """
-    Processing to make a unified format of question answering
+    r"""Processing to make a unified format of question answering.
+
     :param numbering: the field containing the numerals to use (e.g. ABCD [1,2,3,4])
     :param choices: the field with the choices (e.g. ['apple','bannana']
     :param topic: the field containing the topic of the question
@@ -93,10 +87,19 @@ def question_answering_preprocess(
     :param expected_answer: what format should the 'label' field be answer\number\number_and_answer
     :return:
     """
-    renames = {"question": question, "label": answer, "context": context, "answers": answers, "topic": topic}
+    renames = {
+        "question": question,
+        "label": answer,
+        "context": context,
+        "answers": answers,
+        "topic": topic,
+    }
     renames = {v: k for k, v in renames.items() if v}
 
-    return [RenameFields(field_to_field=renames), JoinStr(separator=",", field=answers, to_field="answers")]
+    return [
+        RenameFields(field_to_field=renames),
+        JoinStr(separator=",", field=answers, to_field="answers"),
+    ]
 
 
 card = TaskCard(
