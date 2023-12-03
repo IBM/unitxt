@@ -23,6 +23,10 @@ operator4 = LowerCase()
 
 add_to_catalog(operator4, "processors.lower_case", overwrite=True)
 
+operator5 = StringOrNotString(string="toxic")
+
+add_to_catalog(operator5, "processors.toxic_or_not_toxic", overwrite=True)
+
 parser = FirstCharacter()
 
 example = " A. This is the answer."
