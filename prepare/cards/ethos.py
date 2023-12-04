@@ -8,14 +8,14 @@ from src.unitxt.blocks import (
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="ethos", name="binary"),
     preprocess_steps=[
-        SplitRandomMix(
-            {"train": "train[10%]", "validation": "train[10%]", "test": "train[80%]"}
-        ),
+        Shuffle(page_size=1000000),
+        SplitRandomMix({"train": "train[20%]", "test": "train[80%]"}),
         MapInstanceValues(
             mappers={"label": {"0": "not hate speech", "1": "hate speech"}}
         ),
