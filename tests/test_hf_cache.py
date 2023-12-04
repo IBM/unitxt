@@ -1,4 +1,5 @@
 import os.path
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,9 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
 from src.unitxt.operators import AddID, CastFields, CopyFields
+from src.unitxt.stream import MultiStream, Stream
+from src.unitxt.test_utils.environment import modified_environment
+from src.unitxt.test_utils.storage import get_directory_size
 
 wnli_recipe = SequentialRecipe(
     steps=[
@@ -119,31 +123,51 @@ catalog_path = os.path.join(Path(__file__).parent, "temp_catalog")
 
 
 class TestHfCache(unittest.TestCase):
-    pass
-    # @classmethod
-    # def setUpClass(cls):
-    #     if os.path.exists(catalog_path):
-    #         shutil.rmtree(catalog_path)  # if for some reason prev test didn't finished and didn't clean the dir.
-    #     os.mkdir(catalog_path)
-    #     os.environ["UNITXT_ARTIFACTORIES"] = catalog_path
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     shutil.rmtree(catalog_path)
-    #
-    # def test_hf_cache_enabling(self):
-    #     add_to_catalog(wnli_recipe, 'tmp.recipes.wnli', catalog_path=catalog_path, overwrite=True)
-    #     wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-    #     add_to_catalog(rte_recipe, 'tmp.recipes.wnli', catalog_path=catalog_path, overwrite=True)
-    #     rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli')
-    #     self.assertEqual(rte_dataset['train'][0], wnli_dataset['train'][0])
-    #
-    # def test_hf_dataset_cache_disabling(self):
-    #     add_to_catalog(wnli_recipe, 'tmp.recipes.wnli2', catalog_path=catalog_path, overwrite=True)
-    #     wnli_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
-    #     add_to_catalog(rte_recipe, 'tmp.recipes.wnli2', catalog_path=catalog_path, overwrite=True)
-    #     rte_dataset = load_dataset(unitxt.dataset_file, 'tmp.recipes.wnli2', download_mode='force_redownload')
-    #     self.assertNotEqual(rte_dataset['train'][0]['source'], wnli_dataset['train'][0]['source'])
+    def test_caching_stream(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with modified_environment(HF_DATASETS_CACHE=tmp_dir):
+                self.assertEqual(get_directory_size(tmp_dir), 0)
+
+                def gen():
+                    for i in range(3):
+                        yield {"x": i}
+
+                ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
+                    use_cache=True, cache_dir=tmp_dir
+                )
+                for i, item in enumerate(ds["test"]):
+                    self.assertEqual(item["x"], i)
+                self.assertNotEqual(get_directory_size(tmp_dir), 0)
+
+    def test_caching_stream_with_general_cache(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with modified_environment(HF_DATASETS_CACHE=tmp_dir):
+                self.assertEqual(get_directory_size(tmp_dir), 0)
+
+                def gen():
+                    for i in range(3):
+                        yield {"x": i}
+
+                ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
+                    use_cache=True
+                )
+                for i, item in enumerate(ds["test"]):
+                    self.assertEqual(item["x"], i)
+                self.assertNotEqual(get_directory_size(tmp_dir), 0)
+
+    def test_not_caching_stream(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with modified_environment(HF_DATASETS_CACHE=tmp_dir):
+                self.assertEqual(get_directory_size(tmp_dir), 0)
+
+                def gen():
+                    for i in range(3):
+                        yield {"x": i}
+
+                ds = MultiStream({"test": Stream(generator=gen)}).to_dataset()
+                for i, item in enumerate(ds["test"]):
+                    self.assertEqual(item["x"], i)
+                self.assertEqual(get_directory_size(tmp_dir), 0)
 
 
 if __name__ == "__main__":
