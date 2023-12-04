@@ -1,7 +1,6 @@
 import unittest
 
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.renderers import RenderTemplate
 from src.unitxt.templates import (
     InputOutputTemplate,
     KeyValTemplate,
@@ -12,6 +11,9 @@ from src.unitxt.templates import (
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+from src.unitxt.test_utils.operators import (
+    check_operator,
+)
 
 
 class TestTemplates(unittest.TestCase):
@@ -49,7 +51,7 @@ class TestTemplates(unittest.TestCase):
         for input, processed_target, parsed_target in zip(
             inputs, processed_targets, parsed_targets
         ):
-            processed = template.process_outputs(input)
+            processed, _ = template.outputs_to_target_and_references(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
@@ -71,7 +73,7 @@ class TestTemplates(unittest.TestCase):
         for input, processed_target, parsed_target in zip(
             inputs, processed_targets, parsed_targets
         ):
-            processed = template.process_outputs(input)
+            processed, _ = template.outputs_to_target_and_references(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
@@ -80,13 +82,11 @@ class TestTemplates(unittest.TestCase):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
-        renderer = RenderTemplate(template=template)
         instance = {
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": ["Dan", "Yossi"]},
         }
-
-        result = renderer.process(instance)
+        result = template.process(instance)
         target = {
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": ["Dan", "Yossi"]},
@@ -100,37 +100,52 @@ class TestTemplates(unittest.TestCase):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
-        renderer = RenderTemplate(template=template)
         instance = {
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": [0, "dkd"]},
         }
 
         with self.assertRaises(ValueError):
-            renderer.process(instance)
+            template.process(instance)
 
     def test_input_output_template(self):
-        parser, _ = fetch_artifact("processors.to_string_stripped")
-
-        template = InputOutputTemplate(output_format="{labels}")
+        template = InputOutputTemplate(
+            input_format="This is my text:'{text}'", output_format="{label}"
+        )
 
         inputs = [
-            {"labels": ["cat"]},
-            {"labels": [" man"]},
-            {"labels": ["dog\n"]},
+            {"inputs": {"text": "hello world"}, "outputs": {"label": "positive"}},
+            {
+                "inputs": {"text": ["hello world\n", "hell"]},
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {"text": ["hello world\n", "hell"]},
+                "outputs": {"label": ["positive", "1"]},
+            },
         ]
 
-        processed_targets = ["cat", " man", "dog\n"]
+        targets = [
+            {
+                "source": "This is my text:'hello world'",
+                "target": "positive",
+                "references": ["positive"],
+            },
+            {
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive",
+                "references": ["positive"],
+            },
+            {
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive, 1",
+                "references": ["positive, 1"],
+            },
+        ]
 
-        parsed_targets = ["cat", "man", "dog"]
+        targets = [{**target, **input} for target, input in zip(targets, inputs)]
 
-        for input, processed_target, parsed_target in zip(
-            inputs, processed_targets, parsed_targets
-        ):
-            processed = template.process_outputs(input)
-            self.assertEqual(processed, processed_target)
-            parsed = parser.process(processed)
-            self.assertEqual(parsed, parsed_target)
+        check_operator(template, inputs, targets, tester=self)
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
@@ -145,7 +160,7 @@ class TestTemplates(unittest.TestCase):
             "Is text_b of news?": {"text": "text_b", "class": ["news"]},
         }
         for expected_processed_input, inputs in proccessed_input_to_inputs.items():
-            processed = template.process_inputs(inputs)
+            processed = template.inputs_to_source(inputs)
             self.assertEqual(expected_processed_input, processed)
 
     def test_yes_no_template_process_input_missing_input_field(self):
@@ -156,7 +171,7 @@ class TestTemplates(unittest.TestCase):
         )
         with self.assertRaises(RuntimeError) as cm:
             wrong_field_name = "wrong_field_name"
-            template.process_inputs(inputs={wrong_field_name: ["news"]})
+            template.inputs_to_source(inputs={wrong_field_name: ["news"]})
         self.assertEqual(
             f"Available inputs are ['{wrong_field_name}'] but input format requires a different one: {input_format}",
             str(cm.exception),
@@ -181,7 +196,7 @@ class TestTemplates(unittest.TestCase):
             yes_answer: {label_field: ["news", "sports"], class_field: ["news"]},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
-            processed = template.process_outputs(outputs)
+            processed, _ = template.outputs_to_target_and_references(outputs)
             self.assertEqual(expected_processed_output, processed)
 
     def test_yes_no_template_process_output_missing_fields(self):
@@ -197,7 +212,7 @@ class TestTemplates(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as cm:
             outputs = {class_field: ["news"]}
-            template.process_outputs(outputs=outputs)
+            template.outputs_to_target_and_references(outputs=outputs)
         self.assertEqual(
             f"Available outputs are {list(outputs.keys())}, missing required label field: '{label_field}'.",
             str(cm.exception),
@@ -205,7 +220,7 @@ class TestTemplates(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as cm:
             outputs = {label_field: ["news", "sports"]}
-            template.process_outputs(outputs=outputs)
+            template.outputs_to_target_and_references(outputs=outputs)
         self.assertEqual(
             f"Available outputs are {list(outputs.keys())}, missing required class field: '{class_field}'.",
             str(cm.exception),
@@ -219,7 +234,9 @@ class TestTemplates(unittest.TestCase):
                 input_format="", class_field="", label_field="labels"
             )
             with self.assertRaises(RuntimeError) as cm:
-                template.process_outputs(outputs={"labels": wrong_labels_value})
+                template.outputs_to_target_and_references(
+                    outputs={"labels": wrong_labels_value}
+                )
             self.assertEqual(
                 f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expected a non-empty list.",
                 str(cm.exception),
@@ -240,7 +257,7 @@ class TestTemplates(unittest.TestCase):
                 input_format="", class_field=class_field, label_field=label_field
             )
             with self.assertRaises(RuntimeError) as cm:
-                template.process_outputs(
+                template.outputs_to_target_and_references(
                     outputs={
                         label_field: ["news"],
                         class_field: wrong_class_value,
@@ -288,7 +305,7 @@ class TestTemplates(unittest.TestCase):
         for input, processed_target, parsed_target in zip(
             inputs, processed_targets, parsed_targets
         ):
-            processed = template.process_outputs(input)
+            processed, _ = template.outputs_to_target_and_references(input)
             self.assertEqual(processed, processed_target)
             parsed = parser.process(processed)
             self.assertEqual(parsed, parsed_target)
@@ -330,7 +347,7 @@ class TestTemplates(unittest.TestCase):
         for input, processed_target, post_target1, post_target2 in zip(
             inputs, processed_targets, post1_targets, post2_targets
         ):
-            processed = template.process_outputs(input)
+            processed, _ = template.outputs_to_target_and_references(input)
             self.assertEqual(processed, processed_target)
             post1 = postprocessor1.process(processed)
             self.assertEqual(post1, post_target1)
