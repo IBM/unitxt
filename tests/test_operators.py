@@ -1639,10 +1639,9 @@ class TestOperators(unittest.TestCase):
         ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
         actual_suffixes = [output["source"][-1] for output in outputs]
         counter = Counter(actual_suffixes)
-        dic = dict(counter)
         assert (
-            dic["T"] > 125
-        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {dic["T"]}'
+            counter["T"] > 125
+        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
 
     def test_augment_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
