@@ -9,8 +9,8 @@ from src.unitxt.blocks import (
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
-from unitxt.operators import Shuffle
 
 card = TaskCard(
     loader=LoadHF(path="ethos", name="binary"),
