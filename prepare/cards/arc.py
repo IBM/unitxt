@@ -1,27 +1,17 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
-    multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
 )
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
     CopyFields,
     IndexOf,
-    JoinStr,
     RenameFields,
-    TakeByField,
-    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -36,13 +26,23 @@ for subtask in subtasks:
         loader=LoadHF(path="ai2_arc", name=subtask),
         preprocess_steps=[
             AddFields({"topic": "science"}),
-            RenameFields(field_to_field={"answerKey": "label", "choices": "choices_struct"}),
+            RenameFields(
+                field_to_field={"answerKey": "label", "choices": "choices_struct"}
+            ),
             CopyFields(
-                field_to_field={"choices_struct/text": "choices", "choices_struct/label": "numbering"}, use_query=True
+                field_to_field={
+                    "choices_struct/text": "choices",
+                    "choices_struct/label": "numbering",
+                },
+                use_query=True,
             ),
             IndexOf(search_in="numbering", index_of="label", to_field="index"),
             *multiple_choice_preprocess(
-                question="question", numbering="numbering", choices="choices", topic="topic", label_index="index"
+                question="question",
+                numbering="numbering",
+                choices="choices",
+                topic="topic",
+                label_index="index",
             ),
         ],
         task=FormTask(

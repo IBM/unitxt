@@ -5,7 +5,9 @@ from src.unitxt.dataset import parse
 
 class TestQuery(unittest.TestCase):
     def test_query_works(self):
-        query = "card=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
+        query = (
+            "card=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
+        )
         parsed = parse(query)
         target = {
             "card": "cards.sst2",
@@ -23,12 +25,16 @@ class TestQuery(unittest.TestCase):
 
     def test_missing_key_fail(self):
         with self.assertRaises(ValueError):
-            parse("=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0")
+            parse(
+                "=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
+            )
         with self.assertRaises(ValueError):
             parse("cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0")
 
     def test_missing_value_fail(self):
         with self.assertRaises(ValueError):
-            parse("cards.sst2=,template_card_index=1000,demos_pool_size=100,num_demos=0")
+            parse(
+                "cards.sst2=,template_card_index=1000,demos_pool_size=100,num_demos=0"
+            )
         with self.assertRaises(ValueError):
             parse("=,template_card_index=1000,demos_pool_size=100,num_demos=0")

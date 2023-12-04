@@ -22,7 +22,12 @@ class ICLFormat(SizeLimitingFormat):
     add_instruction_after_demos: bool = False
 
     def single_source_str(self, source):
-        return self.input_prefix + source + self.input_output_separator + self.output_prefix
+        return (
+            self.input_prefix
+            + source
+            + self.input_output_separator
+            + self.output_prefix
+        )
 
     def single_source_str_with_instruction(self, source, instruction):
         return (
@@ -34,19 +39,25 @@ class ICLFormat(SizeLimitingFormat):
             + self.output_prefix
         )
 
-    def format(self, instance, demos_instances=[]):
+    def format(self, instance, demos_instances=None):
+        if demos_instances is None:
+            demos_instances = []
         source = self.prefix
 
         instruction = ""
         if "instruction" in instance:
             instruction = instance.pop("instruction")
-            assert "instruction" != None, f"instruction field can not be none : {instance}"
+            assert (
+                "instruction" != None
+            ), f"instruction field can not be none : {instance}"
 
         if self.add_instruction_at_start and instruction != "":
             source += self.instruction_prefix + instruction + self.demo_separator
 
         if self.add_instruction_after_demos and instruction != "":
-            query_str = self.single_source_str_with_instruction(instance["source"], instruction)
+            query_str = self.single_source_str_with_instruction(
+                instance["source"], instruction
+            )
         else:
             query_str = self.single_source_str(instance["source"])
 
@@ -59,7 +70,9 @@ class ICLFormat(SizeLimitingFormat):
             )
 
             if self.size_limiter is not None:
-                if not self.size_limiter.check(source + demo_str + query_str + instance["target"]):
+                if not self.size_limiter.check(
+                    source + demo_str + query_str + instance["target"]
+                ):
                     continue
 
             source += demo_str

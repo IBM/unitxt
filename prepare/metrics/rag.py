@@ -1,13 +1,12 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
-    Accuracy,
     BertScore,
     MetricPipeline,
     Reward,
     SentenceBert,
     TokenOverlap,
 )
-from src.unitxt.operators import CopyFields, ListFieldValues, RenameFields
+from src.unitxt.operators import CopyFields, ListFieldValues
 from src.unitxt.test_utils.metrics import test_metric
 
 metrics = [
@@ -15,9 +14,18 @@ metrics = [
         "metrics.token_overlap",
         TokenOverlap(),
     ),
-    ("metrics.bert_score.deberta.xlarge.mnli", BertScore(model_name="microsoft/deberta-xlarge-mnli")),
-    ("metrics.sentence_bert.mpnet.base.v2", SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2")),
-    ("metrics.reward.deberta.v3.large.v2", Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2")),
+    (
+        "metrics.bert_score.deberta.xlarge.mnli",
+        BertScore(model_name="microsoft/deberta-xlarge-mnli"),
+    ),
+    (
+        "metrics.sentence_bert.mpnet.base.v2",
+        SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2"),
+    ),
+    (
+        "metrics.reward.deberta.v3.large.v2",
+        Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2"),
+    ),
 ]
 for metric_id, metric in metrics:
     add_to_catalog(metric, metric_id, overwrite=True)
@@ -51,7 +59,9 @@ global_target = {
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(field_to_field=[("additional_inputs/context", "references")], use_query=True),
+        CopyFields(
+            field_to_field=[("additional_inputs/context", "references")], use_query=True
+        ),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=TokenOverlap(),
@@ -60,7 +70,10 @@ metric = MetricPipeline(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
                 ("score/global/recall", "score/global/recall_overlap_with_context"),
-                ("score/global/precision", "score/global/precision_overlap_with_context"),
+                (
+                    "score/global/precision",
+                    "score/global/precision_overlap_with_context",
+                ),
             ],
             use_query=True,
         ),

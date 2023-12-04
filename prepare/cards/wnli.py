@@ -4,7 +4,6 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -19,7 +18,9 @@ card = TaskCard(
                 "sentence2": "hypothesis",
             }
         ),
-        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        MapInstanceValues(
+            mappers={"label": {"0": "entailment", "1": "not entailment"}}
+        ),
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],

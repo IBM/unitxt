@@ -1,4 +1,3 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
@@ -6,25 +5,14 @@ from prepare.cards.mmlu import (
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
     AddConstant,
     CastFields,
-    CopyFields,
-    IndexOf,
-    JoinStr,
     ListFieldValues,
-    RenameFields,
-    TakeByField,
-    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 

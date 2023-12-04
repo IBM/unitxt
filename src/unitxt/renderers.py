@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from abc import ABC
+from typing import Any, Dict, List, Optional
 
 from .dataclass import InternalField
 from .formats import Format, ICLFormat
@@ -21,7 +21,9 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
     random_reference: bool = False
     skip_rendered_instance: bool = True
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         if self.skip_rendered_instance:
             if (
                 "inputs" not in instance
@@ -65,7 +67,9 @@ class RenderTemplate(Renderer, StreamInstanceOperator):
 class RenderDemonstrations(RenderTemplate):
     demos_field: str
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         demos = instance.get(self.demos_field, [])
 
         processed_demos = []
@@ -81,7 +85,9 @@ class RenderDemonstrations(RenderTemplate):
 class RenderInstruction(Renderer, StreamInstanceOperator):
     instruction: Instruction
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         if self.instruction is not None:
             instance["instruction"] = self.instruction()
         else:
@@ -93,10 +99,14 @@ class RenderFormat(Renderer, StreamInstanceOperator):
     format: Format
     demos_field: str = None
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         demos_instances = instance.pop(self.demos_field, None)
         if demos_instances is not None:
-            instance["source"] = self.format.format(instance, demos_instances=demos_instances)
+            instance["source"] = self.format.format(
+                instance, demos_instances=demos_instances
+            )
         else:
             instance["source"] = self.format.format(instance)
         return instance
