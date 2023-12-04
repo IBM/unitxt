@@ -6,7 +6,6 @@ from src.unitxt.renderers import (
     RenderDemonstrations,
     RenderFormat,
     RenderInstruction,
-    RenderTemplate,
     StandardRenderer,
 )
 from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
@@ -25,11 +24,9 @@ format = ICLFormat(
 
 class TestRenderers(unittest.TestCase):
     def test_render_template(self):
-        renderer = RenderTemplate(template=template)
-
         instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
 
-        result = renderer.process(instance)
+        result = template.process(instance)
         target = {
             "inputs": {"text": "was so bad"},
             "outputs": {"label": "negative"},
@@ -43,13 +40,12 @@ class TestRenderers(unittest.TestCase):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
-        renderer = RenderTemplate(template=template)
         instance = {
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": ["Dan", "Yossi"]},
         }
 
-        result = renderer.process(instance)
+        result = template.process(instance)
         target = {
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": ["Dan", "Yossi"]},
