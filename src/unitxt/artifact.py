@@ -121,17 +121,17 @@ class Artifact(Dataclass):
     def register_class(cls, artifact_class):
         assert issubclass(
             artifact_class, Artifact
-        ), f"Artifact class must be a subclass of Artifact, got {artifact_class}"
+        ), f"Artifact class must be a subclass of Artifact, got '{artifact_class}'"
         assert is_camel_case(
             artifact_class.__name__
-        ), f"Artifact class name must be legal camel case, got {artifact_class.__name__}"
+        ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
 
         snake_case_key = camel_to_snake_case(artifact_class.__name__)
 
         if cls.is_registered_type(snake_case_key):
             assert (
                 cls._class_register[snake_case_key] == artifact_class
-            ), f"Artifact class name must be unique, {snake_case_key} already exists for {cls._class_register[snake_case_key]}"
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for '{cls._class_register[snake_case_key]}'"
 
             return snake_case_key
 
