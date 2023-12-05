@@ -1,6 +1,9 @@
-import logging
 import re
 import shutil
+
+from .logging import get_logger
+
+logger = get_logger()
 
 
 def split_words(s):
@@ -82,7 +85,7 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
 
     for key, value in d.items():
         if isinstance(value, dict):
-            logging.info(f"{indent_str}{key}:")
+            logger.info(f"{indent_str}{key}:")
             print_dict(value, indent=indent + indent_delta, max_chars=max_chars)
         else:
             # Value is not a dict, print as a string
@@ -91,17 +94,17 @@ def print_dict(d, indent=0, indent_delta=4, max_chars=None):
             line_width = max_chars - indent
             # Split value by newline characters and handle each line separately
             lines = str_value.split("\n")
-            logging.info(f"{indent_str}{key} ({type(value).__name__}):")
+            logger.info(f"{indent_str}{key} ({type(value).__name__}):")
             for line in lines:
                 if len(line) + len(indent_str) + indent_delta > line_width:
                     # Split long lines into multiple lines
-                    logging.info(f"{indent_str}{indent_delta_str}{line[:line_width]}")
+                    logger.info(f"{indent_str}{indent_delta_str}{line[:line_width]}")
                     for i in range(line_width, len(line), line_width):
-                        logging.info(
+                        logger.info(
                             f"{indent_str}{indent_delta_str}{line[i:i+line_width]}"
                         )
                 else:
-                    logging.info(f"{indent_str}{indent_delta_str}{line}")
+                    logger.info(f"{indent_str}{indent_delta_str}{line}")
                 key = ""  # Empty the key for lines after the first one
 
 

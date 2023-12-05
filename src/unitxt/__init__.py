@@ -1,9 +1,13 @@
 import os
 import random
 
+from . import logging
 from .catalog import add_to_catalog
 from .load import load_dataset
 from .register import register_all_artifacts, register_local_catalog
+
+logging.setup_logging()
+logging.set_verbosity_info()
 
 register_all_artifacts()
 random.seed(0)

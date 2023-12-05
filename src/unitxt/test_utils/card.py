@@ -1,16 +1,17 @@
 import json
-import logging
 import math
 import os.path
 import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
+from ..logging import get_logger
 from ..metric import _compute
 from ..standard import StandardRecipe
 from ..templates import TemplatesDict
 from ..text_utils import print_dict
 
+logger = get_logger()
 TEMP_NAME = "tmp_name"
 
 
@@ -42,8 +43,8 @@ def test_loading_from_catalog(card):
 
 
 def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
-    logging.info("*" * 80)
-    logging.info(f"Using template card index: {template_card_index}")
+    logger.info("*" * 80)
+    logger.info(f"Using template card index: {template_card_index}")
 
     if "num_demos" not in kwargs:
         kwargs["num_demos"] = 3
@@ -84,28 +85,28 @@ def print_recipe_output(
     recipe.set_max_steps(max_steps)
     if print_header:
         recipe.get_last_step_description()
-        logging.info("=" * 80)
-        logging.info("=" * 8)
-        logging.info("=" * 8, recipe.get_last_step_description())
-        logging.info("=" * 8)
+        logger.info("=" * 80)
+        logger.info("=" * 8)
+        logger.info("=" * 8, recipe.get_last_step_description())
+        logger.info("=" * 8)
     multi_stream = recipe()
     if print_stream_size:
         for stream_name in multi_stream.keys():
             stream = multi_stream[stream_name]
             num_instances = len(list(iter(stream)))
-            logging.info(f"stream named '{stream_name}' has {num_instances} instances")
-        logging.info("")
+            logger.info(f"stream named '{stream_name}' has {num_instances} instances")
+        logger.info("")
     for stream_name in multi_stream.keys():
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
             examples = list(stream.take(num_examples))
-            logging.info("-" * 10)
-            logging.info(
+            logger.info("-" * 10)
+            logger.info(
                 f"Showing {len(examples)} example(s) from stream '{stream_name}':\n"
             )
             for example in examples:
                 print_dict(example)
-                logging.info("\n")
+                logger.info("\n")
     return examples
 
 
@@ -148,7 +149,7 @@ def test_with_eval(
         if strict:
             raise AssertionError(message)
 
-        logging.info(f"Warning: {message}")
+        logger.info(f"Warning: {message}")
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
@@ -156,7 +157,7 @@ def test_with_eval(
         full_mismatch_score is not None
         and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score
     ):
-        logging.info(
+        logger.info(
             f"Warning: metric on random predictions is not {full_mismatch_score}, but {results[0]['score']['global']['groups_mean_score']} "
         )
 

@@ -1,7 +1,6 @@
 import difflib
 import inspect
 import json
-import logging
 import os
 import pkgutil
 from abc import abstractmethod
@@ -9,8 +8,11 @@ from copy import deepcopy
 from typing import Dict, List, Union, final
 
 from .dataclass import Dataclass, Field, fields
+from .logging import get_logger
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
+
+logger = get_logger()
 
 
 class Artifactories:
@@ -261,7 +263,7 @@ def fetch_artifact(name):
 
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
-    logging.info(f"Artifact {identifer} is fetched from {artifactory}")
+    logger.info(f"Artifact {identifer} is fetched from {artifactory}")
     return artifact
 
 
@@ -274,10 +276,10 @@ def maybe_recover_artifact(artifact):
 
 def register_all_artifacts(path):
     for loader, module_name, _is_pkg in pkgutil.walk_packages(path):
-        logging.info(__name__)
+        logger.info(__name__)
         if module_name == __name__:
             continue
-        logging.info(f"Loading {module_name}")
+        logger.info(f"Loading {module_name}")
         # Import the module
         module = loader.find_module(module_name).load_module(module_name)
 
@@ -287,4 +289,4 @@ def register_all_artifacts(path):
             if inspect.isclass(obj):
                 # Make sure the class is a subclass of Artifact (but not Artifact itself)
                 if issubclass(obj, Artifact) and obj is not Artifact:
-                    logging.info(obj)
+                    logger.info(obj)

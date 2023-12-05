@@ -1,4 +1,3 @@
-import logging
 import os
 
 import datasets
@@ -19,6 +18,7 @@ from .hf_utils import __file__ as _
 from .instructions import __file__ as _
 from .load import __file__ as _
 from .loaders import __file__ as _
+from .logging import get_logger
 from .metric import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
@@ -43,6 +43,8 @@ from .utils import __file__ as _
 from .validate import __file__ as _
 from .version import __file__ as _
 from .version import version
+
+logger = get_logger()
 
 __default_recipe__ = "standard_recipe"
 
@@ -114,10 +116,10 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 unitxt_installed = False
 
             if unitxt_installed:
-                logging.info("Loading with installed unitxt library...")
+                logger.info("Loading with installed unitxt library...")
                 dataset = get_dataset_artifact_installed(self.config.name)
             else:
-                logging.info("Loading with huggingface unitxt copy...")
+                logger.info("Loading with huggingface unitxt copy...")
                 dataset = get_dataset_artifact(self.config.name)
 
             self._generators = dataset()

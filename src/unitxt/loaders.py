@@ -1,5 +1,4 @@
 import itertools
-import logging
 import os
 from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
@@ -8,9 +7,11 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
+from .logging import get_logger
 from .operator import SourceOperator
 from .stream import MultiStream, Stream
 
+logger = get_logger()
 try:
     import ibm_boto3
     # from ibm_botocore.client import ClientError
@@ -101,7 +102,7 @@ class LoadFromIBMCloud(Loader):
     data_files: Sequence[str]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
-        logging.info(f"Downloading {item_name} from {bucket_name} COS")
+        logger.info(f"Downloading {item_name} from {bucket_name} COS")
         try:
             response = cos.Object(bucket_name, item_name).get()
             size = response["ContentLength"]
@@ -120,7 +121,7 @@ class LoadFromIBMCloud(Loader):
                     for line in first_lines:
                         downloaded_file.write(line)
                         downloaded_file.write(b"\n")
-                logging.info(
+                logger.info(
                     f"\nDownload successful limited to {self.loader_limit} lines"
                 )
                 return
@@ -134,7 +135,7 @@ class LoadFromIBMCloud(Loader):
             cos.Bucket(bucket_name).download_file(
                 item_name, local_file, Callback=upload_progress
             )
-            logging.info("\nDownload Successful")
+            logger.info("\nDownload Successful")
         except Exception as e:
             raise Exception(
                 f"Unabled to download {item_name} in {bucket_name}", e
