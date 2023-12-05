@@ -117,7 +117,7 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 logging.info("Loading with installed unitxt library...")
                 dataset = get_dataset_artifact_installed(self.config.name)
             else:
-                logging.info("Loading with installed unitxt library...")
+                logging.info("Loading with huggingface unitxt copy...")
                 dataset = get_dataset_artifact(self.config.name)
 
             self._generators = dataset()

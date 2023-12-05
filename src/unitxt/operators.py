@@ -966,7 +966,7 @@ class FilterByListsOfValues(SingleStreamOperator):
     """
 
     required_values: Dict[str, List]
-    process_every_value: Optional[bool] = False
+    error_on_filtered_all: bool = True
 
     def verify(self):
         super().verify()
@@ -991,8 +991,8 @@ class FilterByListsOfValues(SingleStreamOperator):
                 filtered_all = False
                 yield instance
         if filtered_all and self.error_on_filtered_all:
-            raise ValueError(
-                f"FilterByListsOfValues filtered all the stream {stream_name} if this is intended set error_on_filtered_all=False"
+            raise RuntimeError(
+                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
             )
 
 

@@ -260,6 +260,20 @@ class TestOperators(unittest.TestCase):
             "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}",
         )
 
+    def test_filter_by_values_error_when_the_entire_stream_is_filtered(self):
+        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        with self.assertRaises(RuntimeError) as e:
+            check_operator(
+                operator=FilterByListsOfValues(required_values={"b": ["weird_value"]}),
+                inputs=inputs,
+                targets=[],
+                tester=self,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "FilterByListsOfValues filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+        )
+
     def test_intersect(self):
         inputs = [
             {"label": ["a", "b"]},
