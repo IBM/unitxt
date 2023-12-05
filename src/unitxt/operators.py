@@ -966,6 +966,7 @@ class FilterByListsOfValues(SingleStreamOperator):
     """
 
     required_values: Dict[str, List]
+    process_every_value: Optional[bool] = False
 
     def verify(self):
         super().verify()
@@ -976,6 +977,7 @@ class FilterByListsOfValues(SingleStreamOperator):
                 )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        filtered_all = True
         for instance in stream:
             filter = False
             for key, value in self.required_values.items():
@@ -986,7 +988,12 @@ class FilterByListsOfValues(SingleStreamOperator):
                 if instance[key] not in value:
                     filter = True
             if not filter:
+                filtered_all = False
                 yield instance
+        if filtered_all and self.error_on_filtered_all:
+            raise ValueError(
+                f"FilterByListsOfValues filtered all the stream {stream_name} if this is intended set error_on_filtered_all=False"
+            )
 
 
 class Intersect(FieldOperator):
