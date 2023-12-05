@@ -1,10 +1,10 @@
-import logging
 from typing import List
 
 from .card import TaskCard
 from .dataclass import InternalField, OptionalField
 from .formats import ICLFormat
 from .instructions import Instruction
+from .logging import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
@@ -12,6 +12,8 @@ from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template
+
+logger = get_logger()
 
 
 # Used to give meaningful name to recipe steps
@@ -94,7 +96,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.loader_limit:
             self.card.loader.loader_limit = self.loader_limit
-            logging.info(f"Loader line limit was set to  {self.loader_limit}")
+            logger.info(f"Loader line limit was set to  {self.loader_limit}")
             self.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         if self.card.preprocess_steps is not None:

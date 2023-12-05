@@ -1,4 +1,3 @@
-import logging
 import re
 import string
 import uuid
@@ -14,6 +13,7 @@ from scipy.stats import bootstrap
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
+from .logging import get_logger
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -24,6 +24,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .stream import MultiStream, Stream
 
+logger = get_logger()
 # The default number of resamples used to estimate the confidence intervals
 # global and instances metrics. Use None to disable confidence interval computation by default.
 _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
@@ -131,7 +132,7 @@ class MetricWithConfidenceInterval(Metric):
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
-                    logging.info(f"Warning in {self.__class__.__name__}", e)
+                    logger.info(f"Warning in {self.__class__.__name__}", e)
                     return np.nan
 
             scores = numpy.apply_along_axis(

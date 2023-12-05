@@ -34,11 +34,11 @@ class CopyingReusableGenerator(ReusableGenerator):
 
 #     # Using itertools.chain
 #     chained = list(chain(iterable1, iterable2))
-#     logging.info(chained)  # Prints: [1, 2, 3, 4, 5, 6]
+#     logger.info(chained)  # Prints: [1, 2, 3, 4, 5, 6]
 
 #     # Using itertools.islice
 #     sliced = list(islice(ReusableGenerator(range, gen_argv=[1, 7]), 1, 4))
-#     logging.info(sliced)  # Prints: [2, 3, 4]
+#     logger.info(sliced)  # Prints: [2, 3, 4]
 
 #     # now same test with generators
 #     def generator(start, end):
@@ -49,7 +49,7 @@ class CopyingReusableGenerator(ReusableGenerator):
 #     iterable2 = ReusableGenerator(generator, gen_argv=[4, 7])
 
 #     chained = list(chain(iterable1, iterable2))
-#     logging.info(chained)  # Prints: [1, 2, 3, 4, 5, 6]
+#     logger.info(chained)  # Prints: [1, 2, 3, 4, 5, 6]
 
 #     sliced = list(islice(ReusableGenerator(generator, gen_argv=[1, 7]), 1, 4))
-#     logging.info(sliced)  # Prints: [2, 3, 4]
+#     logger.info(sliced)  # Prints: [2, 3, 4]

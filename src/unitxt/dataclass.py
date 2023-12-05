@@ -330,7 +330,7 @@ class Dataclass(metaclass=DataclassMeta):
             pass
 
         grand_child = GrandChild()
-        logging.info(grand_child.to_dict())
+        logger.info(grand_child.to_dict())
         ```
 
     """
