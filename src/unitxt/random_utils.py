@@ -26,6 +26,10 @@ def get_random():
 random = get_random()
 
 
+def new_random_generator():
+    return python_random.Random(get_seed())
+
+
 def set_seed(seed):
     _thread_local.seed = seed
     get_random().seed(seed)

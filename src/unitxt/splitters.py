@@ -1,10 +1,11 @@
 import itertools
 from abc import abstractmethod
+from random import Random
 from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_random
+from .random_utils import get_random, new_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -82,10 +83,12 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
+    random_generator: Random = None
 
     def prepare(self):
         super().prepare()
         self.set_size(self.sample_size)
+        self.random_generator = new_random_generator()
 
     def set_size(self, size):
         if isinstance(size, str):
@@ -103,11 +106,14 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
+    def prepare(self):
+        super().prepare()
+
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return get_random().sample(instances_pool, self.sample_size)
+        return self.random_generator.sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -171,10 +177,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = get_random().sample(self.labels[label], allocation)
+            sample = self.random_generator.sample(self.labels[label], allocation)
             result.extend(sample)
 
-        get_random().shuffle(result)
+        self.random_generator.shuffle(result)
         return result
 
 
