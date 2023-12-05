@@ -9,7 +9,7 @@ from ..logging import get_logger
 from ..metric import _compute
 from ..standard import StandardRecipe
 from ..templates import TemplatesDict
-from ..text_utils import print_dict
+from ..text_utils import construct_dict_str
 
 logger = get_logger()
 TEMP_NAME = "tmp_name"
@@ -79,34 +79,57 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     return examples
 
 
-def print_recipe_output(
+def construct_recipe_output_message(
     recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
 ):
+    # Prepare the message string
+    message = ""
     recipe.set_max_steps(max_steps)
+
     if print_header:
-        recipe.get_last_step_description()
-        logger.info("=" * 80)
-        logger.info("=" * 8)
-        logger.info("=" * 8, recipe.get_last_step_description())
-        logger.info("=" * 8)
+        step_description = recipe.get_last_step_description()
+        header = "=" * 80 + "\n"
+        header += "=" * 8 + "\n"
+        header += "=" * 8 + " " + step_description + "\n"
+        header += "=" * 8 + "\n"
+        message += header
+
     multi_stream = recipe()
+
     if print_stream_size:
         for stream_name in multi_stream.keys():
             stream = multi_stream[stream_name]
             num_instances = len(list(iter(stream)))
-            logger.info(f"stream named '{stream_name}' has {num_instances} instances")
-        logger.info("")
+            message += f"stream named '{stream_name}' has {num_instances} instances\n"
+        message += "\n"
+
+    examples = []
     for stream_name in multi_stream.keys():
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
-            examples = list(stream.take(num_examples))
-            logger.info("-" * 10)
-            logger.info(
-                f"Showing {len(examples)} example(s) from stream '{stream_name}':\n"
-            )
-            for example in examples:
-                print_dict(example)
-                logger.info("\n")
+            examples_in_stream = list(stream.take(num_examples))
+            stream_header = "-" * 10 + "\n"
+            stream_header += f"Showing {len(examples_in_stream)} example(s) from stream '{stream_name}':\n"
+            message += stream_header
+
+            for example in examples_in_stream:
+                dict_message = construct_dict_str(example)
+                message += dict_message + "\n\n"
+
+            examples.extend(examples_in_stream)
+
+    return message, examples
+
+
+def print_recipe_output(
+    recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
+):
+    message, examples = construct_recipe_output_message(
+        recipe, max_steps, num_examples, print_header, print_stream_size, streams
+    )
+    # Print the message
+    message = "\n" + message
+    logger.info(message)
     return examples
 
 
@@ -149,7 +172,7 @@ def test_with_eval(
         if strict:
             raise AssertionError(message)
 
-        logger.info(f"Warning: {message}")
+        logger.warning(f"Warning: {message}")
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)

@@ -68,44 +68,44 @@ def camel_to_snake_case(s):
     return s.lower()
 
 
-def print_dict(d, indent=0, indent_delta=4, max_chars=None):
-    """Prints a dictionary in a formatted manner, taking into account the terminal width.
+def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
+    """Constructs a formatted string of a dictionary.
 
     Args:
-        d (dict): The dictionary to be printed.
+        d (dict): The dictionary to be formatted.
         indent (int, optional): The current level of indentation. Defaults to 0.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
         max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
     """
-    max_chars = (
-        max_chars or shutil.get_terminal_size()[0] - 10
-    )  # Get terminal size if max_chars not set
+    max_chars = max_chars or shutil.get_terminal_size()[0] - 10
     indent_str = " " * indent
     indent_delta_str = " " * indent_delta
+    res = ""
 
     for key, value in d.items():
         if isinstance(value, dict):
-            logger.info(f"{indent_str}{key}:")
-            print_dict(value, indent=indent + indent_delta, max_chars=max_chars)
+            res += f"{indent_str}{key}:\n"
+            res += construct_dict_str(value, indent + indent_delta, max_chars=max_chars)
         else:
-            # Value is not a dict, print as a string
             str_value = str(value)
-
             line_width = max_chars - indent
-            # Split value by newline characters and handle each line separately
             lines = str_value.split("\n")
-            logger.info(f"{indent_str}{key} ({type(value).__name__}):")
+            res += f"{indent_str}{key} ({type(value).__name__}):\n"
             for line in lines:
                 if len(line) + len(indent_str) + indent_delta > line_width:
-                    # Split long lines into multiple lines
-                    logger.info(f"{indent_str}{indent_delta_str}{line[:line_width]}")
+                    res += f"{indent_str}{indent_delta_str}{line[:line_width]}\n"
                     for i in range(line_width, len(line), line_width):
-                        logger.info(
-                            f"{indent_str}{indent_delta_str}{line[i:i+line_width]}"
-                        )
+                        res += f"{indent_str}{indent_delta_str}{line[i:i+line_width]}\n"
                 else:
-                    logger.info(f"{indent_str}{indent_delta_str}{line}")
+                    res += f"{indent_str}{indent_delta_str}{line}\n"
                 key = ""  # Empty the key for lines after the first one
+    return res
+
+
+def print_dict(d, indent=0, indent_delta=4, max_chars=None):
+    dict_str = construct_dict_str(d, indent, indent_delta, max_chars)
+    dict_str = "\n" + dict_str
+    logger.info(dict_str)
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
