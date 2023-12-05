@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -31,11 +30,11 @@ class Stream(Dataclass):
         """
         if self.caching:
             return Dataset.from_generator
-        else:
-            if self.copying:
-                return CopyingReusableGenerator
-            else:
-                return ReusableGenerator
+
+        if self.copying:
+            return CopyingReusableGenerator
+
+        return ReusableGenerator
 
     def _get_stream(self):
         """Private method to get the stream based on the initiator function.
@@ -102,12 +101,20 @@ class MultiStream(dict):
 
     def to_dataset(self) -> DatasetDict:
         return DatasetDict(
-            {key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
+            {
+                key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key})
+                for key in self.keys()
+            }
         )
 
     def to_iterable_dataset(self) -> IterableDatasetDict:
         return IterableDatasetDict(
-            {key: IterableDataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
+            {
+                key: IterableDataset.from_generator(
+                    self.get_generator, gen_kwargs={"key": key}
+                )
+                for key in self.keys()
+            }
         )
 
     def __setitem__(self, key, value):
@@ -116,17 +123,19 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False):
+    def from_generators(
+        cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False
+    ):
         """Creates a MultiStream from a dictionary of ReusableGenerators.
 
         Args:
             generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.
         """
-
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
@@ -141,17 +150,19 @@ class MultiStream(dict):
         )
 
     @classmethod
-    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False, copying=False):
+    def from_iterables(
+        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+    ):
         """Creates a MultiStream from a dictionary of iterables.
 
         Args:
             iterables (Dict[str, Iterable]): A dictionary of iterables.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.
         """
-
         return cls(
             {
                 key: Stream(

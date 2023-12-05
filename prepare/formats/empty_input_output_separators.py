@@ -3,4 +3,4 @@ from src.unitxt.formats import ICLFormat
 
 format = ICLFormat(input_output_separator="")
 
-add_to_catalog(format, f"formats.empty_input_output_separator", overwrite=True)
+add_to_catalog(format, "formats.empty_input_output_separator", overwrite=True)

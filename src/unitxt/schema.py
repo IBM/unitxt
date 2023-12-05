@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from datasets import Features, Sequence, Value
 
@@ -13,7 +13,9 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
-        "additional_inputs": Sequence({"key": Value(dtype="string"), "value": Value("string")}),
+        "additional_inputs": Sequence(
+            {"key": Value(dtype="string"), "value": Value("string")}
+        ),
     }
 )
 
@@ -34,11 +36,18 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     remove_unnecessary_fields: bool = True
 
     def _to_lists_of_keys_and_values(self, dict: Dict[str, str]):
-        return {"key": [key for key, _ in dict.items()], "value": [str(value) for _, value in dict.items()]}
+        return {
+            "key": [key for key, _ in dict.items()],
+            "value": [str(value) for _, value in dict.items()],
+        }
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         additional_inputs = {**instance["inputs"], **instance["outputs"]}
-        instance["additional_inputs"] = self._to_lists_of_keys_and_values(additional_inputs)
+        instance["additional_inputs"] = self._to_lists_of_keys_and_values(
+            additional_inputs
+        )
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []
@@ -56,11 +65,13 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
             instance["postprocessors"] = self.postprocessors
         return instance
 
-    def validate(self, instance: Dict[str, Any], stream_name: str = None):
+    def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):
         # verify the instance has the required schema
-        assert instance is not None, f"Instance is None"
-        assert isinstance(instance, dict), f"Instance should be a dict, got {type(instance)}"
+        assert instance is not None, "Instance is None"
+        assert isinstance(
+            instance, dict
+        ), f"Instance should be a dict, got {type(instance)}"
         assert all(
-            [key in instance for key in UNITXT_DATASET_SCHEMA]
+            key in instance for key in UNITXT_DATASET_SCHEMA
         ), f"Instance should have the following keys: {UNITXT_DATASET_SCHEMA}. Instance is: {instance}"
         UNITXT_DATASET_SCHEMA.encode_example(instance)

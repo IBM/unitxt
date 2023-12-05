@@ -1,9 +1,8 @@
+import logging
 import unittest
 from math import isnan
 
-import numpy as np
 from src.unitxt.metrics import (
-    F1,
     Accuracy,
     BertScore,
     F1Macro,
@@ -27,7 +26,9 @@ class TestMetrics(unittest.TestCase):
         predictions = ["A", "B", "C"]
         references = [["B", "C"], ["A"], ["B", "C"]]
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
 
         expected_global_result = {
             "accuracy": 1 / 3,
@@ -37,7 +38,11 @@ class TestMetrics(unittest.TestCase):
 
         global_result = outputs[0]["score"]["global"].copy()
         # Only check the keys that are expected, i.e. exist in expected_global_result
-        global_result = {key: value for key, value in global_result.items() if key in expected_global_result}
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
         self.assertDictEqual(global_result, expected_global_result)
 
         instance_targets = [
@@ -58,7 +63,9 @@ class TestMetrics(unittest.TestCase):
             {"exact_match": 100.0, "f1": 100.0, "score": 100.0, "score_name": "f1"},
         ]
         global_target = 100 * 2 / 3
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         for output, target in zip(outputs, instance_targets):
@@ -70,7 +77,9 @@ class TestMetrics(unittest.TestCase):
         predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
         # F1 micro is equal to accuracy in multi class setting  (5/6)
         global_target = 0.8333333
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
@@ -86,23 +95,40 @@ class TestMetrics(unittest.TestCase):
         global_target_dog = 0.8
         global_target_cat = 0.857142857143
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-        self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
-        self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
         self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_weighted(self):
         metric = F1Weighted()
-        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"], ["dog"], ["dog"]]
+        references = [
+            ["cat"],
+            ["dog"],
+            ["dog"],
+            ["dog"],
+            ["cat"],
+            ["cat"],
+            ["dog"],
+            ["dog"],
+        ]
         predictions = ["cat", "cat", "dog", "cat", "cat", "cat", "cat", "dog"]
         # recall class 'dog'  = 2/5  = 0.4          precision= 2/2 = 1    f1 = 0.66666666
         # recall class 'cat'  = 3/3  = 1            precision= 3/6 = 0.5  f1 = 0.57142857
         # weighted f1 = (0.375 * 0.66666666) + (0.625 * 0.57142857) = 0.60714285
         global_target = 0.60714285
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_weighted", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_weighted", outputs[0]["score"]["instance"]["score_name"])
@@ -118,16 +144,29 @@ class TestMetrics(unittest.TestCase):
         global_target_dog = 0.8
         global_target_cat = 1
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
-        self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro_multilabel(self):
         metric = F1MacroMultiLabel()
-        references = [[["cat", "dog"]], [["dog"]], [["dog"]], [["dog"]], [["cat"]], [["cat"]]]
+        references = [
+            [["cat", "dog"]],
+            [["dog"]],
+            [["dog"]],
+            [["dog"]],
+            [["cat"]],
+            [["cat"]],
+        ]
         predictions = [["cat"], ["2"], ["cat", "dog"], ["dog"], ["cat"], ["cat"]]
         # recall class 'dog'  = 2/4  = 0.5          precision= 2/2 = 1       f1 = 0.666666666667
         # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75    f1 = 0.857142857143
@@ -136,16 +175,29 @@ class TestMetrics(unittest.TestCase):
         global_target_dog = 0.666666666667
         global_target_cat = 0.857142857143
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
-        self.assertAlmostEqual(global_target_dog, outputs[0]["score"]["global"]["f1_dog"])
-        self.assertAlmostEqual(global_target_cat, outputs[0]["score"]["global"]["f1_cat"])
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_micro_multilabel(self):
         metric = F1MicroMultiLabel()
-        references = [[["cat", "dog"]], [["dog"]], [["dog"]], [["dog"]], [["cat"]], [["cat"]]]
+        references = [
+            [["cat", "dog"]],
+            [["dog"]],
+            [["dog"]],
+            [["dog"]],
+            [["cat"]],
+            [["cat"]],
+        ]
         predictions = [["cat"], ["2"], ["cat", "dog"], ["dog"], ["cat"], ["cat"]]
         # cat     TP=3  FP=1  FN=0  TN=2
         # dog     TP=2  FP=0  FN=2  TN=2
@@ -154,7 +206,9 @@ class TestMetrics(unittest.TestCase):
         # recall = TP /( FN + TP) =  5 / 7 = 0.7142857
         global_target = 0.769230760933
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_f1_macro_multilabel_with_nones(self):
@@ -163,17 +217,23 @@ class TestMetrics(unittest.TestCase):
         references = [[["none"]]]
         predictions = [["none"]]
         global_target = float("nan")
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
         references = [[["none"]]]
         predictions = [["x", "y"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
         references = [[["none"]]]
         predictions = [["none", "x", "y"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
         references = [[["x"]], [["y"]]]
@@ -181,12 +241,16 @@ class TestMetrics(unittest.TestCase):
         global_target = 0.33333333333
         # Recall(x) = 1.0 Precion(x) = 0.5   --> F1(x) = 0.66666
         # recall(y) = 0.0 Precision(x) = NAN --> F1(y) = 0
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
         references = [[["none"]], [["x"]], [["y"]], [["none"]], [["none"]]]
         predictions = [["none"], ["x"], ["x"], ["none"], ["none"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_f1_micro_multilabel_with_nones(self):
@@ -194,12 +258,16 @@ class TestMetrics(unittest.TestCase):
         references = [[["none"]]]
         predictions = [["cat", "dog"]]
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
         references = [[["none"]]]
         predictions = [["none"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
         references = [[["sad"]], [["sad"]]]
@@ -211,7 +279,9 @@ class TestMetrics(unittest.TestCase):
         # recall = TP /( FN + TP) =  1 / 1 = 1
 
         global_target = 0.66666666
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
         references = [[["none"]], [["sad"]]]
@@ -220,7 +290,9 @@ class TestMetrics(unittest.TestCase):
         # recall = TP /( FN + TP) =  1 / 1 = 1
 
         global_target = 1
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_f1_multiple_use(self):
@@ -230,19 +302,25 @@ class TestMetrics(unittest.TestCase):
         # recall class 'dog'  = 0/1 = 0             precision= 0/0 = 1       f1 = 0
         # recall class 'cat'  = 1/1 = 1             precision= 1/1 = 1       f1 = 1
         global_target = 0.5
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         references = [[["horse"]]]
         predictions = [["horse"]]
         global_target = 1
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_rouge(self):
         metric = Rouge()
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
         predictions = ["hello there", "general kenobi"]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_target = 5 / 6
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
@@ -254,15 +332,22 @@ class TestMetrics(unittest.TestCase):
         )
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
         predictions = ["hello there", "general kenobi"]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_target = [2 / 3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_token_overlap(self):
         metric = TokenOverlap()
         predictions = ["hello there general dude", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        references = [
+            ["hello there general kenobi", "hello there!"],
+            ["foo bar foobar", "foo bar"],
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_targets = {"f1": 7 / 8, "precision": 7 / 8, "recall": 1}
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
@@ -270,36 +355,50 @@ class TestMetrics(unittest.TestCase):
     def test_bert_score(self):
         metric = BertScore(model_name="microsoft/deberta-xlarge-mnli")
         predictions = ["hello there general dude", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        references = [
+            ["hello there general kenobi", "hello there!"],
+            ["foo bar foobar", "foo bar"],
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_targets = {"f1": 0.89818, "precision": 0.92830, "recall": 0.92185}
         for target, value in global_targets.items():
-            self.assertAlmostEqual(value, outputs[0]["score"]["global"][target], places=5)
+            self.assertAlmostEqual(
+                value, outputs[0]["score"]["global"][target], places=5
+            )
 
     def test_sentence_bert(self):
         metric = SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2")
         predictions = ["hello there general dude", "foo bar foobar"]
-        references = [["hello there general kenobi", "hello there!"], ["foo bar foobar", "foo bar"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        references = [
+            ["hello there general kenobi", "hello there!"],
+            ["foo bar foobar", "foo bar"],
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_target = 0.85614
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["score"], places=5
+        )
 
     def test_reward(self):
         metric = Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2")
         predictions = ["hello there General Dude", "foo bar foobar"]
         references = [["How do you greet General Dude"], ["What is your name?"]]
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         global_target = 0.08608
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=5)
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["score"], places=5
+        )
 
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
-        """
-        Test that when metric.n_resamples is set to None, no confidence intervals
-        are computed
-        """
-
+        """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
         # Test one GlobalMetric and one InstanceMetric
         for metric in [Accuracy(), F1Macro()]:
             metric.disable_confidence_interval_calculation()
@@ -312,11 +411,7 @@ class TestConfidenceIntervals(unittest.TestCase):
                 self.assertTrue("ci_high" not in key)
 
     def test_instance_metric_confidence_interval(self):
-        """
-        Test the calculation of confidence intervals
-        for an instance metric (Accuracy is used as an instance of
-        an InstanceMetric)
-        """
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
         self._test_confidence_interval(
             metric=Accuracy(),
             expected_ci_low=0.71,
@@ -331,11 +426,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         )
 
     def test_global_metric_confidence_interval(self):
-        """
-        Test the calculation of confidence intervals
-        for global metrics (F1Macro and F1Micro are used as instances of
-        a GlobalMetric)
-        """
+        """Test the calculation of confidence intervals for global metrics (F1Macro and F1Micro are used as instances of a GlobalMetric)."""
         f1_macro_low, f1_macro_high = 0.8809213119223925, 0.9439681645177271
         self._test_confidence_interval(
             metric=F1Macro(),
@@ -362,14 +453,13 @@ class TestConfidenceIntervals(unittest.TestCase):
         )
 
     def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
-        """
-        Test the calculation of confidence intervals
-        for a given metric.
-        """
+        """Test the calculation of confidence intervals for a given metric."""
         predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
         references = [["B"], ["B"], ["C"], ["D"], ["E"]] * 20  # 80% are correct (4/5)
 
-        outputs = apply_metric(metric=metric, predictions=predictions, references=references)
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
 
         expected_global_result = {
             f"{metric.main_score}_ci_low": expected_ci_low,
@@ -379,11 +469,13 @@ class TestConfidenceIntervals(unittest.TestCase):
         }
 
         global_result = outputs[0]["score"]["global"].copy()
-        print(global_result)
+        logging.info(global_result)
         for score_name, score_value in global_result.items():
             if score_name in expected_global_result:
                 # The that the output value is as the expected value
-                self.assertAlmostEqual(score_value, expected_global_result[score_name], places=5)
+                self.assertAlmostEqual(
+                    score_value, expected_global_result[score_name], places=5
+                )
             else:
                 # An output score that is not expected
                 # This is ok if the score_name is not related to confidence intervals

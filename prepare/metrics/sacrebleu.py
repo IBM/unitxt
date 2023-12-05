@@ -1,12 +1,16 @@
-import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 
-metric = HuggingfaceMetric(hf_metric_name="sacrebleu", hf_main_score="score", main_score="sacrebleu", scale=1.0)
+metric = HuggingfaceMetric(
+    hf_metric_name="sacrebleu", hf_main_score="score", main_score="sacrebleu", scale=1.0
+)
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
-references = [["hello there general kenobi", "hello there !"], ["goodbye ankh morpork", "ankh morpork"]]
+references = [
+    ["hello there general kenobi", "hello there !"],
+    ["goodbye ankh morpork", "ankh morpork"],
+]
 instance_targets = [
     {
         "counts": [4, 3, 2, 1],

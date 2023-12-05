@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from .card import TaskCard
@@ -10,7 +11,7 @@ from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
-from .templates import Template, TemplatesDict
+from .templates import Template
 
 
 # Used to give meaningful name to recipe steps
@@ -71,11 +72,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 raise ValueError(
                     f"max_test_instances must be bigger than loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
                 )
-            if self.max_validation_instances and self.max_validation_instances > self.loader_limit:
+            if (
+                self.max_validation_instances
+                and self.max_validation_instances > self.loader_limit
+            ):
                 raise ValueError(
                     f"max_validation_instances must be bigger than loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
                 )
-            if self.max_train_instances and self.max_train_instances > self.loader_limit:
+            if (
+                self.max_train_instances
+                and self.max_train_instances > self.loader_limit
+            ):
                 raise ValueError(
                     f"max_train_instances must be bigger than loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
@@ -87,7 +94,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.loader_limit:
             self.card.loader.loader_limit = self.loader_limit
-            print(f"Loader line limit was set to  {self.loader_limit}")
+            logging.info(f"Loader line limit was set to  {self.loader_limit}")
             self.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         if self.card.preprocess_steps is not None:
@@ -173,14 +180,14 @@ class StandardRecipeWithIndexes(BaseRecipe):
         if self.template_card_index is not None:
             try:
                 self.template = self.card.templates[self.template_card_index]
-            except:
+            except Exception as e:
                 if isinstance(self.card.templates, dict):
                     options = self.card.templates.keys()
                 else:
                     options = list(range(0, len(self.card.templates)))
                 raise ValueError(
                     f"card_template_index '{self.template_card_index}' is not in card. Available options: {options}"
-                )
+                ) from e
         assert (
             self.instruction_card_index is None or self.instruction is None
         ), "Specify either instruction or instruction_card_index"
@@ -191,9 +198,9 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
 
 class StandardRecipe(StandardRecipeWithIndexes):
-    """
-    This class represents a standard recipe for data processing and preperation.
-    This class can be used to prepare a recipe
+    """This class represents a standard recipe for data processing and preperation.
+
+    This class can be used to prepare a recipe.
     with all necessary steps, refiners and renderers included. It allows to set various
     parameters and steps in a sequential manner for preparing the recipe.
 

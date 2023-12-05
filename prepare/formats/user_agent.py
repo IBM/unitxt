@@ -6,4 +6,4 @@ format = ICLFormat(
     output_prefix="Agent: ",
 )
 
-add_to_catalog(format, f"formats.user_agent", overwrite=True)
+add_to_catalog(format, "formats.user_agent", overwrite=True)

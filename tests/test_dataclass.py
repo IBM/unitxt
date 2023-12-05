@@ -79,10 +79,10 @@ class TestDataclass(unittest.TestCase):
             a: int = AbstractField()
 
         with self.assertRaises(AbstractFieldError):
-            d = Dummy()
+            Dummy()
 
         with self.assertRaises(AbstractFieldError):
-            d = Dummy(a=1)
+            Dummy(a=1)
 
     def test_abstract_field(self):
         class GrandParent(Dataclass):
@@ -94,10 +94,10 @@ class TestDataclass(unittest.TestCase):
             a: float = AbstractField()
 
         with self.assertRaises(AbstractFieldError):
-            p = Parent(b=2)
+            Parent(b=2)
 
         with self.assertRaises(AbstractFieldError):
-            p = Parent(a=2, b=2)
+            Parent(a=2, b=2)
 
         class Child(Parent):
             a: int
