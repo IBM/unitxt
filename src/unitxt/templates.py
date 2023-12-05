@@ -122,16 +122,6 @@ class YesNoTemplate(Template):
     label_field: str = None
     yes_answer: str = "Yes"
     no_answer: str = "No"
-    yes_answer_references: List[str] = ["Yes", "yes", "1", "True", "true"]
-    no_answer_references: List[str] = [
-        "No",
-        "no",
-        "0",
-        "False",
-        "false",
-        "None",
-        "none",
-    ]
     postprocessors: List[str] = field(
         default_factory=lambda: ["processors.to_string_stripped"]
     )
@@ -174,9 +164,8 @@ class YesNoTemplate(Template):
             )
         queried_class_name = queried_class_names[0]
         if queried_class_name in gold_class_names:
-            return self.yes_answer, self.yes_answer_references
-
-        return self.no_answer, self.no_answer_references
+            return self.yes_answer, [self.yes_answer]
+        return self.no_answer, [self.no_answer]
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
