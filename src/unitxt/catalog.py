@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from pathlib import Path
@@ -7,8 +6,10 @@ from typing import Optional
 import requests
 
 from .artifact import Artifact, Artifactory
+from .logging import get_logger
 from .version import version
 
+logger = get_logger()
 COLLECTION_SEPARATOR = "."
 PATHS_SEP = ":"
 
@@ -79,7 +80,7 @@ class LocalCatalog(Catalog):
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
         if verbose:
-            logging.info(f"Artifact {artifact_identifier} saved to {path}")
+            logger.info(f"Artifact {artifact_identifier} saved to {path}")
 
 
 class EnvironmentLocalCatalog(LocalCatalog):

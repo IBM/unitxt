@@ -1,10 +1,12 @@
-import logging
 import unittest
 
 from datasets import load_dataset
 
 from src import unitxt
+from src.unitxt.logging import get_logger
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+
+logger = get_logger()
 
 
 class TestExamples(unittest.TestCase):
@@ -13,19 +15,19 @@ class TestExamples(unittest.TestCase):
         register_local_catalog_for_tests()
 
     def test_dataset_is_deterministic_after_loading_other_dataset(self):
-        logging.info("Loading wnli- first time")
+        logger.info("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
         )
-        logging.info("Loading squad")
+        logger.info("Loading squad")
         load_dataset(
             unitxt.dataset_file,
             "card=cards.rte,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
         )
-        logging.info("Loading wnli- second time")
+        logger.info("Loading wnli- second time")
         wnli_2_dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
@@ -38,13 +40,13 @@ class TestExamples(unittest.TestCase):
         return " ".join(s.split())
 
     def test_dataset_is_deterministic_after_augmentation(self):
-        logging.info("Loading wnli- first time")
+        logger.info("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
             download_mode="force_redownload",
         )
-        logging.info("Loading wnli- second time with augmentation")
+        logger.info("Loading wnli- second time with augmentation")
         wnli_2_dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmentor=augmentors.augment_whitespace_model_input",

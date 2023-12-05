@@ -1,11 +1,12 @@
 import json
-import logging
 import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
+from ..logging import get_logger
 from ..text_utils import print_dict
 
+logger = get_logger()
 TEMP_NAME = "tmp_name"
 
 
@@ -23,7 +24,7 @@ def test_artfifact_saving_and_loading(artifact, tester=None):
             if not json.dumps(loaded_artifact.to_dict(), sort_keys=True) == json.dumps(
                 artifact.to_dict(), sort_keys=True
             ):
-                logging.info("Artifact loaded is not equal to artifact stored")
+                logger.info("Artifact loaded is not equal to artifact stored")
                 print_dict(loaded_artifact.to_dict())
                 print_dict(artifact.to_dict())
                 raise AssertionError("Artifact loaded is not equal to artifact stored")

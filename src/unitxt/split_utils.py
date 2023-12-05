@@ -1,11 +1,13 @@
 import itertools
-import logging
 import re
 from typing import Dict
 
 from .generator_utils import ReusableGenerator
+from .logging import get_logger
 from .random_utils import nested_seed
 from .stream import Stream
+
+logger = get_logger()
 
 
 def parse_random_mix_string(input_str):
@@ -179,7 +181,7 @@ def build_stream_routing(mapping):
                 }
             }
             stream_mapping = build_stream_mapping(mapping)
-            logging.info(stream_mapping)
+            logger.info(stream_mapping)
             # Output: {'my_old_stream1': (['my_new_stream', 'my_new_stream2'], [0.6, 0.4]),
             #          'my_old_stream2': (['my_new_stream', 'my_new_stream2'], [0.2, 0.8])}
     """
@@ -276,9 +278,9 @@ def random_mix_streams(input_streams, mapping):
             }
             new_streams = create_streams(input_streams, mapping)
             for new_stream_name, new_stream in new_streams.items():
-                logging.info(f"{new_stream_name}:")
+                logger.info(f"{new_stream_name}:")
                 for _, item in zip(range(10), new_stream):
-                    logging.info(item)
+                    logger.info(item)
     """
     new_streams = {}
 
@@ -302,4 +304,4 @@ def random_mix_streams(input_streams, mapping):
 
 
 if __name__ == "__main__":
-    logging.info(parse_random_mix_string("dale[90%]+oren[0.7]+mike"))
+    logger.info(parse_random_mix_string("dale[90%]+oren[0.7]+mike"))
