@@ -1,4 +1,3 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
@@ -145,9 +144,16 @@ for lang in language_codes:
             # "splitters.test_only",
             RenameSplits(mapper={lang: "test"}),
             AddFields({"numbering": numbering}),
-            ListFieldValues(fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"], to_field="choices"),
-            MapInstanceValues(mappers={"correct_answer_num": {"1": "A", "2": "B", "3": "C", "4": "D"}}),
-            IndexOf(search_in="numbering", index_of="correct_answer_num", to_field="index"),
+            ListFieldValues(
+                fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"],
+                to_field="choices",
+            ),
+            MapInstanceValues(
+                mappers={"correct_answer_num": {"1": "A", "2": "B", "3": "C", "4": "D"}}
+            ),
+            IndexOf(
+                search_in="numbering", index_of="correct_answer_num", to_field="index"
+            ),
             *multiple_choice_preprocess(
                 question="question",
                 context="flores_passage",

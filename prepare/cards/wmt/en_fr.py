@@ -5,7 +5,13 @@ from src.unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="wmt14", name="fr-en"),
     preprocess_steps=[
-        CopyFields(field_to_field=[["translation/en", "text"], ["translation/fr", "translation"]], use_query=True),
+        CopyFields(
+            field_to_field=[
+                ["translation/en", "text"],
+                ["translation/fr", "translation"],
+            ],
+            use_query=True,
+        ),
         AddFields(
             fields={
                 "source_language": "english",

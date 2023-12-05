@@ -9,12 +9,18 @@ from src.unitxt.renderers import (
     RenderTemplate,
     StandardRenderer,
 )
-from src.unitxt.templates import InputOutputTemplate
+from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import check_operator
 
-template = InputOutputTemplate(input_format='This is my sentence: "{text}"', output_format="{label}")
-instruction = TextualInstruction("classify user sentence by its sentiment to either positive, or nagative.")
-format = ICLFormat(input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:")
+template = InputOutputTemplate(
+    input_format='This is my sentence: "{text}"', output_format="{label}"
+)
+instruction = TextualInstruction(
+    "classify user sentence by its sentiment to either positive, or nagative."
+)
+format = ICLFormat(
+    input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:"
+)
 
 
 class TestRenderers(unittest.TestCase):
@@ -33,12 +39,35 @@ class TestRenderers(unittest.TestCase):
         }
         self.assertDictEqual(result, target)
 
+    def test_render_multi_reference_template(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        renderer = RenderTemplate(template=template)
+        instance = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+        }
+
+        result = renderer.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+        }
+        self.assertDictEqual(result, target)
+
     def test_render_demonstrations(self):
         renderer = RenderDemonstrations(template=template, demos_field="demos")
 
         instance = {
             "demos": [
-                {"inputs": {"text": "was so not good"}, "outputs": {"label": "negative"}},
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                },
                 {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
             ]
         }
@@ -66,12 +95,56 @@ class TestRenderers(unittest.TestCase):
 
         self.assertDictEqual(result, target)
 
+    def test_render_demonstrations_multi_reference(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        renderer = RenderDemonstrations(template=template, demos_field="demos")
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                },
+            ]
+        }
+
+        result = renderer.process(instance)
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "source": "This is my sentence: who was he?",
+                    "target": "Dan",
+                    "references": ["Dan", "Yossi"],
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "source": "This is my sentence: who was she?",
+                    "target": "Shira",
+                    "references": ["Shira", "Yael"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(result, target)
+
     def test_render_instruction(self):
         renderer = RenderInstruction(instruction=instruction)
 
         instance = {}
         result = renderer.process(instance)
-        target = {"instruction": "classify user sentence by its sentiment to either positive, or nagative."}
+        target = {
+            "instruction": "classify user sentence by its sentiment to either positive, or nagative."
+        }
         self.assertDictEqual(result, target)
 
     def test_render_format(self):
@@ -83,8 +156,16 @@ class TestRenderers(unittest.TestCase):
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ],
         }
 
@@ -130,8 +211,16 @@ class TestRenderers(unittest.TestCase):
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
             "demos": [
-                {"source": 'This is my sentence: "was so not good"', "target": "negative", "references": ["negative"]},
-                {"source": 'This is my sentence: "was so good"', "target": "positive", "references": ["positive"]},
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
             ],
         }
         self.maxDiff = None
@@ -144,13 +233,21 @@ class TestRenderers(unittest.TestCase):
         self.assertDictEqual(result, target)
 
     def test_standard_renderer(self):
-        renderer = StandardRenderer(template=template, instruction=instruction, format=format, demos_field="demos")
+        renderer = StandardRenderer(
+            template=template,
+            instruction=instruction,
+            format=format,
+            demos_field="demos",
+        )
 
         instance = {
             "inputs": {"text": "was so bad"},
             "outputs": {"label": "negative"},
             "demos": [
-                {"inputs": {"text": "was so not good"}, "outputs": {"label": "negative"}},
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                },
                 {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
             ],
         }
@@ -163,18 +260,57 @@ class TestRenderers(unittest.TestCase):
             "outputs": {"label": "negative"},
         }
 
-        check_operator(operator=renderer, inputs=[instance], targets=[target], tester=self)
+        check_operator(
+            operator=renderer, inputs=[instance], targets=[target], tester=self
+        )
+
+    def test_standard_renderer_multi_reference(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        instruction = TextualInstruction("answer the question")
+
+        renderer = StandardRenderer(
+            template=template,
+            instruction=instruction,
+            format=format,
+            demos_field="demos",
+        )
+
+        instance = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "demos": [
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                },
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Codi", "Bodi"]},
+                },
+            ],
+        }
+
+        target = {
+            "source": "Instruction:answer the question\n\nUser:This is my sentence: who was she?\nAgent: Shira\n\nUser:This is my sentence: who was he?\nAgent: Codi\n\nUser:This is my sentence: who was he?\nAgent:",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+        }
+
+        check_operator(
+            operator=renderer, inputs=[instance], targets=[target], tester=self
+        )
 
     def test_temp(self):
-        import datasets as ds
         from src.unitxt.blocks import (
             AddFields,
             FormTask,
             InputOutputTemplate,
             LoadHF,
             MapInstanceValues,
-            NormalizeListFields,
-            SplitRandomMix,
             TaskCard,
             TemplatesList,
         )
@@ -185,7 +321,9 @@ class TestRenderers(unittest.TestCase):
             loader=LoadHF(path="glue", name="cola"),
             preprocess_steps=[
                 "splitters.small_no_test",
-                MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
+                MapInstanceValues(
+                    mappers={"label": {"0": "unacceptable", "1": "acceptable"}}
+                ),
                 AddFields(
                     fields={
                         "choices": ["unacceptable", "acceptable"],

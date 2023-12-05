@@ -27,7 +27,9 @@ recipe = SequentialRecipe(
                 "test": "validation",
             }
         ),
-        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        MapInstanceValues(
+            mappers={"label": {"0": "entailment", "1": "not entailment"}}
+        ),
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],

@@ -1,6 +1,8 @@
+import logging
 import os
 import re
 from pathlib import Path
+from typing import Optional
 
 import requests
 
@@ -34,16 +36,19 @@ class LocalCatalog(Catalog):
     location: str = default_catalog_path
 
     def path(self, artifact_identifier: str):
-        assert artifact_identifier.strip(), "artifact_identifier should not be an empty string."
+        assert (
+            artifact_identifier.strip()
+        ), "artifact_identifier should not be an empty string."
         parts = artifact_identifier.split(COLLECTION_SEPARATOR)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
     def load(self, artifact_identifier: str):
-        assert artifact_identifier in self, "Artifact with name {} does not exist".format(artifact_identifier)
+        assert (
+            artifact_identifier in self
+        ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
-        artifact_instance = Artifact.load(path)
-        return artifact_instance
+        return Artifact.load(path)
 
     def __getitem__(self, name) -> Artifact:
         return self.load(name)
@@ -57,9 +62,15 @@ class LocalCatalog(Catalog):
         return os.path.exists(path) and os.path.isfile(path)
 
     def save_artifact(
-        self, artifact: Artifact, artifact_identifier: str, overwrite: bool = False, verbose: bool = True
+        self,
+        artifact: Artifact,
+        artifact_identifier: str,
+        overwrite: bool = False,
+        verbose: bool = True,
     ):
-        assert isinstance(artifact, Artifact), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
+        assert isinstance(
+            artifact, Artifact
+        ), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
         if not overwrite:
             assert (
                 artifact_identifier not in self
@@ -68,7 +79,7 @@ class LocalCatalog(Catalog):
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)
         if verbose:
-            print(f"Artifact {artifact_identifier} saved to {path}")
+            logging.info(f"Artifact {artifact_identifier} saved to {path}")
 
 
 class EnvironmentLocalCatalog(LocalCatalog):
@@ -108,7 +119,7 @@ def add_to_catalog(
     name: str,
     catalog: Catalog = None,
     overwrite: bool = False,
-    catalog_path: str = None,
+    catalog_path: Optional[str] = None,
     verbose=True,
 ):
     if catalog is None:

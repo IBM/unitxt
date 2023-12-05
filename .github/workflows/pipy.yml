@@ -32,14 +32,14 @@ jobs:
 
     - name: Build a binary wheel
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         python setup.py sdist bdist_wheel
 
     - name: push wheel to pypi
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: >-
         twine upload dist/*

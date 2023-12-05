@@ -1,4 +1,3 @@
-from datasets import load_dataset_builder
 from prepare.cards.mmlu import (
     multiple_choice_inputs_outputs,
     multiple_choice_preprocess,
@@ -6,25 +5,14 @@ from prepare.cards.mmlu import (
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
-    MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
     AddConstant,
     CastFields,
-    CopyFields,
-    IndexOf,
-    JoinStr,
     ListFieldValues,
-    RenameFields,
-    TakeByField,
-    ZipFieldValues,
 )
 from src.unitxt.test_utils.card import test_card
 
@@ -44,7 +32,11 @@ for subtask in subtasks:
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
             *multiple_choice_preprocess(
-                question="sentence", numbering="numbering", choices="choices", topic="topic", label_index="answer"
+                question="sentence",
+                numbering="numbering",
+                choices="choices",
+                topic="topic",
+                label_index="answer",
             ),
         ],
         task=FormTask(
@@ -55,4 +47,6 @@ for subtask in subtasks:
     )
     if subtask == subtask[0]:
         test_card(card, demos_taken_from="test")
-    add_to_catalog(card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True)
+    add_to_catalog(
+        card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True
+    )

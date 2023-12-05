@@ -1,12 +1,10 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
-    InputOutputTemplate,
     LoadHF,
     TaskCard,
-    TemplatesDict,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operator import StreamingOperator
@@ -93,7 +91,10 @@ def multiple_choice_outputs():
 
 
 def multiple_choice_inputs_outputs(context=False):
-    return {"inputs": multiple_choice_inputs(context=context), "outputs": multiple_choice_outputs()}
+    return {
+        "inputs": multiple_choice_inputs(context=context),
+        "outputs": multiple_choice_outputs(),
+    }
 
 
 def multiple_choice_inputs(context=False):
@@ -109,11 +110,11 @@ def multiple_choice_preprocess(
     choices: str,
     topic: str,
     label_index: str,
-    context: str = None,
+    context: Optional[str] = None,
     expected_answer: str = "number",
 ) -> List[Union[StreamingOperator, str]]:
-    """
-    Processing to make a unified format of multiple choice questions
+    r"""Processing to make a unified format of multiple choice questions.
+
     :param numbering: the field containing the numerals to use (e.g. ABCD [1,2,3,4])
     :param choices: the field with the choices (e.g. ['apple','bannana']
     :param topic: the field containing the topic of the question
@@ -121,7 +122,6 @@ def multiple_choice_preprocess(
     :param expected_answer: what format should the 'label' field be answer\number\number_and_answer
     :return:
     """
-
     assert expected_answer in ["number", "number_and_answer", "answer"]
     input_fields = [numbering, choices, label_index]
     renames = {field: "_" + field for field in input_fields}
@@ -131,14 +131,32 @@ def multiple_choice_preprocess(
     renames[question] = "sentence1"
     return [
         RenameFields(field_to_field=renames),
-        TakeByField(field=renames[numbering], index=renames[label_index], to_field="number"),
-        TakeByField(field=renames[choices], index=renames[label_index], to_field="answer"),
-        ZipFieldValues(fields=[renames[numbering], renames[choices]], to_field="choices"),
-        JoinStr(separator=". ", field="choices/*", to_field="choices_list", use_query=True, process_every_value=True),
-        TakeByField(field="choices_list", index=renames[label_index], to_field="number_and_answer"),
+        TakeByField(
+            field=renames[numbering], index=renames[label_index], to_field="number"
+        ),
+        TakeByField(
+            field=renames[choices], index=renames[label_index], to_field="answer"
+        ),
+        ZipFieldValues(
+            fields=[renames[numbering], renames[choices]], to_field="choices"
+        ),
+        JoinStr(
+            separator=". ",
+            field="choices/*",
+            to_field="choices_list",
+            use_query=True,
+            process_every_value=True,
+        ),
+        TakeByField(
+            field="choices_list",
+            index=renames[label_index],
+            to_field="number_and_answer",
+        ),
         JoinStr(separator=",", field="choices/*/0", to_field="numbers", use_query=True),
         AddConstant(field="choices_list", to_field="choices_list", add=[""]),
-        JoinStr(separator="\n", field="choices_list", to_field="choices"),  # field_to_field
+        JoinStr(
+            separator="\n", field="choices_list", to_field="choices"
+        ),  # field_to_field
         RenameFields(field_to_field={expected_answer: "label"}),
     ]
 

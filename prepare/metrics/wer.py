@@ -1,4 +1,3 @@
-import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import Wer
 from src.unitxt.test_utils.metrics import test_metric
@@ -9,8 +8,16 @@ predictions = ["this is the prediction", "there is an other sample"]
 references = [["this is the reference"], ["there is another sample"]]
 
 instance_targets = [
-    {"wer": 0.25, "score": 0.25, "score_name": "wer"},  # 1 errors: reokace 'prediction' with 'reference'
-    {"wer": 0.5, "score": 0.5, "score_name": "wer"},  # 2 errors: remove 'an' and replace 'other' with 'another'
+    {
+        "wer": 0.25,
+        "score": 0.25,
+        "score_name": "wer",
+    },  # 1 errors: reokace 'prediction' with 'reference'
+    {
+        "wer": 0.5,
+        "score": 0.5,
+        "score_name": "wer",
+    },  # 2 errors: remove 'an' and replace 'other' with 'another'
 ]
 
 global_target = {

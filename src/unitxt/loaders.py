@@ -1,4 +1,5 @@
 import itertools
+import logging
 import os
 from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
@@ -12,7 +13,7 @@ from .stream import MultiStream, Stream
 
 try:
     import ibm_boto3
-    from ibm_botocore.client import ClientError
+    # from ibm_botocore.client import ClientError
 
     ibm_boto3_available = True
 except ImportError:
@@ -35,7 +36,9 @@ class LoadHF(Loader):
     name: Optional[str] = None
     data_dir: Optional[str] = None
     split: Optional[str] = None
-    data_files: Optional[Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]] = None
+    data_files: Optional[
+        Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
+    ] = None
     streaming: bool = True
     cached = False
 
@@ -51,7 +54,9 @@ class LoadHF(Loader):
             )
             if self.split is not None:
                 dataset = {self.split: dataset}
-        except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+        except (
+            NotImplementedError
+        ):  # streaming is not supported for zipped files so we load without streaming
             dataset = hf_load_dataset(
                 self.path,
                 name=self.name,
@@ -75,12 +80,15 @@ class LoadCSV(Loader):
 
     def load_csv(self, file):
         for chunk in pd.read_csv(file, chunksize=self.chunksize):
-            for index, row in chunk.iterrows():
+            for _index, row in chunk.iterrows():
                 yield row.to_dict()
 
     def process(self):
         return MultiStream(
-            {name: Stream(generator=self.load_csv, gen_kwargs={"file": file}) for name, file in self.files.items()}
+            {
+                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                for name, file in self.files.items()
+            }
         )
 
 
@@ -93,22 +101,28 @@ class LoadFromIBMCloud(Loader):
     data_files: Sequence[str]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
-        print(f"Downloading {item_name} from {bucket_name} COS")
+        logging.info(f"Downloading {item_name} from {bucket_name} COS")
         try:
             response = cos.Object(bucket_name, item_name).get()
             size = response["ContentLength"]
             body = response["Body"]
         except Exception as e:
-            raise Exception(f"Unabled to access {item_name} in {bucket_name} in COS", e)
+            raise Exception(
+                f"Unabled to access {item_name} in {bucket_name} in COS", e
+            ) from e
 
-        if self.loader_limit != None:
+        if self.loader_limit is not None:
             if item_name.endswith(".jsonl"):
-                first_lines = list(itertools.islice(body.iter_lines(), self.loader_limit))
+                first_lines = list(
+                    itertools.islice(body.iter_lines(), self.loader_limit)
+                )
                 with open(local_file, "wb") as downloaded_file:
                     for line in first_lines:
                         downloaded_file.write(line)
                         downloaded_file.write(b"\n")
-                print(f"\nDownload successful limited to {self.loader_limit} lines")
+                logging.info(
+                    f"\nDownload successful limited to {self.loader_limit} lines"
+                )
                 return
 
         progress_bar = tqdm(total=size, unit="iB", unit_scale=True)
@@ -117,10 +131,14 @@ class LoadFromIBMCloud(Loader):
             progress_bar.update(chunk)
 
         try:
-            cos.Bucket(bucket_name).download_file(item_name, local_file, Callback=upload_progress)
-            print("\nDownload Successful")
+            cos.Bucket(bucket_name).download_file(
+                item_name, local_file, Callback=upload_progress
+            )
+            logging.info("\nDownload Successful")
         except Exception as e:
-            raise Exception(f"Unabled to download {item_name} in {bucket_name}", e)
+            raise Exception(
+                f"Unabled to download {item_name} in {bucket_name}", e
+            ) from e
 
     def prepare(self):
         super().prepare()
@@ -130,11 +148,13 @@ class LoadFromIBMCloud(Loader):
 
     def verify(self):
         super().verify()
+        assert ibm_boto3_available, "Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
         assert (
-            ibm_boto3_available
-        ), f"Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
-        assert self.endpoint_url is not None, f"Please set the {self.endpoint_url_env} environmental variable"
-        assert self.aws_access_key_id is not None, f"Please set {self.aws_access_key_id_env} environmental variable"
+            self.endpoint_url is not None
+        ), f"Please set the {self.endpoint_url_env} environmental variable"
+        assert (
+            self.aws_access_key_id is not None
+        ), f"Please set {self.aws_access_key_id_env} environmental variable"
         assert (
             self.aws_secret_access_key is not None
         ), f"Please set {self.aws_secret_access_key_env} environmental variable"
@@ -151,8 +171,14 @@ class LoadFromIBMCloud(Loader):
             for data_file in self.data_files:
                 # Build object key based on parameters. Slash character is not
                 # allowed to be part of object key in IBM COS.
-                object_key = self.data_dir + "/" + data_file if self.data_dir is not None else data_file
-                self._download_from_cos(cos, self.bucket_name, object_key, temp_directory + "/" + data_file)
+                object_key = (
+                    self.data_dir + "/" + data_file
+                    if self.data_dir is not None
+                    else data_file
+                )
+                self._download_from_cos(
+                    cos, self.bucket_name, object_key, temp_directory + "/" + data_file
+                )
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
         return MultiStream.from_iterables(dataset)
