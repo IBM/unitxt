@@ -39,10 +39,12 @@ from .utils import flatten_dict
 
 
 class FromIterables(StreamInitializerOperator):
-    """Creates a MultiStream from iterables.
+    """Creates a MultiStream from named iterables.
 
-    Args:
-        iterables (Dict[str, Iterable]): A dictionary where each key-value pair represents a stream name and its corresponding iterable.
+    Example:
+        operator = FromIterables()
+        output_ms = operator.process(iterables)
+
     """
 
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
@@ -50,6 +52,16 @@ class FromIterables(StreamInitializerOperator):
 
 
 class IterableSource(StreamSource):
+    """Creates a MultiStream from iterables. A callable.
+
+    Args:
+        iterables (Dict[str, Iterable]): A dictionary mapping stream names to iterables.
+
+    Example:
+        operator =  IterableSource(input_dict)
+        out_multistream = operator()
+    """
+
     iterables: Dict[str, Iterable]
 
     def __call__(self) -> MultiStream:
@@ -187,6 +199,7 @@ class AddFields(StreamInstanceOperator):
         # Add a 'classes' field on a given list, prevent modification of original list
         # from changing the instance.
         AddFields(fields={"classes": alist}), use_deepcopy=True)
+        # if now alist is modified, still the instances remain intact.
     """
 
     fields: Dict[str, object]
@@ -226,11 +239,11 @@ class RemoveFields(StreamInstanceOperator):
 
 
 class FieldOperator(StreamInstanceOperator):
-    """A general stream that processes the values of a field (or multiple ones.
+    """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
         field (Optional[str]): The field to process, if only a single one is passed Defaults to None
-        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operator would happen in-place and replace "field" Defaults to None
+        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operation would happen in-place and replace "field". Defaults to None
         field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
@@ -488,7 +501,9 @@ class AugmentSuffix(Augmentor):
                 assert isinstance(
                     k, str
                 ), f"suffixes should be a list of strings, whereas member {k!s} is of type {type(k)}"
+        super().verify()
 
+    def prepare(self):
         self.pats = (
             self.suffixes
             if isinstance(self.suffixes, list)
@@ -504,7 +519,8 @@ class AugmentSuffix(Augmentor):
             if isinstance(self.suffixes, list)
             else [float(self.suffixes[p]) / total_weight for p in self.pats]
         )
-        super().verify()
+
+        super().prepare()
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
@@ -1023,6 +1039,7 @@ class Intersect(FieldOperator):
             )
 
     def process_value(self, value: Any) -> Any:
+        super().process_value(value)
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
         return [e for e in value if e in self.allowed_values]
@@ -1250,7 +1267,7 @@ class MergeStreams(MultiStreamOperator):
 class Shuffle(PagedStreamOperator):
     """Shuffles the order of instances in each page of a stream.
 
-    Args:
+    Args (of superclass):
         page_size (int): The size of each page in the stream. Defaults to 1000.
     """
 
@@ -1260,10 +1277,23 @@ class Shuffle(PagedStreamOperator):
 
 
 class EncodeLabels(StreamInstanceOperator):
-    """Encode labels of specified fields together a into integers.
+    """Encode each value encountered in any field in 'fields' into the integers 0,1,...
+
+    Encoding is determined by a str->int map that is built on the go, as different values are
+    first encountered in the stream, either as list members or as values in single-value fields.
 
     Args:
         fields (List[str]): The fields to encode together.
+
+    Example: applying
+        EncodeLabels(fields = ["a", "b/*"])
+        on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
+          {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
+
+        Note: dpath is applied here, and hence, fields that are lists, should be included in
+        input 'fields' with the appendix "/*"  as in the above example.
+
     """
 
     fields: List[str]

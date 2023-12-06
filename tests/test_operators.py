@@ -1,6 +1,7 @@
 import json
 import unittest
 from collections import Counter
+from typing import Any
 
 from src.unitxt.operators import (
     AddFields,
@@ -14,10 +15,13 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     EncodeLabels,
     ExtractFieldValues,
+    FieldOperator,
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
+    FromIterables,
     Intersect,
+    IterableSource,
     JoinStr,
     LengthBalancer,
     ListFieldValues,
@@ -149,6 +153,29 @@ class TestOperators(unittest.TestCase):
             targets=targets,
         )
 
+    def test_from_iterables_and_iterable_source(self):
+        input_ms = {
+            "train": [{"a": "1"}, {"b": "2"}, {"a": "3"}],
+            "test": [{"a": "4"}, {"c": "5"}, {"a": "6"}],
+        }
+
+        operator = FromIterables()
+        output_ms = operator.process(input_ms)
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
+        # IterableSource is a callable
+        operator = IterableSource(iterables=input_ms)
+        output_ms = operator()
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
     def test_list_field_values(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -162,6 +189,46 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_field_operator(self):
+        class ExpandJustForCoverage(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                pass
+
+        operator = ExpandJustForCoverage(field_to_field=[("from", "to")])
+        operator.process_value(2)
+
+        class ExpandJustForCoverage2(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                return str(value).upper()
+
+        inputs = [
+            {"a": "imagine", "b": ["theres", "no", "heaven"]},
+            {"a": "imagine", "b": ["all", "the", "people"]},
+        ]
+
+        targets = [
+            {
+                "a": "imagine",
+                "b": ["theres", "no", "heaven"],
+                "B": ["THERES", "NO", "HEAVEN"],
+            },
+            {
+                "a": "imagine",
+                "b": ["all", "the", "people"],
+                "B": ["ALL", "THE", "PEOPLE"],
+            },
+        ]
+
+        check_operator(
+            operator=ExpandJustForCoverage2(
+                field_to_field={"b": "B"}, process_every_value=True
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -457,6 +524,24 @@ class TestOperators(unittest.TestCase):
         )
 
         alist.append(5)
+
+        self.assertDictEqual(outputs[0], targets[0])
+
+        targets = [
+            {"a": 1, "b": 2, "c": {"d": [4, 5]}},
+            {"a": 2, "b": 3, "c": {"d": [4, 5]}},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(
+                fields={"c/d": alist}, use_deepcopy=True, use_query=True
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        alist.append(6)
 
         self.assertDictEqual(outputs[0], targets[0])
 
@@ -1233,7 +1318,7 @@ class TestOperators(unittest.TestCase):
         outputs = [instance["a"] for instance in outputs]
 
         self.assertNotEqual(inputs, outputs)
-        self.assertSetEqual(set(inputs), set(outputs))
+        self.assertListEqual(sorted(inputs), sorted(outputs))
 
         # test no mixing between pages:
         page_1_inputs = inputs[:10]
@@ -1241,8 +1326,8 @@ class TestOperators(unittest.TestCase):
         page_1_outputs = outputs[:10]
         page_2_outputs = outputs[10:]
 
-        self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
-        self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
+        self.assertListEqual(sorted(page_1_inputs), sorted(page_1_outputs))
+        self.assertListEqual(sorted(page_2_inputs), sorted(page_2_outputs))
 
         inputs_outputs_intersection = set(page_1_inputs).intersection(
             set(page_2_outputs)
