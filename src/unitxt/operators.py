@@ -274,6 +274,7 @@ class FieldOperator(StreamInstanceOperator):
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         for pair in self._field_to_field:
             assert (
                 len(pair) == 2
@@ -736,7 +737,7 @@ class IndexOf(StreamInstanceOperator):
 
 
 class TakeByField(StreamInstanceOperator):
-    """Takes value from one field based on another field similar to field[index]."""
+    """From field 'field' of a given instance, select the member indexed by field 'index', and store to field 'to_field'."""
 
     field: str
     index: str

@@ -1604,6 +1604,14 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # field plays the role of to_field
+        check_operator(
+            operator=TakeByField(field="a", index="b", use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": 0}, {"a": 1, "b": "a"}],
+            tester=self,
+        )
+
     def test_stream_refiner(self):
         refiner = StreamRefiner()
 
