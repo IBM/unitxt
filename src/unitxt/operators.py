@@ -99,6 +99,11 @@ class MapInstanceValues(StreamInstanceOperator):
         To ensure that all values of field 'a' are mapped in every instance, use strict=True.
         Input instance {"a":"3", "b": 2} will raise an exception per the above call,
         because "3" is not a key in the mapper of "a".
+
+        MapInstanceValues(mappers={"a": {str([1,2,3,4]): 'All', str([]): 'None'}}, strict=True)
+        replaces a list [1,2,3,4] with the string 'All' and an empty list by string 'None'.
+        Note that mapped values are defined by their string representation, so mapped values
+        must be converted to strings.
     """
 
     mappers: Dict[str, Dict[str, str]]
@@ -127,31 +132,31 @@ class MapInstanceValues(StreamInstanceOperator):
                     raise ValueError(
                         f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
                     )
-                if isinstance(value, list):
-                    if self.process_every_value:
-                        for i, val in enumerate(value):
-                            val = str(val)  # make sure the value is a string
-                            if self.strict and (val not in mapper):
-                                raise KeyError(
-                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
-                                )
-                            if val in mapper:
-                                # replace just that member of value (value is a list)
-                                value[i] = mapper[val]
-                                dict_set(instance, key, value, use_dpath=self.use_query)
-                    else:  # field is a list, and process_every_value == False
-                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
+                if isinstance(value, list) and self.process_every_value:
+                    for i, val in enumerate(value):
+                        val = str(val)  # make sure the value is a string
+                        if self.strict and (val not in mapper):
                             raise KeyError(
-                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
+                                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
                             )
-                else:  # value is not a list, implying process_every_value == False
+                        if val in mapper:
+                            # replace just that member of value (value is a list)
+                            value[i] = mapper[val]
+                            dict_set(instance, key, value, use_dpath=self.use_query)
+                else:
                     value = str(value)  # make sure the value is a string
                     if self.strict and (value not in mapper):
                         raise KeyError(
                             f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
                         )
                     if value in mapper:
-                        dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+                        # By default deep copy the value in mapper to avoid shared modifications
+                        dict_set(
+                            instance,
+                            key,
+                            deepcopy(mapper[value]),
+                            use_dpath=self.use_query,
+                        )
 
         return instance
 
