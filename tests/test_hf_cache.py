@@ -1,12 +1,9 @@
 import tempfile
-import threading
 import unittest
 
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.environment import modified_environment
 from src.unitxt.test_utils.storage import get_directory_size
-
-threading_lock = threading.Lock()
 
 
 class TestHfCache(unittest.TestCase):
@@ -16,7 +13,7 @@ class TestHfCache(unittest.TestCase):
                 self.assertEqual(get_directory_size(tmp_dir), 0)
 
                 def gen():
-                    for i in range(10000000):  # must be big or else hf
+                    for i in range(100000):  # must be big or else hf wont cache
                         yield {"x": i}
 
                 ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
@@ -32,7 +29,7 @@ class TestHfCache(unittest.TestCase):
                 self.assertEqual(get_directory_size(tmp_dir), 0)
 
                 def gen():
-                    for i in range(3):
+                    for i in range(100000):  # must be big or else hf wont cache
                         yield {"x": i}
 
                 ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
