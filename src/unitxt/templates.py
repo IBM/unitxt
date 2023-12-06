@@ -17,7 +17,7 @@ class Renderer(ABC):
 
 
 class Template(StreamInstanceOperator):
-    """The rule of template is to take the fields of every instance and verbalize it.
+    """The role of template is to take the fields of every instance and verbalize it.
 
     Meaning the template is taking the instance and generating source, target and references.
     """
