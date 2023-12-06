@@ -46,14 +46,16 @@ class LoadHF(Loader):
 
     def process(self):
         try:
-            dataset = hf_load_dataset(
-                self.path,
-                name=self.name,
-                data_dir=self.data_dir,
-                data_files=self.data_files,
-                streaming=self.streaming,
-                split=self.split,
-            )
+            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    streaming=self.streaming,
+                    cache_dir=None if self.streaming else dir_to_be_deleted,
+                    split=self.split,
+                )
             if self.split is not None:
                 dataset = {self.split: dataset}
         except (
