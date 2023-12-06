@@ -134,31 +134,29 @@ class MapInstanceValues(StreamInstanceOperator):
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
-                        val = str(val)  # make sure the value is a string
-                        if self.strict and (val not in mapper):
-                            raise KeyError(
-                                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
-                            )
-                        if val in mapper:
-                            # replace just that member of value (value is a list)
-                            value[i] = mapper[val]
-                            dict_set(instance, key, value, use_dpath=self.use_query)
+                        value[i] = self.get_mapped_value(instance, key, mapper, val)
+                    dict_set(instance, key, value, use_dpath=self.use_query)
                 else:
-                    value = str(value)  # make sure the value is a string
-                    if self.strict and (value not in mapper):
-                        raise KeyError(
-                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
-                        )
-                    if value in mapper:
-                        # By default deep copy the value in mapper to avoid shared modifications
-                        dict_set(
-                            instance,
-                            key,
-                            deepcopy(mapper[value]),
-                            use_dpath=self.use_query,
-                        )
+                    value = self.get_mapped_value(instance, key, mapper, value)
+                    dict_set(
+                        instance,
+                        key,
+                        value,
+                        use_dpath=self.use_query,
+                    )
 
         return instance
+
+    def get_mapped_value(self, instance, key, mapper, val):
+        val_as_str = str(val)  # make sure the value is a string
+        if self.strict and (val_as_str not in mapper):
+            raise KeyError(
+                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+            )
+        # By default deep copy the value in mapper to avoid shared modifications
+        if val_as_str in mapper:
+            return deepcopy(mapper[val_as_str])
+        return val
 
 
 class FlattenInstances(StreamInstanceOperator):
