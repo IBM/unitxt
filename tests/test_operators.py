@@ -111,31 +111,21 @@ class TestOperators(unittest.TestCase):
             exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
             tester=self,
         )
-
-        # input list can not be ignored with strict=True, and process_every_value=False
-        check_operator_exception(
-            operator=MapInstanceValues(
-                mappers=mappers, strict=True, process_every_value=False
-            ),
-            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'A whole list ([1, 2, 3, 4]) in the instance can not be mapped by a field mapper.'",
-            tester=self,
-        )
-
+        # Test mapping of lists to lists
         inputs_not_process_every_value = [
             {"a": [1, 2, 3, 4], "b": 2},
-            {"a": 2, "b": 3},
+            {"a": [], "b": 3},
         ]
 
         targets_not_process_every_value = [
-            {"a": [1, 2, 3, 4], "b": 2},
-            {"a": "bye", "b": 3},
+            {"a": ["All"], "b": 2},
+            {"a": ["None"], "b": 3},
         ]
 
-        # with strict=False, and process_every_value=False, lists are ignored
+        list_mappers = {"a": {str([1, 2, 3, 4]): ["All"], "[]": ["None"]}}
         check_operator(
             operator=MapInstanceValues(
-                mappers=mappers, process_every_value=False, strict=False
+                mappers=list_mappers, process_every_value=False, strict=False
             ),
             inputs=inputs_not_process_every_value,
             targets=targets_not_process_every_value,
