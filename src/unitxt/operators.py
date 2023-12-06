@@ -135,15 +135,14 @@ class MapInstanceValues(StreamInstanceOperator):
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
                         value[i] = self.get_mapped_value(instance, key, mapper, val)
-                    dict_set(instance, key, value, use_dpath=self.use_query)
                 else:
                     value = self.get_mapped_value(instance, key, mapper, value)
-                    dict_set(
-                        instance,
-                        key,
-                        value,
-                        use_dpath=self.use_query,
-                    )
+                dict_set(
+                    instance,
+                    key,
+                    value,
+                    use_dpath=self.use_query,
+                )
 
         return instance
 
