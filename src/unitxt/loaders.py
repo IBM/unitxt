@@ -1,5 +1,6 @@
 import itertools
 import os
+import tempfile
 from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
 
@@ -58,14 +59,17 @@ class LoadHF(Loader):
         except (
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = hf_load_dataset(
-                self.path,
-                name=self.name,
-                data_dir=self.data_dir,
-                data_files=self.data_files,
-                streaming=False,
-                split=self.split,
-            )
+            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    streaming=False,
+                    keep_in_memory=True,
+                    cache_dir=dir_to_be_deleted,
+                    split=self.split,
+                )
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
