@@ -1,5 +1,6 @@
 import collections
 import importlib
+import os
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -14,7 +15,6 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -39,11 +39,11 @@ from .utils import flatten_dict
 
 
 class FromIterables(StreamInitializerOperator):
-    """Creates a MultiStream from named iterables.
+    """Creates a MultiStream from a dict of named iterables.
 
     Example:
         operator = FromIterables()
-        output_ms = operator.process(iterables)
+        ms = operator.process(iterables)
 
     """
 
@@ -52,14 +52,17 @@ class FromIterables(StreamInitializerOperator):
 
 
 class IterableSource(StreamSource):
-    """Creates a MultiStream from iterables. A callable.
+    """Creates a MultiStream from a dict of named iterables.
+
+    It is a callable.
 
     Args:
         iterables (Dict[str, Iterable]): A dictionary mapping stream names to iterables.
 
     Example:
         operator =  IterableSource(input_dict)
-        out_multistream = operator()
+        ms = operator()
+
     """
 
     iterables: Dict[str, Iterable]
@@ -241,14 +244,18 @@ class FieldOperator(StreamInstanceOperator):
     Args:
         field (Optional[str]): The field to process, if only a single one is passed Defaults to None
         to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operation would happen in-place and replace "field". Defaults to None
-        field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
+        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from fields to process to their names after this process,
+         duplicates are allowed. Inner List, if used, should be of length 2. Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
+
+        Note: if 'field' and 'to_field' (or both members of a pair in 'field_to_field') are equal (or share a common
+        prefix if 'use_query'=True), then the result of the operation is saved within 'field'
     """
 
     field: Optional[str] = None
     to_field: Optional[str] = None
-    field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
+    field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     process_every_value: bool = False
     use_query: bool = False
     get_default: Any = None
@@ -265,25 +272,38 @@ class FieldOperator(StreamInstanceOperator):
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
             self.field is None or self.field_to_field is None
-        ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
-        assert (
-            self._field_to_field
-        ), f"the from and to fields must be defined got: {self._field_to_field}"
+        ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
+        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        for pair in self._field_to_field:
+            assert (
+                len(pair) == 2
+            ), "when 'field_to_field is defined as a list of lists, the inner lists should all be of length 2"
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
 
     def prepare(self):
-        if self.to_field is None:
-            self.to_field = self.field
+        super().prepare()
+
+        # prepare is invoked before verify, hence must make some checks here, before the changes done here
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
+
         if self.field_to_field is None:
-            self._field_to_field = [(self.field, self.to_field)]
+            self._field_to_field = [
+                (self.field, self.to_field if self.to_field is not None else self.field)
+            ]
         else:
-            try:
-                self._field_to_field = list(self.field_to_field.items())
-            except AttributeError:
-                self._field_to_field = self.field_to_field
+            self._field_to_field = (
+                list(self.field_to_field.items())
+                if isinstance(self.field_to_field, dict)
+                else self.field_to_field
+            )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -310,7 +330,7 @@ class FieldOperator(StreamInstanceOperator):
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
                 ) from e
-            if self.use_query and is_subpath(from_field, to_field):
+            if is_subpath(from_field, to_field) or is_subpath(to_field, from_field):
                 dict_delete(instance, from_field)
             dict_set(
                 instance,
@@ -323,7 +343,25 @@ class FieldOperator(StreamInstanceOperator):
 
 
 class RenameFields(FieldOperator):
-    """Renames fields."""
+    """Renames fields.
+
+    Move value from one field to another, potentially, if 'use_query'=True, from one branch into another.
+    Remove the from field, potentially part of it in case of use_query.
+
+    Examples:
+        RenameFields(field_to_field={"b": "c"})
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
+
+        RenameFields(field_to_field={"b": "c/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
+
+        RenameFields(field_to_field={"b": "b/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
+
+        RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
+
+    """
 
     def process_value(self, value: Any) -> Any:
         return value
@@ -332,20 +370,31 @@ class RenameFields(FieldOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         res = super().process(instance=instance, stream_name=stream_name)
-        vals = [x[1] for x in self._field_to_field]
-        for key, _ in self._field_to_field:
-            if self.use_query and "/" in key:
-                continue
-            if key not in vals:
-                res.pop(key)
+        for from_field, to_field in self._field_to_field:
+            if (not is_subpath(from_field, to_field)) and (
+                not is_subpath(to_field, from_field)
+            ):
+                dict_delete(res, from_field)
+                if self.use_query:
+                    from_field_components = list(
+                        os.path.normpath(from_field).split(os.path.sep)
+                    )
+                    while len(from_field_components) > 1:
+                        from_field_components.pop()
+                        parent = dict_get(res, os.path.sep.join(from_field_components))
+                        if isinstance(parent, dict) and not parent:
+                            dict_delete(res, os.path.sep.join(from_field_components))
+                        else:
+                            break
+
         return res
 
 
 class AddConstant(FieldOperator):
-    """Adds a value, similar to  add + field.
+    """Adds a constant, being argument 'add', to the processed value.
 
     Args:
-        add: sum to add.
+        add: the constant to add.
     """
 
     add: Any
