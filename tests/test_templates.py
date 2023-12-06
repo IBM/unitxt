@@ -1,6 +1,5 @@
 import unittest
 
-from src.unitxt.artifact import fetch_artifact
 from src.unitxt.templates import (
     InputOutputTemplate,
     KeyValTemplate,
@@ -22,79 +21,118 @@ class TestTemplates(unittest.TestCase):
         register_local_catalog_for_tests()
 
     def test_span_labeling_template_escaping(self):
-        parser, _ = fetch_artifact("processors.to_span_label_pairs")
-
-        template = SpanLabelingTemplate()
+        template = SpanLabelingTemplate(input_format="{text}")
 
         inputs = [
             {
-                "spans_starts": [0, 19, 41],
-                "spans_ends": [10, 27, 48],
-                "labels": ["PER", "LOC", "ORG"],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "LOC", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
             {
-                "spans_starts": [],
-                "spans_ends": [],
-                "labels": [],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
         ]
 
-        processed_targets = [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG", "None"]
-
-        parsed_targets = [
-            [("John\\,\\: Doe", "PER"), ("New York", "LOC"), ("Goo\\:gle", "ORG")],
-            [],
+        targets = [
+            {
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "LOC", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG",
+                "references": [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG"],
+            },
+            {
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": "None",
+                "references": ["None"],
+            },
         ]
 
-        for input, processed_target, parsed_target in zip(
-            inputs, processed_targets, parsed_targets
-        ):
-            processed, _ = template.outputs_to_target_and_references(input)
-            self.assertEqual(processed, processed_target)
-            parsed = parser.process(processed)
-            self.assertEqual(parsed, parsed_target)
+        check_operator(template, inputs, targets, tester=self)
 
     def test_multi_label_template(self):
-        parser, _ = fetch_artifact("processors.to_list_by_comma")
-
-        template = MultiLabelTemplate()
+        template = MultiLabelTemplate(input_format="{text}")
 
         inputs = [
-            {"labels": ["cat", "dog"]},
-            {"labels": ["man", "woman", "dog"]},
+            {
+                "inputs": {"text": "hello world"},
+                "outputs": {"labels": ["cat", "dog"]},
+            },
+            {
+                "inputs": {"text": "hello world"},
+                "outputs": {"labels": ["man", "woman", "dog"]},
+            },
         ]
 
-        processed_targets = ["cat, dog", "man, woman, dog"]
+        targets = [
+            {
+                "inputs": {"text": "hello world"},
+                "outputs": {"labels": ["cat", "dog"]},
+                "source": "hello world",
+                "target": "cat, dog",
+                "references": ["cat, dog"],
+            },
+            {
+                "inputs": {"text": "hello world"},
+                "outputs": {"labels": ["man", "woman", "dog"]},
+                "source": "hello world",
+                "target": "man, woman, dog",
+                "references": ["man, woman, dog"],
+            },
+        ]
 
-        parsed_targets = [["cat", "dog"], ["man", "woman", "dog"]]
-
-        for input, processed_target, parsed_target in zip(
-            inputs, processed_targets, parsed_targets
-        ):
-            processed, _ = template.outputs_to_target_and_references(input)
-            self.assertEqual(processed, processed_target)
-            parsed = parser.process(processed)
-            self.assertEqual(parsed, parsed_target)
+        check_operator(template, inputs, targets, tester=self)
 
     def test_multi_reference_template(self):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
-        instance = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
-        }
-        result = template.process(instance)
-        target = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
-            "source": "This is my sentence: who was he?",
-            "target": "Dan",
-            "references": ["Dan", "Yossi"],
-        }
-        self.assertDictEqual(result, target)
+
+        inputs = [
+            {
+                "inputs": {"text": "who was he?"},
+                "outputs": {"answer": ["Dan", "Yossi"]},
+            }
+        ]
+
+        targets = [
+            {
+                "inputs": {"text": "who was he?"},
+                "outputs": {"answer": ["Dan", "Yossi"]},
+                "source": "This is my sentence: who was he?",
+                "target": "Dan",
+                "references": ["Dan", "Yossi"],
+            }
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
 
     def test_multi_reference_template_verify_references_type(self):
         template = MultiReferenceTemplate(
@@ -196,8 +234,9 @@ class TestTemplates(unittest.TestCase):
             yes_answer: {label_field: ["news", "sports"], class_field: ["news"]},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
-            processed, _ = template.outputs_to_target_and_references(outputs)
+            processed, references = template.outputs_to_target_and_references(outputs)
             self.assertEqual(expected_processed_output, processed)
+            self.assertEqual(references, [expected_processed_output])
 
     def test_yes_no_template_process_output_missing_fields(self):
         """Test the processing of the output of a YesNoTemplate.
@@ -277,101 +316,122 @@ class TestTemplates(unittest.TestCase):
         )
 
     def test_span_labeling_template_one_entity_escaping(self):
-        parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
-
         template = SpanLabelingTemplate(
-            labels_support=["PER"], span_label_format="{span}"
+            input_format="{text}", labels_support=["PER"], span_label_format="{span}"
         )
 
         inputs = [
             {
-                "spans_starts": [0, 19, 41],
-                "spans_ends": [10, 27, 48],
-                "labels": ["PER", "PER", "ORG"],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "PER", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
             {
-                "spans_starts": [],
-                "spans_ends": [],
-                "labels": [],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
         ]
 
-        processed_targets = [r"John\,\: Doe, New York", "None"]
+        targets = [
+            {
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "PER", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": r"John\,\: Doe, New York",
+                "references": [r"John\,\: Doe, New York"],
+            },
+            {
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": "None",
+                "references": ["None"],
+            },
+        ]
 
-        parsed_targets = [[("John\\,\\: Doe", ""), ("New York", "")], []]
-
-        for input, processed_target, parsed_target in zip(
-            inputs, processed_targets, parsed_targets
-        ):
-            processed, _ = template.outputs_to_target_and_references(input)
-            self.assertEqual(processed, processed_target)
-            parsed = parser.process(processed)
-            self.assertEqual(parsed, parsed_target)
+        check_operator(template, inputs, targets, tester=self)
 
     def test_span_labeling_json_template(self):
-        postprocessor1, _ = fetch_artifact("processors.load_json")
-        postprocessor2, _ = fetch_artifact(
-            "processors.dict_of_lists_to_value_key_pairs"
-        )
-
-        template = SpanLabelingJsonTemplate()
+        template = SpanLabelingJsonTemplate(input_format="{text}")
 
         inputs = [
             {
-                "spans_starts": [0, 19, 41],
-                "spans_ends": [10, 27, 48],
-                "labels": ["PER", "PER", "ORG"],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "PER", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
             {
-                "spans_starts": [],
-                "spans_ends": [],
-                "labels": [],
-                "text": "John,: Doe is from New York and works at Goo:gle.",
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
             },
         ]
 
-        processed_targets = [
-            '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}',
-            "None",
+        targets = [
+            {
+                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
+                "outputs": {
+                    "spans_starts": [0, 19, 41],
+                    "spans_ends": [10, 27, 48],
+                    "labels": ["PER", "PER", "ORG"],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}',
+                "references": [
+                    '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}'
+                ],
+            },
+            {
+                "inputs": {
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "outputs": {
+                    "spans_starts": [],
+                    "spans_ends": [],
+                    "labels": [],
+                    "text": "John,: Doe is from New York and works at Goo:gle.",
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": "None",
+                "references": ["None"],
+            },
         ]
 
-        post1_targets = [{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}, []]
-        post2_targets = [
-            [("John,: Doe", "PER"), ("New York", "PER"), ("Goo:gle", "ORG")],
-            [],
-        ]
-
-        for input, processed_target, post_target1, post_target2 in zip(
-            inputs, processed_targets, post1_targets, post2_targets
-        ):
-            processed, _ = template.outputs_to_target_and_references(input)
-            self.assertEqual(processed, processed_target)
-            post1 = postprocessor1.process(processed)
-            self.assertEqual(post1, post_target1)
-            post2 = postprocessor2.process(post1)
-            self.assertEqual(post2, post_target2)
-
-    def test_span_labeling_json_template_errors(self):
-        postprocessor1, _ = fetch_artifact("processors.load_json")
-        postprocessor2, _ = fetch_artifact(
-            "processors.dict_of_lists_to_value_key_pairs"
-        )
-
-        predictions = ["{}", '{"d":{"b": "c"}}', '{dll:"dkk"}', '["djje", "djjjd"]']
-
-        post1_targets = [{}, {"d": {"b": "c"}}, [], ["djje", "djjjd"]]
-        post2_targets = [[], [("b", "d")], [], []]
-
-        for pred, post_target1, post_target2 in zip(
-            predictions, post1_targets, post2_targets
-        ):
-            post1 = postprocessor1.process(pred)
-            self.assertEqual(post1, post_target1)
-            post2 = postprocessor2.process(post1)
-            self.assertEqual(post2, post_target2)
+        check_operator(template, inputs, targets, tester=self)
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
