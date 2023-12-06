@@ -1,13 +1,15 @@
 import json
 import unittest
 from collections import Counter
-from typing import Any
+from typing import Any, Dict
 
 from src.unitxt.operators import (
+    AddConstant,
     AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    Augmentor,
     AugmentSuffix,
     AugmentWhitespace,
     CastFields,
@@ -200,8 +202,7 @@ class TestOperators(unittest.TestCase):
                 super().process_value(value)
                 pass
 
-        operator = ExpandJustForCoverage(field_to_field=[("from", "to")])
-        operator.process_value(2)
+        ExpandJustForCoverage(field_to_field={"from": "to"}).process_value(2)
 
         class ExpandJustForCoverage2(FieldOperator):
             def process_value(self, value: Any) -> Any:
@@ -227,7 +228,7 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=ExpandJustForCoverage2(
-                field_to_field={"b": "B"}, process_every_value=True
+                field_to_field=[["b", "B"]], process_every_value=True
             ),
             inputs=inputs,
             targets=targets,
@@ -1381,10 +1382,86 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
+        # the simplest case
         check_operator(
             operator=RenameFields(field_to_field={"b": "c"}),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        # target field is structured:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field, source field is deeper:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}, "d": 2}},
+                {"a": 2, "b": {"c": {"f": 30}, "d": 3}},
+            ],
+            tester=self,
+        )
+
+        # target field is structured, source field is structured too, different fields:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}}, "g": {"h": 2}},
+                {"a": 2, "b": {"c": {"f": 30}}, "g": {"h": 3}},
+            ],
+            tester=self,
+        )
+
+        # both source and target are structured, different only in the middle of the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+    def test_add(self):
+        check_operator(
+            operator=AddConstant(field_to_field=[["a", "b"]], add=5),
+            inputs=[{"a": 1}],
+            targets=[{"a": 1, "b": 6}],
+            tester=self,
+        )
+
+        check_operator(
+            operator=AddConstant(
+                field_to_field=[["a", "b"]], add=5, process_every_value=True
+            ),
+            inputs=[{"a": [1, 2, 3]}],
+            targets=[{"a": [1, 2, 3], "b": [6, 7, 8]}],
             tester=self,
         )
 
@@ -1642,6 +1719,20 @@ class TestOperators(unittest.TestCase):
         assert (
             counter["T"] > 125
         ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
+
+        # just for code coverage of Augmentor.process_value and Augmentor.process
+        class JustToCoverProcessValueOfAugmentor(Augmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def process(self, instance: Dict[str, Any]) -> Dict[str, Any]:
+                return super().process(instance)
+
+        operator = JustToCoverProcessValueOfAugmentor(augment_model_input=True)
+        self.assertEqual(5, operator.process_value(5))
+        with self.assertRaises(ValueError):
+            operator.process({"not_source": "just to raise exception"})
 
     def test_augment_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
