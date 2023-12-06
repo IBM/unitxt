@@ -1370,7 +1370,18 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_test_cast_fields_casting_failure(self):
+        check_operator(
+            operator=CastFields(
+                fields={"a": "float", "b": "int"},
+                failure_defaults={"a": 0.0, "b": 0},
+                cast_multiple=True,
+            ),
+            inputs=[{"a": ["0.5", "0.6", "1.0", "12"], "b": ["2"]}],
+            targets=[{"a": [0.5, 0.6, 1.0, 12.0], "b": [2]}],
+            tester=self,
+        )
+
+    def test_cast_fields_casting_failure(self):
         inputs = [
             {"a": "0.5", "b": "2"},
             {"a": "fail", "b": "fail"},

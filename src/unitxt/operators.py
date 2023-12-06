@@ -758,7 +758,7 @@ class TakeByField(StreamInstanceOperator):
 
 
 class CopyFields(FieldOperator):
-    """Copies specified fields from one field to another.
+    """Copies values from specified fields to specified fields.
 
     Args:
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
@@ -770,6 +770,8 @@ class CopyFields(FieldOperator):
 
 
 class AddID(StreamInstanceOperator):
+    """Stores an id value in the designated 'id_field_name' field of the given instance."""
+
     id_field_name: str = "id"
 
     def process(
@@ -783,10 +785,11 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        types (Dict[str, str]): A dictionary mapping fields to their new types.
+        types (Dict[str, str]): A dictionary mapping type names to types.
         nested (bool): Whether to cast nested fields. Defaults to False.
-        fields (Dict[str, str]): A dictionary mapping fields to their new types.
-        defaults (Dict[str, object]): A dictionary mapping types to their default values for cases of casting failure.
+        fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
+        defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
+        cast_multiple (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
     """
 
     types = {
@@ -811,7 +814,7 @@ class CastFields(StreamInstanceOperator):
             return self.failure_defaults[field]
 
     def _cast_multiple(self, values, type, field):
-        values = [self._cast_single(value, type, field) for value in values]
+        return [self._cast_single(value, type, field) for value in values]
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
