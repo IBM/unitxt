@@ -47,3 +47,8 @@ cd unitxt
 pip install -e ".[dev]"
 pre-commit install
 ```
+To ensure you have (1) linear git history (2) no merge commits:
+```
+git config --global pull.rebase true
+git config --global merge.ff only
+```
