@@ -72,7 +72,7 @@ class IterableSource(StreamSource):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
+    """A class used to map instance values into other values.
 
     This class is a type of StreamInstanceOperator,
     it maps values of instances in a stream using predefined mappers.
@@ -279,6 +279,21 @@ class FieldOperator(StreamInstanceOperator):
             assert (
                 len(pair) == 2
             ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+        # The order of pairs in _field_to_field is not always uniquely determined by the input. In
+        # particular when the input is a dictionary.
+        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
+        # where g,h are different from f, it is not clear if when f defines the new value of h
+        # (e.g., through a copy operation), f is before or after being determined by g.
+        # The following asserts that such ambiguity does not exist in the input.
+
+        if len(self._field_to_field) == 1:
+            return
+        for ind in range(len(self._field_to_field)):
+            assert (
+                self._field_to_field[ind][0]
+                not in [t for _, t in self._field_to_field[:ind]]
+                + [t for _, t in self._field_to_field[ind + 1 :]]
+            ), f"{self._field_to_field[ind][0]} plays both roles of 'from_field' and 'to_field', which makes its value, when playing the role of 'from_field', ambiguous."
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
