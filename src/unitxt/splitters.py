@@ -108,7 +108,9 @@ class RandomSampler(Sampler):
 
     def prepare(self):
         super().prepare()
-        self.random_generator = get_sub_default_random_generator("lkdjfsa")
+        self.random_generator = get_sub_default_random_generator(
+            sub_seed="random_sample_seed"
+        )
 
     def sample(
         self, instances_pool: List[Dict[str, object]]
