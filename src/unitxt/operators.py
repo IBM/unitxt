@@ -822,6 +822,9 @@ class CastFields(StreamInstanceOperator):
         for field_name, type in self.fields.items():
             value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
             if self.cast_multiple:
+                assert isinstance(
+                    value, list
+                ), f"'cast_multiple' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
