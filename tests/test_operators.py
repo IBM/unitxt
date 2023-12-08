@@ -681,7 +681,7 @@ class TestOperators(unittest.TestCase):
                 ],
             }
         )
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream1 = ExtractFieldValues(
             stream_name="train",
             field="animal",
             to_field="most_common_animals",
@@ -708,15 +708,15 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream,
+            output_multi_stream1,
             expected_output1,
             "expected to see: \n"
             + json.dumps(expected_output1)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_multi_stream1),
         )
         # with minimum frequency limit
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream2 = ExtractFieldValues(
             stream_name="train",
             field="animal",
             to_field="most_common_animals",
@@ -739,12 +739,21 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream,
+            output_multi_stream2,
             expected_output2,
             "expected to see: \n"
             + json.dumps(expected_output2)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_multi_stream2),
+        )
+        ## is output_multi_stream1 stable or on ice?
+        self.assertDictEqual(
+            output_multi_stream1,
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream1),
         )
         # with list values
         input_multi_stream2 = MultiStream(
