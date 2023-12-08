@@ -760,9 +760,22 @@ class TakeByField(StreamInstanceOperator):
 class CopyFields(FieldOperator):
     """Copies values from specified fields to specified fields.
 
-    Args:
+    Args (of parent class):
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
-        use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
+        use_query (bool): Whether to use dpath for accessing fields. Defaults to False.
+
+    Examples:
+        An input instance {"a": 2, "b": 3}, when processed by
+        CopyField(field_to_field={"a": "b"}
+        would yield {"a": 2, "b": 2}, and when processed by
+        CopyField(field_to_field={"a": "c"} would yield
+        {"a": 2, "b": 3, "c": 2}
+
+        with use_query=True, we can also copy inside the field:
+        CopyFields(field_to_field={"a/0": "a"}, use_query=True)
+        would process instance {"a": [1, 3]} into {"a": 1}
+
+
     """
 
     def process_value(self, value: Any) -> Any:
