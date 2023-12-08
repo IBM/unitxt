@@ -1761,17 +1761,20 @@ class TestOperators(unittest.TestCase):
         # weighted suffixes
         suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 8}
         operator = AugmentPrefixSuffix(
-            augment_model_input=True, suffixes=suffixes_dict, prefixes=None
+            augment_model_input=True,
+            suffixes=suffixes_dict,
+            suffix_len=8,
+            prefixes=None,
         )
         outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
         assert (
             len(outputs) == 500
         ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
-        actual_suffixes = [output["source"][-1] for output in outputs]
+        actual_suffixes = [output["source"][-8:] for output in outputs]
         counter = Counter(actual_suffixes)
         assert (
-            counter["T"] > 125
-        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
+            counter["TTTTTTTT"] > 125
+        ), f'In a population of size 500, suffix "TTTTTTTT" is expected to be more frequent than {counter["T"]}'
 
         # just for code coverage of Augmentor.process_value and Augmentor.process
         class JustToCoverProcessValueOfAugmentor(Augmentor):

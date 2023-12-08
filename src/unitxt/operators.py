@@ -514,20 +514,20 @@ class AugmentPrefixSuffix(Augmentor):
     Args:
      prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
         The dictionary version allows to specify relative weights of the different patterns.
-        The added prefix or suffix will be of length 1 - 5 patterns. The actual length is also randomly selected.
+     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of length
+        prefix_len of suffix_len, respectively, repetitions of the randomly selected patterns.
      remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
-        The selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
-
+        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
+        trimmed input.
+     If only one of prefixes/suffixes is needed, set the other to None.
 
     Examples:
-        To prepend the input with a prefix made of 1 to 5 '\n'-s or '\t'-s, employ
-        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], suffixes = None)
-        To append the input with a suffix made of 1 to 5 '\n'-s or '\t'-s, with an all '\n'-s suffixes
-        being preferred over all '\t'-s, at 2:1 ratio, employ
-        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, prefixes = None)
+        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
+        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
+        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
+        being preferred over triple '\t', at 2:1 ratio, employ
+        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
         which will append '\n'-s twice as often as '\t'-s.
-        The actual length of the prefix and/or suffix is randomly selected, uniformly over [1..5]
-        If only one of prefixes/suffixes is needed, set the other to None.
 
     """
 
@@ -537,12 +537,14 @@ class AugmentPrefixSuffix(Augmentor):
         "\\n": 40,
         "": 30,
     }
+    prefix_len: Optional[int] = 3
     suffixes: Optional[Union[List[str], Dict[str, int]]] = {
         " ": 20,
         "\\t": 10,
         "\\n": 40,
         "": 30,
     }
+    suffix_len: Optional[int] = 3
     remove_existing_whitespaces: Optional[bool] = False
 
     def verify(self):
@@ -571,57 +573,58 @@ class AugmentPrefixSuffix(Augmentor):
                     assert isinstance(
                         k, str
                     ), f"{arg_name} should be a list of strings, whereas member {k!s} is of type {type(k)}"
+        assert (
+            self.prefix_len > 0
+        ), f"prefix_len must be positive, got {self.prefix_len}"
+        assert (
+            self.suffix_len > 0
+        ), f"suffix_len must be positive, got {self.suffix_len}"
         super().verify()
+
+    def _calculate_distribution(self, end, end_name):
+        if end is None:
+            return
+        self.pats[end_name] = (
+            end if isinstance(end, list) else [k for k, v in end.items()]
+        )
+        total_weight = (
+            len(self.pats[end_name])
+            if isinstance(end, list)
+            else sum([v for k, v in end.items()])
+        )
+        self.weights[end_name] = (
+            [1.0 / total_weight] * len(self.pats[end_name])
+            if isinstance(end, list)
+            else [float(end[p]) / total_weight for p in self.pats[end_name]]
+        )
 
     def prepare(self):
         # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
         self.verify()
         self.pats = {"prefixes": None, "suffixes": None}
         self.weights = {"prefixes": None, "suffixes": None}
+        self.lens = {"prefixes": self.prefix_len, "suffixes": self.suffix_len}
 
-        for end, end_name in zip(
-            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
-        ):
-            if end is None:
-                continue
-            self.pats[end_name] = (
-                end if isinstance(end, list) else [k for k, v in end.items()]
-            )
-            total_weight = (
-                len(self.pats[end_name])
-                if isinstance(end, list)
-                else sum([v for k, v in end.items()])
-            )
-            self.weights[end_name] = (
-                [1.0 / total_weight] * len(self.pats[end_name])
-                if isinstance(end, list)
-                else [float(end[p]) / total_weight for p in self.pats[end_name]]
-            )
-
+        self._calculate_distribution(self.prefixes, "prefixes")
+        self._calculate_distribution(self.suffixes, "suffixes")
         super().prepare()
+
+    def _get_random_pattern(self, end_name: str) -> str:
+        string_to_add = ""
+        if self.pats[end_name]:
+            string_to_add = "".join(
+                get_random().choices(self.pats[end_name], self.weights[end_name], k=1)
+                * self.lens[end_name]
+            )
+        return string_to_add
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        prefix = ""
-        suffix = ""
-        if self.prefixes:
-            prefix = "".join(
-                get_random().choices(
-                    self.pats["prefixes"], self.weights["prefixes"], k=1
-                )
-                * get_random().randint(1, 5)
-            )
-        if self.suffixes:
-            suffix = "".join(
-                get_random().choices(
-                    self.pats["suffixes"], self.weights["suffixes"], k=1
-                )
-                * get_random().randint(1, 5)
-            )
-
+        prefix = self._get_random_pattern("prefixes")
+        suffix = self._get_random_pattern("suffixes")
         return prefix + new_value + suffix
 
 
