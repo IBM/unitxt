@@ -508,75 +508,121 @@ class AugmentWhitespace(Augmentor):
         return new_value
 
 
-class AugmentSuffix(Augmentor):
-    r"""Augments the input by appending to it a randomly selected (typically, whitespace) pattern.
+class AugmentPrefixSuffix(Augmentor):
+    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) pattern.
 
     Args:
-     suffixes : the potential (typically, whitespace) patterns to select from.
+     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
         The dictionary version allows to specify relative weights of the different patterns.
-     remove_existing_trailing_whitespaces : allows to first clean existing trailing whitespaces.
-        The selected pattern is then appended to the potentially trimmed at its end input.
+        The added string will be of length 1 - 5 patterns. The actual length is also randomly selected.
+     remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
+        The selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
 
 
     Examples:
-        to append a '\n' or a '\t' to the end of the input, employ
-        AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
-        If '\n' is preferred over '\t', at 2:1 ratio, employ
-        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1})
-        which will append '\n' twice as often as '\t'.
+        To prepend the input with a prefix made of 1 to 5 '\n'-s or '\t'-s, employ
+        AugmentSuffix(augment_model_input=True, prefixes=['\n','\t'], suffixes = None)
+        To append the input with a suffix made of 1 to 5 '\n'-s or '\t'-s, with an all '\n'-s suffixes
+        being preferred over all '\t'-s, at 2:1 ratio, employ
+        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, prefixes = None)
+        which will append '\n'-s twice as often as '\t'-s.
+        The actual length of the prefix and/or suffix is randomly selected, uniformly over [1..5]
+        If only one of prefixes/suffixes is needed, set the other to None.
 
     """
 
-    suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
-    remove_existing_trailing_whitespaces: Optional[bool] = False
+    prefixes: Optional[Union[List[str], Dict[str, int]]] = {
+        " ": 20,
+        "\\t": 10,
+        "\\n": 40,
+        "": 30,
+    }
+    suffixes: Optional[Union[List[str], Dict[str, int]]] = {
+        " ": 20,
+        "\\t": 10,
+        "\\n": 40,
+        "": 30,
+    }
+    remove_existing_whitespaces: Optional[bool] = False
 
     def verify(self):
         assert (
-            isinstance(self.suffixes, list) or isinstance(self.suffixes, dict)
-        ), f"Argument 'suffixes' should be either a list or a dictionary, whereas it is of type {type(self.suffixes)}"
+            self.prefixes or self.suffixes
+        ), "At least one of prefixes/suffixes should be not None."
+        for arg, arg_name in zip(
+            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
+        ):
+            assert (
+                arg is None or isinstance(arg, list) or isinstance(arg, dict)
+            ), f"Argument {arg_name} should be either None or a list or a dictionary, whereas it is of type {type(arg)}"
 
-        if isinstance(self.suffixes, dict):
-            for k, v in self.suffixes.items():
-                assert isinstance(
-                    k, str
-                ), f"suffixes should map strings, whereas key {k!s} is of type {type(k)}"
-                assert isinstance(
-                    v, int
-                ), f"suffixes should map to ints, whereas value {v!s} is of type {type(v)}"
-        else:
-            for k in self.suffixes:
-                assert isinstance(
-                    k, str
-                ), f"suffixes should be a list of strings, whereas member {k!s} is of type {type(k)}"
+            if arg is None:
+                continue
+            if isinstance(arg, dict):
+                for k, v in arg.items():
+                    assert isinstance(
+                        k, str
+                    ), f"{arg_name} should map strings, whereas key {k!s} is of type {type(k)}"
+                    assert isinstance(
+                        v, int
+                    ), f"{arg_name} should map to ints, whereas value {v!s} is of type {type(v)}"
+            else:
+                for k in arg:
+                    assert isinstance(
+                        k, str
+                    ), f"{arg_name} should be a list of strings, whereas member {k!s} is of type {type(k)}"
         super().verify()
 
     def prepare(self):
-        self.pats = (
-            self.suffixes
-            if isinstance(self.suffixes, list)
-            else [k for k, v in self.suffixes.items()]
-        )
-        total_weight = (
-            len(self.pats)
-            if isinstance(self.suffixes, list)
-            else sum([v for k, v in self.suffixes.items()])
-        )
-        self.weights = (
-            [1.0 / total_weight] * len(self.pats)
-            if isinstance(self.suffixes, list)
-            else [float(self.suffixes[p]) / total_weight for p in self.pats]
-        )
+        # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
+        self.verify()
+        self.pats = {"prefixes": None, "suffixes": None}
+        self.weights = {"prefixes": None, "suffixes": None}
+
+        for end, end_name in zip(
+            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
+        ):
+            if end is None:
+                continue
+            self.pats[end_name] = (
+                end if isinstance(end, list) else [k for k, v in end.items()]
+            )
+            total_weight = (
+                len(self.pats[end_name])
+                if isinstance(end, list)
+                else sum([v for k, v in end.items()])
+            )
+            self.weights[end_name] = (
+                [1.0 / total_weight] * len(self.pats[end_name])
+                if isinstance(end, list)
+                else [float(end[p]) / total_weight for p in self.pats[end_name]]
+            )
 
         super().prepare()
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
         new_value = str(value)
-        if self.remove_existing_trailing_whitespaces:
-            new_value = new_value.rstrip()
-        new_value += get_random().choices(self.pats, self.weights, k=1)[0]
+        if self.remove_existing_whitespaces:
+            new_value = new_value.strip()
+        prefix = ""
+        suffix = ""
+        if self.prefixes:
+            prefix = "".join(
+                get_random().choices(
+                    self.pats["prefixes"], self.weights["prefixes"], k=1
+                )
+                * get_random().randint(1, 5)
+            )
+        if self.suffixes:
+            suffix = "".join(
+                get_random().choices(
+                    self.pats["suffixes"], self.weights["suffixes"], k=1
+                )
+                * get_random().randint(1, 5)
+            )
 
-        return new_value
+        return prefix + new_value + suffix
 
 
 class ShuffleFieldValues(FieldOperator):
