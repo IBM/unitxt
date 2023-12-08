@@ -817,7 +817,7 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        types (Dict[str, str]): A dictionary mapping type names to types.
+        types (Dict[str, object]): A dictionary mapping type names to types.
         nested (bool): Whether to cast nested fields. Defaults to False.
         fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
         defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
