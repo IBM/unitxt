@@ -509,22 +509,22 @@ class AugmentWhitespace(Augmentor):
 
 
 class AugmentPrefixSuffix(Augmentor):
-    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) pattern.
+    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) patterns.
 
     Args:
      prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
         The dictionary version allows to specify relative weights of the different patterns.
-        The added string will be of length 1 - 5 patterns. The actual length is also randomly selected.
+        The added prefix or suffix will be of length 1 - 5 patterns. The actual length is also randomly selected.
      remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
         The selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
 
 
     Examples:
         To prepend the input with a prefix made of 1 to 5 '\n'-s or '\t'-s, employ
-        AugmentSuffix(augment_model_input=True, prefixes=['\n','\t'], suffixes = None)
+        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], suffixes = None)
         To append the input with a suffix made of 1 to 5 '\n'-s or '\t'-s, with an all '\n'-s suffixes
         being preferred over all '\t'-s, at 2:1 ratio, employ
-        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, prefixes = None)
+        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, prefixes = None)
         which will append '\n'-s twice as often as '\t'-s.
         The actual length of the prefix and/or suffix is randomly selected, uniformly over [1..5]
         If only one of prefixes/suffixes is needed, set the other to None.
