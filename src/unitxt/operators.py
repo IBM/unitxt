@@ -296,7 +296,7 @@ class FieldOperator(StreamInstanceOperator):
                 self._field_to_field[ind][0]
                 not in [t for _, t in self._field_to_field[:ind]]
                 + [t for _, t in self._field_to_field[ind + 1 :]]
-            ), f"{self._field_to_field[ind][0]} plays both roles of 'from_field' and 'to_field', which makes its value, when playing the role of 'from_field', ambiguous. Hint: break field_to_field list into two invocations of the operator."
+            ), f"'{self._field_to_field[ind][0]}' plays both roles of 'from_field' and 'to_field', which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
