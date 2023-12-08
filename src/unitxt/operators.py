@@ -802,7 +802,7 @@ class CopyFields(FieldOperator):
 
 
 class AddID(StreamInstanceOperator):
-    """Stores an id value in the designated 'id_field_name' field of the given instance."""
+    """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
 
     id_field_name: str = "id"
 
