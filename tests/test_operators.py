@@ -1475,6 +1475,19 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # test the loop in field_to_field
+        with self.assertRaises(AssertionError) as ae:
+            operator = AddConstant(
+                field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
+            )
+            instance = {"a": [1, 2, 3]}
+            operator.process(instance)
+
+        self.assertEqual(
+            str(ae.exception),
+            "'a' plays both roles of 'from_field' and 'to_field', which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+        )
+
     def test_copy_paste_fields(self):
         inputs = [
             {"a": [1, 3]},
