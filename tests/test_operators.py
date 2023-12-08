@@ -1475,13 +1475,11 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # test the loop in field_to_field
+        # test the loop in field_to_field, to be caught on init
         with self.assertRaises(AssertionError) as ae:
-            operator = AddConstant(
+            AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
-            )
-            instance = {"a": [1, 2, 3]}
-            operator.process(instance)
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
             str(ae.exception),
