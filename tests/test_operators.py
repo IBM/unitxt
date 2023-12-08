@@ -1485,7 +1485,7 @@ class TestOperators(unittest.TestCase):
 
         self.assertEqual(
             str(ae.exception),
-            "'a' plays both roles of 'from_field' and 'to_field', which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+            "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
         )
 
     def test_copy_paste_fields(self):
