@@ -538,7 +538,7 @@ class HuggingfaceMetric(GlobalMetric):
                 additional_input[additional_input_field]
                 for additional_input in additional_inputs
             ]
-        # add check that all required fields in self.metrics are in oassed_additional_inputs
+        # add check that all required fields in self.metrics are in passed_additional_inputs
 
         result = self.metric.compute(
             predictions=predictions,
@@ -588,15 +588,16 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         additional_inputs: List[Any],
     ) -> List[Dict[str, Any]]:
         passed_additional_inputs = {}
-        for additional_input in self.hf_additional_inputs:
+        passed_additional_inputs = {}
+        for additional_input_field in self.hf_additional_input_fields:
             assert (
-                additional_input in additional_inputs
-            ), f"{additional_input} field required by {__class__.__name__} is not in passed additional inputs: {additional_inputs}"
-            passed_additional_inputs[additional_input] = additional_inputs[
-                additional_input
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
+            passed_additional_inputs[additional_input_field] = [
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
             ]
-
-        # add check that all required fields in self.metrics are in oassed_additional_inputs
+        # add check that all required fields in self.metrics are in passed_additional_inputs
 
         scores = self.metric.compute(
             predictions=predictions,
