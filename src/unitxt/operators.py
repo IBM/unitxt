@@ -581,40 +581,50 @@ class AugmentPrefixSuffix(Augmentor):
         ), f"suffix_len must be positive, got {self.suffix_len}"
         super().verify()
 
-    def _calculate_distribution(self, end, end_name):
-        if end is None:
-            return
-        self.pats[end_name] = (
-            end if isinstance(end, list) else [k for k, v in end.items()]
+    def _calculate_distributions(self, prefs_or_suffs):
+        if prefs_or_suffs is None:
+            return None, None
+        patterns = (
+            prefs_or_suffs
+            if isinstance(prefs_or_suffs, list)
+            else [k for k, v in prefs_or_suffs.items()]
         )
         total_weight = (
-            len(self.pats[end_name])
-            if isinstance(end, list)
-            else sum([v for k, v in end.items()])
+            len(patterns)
+            if isinstance(prefs_or_suffs, list)
+            else sum([v for k, v in prefs_or_suffs.items()])
         )
-        self.weights[end_name] = (
-            [1.0 / total_weight] * len(self.pats[end_name])
-            if isinstance(end, list)
-            else [float(end[p]) / total_weight for p in self.pats[end_name]]
+        weights = (
+            [1.0 / total_weight] * len(patterns)
+            if isinstance(prefs_or_suffs, list)
+            else [float(prefs_or_suffs[p]) / total_weight for p in patterns]
         )
+        return patterns, weights
 
     def prepare(self):
         # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
         self.verify()
-        self.pats = {"prefixes": None, "suffixes": None}
-        self.weights = {"prefixes": None, "suffixes": None}
-        self.lens = {"prefixes": self.prefix_len, "suffixes": self.suffix_len}
+        self._prefixes = {"length": self.prefix_len}
+        self._suffixes = {"length": self.suffix_len}
 
-        self._calculate_distribution(self.prefixes, "prefixes")
-        self._calculate_distribution(self.suffixes, "suffixes")
+        (
+            self._prefixes["patterns"],
+            self._prefixes["weights"],
+        ) = self._calculate_distributions(self.prefixes)
+        (
+            self._suffixes["patterns"],
+            self._suffixes["weights"],
+        ) = self._calculate_distributions(self.suffixes)
         super().prepare()
 
-    def _get_random_pattern(self, end_name: str) -> str:
+    def _get_random_pattern(self, _prefs_or_suffs) -> str:
         string_to_add = ""
-        if self.pats[end_name]:
+        if _prefs_or_suffs["patterns"]:
             string_to_add = "".join(
-                get_random().choices(self.pats[end_name], self.weights[end_name], k=1)
-                * self.lens[end_name]
+                get_random().choices(
+                    _prefs_or_suffs["patterns"], _prefs_or_suffs["weights"], k=1
+                )
+                * _prefs_or_suffs["length"]
             )
         return string_to_add
 
@@ -623,8 +633,8 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        prefix = self._get_random_pattern("prefixes")
-        suffix = self._get_random_pattern("suffixes")
+        prefix = self._get_random_pattern(self._prefixes)
+        suffix = self._get_random_pattern(self._suffixes)
         return prefix + new_value + suffix
 
 
