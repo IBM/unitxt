@@ -821,7 +821,7 @@ class CastFields(StreamInstanceOperator):
         nested (bool): Whether to cast nested fields. Defaults to False.
         fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
         defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
-        cast_multiple (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
     """
 
     types = {
@@ -833,7 +833,7 @@ class CastFields(StreamInstanceOperator):
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
     use_nested_query: bool = False
-    cast_multiple: bool = False
+    process_every_value: bool = False
 
     def _cast_single(self, value, type, field):
         try:
@@ -853,10 +853,10 @@ class CastFields(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
             value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
-            if self.cast_multiple:
+            if self.process_every_value:
                 assert isinstance(
                     value, list
-                ), f"'cast_multiple' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
+                ), f"'process_every_value' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
