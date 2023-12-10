@@ -1,7 +1,7 @@
 import itertools
 import os
 import tempfile
-from tempfile import TemporaryDirectory
+from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import pandas as pd
@@ -42,7 +42,6 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
-    cached = False
 
     def process(self):
         try:
@@ -106,6 +105,7 @@ class LoadFromIBMCloud(Loader):
     bucket_name: str
     data_dir: str = None
     data_files: Sequence[str]
+    caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
         logger.info(f"Downloading {item_name} from {bucket_name} COS")
@@ -152,6 +152,11 @@ class LoadFromIBMCloud(Loader):
         self.endpoint_url = os.getenv(self.endpoint_url_env)
         self.aws_access_key_id = os.getenv(self.aws_access_key_id_env)
         self.aws_secret_access_key = os.getenv(self.aws_secret_access_key_env)
+        root_dir = os.getenv("UNITXT_IBM_COS_CACHE", None) or os.getcwd()
+        self.cache_dir = os.path.join(root_dir, "ibmcos_datasets")
+
+        if not os.path.exists(self.cache_dir):
+            Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
     def verify(self):
         super().verify()
@@ -173,9 +178,12 @@ class LoadFromIBMCloud(Loader):
             aws_secret_access_key=self.aws_secret_access_key,
             endpoint_url=self.endpoint_url,
         )
-
-        with TemporaryDirectory() as temp_directory:
-            for data_file in self.data_files:
+        local_dir = os.path.join(self.cache_dir, self.bucket_name, self.data_dir)
+        if not os.path.exists(local_dir):
+            Path(local_dir).mkdir(parents=True, exist_ok=True)
+        for data_file in self.data_files:
+            local_file = os.path.join(local_dir, data_file)
+            if not self.caching or not os.path.exists(local_file):
                 # Build object key based on parameters. Slash character is not
                 # allowed to be part of object key in IBM COS.
                 object_key = (
@@ -184,8 +192,8 @@ class LoadFromIBMCloud(Loader):
                     else data_file
                 )
                 self._download_from_cos(
-                    cos, self.bucket_name, object_key, temp_directory + "/" + data_file
+                    cos, self.bucket_name, object_key, local_dir + "/" + data_file
                 )
-            dataset = hf_load_dataset(temp_directory, streaming=False)
+        dataset = hf_load_dataset(local_dir, streaming=False)
 
         return MultiStream.from_iterables(dataset)
