@@ -183,13 +183,13 @@ class TestOperators(unittest.TestCase):
 
     def test_list_field_values(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
+            {"a": 1, "b": 2, "c": 3},
+            {"a": 2, "b": 3, "c": 5},
         ]
 
         targets = [
-            {"a": 1, "b": 2, "ab": [1, 2]},
-            {"a": 2, "b": 3, "ab": [2, 3]},
+            {"a": 1, "b": 2, "ab": [1, 2], "c": 3},
+            {"a": 2, "b": 3, "ab": [2, 3], "c": 5},
         ]
 
         check_operator(
@@ -1374,7 +1374,7 @@ class TestOperators(unittest.TestCase):
             operator=CastFields(
                 fields={"a": "float", "b": "int"},
                 failure_defaults={"a": 0.0, "b": 0},
-                cast_multiple=True,
+                process_every_value=True,
             ),
             inputs=[{"a": ["0.5", "0.6", "1.0", "12"], "b": ["2"]}],
             targets=[{"a": [0.5, 0.6, 1.0, 12.0], "b": [2]}],
@@ -1856,12 +1856,6 @@ class TestOperators(unittest.TestCase):
             tester=self,
             exception_text=exception_text,
         )
-
-    def test_list_field_values2(self):
-        in_instance = {"a": 1, "b": 2, "c": 3}
-        operator = ListFieldValues(fields=["a", "b"], to_field="ab")
-        out_instance = operator.process(in_instance)
-        self.assertDictEqual(out_instance, {"a": 1, "b": 2, "c": 3, "ab": [1, 2]})
 
     def test_test_operator_without_tester_param(self):
         text = None
