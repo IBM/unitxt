@@ -35,6 +35,7 @@ from .operator import (
 from .random_utils import get_random, nested_seed
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
+from .type_utils import isoftype
 from .utils import flatten_dict
 
 
@@ -555,24 +556,12 @@ class AugmentPrefixSuffix(Augmentor):
             [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
         ):
             assert (
-                arg is None or isinstance(arg, list) or isinstance(arg, dict)
-            ), f"Argument {arg_name} should be either None or a list or a dictionary, whereas it is of type {type(arg)}"
-
-            if arg is None:
-                continue
-            if isinstance(arg, dict):
-                for k, v in arg.items():
-                    assert isinstance(
-                        k, str
-                    ), f"{arg_name} should map strings, whereas key {k!s} is of type {type(k)}"
-                    assert isinstance(
-                        v, int
-                    ), f"{arg_name} should map to ints, whereas value {v!s} is of type {type(v)}"
-            else:
-                for k in arg:
-                    assert isinstance(
-                        k, str
-                    ), f"{arg_name} should be a list of strings, whereas member {k!s} is of type {type(k)}"
+                arg is None
+                or isinstance(arg, list)
+                and isoftype(arg, List[str])
+                or isinstance(arg, dict)
+                and isoftype(arg, Dict[str, int])
+            ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
         assert (
             self.prefix_len > 0
         ), f"prefix_len must be positive, got {self.prefix_len}"
