@@ -42,7 +42,6 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
-    caching: bool = True
 
     def process(self):
         try:
@@ -106,7 +105,7 @@ class LoadFromIBMCloud(Loader):
     bucket_name: str
     data_dir: str = None
     data_files: Sequence[str]
-    caching: str = True
+    caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
         logger.info(f"Downloading {item_name} from {bucket_name} COS")
