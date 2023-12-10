@@ -1869,7 +1869,7 @@ class TestOperators(unittest.TestCase):
             )
         self.assertEqual(
             str(ae.exception),
-            "prefixes should be a list of strings, whereas member 10 is of type <class 'int'>",
+            "Argument prefixes should be either None or a list of strings or a dictionary str->int. [10, 20, 'O', 'P'] is none of the above.",
         )
 
     def test_augment_prefix_suffix_with_none_input_error(self):
