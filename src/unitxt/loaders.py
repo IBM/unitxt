@@ -42,7 +42,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
-    cached = False
+    caching: bool = True
 
     def process(self):
         try:
