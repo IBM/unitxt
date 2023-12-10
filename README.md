@@ -47,3 +47,14 @@ cd unitxt
 pip install -e ".[dev]"
 pre-commit install
 ```
+### Ensuring a Linear Git History
+
+Configure your Git to maintain a linear history with these commands:
+
+1. **Automatic Rebasing for Pulls**:
+   - Command: `git config --global pull.rebase true`
+   - This sets `git pull` to rebase changes, keeping your history linear without unnecessary merge commits.
+
+2. **Fast-Forward Merges Only**:
+   - Command: `git config --global merge.ff only`
+   - This allows only fast-forward merges, preventing merge commits when branches diverge, to maintain a linear history.
