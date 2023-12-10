@@ -152,7 +152,7 @@ class LoadFromIBMCloud(Loader):
         self.endpoint_url = os.getenv(self.endpoint_url_env)
         self.aws_access_key_id = os.getenv(self.aws_access_key_id_env)
         self.aws_secret_access_key = os.getenv(self.aws_secret_access_key_env)
-        root_dir = os.getenv("IBM_COS_CACHE", None) or os.getcwd()
+        root_dir = os.getenv("UNITXT_IBM_COS_CACHE", None) or os.getcwd()
         self.cache_dir = os.path.join(root_dir, "ibmcos_datasets")
 
         if not os.path.exists(self.cache_dir):
