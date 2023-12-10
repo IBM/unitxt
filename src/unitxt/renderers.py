@@ -5,7 +5,6 @@ from .dataclass import InternalField
 from .formats import Format, ICLFormat
 from .instructions import Instruction
 from .operator import Operator, SequentialOperator, StreamInstanceOperator
-from .random_utils import get_random
 from .templates import Template
 
 
@@ -16,55 +15,8 @@ class Renderer(ABC):
     #     pass
 
 
-class RenderTemplate(Renderer, StreamInstanceOperator):
+class RenderDemonstrations(Renderer, StreamInstanceOperator):
     template: Template
-    random_reference: bool = False
-    skip_rendered_instance: bool = True
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.skip_rendered_instance:
-            if (
-                "inputs" not in instance
-                and "outputs" not in instance
-                and "source" in instance
-                and "target" in instance
-                and "references" in instance
-            ):
-                return instance
-
-        inputs = instance["inputs"]
-        outputs = instance["outputs"]
-
-        source = self.template.process_inputs(inputs)
-        targets = self.template.process_outputs(outputs)
-
-        if self.template.is_multi_reference:
-            assert isinstance(targets, list), f"{targets} must be a list"
-            references = targets
-            if self.random_reference:
-                target = get_random().choice(references)
-            else:
-                if len(references) == 0:
-                    raise ValueError("No references found")
-                target = references[0]
-        else:
-            references = [targets]
-            target = targets
-
-        instance.update(
-            {
-                "source": source,
-                "target": target,
-                "references": references,
-            }
-        )
-
-        return instance
-
-
-class RenderDemonstrations(RenderTemplate):
     demos_field: str
 
     def process(
@@ -74,7 +26,7 @@ class RenderDemonstrations(RenderTemplate):
 
         processed_demos = []
         for demo_instance in demos:
-            demo_instance = super().process(demo_instance)
+            demo_instance = self.template.process(demo_instance)
             processed_demos.append(demo_instance)
 
         instance[self.demos_field] = processed_demos
@@ -122,7 +74,7 @@ class StandardRenderer(Renderer, SequentialOperator):
 
     def prepare(self):
         self.steps = [
-            RenderTemplate(template=self.template),
+            self.template,
             RenderDemonstrations(template=self.template, demos_field=self.demos_field),
             RenderInstruction(instruction=self.instruction),
             RenderFormat(format=self.format, demos_field=self.demos_field),

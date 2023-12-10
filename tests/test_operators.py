@@ -22,6 +22,7 @@ from src.unitxt.operators import (
     FilterByValues,
     FlattenInstances,
     FromIterables,
+    IndexOf,
     Intersect,
     IterableSource,
     JoinStr,
@@ -29,10 +30,12 @@ from src.unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    NullAugmentor,
     RemoveFields,
     RemoveValues,
     RenameFields,
     Shuffle,
+    ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
     TakeByField,
@@ -1340,6 +1343,13 @@ class TestOperators(unittest.TestCase):
         )
         self.assertSetEqual(inputs_outputs_intersection, set())
 
+    def test_shuffle_field_value(self):
+        operator = ShuffleFieldValues([["from", "to"]])
+        in_list = [1, 2, 3, 4, 5, 6, 7, 8]
+        out_list = operator.process_value(in_list)
+        self.assertEqual(sorted(out_list), in_list)
+        self.assertNotEqual(out_list, in_list)
+
     def test_cast_fields(self):
         inputs = [
             {"a": "0.5", "b": "2"},
@@ -1535,13 +1545,18 @@ class TestOperators(unittest.TestCase):
 
     def test_zip_fields(self):
         inputs = [
-            {"a": [1, 3], "b": [1, 3]},
-            {"a": [2, 4], "b": [2, 4]},
+            {"a": [1, 3, 5], "b": [1, 3]},
+            {"a": [2, 4, 6], "b": [2, 4]},
         ]
 
         targets = [
-            {"a": [1, 3], "b": [1, 3], "c": [(1, 1), (3, 3)]},
-            {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+        ]
+
+        targets_longest = [
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3), (5, None)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4), (6, None)]},
         ]
 
         check_operator(
@@ -1550,6 +1565,26 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+        check_operator(
+            operator=ZipFieldValues(
+                fields=["a", "b"], to_field="c", use_query=True, longest=True
+            ),
+            inputs=inputs,
+            targets=targets_longest,
+            tester=self,
+        )
+
+    def test_index_of(self):
+        operator = IndexOf(
+            search_in="field_text", index_of="field_pattern", to_field="index"
+        )
+        in_instance = {
+            "field_text": "the long story I was telling to everyone.",
+            "field_pattern": "telling to",
+        }
+        out_instance = operator.process(in_instance)
+        self.assertEqual(out_instance["index"], 21)
 
     def test_take_by_field(self):
         inputs = [
@@ -1566,6 +1601,14 @@ class TestOperators(unittest.TestCase):
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        # field plays the role of to_field
+        check_operator(
+            operator=TakeByField(field="a", index="b", use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": 0}, {"a": 1, "b": "a"}],
             tester=self,
         )
 
@@ -1731,8 +1774,22 @@ class TestOperators(unittest.TestCase):
 
         operator = JustToCoverProcessValueOfAugmentor(augment_model_input=True)
         self.assertEqual(5, operator.process_value(5))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             operator.process({"not_source": "just to raise exception"})
+
+        class JustToCoverProcessValueVerifyOfNullAugmentor(NullAugmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def verify(self):
+                super().verify()
+
+        operator = JustToCoverProcessValueVerifyOfNullAugmentor(
+            augment_model_input=True
+        )
+        self.assertEqual(5, operator.process_value(5))
+        operator.verify()
 
     def test_augment_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
@@ -1744,7 +1801,7 @@ class TestOperators(unittest.TestCase):
             apply_operator(operator, inputs)
         self.assertEqual(
             str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: query \"inputs/sentence\" did not match any item in dict: {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
         )
 
     def test_augment_suffix_task_input(self):

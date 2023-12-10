@@ -274,10 +274,11 @@ class FieldOperator(StreamInstanceOperator):
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         for pair in self._field_to_field:
             assert (
                 len(pair) == 2
-            ), "when 'field_to_field is defined as a list of lists, the inner lists should all be of length 2"
+            ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
@@ -460,7 +461,7 @@ class Augmentor(StreamInstanceOperator):
                     default="",
                     not_exist_ok=False,
                 )
-            except TypeError as e:
+            except ValueError as e:
                 raise TypeError(f"Failed to get {field_name} from {instance}") from e
 
             # We are setting a nested seed based on the value processed, to ensure that
@@ -579,7 +580,7 @@ class AugmentSuffix(Augmentor):
 
 
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles an iterable value."""
+    """Shuffles a list of values found in a field."""
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
@@ -688,9 +689,18 @@ class ListFieldValues(StreamInstanceOperator):
 
 
 class ZipFieldValues(StreamInstanceOperator):
-    """Zips values of multiple fields similar to list(zip(*fields))."""
+    """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
 
-    fields: str
+    The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
+    are zipped, and stored into 'to_field'.
+
+    If 'longest'=False, the length of the zipped result is determined by the shortest input value.
+    If 'longest'=False, the length of the zipped result is determined by the longest input, padding shorter
+    inputs with None -s.
+
+    """
+
+    fields: List[str]
     to_field: str
     longest: bool = False
     use_query: bool = False
@@ -710,7 +720,7 @@ class ZipFieldValues(StreamInstanceOperator):
 
 
 class IndexOf(StreamInstanceOperator):
-    """Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)."""
+    """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
     search_in: str
     index_of: str
@@ -727,7 +737,7 @@ class IndexOf(StreamInstanceOperator):
 
 
 class TakeByField(StreamInstanceOperator):
-    """Takes value from one field based on another field similar to field[index]."""
+    """From field 'field' of a given instance, select the member indexed by field 'index', and store to field 'to_field'."""
 
     field: str
     index: str
