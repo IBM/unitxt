@@ -26,14 +26,14 @@ testing suit:
 
     .. code-block:: python
 
-        from unitxt.test_utils.operators import test_operator
+        from unitxt.test_utils.operators import check_operator
 
         operator = AddFields(fields={"b": 2})
 
         inputs = [{'a': 1}, {'a': 2}]
         targets = [{'a': 1, 'b': 2}, {'a': 2, 'b': 2}]
 
-        print(test_operator(operator, inputs, targets)) # True
+        print(check_operator(operator, inputs, targets)) # True
 
 
 Adding a new metric

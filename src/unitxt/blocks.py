@@ -25,24 +25,11 @@ from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
 from .task import FormTask
 from .templates import (
-    AutoInputOutputTemplate,
     InputOutputTemplate,
     MultiLabelTemplate,
     OutputQuantizingTemplate,
-    RenderAutoFormatTemplate,
-    RenderFormatTemplate,
-    RenderTemplatedICL,
     SpanLabelingTemplate,
     Template,
     TemplatesDict,
     TemplatesList,
 )
-
-# from .validate import (
-#     ValidateStandartSchema
-# )
-
-
-# from .metric import (
-#     MetricRecipe,
-# )

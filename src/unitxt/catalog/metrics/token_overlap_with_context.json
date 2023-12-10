@@ -1,0 +1,46 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "additional_inputs/context",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "references"
+            ],
+            "to_field": "references"
+        }
+    ],
+    "metric": {
+        "type": "token_overlap"
+    },
+    "postpreprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "score/global/f1",
+                    "score/global/f1_overlap_with_context"
+                ],
+                [
+                    "score/global/recall",
+                    "score/global/recall_overlap_with_context"
+                ],
+                [
+                    "score/global/precision",
+                    "score/global/precision_overlap_with_context"
+                ]
+            ],
+            "use_query": true
+        }
+    ]
+}

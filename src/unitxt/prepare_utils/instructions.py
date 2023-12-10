@@ -6,4 +6,6 @@ sentence_classification_instructions = [
     "Which of the choices {choices}, best describes the following text:",
 ]
 # instructions?
-sentence_classification_instructions = [TextualInstruction(text=x) for x in sentence_classification_instructions]
+sentence_classification_instructions = [
+    TextualInstruction(text=x) for x in sentence_classification_instructions
+]

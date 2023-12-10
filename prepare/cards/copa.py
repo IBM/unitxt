@@ -6,7 +6,6 @@ from src.unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
 from src.unitxt.card import TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import AddFields, ListFieldValues
-from src.unitxt.prepare_utils.card_types import addClassificationChoices
 from src.unitxt.task import FormTask
 from src.unitxt.test_utils.card import test_card
 

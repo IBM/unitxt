@@ -4,7 +4,7 @@
 
 Unitxt is a python library for getting data fired up and set for utilization.
 In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation.
-We aspire to be simple, adaptable and transperant.
+We aspire to be simple, adaptable and transparent.
 
 Unitxt builds on separation. Separation allows adding a dataset, without knowing anything about the models using it. Separation allows training without caring for preprocessing, switching models without loading the data differently and changing formats (instruction\ICL\etc.) without changing anything else.
 
@@ -32,18 +32,29 @@ Unitxt builds on separation. Separation allows adding a dataset, without knowing
 # Why Unitxt? 🦄
 
 ### 🦄 Simplicity
-Everything is unitxt is simple and designed to feel natural and self-explanatory.
+Everything in Unitxt is simple and designed to feel natural and self-explanatory.
 ### 🦄 Adaptability
 Adding new datasets, loading recipes, instructions and formatters is possible and encouraged!
-### 🦄 Transperancy
-The reosurces and formatters of Unitxt are stored as shared datasets and therefore can easily reviewed by the crowd. Moreover, when assembling a dataset with Unitxt, it is very clear to others what's in it.
+### 🦄 Transparency
+The resources and formatters of Unitxt are stored as shared datasets and therefore can easily reviewed by the crowd. Moreover, when assembling a dataset with Unitxt, it is very clear to others what's in it.
 
 # Contributers
 
-Please install unitxt from source by:
+Please install Unitxt from source by:
 ```
 git clone git@github.com:IBM/unitxt.git
 cd unitxt
 pip install -e ".[dev]"
 pre-commit install
 ```
+### Ensuring a Linear Git History
+
+Configure your Git to maintain a linear history with these commands:
+
+1. **Automatic Rebasing for Pulls**:
+   - Command: `git config --global pull.rebase true`
+   - This sets `git pull` to rebase changes, keeping your history linear without unnecessary merge commits.
+
+2. **Fast-Forward Merges Only**:
+   - Command: `git config --global merge.ff only`
+   - This allows only fast-forward merges, preventing merge commits when branches diverge, to maintain a linear history.

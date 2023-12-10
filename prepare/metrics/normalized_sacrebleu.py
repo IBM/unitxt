@@ -11,7 +11,10 @@ metric = HuggingfaceMetric(
 )
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
-references = [["hello there general kenobi", "hello there !"], ["goodbye ankh morpork", "ankh morpork"]]
+references = [
+    ["hello there general kenobi", "hello there !"],
+    ["goodbye ankh morpork", "ankh morpork"],
+]
 instance_targets = [
     {
         "counts": [4, 3, 2, 1],
@@ -47,6 +50,10 @@ global_target = {
     "sys_len": 10,
     "ref_len": 7,
     "score_name": "sacrebleu",
+    "score_ci_low": 0.4,
+    "score_ci_high": 0.4,
+    "sacrebleu_ci_low": 0.4,
+    "sacrebleu_ci_high": 0.4,
 }
 
 outputs = test_metric(

@@ -15,14 +15,15 @@
         {
             "type": "add_fields",
             "fields": {
-                "text_type": "text"
+                "document_type": "document"
             }
         }
     ],
     "task": {
         "type": "form_task",
         "inputs": [
-            "document"
+            "document",
+            "document_type"
         ],
         "outputs": [
             "summary"

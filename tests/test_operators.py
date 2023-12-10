@@ -1,33 +1,53 @@
+import json
 import unittest
+from collections import Counter
+from typing import Any, Dict
 
 from src.unitxt.operators import (
+    AddConstant,
     AddFields,
+    Apply,
+    ApplyMetric,
     ApplyOperatorsField,
+    Augmentor,
+    AugmentSuffix,
     AugmentWhitespace,
     CastFields,
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    ExtractFieldValues,
+    FieldOperator,
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
+    FromIterables,
+    IndexOf,
     Intersect,
+    IterableSource,
     JoinStr,
     LengthBalancer,
+    ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    NullAugmentor,
     RemoveFields,
     RemoveValues,
     RenameFields,
     Shuffle,
+    ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
     TakeByField,
     Unique,
     ZipFieldValues,
 )
-from src.unitxt.stream import MultiStream, Stream
-from src.unitxt.test_utils.operators import apply_operator, test_operator
+from src.unitxt.stream import MultiStream
+from src.unitxt.test_utils.operators import (
+    apply_operator,
+    check_operator,
+    check_operator_exception,
+)
 
 
 class TestOperators(unittest.TestCase):
@@ -37,20 +57,87 @@ class TestOperators(unittest.TestCase):
             self.assertDictEqual(input_dict, output_dict)
 
     def test_map_instance_values(self):
+        mappers = {"a": {"1": "hi", "2": "bye"}}
+
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
+            {"a": "1", "b": "2"},
+            {"a": "2", "b": "3"},
         ]
 
         targets = [
-            {"a": "hi", "b": 2},
-            {"a": "bye", "b": 3},
+            {"a": "hi", "b": "2"},
+            {"a": "bye", "b": "3"},
         ]
 
-        test_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
+        # simple value substitute
+        check_operator(
+            operator=MapInstanceValues(mappers=mappers),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        # process_every_value=True would not accept non-list inputs
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instace = {'a': '1', 'b': '2'}",
+            tester=self,
+        )
+
+        # strict is True by default, input value "3" in field "a" is missing from the mapper of "a"
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers),
+            inputs=[{"a": "3", "b": "4"}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+
+        inputs_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": [2], "b": 3},
+        ]
+
+        targets_process_every_value = [
+            {"a": ["hi", "bye", 3, 4], "b": 2},
+            {"a": ["bye"], "b": 3},
+        ]
+
+        # simple mapping of individual elements in the list. strict is False here, to ignore absence of "3" from the mapper of "a"
+        check_operator(
+            operator=MapInstanceValues(
+                mappers=mappers, process_every_value=True, strict=False
+            ),
+            inputs=inputs_process_every_value,
+            targets=targets_process_every_value,
+            tester=self,
+        )
+
+        # simple mapping of individual elements in the list. with strict=True, the absence of "3" from the mapper of "a" is not overlooked
+        check_operator_exception(
+            operator=MapInstanceValues(mappers=mappers, process_every_value=True),
+            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            tester=self,
+        )
+        # Test mapping of lists to lists
+        inputs_not_process_every_value = [
+            {"a": [1, 2, 3, 4], "b": 2},
+            {"a": [], "b": 3},
+        ]
+
+        targets_not_process_every_value = [
+            {"a": ["All"], "b": 2},
+            {"a": ["None"], "b": 3},
+        ]
+
+        list_mappers = {"a": {str([1, 2, 3, 4]): ["All"], "[]": ["None"]}}
+        check_operator(
+            operator=MapInstanceValues(
+                mappers=list_mappers, process_every_value=False, strict=False
+            ),
+            inputs=inputs_not_process_every_value,
+            targets=targets_not_process_every_value,
             tester=self,
         )
 
@@ -65,8 +152,90 @@ class TestOperators(unittest.TestCase):
             {"a": "bye", "b": 3},
         ]
 
-        test_operator(
-            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}), inputs=inputs, targets=targets
+        check_operator(
+            operator=MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}),
+            inputs=inputs,
+            targets=targets,
+        )
+
+    def test_from_iterables_and_iterable_source(self):
+        input_ms = {
+            "train": [{"a": "1"}, {"b": "2"}, {"a": "3"}],
+            "test": [{"a": "4"}, {"c": "5"}, {"a": "6"}],
+        }
+
+        operator = FromIterables()
+        output_ms = operator.process(input_ms)
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
+        # IterableSource is a callable
+        operator = IterableSource(iterables=input_ms)
+        output_ms = operator()
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
+    def test_list_field_values(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "ab": [1, 2]},
+            {"a": 2, "b": 3, "ab": [2, 3]},
+        ]
+
+        check_operator(
+            operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_field_operator(self):
+        class ExpandJustForCoverage(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                pass
+
+        ExpandJustForCoverage(field_to_field={"from": "to"}).process_value(2)
+
+        class ExpandJustForCoverage2(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                return str(value).upper()
+
+        inputs = [
+            {"a": "imagine", "b": ["theres", "no", "heaven"]},
+            {"a": "imagine", "b": ["all", "the", "people"]},
+        ]
+
+        targets = [
+            {
+                "a": "imagine",
+                "b": ["theres", "no", "heaven"],
+                "B": ["THERES", "NO", "HEAVEN"],
+            },
+            {
+                "a": "imagine",
+                "b": ["all", "the", "people"],
+                "B": ["ALL", "THE", "PEOPLE"],
+            },
+        ]
+
+        check_operator(
+            operator=ExpandJustForCoverage2(
+                field_to_field=[["b", "B"]], process_every_value=True
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_flatten_instances(self):
@@ -80,7 +249,12 @@ class TestOperators(unittest.TestCase):
             {"a...b": 2},
         ]
 
-        test_operator(operator=FlattenInstances(sep="..."), inputs=inputs, targets=targets, tester=self)
+        check_operator(
+            operator=FlattenInstances(sep="..."),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -89,17 +263,19 @@ class TestOperators(unittest.TestCase):
             {"a": 1, "b": 3},
         ]
 
-        test_operator(
-            operator=FilterByValues(required_values={"a": 1, "b": 3}), inputs=inputs, targets=targets, tester=self
+        check_operator(
+            operator=FilterByValues(required_values={"a": 1, "b": 3}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=FilterByValues(required_values={"c": "5"}), inputs=inputs, targets=targets, tester=self
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}",
+        exception_text = "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}"
+        check_operator_exception(
+            operator=FilterByValues(required_values={"c": "5"}),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_filter_by_list_of_values(self):
@@ -114,28 +290,49 @@ class TestOperators(unittest.TestCase):
             {"a": 3, "b": 4},
         ]
 
-        test_operator(
-            operator=FilterByListsOfValues(required_values={"b": ["3", "4"]}),
+        check_operator(
+            operator=FilterByListsOfValues(required_values={"b": [3, 4]}),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=FilterByListsOfValues(required_values={"b": "5"}), inputs=inputs, targets=targets, tester=self
+            check_operator(
+                operator=FilterByListsOfValues(required_values={"b": "5"}),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
             )
-        self.assertEqual(str(cm.exception), "The filter for key ('b') in FilterByListsOfValues is not a list but '5'")
+        self.assertEqual(
+            str(cm.exception),
+            "The filter for key ('b') in FilterByListsOfValues is not a list but '5'",
+        )
 
         with self.assertRaises(ValueError) as cm:
-            test_operator(
+            check_operator(
                 operator=FilterByListsOfValues(required_values={"c": ["5"]}),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
-            str(cm.exception), "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}"
+            str(cm.exception),
+            "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}",
+        )
+
+    def test_filter_by_values_error_when_the_entire_stream_is_filtered(self):
+        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        with self.assertRaises(RuntimeError) as e:
+            check_operator(
+                operator=FilterByListsOfValues(required_values={"b": ["weird_value"]}),
+                inputs=inputs,
+                targets=[],
+                tester=self,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "FilterByListsOfValues filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
         )
 
     def test_intersect(self):
@@ -151,40 +348,44 @@ class TestOperators(unittest.TestCase):
             {"label": ["b", "f"]},
         ]
 
-        test_operator(
+        check_operator(
             operator=Intersect(field="label", allowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=Intersect(field="label", allowed_values=3), inputs=inputs, targets=targets, tester=self
-            )
-        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
-
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=Intersect(field="label", allowed_values=["3"], process_every_value=True),
+            check_operator(
+                operator=Intersect(field="label", allowed_values=3),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in Intersect operator")
+        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
-        inputs = [
-            {"label": "b"},
-        ]
         with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=Intersect(field="label", allowed_values=["c"]),
+            check_operator(
+                operator=Intersect(
+                    field="label", allowed_values=["3"], process_every_value=True
+                ),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
             str(cm.exception),
-            "Intersect: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+            "'process_every_value=True' is not supported in Intersect operator",
+        )
+
+        inputs = [
+            {"label": "b"},
+        ]
+        exception_text = "Error processing instance '0' from stream 'test' in Intersect due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        check_operator_exception(
+            operator=Intersect(field="label", allowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_remove_values(self):
@@ -200,52 +401,54 @@ class TestOperators(unittest.TestCase):
             {"label": []},
         ]
 
-        test_operator(
+        check_operator(
             operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label", unallowed_values=3), inputs=inputs, targets=targets, tester=self
-            )
-        self.assertEqual(str(cm.exception), "The unallowed_values is not a list but '3'")
-
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label", unallowed_values=["3"], process_every_value=True),
+            check_operator(
+                operator=RemoveValues(field="label", unallowed_values=3),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
-        self.assertEqual(str(cm.exception), "'process_every_value=True' is not supported in RemoveValues operator")
+        self.assertEqual(
+            str(cm.exception), "The unallowed_values is not a list but '3'"
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            check_operator(
+                operator=RemoveValues(
+                    field="label", unallowed_values=["3"], process_every_value=True
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "'process_every_value=True' is not supported in RemoveValues operator",
+        )
 
         inputs = [
             {"label": "b"},
         ]
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label", unallowed_values=["c"]),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "RemoveValues: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'",
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        check_operator_exception(
+            operator=RemoveValues(field="label", unallowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
-        with self.assertRaises(ValueError) as cm:
-            test_operator(
-                operator=RemoveValues(field="label2", unallowed_values=["c"]),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "RemoveValues: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}",
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        check_operator_exception(
+            operator=RemoveValues(field="label2", unallowed_values=["c"]),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
         )
 
     def test_apply_value_operators_field(self):
@@ -259,8 +462,10 @@ class TestOperators(unittest.TestCase):
             {"a": "222", "b": 3, "c": "processors.to_string"},
         ]
 
-        test_operator(
-            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
+        check_operator(
+            operator=ApplyOperatorsField(
+                inputs_fields=["a"], operators_field="c", default_operators=["add"]
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -277,7 +482,72 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 3, "c": 3},
         ]
 
-        test_operator(operator=AddFields(fields={"c": 3}), inputs=inputs, targets=targets, tester=self)
+        check_operator(
+            operator=AddFields(fields={"c": 3}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_add_fields_with_query(self):
+        inputs = [
+            {"a": {"a": 1, "b": 2}, "b": 2},
+            {"a": {"a": 2, "b": 3}, "b": 3},
+        ]
+
+        targets = [
+            {"a": {"a": 1, "b": 2, "c": 5}, "b": 2},
+            {"a": {"a": 2, "b": 3, "c": 5}, "b": 3},
+        ]
+
+        check_operator(
+            operator=AddFields(fields={"a/c": 5}, use_query=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_add_fields_with_deep_copy(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        alist = [4]
+
+        targets = [
+            {"a": 1, "b": 2, "c": [4]},
+            {"a": 2, "b": 3, "c": [4]},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(fields={"c": alist}, use_deepcopy=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        alist.append(5)
+
+        self.assertDictEqual(outputs[0], targets[0])
+
+        targets = [
+            {"a": 1, "b": 2, "c": {"d": [4, 5]}},
+            {"a": 2, "b": 3, "c": {"d": [4, 5]}},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(
+                fields={"c/d": alist}, use_deepcopy=True, use_query=True
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        alist.append(6)
+
+        self.assertDictEqual(outputs[0], targets[0])
 
     def test_remove_fields(self):
         inputs = [
@@ -290,7 +560,12 @@ class TestOperators(unittest.TestCase):
             {"a": 2},
         ]
 
-        test_operator(operator=RemoveFields(fields=["b"]), inputs=inputs, targets=targets, tester=self)
+        check_operator(
+            operator=RemoveFields(fields=["b"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_unique_on_single_field(self):
         inputs = [
@@ -332,7 +607,9 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "b": 4},
         ]
 
-        outputs = apply_operator(operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True)
+        outputs = apply_operator(
+            operator=SplitByValue(fields="a"), inputs=inputs, return_multi_stream=True
+        )
 
         self.assertSetEqual(set(outputs.keys()), {"test_1", "test_2"})
 
@@ -351,7 +628,11 @@ class TestOperators(unittest.TestCase):
     def test_merge(self):
         # Test with default params
         input_multi_stream = MultiStream(
-            {"test": [{"field": "test1"}], "validation": [{"field": "validation1"}], "train": [{"field": "train1"}]}
+            {
+                "test": [{"field": "test1"}],
+                "validation": [{"field": "validation1"}],
+                "train": [{"field": "train1"}],
+            }
         )
         output_multi_stream = MergeStreams()(input_multi_stream)
         self.assertListEqual(list(output_multi_stream.keys()), ["all"])
@@ -365,15 +646,672 @@ class TestOperators(unittest.TestCase):
 
         # test with parameters
         input_multi_stream = MultiStream(
-            {"test": [{"field": "test1"}], "validation": [{"field": "validation1"}], "train": [{"field": "train1"}]}
+            {
+                "test": [{"field": "test1"}],
+                "validation": [{"field": "validation1"}],
+                "train": [{"field": "train1"}],
+            }
         )
         output_multi_stream = MergeStreams(
-            streams_to_merge=["test", "train"], new_stream_name="merged", add_origin_stream_name=False
+            streams_to_merge=["test", "train"],
+            new_stream_name="merged",
+            add_origin_stream_name=False,
         )(input_multi_stream)
         self.assertListEqual(list(output_multi_stream.keys()), ["merged"])
         merged = list(output_multi_stream["merged"])
         expected_merged = [{"field": "test1"}, {"field": "train1"}]
         self.compare_streams(merged, expected_merged)
+
+    def test_extract_values(self):
+        input_multi_stream1 = MultiStream(
+            {
+                "test": [{"animal": "shark"}],
+                "validation": [{"animal": "cat"}],
+                "train": [
+                    {"animal": "fish"},
+                    {"animal": "dog"},
+                    {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "sheep"},
+                    {"animal": "cat"},
+                    {"animal": "fish"},
+                    {"animal": "shark"},
+                ],
+            }
+        )
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train",
+            field="animal",
+            to_field="most_common_animals",
+            overall_top_frequency_percent=80,
+        ).process(input_multi_stream1)
+        expected_output1 = {
+            "test": [
+                {"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]}
+            ],
+            "validation": [
+                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]}
+            ],
+            "train": [
+                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "sheep", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]},
+            ],
+        }
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+        # with minimum frequency limit
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train",
+            field="animal",
+            to_field="most_common_animals",
+            min_frequency_percent=25,
+        ).process(input_multi_stream1)
+        expected_output2 = {
+            "test": [{"animal": "shark", "most_common_animals": ["dog", "cat"]}],
+            "validation": [{"animal": "cat", "most_common_animals": ["dog", "cat"]}],
+            "train": [
+                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "sheep", "most_common_animals": ["dog", "cat"]},
+                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
+                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
+                {"animal": "shark", "most_common_animals": ["dog", "cat"]},
+            ],
+        }
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output2,
+            "expected to see: \n"
+            + json.dumps(expected_output2)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+        # with list values
+        input_multi_stream2 = MultiStream(
+            {
+                "test": [{"field": ["a", "b", "c"]}],
+                "validation": [{"field": ["d", "e", "f"]}],
+                "train": [
+                    # Individual value members and their overall frequency, in train:
+                    # h: 6
+                    # m: 6
+                    # j: 3
+                    # i: 3
+                    # k: 3
+                    # o: 3
+                    # p: 3
+                    # q: 2
+                    # r: 2
+                    # s: 2
+                    # t: 1
+                    # u:1
+                    # v:1
+                    # Tuples in train:
+                    # ["h", "i", "j"] : 3
+                    # ["k", "h", "m"]: 3
+                    # ["m", "o", "p"] : 3
+                    # ["q", "r", "s"] : 2
+                    # ["t","u","v"] : 1
+                    {"field": ["t", "u", "v"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["k", "h", "m"]},
+                    {"field": ["m", "o", "p"]},
+                    {"field": ["m", "o", "p"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["k", "h", "m"]},
+                    {"field": ["h", "i", "j"]},
+                    {"field": ["q", "r", "s"]},
+                    {"field": ["k", "h", "m"]},
+                    {"field": ["m", "o", "p"]},
+                ],
+            }
+        )
+        # with lists, treated as single elements
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train",
+            field="field",
+            to_field="most_common_lists",
+            overall_top_frequency_percent=90,
+            process_every_value=False,
+        ).process(input_multi_stream2)
+
+        expected_output3 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                },
+            ],
+        }
+
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output3,
+            "expected to see: \n"
+            + json.dumps(expected_output3)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+
+        # finally, with lists and with process_every_value=True
+        output_multi_stream = ExtractFieldValues(
+            stream_name="train",
+            field="field",
+            to_field="most_common_individuals",
+            overall_top_frequency_percent=90,
+            process_every_value=True,
+        ).process(input_multi_stream2)
+
+        expected_output4 = {
+            "test": [
+                {
+                    "field": ["a", "b", "c"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                }
+            ],
+            "validation": [
+                {
+                    "field": ["d", "e", "f"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                }
+            ],
+            "train": [
+                {
+                    "field": ["t", "u", "v"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["h", "i", "j"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["q", "r", "s"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["k", "h", "m"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+                {
+                    "field": ["m", "o", "p"],
+                    "most_common_lists": [
+                        ["h", "i", "j"],
+                        ["k", "h", "m"],
+                        ["m", "o", "p"],
+                        ["q", "r", "s"],
+                    ],
+                    "most_common_individuals": [
+                        "h",
+                        "m",
+                        "i",
+                        "j",
+                        "k",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                    ],
+                },
+            ],
+        }
+        self.assertDictEqual(
+            output_multi_stream,
+            expected_output4,
+            "expected to see: \n"
+            + json.dumps(expected_output4)
+            + "\n but instead, received: \n"
+            + json.dumps(output_multi_stream),
+        )
+
+        with self.assertRaises(ValueError):
+            output_multi_stream = ExtractFieldValues(
+                stream_name="train",
+                field="animal",
+                to_field="most_common_individuals",
+                overall_top_frequency_percent=90,
+                process_every_value=True,
+            ).process(input_multi_stream1)
+
+        with self.assertRaises(AssertionError):
+            output_multi_stream = ExtractFieldValues(
+                stream_name="train",
+                field="animal",
+                to_field="most_common_individuals",
+                overall_top_frequency_percent=90,
+                min_frequency_percent=25,
+            ).process(input_multi_stream1)
+        with self.assertRaises(AssertionError):
+            output_multi_stream = ExtractFieldValues(
+                stream_name="train",
+                field="animal",
+                to_field="most_common_individuals",
+                overall_top_frequency_percent=120,
+            ).process(input_multi_stream1)
+        with self.assertRaises(AssertionError):
+            output_multi_stream = ExtractFieldValues(
+                stream_name="train",
+                field="animal",
+                to_field="most_common_individuals",
+                min_frequency_percent=-2,
+            ).process(input_multi_stream1)
+
+    def test_apply(self):
+        in_instance = {"a": "lower"}
+        operator = Apply("a", function=str.upper, to_field="b")
+        st_from_upper = operator.function_to_str(str.upper)
+        self.assertEqual(st_from_upper, "str.upper")
+        upper_from_st = operator.str_to_function(st_from_upper)
+        self.assertEqual("UPPER", upper_from_st("upper"))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": "lower", "b": "LOWER"})
+
+        in_instance = {"a": ["input", "list"]}
+        operator = Apply("a", function="tuple", to_field="b")
+        st_from_tuple = operator.function_to_str(tuple)
+        self.assertEqual(st_from_tuple, "builtins.tuple")
+        tuple_from_st = operator.str_to_function("tuple")
+        self.assertEqual((1, 2, 3), tuple_from_st([1, 2, 3]))
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(
+            out_instance, {"a": ["input", "list"], "b": ("input", "list")}
+        )
 
     def test_shuffle(self):
         inputs = [{"a": i} for i in range(15)]
@@ -384,7 +1322,7 @@ class TestOperators(unittest.TestCase):
         outputs = [instance["a"] for instance in outputs]
 
         self.assertNotEqual(inputs, outputs)
-        self.assertSetEqual(set(inputs), set(outputs))
+        self.assertListEqual(sorted(inputs), sorted(outputs))
 
         # test no mixing between pages:
         page_1_inputs = inputs[:10]
@@ -392,14 +1330,25 @@ class TestOperators(unittest.TestCase):
         page_1_outputs = outputs[:10]
         page_2_outputs = outputs[10:]
 
-        self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
-        self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
+        self.assertListEqual(sorted(page_1_inputs), sorted(page_1_outputs))
+        self.assertListEqual(sorted(page_2_inputs), sorted(page_2_outputs))
 
-        inputs_outputs_intersection = set(page_1_inputs).intersection(set(page_2_outputs))
+        inputs_outputs_intersection = set(page_1_inputs).intersection(
+            set(page_2_outputs)
+        )
         self.assertSetEqual(inputs_outputs_intersection, set())
 
-        inputs_outputs_intersection = set(page_2_inputs).intersection(set(page_1_outputs))
+        inputs_outputs_intersection = set(page_2_inputs).intersection(
+            set(page_1_outputs)
+        )
         self.assertSetEqual(inputs_outputs_intersection, set())
+
+    def test_shuffle_field_value(self):
+        operator = ShuffleFieldValues([["from", "to"]])
+        in_list = [1, 2, 3, 4, 5, 6, 7, 8]
+        out_list = operator.process_value(in_list)
+        self.assertEqual(sorted(out_list), in_list)
+        self.assertNotEqual(out_list, in_list)
 
     def test_cast_fields(self):
         inputs = [
@@ -412,8 +1361,10 @@ class TestOperators(unittest.TestCase):
             {"a": 0.0, "b": 0},
         ]
 
-        test_operator(
-            operator=CastFields(fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}),
+        check_operator(
+            operator=CastFields(
+                fields={"a": "float", "b": "int"}, failure_defaults={"a": 0.0, "b": 0}
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -426,7 +1377,9 @@ class TestOperators(unittest.TestCase):
         ]
 
         with self.assertRaises(ValueError):
-            outputs = apply_operator(operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs)
+            apply_operator(
+                operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs
+            )
 
     def test_rename_fields(self):
         inputs = [
@@ -439,7 +1392,88 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
-        test_operator(operator=RenameFields(field_to_field={"b": "c"}), inputs=inputs, targets=targets, tester=self)
+        # the simplest case
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "c"}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # target field is structured:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field, source field is deeper:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}, "d": 2}},
+                {"a": 2, "b": {"c": {"f": 30}, "d": 3}},
+            ],
+            tester=self,
+        )
+
+        # target field is structured, source field is structured too, different fields:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}}, "g": {"h": 2}},
+                {"a": 2, "b": {"c": {"f": 30}}, "g": {"h": 3}},
+            ],
+            tester=self,
+        )
+
+        # both source and target are structured, different only in the middle of the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+    def test_add(self):
+        check_operator(
+            operator=AddConstant(field_to_field=[["a", "b"]], add=5),
+            inputs=[{"a": 1}],
+            targets=[{"a": 1, "b": 6}],
+            tester=self,
+        )
+
+        check_operator(
+            operator=AddConstant(
+                field_to_field=[["a", "b"]], add=5, process_every_value=True
+            ),
+            inputs=[{"a": [1, 2, 3]}],
+            targets=[{"a": [1, 2, 3], "b": [6, 7, 8]}],
+            tester=self,
+        )
 
     def test_copy_paste_fields(self):
         inputs = [
@@ -449,7 +1483,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": 1}, {"a": 2}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -464,7 +1498,7 @@ class TestOperators(unittest.TestCase):
 
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-        test_operator(
+        check_operator(
             operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
             inputs=inputs,
             targets=targets,
@@ -484,8 +1518,11 @@ class TestOperators(unittest.TestCase):
             {"prediction": 2, "references": [0]},
         ]
 
-        test_operator(
-            operator=EncodeLabels(fields=["prediction", "references/*"]), inputs=inputs, targets=targets, tester=self
+        check_operator(
+            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_join_str(self):
@@ -499,27 +1536,55 @@ class TestOperators(unittest.TestCase):
             {"a": [2, 4], "b": "2,4"},
         ]
 
-        test_operator(
-            operator=JoinStr(field_to_field={"a": "b"}, separator=","), inputs=inputs, targets=targets, tester=self
+        check_operator(
+            operator=JoinStr(field_to_field={"a": "b"}, separator=","),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
 
     def test_zip_fields(self):
         inputs = [
-            {"a": [1, 3], "b": [1, 3]},
-            {"a": [2, 4], "b": [2, 4]},
+            {"a": [1, 3, 5], "b": [1, 3]},
+            {"a": [2, 4, 6], "b": [2, 4]},
         ]
 
         targets = [
-            {"a": [1, 3], "b": [1, 3], "c": [(1, 1), (3, 3)]},
-            {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4)]},
         ]
 
-        test_operator(
+        targets_longest = [
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3), (5, None)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4), (6, None)]},
+        ]
+
+        check_operator(
             operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
+
+        check_operator(
+            operator=ZipFieldValues(
+                fields=["a", "b"], to_field="c", use_query=True, longest=True
+            ),
+            inputs=inputs,
+            targets=targets_longest,
+            tester=self,
+        )
+
+    def test_index_of(self):
+        operator = IndexOf(
+            search_in="field_text", index_of="field_pattern", to_field="index"
+        )
+        in_instance = {
+            "field_text": "the long story I was telling to everyone.",
+            "field_pattern": "telling to",
+        }
+        out_instance = operator.process(in_instance)
+        self.assertEqual(out_instance["index"], 21)
 
     def test_take_by_field(self):
         inputs = [
@@ -532,17 +1597,27 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "c": 1},
         ]
 
-        test_operator(
+        check_operator(
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
+        # field plays the role of to_field
+        check_operator(
+            operator=TakeByField(field="a", index="b", use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": 0}, {"a": 1, "b": "a"}],
+            tester=self,
+        )
+
     def test_stream_refiner(self):
         refiner = StreamRefiner()
 
-        ms = MultiStream.from_iterables({"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True)
+        ms = MultiStream.from_iterables(
+            {"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True
+        )
 
         refiner.apply_to_streams = ["train"]
         refiner.max_instances = 1
@@ -560,7 +1635,7 @@ class TestOperators(unittest.TestCase):
 
         targets = []
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -579,7 +1654,7 @@ class TestOperators(unittest.TestCase):
             {"a": {"a": 1}, "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=DeterministicBalancer(fields=["a", "b"]),
             inputs=inputs,
             targets=targets,
@@ -598,7 +1673,7 @@ class TestOperators(unittest.TestCase):
             {"a": [], "b": "a", "id": 2},
         ]
 
-        test_operator(
+        check_operator(
             operator=LengthBalancer(fields=["a"], segments_boundaries=[1]),
             inputs=inputs,
             targets=targets,
@@ -611,7 +1686,9 @@ class TestOperators(unittest.TestCase):
 
         operator = AugmentWhitespace(augment_model_input=True)
         outputs = apply_operator(operator, inputs)
-        assert outputs[0]["source"] != source, f"Source of f{outputs} is equal to f{source} and was not augmented"
+        assert (
+            outputs[0]["source"] != source
+        ), f"Source of f{outputs} is equal to f{source} and was not augmented"
         normalized_output_source = outputs[0]["source"].split()
         normalized_input_source = source.split()
         assert (
@@ -624,7 +1701,7 @@ class TestOperators(unittest.TestCase):
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["sentence"])
         with self.assertRaises(ValueError):
-            outputs = apply_operator(operator, inputs)
+            apply_operator(operator, inputs)
 
     def test_augment_whitespace_task_input(self):
         text = "The dog ate my cat"
@@ -637,3 +1714,255 @@ class TestOperators(unittest.TestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_augment_whitespace_with_none_text_error(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        check_operator_exception(
+            operator,
+            inputs,
+            tester=self,
+            exception_text=exception_text,
+        )
+
+    def test_augment_suffix_model_input(self):
+        source = "She is riding a black horse\t\t  "
+        inputs = [{"source": source}]
+        suffixes = [
+            "Q",
+            "R",
+            "S",
+            "T",
+        ]  # none at ending of source, when stripped on right from its white spaces
+
+        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixes)
+        outputs = apply_operator(operator, inputs)
+        assert (
+            outputs[0]["source"] != source
+        ), f"Source of f{outputs} is equal to f{source} and was not augmented"
+        output0 = str(outputs[0]["source"]).rstrip("".join(suffixes))
+        assert (
+            output0 == source[: len(output0)]
+        ), f"the prefix of {outputs[0]['source']} is not equal to {source}"
+        assert (
+            "\t\t " in output0
+        ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_trailing_whitespaces' is False,"
+        # weighted suffixes
+        suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 8}
+        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixes_dict)
+        outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
+        assert (
+            len(outputs) == 500
+        ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
+        actual_suffixes = [output["source"][-1] for output in outputs]
+        counter = Counter(actual_suffixes)
+        assert (
+            counter["T"] > 125
+        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
+
+        # just for code coverage of Augmentor.process_value and Augmentor.process
+        class JustToCoverProcessValueOfAugmentor(Augmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def process(self, instance: Dict[str, Any]) -> Dict[str, Any]:
+                return super().process(instance)
+
+        operator = JustToCoverProcessValueOfAugmentor(augment_model_input=True)
+        self.assertEqual(5, operator.process_value(5))
+        with self.assertRaises(TypeError):
+            operator.process({"not_source": "just to raise exception"})
+
+        class JustToCoverProcessValueVerifyOfNullAugmentor(NullAugmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def verify(self):
+                super().verify()
+
+        operator = JustToCoverProcessValueVerifyOfNullAugmentor(
+            augment_model_input=True
+        )
+        self.assertEqual(5, operator.process_value(5))
+        operator.verify()
+
+    def test_augment_suffix_task_input_with_error(self):
+        text = "She is riding a black horse\t\t  "
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator.set_task_input_fields(["sentence"])
+        with self.assertRaises(ValueError) as ve:
+            apply_operator(operator, inputs)
+        self.assertEqual(
+            str(ve.exception),
+            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+        )
+
+    def test_augment_suffix_task_input(self):
+        text = "She is riding a black horse  \t\t  "
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(
+            augment_task_input=True,
+            suffixes=suffixes,
+            remove_existing_trailing_whitespaces=True,
+        )
+        operator.set_task_input_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        output0 = str(outputs[0]["inputs"]["text"]).rstrip("".join(suffixes))
+        assert (
+            " \t\t " not in output0
+        ), f"Trailing whitespaces should have been removed, but still found in the output: {output0}"
+        assert (
+            output0 == text[: len(output0)]
+        ), f"the prefix of {outputs[0]['inputs']['text']!s} is not equal to the prefix of {text}"
+
+    def test_augment_suffix_with_non_string_suffixes_error(self):
+        suffixes = [1, 2, "S", "T"]
+        with self.assertRaises(AssertionError) as ae:
+            AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        self.assertEqual(
+            str(ae.exception),
+            "suffixes should be a list of strings, whereas member 1 is of type <class 'int'>",
+        )
+
+    def test_augment_suffix_with_none_input_error(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        suffixes = ["Q", "R", "S", "T"]
+        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        check_operator_exception(
+            operator,
+            inputs,
+            tester=self,
+            exception_text=exception_text,
+        )
+
+    def test_list_field_values2(self):
+        in_instance = {"a": 1, "b": 2, "c": 3}
+        operator = ListFieldValues(fields=["a", "b"], to_field="ab")
+        out_instance = operator.process(in_instance)
+        self.assertDictEqual(out_instance, {"a": 1, "b": 2, "c": 3, "ab": [1, 2]})
+
+    def test_test_operator_without_tester_param(self):
+        text = None
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+
+        check_operator_exception(
+            operator,
+            inputs,
+            exception_text=exception_text,
+        )
+
+    def test_test_operator_unexpected_pass(self):
+        text = "Should be ok"
+        inputs = [{"inputs": {"text": text}}]
+        operator = AugmentWhitespace(augment_task_input=True)
+        operator.set_task_input_fields(["text"])
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+
+        try:
+            check_operator_exception(
+                operator,
+                inputs,
+                exception_text=exception_text,
+            )
+        except Exception as e:
+            self.assertEqual(
+                str(e),
+                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+            )
+
+
+class TestApplyMetric(unittest.TestCase):
+    def _test_apply_metric(
+        self,
+        metrics,
+        expected_score_name,
+        expected_score_value,
+        calc_confidence_intervals=False,
+    ):
+        inputs = [
+            {"prediction": "0", "references": ["1"], "metrics": metrics},
+            {"prediction": "1", "references": ["1"], "metrics": metrics},
+            {"prediction": "0", "references": ["2"], "metrics": metrics},
+            {"prediction": "0", "references": ["0"], "metrics": metrics},
+        ]
+        output = apply_operator(
+            operator=ApplyMetric(
+                metric_field="metrics",
+                calc_confidence_intervals=calc_confidence_intervals,
+            ),
+            inputs=inputs,
+        )
+        global_metric_result = output[0]["score"]["global"]
+        self.assertEqual(global_metric_result["score"], expected_score_value)
+        self.assertEqual(global_metric_result["score_name"], expected_score_name)
+        self.assertEqual(
+            global_metric_result[expected_score_name], expected_score_value
+        )
+        self.assertEqual(
+            "score_ci_low" in global_metric_result, calc_confidence_intervals
+        )
+        self.assertEqual(
+            "score_ci_high" in global_metric_result, calc_confidence_intervals
+        )
+        return global_metric_result
+
+    def test_apply_metric_with_empty_metric(self):
+        """Test applying a metric for one metric, given as a string."""
+        try:
+            self._test_apply_metric(
+                metrics="", expected_score_name="accuracy", expected_score_value=0.5
+            )
+        except Exception as e:
+            self.assertEqual(
+                str(e),
+                "Missing metric names in field 'metrics' and instance '{'prediction': '0', 'references': ['1'], 'metrics': ''}'.",
+            )
+
+    def test_apply_metric_with_single_string_metric(self):
+        """Test applying a metric for one metric, given as a string."""
+        self._test_apply_metric(
+            metrics="metrics.accuracy",
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+
+    def test_apply_metric_with_confience_intervals(self):
+        """Test applying a metric for one metric, given as a string."""
+        self._test_apply_metric(
+            metrics="metrics.accuracy",
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+            calc_confidence_intervals=True,
+        )
+
+    def test_apply_metric_with_a_metric_pipeline_and_no_confidence_intervals(self):
+        """Test applying a metric for one metric, given as a string.
+
+        The metric here is a MetricPipeline.
+        """
+        self._test_apply_metric(
+            metrics="metrics.squad", expected_score_name="f1", expected_score_value=0.5
+        )
+
+    def test_apply_metric_with_two_metrics_and_no_confidence_intervals(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=["metrics.accuracy", "metrics.f1_macro"],
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+        # check that the second score is present too
+        self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)

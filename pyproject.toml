@@ -1,25 +1,91 @@
-[tool.black]
-line-length = 119
-target-version = ['py37']
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
 
-[tool.isort]
-profile = "black"
-extend_skip_glob = ["venv"]
-src_paths = ["isort", "test"]
-skip = ["src/unitxt/dataset.py", "src/unitxt/metric.py"]
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint.per-file-ignores]
+"src/unitxt/__init__.py" = ["F811", "F401"]
+"src/unitxt/metric.py" = ["F811", "F401"]
+"src/unitxt/dataset.py" = ["F811", "F401"]
+"src/unitxt/blocks.py" = ["F811", "F401"]
+"tests/test_loaders.py" = ["N802", "N803"]
+"tests/test_dataclass.py" = ["F811"]
+"src/unitxt/validate.py" = ["B024"]
+"src/unitxt/renderers.py" = ["B024"]
+"src/unitxt/type_utils.py" = ["C901"]
+"src/unitxt/dataclass.py" = ["C901"]
+"src/unitxt/operators.py" = ["C901"]
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+extend-select = [
+  "UP",  # pyupgrade
+  "D",   # pydocstyle
+  "F", # pyflakes
+  "E", # pycodestyle
+  "B", # bugbear
+  "C", # mccabe
+  "R", # flake8-rst-docstrings
+  "T", # flake8-typing-imports
+  "W", # pycodestyle-wordlist
+  "M", # flake8-mypy
+  "I", # isort
+  "G", # flake8-bugbear
+  "N", # PEP8 Naming
+  "Q", # flake8-quotes
+  "RUF" # ruff
+]
+ignore = ["E501", "E203", "E722", "D101", "D102", "D103", "D100", "D104", "D105", "D106", "D107", "RUF012", "G004"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

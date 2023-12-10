@@ -4,7 +4,7 @@ import unittest
 
 from src.unitxt.operators import Apply
 from src.unitxt.stream import Stream
-from src.unitxt.test_utils.operators import apply_operator, test_operator
+from src.unitxt.test_utils.operators import apply_operator
 
 
 class TestStreamCaching(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestStreamCaching(unittest.TestCase):
             caching=False,
         )
 
-        self.assertNotEqual(list(stream)[0]["x"], list(stream)[0]["x"])
+        self.assertNotEqual(next(iter(stream))["x"], next(iter(stream))["x"])
 
     def test_caching_stream(self):
         def generator():
@@ -28,7 +28,7 @@ class TestStreamCaching(unittest.TestCase):
             caching=True,
         )
 
-        self.assertEqual(list(stream)[0]["x"], list(stream)[0]["x"])
+        self.assertEqual(next(iter(stream))["x"], next(iter(stream))["x"])
 
     def test_operator_not_caching(self):
         operator = Apply(function=time.time, to_field="b", caching=False)
@@ -52,6 +52,6 @@ class TestStreamCaching(unittest.TestCase):
             {"a": "b"},
         ]
 
-        targets = apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
+        apply_operator(operator=operator, inputs=copy.deepcopy(inputs))
 
-        # test_operator(operator=operator, inputs=copy.deepcopy(inputs), targets=targets, tester=self)
+        # check_operator(operator=operator, inputs=copy.deepcopy(inputs), targets=targets, tester=self)
