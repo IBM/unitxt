@@ -292,11 +292,12 @@ class FieldOperator(StreamInstanceOperator):
         if len(self._field_to_field) == 1:
             return
         for ind in range(len(self._field_to_field)):
-            assert (
-                self._field_to_field[ind][0]
-                not in [t for _, t in self._field_to_field[:ind]]
-                + [t for _, t in self._field_to_field[ind + 1 :]]
-            ), f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+            if self._field_to_field[ind][0] in [
+                t for _, t in self._field_to_field[:ind]
+            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
+                raise ValueError(
+                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+                )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
