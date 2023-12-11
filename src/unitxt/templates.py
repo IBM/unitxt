@@ -336,7 +336,7 @@ class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
                 groups[label] = []
             groups[label].append(span)
         if len(groups) > 0:
-            targets = [json.dumps(groups)]
+            targets = [json.dumps(groups, ensure_ascii=False)]
         else:
             targets = []
         return targets

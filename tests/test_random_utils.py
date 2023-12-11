@@ -1,11 +1,23 @@
 import random as python_random
 import unittest
 
-from src.unitxt.random_utils import __default_seed__, get_random, nested_seed, set_seed
+from src.unitxt.random_utils import (
+    __default_seed__,
+    get_random,
+    get_sub_default_random_generator,
+    nested_seed,
+    set_seed,
+)
 
 
 def first_randomization():
-    return tuple(get_random().randint(0, 10000000000000000000000) for _ in range(100))
+    return randomize(get_random())
+
+
+def randomize(random_generator):
+    return tuple(
+        random_generator.randint(0, 10000000000000000000000) for _ in range(100)
+    )
 
 
 class TestRandomUtils(unittest.TestCase):
@@ -28,6 +40,21 @@ class TestRandomUtils(unittest.TestCase):
             b = first_randomization()
 
         self.assertNotEqual(a, b)
+
+    def compare_get_sub_default_random_generator_with_same_seed(self, sub_seed: str):
+        rand1 = get_sub_default_random_generator(sub_seed=sub_seed)
+        rand2 = get_sub_default_random_generator(sub_seed=sub_seed)
+        self.assertEqual(randomize(rand1), randomize(rand2))
+
+    def test_get_sub_default_random_generator(self):
+        self.compare_get_sub_default_random_generator_with_same_seed(sub_seed="a")
+        with nested_seed():
+            self.compare_get_sub_default_random_generator_with_same_seed(sub_seed="b")
+        with nested_seed():
+            with nested_seed():
+                self.compare_get_sub_default_random_generator_with_same_seed(
+                    sub_seed="c"
+                )
 
     def test_nested_level_similarity(self):
         with nested_seed():
