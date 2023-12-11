@@ -264,10 +264,10 @@ class TestRecipes(unittest.TestCase):
         stream = recipe()
         sample = list(stream["test"])[1]
         source = sample["source"]
-        pattern = "Classify the sentiment of following sentence to one of these options: negative, positive. Text: (.*)"
+        pattern = "Classify the sentiment of following sentence to one of these options: ((negative, positive)|(positive, negative)). Text: (.*)"
         result = re.match(pattern, sample["source"], re.DOTALL)
         assert result, f"Unable to find '{pattern}' in '{source}'"
-        result = result.group(1)
+        result = result.group(4)
         original_text = "unflinchingly bleak and desperate "
         assert (
             result != original_text
