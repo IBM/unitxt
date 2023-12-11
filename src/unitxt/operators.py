@@ -1025,6 +1025,21 @@ class FilterByValues(SingleStreamOperator):
                 yield instance
 
 
+class AddFieldValues(SingleStreamOperator):
+    """Adds fields and their values to all instances of a stream.
+
+    Args: fields_values : the fields and their respective vaulues to add to each instance in the stream
+    """
+
+    fields_values: Dict[str, Any]
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        for instance in stream:
+            for f, v in self.fields_values.items():
+                instance[f] = v
+            yield instance
+
+
 class ExtractFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
@@ -1121,13 +1136,18 @@ class ExtractFieldValues(MultiStreamOperator):
             [*ele[0]] if isinstance(ele[0], tuple) else ele[0]
             for ele in values_and_counts
         ]
-        add_field_operator = AddFields(
-            fields={self.to_field: values_to_keep}, use_query=False, use_deepcopy=True
+
+        multi_stream_to_return = {}
+        addmostcommon_stream_operator = AddFieldValues(
+            fields_values={self.to_field: values_to_keep}
         )
-        for name in multi_stream:
-            for instance in multi_stream[name]:
-                add_field_operator.process(instance)
-        return multi_stream
+        for stream_name, stream in multi_stream.items():
+            updated_stream = addmostcommon_stream_operator._process_single_stream(
+                stream
+            )
+            multi_stream_to_return[stream_name] = updated_stream
+
+        return MultiStream(multi_stream_to_return)
 
 
 class FilterByListsOfValues(SingleStreamOperator):

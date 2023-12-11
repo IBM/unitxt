@@ -687,6 +687,9 @@ class TestOperators(unittest.TestCase):
             to_field="most_common_animals1",
             overall_top_frequency_percent=80,
         ).process(input_multi_stream1)
+        output_for_comparison1 = {}
+        for k, v in output_multi_stream1.items():
+            output_for_comparison1[k] = list(v)
         expected_output1 = {
             "test": [
                 {"animal": "shark", "most_common_animals1": ["dog", "cat", "fish"]}
@@ -708,12 +711,12 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream1,
+            output_for_comparison1,
             expected_output1,
             "expected to see: \n"
             + json.dumps(expected_output1)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream1),
+            + json.dumps(output_for_comparison1),
         )
         # with minimum frequency limit
         output_multi_stream2 = ExtractFieldValues(
@@ -722,6 +725,9 @@ class TestOperators(unittest.TestCase):
             to_field="most_common_animals2",
             min_frequency_percent=25,
         ).process(input_multi_stream1)
+        output_for_comparison2 = {}
+        for k, v in output_multi_stream2.items():
+            output_for_comparison2[k] = list(v)
         expected_output2 = {
             "test": [
                 {
@@ -791,12 +797,12 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream2,
+            output_for_comparison2,
             expected_output2,
             "expected to see: \n"
             + json.dumps(expected_output2)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream2),
+            + json.dumps(output_for_comparison2),
         )
         # with list values
         input_multi_stream2 = MultiStream(
@@ -847,7 +853,9 @@ class TestOperators(unittest.TestCase):
             overall_top_frequency_percent=90,
             process_every_value=False,
         ).process(input_multi_stream2)
-
+        output_for_comparison3 = {}
+        for k, v in output_multi_stream3.items():
+            output_for_comparison3[k] = list(v)
         expected_output3 = {
             "test": [
                 {
@@ -984,12 +992,12 @@ class TestOperators(unittest.TestCase):
         }
 
         self.assertDictEqual(
-            output_multi_stream3,
+            output_for_comparison3,
             expected_output3,
             "expected to see: \n"
             + json.dumps(expected_output3)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream3),
+            + json.dumps(output_for_comparison3),
         )
 
         # finally, with lists and with process_every_value=True
@@ -1000,7 +1008,9 @@ class TestOperators(unittest.TestCase):
             overall_top_frequency_percent=90,
             process_every_value=True,
         ).process(input_multi_stream2)
-
+        output_for_comparison4 = {}
+        for k, v in output_multi_stream4.items():
+            output_for_comparison4[k] = list(v)
         expected_output4 = {
             "test": [
                 {
@@ -1304,12 +1314,12 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream4,
+            output_for_comparison4,
             expected_output4,
             "expected to see: \n"
             + json.dumps(expected_output4)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream4),
+            + json.dumps(output_for_comparison4),
         )
         # test error cases
         with self.assertRaises(ValueError):
