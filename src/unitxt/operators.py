@@ -612,27 +612,29 @@ class AugmentPrefixSuffix(Augmentor):
     def prepare(self):
         # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
         self.verify()
-        self._prefixes = {"length": self.prefix_len}
-        self._suffixes = {"length": self.suffix_len}
+        self._prefix_pattern_distribution = {"length": self.prefix_len}
+        self._suffix_pattern_distribution = {"length": self.suffix_len}
 
         (
-            self._prefixes["patterns"],
-            self._prefixes["weights"],
+            self._prefix_pattern_distribution["patterns"],
+            self._prefix_pattern_distribution["weights"],
         ) = self._calculate_distributions(self.prefixes)
         (
-            self._suffixes["patterns"],
-            self._suffixes["weights"],
+            self._suffix_pattern_distribution["patterns"],
+            self._suffix_pattern_distribution["weights"],
         ) = self._calculate_distributions(self.suffixes)
         super().prepare()
 
-    def _get_random_pattern(self, _prefs_or_suffs) -> str:
+    def _get_random_pattern(self, pattern_distribution) -> str:
         string_to_add = ""
-        if _prefs_or_suffs["patterns"]:
+        if pattern_distribution["patterns"]:
             string_to_add = "".join(
                 get_random().choices(
-                    _prefs_or_suffs["patterns"], _prefs_or_suffs["weights"], k=1
+                    pattern_distribution["patterns"],
+                    pattern_distribution["weights"],
+                    k=1,
                 )
-                * _prefs_or_suffs["length"]
+                * pattern_distribution["length"]
             )
         return string_to_add
 
@@ -641,8 +643,8 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        prefix = self._get_random_pattern(self._prefixes)
-        suffix = self._get_random_pattern(self._suffixes)
+        prefix = self._get_random_pattern(self._prefix_pattern_distribution)
+        suffix = self._get_random_pattern(self._suffix_pattern_distribution)
         return prefix + new_value + suffix
 
 
