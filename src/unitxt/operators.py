@@ -575,11 +575,7 @@ class AugmentPrefixSuffix(Augmentor):
             [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
         ):
             assert (
-                arg is None
-                or isinstance(arg, list)
-                and isoftype(arg, List[str])
-                or isinstance(arg, dict)
-                and isoftype(arg, Dict[str, int])
+                arg is None or isoftype(arg, List[str]) or isoftype(arg, Dict[str, int])
             ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
         assert (
             self.prefix_len > 0
