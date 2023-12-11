@@ -1,6 +1,5 @@
-import logging
-
 from src.unitxt import add_to_catalog
+from src.unitxt.logging import get_logger
 from src.unitxt.processors import (
     FirstCharacter,
     LowerCase,
@@ -9,6 +8,7 @@ from src.unitxt.processors import (
     TakeFirstNonEmptyLine,
 )
 
+logger = get_logger()
 operator = TakeFirstNonEmptyLine()
 
 add_to_catalog(operator, "processors.take_first_non_empty_line", overwrite=True)
@@ -33,12 +33,12 @@ parser = FirstCharacter()
 
 example = " A. This is the answer."
 
-logging.info(parser.process(example))
+logger.info(parser.process(example))
 assert parser.process(example) == "A"
 
 example = "   "
 
-logging.info(parser.process(example))
+logger.info(parser.process(example))
 assert parser.process(example) == ""
 
 add_to_catalog(parser, "processors.first_character", overwrite=True)

@@ -1,4 +1,3 @@
-import logging
 import os
 import tempfile
 import unittest
@@ -8,6 +7,9 @@ import ibm_boto3
 import pandas as pd
 
 from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
+from src.unitxt.logging import get_logger
+
+logger = get_logger()
 
 
 class DummyBody:
@@ -22,7 +24,7 @@ class DummyObject:
 class DummyBucket:
     def download_file(self, item_name, local_file, Callback):
         with open(local_file, "w") as f:
-            logging.info(local_file)
+            logger.info(local_file)
             f.write("a,b\n")
             f.write("1,2\n")
 

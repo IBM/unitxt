@@ -75,9 +75,13 @@ class StreamSource(StreamingOperator):
 class SourceOperator(StreamSource):
     """A class representing a source operator in the streaming system.
 
-    A source operator is responsible for generating the data stream from some source, such as a database or a file. This is the starting point of a stream processing pipeline. The `SourceOperator` class is a type of `StreamSource`, which is a special type of `StreamingOperator` that generates an output stream but does not take any input streams.
+    A source operator is responsible for generating the data stream from some source, such as a database or a file.
+    This is the starting point of a stream processing pipeline.
+    The `SourceOperator` class is a type of `StreamSource`, which is a special type of `StreamingOperator`
+    that generates an output stream but does not take any input streams.
 
-    When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses to generate the required `MultiStream`.
+    When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses
+    to generate the required `MultiStream`.
 
     """
 
@@ -150,7 +154,12 @@ class MultiStreamOperator(StreamingOperator):
 class SingleStreamOperator(MultiStreamOperator):
     """A class representing a single-stream operator in the streaming system.
 
-    A single-stream operator is a type of `MultiStreamOperator` that operates on individual `Stream` objects within a `MultiStream`. It iterates through each `Stream` in the `MultiStream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each `Stream`.
+    A single-stream operator is a type of `MultiStreamOperator` that operates on individual
+    `Stream` objects within a `MultiStream`. It iterates through each `Stream` in the `MultiStream`
+    and applies the `process` method.
+    The `process` method should be implemented by subclasses to define the specific operations
+    to be performed on each `Stream`.
+
     """
 
     apply_to_streams: List[str] = NonPositionalField(
@@ -211,7 +220,13 @@ class SingleStreamOperator(MultiStreamOperator):
 class PagedStreamOperator(SingleStreamOperator):
     """A class representing a paged-stream operator in the streaming system.
 
-    A paged-stream operator is a type of `SingleStreamOperator` that operates on a page of instances in a `Stream` at a time, where a page is a subset of instances. The `process` method should be implemented by subclasses to define the specific operations to be performed on each page.
+    A paged-stream operator is a type of `SingleStreamOperator` that operates on a page of instances
+    in a `Stream` at a time, where a page is a subset of instances.
+    The `process` method should be implemented by subclasses to define the specific operations
+    to be performed on each page.
+
+    Args:
+        page_size (int): The size of each page in the stream. Defaults to 1000.
     """
 
     page_size: int = 1000
@@ -371,7 +386,8 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
 class SequentialOperator(MultiStreamOperator):
     """A class representing a sequential operator in the streaming system.
 
-    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
+    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a
+    `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
     """
 
     max_steps = None
@@ -407,7 +423,9 @@ class SequentialOperator(MultiStreamOperator):
 class SourceSequentialOperator(SequentialOperator):
     """A class representing a source sequential operator in the streaming system.
 
-    A source sequential operator is a type of `SequntialOperator` that starts with a source operator. The first operator in its list of steps is a `StreamSource`, which generates the initial `MultiStream` that the other operators then process.
+    A source sequential operator is a type of `SequentialOperator` that starts with a source operator.
+    The first operator in its list of steps is a `StreamSource`, which generates the initial `MultiStream`
+    that the other operators then process.
     """
 
     def __call__(self) -> MultiStream:

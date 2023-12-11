@@ -1,4 +1,3 @@
-import logging
 import unittest
 
 from src.unitxt.artifact import (
@@ -6,6 +5,9 @@ from src.unitxt.artifact import (
     MissingArtifactTypeError,
     UnrecognizedArtifactTypeError,
 )
+from src.unitxt.logging import get_logger
+
+logger = get_logger()
 
 
 class TestArtifactRecovery(unittest.TestCase):
@@ -43,7 +45,7 @@ class TestArtifactRecovery(unittest.TestCase):
         try:
             Artifact.from_dict(args)
         except Exception as e:
-            logging.info(e)
+            logger.info(e)
 
     def test_subclass_registration_and_loading(self):
         args = {
@@ -55,7 +57,7 @@ class TestArtifactRecovery(unittest.TestCase):
         try:
             Artifact.from_dict(args)
         except UnrecognizedArtifactTypeError as e:
-            logging.info("The error message (not a real error):", e)
+            logger.info("The error message (not a real error):", e)
 
         class DummyExistForLoading(Artifact):
             pass

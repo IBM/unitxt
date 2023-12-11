@@ -1,7 +1,7 @@
-import logging
 import unittest
 from math import isnan
 
+from src.unitxt.logging import get_logger
 from src.unitxt.metrics import (
     Accuracy,
     BertScore,
@@ -17,6 +17,8 @@ from src.unitxt.metrics import (
     TokenOverlap,
 )
 from src.unitxt.test_utils.metrics import apply_metric
+
+logger = get_logger()
 
 
 class TestMetrics(unittest.TestCase):
@@ -469,7 +471,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         }
 
         global_result = outputs[0]["score"]["global"].copy()
-        logging.info(global_result)
+        logger.info(global_result)
         for score_name, score_value in global_result.items():
             if score_name in expected_global_result:
                 # The that the output value is as the expected value

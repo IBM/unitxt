@@ -1,5 +1,6 @@
 import collections
 import importlib
+import os
 import uuid
 from abc import abstractmethod
 from collections import Counter
@@ -14,7 +15,6 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -39,10 +39,12 @@ from .utils import flatten_dict
 
 
 class FromIterables(StreamInitializerOperator):
-    """Creates a MultiStream from iterables.
+    """Creates a MultiStream from a dict of named iterables.
 
-    Args:
-        iterables (Dict[str, Iterable]): A dictionary where each key-value pair represents a stream name and its corresponding iterable.
+    Example:
+        operator = FromIterables()
+        ms = operator.process(iterables)
+
     """
 
     def process(self, iterables: Dict[str, Iterable]) -> MultiStream:
@@ -50,6 +52,19 @@ class FromIterables(StreamInitializerOperator):
 
 
 class IterableSource(StreamSource):
+    """Creates a MultiStream from a dict of named iterables.
+
+    It is a callable.
+
+    Args:
+        iterables (Dict[str, Iterable]): A dictionary mapping stream names to iterables.
+
+    Example:
+        operator =  IterableSource(input_dict)
+        ms = operator()
+
+    """
+
     iterables: Dict[str, Iterable]
 
     def __call__(self) -> MultiStream:
@@ -57,7 +72,7 @@ class IterableSource(StreamSource):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
+    """A class used to map instance values into other values.
 
     This class is a type of StreamInstanceOperator,
     it maps values of instances in a stream using predefined mappers.
@@ -87,6 +102,11 @@ class MapInstanceValues(StreamInstanceOperator):
         To ensure that all values of field 'a' are mapped in every instance, use strict=True.
         Input instance {"a":"3", "b": 2} will raise an exception per the above call,
         because "3" is not a key in the mapper of "a".
+
+        MapInstanceValues(mappers={"a": {str([1,2,3,4]): 'All', str([]): 'None'}}, strict=True)
+        replaces a list [1,2,3,4] with the string 'All' and an empty list by string 'None'.
+        Note that mapped values are defined by their string representation, so mapped values
+        must be converted to strings.
     """
 
     mappers: Dict[str, Dict[str, str]]
@@ -115,33 +135,30 @@ class MapInstanceValues(StreamInstanceOperator):
                     raise ValueError(
                         f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
                     )
-                if isinstance(value, list):
-                    if self.process_every_value:
-                        for i, val in enumerate(value):
-                            val = str(val)  # make sure the value is a string
-                            if self.strict and (val not in mapper):
-                                raise KeyError(
-                                    f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
-                                )
-                            if val in mapper:
-                                # replace just that member of value (value is a list)
-                                value[i] = mapper[val]
-                                dict_set(instance, key, value, use_dpath=self.use_query)
-                    else:  # field is a list, and process_every_value == False
-                        if self.strict:  # whole lists can not be mapped by a string-to-something mapper
-                            raise KeyError(
-                                f"A whole list ({value}) in the instance can not be mapped by a field mapper."
-                            )
-                else:  # value is not a list, implying process_every_value == False
-                    value = str(value)  # make sure the value is a string
-                    if self.strict and (value not in mapper):
-                        raise KeyError(
-                            f"value '{value}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
-                        )
-                    if value in mapper:
-                        dict_set(instance, key, mapper[value], use_dpath=self.use_query)
+                if isinstance(value, list) and self.process_every_value:
+                    for i, val in enumerate(value):
+                        value[i] = self.get_mapped_value(instance, key, mapper, val)
+                else:
+                    value = self.get_mapped_value(instance, key, mapper, value)
+                dict_set(
+                    instance,
+                    key,
+                    value,
+                    use_dpath=self.use_query,
+                )
 
         return instance
+
+    def get_mapped_value(self, instance, key, mapper, val):
+        val_as_str = str(val)  # make sure the value is a string
+        if self.strict and (val_as_str not in mapper):
+            raise KeyError(
+                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+            )
+        # By default deep copy the value in mapper to avoid shared modifications
+        if val_as_str in mapper:
+            return deepcopy(mapper[val_as_str])
+        return val
 
 
 class FlattenInstances(StreamInstanceOperator):
@@ -182,6 +199,7 @@ class AddFields(StreamInstanceOperator):
         # Add a 'classes' field on a given list, prevent modification of original list
         # from changing the instance.
         AddFields(fields={"classes": alist}), use_deepcopy=True)
+        # if now alist is modified, still the instances remain intact.
     """
 
     fields: Dict[str, object]
@@ -221,19 +239,26 @@ class RemoveFields(StreamInstanceOperator):
 
 
 class FieldOperator(StreamInstanceOperator):
-    """A general stream that processes the values of a field (or multiple ones.
+    """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
-        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
-        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operator would happen in-place and replace "field" Defaults to None
-        field_to_field (Optional[Union[List[Tuple[str, str]], Dict[str, str]]]): Mapping from fields to process to their names after this process, duplicates are allowed. Defaults to None
+        field (Optional[str]): The field to process, if only a single one is passed. Defaults to None
+        to_field (Optional[str]): Field name to save result into, if only one field is processed, if None is passed the
+          operation would happen in-place and its result would replace the value of "field". Defaults to None
+        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
+          to names of fields to save the results into. Inner List, if used, should be of length 2.
+          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
+          process a result from, a result to be stored in field of a different name. Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
+
+        Note: if 'field' and 'to_field' (or both members of a pair in 'field_to_field') are equal (or share a common
+        prefix if 'use_query'=True), then the result of the operation is saved within 'field'
     """
 
     field: Optional[str] = None
     to_field: Optional[str] = None
-    field_to_field: Optional[Union[List[Tuple[str, str]], Dict[str, str]]] = None
+    field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
     process_every_value: bool = False
     use_query: bool = False
     get_default: Any = None
@@ -250,25 +275,55 @@ class FieldOperator(StreamInstanceOperator):
         ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
         assert (
             self.field is None or self.field_to_field is None
-        ), f"Can not apply operator both on {self.field} and on the mapping from fields to fields {self.field_to_field}"
-        assert (
-            self._field_to_field
-        ), f"the from and to fields must be defined got: {self._field_to_field}"
+        ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
+        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
+        for pair in self._field_to_field:
+            assert (
+                len(pair) == 2
+            ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+        # The order of pairs in _field_to_field is not always uniquely determined by the input.
+        # In particular, when the input is a dictionary.
+        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
+        # where h is different from f, it is not clear if when f defines the new value of h
+        # (e.g., through an add-constant operation), f is before or after being determined by g.
+        # The following asserts that such ambiguity does not exist in the input.
+
+        if len(self._field_to_field) == 1:
+            return
+        for ind in range(len(self._field_to_field)):
+            if self._field_to_field[ind][0] in [
+                t for _, t in self._field_to_field[:ind]
+            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
+                raise ValueError(
+                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+                )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
 
     def prepare(self):
-        if self.to_field is None:
-            self.to_field = self.field
+        super().prepare()
+
+        # prepare is invoked before verify, hence must make some checks here, before the changes done here
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
+
         if self.field_to_field is None:
-            self._field_to_field = [(self.field, self.to_field)]
+            self._field_to_field = [
+                (self.field, self.to_field if self.to_field is not None else self.field)
+            ]
         else:
-            try:
-                self._field_to_field = list(self.field_to_field.items())
-            except AttributeError:
-                self._field_to_field = self.field_to_field
+            self._field_to_field = (
+                list(self.field_to_field.items())
+                if isinstance(self.field_to_field, dict)
+                else self.field_to_field
+            )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -295,7 +350,7 @@ class FieldOperator(StreamInstanceOperator):
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
                 ) from e
-            if self.use_query and is_subpath(from_field, to_field):
+            if is_subpath(from_field, to_field) or is_subpath(to_field, from_field):
                 dict_delete(instance, from_field)
             dict_set(
                 instance,
@@ -308,7 +363,25 @@ class FieldOperator(StreamInstanceOperator):
 
 
 class RenameFields(FieldOperator):
-    """Renames fields."""
+    """Renames fields.
+
+    Move value from one field to another, potentially, if 'use_query'=True, from one branch into another.
+    Remove the from field, potentially part of it in case of use_query.
+
+    Examples:
+        RenameFields(field_to_field={"b": "c"})
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
+
+        RenameFields(field_to_field={"b": "c/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
+
+        RenameFields(field_to_field={"b": "b/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
+
+        RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True)
+        will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
+
+    """
 
     def process_value(self, value: Any) -> Any:
         return value
@@ -317,20 +390,31 @@ class RenameFields(FieldOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         res = super().process(instance=instance, stream_name=stream_name)
-        vals = [x[1] for x in self._field_to_field]
-        for key, _ in self._field_to_field:
-            if self.use_query and "/" in key:
-                continue
-            if key not in vals:
-                res.pop(key)
+        for from_field, to_field in self._field_to_field:
+            if (not is_subpath(from_field, to_field)) and (
+                not is_subpath(to_field, from_field)
+            ):
+                dict_delete(res, from_field)
+                if self.use_query:
+                    from_field_components = list(
+                        os.path.normpath(from_field).split(os.path.sep)
+                    )
+                    while len(from_field_components) > 1:
+                        from_field_components.pop()
+                        parent = dict_get(res, os.path.sep.join(from_field_components))
+                        if isinstance(parent, dict) and not parent:
+                            dict_delete(res, os.path.sep.join(from_field_components))
+                        else:
+                            break
+
         return res
 
 
 class AddConstant(FieldOperator):
-    """Adds a value, similar to  add + field.
+    """Adds a constant, being argument 'add', to the processed value.
 
     Args:
-        add: sum to add.
+        add: the constant to add.
     """
 
     add: Any
@@ -396,7 +480,7 @@ class Augmentor(StreamInstanceOperator):
                     default="",
                     not_exist_ok=False,
                 )
-            except TypeError as e:
+            except ValueError as e:
                 raise TypeError(f"Failed to get {field_name} from {instance}") from e
 
             # We are setting a nested seed based on the value processed, to ensure that
@@ -483,7 +567,9 @@ class AugmentSuffix(Augmentor):
                 assert isinstance(
                     k, str
                 ), f"suffixes should be a list of strings, whereas member {k!s} is of type {type(k)}"
+        super().verify()
 
+    def prepare(self):
         self.pats = (
             self.suffixes
             if isinstance(self.suffixes, list)
@@ -499,7 +585,8 @@ class AugmentSuffix(Augmentor):
             if isinstance(self.suffixes, list)
             else [float(self.suffixes[p]) / total_weight for p in self.pats]
         )
-        super().verify()
+
+        super().prepare()
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
@@ -512,7 +599,7 @@ class AugmentSuffix(Augmentor):
 
 
 class ShuffleFieldValues(FieldOperator):
-    """Shuffles an iterable value."""
+    """Shuffles a list of values found in a field."""
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
@@ -621,9 +708,18 @@ class ListFieldValues(StreamInstanceOperator):
 
 
 class ZipFieldValues(StreamInstanceOperator):
-    """Zips values of multiple fields similar to list(zip(*fields))."""
+    """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
 
-    fields: str
+    The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
+    are zipped, and stored into 'to_field'.
+
+    If 'longest'=False, the length of the zipped result is determined by the shortest input value.
+    If 'longest'=False, the length of the zipped result is determined by the longest input, padding shorter
+    inputs with None -s.
+
+    """
+
+    fields: List[str]
     to_field: str
     longest: bool = False
     use_query: bool = False
@@ -643,7 +739,7 @@ class ZipFieldValues(StreamInstanceOperator):
 
 
 class IndexOf(StreamInstanceOperator):
-    """Finds the location of one value in another (iterable) value similar to to_field=search_in.index(index_of)."""
+    """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
     search_in: str
     index_of: str
@@ -660,7 +756,7 @@ class IndexOf(StreamInstanceOperator):
 
 
 class TakeByField(StreamInstanceOperator):
-    """Takes value from one field based on another field similar to field[index]."""
+    """From field 'field' of a given instance, select the member indexed by field 'index', and store to field 'to_field'."""
 
     field: str
     index: str
@@ -966,6 +1062,7 @@ class FilterByListsOfValues(SingleStreamOperator):
     """
 
     required_values: Dict[str, List]
+    error_on_filtered_all: bool = True
 
     def verify(self):
         super().verify()
@@ -976,6 +1073,7 @@ class FilterByListsOfValues(SingleStreamOperator):
                 )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        filtered_all = True
         for instance in stream:
             filter = False
             for key, value in self.required_values.items():
@@ -986,7 +1084,12 @@ class FilterByListsOfValues(SingleStreamOperator):
                 if instance[key] not in value:
                     filter = True
             if not filter:
+                filtered_all = False
                 yield instance
+        if filtered_all and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
 
 
 class Intersect(FieldOperator):
@@ -1011,6 +1114,7 @@ class Intersect(FieldOperator):
             )
 
     def process_value(self, value: Any) -> Any:
+        super().process_value(value)
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
         return [e for e in value if e in self.allowed_values]
@@ -1238,7 +1342,7 @@ class MergeStreams(MultiStreamOperator):
 class Shuffle(PagedStreamOperator):
     """Shuffles the order of instances in each page of a stream.
 
-    Args:
+    Args (of superclass):
         page_size (int): The size of each page in the stream. Defaults to 1000.
     """
 
@@ -1248,10 +1352,23 @@ class Shuffle(PagedStreamOperator):
 
 
 class EncodeLabels(StreamInstanceOperator):
-    """Encode labels of specified fields together a into integers.
+    """Encode each value encountered in any field in 'fields' into the integers 0,1,...
+
+    Encoding is determined by a str->int map that is built on the go, as different values are
+    first encountered in the stream, either as list members or as values in single-value fields.
 
     Args:
         fields (List[str]): The fields to encode together.
+
+    Example: applying
+        EncodeLabels(fields = ["a", "b/*"])
+        on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
+          {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
+
+        Note: dpath is applied here, and hence, fields that are lists, should be included in
+        input 'fields' with the appendix "/*"  as in the above example.
+
     """
 
     fields: List[str]

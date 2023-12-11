@@ -1,12 +1,15 @@
 import json
 import unittest
 from collections import Counter
+from typing import Any, Dict
 
 from src.unitxt.operators import (
+    AddConstant,
     AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    Augmentor,
     AugmentSuffix,
     AugmentWhitespace,
     CastFields,
@@ -14,19 +17,25 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     EncodeLabels,
     ExtractFieldValues,
+    FieldOperator,
     FilterByListsOfValues,
     FilterByValues,
     FlattenInstances,
+    FromIterables,
+    IndexOf,
     Intersect,
+    IterableSource,
     JoinStr,
     LengthBalancer,
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    NullAugmentor,
     RemoveFields,
     RemoveValues,
     RenameFields,
     Shuffle,
+    ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
     TakeByField,
@@ -111,31 +120,21 @@ class TestOperators(unittest.TestCase):
             exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
             tester=self,
         )
-
-        # input list can not be ignored with strict=True, and process_every_value=False
-        check_operator_exception(
-            operator=MapInstanceValues(
-                mappers=mappers, strict=True, process_every_value=False
-            ),
-            inputs=[{"a": [1, 2, 3, 4], "b": 2}],
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'A whole list ([1, 2, 3, 4]) in the instance can not be mapped by a field mapper.'",
-            tester=self,
-        )
-
+        # Test mapping of lists to lists
         inputs_not_process_every_value = [
             {"a": [1, 2, 3, 4], "b": 2},
-            {"a": 2, "b": 3},
+            {"a": [], "b": 3},
         ]
 
         targets_not_process_every_value = [
-            {"a": [1, 2, 3, 4], "b": 2},
-            {"a": "bye", "b": 3},
+            {"a": ["All"], "b": 2},
+            {"a": ["None"], "b": 3},
         ]
 
-        # with strict=False, and process_every_value=False, lists are ignored
+        list_mappers = {"a": {str([1, 2, 3, 4]): ["All"], "[]": ["None"]}}
         check_operator(
             operator=MapInstanceValues(
-                mappers=mappers, process_every_value=False, strict=False
+                mappers=list_mappers, process_every_value=False, strict=False
             ),
             inputs=inputs_not_process_every_value,
             targets=targets_not_process_every_value,
@@ -159,6 +158,29 @@ class TestOperators(unittest.TestCase):
             targets=targets,
         )
 
+    def test_from_iterables_and_iterable_source(self):
+        input_ms = {
+            "train": [{"a": "1"}, {"b": "2"}, {"a": "3"}],
+            "test": [{"a": "4"}, {"c": "5"}, {"a": "6"}],
+        }
+
+        operator = FromIterables()
+        output_ms = operator.process(input_ms)
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
+        # IterableSource is a callable
+        operator = IterableSource(iterables=input_ms)
+        output_ms = operator()
+        self.assertSetEqual(set(input_ms.keys()), set(output_ms.keys()))
+        for stream_name in input_ms.keys():
+            self.assertListEqual(
+                list(input_ms[stream_name]), list(output_ms[stream_name])
+            )
+
     def test_list_field_values(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -172,6 +194,45 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=ListFieldValues(fields=["a", "b"], to_field="ab"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_field_operator(self):
+        class ExpandJustForCoverage(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                pass
+
+        ExpandJustForCoverage(field_to_field={"from": "to"}).process_value(2)
+
+        class ExpandJustForCoverage2(FieldOperator):
+            def process_value(self, value: Any) -> Any:
+                return str(value).upper()
+
+        inputs = [
+            {"a": "imagine", "b": ["theres", "no", "heaven"]},
+            {"a": "imagine", "b": ["all", "the", "people"]},
+        ]
+
+        targets = [
+            {
+                "a": "imagine",
+                "b": ["theres", "no", "heaven"],
+                "B": ["THERES", "NO", "HEAVEN"],
+            },
+            {
+                "a": "imagine",
+                "b": ["all", "the", "people"],
+                "B": ["ALL", "THE", "PEOPLE"],
+            },
+        ]
+
+        check_operator(
+            operator=ExpandJustForCoverage2(
+                field_to_field=[["b", "B"]], process_every_value=True
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -258,6 +319,20 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}",
+        )
+
+    def test_filter_by_values_error_when_the_entire_stream_is_filtered(self):
+        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        with self.assertRaises(RuntimeError) as e:
+            check_operator(
+                operator=FilterByListsOfValues(required_values={"b": ["weird_value"]}),
+                inputs=inputs,
+                targets=[],
+                tester=self,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "FilterByListsOfValues filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
         )
 
     def test_intersect(self):
@@ -453,6 +528,24 @@ class TestOperators(unittest.TestCase):
         )
 
         alist.append(5)
+
+        self.assertDictEqual(outputs[0], targets[0])
+
+        targets = [
+            {"a": 1, "b": 2, "c": {"d": [4, 5]}},
+            {"a": 2, "b": 3, "c": {"d": [4, 5]}},
+        ]
+
+        outputs = check_operator(
+            operator=AddFields(
+                fields={"c/d": alist}, use_deepcopy=True, use_query=True
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        alist.append(6)
 
         self.assertDictEqual(outputs[0], targets[0])
 
@@ -1229,7 +1322,7 @@ class TestOperators(unittest.TestCase):
         outputs = [instance["a"] for instance in outputs]
 
         self.assertNotEqual(inputs, outputs)
-        self.assertSetEqual(set(inputs), set(outputs))
+        self.assertListEqual(sorted(inputs), sorted(outputs))
 
         # test no mixing between pages:
         page_1_inputs = inputs[:10]
@@ -1237,8 +1330,8 @@ class TestOperators(unittest.TestCase):
         page_1_outputs = outputs[:10]
         page_2_outputs = outputs[10:]
 
-        self.assertSetEqual(set(page_1_inputs), set(page_1_outputs))
-        self.assertSetEqual(set(page_2_inputs), set(page_2_outputs))
+        self.assertListEqual(sorted(page_1_inputs), sorted(page_1_outputs))
+        self.assertListEqual(sorted(page_2_inputs), sorted(page_2_outputs))
 
         inputs_outputs_intersection = set(page_1_inputs).intersection(
             set(page_2_outputs)
@@ -1249,6 +1342,13 @@ class TestOperators(unittest.TestCase):
             set(page_1_outputs)
         )
         self.assertSetEqual(inputs_outputs_intersection, set())
+
+    def test_shuffle_field_value(self):
+        operator = ShuffleFieldValues([["from", "to"]])
+        in_list = [1, 2, 3, 4, 5, 6, 7, 8]
+        out_list = operator.process_value(in_list)
+        self.assertEqual(sorted(out_list), in_list)
+        self.assertNotEqual(out_list, in_list)
 
     def test_cast_fields(self):
         inputs = [
@@ -1292,11 +1392,98 @@ class TestOperators(unittest.TestCase):
             {"a": 2, "c": 3},
         ]
 
+        # the simplest case
         check_operator(
             operator=RenameFields(field_to_field={"b": "c"}),
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+        # target field is structured:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field:
+        check_operator(
+            operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
+            tester=self,
+        )
+
+        # target field is structured, to stand in place of source field, source field is deeper:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}, "d": 2}},
+                {"a": 2, "b": {"c": {"f": 30}, "d": 3}},
+            ],
+            tester=self,
+        )
+
+        # target field is structured, source field is structured too, different fields:
+        check_operator(
+            operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
+            inputs=[
+                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+            ],
+            targets=[
+                {"a": 1, "b": {"c": {"f": 20}}, "g": {"h": 2}},
+                {"a": 2, "b": {"c": {"f": 30}}, "g": {"h": 3}},
+            ],
+            tester=self,
+        )
+
+        # both source and target are structured, different only in the middle of the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+    def test_add(self):
+        check_operator(
+            operator=AddConstant(field_to_field=[["a", "b"]], add=5),
+            inputs=[{"a": 1}],
+            targets=[{"a": 1, "b": 6}],
+            tester=self,
+        )
+
+        check_operator(
+            operator=AddConstant(
+                field_to_field=[["a", "b"]], add=5, process_every_value=True
+            ),
+            inputs=[{"a": [1, 2, 3]}],
+            targets=[{"a": [1, 2, 3], "b": [6, 7, 8]}],
+            tester=self,
+        )
+
+        # test the loop in field_to_field, to be caught on init
+        with self.assertRaises(ValueError) as ve:
+            AddConstant(
+                field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
+            str(ve.exception),
+            "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
         )
 
     def test_copy_paste_fields(self):
@@ -1369,13 +1556,18 @@ class TestOperators(unittest.TestCase):
 
     def test_zip_fields(self):
         inputs = [
-            {"a": [1, 3], "b": [1, 3]},
-            {"a": [2, 4], "b": [2, 4]},
+            {"a": [1, 3, 5], "b": [1, 3]},
+            {"a": [2, 4, 6], "b": [2, 4]},
         ]
 
         targets = [
-            {"a": [1, 3], "b": [1, 3], "c": [(1, 1), (3, 3)]},
-            {"a": [2, 4], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4)]},
+        ]
+
+        targets_longest = [
+            {"a": [1, 3, 5], "b": [1, 3], "c": [(1, 1), (3, 3), (5, None)]},
+            {"a": [2, 4, 6], "b": [2, 4], "c": [(2, 2), (4, 4), (6, None)]},
         ]
 
         check_operator(
@@ -1384,6 +1576,26 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+        check_operator(
+            operator=ZipFieldValues(
+                fields=["a", "b"], to_field="c", use_query=True, longest=True
+            ),
+            inputs=inputs,
+            targets=targets_longest,
+            tester=self,
+        )
+
+    def test_index_of(self):
+        operator = IndexOf(
+            search_in="field_text", index_of="field_pattern", to_field="index"
+        )
+        in_instance = {
+            "field_text": "the long story I was telling to everyone.",
+            "field_pattern": "telling to",
+        }
+        out_instance = operator.process(in_instance)
+        self.assertEqual(out_instance["index"], 21)
 
     def test_take_by_field(self):
         inputs = [
@@ -1400,6 +1612,14 @@ class TestOperators(unittest.TestCase):
             operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        # field plays the role of to_field
+        check_operator(
+            operator=TakeByField(field="a", index="b", use_query=True),
+            inputs=inputs,
+            targets=[{"a": 1, "b": 0}, {"a": 1, "b": "a"}],
             tester=self,
         )
 
@@ -1550,10 +1770,37 @@ class TestOperators(unittest.TestCase):
         ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
         actual_suffixes = [output["source"][-1] for output in outputs]
         counter = Counter(actual_suffixes)
-        dic = dict(counter)
         assert (
-            dic["T"] > 125
-        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {dic["T"]}'
+            counter["T"] > 125
+        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
+
+        # just for code coverage of Augmentor.process_value and Augmentor.process
+        class JustToCoverProcessValueOfAugmentor(Augmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def process(self, instance: Dict[str, Any]) -> Dict[str, Any]:
+                return super().process(instance)
+
+        operator = JustToCoverProcessValueOfAugmentor(augment_model_input=True)
+        self.assertEqual(5, operator.process_value(5))
+        with self.assertRaises(TypeError):
+            operator.process({"not_source": "just to raise exception"})
+
+        class JustToCoverProcessValueVerifyOfNullAugmentor(NullAugmentor):
+            def process_value(self, value: Any) -> Any:
+                super().process_value(value)
+                return value
+
+            def verify(self):
+                super().verify()
+
+        operator = JustToCoverProcessValueVerifyOfNullAugmentor(
+            augment_model_input=True
+        )
+        self.assertEqual(5, operator.process_value(5))
+        operator.verify()
 
     def test_augment_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
@@ -1565,7 +1812,7 @@ class TestOperators(unittest.TestCase):
             apply_operator(operator, inputs)
         self.assertEqual(
             str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: query \"inputs/sentence\" did not match any item in dict: {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
         )
 
     def test_augment_suffix_task_input(self):
