@@ -1,10 +1,11 @@
 import itertools
 from abc import abstractmethod
+from random import Random
 from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_random
+from .random_utils import get_random, get_sub_default_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -103,11 +104,19 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
+    random_generator: Random = None
+
+    def prepare(self):
+        super().prepare()
+        self.random_generator = get_sub_default_random_generator(
+            sub_seed="random_sample_seed"
+        )
+
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return get_random().sample(instances_pool, self.sample_size)
+        return self.random_generator.sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
