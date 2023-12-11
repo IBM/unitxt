@@ -514,6 +514,7 @@ class HuggingfaceMetric(GlobalMetric):
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
     hf_compute_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    hf_additional_input_fields: List = OptionalField(default_factory=list)
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
 
     def prepare(self):
@@ -528,8 +529,22 @@ class HuggingfaceMetric(GlobalMetric):
         predictions: List[Any],
         additional_inputs: List[Dict],
     ) -> dict:
+        passed_additional_inputs = {}
+        for additional_input_field in self.hf_additional_input_fields:
+            assert (
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
+            passed_additional_inputs[additional_input_field] = [
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
+            ]
+        # add check that all required fields in self.metrics are in passed_additional_inputs
+
         result = self.metric.compute(
-            predictions=predictions, references=references, **self.hf_compute_args
+            predictions=predictions,
+            references=references,
+            **passed_additional_inputs,
+            **self.hf_compute_args,
         )
         if self.hf_main_score:
             result[self.main_score] = result[self.hf_main_score]
@@ -560,6 +575,7 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     hf_metric_fields: List[str]
     hf_compute_args: dict = {}
+    hf_additional_input_fields: List = OptionalField(default_factory=list)
 
     def prepare(self):
         super().prepare()
@@ -571,8 +587,23 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         predictions: List[str],
         additional_inputs: List[Any],
     ) -> List[Dict[str, Any]]:
+        passed_additional_inputs = {}
+        passed_additional_inputs = {}
+        for additional_input_field in self.hf_additional_input_fields:
+            assert (
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
+            passed_additional_inputs[additional_input_field] = [
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
+            ]
+        # add check that all required fields in self.metrics are in passed_additional_inputs
+
         scores = self.metric.compute(
-            predictions=predictions, references=references, **self.hf_compute_args
+            predictions=predictions,
+            references=references,
+            **passed_additional_inputs,
+            **self.hf_compute_args,
         )
 
         # convert dict of lists to a list of dicts

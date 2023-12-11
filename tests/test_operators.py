@@ -1486,6 +1486,17 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # test the loop in field_to_field, to be caught on init
+        with self.assertRaises(ValueError) as ve:
+            AddConstant(
+                field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
+            str(ve.exception),
+            "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+        )
+
     def test_copy_paste_fields(self):
         inputs = [
             {"a": [1, 3]},
