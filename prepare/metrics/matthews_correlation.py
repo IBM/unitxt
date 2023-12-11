@@ -1,4 +1,3 @@
-import numpy as np
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import MatthewsCorrelation
 from src.unitxt.test_utils.metrics import test_metric

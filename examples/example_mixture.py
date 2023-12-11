@@ -17,4 +17,3 @@ dataset = load_dataset("benchmarks.glue")
 
 for example in dataset["train"]:
     print_dict(example)
-    print()

@@ -1,8 +1,8 @@
 from abc import ABC
 from dataclasses import field
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from datasets import Dataset, Features, Sequence, Value
+from datasets import Features, Sequence, Value
 
 from .operator import StreamInstanceOperator
 
@@ -15,14 +15,20 @@ class ValidateSchema(Validator, StreamInstanceOperator):
     schema: Features = None
 
     def verify(self):
-        assert isinstance(self.schema, Features), "Schema must be an instance of Features"
+        assert isinstance(
+            self.schema, Features
+        ), "Schema must be an instance of Features"
         assert self.schema is not None, "Schema must be specified"
 
     def verify_first_instance(self, instance):
-        for field in self.standart_fields:
-            assert field in instance, f'Field "{field}" is missing in the first instance'
+        for std_field in self.standart_fields:
+            assert (
+                std_field in instance
+            ), f'Field "{std_field}" is missing in the first instance'
 
-    def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         return instance
 
 

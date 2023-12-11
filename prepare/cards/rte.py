@@ -5,7 +5,6 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -22,7 +21,9 @@ card = TaskCard(
     loader=LoadHF(path="glue", name="rte"),
     preprocess_steps=[
         "splitters.small_no_test",
-        MapInstanceValues(mappers={"label": {"0": "entailment", "1": "not entailment"}}),
+        MapInstanceValues(
+            mappers={"label": {"0": "entailment", "1": "not entailment"}}
+        ),
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],

@@ -7,10 +7,13 @@
     },
     "preprocess_steps": [
         {
+            "type": "shuffle",
+            "page_size": 1000000
+        },
+        {
             "type": "split_random_mix",
             "mix": {
-                "train": "train[10%]",
-                "validation": "train[10%]",
+                "train": "train[20%]",
                 "test": "train[80%]"
             }
         },

@@ -12,7 +12,9 @@ from src.unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="glue", name="stsb"),
     preprocess_steps=[
-        SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
+        SplitRandomMix(
+            {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
+        ),
     ],
     task=FormTask(
         inputs=["sentence1", "sentence2"],

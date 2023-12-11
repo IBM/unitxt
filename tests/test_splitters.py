@@ -4,15 +4,15 @@ from src.unitxt.splitters import DiverseLabelsSampler
 
 
 class TestDiverseLabelsSampler(unittest.TestCase):
-    """
-    Tests for the DiverseLabelsSampler object.
-    """
+    """Tests for the DiverseLabelsSampler object."""
 
     @staticmethod
-    def new_examplar(input_choices=["class_a", "class_b"], output_choices=["class_a"]):
-        """
-        return an examplar in a correct format.
-        """
+    def new_examplar(input_choices=None, output_choices=None):
+        """Return an examplar in a correct format."""
+        if output_choices is None:
+            output_choices = ["class_a"]
+        if input_choices is None:
+            input_choices = ["class_a", "class_b"]
         return {
             "inputs": {"choices": input_choices},
             "outputs": {
@@ -32,7 +32,7 @@ class TestDiverseLabelsSampler(unittest.TestCase):
         wrong_examplar = self.new_examplar(input_choices=examplar_input_choices)
         with self.assertRaises(ValueError) as cm:
             sampler.examplar_repr(examplar=wrong_examplar)
-        self.assertEquals(
+        self.assertEqual(
             f"Unexpected input choices value '{examplar_input_choices}'. Expected a list.",
             str(cm.exception),
         )
@@ -43,7 +43,7 @@ class TestDiverseLabelsSampler(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             sampler = DiverseLabelsSampler()
             sampler.examplar_repr(examplar=examplar)
-        self.assertEquals(
+        self.assertEqual(
             f"'{missing_field}' field is missing from '{examplar}'.",
             str(cm.exception),
         )

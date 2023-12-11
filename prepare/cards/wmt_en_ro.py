@@ -14,7 +14,10 @@ card = TaskCard(
     loader=LoadHF(path="wmt16", name="ro-en"),
     preprocess_steps=[
         SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
-        CopyFields(field_to_field=[["translation/en", "en"], ["translation/ro", "ro"]], use_query=True),
+        CopyFields(
+            field_to_field=[["translation/en", "en"], ["translation/ro", "ro"]],
+            use_query=True,
+        ),
     ],
     task=FormTask(
         inputs=["en"],

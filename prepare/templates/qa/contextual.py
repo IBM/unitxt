@@ -2,7 +2,10 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
-    MultiReferenceTemplate(input_format="Context: {context}\nQuestion: {question}", references_field="answers"),
+    MultiReferenceTemplate(
+        input_format="Context: {context}\nQuestion: {question}",
+        references_field="answers",
+    ),
     "templates.qa.contextual.simple",
     overwrite=True,
 )
