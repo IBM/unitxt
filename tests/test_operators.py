@@ -41,6 +41,7 @@ from src.unitxt.operators import (
     TakeByField,
     Unique,
     ZipFieldValues,
+    recursive_divide,
 )
 from src.unitxt.stream import MultiStream
 from src.unitxt.test_utils.operators import (
@@ -1380,6 +1381,30 @@ class TestOperators(unittest.TestCase):
             apply_operator(
                 operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs
             )
+
+    def test_recursive_divide(self):
+        input = {
+            "a": [
+                8.0,
+                9.2,
+                [5.6, 8.3],
+            ],
+            "b": 100.0,
+        }
+        self.assertDictEqual(
+            {"a": [4.0, 4.6, [2.8, 4.15]], "b": 50.0},
+            recursive_divide(instance=input, divisor=2.0, strict=True),
+        )
+
+        input["b"] = 100
+        with self.assertRaises(ValueError) as ve:
+            recursive_divide(instance=input, divisor=2.0, strict=True)
+        (
+            self.assertEqual(
+                str(ve.exception), "Cannot divide instance of type <class 'int'>"
+            ),
+            "Wrong error message.",
+        )
 
     def test_rename_fields(self):
         inputs = [
