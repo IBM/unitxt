@@ -77,7 +77,9 @@ def check_operator(
     if tester is None:
         errors = []
         for output, target in zip(outputs, targets):
-            if json.dumps(output, sort_keys=True) != json.dumps(target, sort_keys=True):
+            if json.dumps(output, sort_keys=True, ensure_ascii=False) != json.dumps(
+                target, sort_keys=True, ensure_ascii=False
+            ):
                 errors.append(
                     f"output and target must be equal, got <{output}> =/= <{target}>"
                 )
