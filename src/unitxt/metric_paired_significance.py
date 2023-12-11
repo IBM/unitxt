@@ -333,7 +333,8 @@ class PairedDifferenceTest:
         # all different metric_names
         assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
 
-    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False):
+    def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False,
+                                              optimize_color=True):
         """
         Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
         Args:
@@ -342,11 +343,14 @@ class PairedDifferenceTest:
             sort_rows: boolean, whether to sort rows so that the most significant comparisons appear at the top
             use_pvalues: boolean, if True use p-values otherwise effect sizes
             hide_insignificant_rows: boolean, if True hide rows (compared pairs) that are not significant for any metric (would be white)
+            optimize_color: boolean, if True try to change the order of comparisons (only for two-sided) to maximize the number of
+                cells belonging to the majority color
         Returns:
 
         """
         self._is_valid_signif_report_list(test_results_list)
         alternative = test_results_list[0].alternative
+        optimize_color = False if alternative != 'two-sided' else optimize_color
 
         # combine in a matrix
 
@@ -356,7 +360,7 @@ class PairedDifferenceTest:
         symb_format = '{} ' + alt_dict[alternative]['symbol'] + ' {}'
         # use 1-indexing for names rather than 0
         combined_results = pd.DataFrame({vv.metric_name: vv.pvalues if use_pvalues else vv.effect_sizes for vv in test_results_list},
-                                        index=[symb_format.format(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
+                                        index = [(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
         # the original p-values only, in array form
         combined_results_arr = combined_results.to_numpy()
 
@@ -397,6 +401,44 @@ class PairedDifferenceTest:
             combined_results = combined_results.loc[row_not_all_nan]
 
         ncomparisons, nmetrics = recoded_values_arr.shape
+
+        def optimize_color_comparisons(recoded_values_arr, combined_results_arr_with_nan, combined_results):
+            from scipy.optimize import minimize
+
+            row_not_all_nan = np.any(a=np.logical_not(np.isnan(combined_results_arr_with_nan)), axis=1)
+            recoded_sign = np.sign(recoded_values_arr[row_not_all_nan, :])
+            ncomparsions, nmetrics = combined_results_arr_with_nan.shape
+            ncomparisons_not_nan = row_not_all_nan.sum()
+            # default is not to change
+            change_comparison_order = np.zeros(ncomparisons).astype(bool)
+
+            if ncomparisons_not_nan > 0:
+                recoded_sign = recoded_values_arr[row_not_all_nan, :]
+                # sign corresponds to colors; sum of signs is the difference between the number of blue and red cells in the row.
+                # a higher gap means there is more potentially to exploit if we change the order, which will flip the colors
+                # take sum of change indicator (0 -> -0.5, 1 -> 0.5) to make opposite sign
+                # sum across rows, then take absolute value (so red/blue are treated the same), multiply by -1 then minimize to maximize the gap
+                diff_each_colors = lambda x: -1 * np.abs(sum([(ind - 0.5) * np.nansum(rvals) for ind, rvals in zip(x, recoded_sign)]))
+                ores = minimize(fun=diff_each_colors, x0=np.zeros(ncomparisons_not_nan), bounds=tuple([(0, 1) for rr in range(ncomparisons_not_nan)]))
+                change_comparison_order[row_not_all_nan] = np.round(ores.x).astype(bool)
+
+                # reorder index if changed
+                combined_results.index = [(idx[1], idx[0]) if chg else idx for idx, chg in zip(combined_results.index, change_comparison_order)]
+                # change sign of recoded values
+                recoded_values_arr = np.vstack([-1 * row if chg else row for row, chg in zip(recoded_values_arr, change_comparison_order)])
+
+                # if use effect size, need to change the sign of the printed values as well
+                if not use_pvalues:
+                    combined_results_arr_with_nan = np.vstack([-1 * row if chg else row for row, chg in zip(combined_results_arr_with_nan, change_comparison_order)])
+                    combined_results = combined_results.multiply(other=[-1 if chg else 1 for chg in change_comparison_order], axis=0)
+
+            return recoded_values_arr, combined_results_arr_with_nan, combined_results
+
+        if optimize_color:
+            recoded_values_arr, combined_results_arr_with_nan, combined_results = optimize_color_comparisons(recoded_values_arr, combined_results_arr_with_nan, combined_results)
+
+        # relabel the index by the comparisons
+        combined_results.index = [symb_format.format(idx[0], idx[1]) for idx in combined_results.index]
 
         fig, ax = plt.subplots(1, 1)
         # this coloring uses the recoding, ensure color range is symmetric
