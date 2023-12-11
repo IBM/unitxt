@@ -33,6 +33,8 @@ def isoftype(object, type):
 
     if hasattr(type, "__origin__"):
         origin = type.__origin__
+        if not isinstance(object, origin):
+            return False
         type_args = typing.get_args(type)
 
         if origin is typing.Union:
