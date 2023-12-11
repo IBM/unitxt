@@ -73,7 +73,7 @@ class IterableSource(StreamSource):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
+    """A class used to map instance values into other values.
 
     This class is a type of StreamInstanceOperator,
     it maps values of instances in a stream using predefined mappers.
@@ -243,10 +243,13 @@ class FieldOperator(StreamInstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
-        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
-        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operation would happen in-place and replace "field". Defaults to None
-        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from fields to process to their names after this process,
-         duplicates are allowed. Inner List, if used, should be of length 2. Defaults to None
+        field (Optional[str]): The field to process, if only a single one is passed. Defaults to None
+        to_field (Optional[str]): Field name to save result into, if only one field is processed, if None is passed the
+          operation would happen in-place and its result would replace the value of "field". Defaults to None
+        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
+          to names of fields to save the results into. Inner List, if used, should be of length 2.
+          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
+          process a result from, a result to be stored in field of a different name. Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
 
@@ -280,6 +283,22 @@ class FieldOperator(StreamInstanceOperator):
             assert (
                 len(pair) == 2
             ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+        # The order of pairs in _field_to_field is not always uniquely determined by the input.
+        # In particular, when the input is a dictionary.
+        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
+        # where h is different from f, it is not clear if when f defines the new value of h
+        # (e.g., through an add-constant operation), f is before or after being determined by g.
+        # The following asserts that such ambiguity does not exist in the input.
+
+        if len(self._field_to_field) == 1:
+            return
+        for ind in range(len(self._field_to_field)):
+            if self._field_to_field[ind][0] in [
+                t for _, t in self._field_to_field[:ind]
+            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
+                raise ValueError(
+                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+                )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
