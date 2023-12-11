@@ -11,6 +11,7 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
+from statistics import mean
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -479,7 +480,7 @@ class SubstringAccuracy(InstanceMetric):
     reduction_map = {"mean": ["substring_accuracy"]}
     main_score = "substring_accuracy"
 
-    def compute(self, references: List[str], prediction: str) -> dict:
+    def compute(self, references: List[Any], prediction: Any) -> dict:
         result = {self.main_score: float(any([str(reference) in str(prediction) for reference in references]))}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
@@ -1235,3 +1236,72 @@ class NDCG(GlobalMetric):
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
         return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+
+
+class GroupedInstanceMetric(GlobalMetric):
+    """
+    class for GlobalMetrics where each instance belongs to a group defined by the combined values of one or more other variables,
+    specified by the dict input in additional_inputs (e.g. an ID and GROUP variable).
+    each instance score is determined by a function (specified by `metric'), and within each group, the overall score
+    is calculated by applying another function (specified by `group_metric') across the instance scores.  Then the
+    overall score is calculated by the mean of these group_metric scores.  For instance, if group_metric = median and
+    metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
+    the medians.
+    """
+
+
+    from statistics import mean
+    metric = Accuracy
+    group_metric = mean
+    group_metric_name = "mean"
+    main_score = "mean"
+
+
+    @classmethod
+    def _group_metric(self, x):
+        return self.group_metric(x)
+
+    def compute(self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Dict]) -> dict:
+
+        from collections import defaultdict
+
+        group_to_predictions_and_references = defaultdict(lambda: [[], [], []])
+        for reference, pred, inputs_dict in zip(
+                references, predictions, additional_inputs
+        ):
+            # allow any number of columns to be used as the identifier
+            keyname = tuple([vv for vv in inputs_dict.values()])
+            group_to_predictions_and_references[keyname][0].append(pred)
+            group_to_predictions_and_references[keyname][1].append(reference)
+            group_to_predictions_and_references[keyname][2].append(inputs_dict)
+
+
+        group_to_scores = {group: [self.metric().compute(prediction=pred, references=refs, additional_inputs=inputs)["score"] for pred, refs, inputs in zip(*instances)]
+                           for group, instances in group_to_predictions_and_references.items()}
+
+        group_total_scores = [self._group_metric(scores) for scores in group_to_scores.values()]
+        group_total_scores = [score for score in group_total_scores if not np.isnan(score)]
+        return {self.main_score: mean(group_total_scores) if len(group_total_scores) > 0 else np.nan}
+
+
+
+class MeanGroupedAccuracy(GroupedInstanceMetric):
+    metric = Accuracy
+    main_score = 'accuracy'
+
+# class MeanGroupedSubstringAccuracy(GroupedInstanceMetric):
+#     metric = SubstringAccuracy
+#     main_score = 'substring_accuracy'
+
+class MeanGroupedAccuracyPerformanceDrop(GroupedInstanceMetric):
+    main_score = 'accuracy'
+    metric = Accuracy
+    group_score_stat = lambda x: mean(x[1:]) - x[0] if len(x) > 1 else np.nan
+
+# class MeanGroupedSubstringAccuracyPerformanceDrop(GroupedInstanceMetric):
+#     main_score = 'substring_accuracy'
+#     metric = SubstringAccuracy
+#     group_score_stat = lambda x: mean(x[1:]) - x[0] if len(x) > 1 else np.nan
