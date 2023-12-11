@@ -1048,13 +1048,13 @@ class ExtractFieldValues(MultiStreamOperator):
             [*ele[0]] if isinstance(ele[0], tuple) else ele[0]
             for ele in values_and_counts
         ]
-        multi_stream_to_return = {}
+        add_field_operator = AddFields(
+            fields={self.to_field: values_to_keep}, use_query=False, use_deepcopy=True
+        )
         for name in multi_stream:
-            multi_stream_to_return[name] = []
             for instance in multi_stream[name]:
-                instance[self.to_field] = values_to_keep
-                multi_stream_to_return[name].append(deepcopy(instance))
-        return multi_stream_to_return
+                add_field_operator.process(instance)
+        return multi_stream
 
 
 class FilterByListsOfValues(SingleStreamOperator):
