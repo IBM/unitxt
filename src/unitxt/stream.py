@@ -1,3 +1,4 @@
+import tempfile
 from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -99,13 +100,20 @@ class MultiStream(dict):
         for stream in self.values():
             stream.copying = copying
 
-    def to_dataset(self) -> DatasetDict:
-        return DatasetDict(
-            {
-                key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key})
-                for key in self.keys()
-            }
-        )
+    def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            cache_dir = dir_to_be_deleted if disable_cache else cache_dir
+            return DatasetDict(
+                {
+                    key: Dataset.from_generator(
+                        self.get_generator,
+                        keep_in_memory=disable_cache,
+                        cache_dir=cache_dir,
+                        gen_kwargs={"key": key},
+                    )
+                    for key in self.keys()
+                }
+            )
 
     def to_iterable_dataset(self) -> IterableDatasetDict:
         return IterableDatasetDict(

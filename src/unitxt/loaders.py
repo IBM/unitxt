@@ -1,16 +1,18 @@
 import itertools
-import logging
 import os
-from tempfile import TemporaryDirectory
+import tempfile
+from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
+from .logging import get_logger
 from .operator import SourceOperator
 from .stream import MultiStream, Stream
 
+logger = get_logger()
 try:
     import ibm_boto3
     # from ibm_botocore.client import ClientError
@@ -40,31 +42,35 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
-    cached = False
 
     def process(self):
         try:
-            dataset = hf_load_dataset(
-                self.path,
-                name=self.name,
-                data_dir=self.data_dir,
-                data_files=self.data_files,
-                streaming=self.streaming,
-                split=self.split,
-            )
+            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    streaming=self.streaming,
+                    cache_dir=None if self.streaming else dir_to_be_deleted,
+                    split=self.split,
+                )
             if self.split is not None:
                 dataset = {self.split: dataset}
         except (
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = hf_load_dataset(
-                self.path,
-                name=self.name,
-                data_dir=self.data_dir,
-                data_files=self.data_files,
-                streaming=False,
-                split=self.split,
-            )
+            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    streaming=False,
+                    keep_in_memory=True,
+                    cache_dir=dir_to_be_deleted,
+                    split=self.split,
+                )
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
@@ -99,9 +105,10 @@ class LoadFromIBMCloud(Loader):
     bucket_name: str
     data_dir: str = None
     data_files: Sequence[str]
+    caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
-        logging.info(f"Downloading {item_name} from {bucket_name} COS")
+        logger.info(f"Downloading {item_name} from {bucket_name} COS")
         try:
             response = cos.Object(bucket_name, item_name).get()
             size = response["ContentLength"]
@@ -120,7 +127,7 @@ class LoadFromIBMCloud(Loader):
                     for line in first_lines:
                         downloaded_file.write(line)
                         downloaded_file.write(b"\n")
-                logging.info(
+                logger.info(
                     f"\nDownload successful limited to {self.loader_limit} lines"
                 )
                 return
@@ -134,7 +141,7 @@ class LoadFromIBMCloud(Loader):
             cos.Bucket(bucket_name).download_file(
                 item_name, local_file, Callback=upload_progress
             )
-            logging.info("\nDownload Successful")
+            logger.info("\nDownload Successful")
         except Exception as e:
             raise Exception(
                 f"Unabled to download {item_name} in {bucket_name}", e
@@ -145,6 +152,11 @@ class LoadFromIBMCloud(Loader):
         self.endpoint_url = os.getenv(self.endpoint_url_env)
         self.aws_access_key_id = os.getenv(self.aws_access_key_id_env)
         self.aws_secret_access_key = os.getenv(self.aws_secret_access_key_env)
+        root_dir = os.getenv("UNITXT_IBM_COS_CACHE", None) or os.getcwd()
+        self.cache_dir = os.path.join(root_dir, "ibmcos_datasets")
+
+        if not os.path.exists(self.cache_dir):
+            Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
     def verify(self):
         super().verify()
@@ -166,9 +178,12 @@ class LoadFromIBMCloud(Loader):
             aws_secret_access_key=self.aws_secret_access_key,
             endpoint_url=self.endpoint_url,
         )
-
-        with TemporaryDirectory() as temp_directory:
-            for data_file in self.data_files:
+        local_dir = os.path.join(self.cache_dir, self.bucket_name, self.data_dir)
+        if not os.path.exists(local_dir):
+            Path(local_dir).mkdir(parents=True, exist_ok=True)
+        for data_file in self.data_files:
+            local_file = os.path.join(local_dir, data_file)
+            if not self.caching or not os.path.exists(local_file):
                 # Build object key based on parameters. Slash character is not
                 # allowed to be part of object key in IBM COS.
                 object_key = (
@@ -177,8 +192,8 @@ class LoadFromIBMCloud(Loader):
                     else data_file
                 )
                 self._download_from_cos(
-                    cos, self.bucket_name, object_key, temp_directory + "/" + data_file
+                    cos, self.bucket_name, object_key, local_dir + "/" + data_file
                 )
-            dataset = hf_load_dataset(temp_directory, streaming=False)
+        dataset = hf_load_dataset(local_dir, streaming=False)
 
         return MultiStream.from_iterables(dataset)

@@ -1,10 +1,12 @@
 import json
-import logging
 from typing import Any, List, Optional
 
+from ..logging import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..stream import MultiStream
 from ..type_utils import isoftype
+
+logger = get_logger()
 
 
 def round_floats(obj, precision=2, recursive=True):
@@ -89,5 +91,5 @@ def test_metric(
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))
 
-    logging.info("Metric tested successfully!")
+    logger.info("Metric tested successfully!")
     return True

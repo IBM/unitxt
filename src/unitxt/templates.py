@@ -1,15 +1,12 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple
 
-from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
-from .instructions import Instruction, TextualInstruction
 from .operator import StreamInstanceOperator
 from .random_utils import get_random
-from .text_utils import split_words
 from .type_utils import isoftype
 
 
@@ -19,56 +16,30 @@ class Renderer(ABC):
         pass
 
 
-class Template(Artifact):
-    is_multi_target: bool = NonPositionalField(default=False)
-    is_multi_reference: bool = NonPositionalField(default=False)
+class Template(StreamInstanceOperator):
+    """The role of template is to take the fields of every instance and verbalize it.
 
-    @abstractmethod
-    def process_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        pass
+    Meaning the template is taking the instance and generating source, target and references.
+    """
 
-    @abstractmethod
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
-        pass
-
-    @abstractmethod
-    def get_postprocessors(self) -> List[str]:
-        pass
-
-
-class RenderFormatTemplate(Renderer, StreamInstanceOperator):
-    template: Template = None
-    random_reference: bool = False
-
-    def verify(self):
-        assert isinstance(
-            self.template, Template
-        ), "Template must be an instance of Template"
-        assert self.template is not None, "Template must be specified"
+    skip_rendered_instance: bool = NonPositionalField(default=True)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        return self.render(instance)
+        if self.skip_rendered_instance:
+            if (
+                "source" in instance
+                and "target" in instance
+                and "references" in instance
+            ):
+                return instance
 
-    def render(self, instance: Dict[str, Any]) -> Dict[str, Any]:
-        inputs = instance.pop("inputs")
-        outputs = instance.pop("outputs")
+        inputs = instance.get("inputs")
+        outputs = instance.get("outputs")
 
-        source = self.template.process_inputs(inputs)
-        targets = self.template.process_outputs(outputs)
-
-        if self.template.is_multi_reference:
-            references = targets
-            if self.random_reference:
-                target = get_random().choice(references)
-            else:
-                if len(references) == 0:
-                    raise ValueError("No references found")
-                target = references[0]
-        else:
-            references = [targets]
-            target = targets
+        source = self.inputs_to_source(inputs)
+        target, references = self.outputs_to_target_and_references(outputs)
 
         return {
             **instance,
@@ -77,92 +48,19 @@ class RenderFormatTemplate(Renderer, StreamInstanceOperator):
             "references": references,
         }
 
+    @abstractmethod
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+        pass
+
+    @abstractmethod
+    def outputs_to_target_and_references(
+        self, outputs: Dict[str, object]
+    ) -> Tuple[str, List[str]]:
+        pass
+
+    @abstractmethod
     def get_postprocessors(self) -> List[str]:
-        return self.template.get_postprocessors()
-
-
-class RenderAutoFormatTemplate(RenderFormatTemplate):
-    def prepare(self):
-        if self.template is None:
-            self.template = AutoInputOutputTemplate()
-
-    def render(self, instance: Dict[str, object]) -> Dict[str, object]:
-        try:
-            if not self.template.is_complete():
-                self.template.infer_missing(instance["inputs"], instance["outputs"])
-        except:
-            pass
-
-        inputs = dict(instance["inputs"].items())
-
-        return super().render({**instance, "inputs": inputs})
-
-
-class CharacterSizeLimiter(Artifact):
-    limit: int = 1000
-
-    def check(self, text: str) -> bool:
-        return len(text) <= self.limit
-
-
-class RenderTemplatedICL(RenderAutoFormatTemplate):
-    instruction: Instruction = None
-    input_prefix: str = ""
-    output_prefix: str = ""
-    target_prefix: str = " "
-    instruction_prefix: str = ""
-    demos_field: str = None
-    size_limiter: Artifact = None
-    input_output_separator: str = "\n"
-    demo_separator: str = "\n\n"
-    system_prompt: str = None
-
-    def render(self, instance: Dict[str, object]) -> Dict[str, object]:
-        demos = instance.pop(self.demos_field, [])
-
-        source = ""
-
-        example = super().render(instance)
-
-        input_str = (
-            self.input_prefix
-            + example["source"]
-            + self.input_output_separator
-            + self.output_prefix
-        )
-
-        if self.instruction is not None:
-            source += self.instruction_prefix + self.instruction() + self.demo_separator
-
-        for demo_instance in demos:
-            demo_example = super().render(demo_instance)
-            demo_str = (
-                self.input_prefix
-                + demo_example["source"]
-                + self.input_output_separator
-                + self.output_prefix
-                + self.target_prefix
-                + demo_example["target"]
-                + self.demo_separator
-            )
-
-            if self.size_limiter is not None:
-                if not self.size_limiter.check(
-                    source + demo_str + input_str + example["target"]
-                ):
-                    continue
-
-            source += demo_str
-
-        source += input_str
-
-        if self.system_prompt is not None:
-            source = self.system_prompt.format(source)
-
-        return {
-            **example,
-            "source": source,
-        }
+        pass
 
 
 class InputOutputTemplate(Template):
@@ -176,7 +74,7 @@ class InputOutputTemplate(Template):
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
         return template.format(**data)
 
-    def process_inputs(self, inputs: Dict[str, object]) -> str:
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
         try:
             return self.process_template(self.input_format, inputs)
         except KeyError as e:
@@ -184,13 +82,16 @@ class InputOutputTemplate(Template):
                 f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{self.input_format}'"
             ) from e
 
-    def process_outputs(self, outputs: Dict[str, object]) -> str:
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         try:
-            return self.process_template(self.output_format, outputs)
+            target = self.process_template(self.output_format, outputs)
         except KeyError as e:
             raise KeyError(
                 f"Available outputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
             ) from e
+
+        references = [target]
+        return target, references
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
@@ -225,7 +126,7 @@ class YesNoTemplate(Template):
         default_factory=lambda: ["processors.to_string_stripped"]
     )
 
-    def process_inputs(self, inputs: Dict[str, object]) -> str:
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
         try:
             data = {
                 k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()
@@ -236,7 +137,7 @@ class YesNoTemplate(Template):
                 f"Available inputs are {list(inputs.keys())} but input format requires a different one: {self.input_format}"
             ) from e
 
-    def process_outputs(self, outputs: Dict[str, object]) -> str:
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         try:
             gold_class_names = outputs[self.label_field]
         except KeyError as e:
@@ -263,9 +164,8 @@ class YesNoTemplate(Template):
             )
         queried_class_name = queried_class_names[0]
         if queried_class_name in gold_class_names:
-            return self.yes_answer
-
-        return self.no_answer
+            return self.yes_answer, [self.yes_answer]
+        return self.no_answer, [self.no_answer]
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
@@ -295,7 +195,7 @@ class KeyValTemplate(Template):
             pairs.append(key_val_sep.join(key_val))
         return pairs_sep.join(pairs)
 
-    def process_inputs(self, inputs: Dict[str, object]) -> str:
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
         return self.process_dict(
             inputs,
             key_val_sep=self.key_val_seperator,
@@ -303,13 +203,14 @@ class KeyValTemplate(Template):
             use_keys=self.use_keys_for_inputs,
         )
 
-    def process_outputs(self, outputs: Dict[str, object]) -> str:
-        return self.process_dict(
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        target = self.process_dict(
             outputs,
             key_val_sep=self.key_val_seperator,
             pairs_sep=self.pairs_seperator,
             use_keys=self.use_keys_for_outputs,
         )
+        return target, [target]
 
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
@@ -318,12 +219,12 @@ class KeyValTemplate(Template):
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
-    def process_outputs(self, outputs: Dict[str, object]) -> str:
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         quantized_outputs = {
             key: round(input_float / self.quantum) * self.quantum
             for key, input_float in outputs.items()
         }
-        return super().process_outputs(quantized_outputs)
+        return super().outputs_to_target_and_references(quantized_outputs)
 
 
 class MultiLabelTemplate(InputOutputTemplate):
@@ -333,25 +234,39 @@ class MultiLabelTemplate(InputOutputTemplate):
     output_format = "{labels}"
     empty_label = "None"
 
-    def process_outputs(self, outputs: Dict[str, object]) -> str:
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         labels = outputs[self.labels_field]
+        if not isinstance(labels, list):
+            raise ValueError(
+                f"MultiLabelTemplate requires labels field '{self.labels_field}' to be a list. Got {self.labels_field}<{type(labels).__name__}>: {labels}"
+            )
         if len(labels) == 0:
             labels = [self.empty_label]
         labels_str = self.labels_seprator.join(labels)
-        return super().process_outputs({self.labels_field: labels_str})
+        return super().outputs_to_target_and_references({self.labels_field: labels_str})
 
 
 class MultiReferenceTemplate(InputOutputTemplate):
     references_field: str = "references"
-    is_multi_reference = True
+    random_reference: bool = False
 
-    def process_outputs(self, outputs: Dict[str, object]) -> List[str]:
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> List[str]:
         references = outputs[self.references_field]
         if not isoftype(references, List[str]):
             raise ValueError(
-                f"MultiReferenceTemplate requires that references field {self.references_field} is of type List[str]."
+                f"MultiReferenceTemplate requires references field '{self.references_field}' to be List[str]. Got {self.references_field}<{type(references).__name__}>: {references}"
             )
-        return references
+        if len(references) == 0:
+            raise ValueError(
+                "No references found. MultiReferenceTemplate requires at least one reference."
+            )
+
+        if self.random_reference:
+            target = get_random().choice(references)
+        else:
+            target = references[0]
+
+        return target, references
 
 
 def escape_chars(s, chars_to_escape):
@@ -381,10 +296,12 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
             if self.labels_support is None or span[3] in self.labels_support:
                 yield span[2], span[3]
 
-    def process_outputs(self, outputs: Dict[str, object]) -> Dict[str, object]:
+    def outputs_to_target_and_references(
+        self, outputs: Dict[str, object]
+    ) -> Dict[str, object]:
         span_lables_pairs = self.extract_span_label_pairs(outputs)
         targets = self.span_label_pairs_to_targets(span_lables_pairs)
-        return super().process_outputs({"labels": targets})
+        return super().outputs_to_target_and_references({"labels": targets})
 
     @abstractmethod
     def span_label_pairs_to_targets(self, pairs):
@@ -425,81 +342,10 @@ class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
         return targets
 
 
-class AutoInputOutputTemplate(InputOutputTemplate):
-    def infer_input_format(self, inputs):
-        input_format = ""
-        for key in inputs.keys():
-            name = " ".join(
-                word.lower().capitalize() for word in split_words(key) if word != " "
-            )
-            input_format += name + ": " + "{" + key + "}" + "\n"
-        self.input_format = input_format
-
-    def infer_output_format(self, outputs):
-        self.output_format = "{" + next(iter(outputs.keys())) + "}"
-
-    def infer_missing(self, inputs, outputs):
-        if self.input_format is None:
-            self.infer_input_format(inputs)
-        if self.output_format is None:
-            self.infer_output_format(outputs)
-
-    def is_complete(self):
-        return self.input_format is not None and self.output_format is not None
-
-
 class TemplatesList(ListCollection):
     def verify(self):
         for template in self.items:
             assert isinstance(template, Template)
-
-
-def outputs_inputs2templates(
-    inputs: Union[str, List], outputs: Union[str, List]
-) -> TemplatesList:
-    """Combines input and output formats into their dot product.
-
-    :param inputs: list of input formats (or one)
-    :param outputs: list of output formats (or one)
-    :return: TemplatesList of InputOutputTemplate.
-    """
-    templates = []
-    if isinstance(inputs, str):
-        inputs = [inputs]
-    if isinstance(outputs, str):
-        outputs = [outputs]
-    for input in inputs:
-        for output in outputs:
-            templates.append(
-                InputOutputTemplate(
-                    input_format=input.strip(),
-                    output_format=output.strip(),
-                ),
-            )
-    return TemplatesList(templates)
-
-
-def instructions2templates(
-    instructions: List[TextualInstruction], templates: List[InputOutputTemplate]
-) -> TemplatesList:
-    """Insert instructions into per demonstration templates.
-
-    :param instructions:
-    :param templates: strings containing {instuction} where the instruction should be placed
-    :return:
-    """
-    res_templates = []
-    for instruction in instructions:
-        for template in templates:
-            res_templates.append(
-                InputOutputTemplate(
-                    input_format=template.input_format.replace(
-                        "{instruction}", instruction.text
-                    ),
-                    output_format=template.output_format,
-                )
-            )
-    return TemplatesList(templates)
 
 
 class TemplatesDict(Dict):
