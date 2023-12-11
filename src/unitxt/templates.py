@@ -63,6 +63,47 @@ class Template(StreamInstanceOperator):
         pass
 
 
+class StandardTemplate(Template):
+    """The standard template takes the fields of every instance and verbalize it.
+
+    Meaning the template is taking the instance and generating source, target and references.
+    """
+
+    source_format: str
+    target_prefix: str
+    instruction: str
+
+    postprocessors: List[str] = field(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
+
+    def process_template(self, template: str, data: Dict[str, object]) -> str:
+        data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
+        return template.format(**data)
+
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+        try:
+            return self.process_template(self.source_format, inputs)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{self.input_format}'"
+            ) from e
+
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        try:
+            target = self.process_template(self.output_format, outputs)
+        except KeyError as e:
+            raise KeyError(
+                f"Available outputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
+            ) from e
+
+        references = [target]
+        return target, references
+
+    def get_postprocessors(self) -> List[str]:
+        return self.postprocessors
+
+
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
