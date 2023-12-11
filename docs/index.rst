@@ -28,6 +28,7 @@ Our aspiration is to be simple, adaptable, and transparent.
    concepts
    adding_common_recipe
    adding_operators_and_metrics
+   backend
    operators
    modules
    catalog

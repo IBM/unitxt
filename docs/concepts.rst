@@ -2,57 +2,38 @@
 Concepts
 ==============
 
-The main building blocks of the library are the `Stream`, `Operator` and the `Artifact` classes.
+Unitxt Data Processing Workflow
+===============================
 
-Stream
--------
+In the dynamic world of large language models, data introduction methods for processing are diverse. This includes using prompts, specific instructions, pre-loaded examples, or different textual layouts and templates. The key to managing these methods effectively is a standardized approach for communication and sharing data processing strategies, facilitating replicability and adaptability in varied data scenarios.
 
-A stream is a sequence of data. It can be finite or infinite. It can be synchronous or asynchronous.
-Every instance in the stream is a simple python dictionary.
+Unitxt addresses this need with a comprehensive data-to-model processing pipeline. This pipeline comprises various components, each essential in standardizing and streamlining the data processing communication.
 
-.. image:: ../assets/flow_animation_1.gif
-   :alt: Optional alt text
-   :width: 80%
-   :align: center
+Components of the Workflow
+--------------------------
 
-Operator
----------
+1) **Data Point**
+   The foundational component, representing raw, unprocessed data awaiting transformation.
 
-An operator is a class that takes multiple streams as input and produces multiple streams as output.
-Every modification of the data in the stream is done by an operator.
-Every opertor should perform a single task and its name should reflect its operation.
+2) **Task**
+   Acts as a schema for a specific skill in the data, like question answering. It sets the structure and format for data processing, providing a blueprint for operations.
 
-.. image:: ../assets/flow_animation_3.gif
-   :alt: Optional alt text
-   :width: 80%
-   :align: center
+3) **Preprocessing Pipeline**
+   A series of operations that modify raw data to align with the task's schema, preparing it for more detailed processing.
 
-Examples: AddDictToEveryInstance, RenameField, etc.
+4) **Template**
+   Here, the preprocessed data undergoes creative processing. The template, guided by the task schema, shapes the data into a query and response format, readying it for application.
 
-Streaming
----------
-Every operation on an stream instance is done once this artifact is being fetched.
+5) **Query and Response**
+   Resulting from the template's processing, these components represent the input (query) and expected output (response), tailored according to the task's requirements.
 
-.. image:: ../assets/flow_animation_2.gif
-   :alt: Optional alt text
-   :width: 80%
-   :align: center
+6) **Instruction**
+   A singular, clear directive outlining the approach to process the query to achieve the desired response, guiding effective data usage.
 
-Artifact
----------
+7) **Demonstration**
+   Practical examples of Query and Response pairs, illustrating the execution of the task and the data processing as per the task schema.
 
-An artifact is a class that can be saved in human readable format.
-Then it can be edited by a text editor and shared between different projects.
-Every operator or pipeline of operators should be saved as an artifact.
+8) **Format**
+   This component organizes all others into a structured and coherent whole, ensuring the data is ready for its intended application or analysis.
 
-.. image:: ../assets/flow_animation_4.gif
-   :alt: Optional alt text
-   :width: 80%
-   :align: center
-
-Recipe
--------
-A data prepration recipe consists of and is defined by a sequence of operators.
-<!--- The recipe can be easily understood by looking at the list of operations its consisted of. --->
-The recipe is saved as an artifact that can be shared between different projects, allowing
-reproducibility and transparent data preparation.
+The Unitxt Data Processing Workflow, with its comprehensive components, aims to simplify the transition from raw data to structured, meaningful outputs, enhancing clarity and efficiency in data processing.
