@@ -1141,6 +1141,15 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
         return addmostcommons(multi_stream)
 
 
+class ExtractFieldValues(ExtractMostCommonFieldValues):
+    def verify(self):
+        super().verify()
+
+    def prepare(self):
+        self.overall_top_frequency_percent = 100
+        self.min_frequency_percent = 0
+
+
 class FilterByListsOfValues(SingleStreamOperator):
     """Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
 
