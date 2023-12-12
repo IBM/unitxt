@@ -1,5 +1,7 @@
+import numpy as np
+
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import MeanGroupedAccuracy#, MeanGroupedSubstringAccuracy, MeanGroupedAccuracyPerformanceDrop, MeanGroupedSubstringAccuracyPerformanceDrop
+from src.unitxt.metrics import MeanGroupedAccuracy, MeanGroupedAccuracyPDR
 from src.unitxt.test_utils.metrics import test_metric
 
 
@@ -54,9 +56,15 @@ exact_instance_targets = [
     {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
 ]
 
+# for PDR, metric is undefined on a single instance
+instance_targets_PDR = [{"accuracy": np.nan, "score": np.nan, "score_name": "accuracy"}] * len(references)
 
 metric = MeanGroupedAccuracy()
-global_target = {"accuracy": 0.225, "score": 0.225, "score_name": "accuracy"}
+global_target = {"accuracy": 0.23, "score": 0.23,
+                 "score_name": "accuracy",
+                 "score_ci_low": np.nan, "score_ci_high": np.nan,
+                 "accuracy_ci_low": np.nan, "accuracy_ci_high": np.nan}
+
 
 outputs = test_metric(
     metric=metric,
@@ -69,40 +77,21 @@ outputs = test_metric(
 
 add_to_catalog(metric, "metrics.mean_grouped_accuracy", overwrite=True)
 
-#
-# metric = MeanGroupedSubstringAccuracy()
-# global_target = {"accuracy": 0.5, "score": 0.5, "score_name": "accuracy"}
-#
-# outputs = test_metric(
-#     metric=metric,
-#     predictions=predictions,
-#     references=references,
-#     instance_targets=substring_instance_targets,
-#     global_target=global_target,
-#     additional_inputs=additional_inputs
-# )
-#
-# metric = MeanGroupedAccuracyPerformanceDrop()
-# global_target = {"accuracy": 0.5, "score": 0.5, "score_name": "accuracy"}
-#
-# outputs = test_metric(
-#     metric=metric,
-#     predictions=predictions,
-#     references=references,
-#     instance_targets=exact_instance_targets,
-#     global_target=global_target,
-#     additional_inputs=additional_inputs
-# )
-#
-# metric = MeanGroupedSubstringAccuracyPerformanceDrop()
-# global_target = {"accuracy": 0.5, "score": 0.5, "score_name": "accuracy"}
-#
-# outputs = test_metric(
-#     metric=metric,
-#     predictions=predictions,
-#     references=references,
-#     instance_targets=substring_instance_targets,
-#     global_target=global_target,
-#     additional_inputs=additional_inputs
-# )
+# PDR
+metric = MeanGroupedAccuracyPDR()
+global_target = {"accuracy": 0.83, "score": 0.83,
+                 "score_name": "accuracy",
+                 "score_ci_low": np.nan, "score_ci_high": np.nan,
+                 "accuracy_ci_low": np.nan, "accuracy_ci_high": np.nan}
 
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_PDR,
+    global_target=global_target,
+    additional_inputs=additional_inputs
+)
+
+add_to_catalog(metric, "metrics.mean_grouped_accuracy_pdr", overwrite=True)
