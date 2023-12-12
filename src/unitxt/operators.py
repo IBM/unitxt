@@ -777,11 +777,24 @@ class TakeByField(StreamInstanceOperator):
 
 
 class CopyFields(FieldOperator):
-    """Copies specified fields from one field to another.
+    """Copies values from specified fields to specified fields.
 
-    Args:
+    Args (of parent class):
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
-        use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
+        use_query (bool): Whether to use dpath for accessing fields. Defaults to False.
+
+    Examples:
+        An input instance {"a": 2, "b": 3}, when processed by
+        CopyField(field_to_field={"a": "b"}
+        would yield {"a": 2, "b": 2}, and when processed by
+        CopyField(field_to_field={"a": "c"} would yield
+        {"a": 2, "b": 3, "c": 2}
+
+        with use_query=True, we can also copy inside the field:
+        CopyFields(field_to_field={"a/0": "a"}, use_query=True)
+        would process instance {"a": [1, 3]} into {"a": 1}
+
+
     """
 
     def process_value(self, value: Any) -> Any:
@@ -789,6 +802,8 @@ class CopyFields(FieldOperator):
 
 
 class AddID(StreamInstanceOperator):
+    """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
+
     id_field_name: str = "id"
 
     def process(
@@ -802,10 +817,11 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        types (Dict[str, str]): A dictionary mapping fields to their new types.
+        types (Dict[str, object]): A dictionary mapping type names to types.
         nested (bool): Whether to cast nested fields. Defaults to False.
-        fields (Dict[str, str]): A dictionary mapping fields to their new types.
-        defaults (Dict[str, object]): A dictionary mapping types to their default values for cases of casting failure.
+        fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
+        defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
     """
 
     types = {
@@ -817,7 +833,7 @@ class CastFields(StreamInstanceOperator):
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
     use_nested_query: bool = False
-    cast_multiple: bool = False
+    process_every_value: bool = False
 
     def _cast_single(self, value, type, field):
         try:
@@ -830,14 +846,17 @@ class CastFields(StreamInstanceOperator):
             return self.failure_defaults[field]
 
     def _cast_multiple(self, values, type, field):
-        values = [self._cast_single(value, type, field) for value in values]
+        return [self._cast_single(value, type, field) for value in values]
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
             value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
-            if self.cast_multiple:
+            if self.process_every_value:
+                assert isinstance(
+                    value, list
+                ), f"'process_every_value' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
