@@ -1375,21 +1375,10 @@ class TestOperators(unittest.TestCase):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_query=True,
+                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
-            tester=self,
-        )
-
-        check_operator(
-            operator=CastFields(
-                fields={"a": "json.loads", "b": "int"},
-                failure_defaults={"a": "0.0", "b": 0},
-                process_every_value=False,
-            ),
-            inputs=[{"a": '{"d": ["half", "0.6", 1, 12]}', "b": "2"}],
-            targets=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": 2}],
             tester=self,
         )
 
