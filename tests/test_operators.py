@@ -16,6 +16,7 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
+    ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByListsOfValues,
@@ -663,6 +664,88 @@ class TestOperators(unittest.TestCase):
         self.compare_streams(merged, expected_merged)
 
     def test_extract_values(self):
+        input_multi_stream1 = MultiStream(
+            {
+                "test": [{"animal": "shark"}],
+                "validation": [{"animal": "cat"}],
+                "train": [
+                    {"animal": "fish"},
+                    {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "sheep"},
+                    {"animal": "fish"},
+                    {"animal": "shark"},
+                ],
+            }
+        )
+        output_multi_stream1 = ExtractFieldValues(
+            stream_name="train",
+            field="animal",
+            to_field="all_animals1",
+        ).process(input_multi_stream1)
+        output_for_comparison1 = {}
+        for k, v in output_multi_stream1.items():
+            output_for_comparison1[k] = list(v)
+        expected_output1 = {
+            "test": [
+                {
+                    "animal": "shark",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                }
+            ],
+            "validation": [
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                }
+            ],
+            "train": [
+                {
+                    "animal": "fish",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "dog",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "dog",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "sheep",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "fish",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "shark",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+            ],
+        }
+        self.assertDictEqual(
+            output_for_comparison1,
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_for_comparison1),
+        )
+
+    def test_extract_most_common_values(self):
         input_multi_stream1 = MultiStream(
             {
                 "test": [{"animal": "shark"}],

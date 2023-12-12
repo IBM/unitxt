@@ -29,7 +29,7 @@
             }
         },
         {
-            "type": "extract_most_common_field_values",
+            "type": "extract_field_values",
             "field": "label",
             "to_field": "classes",
             "stream_name": "train"
