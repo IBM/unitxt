@@ -1083,17 +1083,8 @@ class ExtractFieldValues(MultiStreamOperator):
             for ele in values_and_counts
         ]
 
-        multi_stream_to_return = {}
-        addmostcommon_stream_operator = AddFieldValues(
-            fields_values={self.to_field: values_to_keep}
-        )
-        for stream_name, stream in multi_stream.items():
-            updated_stream = addmostcommon_stream_operator._process_single_stream(
-                stream
-            )
-            multi_stream_to_return[stream_name] = updated_stream
-
-        return MultiStream(multi_stream_to_return)
+        addmostcommons = AddFieldValues(fields_values={self.to_field: values_to_keep})
+        return addmostcommons(multi_stream)
 
 
 class FilterByListsOfValues(SingleStreamOperator):
