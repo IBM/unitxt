@@ -12,7 +12,7 @@ metric = MetricPipeline(
         CastFields(
             fields={"prediction": "float", "references": "float"},
             failure_defaults={"prediction": 0.0},
-            use_query=True,
+            use_nested_query=True,
         ),
     ],
     metric=HuggingfaceMetric(

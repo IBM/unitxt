@@ -817,7 +817,7 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        use_query (bool): Whether to cast nested fields, expressed in dpath. Defaults to False.
+        use_nested_query (bool): Whether to cast nested fields, expressed in dpath. Defaults to False.
         fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
             e.g: "int", "str", "float", "bool". Basic names of types
         defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
@@ -828,7 +828,7 @@ class CastFields(StreamInstanceOperator):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_query=True
+                use_nested_query=True
             )
         would process the input instance: {"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}
             into {"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}
@@ -837,14 +837,11 @@ class CastFields(StreamInstanceOperator):
 
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
-    use_query: bool = False
+    use_nested_query: bool = False
     process_every_value: bool = False
 
     def prepare(self):
-        self.types = {}
-        apply_operator = Apply(function=str, to_field="__")
-        for _, v in self.fields.items():
-            self.types[v] = apply_operator.str_to_function(function_str=v)
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
 
     def _cast_single(self, value, type, field):
         try:
@@ -863,7 +860,7 @@ class CastFields(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
-            value = dict_get(instance, field_name, use_dpath=self.use_query)
+            value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
             if self.process_every_value:
                 assert isinstance(
                     value, list
@@ -871,7 +868,9 @@ class CastFields(StreamInstanceOperator):
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
-            dict_set(instance, field_name, casted_value, use_dpath=self.use_query)
+            dict_set(
+                instance, field_name, casted_value, use_dpath=self.use_nested_query
+            )
         return instance
 
 
