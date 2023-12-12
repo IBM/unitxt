@@ -474,6 +474,18 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class StringContainment(InstanceMetric):
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+
+    def compute(self, references: List[Any], prediction: Any, additional_inputs: List[Dict]) -> dict:
+        references = [r.strip() for r in references[0].split("|")]
+        result = {self.main_score: float(any([str(reference) in prediction for reference in references]))}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
