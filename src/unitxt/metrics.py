@@ -723,7 +723,7 @@ class F1MultiLabel(GlobalMetric):
 
         for reference in references:
             assert isinstance(
-                references, list
+                reference, list
             ), f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference}"
 
         for prediction in predictions:
