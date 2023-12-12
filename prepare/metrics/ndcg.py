@@ -13,7 +13,7 @@ metric = MetricPipeline(
         CastFields(
             fields={"prediction": "float", "references": "float"},
             failure_defaults={"prediction": None},
-            use_nested_query=True,
+            use_query=True,
         ),
     ],
     metric=NDCG(),
