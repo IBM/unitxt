@@ -20,7 +20,9 @@ def round_floats(obj, precision=2, recursive=True):
 
 
 def dict_equal(dict1, dict2):
-    return json.dumps(dict1, sort_keys=True) == json.dumps(dict2, sort_keys=True)
+    return json.dumps(dict1, sort_keys=True, ensure_ascii=False) == json.dumps(
+        dict2, sort_keys=True, ensure_ascii=False
+    )
 
 
 def apply_metric(
@@ -78,14 +80,14 @@ def test_metric(
     global_score = round_floats(outputs[0]["score"]["global"])
     if not dict_equal(global_score, global_target):
         errors.append(
-            f"global score must be equal, got {json.dumps(global_score, sort_keys=True)} =/= {json.dumps(global_target, sort_keys=True)}"
+            f"global score must be equal, got {json.dumps(global_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(global_target, sort_keys=True, ensure_ascii=False)}"
         )
 
     for output, instance_target in zip(outputs, instance_targets):
         instance_score = round_floats(output["score"]["instance"])
         if not dict_equal(instance_score, instance_target):
             errors.append(
-                f"instance score must be equal, got {json.dumps(instance_score, sort_keys=True)} =/= {json.dumps(instance_target, sort_keys=True)}"
+                f"instance score must be equal, got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
             )
 
     if len(errors) > 0:
