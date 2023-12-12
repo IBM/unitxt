@@ -1040,7 +1040,7 @@ class AddFieldValues(SingleStreamOperator):
             yield instance
 
 
-class ExtractFieldValues(MultiStreamOperator):
+class ExtractMostCommonFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
     overall_top_frequency_percent: Optional[int] = 100
