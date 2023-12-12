@@ -1,6 +1,6 @@
 from src.unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import AddFields, ExtractFieldValues, RenameFields
+from src.unitxt.operators import AddFields, ExtractMostCommonFieldValues, RenameFields
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,7 +15,9 @@ card = TaskCard(
                 "type_of_class": "sentiment",
             }
         ),
-        ExtractFieldValues(field="label", to_field="classes", stream_name="train"),
+        ExtractMostCommonFieldValues(
+            field="label", to_field="classes", stream_name="train"
+        ),
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",

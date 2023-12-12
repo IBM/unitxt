@@ -16,7 +16,7 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     EncodeLabels,
-    ExtractFieldValues,
+    ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByListsOfValues,
     FilterByValues,
@@ -681,7 +681,7 @@ class TestOperators(unittest.TestCase):
                 ],
             }
         )
-        output_multi_stream1 = ExtractFieldValues(
+        output_multi_stream1 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="animal",
             to_field="most_common_animals1",
@@ -719,7 +719,7 @@ class TestOperators(unittest.TestCase):
             + json.dumps(output_for_comparison1),
         )
         # with minimum frequency limit
-        output_multi_stream2 = ExtractFieldValues(
+        output_multi_stream2 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="animal",
             to_field="most_common_animals2",
@@ -846,7 +846,7 @@ class TestOperators(unittest.TestCase):
             }
         )
         # with lists, treated as single elements
-        output_multi_stream3 = ExtractFieldValues(
+        output_multi_stream3 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="field",
             to_field="most_common_lists3",
@@ -1001,7 +1001,7 @@ class TestOperators(unittest.TestCase):
         )
 
         # finally, with lists and with process_every_value=True
-        output_multi_stream4 = ExtractFieldValues(
+        output_multi_stream4 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="field",
             to_field="most_common_individuals4",
@@ -1323,7 +1323,7 @@ class TestOperators(unittest.TestCase):
         )
         # test error cases
         with self.assertRaises(ValueError):
-            ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
@@ -1332,7 +1332,7 @@ class TestOperators(unittest.TestCase):
             ).process(input_multi_stream1)
 
         with self.assertRaises(AssertionError):
-            ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
@@ -1340,14 +1340,14 @@ class TestOperators(unittest.TestCase):
                 min_frequency_percent=25,
             ).process(input_multi_stream1)
         with self.assertRaises(AssertionError):
-            ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
                 overall_top_frequency_percent=120,
             ).process(input_multi_stream1)
         with self.assertRaises(AssertionError):
-            ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
