@@ -1275,23 +1275,25 @@ class GroupedInstanceMetric(GlobalMetric):
     class for GlobalMetrics where each instance belongs to a group defined by the combined values of one or more other variables,
     specified by the dict input in additional_inputs (e.g. an ID and GROUP variable).
     each instance score is determined by a function (specified by `metric'), and within each group, the overall score
-    is calculated by applying another function (specified by `group_metric') across the instance scores.  Then the
-    overall score is calculated by the mean of these group_metric scores.  For instance, if group_metric = median and
+    is calculated by applying another function (specified by `group_score_func') across the instance scores.  Then the
+    overall score is calculated by the mean of these group_score_func scores.  For instance, if group_score_func = median and
     metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
-    the medians.
+    the medians (excluding any NaN values)
+    Note: the implementation could be more efficient, because the instance accuracies only need to be calculated once
+    for the global score and in the confidence interval
     """
 
 
     from statistics import mean
     metric = Accuracy
-    group_metric = mean
-    group_metric_name = "mean"
+    group_score_func = mean
+    group_score_name = "mean"
     main_score = "mean"
 
 
     @classmethod
-    def _group_metric(self, x):
-        return self.group_metric(x)
+    def _group_score(self, x):
+        return self.group_score_func(x)
 
     def compute(self,
         references: List[List[Any]],
@@ -1310,11 +1312,11 @@ class GroupedInstanceMetric(GlobalMetric):
             group_to_predictions_and_references[keyname][1].append(reference)
             group_to_predictions_and_references[keyname][2].append(inputs_dict)
 
-
+        # calculate metric score for each instance by group
         group_to_scores = {group: [self.metric().compute(prediction=pred, references=refs, additional_inputs=inputs)["score"] for pred, refs, inputs in zip(*instances)]
                            for group, instances in group_to_predictions_and_references.items()}
-
-        group_total_scores = [self._group_metric(scores) for scores in group_to_scores.values()]
+        # now apply function by grop on the instance scores, and discard any NaNs
+        group_total_scores = [self._group_score(scores) for scores in group_to_scores.values()]
         group_total_scores = [score for score in group_total_scores if not np.isnan(score)]
         return {self.main_score: mean(group_total_scores) if len(group_total_scores) > 0 else np.nan}
 
@@ -1323,17 +1325,16 @@ class GroupedInstanceMetric(GlobalMetric):
 class MeanGroupedAccuracy(GroupedInstanceMetric):
     metric = Accuracy
     main_score = 'accuracy'
+    group_score_func = mean
 
-# class MeanGroupedSubstringAccuracy(GroupedInstanceMetric):
-#     metric = SubstringAccuracy
-#     main_score = 'substring_accuracy'
 
-class MeanGroupedAccuracyPerformanceDrop(GroupedInstanceMetric):
-    main_score = 'accuracy'
+# PDR (performance drop rate) from https://arxiv.org/pdf/2306.04528.pdf
+# undefined if fewer than 2 elements, or if first element is 0;
+# otherwise, calculate percentage change of average of scores of remaining observations (assumed to be perturbations) relative to the first
+
+PDR = lambda x: np.nan if (len(x) < 2 or x[0] == 0) else 1 - mean(x[1:]) / x[0]
+
+class MeanGroupedAccuracyPDR(GroupedInstanceMetric):
     metric = Accuracy
-    group_score_stat = lambda x: mean(x[1:]) - x[0] if len(x) > 1 else np.nan
-
-# class MeanGroupedSubstringAccuracyPerformanceDrop(GroupedInstanceMetric):
-#     main_score = 'substring_accuracy'
-#     metric = SubstringAccuracy
-#     group_score_stat = lambda x: mean(x[1:]) - x[0] if len(x) > 1 else np.nan
+    main_score = "accuracy"
+    group_score_func = PDR
