@@ -21,7 +21,7 @@
             "failure_defaults": {
                 "prediction": null
             },
-            "use_nested_query": true
+            "use_query": true
         }
     ],
     "metric": {
