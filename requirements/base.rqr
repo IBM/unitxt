@@ -10,3 +10,6 @@ jiwer
 editdistance
 statsmodels
 scipy
+seaborn
+matplotlib
+networkx
