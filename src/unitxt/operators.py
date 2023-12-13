@@ -971,21 +971,6 @@ class FilterByValues(SingleStreamOperator):
                 yield instance
 
 
-class AddFieldValues(SingleStreamOperator):
-    """Adds fields and their values to all instances of a stream.
-
-    Args: fields_values : the fields and their respective vaulues to add to each instance in the stream
-    """
-
-    fields_values: Dict[str, Any]
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None):
-        for instance in stream:
-            for f, v in self.fields_values.items():
-                instance[f] = v
-            yield instance
-
-
 class ExtractMostCommonFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
@@ -1083,7 +1068,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             for ele in values_and_counts
         ]
 
-        addmostcommons = AddFieldValues(fields_values={self.to_field: values_to_keep})
+        addmostcommons = AddFields(fields={self.to_field: values_to_keep})
         return addmostcommons(multi_stream)
 
 
