@@ -1,15 +1,8 @@
-import datasets as ds
-from src.unitxt import dataset
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
-    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    NormalizeListFields,
-    SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.splitters import RenameSplits
@@ -40,7 +33,11 @@ for lang in langs:
         preprocess_steps=[
             RenameSplits({"validation_matched": "validation"}),
             "splitters.small_no_test",
-            MapInstanceValues(mappers={"label": {"0": "entailment", "1": "neutral", "2": "contradiction"}}),
+            MapInstanceValues(
+                mappers={
+                    "label": {"0": "entailment", "1": "neutral", "2": "contradiction"}
+                }
+            ),
             AddFields(
                 fields={
                     "choices": ["entailment", "neutral", "contradiction"],

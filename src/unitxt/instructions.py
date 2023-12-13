@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Dict
 
 from .artifact import Artifact
+from .collections import ListCollection
 
 
 class Instruction(Artifact):
@@ -20,9 +21,6 @@ class TextualInstruction(Instruction):
         return self.text
 
 
-from .collections import ListCollection
-
-
 class InstructionsList(ListCollection):
     def verify(self):
         for instruction in self.items:
@@ -31,5 +29,5 @@ class InstructionsList(ListCollection):
 
 class InstructionsDict(Dict):
     def verify(self):
-        for key, instruction in self.items():
+        for _key, instruction in self.items():
             assert isinstance(instruction, Instruction)

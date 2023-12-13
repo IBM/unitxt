@@ -1,8 +1,5 @@
 from datasets import get_dataset_config_names
 
-configs = get_dataset_config_names("GEM/xlsum")  # the languages
-# now configs is the list of all languages showing in the dataset
-
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -14,6 +11,10 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
+
+configs = get_dataset_config_names("GEM/xlsum")  # the languages
+# now configs is the list of all languages showing in the dataset
+
 
 langs = configs
 
@@ -31,7 +32,9 @@ for lang in langs:
         ),
         templates=TemplatesList(
             [
-                InputOutputTemplate(input_format="{document}", output_format="{summary}"),
+                InputOutputTemplate(
+                    input_format="{document}", output_format="{summary}"
+                ),
             ]
         ),
     )

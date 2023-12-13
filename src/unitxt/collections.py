@@ -13,8 +13,8 @@ class Collection(Artifact):
     def __getitem__(self, key):
         try:
             return self.items[key]
-        except LookupError:
-            raise LookupError(f"Cannot find item {repr(key)} in {repr(self)}")
+        except LookupError as e:
+            raise LookupError(f"Cannot find item {key!r} in {self!r}") from e
 
 
 class ListCollection(Collection):
@@ -43,7 +43,11 @@ class ItemPicker(Artifact):
     def __call__(self, collection: Collection):
         try:
             return collection[int(self.item)]
-        except (SyntaxError, KeyError, ValueError) as e:  # in case picking from a dictionary
+        except (
+            SyntaxError,
+            KeyError,
+            ValueError,
+        ):  # in case picking from a dictionary
             return collection[self.item]
 
 
@@ -51,5 +55,6 @@ class RandomPicker(Artifact):
     def __call__(self, collection: Collection):
         if isinstance(collection, ListCollection):
             return get_random().choice(list(collection.items))
-        elif isinstance(collection, DictCollection):
+        if isinstance(collection, DictCollection):
             return get_random().choice(list(collection.items.values()))
+        return None

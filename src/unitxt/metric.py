@@ -1,9 +1,7 @@
-from dataclasses import field
-from typing import Any, Dict, Generator, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List
 
-import datasets
 import evaluate
-from datasets import Features, Sequence, Value
+from datasets import Features, Value
 
 from .artifact import __file__ as _
 from .blocks import __file__ as _
@@ -20,6 +18,7 @@ from .hf_utils import __file__ as _
 from .instructions import __file__ as _
 from .load import __file__ as _
 from .loaders import __file__ as _
+from .logging import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import (
@@ -45,6 +44,7 @@ from .recipe import __file__ as _
 from .register import __file__ as _
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .renderers import __file__ as _
+from .schema import UNITXT_DATASET_SCHEMA
 from .schema import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
@@ -78,7 +78,9 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
     def spread_results_one_stream(self, stream: Stream):
         for instance in stream:
-            instance["score"]["global"]["groups_mean_score"] = instance["score"]["global"]["score"]
+            instance["score"]["global"]["groups_mean_score"] = instance["score"][
+                "global"
+            ]["score"]
             yield instance
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -88,13 +90,17 @@ class MultiStreamScoreMean(MultiStreamOperator):
         # when aggregating results, if there is only one stream.
         if len(multi_stream) == 1:
             for stream_name, stream in multi_stream.items():
-                result[stream_name] = Stream(self.spread_results_one_stream, gen_kwargs={"stream": stream})
+                result[stream_name] = Stream(
+                    self.spread_results_one_stream, gen_kwargs={"stream": stream}
+                )
             return MultiStream(result)
 
         mean_score = self.aggegate_results(multi_stream)
         result = {}
         for stream_name, stream in multi_stream.items():
-            result[stream_name] = Stream(self.spread_results, gen_kwargs={"stream": stream, "score": mean_score})
+            result[stream_name] = Stream(
+                self.spread_results, gen_kwargs={"stream": stream, "score": mean_score}
+            )
 
         return MultiStream(result)
 
@@ -104,13 +110,18 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
         for prediction, original in zip(predictions, references):
             yield {**original, "prediction": prediction}
 
-    def process(self, predictions: List[str], references: Iterable, split_name: str = "all") -> MultiStream:
+    def process(
+        self, predictions: List[str], references: Iterable, split_name: str = "all"
+    ) -> MultiStream:
         return MultiStream(
-            {split_name: Stream(self.zip, gen_kwargs={"predictions": predictions, "references": references})}
+            {
+                split_name: Stream(
+                    self.zip,
+                    gen_kwargs={"predictions": predictions, "references": references},
+                )
+            }
         )
 
-
-from .schema import UNITXT_DATASET_SCHEMA
 
 # The additional_inputs field in the schema is defined as
 # Sequence({"key": Value(dtype="string"), "value": Value("string")})
@@ -119,7 +130,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 
 
 def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
-    return dict([(key, value) for key, value in zip(key_value_list["key"], key_value_list["value"])])
+    return dict(zip(key_value_list["key"], key_value_list["value"]))
 
 
 class MetricRecipe(SequentialOperatorInitilizer):
@@ -129,7 +140,11 @@ class MetricRecipe(SequentialOperatorInitilizer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
-            Apply("additional_inputs", function=_from_key_value_pairs, to_field="additional_inputs"),
+            Apply(
+                "additional_inputs",
+                function=_from_key_value_pairs,
+                to_field="additional_inputs",
+            ),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],
@@ -146,7 +161,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
         ]
 
 
-UNITXT_METRIC_SCHEMA = Features({"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)})
+UNITXT_METRIC_SCHEMA = Features(
+    {"predictions": Value("string"), "references": dict(UNITXT_DATASET_SCHEMA)}
+)
 
 
 def _compute(
@@ -160,7 +177,9 @@ def _compute(
     register_all_artifacts()
     recipe = MetricRecipe(calc_confidence_intervals=calc_confidence_intervals)
 
-    multi_stream = recipe(predictions=predictions, references=references, split_name=split_name)
+    multi_stream = recipe(
+        predictions=predictions, references=references, split_name=split_name
+    )
 
     if flatten:
         operator = FlattenInstances()
@@ -188,7 +207,13 @@ class Metric(evaluate.Metric):
             ],
         )
 
-    def _compute(self, predictions: List[str], references: Iterable, flatten: bool = False, split_name: str = "all"):
+    def _compute(
+        self,
+        predictions: List[str],
+        references: Iterable,
+        flatten: bool = False,
+        split_name: str = "all",
+    ):
         try:
             from unitxt.dataset import (
                 get_dataset_artifact as get_dataset_artifact_installed,
@@ -208,11 +233,11 @@ class Metric(evaluate.Metric):
                 split_name=split_name,
                 calc_confidence_intervals=self.calc_confidence_intervals,
             )
-        else:
-            return _compute(
-                predictions=predictions,
-                references=references,
-                flatten=flatten,
-                split_name=split_name,
-                calc_confidence_intervals=self.calc_confidence_intervals,
-            )
+
+        return _compute(
+            predictions=predictions,
+            references=references,
+            flatten=flatten,
+            split_name=split_name,
+            calc_confidence_intervals=self.calc_confidence_intervals,
+        )

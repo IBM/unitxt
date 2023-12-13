@@ -1,12 +1,13 @@
 import glob
 import importlib.util
 import os
-import sys
 import unittest
 
-from src.unitxt.random_utils import get_seed, set_seed
+from src.unitxt.logging import get_logger
+from src.unitxt.random_utils import get_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
+logger = get_logger()
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
@@ -34,16 +35,18 @@ class TestExamples(unittest.TestCase):
         register_local_catalog_for_tests()
 
     def test_preprations(self):
-        print(glob_query)
-        print(f"Testing preparation files: {all_preparation_files}")
+        logger.info(glob_query)
+        logger.info(f"Testing preparation files: {all_preparation_files}")
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         all_preparation_files.sort()
         for file in all_preparation_files:
             with self.subTest(file=file):
-                print(f"Testing preparation file: {file}, current seed: {get_seed()}.")
+                logger.info(
+                    f"Testing preparation file: {file}, current seed: {get_seed()}."
+                )
                 import_module_from_file(file)
                 # with open(file, "r") as f:
                 #     exec(f.read())
-                print(f"Testing preparation file: {file} passed")
+                logger.info(f"Testing preparation file: {file} passed")
                 self.assertTrue(True)

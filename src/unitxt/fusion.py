@@ -1,9 +1,7 @@
 import copy
 from abc import abstractmethod
-from dataclasses import asdict
 from typing import Generator, List, Optional
 
-from .card import ICLCard, TaskCard
 from .dataclass import NonPositionalField
 from .operator import SourceOperator, StreamSource
 from .random_utils import get_random
@@ -11,8 +9,7 @@ from .stream import MultiStream, Stream
 
 
 class BaseFusion(SourceOperator):
-    """
-    BaseFusion operator that combines multiple streams into one.
+    """BaseFusion operator that combines multiple streams into one.
 
     Args:
         include_splits: List of splits to include. If None, all splits are included.
@@ -44,8 +41,7 @@ class BaseFusion(SourceOperator):
 
 
 class FixedFusion(BaseFusion):
-    """
-    FixedFusion operator that combines multiple streams into one based on a fixed number of examples per task.
+    """FixedFusion operator that combines multiple streams into one based on a fixed number of examples per task.
 
     Args:
         orgins: List of StreamSource objects.
@@ -69,8 +65,7 @@ class FixedFusion(BaseFusion):
 
 
 class WeightedFusion(BaseFusion):
-    """
-    Fusion operator that combines multiple streams based
+    """Fusion operator that combines multiple streams based.
 
     Args:
         orgins: List of StreamSource objects.
@@ -86,13 +81,17 @@ class WeightedFusion(BaseFusion):
         super().verify()
         assert self.origins is not None, "origins must be specified"
         assert self.weights is not None, "weights must be specified"
-        assert len(self.origins) == len(self.weights), "origins and weights must have the same length"
+        assert len(self.origins) == len(
+            self.weights
+        ), "origins and weights must have the same length"
 
     def fusion_generator(self, split) -> Generator:
         weights = copy.deepcopy(self.weights)
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
-        while (self.max_total_examples is None or total_examples <= self.max_total_examples) and len(iterators) > 0:
+        while (
+            self.max_total_examples is None or total_examples <= self.max_total_examples
+        ) and len(iterators) > 0:
             iterator = get_random().choices(population=iterators, weights=weights)[0]
             try:
                 yield next(iterator)

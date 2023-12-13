@@ -1,4 +1,5 @@
 import numpy as np
+
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import CastFields, CopyFields
 from src.unitxt.metrics import NDCG, MetricPipeline
@@ -18,7 +19,19 @@ metric = MetricPipeline(
     metric=NDCG(),
 )
 
-predictions = ["1.0", " 2 ", "1.0", "0", "1.7", 3, "0", "oops", "1", "failed", "failed again"]
+predictions = [
+    "1.0",
+    " 2 ",
+    "1.0",
+    "0",
+    "1.7",
+    3,
+    "0",
+    "oops",
+    "1",
+    "failed",
+    "failed again",
+]
 references = [["4"], ["0"], ["1.0"], [4], ["0"], ["1"], ["1.0"], ["3"], ["2"], [4], [1]]
 inputs = (
     [{"query": "who is Barack Obama"}] * 3

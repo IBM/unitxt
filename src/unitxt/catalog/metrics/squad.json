@@ -42,7 +42,13 @@
                 [
                     "id",
                     "reference_template/id"
-                ],
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
                 [
                     "reference_template",
                     "references"
