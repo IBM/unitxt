@@ -12,13 +12,15 @@ instance_targets = [
     {"string_containment": 0.0, "score": 0.0, "score_name": "string_containment"},
 ]
 
-global_target = {"string_containment": 0.50,
-                 "score": 0.50,
-                 "score_name": "string_containment",
-                 "score_ci_high": 1.0,
-                 "score_ci_low": 0.0,
-                 "string_containment_ci_high": 1.0,
-                 "string_containment_ci_low": 0.0}
+global_target = {
+    "string_containment": 0.50,
+    "score": 0.50,
+    "score_name": "string_containment",
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.0,
+    "string_containment_ci_high": 1.0,
+    "string_containment_ci_low": 0.0,
+}
 
 outputs = test_metric(
     metric=metric,

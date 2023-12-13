@@ -77,9 +77,9 @@ class TakeFirstNonEmptyLine(BaseFieldOperator):
 
 class ConvertToBoolean(BaseFieldOperator):
     def process(self, instance):
-        if any([w in str(instance).strip().lower() for w in ["yes", "right", "correct"]]):
+        if any(w in str(instance).strip().lower() for w in ["yes", "right", "correct"]):
             return "TRUE"
-        if any([w in str(instance).strip().lower() for w in ["no", "not", "wrong"]]):
+        if any(w in str(instance).strip().lower() for w in ["no", "not", "wrong"]):
             return "FALSE"
         return instance.upper()
 
