@@ -50,7 +50,10 @@ def make_content(artifact, label, all_labels=None):
     artifact_class_id = f"{artifact_class.__module__}.{class_name}"
     result = f".. note:: ID: ``{label}``  |  Type: :class:`{class_name} <{artifact_class_id}>`\n\n   .. code-block:: json\n\n      "
     result += (
-        json.dumps(artifact, sort_keys=True, indent=4).replace("\n", "\n      ") + "\n"
+        json.dumps(artifact, sort_keys=True, indent=4, ensure_ascii=False).replace(
+            "\n", "\n      "
+        )
+        + "\n"
     )
 
     references = []
