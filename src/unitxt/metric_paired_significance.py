@@ -173,7 +173,7 @@ class PairedDifferenceTest:
         # notice, the pair order is important if one-sided tests are used because it affects the hypothesis order
         return combinations(range(self.nmodels) if samples_list is None else samples_list, r=2)
 
-    def signif_pair_diff(self, samples_list, metric_name='unknown', alternative='two-sided', permute=False, corrected=True):
+    def signif_pair_diff(self, samples_list, metric_name='unknown', alternative='two-sided', permute=False, corrected=True, random_state=None):
         """ Conduct pairedd-observation est of difference in means between samples.
 
         Args:
@@ -182,6 +182,7 @@ class PairedDifferenceTest:
             alternative: alternative hypothesis to be used; one-sided (greater/less) should only be used if the arrays have been ordered
             permute: whether or not to use permutation test (requires some simulation)
             corrected: whether or not to apply a correction for control of false positive rate given the number of hypotheses (used when nmodels > 2)
+            random_state: either an integer seed or None
 
         Returns:
             dict
@@ -212,7 +213,7 @@ class PairedDifferenceTest:
             # pvalue is low (close to 0) if E(a_i - b_i) is significant (according to altnernative)
             res = {}
             if permute:
-                pvalues = np.array([permutation_test(data=vec, statistic=self._permute_diff_statistic, alternative=alternative, permutation_type='samples', vectorized=False).pvalue
+                pvalues = np.array([permutation_test(data=vec, statistic=self._permute_diff_statistic, alternative=alternative, permutation_type='samples', vectorized=False, random_state=random_state).pvalue
                                     for vec in self.iterate_pairs(samples_list=samples_list)])
             else:
                 test_res = [ttest_rel(a=vec[0], b=vec[1], alternative=alternative) for vec in self.iterate_pairs(samples_list=samples_list)]
