@@ -863,23 +863,31 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        types (Dict[str, object]): A dictionary mapping type names to types.
-        nested (bool): Whether to cast nested fields. Defaults to False.
+        use_nested_query (bool): Whether to cast nested fields, expressed in dpath. Defaults to False.
         fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
+            e.g: "int", "str", "float", "bool". Basic names of types
         defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
         process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+
+    Examples:
+        CastFields(
+                fields={"a/d": "float", "b": "int"},
+                failure_defaults={"a/d": 0.0, "b": 0},
+                process_every_value=True,
+                use_nested_query=True
+            )
+        would process the input instance: {"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}
+            into {"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}
+
     """
 
-    types = {
-        "int": int,
-        "float": float,
-        "str": str,
-        "bool": bool,
-    }
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
     use_nested_query: bool = False
     process_every_value: bool = False
+
+    def prepare(self):
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
 
     def _cast_single(self, value, type, field):
         try:
