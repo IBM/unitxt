@@ -28,9 +28,15 @@ def isoftype(object, type):
         >>> isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]])
         True
     """
+    if type == typing.Any:
+        return True
+
     if hasattr(type, "__origin__"):
         origin = type.__origin__
         type_args = typing.get_args(type)
+
+        if origin is typing.Union:
+            return any(isoftype(object, sub_type) for sub_type in type_args)
 
         if not isinstance(object, origin):
             return False
@@ -50,8 +56,6 @@ def isoftype(object, type):
             )
         return None
 
-    if type == typing.Any:
-        return True
     return isinstance(object, type)
 
 
