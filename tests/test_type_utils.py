@@ -8,6 +8,7 @@ class TestAssertTyping(unittest.TestCase):
     def test_simple_types(self):
         self.assertEqual(isoftype(1, int), True)
         self.assertEqual(isoftype("hello", str), True)
+        self.assertEqual(isoftype("hello", typing.List[str]), False)
         self.assertEqual(isoftype(1.23, float), True)
         self.assertEqual(isoftype([1, 2, 3], typing.List[int]), True)
         self.assertEqual(isoftype(("hello", 1), typing.Tuple[str, int]), True)

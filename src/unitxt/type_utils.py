@@ -32,8 +32,12 @@ def isoftype(object, type):
         origin = type.__origin__
         type_args = typing.get_args(type)
 
+        if not isinstance(object, origin):
+            return False
+
         if origin is list or origin is set:
             return all(isoftype(element, type_args[0]) for element in object)
+
         if origin is dict:
             return all(
                 isoftype(key, type_args[0]) and isoftype(value, type_args[1])
