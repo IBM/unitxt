@@ -24,5 +24,4 @@ repos:
       # when "--baseline" without "--use-all-plugins", pre-commit scan with just plugins in baseline file
       # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
       # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
-      # add --exclude-files to exclude jupyter notebooks (https://github.com/Yelp/detect-secrets/issues/549)
-      args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited, --exclude-files, '.*\.ipynb$']
+      args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]
