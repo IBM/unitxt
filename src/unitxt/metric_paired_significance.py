@@ -46,8 +46,7 @@ def spectal_palette(n):
 
 
 class PairedDifferenceTest:
-    """    Class to conduct test of statistical significance (from 0) in average differences between
-    sample values for the same observation index.
+    """    Class to conduct test of statistical significance (from 0) in average differences between sample values for the same observation index.
 
     Can be used to measure if a pair of prediction models differ substantially in the metric scores they
     receive across observations.
@@ -77,8 +76,9 @@ class PairedDifferenceTest:
 
     @staticmethod
     def _permute_diff_statistic(lx, ly):
-        """  Statistic to be used in permutation test.  Calculates expected difference between pairs (= difference
-        in expected values of the samples themselves)
+        """  Statistic to be used in permutation test.
+
+        Calculates expected difference between pairs (= difference in expected values of the samples themselves).
 
         Args:
             lx: first sample
@@ -87,7 +87,7 @@ class PairedDifferenceTest:
         return np.mean(lx) - np.mean(ly)
 
     def _check_valid_samples(self, samples_list):
-        """  Check if samples_list is valid (is of length nmodels), all have same length, and at least 2
+        """ Check if samples_list is valid (is of length nmodels), all have same length, and at least 2.
 
         Args:
             samples_list: a list of 1-D numpy arrays
@@ -97,7 +97,7 @@ class PairedDifferenceTest:
         assert (len(samples_list) == self.nmodels) and (len(np.unique(len_elements)) == 1) and (len_elements[0] >= 2)
 
     def _check_binary(self, samples_list):
-        """ Check if samples are binary-valued
+        """ Check if samples are binary-valued.
 
         Args:
             samples_list: a list of 1-D numpy arrays
@@ -111,7 +111,7 @@ class PairedDifferenceTest:
         return np.all(np.isin(uv, self.binary_values))
 
     def _can_use_mcnemar(self, samples_list, alternative='two-sided'):
-        """ Check if can use the McNemar test (accepts only 2 binary equal-length samples) which simplifies computation
+        """ Check if can use the McNemar test (accepts only 2 binary equal-length samples) which simplifies computation.
 
         Args:
             samples_list: a list of 1-D numpy arrays
@@ -124,7 +124,7 @@ class PairedDifferenceTest:
         return is_binary and (len(samples_list) == 2) and (alternative == 'two-sided')
 
     def _handle_binary_data_contingency(self, samples_list, continuity_correction=True):
-        """ Convert samples into 2x2 contingency table form, even if some value combinations are not observed
+        """ Convert samples into 2x2 contingency table form, even if some value combinations are not observed.
 
         Args:
             samples_list: a list of 1-D numpy arrays
@@ -138,11 +138,10 @@ class PairedDifferenceTest:
         # encode as categorical binary with all values, use dropna=False to avoid dropping missing combinations
         df = pd.DataFrame(np.transpose(np.vstack(samples_list))).astype(cat_binary)
         # need to allow floats for continuity correction
-        tbl = pd.crosstab(df[0], df[1], dropna=False).to_numpy()
-        return tbl
+        return pd.crosstab(df[0], df[1], dropna=False).to_numpy()
 
     def mcnemar_test(self, samples_list):
-        """ Perform McNemar test and return a p-value and effect size
+        """ Perform McNemar test and return a p-value and effect size.
         Use approximation (exact=False) so that effect size can be calculated
 
         Args:
@@ -162,7 +161,7 @@ class PairedDifferenceTest:
         return mcnemar(table=tbl, exact=True).pvalue, cohens_g
 
     def iterate_pairs(self, samples_list=None):
-        """ Iterate over ordered combinations of samples or their indices (if samples_list is None)
+        """ Iterate over ordered combinations of samples or their indices (if samples_list is None).
 
         Args:
             samples_list: a list of 1-D numpy arrays (must be binary)
@@ -175,7 +174,7 @@ class PairedDifferenceTest:
         return combinations(range(self.nmodels) if samples_list is None else samples_list, r=2)
 
     def signif_pair_diff(self, samples_list, metric_name='unknown', alternative='two-sided', permute=False, corrected=True):
-        """ Conduct pairedd-observation est of difference in means between samples
+        """ Conduct pairedd-observation est of difference in means between samples.
 
         Args:
             samples_list: a list of 1-D numpy arrays
@@ -240,7 +239,7 @@ class PairedDifferenceTest:
         return self.PERMUTE_REPORT(*[res[kk] for kk in self.PERMUTE_REPORT._fields]) if permute else self.TTEST_REPORT(*[res[kk] for kk in self.TTEST_REPORT._fields])
 
     def _is_valid_signif_report(self, test_res):
-        """ Test if an instance of results from signif_pair_diff is a valid comparison to an object of class PairedDifferenceTest
+        """ Test if an instance of results from signif_pair_diff is a valid comparison to an object of class PairedDifferenceTest.
 
          Args:
             test_res: a namedtuple outputted from signif_pair_diff, from the same item
@@ -253,7 +252,7 @@ class PairedDifferenceTest:
         assert all([ii == jj for ii, jj in zip(self.model_names, test_res.model_names)]), 'model_names lists must match'
 
     def pvalue_lineplot(self, test_res):
-        """ A lineplot that shows pairs of compared models and arranges them along the x-axis by p-value
+        """ A lineplot that shows pairs of compared models and arranges them along the x-axis by p-value.
 
         Inspired by https://cran.r-project.org/web/packages/emmeans/vignettes/comparisons.html
         The graph plot is recommended because the lineplot can result in over-plotting and a busy image that is difficult to read
@@ -323,7 +322,7 @@ class PairedDifferenceTest:
         g.axes.tick_params(right=True, left=True, labelright=True, labelleft=False)
 
         # label sample means
-        for colpal, sm, mn, lord in zip(pal, test_res.sample_means, self.model_names, level_order):
+        for colpal, sm, mn in zip(pal, test_res.sample_means, self.model_names):
             g.text(x=xaxis_range[0], y=sm, s=mn, fontdict=dict(color=colpal, horizontalalignment="right"))
 
         color_legend = [Line2D([0], [0], color='red', label=lab, linewidth=lw) for lab, lw in zip(['significant', 'not significant'], linewidths)]
@@ -333,7 +332,7 @@ class PairedDifferenceTest:
         plt.show()
 
     def _is_valid_signif_report_list(self, test_results_list: list):
-        """ Test whether a list of results of signif_pair_diff outputs, on different metrics, can be compared
+        """ Test whether a list of results of signif_pair_diff outputs, on different metrics, can be compared.
 
         Used before running heatmap
 
@@ -358,7 +357,7 @@ class PairedDifferenceTest:
 
     def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False,
                                               optimize_color=True):
-        """ Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons
+        """ Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons.
 
         Args:
             test_results_list: list where each element corresponds to a different metric_name result of signif_pair_diff on the same
@@ -525,8 +524,7 @@ class PairedDifferenceTest:
         plt.show()
 
     def metric_significant_pairs_graph(self, test_res, node_color_levels=None, use_pvalues=True, model_name_split_char=None, weight_edges=False):
-        ''' Compare models across a given metric; show a graph where nodes correspond to models, and edges are drawn
-        between pairs that have a significant difference result
+        ''' Compare models across a given metric; show a graph where nodes correspond to models, and edges are drawn between pairs that have a significant difference result.
 
         Args:
             test_res: object outputted from signif_pair_diff
