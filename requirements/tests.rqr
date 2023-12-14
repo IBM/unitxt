@@ -2,3 +2,6 @@ bert_score
 transformers
 sentence_transformers
 ibm-cos-sdk
+seaborn
+matplotlib
+networkx
