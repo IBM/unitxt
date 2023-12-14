@@ -717,18 +717,8 @@ class F1MultiLabel(GlobalMetric):
         self.str_to_id = {}
         self.id_to_str = {}
 
-        if not isoftype(references, List[Any]):
-            raise ValueError(f"References must be a list: {references}")
-
-        for reference in references:
-            if not len(reference) == 1:
-                raise ValueError(
-                    "Only a single reference per prediction is allowed in F1 multi label metric"
-                )
-
-        references = [reference[0] for reference in references]
-
         self._validate_references_and_prediction(references, predictions)
+        references = [reference[0] for reference in references]
 
         labels = [
             lbl
@@ -778,9 +768,13 @@ class F1MultiLabel(GlobalMetric):
 
     def _validate_references_and_prediction(self, references, predictions):
         for reference in references:
-            if not isoftype(reference, List[str]):
+            if not len(reference) == 1:
                 raise ValueError(
-                    f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference}"
+                    "Only a single reference per prediction is allowed in F1 multi label metric"
+                )
+            if not isoftype(reference[0], List[str]):
+                raise ValueError(
+                    f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference[0]}"
                 )
 
         for prediction in predictions:
