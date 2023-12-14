@@ -1,7 +1,36 @@
 import numpy as np
 
 import unittest
+from src.unitxt.random_utils import *
 from src.unitxt.metric_paired_significance import PairedDifferenceTest
+
+np.set_printoptions(precision=10)
+
+
+def rbernoulli_vec(pvec, rng):
+    # binary variable with probability of 1 being given by a vector pvec (which determines the length)
+    pvec = np.clip(pvec, 0.0, 1.0)
+    return np.array([rng.choices(population=[0, 1], weights=[1-pp, pp], k=1)[0] for pp in pvec])
+
+def rbeta(alpha, beta, rng, n):
+    n = int(max(n, 1))
+    return np.array([rng.betavariate(alpha=alpha, beta=beta) for _ in range(n)])
+
+def rnorm(mu, sigma, rng, n):
+    n = int(max(n, 1))
+    return np.array([rng.normalvariate(mu=mu, sigma=sigma) for _ in range(n)])
+
+def rmvnorm(mu, cmat, rng, n):
+    # multivariate normal from univariate, since no existing function in Random
+    # see https://rinterested.github.io/statistics/multivariate_normal_draws.html
+    assert len(mu) == cmat.shape[0]
+    d = cmat.shape[0]
+    # generate n * d independent standard normal dras
+    Z = np.vstack([rnorm(mu=0, sigma=1, rng=rng, n=n) for _ in range(d)])
+    # cholesky decomposition (LL^T = cmat)
+    L = np.linalg.cholesky(cmat)
+    # add mu row-wise
+    return mu + np.transpose(np.matmul(L, Z))
 
 
 class TestMetricSignifDifference(unittest.TestCase):
@@ -9,6 +38,7 @@ class TestMetricSignifDifference(unittest.TestCase):
     def setUpClass(cls, nmodels=4, nobs=50):
         cls.nmodels = max(2, int(nmodels))
         cls.nobs = max(3, int(nobs))
+        cls.rseed = "4"
 
     def gen_continuous_data(self, same_distr=True):
         # assume we have a dataset with nobs observations
@@ -19,8 +49,13 @@ class TestMetricSignifDifference(unittest.TestCase):
         cmat.fill(0.7)
         np.fill_diagonal(cmat, 1)
 
-        mu = np.random.normal(size=self.nobs, loc=5)
-        model_measurement = np.transpose(np.vstack([np.random.multivariate_normal(mean=[mm]*self.nmodels, cov=cmat) for mm in mu]))
+        rng = get_sub_default_random_generator(sub_seed=self.rseed)
+        # different mean for every observation, and are correlated due to pairing
+        mu = rnorm(mu=5, sigma=1, rng=rng, n=self.nobs)
+
+        # multivariate normal
+        model_measurement = np.transpose(np.vstack([rmvnorm(mu=np.array([mm]*self.nmodels), cmat=cmat, n=1, rng=rng)[0,:] for mm in mu]))
+
         if not same_distr:
             # make the last two sample have a higher mean
             model_measurement[-1, :] = model_measurement[-1, :] + 2
@@ -35,18 +70,18 @@ class TestMetricSignifDifference(unittest.TestCase):
     def gen_binary_data(self, same_distr=True, nmodels=None):
         # generate only binary data
         nmodels = self.nmodels if nmodels is None else max(2, int(nmodels))
+        rng = get_sub_default_random_generator(sub_seed=self.rseed)
         if same_distr:
             # generate random probabilities for each observation and then binary
             # do this so observation pairs are more correlated than otherwise if used the same p for all
-            p = np.random.beta(a=2, b=5, size=self.nobs)
-            return [np.random.binomial(n=1, p=p) for rr in range(nmodels)]
+            p = rbeta(alpha=2, beta=5, rng=rng, n=self.nobs)
+            return [rbernoulli_vec(pvec=p, rng=rng) for _ in range(nmodels)]
         else:
-            p = np.vstack([np.random.beta(a=2, b=5, size=(nmodels-1, self.nobs)), np.random.beta(a=5, b=2, size=(1, self.nobs))])
-            return [np.random.binomial(n=1, p=pp) for pp in p]
+            p = np.vstack([rbeta(alpha=2, beta=5, rng=rng, n=self.nobs) for _ in range(nmodels - 1)] + [rbeta(alpha=5, beta=2, rng=rng, n=self.nobs)])
+            return [rbernoulli_vec(pvec=pp, rng=rng) for pp in p]
 
     
     def _test_signif(self, expected_pvalues_list: list, expected_effect_sizes, same_distr=True, continuous=True):
-        np.random.seed(4)
 
         model_res = self.gen_continuous_data(same_distr) if continuous else self.gen_binary_data(same_distr=same_distr)
         tester = PairedDifferenceTest(nmodels=self.nmodels)
@@ -64,51 +99,50 @@ class TestMetricSignifDifference(unittest.TestCase):
             self.assertAlmostEqual(first=observed, second=expected)
 
         # permutation results should be very similar to t-test but not identical, and should vary a bit each run due to permutation randomness
-        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided', permute=True)
+        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided', permute=True, random_state=int(self.rseed))
         for observed, expected in zip(res_twosided.pvalues, expected_pvalues_list[2]):
             self.assertAlmostEqual(first=observed, second=expected)
-        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less', permute=True)
+
+        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less', permute=True, random_state=int(self.rseed))
         for observed, expected in zip(res_onesided.pvalues, expected_pvalues_list[3]):
             self.assertAlmostEqual(first=observed, second=expected)
 
     def test_signif_same_distr_continuous(self):
-        self._test_signif(expected_pvalues_list=[np.array([0.85442384, 0.90404157, 0.826577, 0.826577, 0.90404157, 0.72593365]),
-                                                 np.array([0.66103154, 0.88089618, 0.59450227, 0.88089618, 0.82079927, 0.4579273]),
-                                                 np.array([0.86229215, 0.90611904, 0.82509877, 0.82509877, 0.90611904, 0.6937621]),
-                                                 np.array([0.66001193, 0.88083696, 0.59651234, 0.88083696, 0.8209753, 0.44840733])],
-                          expected_effect_sizes=np.array([-0.27137964,  0.15076678, -0.36974064,  0.39757755, -0.06070158, -0.49517756]),
-                          same_distr=True)
+        self._test_signif(expected_pvalues_list=[np.array([0.9895803029, 0.9961379384, 0.9961379384, 0.9961379384, 0.9961379384, 0.9961379384]),
+                                                 np.array([0.9561053206, 0.9561053206, 0.9561053206, 0.9516411082, 0.9516411082, 0.9516411082]),
+                                                 np.array([0.9888580218, 0.995026807, 0.995026807, 0.995026807, 0.995026807, 0.995026807]),
+                                                 np.array([0.9550338964, 0.9550338964, 0.9550338964, 0.9524978682, 0.9524978682, 0.9524978682])],
+                          expected_effect_sizes=np.array([ 0.2363223971, 0.1607737558, 0.1429445904, -0.0605006595, -0.0993183451]))
 
     def test_signif_diff_distr_continuous(self):
         # here the last one or two samples (models) have higher mean, so the 'less' alternative should be appropriate
-        self._test_signif(expected_pvalues_list=[np.array([4.73946291e-01, 2.13890672e-10, 2.46099435e-23, 1.06904139e-09, 7.72220177e-20, 9.73759291e-13]),
-                                                 np.array([2.36973146e-01, 1.06945336e-10, 1.23049717e-23, 5.34520693e-10, 3.86110089e-20, 4.86879645e-13]),
-                                                 np.array([0.4836, 0.0011994, 0.0011994, 0.0011994, 0.0011994, 0.0011994]),
-                                                 np.array([0.2364, 0.00059985, 0.00059985, 0.00059985, 0.00059985, 0.00059985])],
-                          expected_effect_sizes=np.array([-0.27137964, -3.11411273, -7.09385033, -2.89886275, -5.83322115, -3.73910222]),
+        self._test_signif(expected_pvalues_list=[np.array([5.3264971085e-01, 5.2011437584e-09, 3.7798272112e-19, 1.1837543364e-10, 1.1248121326e-19, 1.8367825057e-13]),
+                                                 np.array([7.3367514457e-01, 2.6005718809e-09, 1.8899136056e-19, 5.9187716820e-11, 5.6240606632e-20, 9.1839125286e-14]),
+                                                 np.array([0.5274, 0.0011994002, 0.0011994002, 0.0011994002, 0.0011994002, 0.0011994002]),
+                                                 np.array([7.3640000e-01, 5.9985002e-04, 5.9985002e-04, 5.9985002e-04, 5.9985002e-04, 5.9985002e-04])],
+                          expected_effect_sizes=np.array([0.2363223971, -2.7312549788, -5.609456644, -3.1778374839, -5.8056079522, -3.9294197371]),
                           same_distr=False)
 
     def test_signif_same_distr_binary(self):
         # use ordinary t-test or permutation on binary values; have more than 2 samples so don't use McNemar
-        self._test_signif(expected_pvalues_list=[np.array([0.43845116, 0.72657074, 0.72657074, 0.17494627, 0.72657074, 0.50067149]),
-                                                 np.array([0.28555526, 0.98904844, 0.68091409, 0.98904844, 0.98904844, 0.33981817]),
-                                                 np.array([0.60324019, 0.86656717, 0.86656717, 0.28055268, 0.86656717, 0.65894208]),
-                                                 np.array([0.42384358, 0.99636195, 0.79740386, 0.99636195, 0.99636195, 0.4785349])],
-                          expected_effect_sizes=np.array([-0.61389088,  0.29011333, -0.25744353,  0.83244498,  0.35415175, -0.53734092]),
+        self._test_signif(expected_pvalues_list=[np.array([0.9596776367, 0.9591282452, 0.9591282452, 0.9591282452, 0.8251525806, 0.9596776367]),
+                                                 np.array([0.7400657497, 0.7400657497, 0.7400657497, 0.7400657497, 0.5546027515, 0.7400657497]),
+                                                 np.array([0.99999804, 0.9934324192, 0.9934324192, 0.9934324192, 0.948378191, 1.]),
+                                                 np.array([0.8513710128, 0.8513710128, 0.8513710128, 0.8513710128, 0.7276678217, 0.8513710128])],
+                          expected_effect_sizes=np.array([0.0961866125, -0.1995634093, -0.2723195343, -0.2574435301, -0.435721617, -0.0903444948]),
                           same_distr=True, continuous=False)
 
     def test_signif_diff_distr_binary(self):
         # use ordinary t-test or permutation on binary values; have more than 2 samples so don't use McNemar
         # here the last one or two samples (models) have higher mean, so the 'less' alternative should be appropriate
-        self._test_signif(expected_pvalues_list=[np.array([0.87261054, 0.87261054, 0.01301297, 0.87261054, 0.0031221, 0.00107259]),
-                                                 np.array([9.30778351e-01, 9.30778351e-01, 6.52246273e-03, 9.30778351e-01, 1.56202768e-03, 5.36416862e-04]),
-                                                 np.array([1.        , 0.95056914, 0.02299894, 0.96095424, 0.0019984, 0.0011994 ]),
-                                                 np.array([0.96683102, 0.96683102, 0.01471806, 0.96683102, 0.00499001, 0.00299625])],
-                          expected_effect_sizes=np.array([0.08545204,  0.25744353, -1.1630991 ,  0.18660746, -1.37473764, -1.52511603]),
+        self._test_signif(expected_pvalues_list=[np.array([0.965426988, 0.965426988, 0.1034291099, 1., 0.0337032272, 0.0121357763]),
+                                                 np.array([0.875, 0.875, 0.0527729664, 0.875, 0.0169671602, 0.0060833233]),
+                                                 np.array([0.9968750569, 0.9968750569, 0.1605192154, 1., 0.0576239336, 0.0202273841]),
+                                                 np.array([0.9305227804, 0.9305227804, 0.0828912316, 0.9305227804, 0.0291539477, 0.0101567481])],
+                          expected_effect_sizes=np.array([0.1409103279, 0.1590304389, -0.8578412784, 0., -1.0621120379, -1.225742824]),
                           same_distr=False, continuous=False)
 
     def test_signif_mcnemar_binary(self):
-        np.random.seed(4)
 
         # use Mcnemar's test, not t-test, only on two model samples
         tester = PairedDifferenceTest(nmodels=2)
@@ -116,13 +150,13 @@ class TestMetricSignifDifference(unittest.TestCase):
         # random generation of paired binary data
         binary_same = self.gen_binary_data(same_distr=True, nmodels=tester.nmodels)
         res = tester.signif_pair_diff(samples_list=binary_same)
-        self.assertAlmostEqual(first=res.pvalues[0], second=0.1670684814453125)
-        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.1842105263157895)
+        self.assertAlmostEqual(first=res.pvalues[0], second=1.0)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.033333333333333326)
 
         binary_diff = self.gen_binary_data(same_distr=False, nmodels=tester.nmodels)
         res = tester.signif_pair_diff(samples_list=binary_diff)
-        self.assertAlmostEqual(first=res.pvalues[0], second=0.028959274291992188)
-        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.23076923076923073)
+        self.assertAlmostEqual(first=res.pvalues[0], second= 3.6729034036397934e-08)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.44285714285714284)
 
         # handle some corner cases where the samples do not result in a 2x2 contingency table automatically
         # contingency table is 1x1
@@ -157,11 +191,4 @@ class TestMetricSignifDifference(unittest.TestCase):
         self.assertAlmostEqual(first=res_2x2.pvalues[0], second=0.001953125)
         self.assertAlmostEqual(first=res_2x2.effect_sizes[0], second=0.45238095238095233)
 
-
-    # def test_lineplot(self, alternative='two-sided'):
-    #     np.random.seed(6)
-    #     model_res = self.gen_continuous_data(same_distr=False)
-    #     tester = PairedDifferenceTest(nmodels=self.nmodels)
-    #     test_res = tester.signif_pair_diff(samples_list=model_res, alternative=alternative)
-    #     tester.lineplot(test_res=test_res)
 
