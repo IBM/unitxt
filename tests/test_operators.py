@@ -10,7 +10,7 @@ from src.unitxt.operators import (
     ApplyMetric,
     ApplyOperatorsField,
     Augmentor,
-    AugmentSuffix,
+    AugmentPrefixSuffix,
     AugmentWhitespace,
     CastFields,
     CopyFields,
@@ -1895,40 +1895,53 @@ class TestOperators(unittest.TestCase):
             exception_text=exception_text,
         )
 
-    def test_augment_suffix_model_input(self):
-        source = "She is riding a black horse\t\t  "
+    def test_augment_prefix_suffix_model_input(self):
+        source = "\n He is riding a black horse\t\t  "
         inputs = [{"source": source}]
+        prefixes = [
+            "M",
+            "N",
+            "O",
+            "P",
+        ]  # all distinct from source, to ease verification
         suffixes = [
             "Q",
             "R",
             "S",
             "T",
-        ]  # none at ending of source, when stripped on right from its white spaces
+        ]  # all distinct from source, to ease verification
 
-        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixes)
+        operator = AugmentPrefixSuffix(
+            augment_model_input=True, suffixes=suffixes, prefixes=prefixes
+        )
         outputs = apply_operator(operator, inputs)
         assert (
             outputs[0]["source"] != source
-        ), f"Source of f{outputs} is equal to f{source} and was not augmented"
-        output0 = str(outputs[0]["source"]).rstrip("".join(suffixes))
+        ), f"Output remains equal to source, {source}, and was not augmented"
+        output0 = str(outputs[0]["source"]).strip("".join(prefixes + suffixes))
         assert (
-            output0 == source[: len(output0)]
-        ), f"the prefix of {outputs[0]['source']} is not equal to {source}"
+            output0 == source
+        ), f"The inner part of the output, {outputs[0]['source']}, is not equal to the input {source}"
         assert (
             "\t\t " in output0
-        ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_trailing_whitespaces' is False,"
+        ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_whitespaces' is False,"
         # weighted suffixes
         suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 8}
-        operator = AugmentSuffix(augment_model_input=True, suffixes=suffixes_dict)
+        operator = AugmentPrefixSuffix(
+            augment_model_input=True,
+            suffixes=suffixes_dict,
+            suffix_len=8,
+            prefixes=None,
+        )
         outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
         assert (
             len(outputs) == 500
         ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
-        actual_suffixes = [output["source"][-1] for output in outputs]
+        actual_suffixes = [output["source"][-8:] for output in outputs]
         counter = Counter(actual_suffixes)
         assert (
-            counter["T"] > 125
-        ), f'In a population of size 500, suffix "T" is expected to be more frequent than {counter["T"]}'
+            counter["TTTTTTTT"] > 125
+        ), f'In a population of size 500, suffix "TTTTTTTT" is expected to be more frequent than {counter["T"]}'
 
         # just for code coverage of Augmentor.process_value and Augmentor.process
         class JustToCoverProcessValueOfAugmentor(Augmentor):
@@ -1958,54 +1971,61 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(5, operator.process_value(5))
         operator.verify()
 
-    def test_augment_suffix_task_input_with_error(self):
+    def test_augment_prefix_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
         inputs = [{"inputs": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator = AugmentPrefixSuffix(
+            augment_task_input=True, suffixes=suffixes, prefixes=None
+        )
         operator.set_task_input_fields(["sentence"])
         with self.assertRaises(ValueError) as ve:
             apply_operator(operator, inputs)
         self.assertEqual(
             str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
         )
 
-    def test_augment_suffix_task_input(self):
-        text = "She is riding a black horse  \t\t  "
+    def test_augment_prefix_suffix_task_input(self):
+        text = "\n She is riding a black horse  \t\t  "
         inputs = [{"inputs": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentSuffix(
+        operator = AugmentPrefixSuffix(
             augment_task_input=True,
             suffixes=suffixes,
-            remove_existing_trailing_whitespaces=True,
+            prefixes=None,
+            remove_existing_whitespaces=True,
         )
         operator.set_task_input_fields(["text"])
         outputs = apply_operator(operator, inputs)
         output0 = str(outputs[0]["inputs"]["text"]).rstrip("".join(suffixes))
         assert (
-            " \t\t " not in output0
-        ), f"Trailing whitespaces should have been removed, but still found in the output: {output0}"
+            " \t\t " not in output0 and "\n" not in output0
+        ), f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
         assert (
-            output0 == text[: len(output0)]
-        ), f"the prefix of {outputs[0]['inputs']['text']!s} is not equal to the prefix of {text}"
+            output0 == text.strip()[: len(output0)]
+        ), f"The prefix of {outputs[0]['inputs']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
 
-    def test_augment_suffix_with_non_string_suffixes_error(self):
-        suffixes = [1, 2, "S", "T"]
+    def test_augment_prefix_suffix_with_non_string_suffixes_error(self):
+        prefixes = [10, 20, "O", "P"]
         with self.assertRaises(AssertionError) as ae:
-            AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+            AugmentPrefixSuffix(
+                augment_task_input=True, prefixes=prefixes, suffixes=None
+            )
         self.assertEqual(
             str(ae.exception),
-            "suffixes should be a list of strings, whereas member 1 is of type <class 'int'>",
+            "Argument prefixes should be either None or a list of strings or a dictionary str->int. [10, 20, 'O', 'P'] is none of the above.",
         )
 
-    def test_augment_suffix_with_none_input_error(self):
+    def test_augment_prefix_suffix_with_none_input_error(self):
         text = None
         inputs = [{"inputs": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentSuffix(augment_task_input=True, suffixes=suffixes)
+        operator = AugmentPrefixSuffix(
+            augment_task_input=True, suffixes=suffixes, prefixes=None
+        )
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
         check_operator_exception(
             operator,
             inputs,
