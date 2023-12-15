@@ -770,17 +770,17 @@ class F1MultiLabel(GlobalMetric):
         for reference in references:
             if not len(reference) == 1:
                 raise ValueError(
-                    "Only a single reference per prediction is allowed in F1 multi label metric"
+                    f"Only a single reference per prediction is allowed in F1 multi label metric. Received reference: {reference}"
                 )
             if not isoftype(reference[0], List[str]):
                 raise ValueError(
-                    f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference[0]}"
+                    f"Each reference is expected to be a list of strings in F1 multi label metric. Received reference: '{reference[0]}'"
                 )
 
         for prediction in predictions:
             if not isoftype(prediction, List[str]):
                 raise ValueError(
-                    f"Each prediction is expected to list of strings in F1 multi label metric. Received prediction: {prediction}"
+                    f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
                 )
 
 
