@@ -21,9 +21,9 @@ def test_artfifact_saving_and_loading(artifact, tester=None):
             with tester.subTest(artifact=artifact, loaded_artifact=loaded_artifact):
                 tester.assertDictEqual(loaded_artifact.to_dict(), artifact.to_dict())
         else:
-            if not json.dumps(loaded_artifact.to_dict(), sort_keys=True) == json.dumps(
-                artifact.to_dict(), sort_keys=True
-            ):
+            if not json.dumps(
+                loaded_artifact.to_dict(), sort_keys=True, ensure_ascii=False
+            ) == json.dumps(artifact.to_dict(), sort_keys=True):
                 logger.info("Artifact loaded is not equal to artifact stored")
                 print_dict(loaded_artifact.to_dict())
                 print_dict(artifact.to_dict())

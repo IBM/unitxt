@@ -36,6 +36,16 @@ def get_random_string(length):
     return "".join(get_random().choice(letters) for _ in range(length))
 
 
+def get_sub_default_random_generator(sub_seed: str):
+    """Get a generator based on a seed derived from the default seed.
+
+    The purpose is to have a random generator that provides outputs
+    that are independent of previous randomizations.
+    """
+    sub_default_seed = str(__default_seed__) + "/" + sub_seed
+    return python_random.Random(sub_default_seed)
+
+
 @contextlib.contextmanager
 def nested_seed(sub_seed=None):
     old_state = get_random().getstate()

@@ -35,6 +35,7 @@ from .operator import (
 from .random_utils import get_random, nested_seed
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
+from .type_utils import isoftype
 from .utils import flatten_dict
 
 
@@ -72,7 +73,7 @@ class IterableSource(StreamSource):
 
 
 class MapInstanceValues(StreamInstanceOperator):
-    """A class used to map instance values into a stream.
+    """A class used to map instance values into other values.
 
     This class is a type of StreamInstanceOperator,
     it maps values of instances in a stream using predefined mappers.
@@ -242,10 +243,13 @@ class FieldOperator(StreamInstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
-        field (Optional[str]): The field to process, if only a single one is passed Defaults to None
-        to_field (Optional[str]): Field name to save, if only one field is to be saved, if None is passed the operation would happen in-place and replace "field". Defaults to None
-        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from fields to process to their names after this process,
-         duplicates are allowed. Inner List, if used, should be of length 2. Defaults to None
+        field (Optional[str]): The field to process, if only a single one is passed. Defaults to None
+        to_field (Optional[str]): Field name to save result into, if only one field is processed, if None is passed the
+          operation would happen in-place and its result would replace the value of "field". Defaults to None
+        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
+          to names of fields to save the results into. Inner List, if used, should be of length 2.
+          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
+          process a result from, a result to be stored in field of a different name. Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
 
@@ -279,6 +283,22 @@ class FieldOperator(StreamInstanceOperator):
             assert (
                 len(pair) == 2
             ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+        # The order of pairs in _field_to_field is not always uniquely determined by the input.
+        # In particular, when the input is a dictionary.
+        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
+        # where h is different from f, it is not clear if when f defines the new value of h
+        # (e.g., through an add-constant operation), f is before or after being determined by g.
+        # The following asserts that such ambiguity does not exist in the input.
+
+        if len(self._field_to_field) == 1:
+            return
+        for ind in range(len(self._field_to_field)):
+            if self._field_to_field[ind][0] in [
+                t for _, t in self._field_to_field[:ind]
+            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
+                raise ValueError(
+                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+                )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
@@ -508,75 +528,120 @@ class AugmentWhitespace(Augmentor):
         return new_value
 
 
-class AugmentSuffix(Augmentor):
-    r"""Augments the input by appending to it a randomly selected (typically, whitespace) pattern.
+class AugmentPrefixSuffix(Augmentor):
+    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) patterns.
 
     Args:
-     suffixes : the potential (typically, whitespace) patterns to select from.
+     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
         The dictionary version allows to specify relative weights of the different patterns.
-     remove_existing_trailing_whitespaces : allows to first clean existing trailing whitespaces.
-        The selected pattern is then appended to the potentially trimmed at its end input.
-
+     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of length
+        prefix_len of suffix_len, respectively, repetitions of the randomly selected patterns.
+     remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
+        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
+        trimmed input.
+     If only one of prefixes/suffixes is needed, set the other to None.
 
     Examples:
-        to append a '\n' or a '\t' to the end of the input, employ
-        AugmentSuffix(augment_model_input=True, suffixes=['\n','\t'])
-        If '\n' is preferred over '\t', at 2:1 ratio, employ
-        AugmentSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1})
-        which will append '\n' twice as often as '\t'.
+        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
+        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
+        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
+        being preferred over triple '\t', at 2:1 ratio, employ
+        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
+        which will append '\n'-s twice as often as '\t'-s.
 
     """
 
-    suffixes: Optional[Union[List[str], Dict[str, int]]] = [" ", "\n", "\t"]
-    remove_existing_trailing_whitespaces: Optional[bool] = False
+    prefixes: Optional[Union[List[str], Dict[str, int]]] = {
+        " ": 20,
+        "\\t": 10,
+        "\\n": 40,
+        "": 30,
+    }
+    prefix_len: Optional[int] = 3
+    suffixes: Optional[Union[List[str], Dict[str, int]]] = {
+        " ": 20,
+        "\\t": 10,
+        "\\n": 40,
+        "": 30,
+    }
+    suffix_len: Optional[int] = 3
+    remove_existing_whitespaces: Optional[bool] = False
 
     def verify(self):
         assert (
-            isinstance(self.suffixes, list) or isinstance(self.suffixes, dict)
-        ), f"Argument 'suffixes' should be either a list or a dictionary, whereas it is of type {type(self.suffixes)}"
-
-        if isinstance(self.suffixes, dict):
-            for k, v in self.suffixes.items():
-                assert isinstance(
-                    k, str
-                ), f"suffixes should map strings, whereas key {k!s} is of type {type(k)}"
-                assert isinstance(
-                    v, int
-                ), f"suffixes should map to ints, whereas value {v!s} is of type {type(v)}"
-        else:
-            for k in self.suffixes:
-                assert isinstance(
-                    k, str
-                ), f"suffixes should be a list of strings, whereas member {k!s} is of type {type(k)}"
+            self.prefixes or self.suffixes
+        ), "At least one of prefixes/suffixes should be not None."
+        for arg, arg_name in zip(
+            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
+        ):
+            assert (
+                arg is None or isoftype(arg, List[str]) or isoftype(arg, Dict[str, int])
+            ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
+        assert (
+            self.prefix_len > 0
+        ), f"prefix_len must be positive, got {self.prefix_len}"
+        assert (
+            self.suffix_len > 0
+        ), f"suffix_len must be positive, got {self.suffix_len}"
         super().verify()
 
-    def prepare(self):
-        self.pats = (
-            self.suffixes
-            if isinstance(self.suffixes, list)
-            else [k for k, v in self.suffixes.items()]
+    def _calculate_distributions(self, prefs_or_suffs):
+        if prefs_or_suffs is None:
+            return None, None
+        patterns = (
+            prefs_or_suffs
+            if isinstance(prefs_or_suffs, list)
+            else [k for k, v in prefs_or_suffs.items()]
         )
         total_weight = (
-            len(self.pats)
-            if isinstance(self.suffixes, list)
-            else sum([v for k, v in self.suffixes.items()])
+            len(patterns)
+            if isinstance(prefs_or_suffs, list)
+            else sum([v for k, v in prefs_or_suffs.items()])
         )
-        self.weights = (
-            [1.0 / total_weight] * len(self.pats)
-            if isinstance(self.suffixes, list)
-            else [float(self.suffixes[p]) / total_weight for p in self.pats]
+        weights = (
+            [1.0 / total_weight] * len(patterns)
+            if isinstance(prefs_or_suffs, list)
+            else [float(prefs_or_suffs[p]) / total_weight for p in patterns]
         )
+        return patterns, weights
 
+    def prepare(self):
+        # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
+        self.verify()
+        self._prefix_pattern_distribution = {"length": self.prefix_len}
+        self._suffix_pattern_distribution = {"length": self.suffix_len}
+
+        (
+            self._prefix_pattern_distribution["patterns"],
+            self._prefix_pattern_distribution["weights"],
+        ) = self._calculate_distributions(self.prefixes)
+        (
+            self._suffix_pattern_distribution["patterns"],
+            self._suffix_pattern_distribution["weights"],
+        ) = self._calculate_distributions(self.suffixes)
         super().prepare()
+
+    def _get_random_pattern(self, pattern_distribution) -> str:
+        string_to_add = ""
+        if pattern_distribution["patterns"]:
+            string_to_add = "".join(
+                get_random().choices(
+                    pattern_distribution["patterns"],
+                    pattern_distribution["weights"],
+                    k=1,
+                )
+                * pattern_distribution["length"]
+            )
+        return string_to_add
 
     def process_value(self, value: Any) -> Any:
         assert value is not None, "input value should not be None"
         new_value = str(value)
-        if self.remove_existing_trailing_whitespaces:
-            new_value = new_value.rstrip()
-        new_value += get_random().choices(self.pats, self.weights, k=1)[0]
-
-        return new_value
+        if self.remove_existing_whitespaces:
+            new_value = new_value.strip()
+        prefix = self._get_random_pattern(self._prefix_pattern_distribution)
+        suffix = self._get_random_pattern(self._suffix_pattern_distribution)
+        return prefix + new_value + suffix
 
 
 class ShuffleFieldValues(FieldOperator):
@@ -758,11 +823,24 @@ class TakeByField(StreamInstanceOperator):
 
 
 class CopyFields(FieldOperator):
-    """Copies specified fields from one field to another.
+    """Copies values from specified fields to specified fields.
 
-    Args:
+    Args (of parent class):
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
-        use_dpath (bool): Whether to use dpath for accessing fields. Defaults to False.
+        use_query (bool): Whether to use dpath for accessing fields. Defaults to False.
+
+    Examples:
+        An input instance {"a": 2, "b": 3}, when processed by
+        CopyField(field_to_field={"a": "b"}
+        would yield {"a": 2, "b": 2}, and when processed by
+        CopyField(field_to_field={"a": "c"} would yield
+        {"a": 2, "b": 3, "c": 2}
+
+        with use_query=True, we can also copy inside the field:
+        CopyFields(field_to_field={"a/0": "a"}, use_query=True)
+        would process instance {"a": [1, 3]} into {"a": 1}
+
+
     """
 
     def process_value(self, value: Any) -> Any:
@@ -770,6 +848,8 @@ class CopyFields(FieldOperator):
 
 
 class AddID(StreamInstanceOperator):
+    """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
+
     id_field_name: str = "id"
 
     def process(
@@ -783,22 +863,31 @@ class CastFields(StreamInstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        types (Dict[str, str]): A dictionary mapping fields to their new types.
-        nested (bool): Whether to cast nested fields. Defaults to False.
-        fields (Dict[str, str]): A dictionary mapping fields to their new types.
-        defaults (Dict[str, object]): A dictionary mapping types to their default values for cases of casting failure.
+        use_nested_query (bool): Whether to cast nested fields, expressed in dpath. Defaults to False.
+        fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
+            e.g: "int", "str", "float", "bool". Basic names of types
+        defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+
+    Examples:
+        CastFields(
+                fields={"a/d": "float", "b": "int"},
+                failure_defaults={"a/d": 0.0, "b": 0},
+                process_every_value=True,
+                use_nested_query=True
+            )
+        would process the input instance: {"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}
+            into {"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}
+
     """
 
-    types = {
-        "int": int,
-        "float": float,
-        "str": str,
-        "bool": bool,
-    }
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
     use_nested_query: bool = False
-    cast_multiple: bool = False
+    process_every_value: bool = False
+
+    def prepare(self):
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
 
     def _cast_single(self, value, type, field):
         try:
@@ -811,14 +900,17 @@ class CastFields(StreamInstanceOperator):
             return self.failure_defaults[field]
 
     def _cast_multiple(self, values, type, field):
-        values = [self._cast_single(value, type, field) for value in values]
+        return [self._cast_single(value, type, field) for value in values]
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
             value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
-            if self.cast_multiple:
+            if self.process_every_value:
+                assert isinstance(
+                    value, list
+                ), f"'process_every_value' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
@@ -933,7 +1025,7 @@ class FilterByValues(SingleStreamOperator):
                 yield instance
 
 
-class ExtractFieldValues(MultiStreamOperator):
+class ExtractMostCommonFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
     overall_top_frequency_percent: Optional[int] = 100
@@ -954,21 +1046,21 @@ class ExtractFieldValues(MultiStreamOperator):
 
     Examples:
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
+    ExtractMostCommonFieldValues(stream_name="train", field="label", to_field="classes") - extracts all the unique values of
     field 'label', sorts them by decreasing frequency, and stores the resulting list in field 'classes' of each and
     every instance in all streams.
 
-    ExtractFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
+    ExtractMostCommonFieldValues(stream_name="train", field="labels", to_field="classes", process_every_value=True) -
     in case that field 'labels' contains a list of values (and not a single value) - track the occurrences of all the possible
     value members in these lists, and report the most frequent values.
     if process_every_value=False, track the most frequent whole lists, and report those (as a list of lists) in field
     'to_field' of each instance of all streams.
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
+    ExtractMostCommonFieldValues(stream_name="train", field="label", to_field="classes",overall_top_frequency_percent=80) -
     extracts the most frequent possible values of field 'label' that together cover at least 80% of the instances of stream_name,
     and stores them in field 'classes' of each instance of all streams.
 
-    ExtractFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
+    ExtractMostCommonFieldValues(stream_name="train", field="label", to_field="classes",min_frequency_percent=5) -
     extracts all possible values of field 'label' that cover, each, at least 5% of the instances.
     Stores these values, sorted by decreasing order of frequency, in field 'classes' of each instance in all streams.
     """
@@ -1029,10 +1121,18 @@ class ExtractFieldValues(MultiStreamOperator):
             [*ele[0]] if isinstance(ele[0], tuple) else ele[0]
             for ele in values_and_counts
         ]
-        for name in multi_stream:
-            for instance in multi_stream[name]:
-                instance[self.to_field] = values_to_keep
-        return multi_stream
+
+        addmostcommons = AddFields(fields={self.to_field: values_to_keep})
+        return addmostcommons(multi_stream)
+
+
+class ExtractFieldValues(ExtractMostCommonFieldValues):
+    def verify(self):
+        super().verify()
+
+    def prepare(self):
+        self.overall_top_frequency_percent = 100
+        self.min_frequency_percent = 0
 
 
 class FilterByListsOfValues(SingleStreamOperator):
