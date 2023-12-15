@@ -1867,14 +1867,11 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_stream_refiner(self):
-        refiner = StreamRefiner()
+        refiner = StreamRefiner(apply_to_streams=["train"], max_instances=1)
 
         ms = MultiStream.from_iterables(
             {"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True
         )
-
-        refiner.apply_to_streams = ["train"]
-        refiner.max_instances = 1
 
         refined_ms = refiner(ms)
 
@@ -1882,6 +1879,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(len(train), 1)
 
         test = list(refined_ms["test"])
+        self.assertEqual(len(test), 2)
+
+        refiner.max_instances = None
+        refiner.apply_to_streams = ["test"]
+        refined_refined_ms = refiner(refined_ms)
+        test = list(refined_refined_ms["test"])
         self.assertEqual(len(test), 2)
 
     def test_deterministic_balancer_empty_stream(self):
@@ -1909,8 +1912,8 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=DeterministicBalancer(fields=["a", "b"]),
-            inputs=inputs,
+            operator=DeterministicBalancer(fields=["a", "b"], max_instances=2),
+            inputs=inputs + inputs,
             targets=targets,
             tester=self,
         )

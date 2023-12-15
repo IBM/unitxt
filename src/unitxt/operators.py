@@ -1545,7 +1545,23 @@ class EncodeLabels(StreamInstanceOperator):
 
 
 class StreamRefiner(SingleStreamOperator):
+    """Discard from the input stream all instances beyond the leading 'max_instances' instances.
+
+    Thereby, if the input stream consists of no more than 'max_instances' instances, the resulting stream is the whole of the
+    input stream. And if the input stream consists of more than 'max_instances' instances, the resulting stream only consists
+    of the leading 'max_instances' of the input stream.
+
+    Args:  max_instances (int)
+           apply_to_streams (optional, list(str)): names of streams to refine.
+
+    Examples:
+        when input = [{"a": 1},{"a": 2},{"a": 3},{"a": 4},{"a": 5},{"a": 6}] is fed into
+        StreamRefiner(max_instances=4)
+        the resulting stream is [{"a": 1},{"a": 2},{"a": 3},{"a": 4}]
+    """
+
     max_instances: int = None
+    apply_to_streams: Optional[List[str]] = None
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         if self.max_instances is not None:
@@ -1557,13 +1573,23 @@ class StreamRefiner(SingleStreamOperator):
 class DeterministicBalancer(StreamRefiner):
     """A class used to balance streams deterministically.
 
+    For each instance, a signature is constructed from the values of the instance in specified input 'fields'.
+    By discarding instances from the input stream, DeterministicBalancer maintains equal number of instances for all signatures.
+    When also input 'max_instances' is specified, DeterministicBalancer maintains a total instance count not exceeding
+    'max_instances'. The total number of discarded instances is as few as possible.
+
     Attributes:
-        fields (List[str]): A list of field names to be used in determining the signature of an instance.
-        streams (List[str]): A list of stream names to be processed by the balancer.
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int)
 
     Usage:
-        balancer = DeterministicBalancer(fields=["field1", "field2"], streams=["stream1", "stream2"])
+        balancer = DeterministicBalancer(fields=["field1", "field2"], max_instances=200)
         balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 2},{"a": 3},{"a": 4}] is fed into
+        DeterministicBalancer(fields=["a"])
+        the resulting stream will be: [{"a": 1, "b": 1},{"a": 2},{"a": 3},{"a": 4}]
     """
 
     fields: List[str]
@@ -1600,7 +1626,23 @@ class DeterministicBalancer(StreamRefiner):
 
 
 class LengthBalancer(DeterministicBalancer):
+    """Balances by a signature that reflects the total length of the fields' values, quantized into integer segments.
+
+    Args:
+        segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
+           into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
+           beyond, namely, the length of segments_boudaries)
+
+        fields (Optional, List[str])
+
+    Example:
+        when input [{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}] is fed into
+        LengthBalancer(fields=["a"], segments_boundaries=[1])
+        input instances will be counted and balanced against two categories: empty total length (less than 1), and non-empty.
+    """
+
     segments_boundaries: List[int]
+    fields: Optional[List[str]]
 
     def signature(self, instance):
         total_len = 0
