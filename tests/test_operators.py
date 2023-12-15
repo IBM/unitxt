@@ -17,6 +17,7 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     EncodeLabels,
     ExtractFieldValues,
+    ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByListsOfValues,
     FilterByValues,
@@ -670,6 +671,88 @@ class TestOperators(unittest.TestCase):
                 "train": [
                     {"animal": "fish"},
                     {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "dog"},
+                    {"animal": "cat"},
+                    {"animal": "sheep"},
+                    {"animal": "fish"},
+                    {"animal": "shark"},
+                ],
+            }
+        )
+        output_multi_stream1 = ExtractFieldValues(
+            stream_name="train",
+            field="animal",
+            to_field="all_animals1",
+        ).process(input_multi_stream1)
+        output_for_comparison1 = {}
+        for k, v in output_multi_stream1.items():
+            output_for_comparison1[k] = list(v)
+        expected_output1 = {
+            "test": [
+                {
+                    "animal": "shark",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                }
+            ],
+            "validation": [
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                }
+            ],
+            "train": [
+                {
+                    "animal": "fish",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "dog",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "dog",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "cat",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "sheep",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "fish",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+                {
+                    "animal": "shark",
+                    "all_animals1": ["fish", "dog", "cat", "sheep", "shark"],
+                },
+            ],
+        }
+        self.assertDictEqual(
+            output_for_comparison1,
+            expected_output1,
+            "expected to see: \n"
+            + json.dumps(expected_output1)
+            + "\n but instead, received: \n"
+            + json.dumps(output_for_comparison1),
+        )
+
+    def test_extract_most_common_values(self):
+        input_multi_stream1 = MultiStream(
+            {
+                "test": [{"animal": "shark"}],
+                "validation": [{"animal": "cat"}],
+                "train": [
+                    {"animal": "fish"},
+                    {"animal": "dog"},
                     {"animal": "dog"},
                     {"animal": "cat"},
                     {"animal": "dog"},
@@ -681,70 +764,128 @@ class TestOperators(unittest.TestCase):
                 ],
             }
         )
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream1 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="animal",
-            to_field="most_common_animals",
+            to_field="most_common_animals1",
             overall_top_frequency_percent=80,
         ).process(input_multi_stream1)
+        output_for_comparison1 = {}
+        for k, v in output_multi_stream1.items():
+            output_for_comparison1[k] = list(v)
         expected_output1 = {
             "test": [
-                {"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]}
+                {"animal": "shark", "most_common_animals1": ["dog", "cat", "fish"]}
             ],
             "validation": [
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]}
+                {"animal": "cat", "most_common_animals1": ["dog", "cat", "fish"]}
             ],
             "train": [
-                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "sheep", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "fish", "most_common_animals": ["dog", "cat", "fish"]},
-                {"animal": "shark", "most_common_animals": ["dog", "cat", "fish"]},
+                {"animal": "fish", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "dog", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "sheep", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "cat", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "fish", "most_common_animals1": ["dog", "cat", "fish"]},
+                {"animal": "shark", "most_common_animals1": ["dog", "cat", "fish"]},
             ],
         }
         self.assertDictEqual(
-            output_multi_stream,
+            output_for_comparison1,
             expected_output1,
             "expected to see: \n"
             + json.dumps(expected_output1)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_for_comparison1),
         )
         # with minimum frequency limit
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream2 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="animal",
-            to_field="most_common_animals",
+            to_field="most_common_animals2",
             min_frequency_percent=25,
         ).process(input_multi_stream1)
+        output_for_comparison2 = {}
+        for k, v in output_multi_stream2.items():
+            output_for_comparison2[k] = list(v)
         expected_output2 = {
-            "test": [{"animal": "shark", "most_common_animals": ["dog", "cat"]}],
-            "validation": [{"animal": "cat", "most_common_animals": ["dog", "cat"]}],
+            "test": [
+                {
+                    "animal": "shark",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                }
+            ],
+            "validation": [
+                {
+                    "animal": "cat",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                }
+            ],
             "train": [
-                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
-                {"animal": "dog", "most_common_animals": ["dog", "cat"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
-                {"animal": "sheep", "most_common_animals": ["dog", "cat"]},
-                {"animal": "cat", "most_common_animals": ["dog", "cat"]},
-                {"animal": "fish", "most_common_animals": ["dog", "cat"]},
-                {"animal": "shark", "most_common_animals": ["dog", "cat"]},
+                {
+                    "animal": "fish",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "dog",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "dog",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "cat",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "dog",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "cat",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "sheep",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "cat",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "fish",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
+                {
+                    "animal": "shark",
+                    "most_common_animals1": ["dog", "cat", "fish"],
+                    "most_common_animals2": ["dog", "cat"],
+                },
             ],
         }
         self.assertDictEqual(
-            output_multi_stream,
+            output_for_comparison2,
             expected_output2,
             "expected to see: \n"
             + json.dumps(expected_output2)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_for_comparison2),
         )
         # with list values
         input_multi_stream2 = MultiStream(
@@ -788,19 +929,21 @@ class TestOperators(unittest.TestCase):
             }
         )
         # with lists, treated as single elements
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream3 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="field",
-            to_field="most_common_lists",
+            to_field="most_common_lists3",
             overall_top_frequency_percent=90,
             process_every_value=False,
         ).process(input_multi_stream2)
-
+        output_for_comparison3 = {}
+        for k, v in output_multi_stream3.items():
+            output_for_comparison3[k] = list(v)
         expected_output3 = {
             "test": [
                 {
                     "field": ["a", "b", "c"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -811,7 +954,7 @@ class TestOperators(unittest.TestCase):
             "validation": [
                 {
                     "field": ["d", "e", "f"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -822,7 +965,7 @@ class TestOperators(unittest.TestCase):
             "train": [
                 {
                     "field": ["t", "u", "v"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -831,7 +974,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -840,7 +983,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -849,7 +992,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -858,7 +1001,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -867,7 +1010,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -876,7 +1019,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["q", "r", "s"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -885,7 +1028,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -894,7 +1037,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -903,7 +1046,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["q", "r", "s"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -912,7 +1055,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -921,7 +1064,7 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
@@ -932,34 +1075,36 @@ class TestOperators(unittest.TestCase):
         }
 
         self.assertDictEqual(
-            output_multi_stream,
+            output_for_comparison3,
             expected_output3,
             "expected to see: \n"
             + json.dumps(expected_output3)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_for_comparison3),
         )
 
         # finally, with lists and with process_every_value=True
-        output_multi_stream = ExtractFieldValues(
+        output_multi_stream4 = ExtractMostCommonFieldValues(
             stream_name="train",
             field="field",
-            to_field="most_common_individuals",
+            to_field="most_common_individuals4",
             overall_top_frequency_percent=90,
             process_every_value=True,
         ).process(input_multi_stream2)
-
+        output_for_comparison4 = {}
+        for k, v in output_multi_stream4.items():
+            output_for_comparison4[k] = list(v)
         expected_output4 = {
             "test": [
                 {
                     "field": ["a", "b", "c"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -976,13 +1121,13 @@ class TestOperators(unittest.TestCase):
             "validation": [
                 {
                     "field": ["d", "e", "f"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -999,13 +1144,13 @@ class TestOperators(unittest.TestCase):
             "train": [
                 {
                     "field": ["t", "u", "v"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1020,13 +1165,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1041,13 +1186,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1062,13 +1207,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1083,13 +1228,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1104,13 +1249,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1125,13 +1270,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["q", "r", "s"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1146,13 +1291,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1167,13 +1312,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["h", "i", "j"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1188,13 +1333,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["q", "r", "s"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1209,13 +1354,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["k", "h", "m"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1230,13 +1375,13 @@ class TestOperators(unittest.TestCase):
                 },
                 {
                     "field": ["m", "o", "p"],
-                    "most_common_lists": [
+                    "most_common_lists3": [
                         ["h", "i", "j"],
                         ["k", "h", "m"],
                         ["m", "o", "p"],
                         ["q", "r", "s"],
                     ],
-                    "most_common_individuals": [
+                    "most_common_individuals4": [
                         "h",
                         "m",
                         "i",
@@ -1252,16 +1397,16 @@ class TestOperators(unittest.TestCase):
             ],
         }
         self.assertDictEqual(
-            output_multi_stream,
+            output_for_comparison4,
             expected_output4,
             "expected to see: \n"
             + json.dumps(expected_output4)
             + "\n but instead, received: \n"
-            + json.dumps(output_multi_stream),
+            + json.dumps(output_for_comparison4),
         )
-
+        # test error cases
         with self.assertRaises(ValueError):
-            output_multi_stream = ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
@@ -1270,7 +1415,7 @@ class TestOperators(unittest.TestCase):
             ).process(input_multi_stream1)
 
         with self.assertRaises(AssertionError):
-            output_multi_stream = ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
@@ -1278,14 +1423,14 @@ class TestOperators(unittest.TestCase):
                 min_frequency_percent=25,
             ).process(input_multi_stream1)
         with self.assertRaises(AssertionError):
-            output_multi_stream = ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
                 overall_top_frequency_percent=120,
             ).process(input_multi_stream1)
         with self.assertRaises(AssertionError):
-            output_multi_stream = ExtractFieldValues(
+            ExtractMostCommonFieldValues(
                 stream_name="train",
                 field="animal",
                 to_field="most_common_individuals",
@@ -1372,12 +1517,13 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=CastFields(
-                fields={"a": "float", "b": "int"},
-                failure_defaults={"a": 0.0, "b": 0},
+                fields={"a/d": "float", "b": "int"},
+                failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
+                use_nested_query=True,
             ),
-            inputs=[{"a": ["0.5", "0.6", "1.0", "12"], "b": ["2"]}],
-            targets=[{"a": [0.5, 0.6, 1.0, 12.0], "b": [2]}],
+            inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
+            targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],
             tester=self,
         )
 
