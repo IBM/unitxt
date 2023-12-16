@@ -924,17 +924,20 @@ class DivideAllFieldsBy(StreamInstanceOperator):
     """Recursively reach down to all fields that are float, and divide each by 'divisor'.
 
     The given instance is viewed as a tree whose internal nodes are dictionaries and lists, and
-    the leaves are either 'float' and then divided, or other basic type, and then, a ValueError is raised
+    the leaves are either 'float' and then divided, or other basic type, in which case, a ValueError is raised
     if input flag 'strict' is True, or -- left alone, if 'strict' is False.
 
     Args:
         divisor (float) the value to divide by
-        strict (boolean) whether to raise an error upon visiting a leaf that is not float
+        strict (bool) whether to raise an error upon visiting a leaf that is not float. Defaults to False.
 
     Example:
-        when instance {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5} is processed by
+        when instance {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5} is processed by operator:
         operator = DivideAllFieldsBy(divisor=2.0)
         the output is: {"a": 5.0, "b": [1.0, 2.0, 3.5], "c": 5}
+        If the operator were defined with strict=True, through:
+        operator = DivideAllFieldsBy(divisor=2.0, strict=True),
+        the processing of the above instance would raise a ValueError, for the integer at "c".
     """
 
     divisor: float = 1.0
@@ -980,13 +983,21 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
-        value_field (str): The field containing the value to be operated on.
-        operators_field (str): The field containing the operators to be applied.
+        inputs_fields (List[str]): list of field names, the values in which are to be processed
+        fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
+            a list of values, each of which is to be processed.
+        operators_field (str): name of the field that contains the list of names of the operators to be applied,
+            one after the other, for the processing.
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
+
+    Example:
+        when instance {"a": 111, "b": 2, "c": ["processors.to_string", "processors.first_character"]} is processed by operator:
+        operator = ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
+        the resulting instance is: {"a": "1", "b": 2, "c": ["processors.to_string", "processors.first_character"]}
+
     """
 
-    inputs_fields: str
-
+    inputs_fields: List[str]
     operators_field: str
     default_operators: List[str] = None
     fields_to_treat_as_list: List[str] = NonPositionalField(default_factory=list)
@@ -998,7 +1009,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         if operator_names is None:
             assert (
                 self.default_operators is not None
-            ), f"No operators found in {self.field} field and no default operators provided"
+            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):
@@ -1011,7 +1022,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
                 if field_name in self.fields_to_treat_as_list:
                     instance[field_name] = [operator.process(v) for v in value]
                 else:
-                    instance[field_name] = operator.process(instance[field_name])
+                    instance[field_name] = operator.process(value)
 
         return instance
 
