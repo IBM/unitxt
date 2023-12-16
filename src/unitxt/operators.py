@@ -920,29 +920,43 @@ class CastFields(StreamInstanceOperator):
         return instance
 
 
-def recursive_divide(instance, divisor, strict=False):
-    if isinstance(instance, dict):
-        for key, value in instance.items():
-            instance[key] = recursive_divide(value, divisor, strict=strict)
-    elif isinstance(instance, list):
-        for i, value in enumerate(instance):
-            instance[i] = recursive_divide(value, divisor, strict=strict)
-    elif isinstance(instance, float):
-        instance /= divisor
-    elif strict:
-        raise ValueError(f"Cannot divide instance of type {type(instance)}")
-    return instance
-
-
 class DivideAllFieldsBy(StreamInstanceOperator):
+    """Recursively reach down to all fields that are float, and divide each by 'divisor'.
+
+    The given instance is viewed as a tree whose internal nodes are dictionaries and lists, and
+    the leaves are either 'float' and then divided, or other basic type, and then, a ValueError is raised
+    if input flag 'strict' is True, or -- left alone, if 'strict' is False.
+
+    Args:
+        divisor (float) the value to divide by
+        strict (boolean) whether to raise an error upon visiting a leaf that is not float
+
+    Example:
+        when instance {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5} is processed by
+        operator = DivideAllFieldsBy(divisor=2.0)
+        the output is: {"a": 5.0, "b": [1.0, 2.0, 3.5], "c": 5}
+    """
+
     divisor: float = 1.0
     strict: bool = False
-    recursive: bool = True
+
+    def _recursive_divide(self, instance, divisor):
+        if isinstance(instance, dict):
+            for key, value in instance.items():
+                instance[key] = self._recursive_divide(value, divisor)
+        elif isinstance(instance, list):
+            for i, value in enumerate(instance):
+                instance[i] = self._recursive_divide(value, divisor)
+        elif isinstance(instance, float):
+            instance /= divisor
+        elif self.strict:
+            raise ValueError(f"Cannot divide instance of type {type(instance)}")
+        return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        return recursive_divide(instance, self.divisor, strict=self.strict)
+        return self._recursive_divide(instance, self.divisor)
 
 
 class ArtifactFetcherMixin:

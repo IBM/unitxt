@@ -15,6 +15,7 @@ from src.unitxt.operators import (
     CastFields,
     CopyFields,
     DeterministicBalancer,
+    DivideAllFieldsBy,
     EncodeLabels,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
@@ -1537,6 +1538,26 @@ class TestOperators(unittest.TestCase):
             apply_operator(
                 operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs
             )
+
+    def test_divide_all_fields_by(self):
+        instance_in = {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5}
+        operator = DivideAllFieldsBy(divisor=2.0)
+        instance_out = operator.process(instance_in)
+        expected = {"a": 5.0, "b": [1.0, 2.0, 3.5], "c": 5}
+        (
+            self.assertDictEqual(instance_out, expected),
+            f"expected: {expected}, but got: {instance_out}.",
+        )
+        operator = DivideAllFieldsBy(
+            divisor=2.0, strict=True
+        )  # integer in "c" will raising ValueError with strict=False
+        expected_error_message = "Cannot divide instance of type <class 'int'>"
+        with self.assertRaises(ValueError) as ve:
+            instance_out = operator.process(instance_in)
+        (
+            self.assertEqual(str(ve.exception), expected_error_message),
+            f"expected error message: {expected_error_message}, but received: {ve.exception!s}.",
+        )
 
     def test_rename_fields(self):
         inputs = [
