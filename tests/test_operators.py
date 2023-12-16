@@ -455,13 +455,29 @@ class TestOperators(unittest.TestCase):
 
     def test_apply_value_operators_field(self):
         inputs = [
-            {"a": 111, "b": 2, "c": "processors.to_string"},
-            {"a": 222, "b": 3, "c": "processors.to_string"},
+            {
+                "a": 111,
+                "b": 2,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+            {
+                "a": 222,
+                "b": 3,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
         ]
 
         targets = [
-            {"a": "111", "b": 2, "c": "processors.to_string"},
-            {"a": "222", "b": 3, "c": "processors.to_string"},
+            {
+                "a": "1",
+                "b": 2,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+            {
+                "a": "2",
+                "b": 3,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
         ]
 
         check_operator(
