@@ -25,9 +25,9 @@ Our aspiration is to be simple, adaptable, and transparent.
    introduction
    no_installation_usage
    installation
-   concepts
-   adding_common_recipe
+   adding_dataset
    adding_operators_and_metrics
+   concepts
    backend
    operators
    modules
