@@ -481,7 +481,6 @@ class StringContainment(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
     ) -> dict:
-        references = [r.strip() for r in references[0].split("|")]
         result = {
             self.main_score: float(
                 any(str(reference) in prediction for reference in references)

@@ -5,7 +5,7 @@ from src.unitxt.test_utils.metrics import test_metric
 metric = StringContainment()
 
 predictions = ["barak obama is a politician", "David Gilmour is an English guitarist"]
-references = [["politician | politic | pol"], ["artist"]]
+references = [["politician", "politic", "pol"], ["artist"]]
 
 instance_targets = [
     {"string_containment": 1.0, "score": 1.0, "score_name": "string_containment"},

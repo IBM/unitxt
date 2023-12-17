@@ -4,6 +4,23 @@ from src.unitxt.artifact import fetch_artifact
 
 
 class TestPostProcessors(unittest.TestCase):
+    def test_convert_to_boolean(self):
+        parser, _ = fetch_artifact("processors.convert_to_boolean")
+        inputs = [
+            "that's right",
+            "correct",
+            "not sure",
+            "true",
+            "TRUE",
+            "FALSE",
+            "interesting",
+        ]
+        targets = ["TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "INTERESTING"]
+
+        for input, target in zip(inputs, targets):
+            parsed = parser.process(input)
+            self.assertEqual(target, parsed)
+
     def test_to_span_label_pairs(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs")
         inputs = [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG", "None"]
