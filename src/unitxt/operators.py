@@ -1322,7 +1322,7 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
     reversed: bool = False
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        first_instance = stream.peak()
+        first_instance = stream.peek()
 
         operators = first_instance.get(self.field, [])
         if isinstance(operators, str):
@@ -1356,7 +1356,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
 
-        first_instance = stream.peak()
+        first_instance = stream.peek()
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
