@@ -12,10 +12,10 @@ class TestPostProcessors(unittest.TestCase):
             "not sure",
             "true",
             "TRUE",
-            "FALSE",
+            "false",
             "interesting",
         ]
-        targets = ["TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "INTERESTING"]
+        targets = ["TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "OTHER"]
 
         for input, target in zip(inputs, targets):
             parsed = parser.process(input)
