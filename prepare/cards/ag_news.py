@@ -5,6 +5,7 @@ from src.unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
+    SplitRandomMix,
     TaskCard,
 )
 from src.unitxt.test_utils.card import test_card
@@ -22,6 +23,9 @@ for i in range(len(classlabels.names)):
 card = TaskCard(
     loader=LoadHF(path=f"{dataset_name}"),
     preprocess_steps=[
+        SplitRandomMix(
+            {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
+        ),
         MapInstanceValues(mappers={"label": mappers}),
         AddFields(
             fields={
