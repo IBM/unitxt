@@ -77,11 +77,12 @@ class TakeFirstNonEmptyLine(BaseFieldOperator):
 
 class ConvertToBoolean(BaseFieldOperator):
     def process(self, instance):
-        if any(w in str(instance).strip().lower() for w in ["yes", "right", "correct"]):
-            return "TRUE"
-        if any(w in str(instance).strip().lower() for w in ["no", "not", "wrong"]):
+        clean_instance = str(instance).strip().lower()
+        if any(w in clean_instance for w in ["no", "not", "wrong", "false"]):
             return "FALSE"
-        return instance.upper()
+        if any(w in clean_instance for w in ["yes", "right", "correct", "true"]):
+            return "TRUE"
+        return "OTHER"
 
 
 class LowerCaseTillPunc(BaseFieldOperator):
