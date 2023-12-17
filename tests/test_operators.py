@@ -258,7 +258,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_values(self):
+    def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -277,6 +277,55 @@ class TestOperators(unittest.TestCase):
             operator=FilterByValues(required_values={"c": "5"}),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_contradicting_definition(self):
+        with self.assertRaises(ValueError):
+            FilterByValues(disallowed_values={"a": 2}, required_values={"a": 1})
+
+    def test_filter_by_values_with_required_values_and_disallowed_values(self):
+        inputs = [{"a": 2, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = []
+
+        with self.assertRaises(RuntimeError):
+            check_operator(
+                operator=FilterByValues(
+                    disallowed_values={"a": 2}, required_values={"b": 2}
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+    def test_filter_by_values_with_filter_all(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 1, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(
+                disallowed_values={"a": 2}, required_values={"b": 3}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_disallowed_values(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(disallowed_values={"a": 1, "b": 2}),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
