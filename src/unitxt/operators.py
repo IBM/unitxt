@@ -1028,26 +1028,69 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
 
 class FilterByValues(SingleStreamOperator):
-    """Filters a stream, yielding only instances that match specified values in the provided fields.
+    """Filters a stream, yielding only instances that match specified required values in the provided fields and do not match specified disallowed values.
+
+    Raises an error if a required key is missing.
 
     Args:
-        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
+        required_values (Dict[str, Any]): Values that instances must match to be included in the output.
+        disallowed_values (Dict[str, Any]): Values that instances must not match to be excluded from the output.
+        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
     """
 
-    required_values: Dict[str, Any]
+    required_values: Dict[str, Any] = None
+    disallowed_values: Dict[str, Any] = None
+    error_on_filtered_all: bool = True
+
+    def verify(self):
+        if self.required_values is not None and self.disallowed_values is not None:
+            if (
+                len(
+                    set(self.required_values.keys()).intersection(
+                        set(self.disallowed_values.keys())
+                    )
+                )
+                > 0
+            ):
+                raise ValueError(
+                    "FilterByValues should not have the same keys in both required_values and disallowed_values"
+                )
+
+        return super().verify()
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        yielded = False
         for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
-                    )
-                if instance[key] != value:
-                    filter = True
-            if not filter:
+            if self._is_required(instance) and not self._is_disallowed(instance):
+                yielded = True
                 yield instance
+
+        if not yielded and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"FilterByValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+    def _is_required(self, instance: dict) -> bool:
+        if not self.required_values:  # If required_values is empty, return True
+            return True
+
+        for key, value in self.required_values.items():
+            if key not in instance:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
+                )
+            if instance[key] != value:
+                return False
+        return True
+
+    def _is_disallowed(self, instance: dict) -> bool:
+        if not self.disallowed_values:  # If disallowed_values is empty, return False
+            return False
+
+        for key, value in self.disallowed_values.items():
+            if key in instance and instance[key] == value:
+                return True
+        return False
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
