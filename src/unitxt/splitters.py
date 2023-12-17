@@ -121,17 +121,18 @@ class RandomSampler(Sampler):
 
 class DiverseLabelsSampler(Sampler):
     choices: str = "choices"
+    labels: str = "labels"
 
     def prepare(self):
         super().prepare()
-        self.labels = None
+        self.labels_cache = None
 
     def examplar_repr(self, examplar):
         if "inputs" not in examplar:
             raise ValueError(f"'inputs' field is missing from '{examplar}'.")
         inputs = examplar["inputs"]
         if self.choices not in inputs:
-            raise ValueError(f"{self.choices} field is missing from '{inputs}'.")
+            raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
         if not isinstance(choices, list):
             raise ValueError(
@@ -140,7 +141,12 @@ class DiverseLabelsSampler(Sampler):
 
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
-        examplar_outputs = next(iter(examplar["outputs"].values()))
+        outputs = examplar["outputs"]
+        self.labels = "labels"
+        if self.labels not in outputs:
+            raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
+
+        examplar_outputs = examplar["outputs"][self.labels]
         if not isinstance(examplar_outputs, list):
             raise ValueError(
                 f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list."
@@ -160,9 +166,9 @@ class DiverseLabelsSampler(Sampler):
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
-        if self.labels is None:
-            self.labels = self.divide_by_repr(instances_pool)
-        all_labels = list(self.labels.keys())
+        if self.labels_cache is None:
+            self.labels_cache = self.divide_by_repr(instances_pool)
+        all_labels = list(self.labels_cache.keys())
         get_random().shuffle(all_labels)
         from collections import Counter
 
@@ -172,7 +178,7 @@ class DiverseLabelsSampler(Sampler):
         while total_allocated < self.sample_size:
             for label in all_labels:
                 if total_allocated < self.sample_size:
-                    if len(self.labels[label]) - allocations[label] > 0:
+                    if len(self.labels_cache[label]) - allocations[label] > 0:
                         allocations[label] += 1
                         total_allocated += 1
                 else:
@@ -180,7 +186,7 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = get_random().sample(self.labels[label], allocation)
+            sample = get_random().sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
         get_random().shuffle(result)

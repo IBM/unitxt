@@ -48,7 +48,7 @@ class Stream(Dataclass):
     def __iter__(self):
         return iter(self._get_stream())
 
-    def peak(self):
+    def peek(self):
         return next(iter(self))
 
     def take(self, n):
