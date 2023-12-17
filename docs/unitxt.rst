@@ -53,14 +53,6 @@ unitxt.collections module
    :undoc-members:
    :show-inheritance:
 
-unitxt.common module
---------------------
-
-.. automodule:: unitxt.common
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 unitxt.dataclass module
 -----------------------
 
@@ -145,6 +137,14 @@ unitxt.loaders module
 ---------------------
 
 .. automodule:: unitxt.loaders
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+unitxt.logging module
+---------------------
+
+.. automodule:: unitxt.logging
    :members:
    :undoc-members:
    :show-inheritance:

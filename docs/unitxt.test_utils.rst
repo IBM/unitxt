@@ -44,6 +44,14 @@ unitxt.test\_utils.operators module
    :undoc-members:
    :show-inheritance:
 
+unitxt.test\_utils.storage module
+---------------------------------
+
+.. automodule:: unitxt.test_utils.storage
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
