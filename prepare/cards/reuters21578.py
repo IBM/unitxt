@@ -152,7 +152,7 @@ for subset in get_dataset_config_names(dataset_name):
                 fields={
                     "classes": classlabels[subset],
                     "text_type": "text",
-                    "type_of_class": "contractual clauses",
+                    "type_of_class": "topic",
                 }
             ),
         ],
