@@ -44,6 +44,32 @@ class TestDiverseLabelsSampler(unittest.TestCase):
             self.assertEqual(counts["cat"], 1)
             self.assertEqual(len(counts.keys()), 3)
 
+    def test_sample_list(self):
+        for _ in range(10):
+            num_samples = 2
+            sampler = DiverseLabelsSampler(num_samples)
+            choices = ["cat"]
+            instances = [
+                self.new_examplar(choices, ["dog", "cat"], "Bark1,Cat1"),
+                self.new_examplar(choices, ["cat"], "Cat2"),
+                self.new_examplar(choices, ["dog"], "Bark2"),
+                self.new_examplar(choices, ["duck"], "Quack"),
+            ]
+            result = sampler.sample(instances)
+            from collections import Counter
+
+            counts = Counter()
+            for j in range(0, num_samples):
+                counts[str(result[j]["outputs"]["labels"])] += 1
+            self.assertTrue(
+                counts["['dog', 'cat']"] == 1 or counts["['cat']"] == 1,
+                f"unexpected counts: {counts}",
+            )
+            self.assertTrue(
+                counts["['duck']"] == 1 or counts["['dog']"] == 1,
+                f"unexpected counts: {counts}",
+            )
+
     def test_examplar_repr(self):
         sampler = DiverseLabelsSampler()
         expected_results = ["class_a"]
