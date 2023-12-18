@@ -289,7 +289,7 @@ class KeyValTemplate(Template):
         }
         pairs = []
         for key, val in dic.items():
-            key_val = [key, val] if use_keys else [val]
+            key_val = [key, str(val)] if use_keys else [str(val)]
             pairs.append(key_val_sep.join(key_val))
         return pairs_sep.join(pairs)
 
