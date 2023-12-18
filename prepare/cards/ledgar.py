@@ -11,9 +11,7 @@ from src.unitxt.test_utils.card import test_card
 
 dataset_name = "ledgar"
 
-ds_builder = load_dataset_builder(
-    "lex_glue", dataset_name
-)  # TODO should we take all from lex_glue?
+ds_builder = load_dataset_builder("lex_glue", dataset_name)
 classlabels = ds_builder.info.features["label"]
 
 mappers = {}
