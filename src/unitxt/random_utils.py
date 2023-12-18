@@ -36,7 +36,7 @@ def get_random_string(length):
     return "".join(get_random().choice(letters) for _ in range(length))
 
 
-def get_sub_default_random_generator(sub_seed: str):
+def get_sub_default_random_generator(sub_seed: str) -> python_random.Random:
     """Get a generator based on a seed derived from the default seed.
 
     The purpose is to have a random generator that provides outputs
