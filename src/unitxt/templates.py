@@ -166,11 +166,21 @@ class MultipleChoiceTemplate(Template):
         target = outputs[self.target_field]
 
         if not isinstance(target, int):
-            target = outputs[self.choices_field].index(target)
+            try:
+                target = outputs[self.choices_field].index(target)
+            except ValueError as e:
+                raise ValueError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {outputs[self.choices_field]}"
+                ) from e
 
         choices = self.get_choices(outputs, self.target_choice_format)
 
-        target = choices[target]
+        try:
+            target = choices[target]
+        except IndexError as e:
+            raise IndexError(
+                f"MultipleChoiceTemplate cannot find index number {target} in choices: {choices}"
+            ) from e
 
         return target, [target]
 
