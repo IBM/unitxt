@@ -1503,8 +1503,14 @@ class Shuffle(PagedStreamOperator):
         page_size (int): The size of each page in the stream. Defaults to 1000.
     """
 
+    random_generator: Random = None
+
+    def prepare(self):
+        super().prepare()
+        self.random_generator = get_sub_default_random_generator(sub_seed="shuffle")
+
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
-        get_random().shuffle(page)
+        self.random_generator.shuffle(page)
         yield from page
 
 
