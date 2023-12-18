@@ -7,6 +7,7 @@ from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
+from random import Random
 from typing import (
     Any,
     Callable,
@@ -32,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import get_random, nested_seed
+from .random_utils import get_random, get_sub_default_random_generator, nested_seed
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
@@ -518,11 +519,12 @@ class AugmentWhitespace(Augmentor):
         words = re.split(r"(\s+)", value)
         new_value = ""
 
+        random_generator = get_sub_default_random_generator(sub_seed=value)
         for word in words:
             if word.isspace():
-                new_value += get_random().choice(
+                new_value += random_generator.choice(
                     ["\n", "\t", " "]
-                ) * get_random().randint(1, 3)
+                ) * random_generator.randint(1, 3)
             else:
                 new_value += word
         return new_value
@@ -621,11 +623,13 @@ class AugmentPrefixSuffix(Augmentor):
         ) = self._calculate_distributions(self.suffixes)
         super().prepare()
 
-    def _get_random_pattern(self, pattern_distribution) -> str:
+    def _get_random_pattern(
+        self, pattern_distribution, random_generator: Random
+    ) -> str:
         string_to_add = ""
         if pattern_distribution["patterns"]:
             string_to_add = "".join(
-                get_random().choices(
+                random_generator.choices(
                     pattern_distribution["patterns"],
                     pattern_distribution["weights"],
                     k=pattern_distribution["length"],
@@ -638,8 +642,13 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        prefix = self._get_random_pattern(self._prefix_pattern_distribution)
-        suffix = self._get_random_pattern(self._suffix_pattern_distribution)
+        random_generator = get_sub_default_random_generator(sub_seed=value)
+        prefix = self._get_random_pattern(
+            self._prefix_pattern_distribution, random_generator
+        )
+        suffix = self._get_random_pattern(
+            self._suffix_pattern_distribution, random_generator
+        )
         return prefix + new_value + suffix
 
 
