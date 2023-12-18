@@ -43,9 +43,7 @@ card = TaskCard(
             {"train": "train[90%]", "validation": "train[10%]", "test": "test"}
         ),
         RenameFields(field_to_field={"label_text": "label"}),
-        MapInstanceValues(
-            mappers={"label": map_labels}
-        ),  # TODO remove lines with empty texts
+        MapInstanceValues(mappers={"label": map_labels}),
         AddFields(
             fields={
                 "classes": list(map_labels.values()),
