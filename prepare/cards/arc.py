@@ -1,4 +1,4 @@
-from prepare.cards.mmlu import (
+from prepare.cards.mmlu_old import (
     multiple_choice_preprocess,
 )
 from src.unitxt.blocks import (
