@@ -171,7 +171,6 @@ class DiverseLabelsSampler(Sampler):
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
         outputs = examplar["outputs"]
-        self.labels = "labels"
         if self.labels not in outputs:
             raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
 
