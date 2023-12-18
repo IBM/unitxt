@@ -120,6 +120,35 @@ class RandomSampler(Sampler):
 
 
 class DiverseLabelsSampler(Sampler):
+    """Selects a balanced sample of instances based on an output field.
+
+    (used for selecting demonstrations in-context learning)
+
+    The field must contain list of values e.g ['dog'], ['cat'], ['dog','cat','cow'].
+    The balancing is done such that each value or combination of values
+    appears as equals as possible in the samples.
+
+    The `choices` param is required and determines which values should be considered.
+
+    Example:
+        If choices is ['dog,'cat'] , then the following combinations will be considered.
+        ['']
+        ['cat']
+        ['dog']
+        ['dog','cat']
+
+        If the instance contains a value not in the 'choice' param, it is ignored. For example,
+        if choices is ['dog,'cat'] and the instance field is ['dog','cat','cow'], then 'cow' is ignored
+        then the instance is considered as ['dog','cat'].
+
+    Args:
+        sample_size - number of samples to extract
+        choices - name of input field that contains the list of values to balance on
+        labels - name of output field with labels that must be balanced
+
+
+    """
+
     choices: str = "choices"
     labels: str = "labels"
 
@@ -172,6 +201,10 @@ class DiverseLabelsSampler(Sampler):
         get_random().shuffle(all_labels)
         from collections import Counter
 
+        if self.sample_size > len(instances_pool):
+            raise ValueError(
+                f"Request sample size {self.sample_size} is greater than number of instances {len(instances_pool)}"
+            )
         total_allocated = 0
         allocations = Counter()
 

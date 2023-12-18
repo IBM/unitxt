@@ -258,7 +258,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_values(self):
+    def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -277,6 +277,55 @@ class TestOperators(unittest.TestCase):
             operator=FilterByValues(required_values={"c": "5"}),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_contradicting_definition(self):
+        with self.assertRaises(ValueError):
+            FilterByValues(disallowed_values={"a": 2}, required_values={"a": 1})
+
+    def test_filter_by_values_with_required_values_and_disallowed_values(self):
+        inputs = [{"a": 2, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = []
+
+        with self.assertRaises(RuntimeError):
+            check_operator(
+                operator=FilterByValues(
+                    disallowed_values={"a": 2}, required_values={"b": 2}
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+    def test_filter_by_values_with_filter_all(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 1, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(
+                disallowed_values={"a": 2}, required_values={"b": 3}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_disallowed_values(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(disallowed_values={"a": 1, "b": 2}),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
@@ -1818,14 +1867,11 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_stream_refiner(self):
-        refiner = StreamRefiner()
+        refiner = StreamRefiner(apply_to_streams=["train"], max_instances=1)
 
         ms = MultiStream.from_iterables(
             {"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True
         )
-
-        refiner.apply_to_streams = ["train"]
-        refiner.max_instances = 1
 
         refined_ms = refiner(ms)
 
@@ -1833,6 +1879,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(len(train), 1)
 
         test = list(refined_ms["test"])
+        self.assertEqual(len(test), 2)
+
+        refiner.max_instances = None
+        refiner.apply_to_streams = ["test"]
+        refined_refined_ms = refiner(refined_ms)
+        test = list(refined_refined_ms["test"])
         self.assertEqual(len(test), 2)
 
     def test_deterministic_balancer_empty_stream(self):
@@ -1860,8 +1912,8 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=DeterministicBalancer(fields=["a", "b"]),
-            inputs=inputs,
+            operator=DeterministicBalancer(fields=["a", "b"], max_instances=2),
+            inputs=inputs + inputs,
             targets=targets,
             tester=self,
         )
