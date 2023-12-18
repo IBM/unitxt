@@ -628,9 +628,8 @@ class AugmentPrefixSuffix(Augmentor):
                 get_random().choices(
                     pattern_distribution["patterns"],
                     pattern_distribution["weights"],
-                    k=1,
+                    k=pattern_distribution["length"],
                 )
-                * pattern_distribution["length"]
             )
         return string_to_add
 
