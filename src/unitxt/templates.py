@@ -230,9 +230,9 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
     labels_seprator: str = ", "
-    postprocessors = ["processors.to_list_by_comma"]
-    output_format = "{labels}"
-    empty_label = "None"
+    postprocessors: List[str] = ["processors.to_list_by_comma"]
+    output_format: str = "{labels}"
+    empty_label: str = "None"
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         labels = outputs[self.labels_field]
@@ -311,7 +311,7 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
 class SpanLabelingTemplate(SpanLabelingBaseTemplate):
     span_label_format: str = "{span}: {label}"
     escape_characters: List[str] = [":", ","]
-    postprocessors = ["processors.to_span_label_pairs"]
+    postprocessors: List[str] = ["processors.to_span_label_pairs"]
 
     def span_label_pairs_to_targets(self, span_label_pairs):
         targets = []
