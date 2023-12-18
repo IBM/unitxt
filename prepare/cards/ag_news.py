@@ -39,5 +39,4 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
 )
 test_card(card, debug=False)
-# TODO do we need suffix ?
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)
