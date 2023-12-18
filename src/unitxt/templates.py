@@ -23,6 +23,9 @@ class Template(StreamInstanceOperator):
     """
 
     skip_rendered_instance: bool = NonPositionalField(default=True)
+    postprocessors: List[str] = NonPositionalField(
+        default_factory=lambda: ["processors.to_string_stripped"]
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -58,17 +61,13 @@ class Template(StreamInstanceOperator):
     ) -> Tuple[str, List[str]]:
         pass
 
-    @abstractmethod
     def get_postprocessors(self) -> List[str]:
-        pass
+        return self.postprocessors
 
 
 class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
-    postprocessors: List[str] = field(
-        default_factory=lambda: ["processors.to_string_stripped"]
-    )
 
     def process_template(self, template: str, data: Dict[str, object]) -> str:
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
@@ -93,8 +92,97 @@ class InputOutputTemplate(Template):
         references = [target]
         return target, references
 
-    def get_postprocessors(self) -> List[str]:
-        return self.postprocessors
+
+class MultipleChoiceTemplate(Template):
+    input_format: str
+    target_prefix: str = ""
+    choices_field: str = "choices"
+    target_field: str = "label"
+    choices_seperator: str = ", "
+    source_choice_format = "{choice_numeral}. {choice_text}"
+    target_choice_format = "{choice_numeral}"
+    add_numerals_as_field: str = None
+    enumerator: str = "capitals"
+
+    def prepare(self):
+        super().prepare()
+        if self.enumerator == "capitals":
+            self.enumerator = "ABCDEFGHIJKLMNOP"
+        if self.enumerator == "lowercase":
+            self.enumerator = "abcdefghijklmnop"
+        if self.enumerator == "numbers":
+            self.enumerator = [str(i + 1) for i in range(20)]
+        if self.enumerator == "roman":
+            self.enumerator = [
+                "I",
+                "II",
+                "III",
+                "IV",
+                "V",
+                "VI",
+                "VII",
+                "VIII",
+                "IX",
+                "X",
+                "XI",
+                "XII",
+                "XIII",
+                "XIV",
+                "XV",
+                "XVI",
+                "XVII",
+                "XVIII",
+                "XIX",
+                "XX",
+            ]
+
+    def get_choices(self, data: Dict[str, object], choice_format: str) -> str:
+        choices = data[self.choices_field]
+        enumrated_choices = []
+        for i, choice in enumerate(choices):
+            enumrated_choices.append(
+                choice_format.format(
+                    choice_text=choice,
+                    choice_numeral=self.enumerator[i],
+                )
+            )
+        return enumrated_choices
+
+    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+        choices = self.get_choices(inputs, self.source_choice_format)
+        inputs = {
+            "numerals": ",".join(self.get_choices(inputs, "{choice_numeral}")),
+            **inputs,
+            self.choices_field: self.choices_seperator.join(choices),
+        }
+        try:
+            return self.input_format.format(**inputs)
+        except KeyError as e:
+            raise KeyError(
+                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}"
+            ) from e
+
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        target = outputs[self.target_field]
+
+        if not isinstance(target, int):
+            target = outputs[self.choices_field].index(target)
+
+        choices = self.get_choices(outputs, self.target_choice_format)
+
+        target = choices[target]
+
+        return target, [target]
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        result = super().process(instance, stream_name)
+        if "options" not in result["outputs"]:
+            result["outputs"]["options"] = self.get_choices(
+                instance["outputs"], self.target_choice_format
+            )
+        return result
 
 
 class YesNoTemplate(Template):
