@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_random, get_sub_default_random_generator
+from .random_utils import get_sub_default_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -151,10 +151,14 @@ class DiverseLabelsSampler(Sampler):
 
     choices: str = "choices"
     labels: str = "labels"
+    random_generator: Random = None
 
     def prepare(self):
         super().prepare()
         self.labels_cache = None
+        self.random_generator = get_sub_default_random_generator(
+            sub_seed="diverse_labels_sampler"
+        )
 
     def examplar_repr(self, examplar):
         if "inputs" not in examplar:
@@ -197,7 +201,7 @@ class DiverseLabelsSampler(Sampler):
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        get_random().shuffle(all_labels)
+        self.random_generator.shuffle(all_labels)
         from collections import Counter
 
         if self.sample_size > len(instances_pool):
@@ -218,10 +222,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = get_random().sample(self.labels_cache[label], allocation)
+            sample = self.random_generator.sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
-        get_random().shuffle(result)
+        self.random_generator.shuffle(result)
         return result
 
 
