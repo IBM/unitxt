@@ -44,7 +44,9 @@ jobs:
         test_files=$(find tests -type f -name "test_*.py" | sort | sed -n "$start,$end"p)
         echo "Running shard ${{ matrix.shard }} with the following test files:"
         echo $test_files
-        echo $test_files | xargs -d '\n' coverage run --parallel-mode -m unittest
+        module_paths=$(echo $test_files | sed 's|tests/|tests.|g' | sed 's|.py||g' | tr '\n' ' ')
+        coverage run --parallel-mode -m unittest $module_paths
+
 
     - name: Upload coverage data
       uses: actions/upload-artifact@v2
