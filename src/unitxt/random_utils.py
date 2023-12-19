@@ -1,5 +1,4 @@
 import random as python_random
-import string
 import threading
 
 __default_seed__ = 42
@@ -23,16 +22,6 @@ def get_random():
 
 
 random = get_random()
-
-
-def set_seed(seed):
-    _thread_local.seed = seed
-    get_random().seed(seed)
-
-
-def get_random_string(length):
-    letters = string.ascii_letters
-    return "".join(get_random().choice(letters) for _ in range(length))
 
 
 def get_sub_default_random_generator(sub_seed: str) -> python_random.Random:

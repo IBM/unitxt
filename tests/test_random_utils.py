@@ -5,7 +5,6 @@ from src.unitxt.random_utils import (
     __default_seed__,
     get_random,
     get_sub_default_random_generator,
-    set_seed,
 )
 
 
@@ -21,12 +20,9 @@ def randomize(random_generator):
 
 class TestRandomUtils(unittest.TestCase):
     def test_default_seed(self):
-        set_seed(42)
-        a = first_randomization()
-        set_seed(43)
-        b = first_randomization()
-        set_seed(__default_seed__)
-        c = first_randomization()
+        a = randomize(get_sub_default_random_generator(sub_seed="42"))
+        b = randomize(get_sub_default_random_generator(sub_seed="43"))
+        c = randomize(get_sub_default_random_generator(sub_seed=str(__default_seed__)))
         self.assertNotEqual(a, b)
         self.assertEqual(a, c)
 
