@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import get_sub_default_random_generator, nested_seed
+from .random_utils import get_sub_default_random_generator
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
@@ -485,16 +485,12 @@ class Augmentor(StreamInstanceOperator):
             except ValueError as e:
                 raise TypeError(f"Failed to get {field_name} from {instance}") from e
 
-            # We are setting a nested seed based on the value processed, to ensure that
-            # the augmentation randomizations do not effect other randomization choices and
-            # to make the augmentation randomization choices different for each text.
-            with nested_seed(str(hash(old_value))):
-                try:
-                    new_value = self.process_value(old_value)
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
-                    ) from e
+            try:
+                new_value = self.process_value(old_value)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
+                ) from e
             dict_set(instance, field_name, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 

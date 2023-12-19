@@ -1,4 +1,3 @@
-import contextlib
 import random as python_random
 import string
 import threading
@@ -44,17 +43,3 @@ def get_sub_default_random_generator(sub_seed: str) -> python_random.Random:
     """
     sub_default_seed = str(__default_seed__) + "/" + sub_seed
     return python_random.Random(sub_default_seed)
-
-
-@contextlib.contextmanager
-def nested_seed(sub_seed=None):
-    old_state = get_random().getstate()
-    old_global_seed = get_seed()
-    sub_seed = sub_seed or get_random_string(10)
-    new_global_seed = str(old_global_seed) + "/" + sub_seed
-    set_seed(new_global_seed)
-    try:
-        yield get_random()
-    finally:
-        set_seed(old_global_seed)
-        get_random().setstate(old_state)
