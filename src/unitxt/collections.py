@@ -1,10 +1,11 @@
 import typing
 from dataclasses import field
+from random import random
 from typing import Dict, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
-from .random_utils import get_random
+from .random_utils import get_sub_default_random_generator
 
 
 class Collection(Artifact):
@@ -52,9 +53,15 @@ class ItemPicker(Artifact):
 
 
 class RandomPicker(Artifact):
+    random_generator: random.Random = field(
+        default_factory=lambda: get_sub_default_random_generator(
+            sub_seed="random_picker"
+        )
+    )
+
     def __call__(self, collection: Collection):
         if isinstance(collection, ListCollection):
-            return get_random().choice(list(collection.items))
+            return self.random_generator.choice(list(collection.items))
         if isinstance(collection, DictCollection):
-            return get_random().choice(list(collection.items.values()))
+            return self.random_generator.choice(list(collection.items.values()))
         return None
