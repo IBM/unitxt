@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import get_random, get_sub_default_random_generator, nested_seed
+from .random_utils import get_sub_default_random_generator, nested_seed
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
@@ -657,7 +657,8 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        get_random().shuffle(res)
+        random_generator = get_sub_default_random_generator(sub_seed=str(res))
+        random_generator.shuffle(res)
         return res
 
 
