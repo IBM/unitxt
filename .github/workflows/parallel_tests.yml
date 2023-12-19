@@ -84,7 +84,7 @@ jobs:
 
     - name: Combine coverage data
       run: |
-        coverage combine coverage-results/
+        coverage combine --omit '/home/runner/.cache/huggingface/*' coverage-results/
         coverage report
         coverage xml
 
