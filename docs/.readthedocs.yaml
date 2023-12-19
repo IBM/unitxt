@@ -29,7 +29,7 @@ sphinx:
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
    - method: pip
-      path: .
+      path: "."
       extra_requirements:
         - docs
 
