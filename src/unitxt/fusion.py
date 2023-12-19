@@ -4,7 +4,7 @@ from typing import Generator, List, Optional
 
 from .dataclass import NonPositionalField
 from .operator import SourceOperator, StreamSource
-from .random_utils import get_random
+from .random_utils import get_sub_default_random_generator
 from .stream import MultiStream, Stream
 
 
@@ -89,10 +89,13 @@ class WeightedFusion(BaseFusion):
         weights = copy.deepcopy(self.weights)
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
+        random_generator = get_sub_default_random_generator(sub_seed="weighted_fusion")
         while (
             self.max_total_examples is None or total_examples <= self.max_total_examples
         ) and len(iterators) > 0:
-            iterator = get_random().choices(population=iterators, weights=weights)[0]
+            iterator = random_generator.choices(population=iterators, weights=weights)[
+                0
+            ]
             try:
                 yield next(iterator)
                 total_examples += 1
