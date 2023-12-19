@@ -13,17 +13,6 @@ def get_seed():
         return _thread_local.seed
 
 
-def get_random():
-    try:
-        return _thread_local.random
-    except AttributeError:
-        _thread_local.random = python_random.Random(get_seed())
-        return _thread_local.random
-
-
-random = get_random()
-
-
 def get_sub_default_random_generator(sub_seed: str) -> python_random.Random:
     """Get a generator based on a seed derived from the default seed.
 

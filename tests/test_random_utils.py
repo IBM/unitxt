@@ -3,13 +3,8 @@ import unittest
 
 from src.unitxt.random_utils import (
     __default_seed__,
-    get_random,
     get_sub_default_random_generator,
 )
-
-
-def first_randomization():
-    return randomize(get_random())
 
 
 def randomize(random_generator):
