@@ -121,8 +121,10 @@ class LoadFromKaggle(Loader):
             "kaggle.json"
         ), "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
 
-    def _download_from_kaggle(self, url, data_dir):
-        opendatasets.download(url, data_dir)
+    def prepare(self):
+        super().prepare()
+        from opendatasets import download
+        self.downloader = download
 
     def process(self):
         with TemporaryDirectory() as temp_directory:
