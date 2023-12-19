@@ -126,7 +126,7 @@ class LoadFromKaggle(Loader):
 
     def process(self):
         with TemporaryDirectory() as temp_directory:
-            self._download_from_kaggle(self.url, temp_directory)
+            self.downloader(self.url, temp_directory)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
         return MultiStream.from_iterables(dataset)
