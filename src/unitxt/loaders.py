@@ -22,14 +22,6 @@ try:
 except ImportError:
     ibm_boto3_available = False
 
-try:
-    import opendatasets
-
-    opendatasets_available = True
-
-except ImportError:
-    opendatasets_available = False
-
 
 class Loader(SourceOperator):
     # The loader_limit an optional parameter used to control the maximum number of instances to load from the the source.
