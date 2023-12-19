@@ -47,9 +47,8 @@ jobs:
         module_paths=$(echo $test_files | sed 's|tests/|tests.|g' | sed 's|.py||g' | tr '\n' ' ')
         coverage run --parallel-mode -m unittest $module_paths
 
-
     - name: Upload coverage data
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: coverage-${{ matrix.shard }}
         path: .coverage.*
@@ -74,14 +73,18 @@ jobs:
       run: pip install coverage
 
     - name: Download all shard coverage data
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         path: coverage-data
 
+    - name: Move coverage data
+      run: |
+        mkdir -p coverage-results
+        find coverage-data -name '.coverage.*' -exec mv {} coverage-results/ \;
+
     - name: Combine coverage data
       run: |
-        mv coverage-data/*/* ./
-        coverage combine
+        coverage combine coverage-results/
         coverage report
         coverage xml
 
