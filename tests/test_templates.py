@@ -4,6 +4,7 @@ from src.unitxt.templates import (
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
+    MultipleChoiceTemplate,
     MultiReferenceTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
@@ -428,6 +429,61 @@ class TestTemplates(unittest.TestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": "None",
                 "references": ["None"],
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_multiple_choice_template(self):
+        template = MultipleChoiceTemplate(
+            input_format="Text: {text}, Choices: {choices}.",
+        )
+
+        choices = ["True", "False"]
+        inputs = [
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {"choices": choices, "label": 0},
+            },
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {"choices": choices, "label": "False"},
+            },
+            {
+                "inputs": {"choices": ["True", "small"], "text": "example A"},
+                "outputs": {"choices": ["True", "small"], "label": "small"},
+            },
+        ]
+
+        targets = [
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {"choices": choices, "label": 0, "options": ["A", "B"]},
+                "source": "Text: example A, Choices: A. True, B. False.",
+                "target": "A",
+                "references": ["A"],
+            },
+            {
+                "inputs": {"choices": choices, "text": "example A"},
+                "outputs": {
+                    "choices": choices,
+                    "label": "False",
+                    "options": ["A", "B"],
+                },
+                "source": "Text: example A, Choices: A. True, B. False.",
+                "target": "B",
+                "references": ["B"],
+            },
+            {
+                "inputs": {"choices": ["True", "small"], "text": "example A"},
+                "outputs": {
+                    "choices": ["True", "small"],
+                    "label": "small",
+                    "options": ["A", "B"],
+                },
+                "source": "Text: example A, Choices: A. True, B. small.",
+                "target": "B",
+                "references": ["B"],
             },
         ]
 

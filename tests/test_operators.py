@@ -15,6 +15,7 @@ from src.unitxt.operators import (
     CastFields,
     CopyFields,
     DeterministicBalancer,
+    DivideAllFieldsBy,
     EncodeLabels,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
@@ -257,7 +258,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_values(self):
+    def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -276,6 +277,55 @@ class TestOperators(unittest.TestCase):
             operator=FilterByValues(required_values={"c": "5"}),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_contradicting_definition(self):
+        with self.assertRaises(ValueError):
+            FilterByValues(disallowed_values={"a": 2}, required_values={"a": 1})
+
+    def test_filter_by_values_with_required_values_and_disallowed_values(self):
+        inputs = [{"a": 2, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = []
+
+        with self.assertRaises(RuntimeError):
+            check_operator(
+                operator=FilterByValues(
+                    disallowed_values={"a": 2}, required_values={"b": 2}
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+    def test_filter_by_values_with_filter_all(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 1, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(
+                disallowed_values={"a": 2}, required_values={"b": 3}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_disallowed_values(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByValues(disallowed_values={"a": 1, "b": 2}),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
@@ -454,13 +504,29 @@ class TestOperators(unittest.TestCase):
 
     def test_apply_value_operators_field(self):
         inputs = [
-            {"a": 111, "b": 2, "c": "processors.to_string"},
-            {"a": 222, "b": 3, "c": "processors.to_string"},
+            {
+                "a": 111,
+                "b": 2,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+            {
+                "a": 222,
+                "b": 3,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
         ]
 
         targets = [
-            {"a": "111", "b": 2, "c": "processors.to_string"},
-            {"a": "222", "b": 3, "c": "processors.to_string"},
+            {
+                "a": "1",
+                "b": 2,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+            {
+                "a": "2",
+                "b": 3,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
         ]
 
         check_operator(
@@ -1538,6 +1604,26 @@ class TestOperators(unittest.TestCase):
                 operator=CastFields(fields={"a": "float", "b": "int"}), inputs=inputs
             )
 
+    def test_divide_all_fields_by(self):
+        instance_in = {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5}
+        operator = DivideAllFieldsBy(divisor=2.0)
+        instance_out = operator.process(instance_in)
+        expected = {"a": 5.0, "b": [1.0, 2.0, 3.5], "c": 5}
+        (
+            self.assertDictEqual(instance_out, expected),
+            f"expected: {expected}, but got: {instance_out}.",
+        )
+        operator = DivideAllFieldsBy(
+            divisor=2.0, strict=True
+        )  # integer in "c" will raising ValueError with strict=False
+        expected_error_message = "Cannot divide instance of type <class 'int'>"
+        with self.assertRaises(ValueError) as ve:
+            instance_out = operator.process(instance_in)
+        (
+            self.assertEqual(str(ve.exception), expected_error_message),
+            f"expected error message: {expected_error_message}, but received: {ve.exception!s}.",
+        )
+
     def test_rename_fields(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -1781,14 +1867,11 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_stream_refiner(self):
-        refiner = StreamRefiner()
+        refiner = StreamRefiner(apply_to_streams=["train"], max_instances=1)
 
         ms = MultiStream.from_iterables(
             {"train": [{"x": 0}, {"x": 1}], "test": [{"x": 2}, {"x": 3}]}, copying=True
         )
-
-        refiner.apply_to_streams = ["train"]
-        refiner.max_instances = 1
 
         refined_ms = refiner(ms)
 
@@ -1796,6 +1879,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(len(train), 1)
 
         test = list(refined_ms["test"])
+        self.assertEqual(len(test), 2)
+
+        refiner.max_instances = None
+        refiner.apply_to_streams = ["test"]
+        refined_refined_ms = refiner(refined_ms)
+        test = list(refined_refined_ms["test"])
         self.assertEqual(len(test), 2)
 
     def test_deterministic_balancer_empty_stream(self):
@@ -1823,8 +1912,8 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=DeterministicBalancer(fields=["a", "b"]),
-            inputs=inputs,
+            operator=DeterministicBalancer(fields=["a", "b"], max_instances=2),
+            inputs=inputs + inputs,
             targets=targets,
             tester=self,
         )
@@ -1927,7 +2016,7 @@ class TestOperators(unittest.TestCase):
             "\t\t " in output0
         ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_whitespaces' is False,"
         # weighted suffixes
-        suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 8}
+        suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 10}
         operator = AugmentPrefixSuffix(
             augment_model_input=True,
             suffixes=suffixes_dict,
@@ -1938,11 +2027,11 @@ class TestOperators(unittest.TestCase):
         assert (
             len(outputs) == 500
         ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
-        actual_suffixes = [output["source"][-8:] for output in outputs]
+        actual_suffixes = [output["source"][-2:] for output in outputs]
         counter = Counter(actual_suffixes)
         assert (
-            counter["TTTTTTTT"] > 125
-        ), f'In a population of size 500, suffix "TTTTTTTT" is expected to be more frequent than {counter["T"]}'
+            counter["TT"] > counter["SS"]
+        ), f'In a population of size 500 , suffix "TT" ({counter["TT"]}) is expected to be more frequent than "SS" {counter["SS"]}'
 
         # just for code coverage of Augmentor.process_value and Augmentor.process
         class JustToCoverProcessValueOfAugmentor(Augmentor):

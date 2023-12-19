@@ -628,9 +628,8 @@ class AugmentPrefixSuffix(Augmentor):
                 get_random().choices(
                     pattern_distribution["patterns"],
                     pattern_distribution["weights"],
-                    k=1,
+                    k=pattern_distribution["length"],
                 )
-                * pattern_distribution["length"]
             )
         return string_to_add
 
@@ -920,29 +919,46 @@ class CastFields(StreamInstanceOperator):
         return instance
 
 
-def recursive_divide(instance, divisor, strict=False):
-    if isinstance(instance, dict):
-        for key, value in instance.items():
-            instance[key] = recursive_divide(value, divisor, strict=strict)
-    elif isinstance(instance, list):
-        for i, value in enumerate(instance):
-            instance[i] = recursive_divide(value, divisor, strict=strict)
-    elif isinstance(instance, float):
-        instance /= divisor
-    elif strict:
-        raise ValueError(f"Cannot divide instance of type {type(instance)}")
-    return instance
-
-
 class DivideAllFieldsBy(StreamInstanceOperator):
+    """Recursively reach down to all fields that are float, and divide each by 'divisor'.
+
+    The given instance is viewed as a tree whose internal nodes are dictionaries and lists, and
+    the leaves are either 'float' and then divided, or other basic type, in which case, a ValueError is raised
+    if input flag 'strict' is True, or -- left alone, if 'strict' is False.
+
+    Args:
+        divisor (float) the value to divide by
+        strict (bool) whether to raise an error upon visiting a leaf that is not float. Defaults to False.
+
+    Example:
+        when instance {"a": 10.0, "b": [2.0, 4.0, 7.0], "c": 5} is processed by operator:
+        operator = DivideAllFieldsBy(divisor=2.0)
+        the output is: {"a": 5.0, "b": [1.0, 2.0, 3.5], "c": 5}
+        If the operator were defined with strict=True, through:
+        operator = DivideAllFieldsBy(divisor=2.0, strict=True),
+        the processing of the above instance would raise a ValueError, for the integer at "c".
+    """
+
     divisor: float = 1.0
     strict: bool = False
-    recursive: bool = True
+
+    def _recursive_divide(self, instance, divisor):
+        if isinstance(instance, dict):
+            for key, value in instance.items():
+                instance[key] = self._recursive_divide(value, divisor)
+        elif isinstance(instance, list):
+            for i, value in enumerate(instance):
+                instance[i] = self._recursive_divide(value, divisor)
+        elif isinstance(instance, float):
+            instance /= divisor
+        elif self.strict:
+            raise ValueError(f"Cannot divide instance of type {type(instance)}")
+        return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        return recursive_divide(instance, self.divisor, strict=self.strict)
+        return self._recursive_divide(instance, self.divisor)
 
 
 class ArtifactFetcherMixin:
@@ -966,13 +982,21 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
-        value_field (str): The field containing the value to be operated on.
-        operators_field (str): The field containing the operators to be applied.
+        inputs_fields (List[str]): list of field names, the values in which are to be processed
+        fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
+            a list of values, each of which is to be processed.
+        operators_field (str): name of the field that contains the list of names of the operators to be applied,
+            one after the other, for the processing.
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
+
+    Example:
+        when instance {"a": 111, "b": 2, "c": ["processors.to_string", "processors.first_character"]} is processed by operator:
+        operator = ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
+        the resulting instance is: {"a": "1", "b": 2, "c": ["processors.to_string", "processors.first_character"]}
+
     """
 
-    inputs_fields: str
-
+    inputs_fields: List[str]
     operators_field: str
     default_operators: List[str] = None
     fields_to_treat_as_list: List[str] = NonPositionalField(default_factory=list)
@@ -984,7 +1008,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         if operator_names is None:
             assert (
                 self.default_operators is not None
-            ), f"No operators found in {self.field} field and no default operators provided"
+            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):
@@ -997,32 +1021,75 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
                 if field_name in self.fields_to_treat_as_list:
                     instance[field_name] = [operator.process(v) for v in value]
                 else:
-                    instance[field_name] = operator.process(instance[field_name])
+                    instance[field_name] = operator.process(value)
 
         return instance
 
 
 class FilterByValues(SingleStreamOperator):
-    """Filters a stream, yielding only instances that match specified values in the provided fields.
+    """Filters a stream, yielding only instances that match specified required values in the provided fields and do not match specified disallowed values.
+
+    Raises an error if a required key is missing.
 
     Args:
-        values (Dict[str, Any]): For each field, the values that instances should match to be included in the output.
+        required_values (Dict[str, Any]): Values that instances must match to be included in the output.
+        disallowed_values (Dict[str, Any]): Values that instances must not match to be excluded from the output.
+        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
     """
 
-    required_values: Dict[str, Any]
+    required_values: Dict[str, Any] = None
+    disallowed_values: Dict[str, Any] = None
+    error_on_filtered_all: bool = True
+
+    def verify(self):
+        if self.required_values is not None and self.disallowed_values is not None:
+            if (
+                len(
+                    set(self.required_values.keys()).intersection(
+                        set(self.disallowed_values.keys())
+                    )
+                )
+                > 0
+            ):
+                raise ValueError(
+                    "FilterByValues should not have the same keys in both required_values and disallowed_values"
+                )
+
+        return super().verify()
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        yielded = False
         for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
-                    )
-                if instance[key] != value:
-                    filter = True
-            if not filter:
+            if self._is_required(instance) and not self._is_disallowed(instance):
+                yielded = True
                 yield instance
+
+        if not yielded and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"FilterByValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+    def _is_required(self, instance: dict) -> bool:
+        if not self.required_values:  # If required_values is empty, return True
+            return True
+
+        for key, value in self.required_values.items():
+            if key not in instance:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
+                )
+            if instance[key] != value:
+                return False
+        return True
+
+    def _is_disallowed(self, instance: dict) -> bool:
+        if not self.disallowed_values:  # If disallowed_values is empty, return False
+            return False
+
+        for key, value in self.disallowed_values.items():
+            if key in instance and instance[key] == value:
+                return True
+        return False
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
@@ -1297,7 +1364,7 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
     reversed: bool = False
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        first_instance = stream.peak()
+        first_instance = stream.peek()
 
         operators = first_instance.get(self.field, [])
         if isinstance(operators, str):
@@ -1331,7 +1398,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
 
-        first_instance = stream.peak()
+        first_instance = stream.peek()
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1477,7 +1544,23 @@ class EncodeLabels(StreamInstanceOperator):
 
 
 class StreamRefiner(SingleStreamOperator):
+    """Discard from the input stream all instances beyond the leading 'max_instances' instances.
+
+    Thereby, if the input stream consists of no more than 'max_instances' instances, the resulting stream is the whole of the
+    input stream. And if the input stream consists of more than 'max_instances' instances, the resulting stream only consists
+    of the leading 'max_instances' of the input stream.
+
+    Args:  max_instances (int)
+           apply_to_streams (optional, list(str)): names of streams to refine.
+
+    Examples:
+        when input = [{"a": 1},{"a": 2},{"a": 3},{"a": 4},{"a": 5},{"a": 6}] is fed into
+        StreamRefiner(max_instances=4)
+        the resulting stream is [{"a": 1},{"a": 2},{"a": 3},{"a": 4}]
+    """
+
     max_instances: int = None
+    apply_to_streams: Optional[List[str]] = None
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         if self.max_instances is not None:
@@ -1489,13 +1572,23 @@ class StreamRefiner(SingleStreamOperator):
 class DeterministicBalancer(StreamRefiner):
     """A class used to balance streams deterministically.
 
+    For each instance, a signature is constructed from the values of the instance in specified input 'fields'.
+    By discarding instances from the input stream, DeterministicBalancer maintains equal number of instances for all signatures.
+    When also input 'max_instances' is specified, DeterministicBalancer maintains a total instance count not exceeding
+    'max_instances'. The total number of discarded instances is as few as possible.
+
     Attributes:
-        fields (List[str]): A list of field names to be used in determining the signature of an instance.
-        streams (List[str]): A list of stream names to be processed by the balancer.
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int)
 
     Usage:
-        balancer = DeterministicBalancer(fields=["field1", "field2"], streams=["stream1", "stream2"])
+        balancer = DeterministicBalancer(fields=["field1", "field2"], max_instances=200)
         balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 2},{"a": 3},{"a": 4}] is fed into
+        DeterministicBalancer(fields=["a"])
+        the resulting stream will be: [{"a": 1, "b": 1},{"a": 2},{"a": 3},{"a": 4}]
     """
 
     fields: List[str]
@@ -1532,7 +1625,23 @@ class DeterministicBalancer(StreamRefiner):
 
 
 class LengthBalancer(DeterministicBalancer):
+    """Balances by a signature that reflects the total length of the fields' values, quantized into integer segments.
+
+    Args:
+        segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
+           into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
+           beyond, namely, the length of segments_boudaries)
+
+        fields (Optional, List[str])
+
+    Example:
+        when input [{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}] is fed into
+        LengthBalancer(fields=["a"], segments_boundaries=[1])
+        input instances will be counted and balanced against two categories: empty total length (less than 1), and non-empty.
+    """
+
     segments_boundaries: List[int]
+    fields: Optional[List[str]]
 
     def signature(self, instance):
         total_len = 0

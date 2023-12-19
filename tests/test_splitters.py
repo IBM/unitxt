@@ -7,18 +7,68 @@ class TestDiverseLabelsSampler(unittest.TestCase):
     """Tests for the DiverseLabelsSampler object."""
 
     @staticmethod
-    def new_examplar(input_choices=None, output_choices=None):
+    def new_examplar(choices=None, labels=None, text=""):
         """Return an examplar in a correct format."""
-        if output_choices is None:
-            output_choices = ["class_a"]
-        if input_choices is None:
-            input_choices = ["class_a", "class_b"]
+        if labels is None:
+            labels = ["class_a"]
+        if choices is None:
+            choices = ["class_a", "class_b"]
         return {
-            "inputs": {"choices": input_choices},
+            "inputs": {"choices": choices, "text": text},
             "outputs": {
-                "choices": output_choices,
+                "labels": labels,
             },
         }
+
+    def test_sample(self):
+        for i in range(3):
+            num_samples = 3
+            sampler = DiverseLabelsSampler(num_samples)
+            choices = ["dog", "cat"]
+            instances = [
+                self.new_examplar(choices, ["dog"], "Bark1"),
+                self.new_examplar(choices, ["dog"], "Bark2"),
+                self.new_examplar(choices, ["cat"], "Cat1"),
+                self.new_examplar(choices, ["dog"], "Bark3"),
+                self.new_examplar(choices, ["cow"], "Moo1"),
+                self.new_examplar(choices, ["duck"], "Quack"),
+            ]
+            result = sampler.sample(instances)
+
+            from collections import Counter
+
+            counts = Counter()
+            for i in range(0, num_samples):
+                counts[result[i]["outputs"]["labels"][0]] += 1
+            self.assertEqual(counts["dog"], 1)
+            self.assertEqual(counts["cat"], 1)
+            self.assertEqual(len(counts.keys()), 3)
+
+    def test_sample_list(self):
+        for _ in range(10):
+            num_samples = 2
+            sampler = DiverseLabelsSampler(num_samples)
+            choices = ["cat"]
+            instances = [
+                self.new_examplar(choices, ["dog", "cat"], "Bark1,Cat1"),
+                self.new_examplar(choices, ["cat"], "Cat2"),
+                self.new_examplar(choices, ["dog"], "Bark2"),
+                self.new_examplar(choices, ["duck"], "Quack"),
+            ]
+            result = sampler.sample(instances)
+            from collections import Counter
+
+            counts = Counter()
+            for j in range(0, num_samples):
+                counts[str(result[j]["outputs"]["labels"])] += 1
+            self.assertTrue(
+                counts["['dog', 'cat']"] == 1 or counts["['cat']"] == 1,
+                f"unexpected counts: {counts}",
+            )
+            self.assertTrue(
+                counts["['duck']"] == 1 or counts["['dog']"] == 1,
+                f"unexpected counts: {counts}",
+            )
 
     def test_examplar_repr(self):
         sampler = DiverseLabelsSampler()
@@ -29,7 +79,7 @@ class TestDiverseLabelsSampler(unittest.TestCase):
     def test_examplar_repr_with_string_for_input_choices(self):
         sampler = DiverseLabelsSampler()
         examplar_input_choices = "a string which is a wrong value"
-        wrong_examplar = self.new_examplar(input_choices=examplar_input_choices)
+        wrong_examplar = self.new_examplar(choices=examplar_input_choices)
         with self.assertRaises(ValueError) as cm:
             sampler.examplar_repr(examplar=wrong_examplar)
         self.assertEqual(
