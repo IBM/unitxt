@@ -4,7 +4,6 @@ import os
 import unittest
 
 from src.unitxt.logging import get_logger
-from src.unitxt.random_utils import get_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 logger = get_logger()
@@ -42,9 +41,7 @@ class TestExamples(unittest.TestCase):
         all_preparation_files.sort()
         for file in all_preparation_files:
             with self.subTest(file=file):
-                logger.info(
-                    f"Testing preparation file: {file}, current seed: {get_seed()}."
-                )
+                logger.info(f"Testing preparation file: {file}.")
                 import_module_from_file(file)
                 # with open(file, "r") as f:
                 #     exec(f.read())
