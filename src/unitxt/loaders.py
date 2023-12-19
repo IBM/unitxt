@@ -2,6 +2,7 @@ import itertools
 import os
 import tempfile
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import pandas as pd
@@ -20,6 +21,14 @@ try:
     ibm_boto3_available = True
 except ImportError:
     ibm_boto3_available = False
+
+try:
+    import opendatasets
+
+    opendatasets_available = True
+
+except ImportError:
+    opendatasets_available = False
 
 
 class Loader(SourceOperator):
@@ -96,6 +105,28 @@ class LoadCSV(Loader):
                 for name, file in self.files.items()
             }
         )
+
+
+# TODO write how to obtain kaggle credentials
+class LoadFromKaggle(Loader):
+    url: str
+
+    def verify(self):
+        super().verify()
+        assert opendatasets_available, "Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) "
+        assert os.path.isfile(
+            "kaggle.json"
+        ), "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
+
+    def _download_from_kaggle(self, url, data_dir):
+        opendatasets.download(url, data_dir)
+
+    def process(self):
+        with TemporaryDirectory() as temp_directory:
+            self._download_from_kaggle(self.url, temp_directory)
+            dataset = hf_load_dataset(temp_directory, streaming=False)
+
+        return MultiStream.from_iterables(dataset)
 
 
 class LoadFromIBMCloud(Loader):
