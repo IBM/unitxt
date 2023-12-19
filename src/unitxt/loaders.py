@@ -1,3 +1,4 @@
+import importlib
 import itertools
 import os
 import tempfile
@@ -99,23 +100,29 @@ class LoadCSV(Loader):
         )
 
 
+class MissingKaggleCredentialsError(ValueError):
+    pass
+
+
 # TODO write how to obtain kaggle credentials
 class LoadFromKaggle(Loader):
     url: str
 
     def verify(self):
         super().verify()
-        try:
-            import opendatasets
-        except ImportError as e:
-             raise ImportError("Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) ") from e
-        assert os.path.isfile(
-            "kaggle.json"
-        ), "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
+        if importlib.util.find_spec("opendatasets") is None:
+            raise ImportError(
+                "Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) "
+            )
+        if not os.path.isfile("kaggle.json"):
+            raise MissingKaggleCredentialsError(
+                "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
+            )
 
     def prepare(self):
         super().prepare()
         from opendatasets import download
+
         self.downloader = download
 
     def process(self):
