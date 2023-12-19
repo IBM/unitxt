@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_sub_default_random_generator
+from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -108,9 +108,7 @@ class RandomSampler(Sampler):
 
     def prepare(self):
         super().prepare()
-        self.random_generator = get_sub_default_random_generator(
-            sub_seed="random_sample_seed"
-        )
+        self.random_generator = new_random_generator(sub_seed="random_sample_seed")
 
     def sample(
         self, instances_pool: List[Dict[str, object]]
@@ -156,9 +154,7 @@ class DiverseLabelsSampler(Sampler):
     def prepare(self):
         super().prepare()
         self.labels_cache = None
-        self.random_generator = get_sub_default_random_generator(
-            sub_seed="diverse_labels_sampler"
-        )
+        self.random_generator = new_random_generator(sub_seed="diverse_labels_sampler")
 
     def examplar_repr(self, examplar):
         if "inputs" not in examplar:

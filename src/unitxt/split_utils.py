@@ -4,7 +4,7 @@ from typing import Dict
 
 from .generator_utils import ReusableGenerator
 from .logging import get_logger
-from .random_utils import get_sub_default_random_generator
+from .random_utils import new_random_generator
 from .stream import Stream
 
 logger = get_logger()
@@ -232,7 +232,7 @@ def random_mix_generator(
 ):
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
-        random_generator = get_sub_default_random_generator(sub_seed=old_stream_name)
+        random_generator = new_random_generator(sub_seed=old_stream_name)
         assert (
             old_stream_name in input_streams
         ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"

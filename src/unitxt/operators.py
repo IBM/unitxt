@@ -33,7 +33,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import get_sub_default_random_generator
+from .random_utils import new_random_generator
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
@@ -515,7 +515,7 @@ class AugmentWhitespace(Augmentor):
         words = re.split(r"(\s+)", value)
         new_value = ""
 
-        random_generator = get_sub_default_random_generator(sub_seed=value)
+        random_generator = new_random_generator(sub_seed=value)
         for word in words:
             if word.isspace():
                 new_value += random_generator.choice(
@@ -638,7 +638,7 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        random_generator = get_sub_default_random_generator(sub_seed=value)
+        random_generator = new_random_generator(sub_seed=value)
         prefix = self._get_random_pattern(
             self._prefix_pattern_distribution, random_generator
         )
@@ -653,7 +653,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random_generator = get_sub_default_random_generator(sub_seed=str(res))
+        random_generator = new_random_generator(sub_seed=str(res))
         random_generator.shuffle(res)
         return res
 
@@ -1504,7 +1504,7 @@ class Shuffle(PagedStreamOperator):
 
     def prepare(self):
         super().prepare()
-        self.random_generator = get_sub_default_random_generator(sub_seed="shuffle")
+        self.random_generator = new_random_generator(sub_seed="shuffle")
 
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
         self.random_generator.shuffle(page)

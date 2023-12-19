@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
-from .random_utils import get_sub_default_random_generator
+from .random_utils import new_random_generator
 
 
 class Collection(Artifact):
@@ -54,9 +54,7 @@ class ItemPicker(Artifact):
 
 class RandomPicker(Artifact):
     random_generator: random.Random = field(
-        default_factory=lambda: get_sub_default_random_generator(
-            sub_seed="random_picker"
-        )
+        default_factory=lambda: new_random_generator(sub_seed="random_picker")
     )
 
     def __call__(self, collection: Collection):
