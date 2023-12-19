@@ -6,6 +6,10 @@
 import os
 import sys
 
+from catalog import build_catalog_rst
+
+build_catalog_rst()
+
 sys.path.insert(0, os.path.abspath("../src"))
 
 
