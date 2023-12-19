@@ -1,16 +1,10 @@
 import random as python_random
-import threading
 
 __default_seed__ = 42
-_thread_local = threading.local()
 
 
 def get_seed():
-    try:
-        return _thread_local.seed
-    except AttributeError:
-        _thread_local.seed = __default_seed__
-        return _thread_local.seed
+    return __default_seed__
 
 
 def get_sub_default_random_generator(sub_seed: str) -> python_random.Random:
