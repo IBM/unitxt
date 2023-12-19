@@ -1,0 +1,90 @@
+name: Test Python Code with Shards
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-tests-in-shards:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5] # Define the number of shards here
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.8'
+
+    steps:
+    - name: Checkout the project
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: ${{ env.PYTHON }}
+        cache: 'pip'
+
+    - name: Install Requirements
+      run: |
+        pip install -r requirements/base.rqr
+        pip install -r requirements/tests.rqr
+
+    - name: Install the package that is required for testing and coverage calculation
+      run: pip install coverage
+
+    - name: Run tests with coverage (sharded)
+      run: |
+        total_tests=$(find tests -type f -name "test_*.py" | wc -l)
+        tests_per_shard=$((total_tests / ${{ strategy.job-total }} + 1))
+        start=$(( (tests_per_shard * ${{ matrix.shard }}) - tests_per_shard + 1))
+        end=$(( start + tests_per_shard - 1))
+        test_files=$(find tests -type f -name "test_*.py" | sort | sed -n "$start,$end"p)
+        echo "Running shard ${{ matrix.shard }} with the following test files:"
+        echo $test_files
+        echo $test_files | xargs -d '\n' coverage run --parallel-mode -m unittest
+
+    - name: Upload coverage data
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-${{ matrix.shard }}
+        path: .coverage.*
+
+  combine-coverage-reports:
+    needs: run-tests-in-shards
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.8'
+
+    steps:
+    - name: Checkout the project
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: ${{ env.PYTHON }}
+
+    - name: Install the package that is required for testing and coverage calculation
+      run: pip install coverage
+
+    - name: Download all shard coverage data
+      uses: actions/download-artifact@v2
+      with:
+        path: coverage-data
+
+    - name: Combine coverage data
+      run: |
+        mv coverage-data/*/* ./
+        coverage combine
+        coverage report
+        coverage xml
+
+    - name: Upload Combined Coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        file: coverage.xml
+        fail_ci_if_error: true
