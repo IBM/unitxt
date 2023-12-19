@@ -515,7 +515,7 @@ class AugmentWhitespace(Augmentor):
         words = re.split(r"(\s+)", value)
         new_value = ""
 
-        random_generator = new_random_generator(sub_seed=value)
+        random_generator = new_random_generator(sub_seed=str(hash(value)))
         for word in words:
             if word.isspace():
                 new_value += random_generator.choice(
@@ -638,7 +638,7 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        random_generator = new_random_generator(sub_seed=value)
+        random_generator = new_random_generator(sub_seed=str(hash(value)))
         prefix = self._get_random_pattern(
             self._prefix_pattern_distribution, random_generator
         )
@@ -653,7 +653,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random_generator = new_random_generator(sub_seed=str(res))
+        random_generator = new_random_generator(sub_seed=str(hash(res)))
         random_generator.shuffle(res)
         return res
 
