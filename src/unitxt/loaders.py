@@ -113,7 +113,10 @@ class LoadFromKaggle(Loader):
 
     def verify(self):
         super().verify()
-        assert opendatasets_available, "Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) "
+        try:
+            import opendatasets
+        except ImportError as e:
+             raise ImportError("Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) ") from e
         assert os.path.isfile(
             "kaggle.json"
         ), "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
