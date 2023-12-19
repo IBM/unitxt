@@ -3,6 +3,7 @@ import importlib.util
 import os
 import unittest
 
+from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging import get_logger
 from src.unitxt.random_utils import get_seed
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
@@ -45,8 +46,10 @@ class TestExamples(unittest.TestCase):
                 logger.info(
                     f"Testing preparation file: {file}, current seed: {get_seed()}."
                 )
-                import_module_from_file(file)
-                # with open(file, "r") as f:
-                #     exec(f.read())
+                try:
+                    import_module_from_file(file)
+                except MissingKaggleCredentialsError as e:
+                    logger.info(f"Skipping file {file} due to ignored error {e}")
+                    continue
                 logger.info(f"Testing preparation file: {file} passed")
                 self.assertTrue(True)
