@@ -1,6 +1,6 @@
+import random
 import typing
 from dataclasses import field
-from random import random
 from typing import Dict, List
 
 from .artifact import Artifact
