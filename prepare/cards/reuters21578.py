@@ -31,7 +31,7 @@ classlabels = {
         "coconut-oil",
         "coffee",
         "copper",
-        "cora-cake",
+        "copra-cake",
         "corn",
         "corn-oil",
         "cornglutenfeed",
