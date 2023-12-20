@@ -139,3 +139,5 @@ t.py
 
 SECRETS.SH
 .DS_Store
+
+docs/catalog.rst
