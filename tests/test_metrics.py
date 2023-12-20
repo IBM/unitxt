@@ -10,6 +10,8 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    MeanGroupedAccuracy,
+    MeanGroupedAccuracyPDR,
     Reward,
     Rouge,
     SentenceBert,
@@ -19,6 +21,18 @@ from src.unitxt.metrics import (
 from src.unitxt.test_utils.metrics import apply_metric
 
 logger = get_logger()
+
+# values of inputs that are common to GroupInstanceMetric tests
+GROUPED_INSTANCE_PREDICTIONS = ["A B", "BC D", "C", "123", "BCD",
+                                10, "  BD", "AB", "I am a dog", "AB C",
+                                "AB 1", "GMA", 0.123, "BD", "abc"]
+
+GROUPED_INSTANCE_REFERENCES = [["B", "AB", "A"], ["A", "BC D", "BC DF"], ["c", " C"], [13, 23, 234], ["  ", " BD", " BDA"],
+                               [1, 10, 100], ["A", "B", "BD"], ["ABC", "ab", "BC"], ["I am a person", "I AM A DOG", "ABC"], ["AB CD", "AB", "ab"],
+                               ["AB 1", "AB1"], [" GMA 123", "GMA"], ["123", 0.12], ["BDE", "BCE", "bdefs"], [' abcdefg', 'AB', 'abcd']]
+
+# possibly multi-column group identifier
+GROUPED_INSTANCE_ADDL_INPUTS = [{"group": "grp1", "id": 0}] * 5 + [{"group": "grp1", "id": 1}] * 5 + [{"group": "grp2", "id": 0}] * 4 + [{"group": "grp2", "id": 1}] * 1
 
 
 class TestMetrics(unittest.TestCase):
@@ -397,6 +411,25 @@ class TestMetrics(unittest.TestCase):
             global_target, outputs[0]["score"]["global"]["score"], places=5
         )
 
+    def test_mean_grouped_accuracy(self):
+        metric = MeanGroupedAccuracy()
+        global_target = 0.225
+        outputs = apply_metric(
+            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+
+    def test_mean_grouped_accuracy_PDR(self):
+        metric = MeanGroupedAccuracyPDR()
+        global_target = 0.8333333333333334
+        outputs = apply_metric(
+            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
@@ -454,6 +487,26 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_high=f1_macro_high,
         )
 
+    def test_grouped_instance_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics).
+        These metrics require additional_inputs"""
+
+        # grouped instance metrics
+        import numpy as np
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.4444209814609315,
+        )
+
+        # these target values will need to be changed once the confidence interval checks if all values are not NaN
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedAccuracyPDR(),
+            expected_ci_low=np.nan,
+            expected_ci_high=np.nan,
+        )
+
+
     def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
         """Test the calculation of confidence intervals for a given metric."""
         predictions = ["A", "B", "C", "D", "E"] * 20  # 100 predictions
@@ -478,6 +531,45 @@ class TestConfidenceIntervals(unittest.TestCase):
                 self.assertAlmostEqual(
                     score_value, expected_global_result[score_name], places=5
                 )
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )
+
+    def _test_grouped_instance_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
+        """Test the calculation of confidence intervals for a given metric."""
+        import numpy as np
+
+        outputs = apply_metric(
+            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+        )
+
+        expected_global_result = {
+            f"{metric.main_score}_ci_low": expected_ci_low,
+            f"{metric.main_score}_ci_high": expected_ci_high,
+            "score_ci_low": expected_ci_low,
+            "score_ci_high": expected_ci_high,
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        logger.info(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                # Test that the output value is the same as the expected value
+                # allow for cases where value is NaN
+                if np.isnan(expected_global_result[score_name]):
+                    assert np.isnan(score_value)
+                elif np.isnan(score_value):
+                    assert np.isnan(expected_global_result[score_name])
+                else:
+                    self.assertAlmostEqual(
+                        score_value, expected_global_result[score_name], places=5
+                    )
             else:
                 # An output score that is not expected
                 # This is ok if the score_name is not related to confidence intervals
