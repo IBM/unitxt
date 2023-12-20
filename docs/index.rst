@@ -22,13 +22,15 @@ Our aspiration is to be simple, adaptable, and transparent.
    :maxdepth: 2
    :caption: Contents:
 
-   introduction
-   no_installation_usage
-   installation
-   concepts
-   adding_common_recipe
-   adding_operators_and_metrics
-   operators
+   docs/introduction
+   docs/no_installation_usage
+   docs/installation
+   docs/adding_dataset
+   docs/adding_operators_and_metrics
+   docs/concepts
+   docs/backend
+   docs/operators
+   
    modules
    catalog
 

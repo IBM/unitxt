@@ -1,5 +1,5 @@
 ==============
-Concepts
+Backend
 ==============
 
 The main building blocks of the library are the `Stream`, `Operator` and the `Artifact` classes.

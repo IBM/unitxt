@@ -227,6 +227,43 @@ class TestMetrics(unittest.TestCase):
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
+    def test_f1_micro_multilabel_error_format(self):
+        metric = F1MicroMultiLabel()
+        references = [["A B"], ["BC D"], ["C"], ["123"]]
+        predictions = [
+            ["B", "AB", "A"],
+            ["A", "bC", "BC DF"],
+            ["c", " C"],
+            [13, 23, 234],
+        ]
+        with self.assertRaises(Exception) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Each reference is expected to be a list of strings in F1 multi label metric. Received reference: 'A B'",
+        )
+
+        references2 = [["A", "B"], ["BC", "D"], ["C"], ["123"]]
+
+        with self.assertRaises(Exception) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references2)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Only a single reference per prediction is allowed in F1 multi label metric. Received reference: ['A', 'B']",
+        )
+
+        references3 = [[["A"]], [["BC"]], [["C"]], [["123"]]]  # OK references
+
+        with self.assertRaises(Exception) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references3)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '[13, 23, 234]'",
+        )
+
     def test_f1_macro_multilabel_with_nones(self):
         metric = F1MacroMultiLabel()
 

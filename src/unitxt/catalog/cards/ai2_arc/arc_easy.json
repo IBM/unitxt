@@ -1,0 +1,39 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "ai2_arc",
+        "name": "ARC-Easy"
+    },
+    "preprocess_steps": [
+        {
+            "type": "add_fields",
+            "fields": {
+                "topic": "science"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "answerKey": "label",
+                "choices": "_choices"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "_choices/text": "choices",
+                "_choices/label": "labels"
+            },
+            "use_query": true
+        },
+        {
+            "type": "index_of",
+            "search_in": "labels",
+            "index_of": "label",
+            "to_field": "answer"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.original.all"
+}
