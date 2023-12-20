@@ -653,7 +653,7 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        random_generator = new_random_generator(sub_seed=str(hash(res)))
+        random_generator = new_random_generator(sub_seed=str(hash(str(res))))
         random_generator.shuffle(res)
         return res
 
