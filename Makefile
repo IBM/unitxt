@@ -6,11 +6,18 @@ THIS_FILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 # Directory of this file
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-docs:
-	# generate .rst files for sphinx
+docs-files:
 	cd $(DIR)/docs && sphinx-apidoc -f -o . ../src/unitxt
-	# create the html documentation
+
+docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
+
+docs: docs-html
+
+test-docs: docs
+	rm $(DIR)/docs/modules.rst
+	rm $(DIR)/docs/unitxt.rst
+	rm $(DIR)/docs/unitxt.*.rst
 
 format:
 	bash $(DIR)/utils/format
@@ -18,6 +25,9 @@ format:
 # command: make version={new_version} new-version
 new-version:
 	bash $(DIR)/utils/update_version $(version)
+
+version-tag:
+	bash $(DIR)/utils/create_tag_for_new_version
 
 docs-server: docs
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
@@ -31,12 +41,12 @@ pypi:
 	twine upload dist/*
 
 dataset:
-	bash $(DIR)/make/hf/prepare_dataset_imports.sh
-	python $(DIR)/make/hf/prepare_dataset.py
+	bash $(DIR)/utils/hf/prepare_dataset_imports.sh
+	python $(DIR)/utils/hf/prepare_dataset.py
 
 metric:
-	bash $(DIR)/make/hf/prepare_metric_imports.sh
-	python $(DIR)/make/hf/prepare_metric.py
+	bash $(DIR)/utils/hf/prepare_metric_imports.sh
+	python $(DIR)/utils/hf/prepare_metric.py
 
 build:
 	format
