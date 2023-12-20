@@ -141,3 +141,5 @@ SECRETS.SH
 .DS_Store
 
 docs/catalog.rst
+docs/unitxt.rst
+docs/unitxt.*.rst
