@@ -1,0 +1,75 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "zeroshot/twitter-financial-news-topic"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[85%]",
+                "validation": "train[15%]",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "analyst update",
+                    "1": "fed and central banks",
+                    "2": "company and product news",
+                    "3": "treasuries and corporate debt",
+                    "4": "dividend",
+                    "5": "earnings",
+                    "6": "energy and oil",
+                    "7": "financials",
+                    "8": "currencies",
+                    "9": "general News and opinion",
+                    "10": "gold, metals and materials",
+                    "11": "initial public offering",
+                    "12": "legal and regulation",
+                    "13": "mergers, acquisitions and investments",
+                    "14": "macro",
+                    "15": "markets",
+                    "16": "politics",
+                    "17": "personnel change",
+                    "18": "stock commentary",
+                    "19": "stock movement"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "analyst update",
+                    "fed and central banks",
+                    "company and product news",
+                    "treasuries and corporate debt",
+                    "dividend",
+                    "earnings",
+                    "energy and oil",
+                    "financials",
+                    "currencies",
+                    "general News and opinion",
+                    "gold, metals and materials",
+                    "initial public offering",
+                    "legal and regulation",
+                    "mergers, acquisitions and investments",
+                    "macro",
+                    "markets",
+                    "politics",
+                    "personnel change",
+                    "stock commentary",
+                    "stock movement"
+                ],
+                "text_type": "tweet",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

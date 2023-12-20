@@ -1,0 +1,64 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "jonathanli/law-stack-exchange"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "test",
+                "test": "train",
+                "validation": "validation"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "text_label": "label"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "title",
+                "body"
+            ],
+            "to_field": "text"
+        },
+        {
+            "type": "join_str",
+            "separator": ". ",
+            "field": "text",
+            "to_field": "text"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "business",
+                    "civil-law",
+                    "constitutional-law",
+                    "contract",
+                    "contract-law",
+                    "copyright",
+                    "criminal-law",
+                    "employment",
+                    "intellectual-property",
+                    "internet",
+                    "liability",
+                    "licensing",
+                    "privacy",
+                    "software",
+                    "tax-law",
+                    "trademark"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}
