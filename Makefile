@@ -13,7 +13,6 @@ docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
 
 docs: docs-html
-	echo "Docs built successfully!!!"
 
 test-docs: docs
 	rm $(DIR)/docs/modules.rst
