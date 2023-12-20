@@ -3,8 +3,10 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+import sys
 
-# sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from catalog import build_catalog_rst
 
@@ -41,31 +43,3 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_nav_header_background": "#ff66ff",
 }
-suppress_warnings = [
-    "app.add_node",
-    "app.add_directive",
-    "app.add_role",
-    "app.add_generic_role",
-    "app.add_source_parser",
-    "autosectionlabel.*",
-    "download.not_readable",
-    "epub.unknown_project_files",
-    "epub.duplicated_toc_entry",
-    "i18n.inconsistent_references",
-    "index",
-    "image.not_readable",
-    "ref.term",
-    "ref.ref",
-    "ref.numref",
-    "ref.keyword",
-    "ref.option",
-    "ref.citation",
-    "ref.footnote",
-    "ref.doc",
-    "ref.python",
-    "misc.highlighting_failure",
-    "toc.circular",
-    "toc.excluded",
-    "toc.not_readable",
-    "toc.secnum",
-]
