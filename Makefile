@@ -16,6 +16,7 @@ docs: docs-html
 	echo "Docs built successfully!!!"
 
 test-docs: docs
+	rm $(DIR)/docs/modules.rst
 	rm $(DIR)/docs/unitxt.rst
 	rm $(DIR)/docs/unitxt.*.rst
 
