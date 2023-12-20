@@ -89,7 +89,7 @@ class WeightedFusion(BaseFusion):
         weights = copy.deepcopy(self.weights)
         iterators = [iter(origin()[split]) for origin in self.origins]
         total_examples = 0
-        random_generator = new_random_generator(sub_seed="weighted_fusion")
+        random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
             self.max_total_examples is None or total_examples <= self.max_total_examples
         ) and len(iterators) > 0:
