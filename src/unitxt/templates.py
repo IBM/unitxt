@@ -360,7 +360,7 @@ class MultiReferenceTemplate(InputOutputTemplate):
             )
 
         if self.random_reference:
-            random_generator = new_random_generator(str(references))
+            random_generator = new_random_generator(str(hash(str(outputs))))
             target = random_generator.choice(references)
         else:
             target = references[0]
