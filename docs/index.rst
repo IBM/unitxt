@@ -8,7 +8,6 @@
    :align: center
 
 
-
 Unitxt: streamlining data processing
 =====================================
 
@@ -19,7 +18,7 @@ In one line of code, it prepares a dataset or mixtures-of-datasets into an input
 Our aspiration is to be simple, adaptable, and transparent.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
    docs/introduction
@@ -30,7 +29,7 @@ Our aspiration is to be simple, adaptable, and transparent.
    docs/concepts
    docs/backend
    docs/operators
-   
+
    modules
    catalog
 
