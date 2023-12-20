@@ -99,8 +99,8 @@ class MultipleChoiceTemplate(Template):
     choices_field: str = "choices"
     target_field: str = "label"
     choices_seperator: str = ", "
-    source_choice_format = "{choice_numeral}. {choice_text}"
-    target_choice_format = "{choice_numeral}"
+    source_choice_format: str = "{choice_numeral}. {choice_text}"
+    target_choice_format: str = "{choice_numeral}"
     add_numerals_as_field: str = None
     enumerator: str = "capitals"
 
