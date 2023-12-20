@@ -12,26 +12,20 @@ jobs:
       runs-on: ubuntu-latest
       env:
         OS: ubuntu-latest
-        PYTHON: '3.8'
         PYTHONPATH: ./docs
 
       steps:
-      - name: Checkout the project
-        uses: actions/checkout@v3
-
-      - name: Cache pip
-        uses: actions/cache@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*.rqr') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: '3.9'
+          cache: 'pip' # caching pip dependencies
+      - run: pip install -r requirements/base.rqr
+      - run: pip install -r requirements/docs.rqr
 
-      - name: Install dependencies
+      - name: Install package
         run: |
-          for file in requirements/*.rqr; do
-            pip install -r $file
-          done
+          pip install .
 
       - name: Print Python Path
         run: python -c "import sys; print(sys.path)"
