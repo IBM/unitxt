@@ -30,7 +30,7 @@ card = TaskCard(
         AddFields(
             fields={
                 "classes": classlabels.names,
-                "text_type": "abstract",
+                "text_type": "sentence",
                 "type_of_class": "topic",
             }
         ),
