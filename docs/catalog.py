@@ -1,7 +1,6 @@
 import json
 import os
 
-import unitxt
 from unitxt.artifact import Artifact
 
 depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
@@ -68,7 +67,8 @@ def make_content(artifact, label, all_labels=None):
 def build_catalog_rst():
     prints = [write_title("Catalog", "catalog", 0)]
     all_labels = set()
-    start_directory = unitxt.local_catalog_path
+    current_dir = os.path.dirname(__file__)
+    start_directory = os.path.join(current_dir, "..", "src", "unitxt", "catalog")
 
     for path, is_dir, _ in custom_walk(start_directory):
         rel_path = path.replace(start_directory, "")
