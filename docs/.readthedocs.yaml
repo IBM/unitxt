@@ -12,7 +12,7 @@ build:
     python: "3.8"
   jobs:
     pre_build:
-      make docs
+      - make docs
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"
