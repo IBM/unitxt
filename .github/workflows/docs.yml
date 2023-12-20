@@ -19,14 +19,22 @@ jobs:
       - name: Checkout the project
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@master
+      - name: Cache pip
+        uses: actions/cache@v2
         with:
-          python-version: ${{ env.PYTHON }}
-          cache: 'pip'
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*.rqr') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-      - name: Install Requirements
-        run: pip install .[docs,dev,base]
+      - name: Install dependencies
+        run: |
+          for file in requirements/*.rqr; do
+            pip install -r $file
+          done
+
+      - name: Print Python Path
+        run: python -c "import sys; print(sys.path)"
 
       - name: Compile Docs
         run: make docs
