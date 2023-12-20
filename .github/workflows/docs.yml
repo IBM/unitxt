@@ -27,6 +27,9 @@ jobs:
       - name: Install Requirements
         run: pip install .[docs,dev,base]
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
       - name: Compile Docs
         run: make docs
 
