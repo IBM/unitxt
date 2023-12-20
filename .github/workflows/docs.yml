@@ -13,6 +13,7 @@ jobs:
       env:
         OS: ubuntu-latest
         PYTHON: '3.8'
+        PYTHONPATH: ./docs
 
       steps:
       - name: Checkout the project
@@ -26,9 +27,6 @@ jobs:
 
       - name: Install Requirements
         run: pip install .[docs,dev,base]
-
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Compile Docs
         run: make docs
