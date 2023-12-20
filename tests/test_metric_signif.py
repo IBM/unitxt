@@ -1,8 +1,9 @@
+import unittest
+
 import numpy as np
 
-import unittest
-from src.unitxt.random_utils import *
 from src.unitxt.metric_paired_significance import PairedDifferenceTest
+from src.unitxt.random_utils import *
 
 np.set_printoptions(precision=10)
 
@@ -66,7 +67,7 @@ class TestMetricSignifDifference(unittest.TestCase):
         model_measurement = np.square(model_measurement)
         return tuple([xx for xx in model_measurement])
 
-    
+
     def gen_binary_data(self, same_distr=True, nmodels=None):
         # generate only binary data
         nmodels = self.nmodels if nmodels is None else max(2, int(nmodels))
@@ -80,30 +81,30 @@ class TestMetricSignifDifference(unittest.TestCase):
             p = np.vstack([rbeta(alpha=2, beta=5, rng=rng, n=self.nobs) for _ in range(nmodels - 1)] + [rbeta(alpha=5, beta=2, rng=rng, n=self.nobs)])
             return [rbernoulli_vec(pvec=pp, rng=rng) for pp in p]
 
-    
+
     def _test_signif(self, expected_pvalues_list: list, expected_effect_sizes, same_distr=True, continuous=True):
 
         model_res = self.gen_continuous_data(same_distr) if continuous else self.gen_binary_data(same_distr=same_distr)
         tester = PairedDifferenceTest(nmodels=self.nmodels)
 
         # use default paired t-test
-        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided')
+        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative="two-sided")
         for observed, expected in zip(res_twosided.pvalues, expected_pvalues_list[0]):
             self.assertAlmostEqual(first=observed, second=expected)
         # the effect sizes are the same in the one and two-sided case, and only the non-permutation case
         for observed, expected in zip(res_twosided.effect_sizes, expected_effect_sizes):
             self.assertAlmostEqual(first=observed, second=expected)
 
-        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less')
+        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative="less")
         for observed, expected in zip(res_onesided.pvalues, expected_pvalues_list[1]):
             self.assertAlmostEqual(first=observed, second=expected)
 
         # permutation results should be very similar to t-test but not identical, and should vary a bit each run due to permutation randomness
-        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative='two-sided', permute=True, random_state=int(self.rseed))
+        res_twosided = tester.signif_pair_diff(samples_list=model_res, alternative="two-sided", permute=True, random_state=int(self.rseed))
         for observed, expected in zip(res_twosided.pvalues, expected_pvalues_list[2]):
             self.assertAlmostEqual(first=observed, second=expected)
 
-        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative='less', permute=True, random_state=int(self.rseed))
+        res_onesided = tester.signif_pair_diff(samples_list=model_res, alternative="less", permute=True, random_state=int(self.rseed))
         for observed, expected in zip(res_onesided.pvalues, expected_pvalues_list[3]):
             self.assertAlmostEqual(first=observed, second=expected)
 
