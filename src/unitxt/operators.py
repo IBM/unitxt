@@ -1511,7 +1511,7 @@ class EncodeLabels(StreamInstanceOperator):
     Example: applying
         EncodeLabels(fields = ["a", "b/*"])
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
-          {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
         Note: dpath is applied here, and hence, fields that are lists, should be included in
