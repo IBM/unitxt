@@ -3,10 +3,9 @@ from datasets import load_dataset_builder
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
-    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    MultiLabelTemplate,
     TaskCard,
     TemplatesList,
 )
@@ -29,18 +28,14 @@ card = TaskCard(
             fields={
                 "classes": classlabels.feature.names,
                 "text_type": "text",
-                "type_of_class": "contractual clauses",
+                "type_of_classes": "contractual clauses",
             }
         ),
     ],
-    task=FormTask(
-        inputs=["text"],
-        outputs=["labels"],
-        metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-    ),
+    task="tasks.classification.multi_label",
     templates=TemplatesList(
         [
-            InputOutputTemplate(
+            MultiLabelTemplate(
                 input_format="{text}",
                 output_format="{labels}",
             ),
