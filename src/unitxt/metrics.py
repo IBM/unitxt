@@ -23,6 +23,7 @@ from .operator import (
 from .operators import CopyFields
 from .random_utils import get_seed
 from .stream import MultiStream, Stream
+from .type_utils import isoftype
 
 logger = get_logger()
 # The default number of resamples used to estimate the confidence intervals
@@ -474,6 +475,23 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class StringContainment(InstanceMetric):
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+
+    def compute(
+        self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
+    ) -> dict:
+        result = {
+            self.main_score: float(
+                any(str(reference) in prediction for reference in references)
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
@@ -715,21 +733,9 @@ class F1MultiLabel(GlobalMetric):
     ) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
-        assert all(
-            len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 multi label metric"
 
+        self._validate_references_and_prediction(references, predictions)
         references = [reference[0] for reference in references]
-
-        for reference in references:
-            assert isinstance(
-                references, list
-            ), f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference}"
-
-        for prediction in predictions:
-            assert isinstance(
-                prediction, list
-            ), f"Each prediction is expected to list of strings in F1 multi label metric. Received prediction: {prediction}"
 
         labels = [
             lbl
@@ -776,6 +782,23 @@ class F1MultiLabel(GlobalMetric):
         else:
             final_result = {self.main_score: result["f1"]}
         return final_result
+
+    def _validate_references_and_prediction(self, references, predictions):
+        for reference in references:
+            if not len(reference) == 1:
+                raise ValueError(
+                    f"Only a single reference per prediction is allowed in F1 multi label metric. Received reference: {reference}"
+                )
+            if not isoftype(reference[0], List[str]):
+                raise ValueError(
+                    f"Each reference is expected to be a list of strings in F1 multi label metric. Received reference: '{reference[0]}'"
+                )
+
+        for prediction in predictions:
+            if not isoftype(prediction, List[str]):
+                raise ValueError(
+                    f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
+                )
 
 
 class F1MicroMultiLabel(F1MultiLabel):

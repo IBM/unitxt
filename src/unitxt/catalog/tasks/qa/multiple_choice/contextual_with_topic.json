@@ -1,0 +1,16 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "topic",
+        "context",
+        "question",
+        "choices"
+    ],
+    "outputs": [
+        "answer",
+        "choices"
+    ],
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}

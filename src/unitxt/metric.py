@@ -65,7 +65,7 @@ class MultiStreamScoreMean(MultiStreamOperator):
     def aggegate_results(self, multi_stream: MultiStream):
         scores = []
         for stream in multi_stream.values():
-            instance = stream.peak()
+            instance = stream.peek()
             scores.append(instance["score"]["global"]["score"])
 
         from statistics import mean

@@ -5,3 +5,4 @@ ibm-cos-sdk
 seaborn
 matplotlib
 networkx
+opendatasets

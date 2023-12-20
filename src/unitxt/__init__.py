@@ -5,6 +5,9 @@ from . import logging
 from .catalog import add_to_catalog
 from .load import load_dataset
 from .register import register_all_artifacts, register_local_catalog
+from .version import version
+
+__version__ = version
 
 register_all_artifacts()
 random.seed(0)

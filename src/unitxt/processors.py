@@ -75,6 +75,16 @@ class TakeFirstNonEmptyLine(BaseFieldOperator):
         return splitted[0].strip()
 
 
+class ConvertToBoolean(BaseFieldOperator):
+    def process(self, instance):
+        clean_instance = str(instance).strip().lower()
+        if any(w in clean_instance for w in ["no", "not", "wrong", "false"]):
+            return "FALSE"
+        if any(w in clean_instance for w in ["yes", "right", "correct", "true"]):
+            return "TRUE"
+        return "OTHER"
+
+
 class LowerCaseTillPunc(BaseFieldOperator):
     def process(self, instance):
         non_empty_line = instance.lower()
