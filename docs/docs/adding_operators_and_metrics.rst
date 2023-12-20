@@ -1,4 +1,5 @@
 .. _adding_operator:
+
 =====================================
 Adding Stream Operators and Metrics
 =====================================
