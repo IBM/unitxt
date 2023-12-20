@@ -6,9 +6,9 @@
 import os
 import sys
 
-from catalog import build_catalog_rst
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from catalog import build_catalog_rst
 
 build_catalog_rst()
 
