@@ -83,7 +83,7 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
-    random_generator: Random = None
+    random_generator: Random = new_random_generator(sub_seed="Sampler")
 
     def prepare(self):
         super().prepare()
@@ -98,7 +98,9 @@ class Sampler(Artifact):
         self.sample_size = size
 
     def init_new_random_generator(self):
-        self.random_generator = new_random_generator(sub_seed="random_sample_seed")
+        self.random_generator = new_random_generator(
+            sub_seed="init_new_random_generator"
+        )
 
     @abstractmethod
     def sample(
