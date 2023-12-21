@@ -53,6 +53,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
+    def before_process_multi_stream(self):
+        self.sampler.init_new_random_generator()
+
     def verify(self):
         super().verify()
         if self.num_demos > 0:
@@ -118,18 +121,21 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             )
 
         if self.num_demos > 0:
-            sampler = self.card.sampler
+            if self.sampler is None:
+                if self.card.sampler is None:
+                    raise ValueError(
+                        "Unexpected None value for card.sampler. "
+                        "To use num_demos > 0, please set a sampler on the TaskCard."
+                    )
+                self.sampler = self.card.sampler
 
-            if self.sampler is not None:
-                sampler = self.sampler
-
-            sampler.set_size(self.num_demos)
+            self.sampler.set_size(self.num_demos)
 
             self.steps.append(
                 AddDemosField(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
-                    sampler=sampler,
+                    sampler=self.sampler,
                 )
             )
 

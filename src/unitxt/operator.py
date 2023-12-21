@@ -128,10 +128,14 @@ class MultiStreamOperator(StreamingOperator):
     caching: bool = NonPositionalField(default=None)
 
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
+        self.before_process_multi_stream()
         result = self._process_multi_stream(multi_stream)
         if self.caching is not None:
             result.set_caching(self.caching)
         return result
+
+    def before_process_multi_stream(self):
+        pass
 
     def _process_multi_stream(
         self, multi_stream: Optional[MultiStream] = None

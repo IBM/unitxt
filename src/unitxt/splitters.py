@@ -83,6 +83,7 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
+    random_generator: Random = None
 
     def prepare(self):
         super().prepare()
@@ -96,6 +97,9 @@ class Sampler(Artifact):
             size = int(size)
         self.sample_size = size
 
+    def init_new_random_generator(self):
+        self.random_generator = new_random_generator(sub_seed="random_sample_seed")
+
     @abstractmethod
     def sample(
         self, instances_pool: List[Dict[str, object]]
@@ -104,12 +108,6 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
-    random_generator: Random = None
-
-    def prepare(self):
-        super().prepare()
-        self.random_generator = new_random_generator(sub_seed="random_sample_seed")
-
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
@@ -149,12 +147,10 @@ class DiverseLabelsSampler(Sampler):
 
     choices: str = "choices"
     labels: str = "labels"
-    random_generator: Random = None
 
     def prepare(self):
         super().prepare()
         self.labels_cache = None
-        self.random_generator = new_random_generator(sub_seed="diverse_labels_sampler")
 
     def examplar_repr(self, examplar):
         if "inputs" not in examplar:
