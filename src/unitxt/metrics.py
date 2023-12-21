@@ -1398,7 +1398,7 @@ class RetrievalAtK(RetrievalMetric):
     reduction_map: Dict[str, List[str]] = None
 
     def prepare(self):
-        super(RetrievalAtK, self).prepare()
+        super().prepare()
         self.main_score = self.score_name("match", self.k_list[0])
         self.reduction_map = {
             "mean": [
