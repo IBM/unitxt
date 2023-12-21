@@ -1502,8 +1502,8 @@ class Shuffle(PagedStreamOperator):
 
     random_generator: Random = None
 
-    def prepare(self):
-        super().prepare()
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
         self.random_generator = new_random_generator(sub_seed="shuffle")
 
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
