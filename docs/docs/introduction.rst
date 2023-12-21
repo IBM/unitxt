@@ -1,4 +1,4 @@
-.. image:: ../assets/banner.png
+.. image:: ../../assets/banner.png
    :alt: Optional alt text
    :width: 100%
    :align: center

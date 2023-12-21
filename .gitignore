@@ -139,3 +139,8 @@ t.py
 
 SECRETS.SH
 .DS_Store
+
+docs/catalog.rst
+docs/unitxt.rst
+docs/modules.rst
+docs/unitxt.*.rst
