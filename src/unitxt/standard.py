@@ -54,7 +54,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
     def before_process_multi_stream(self):
-        self.sampler.init_new_random_generator()
+        if self.sampler:  # e.g. when num_demos is 0, the sampler may not be initialized
+            self.sampler.init_new_random_generator()
 
     def verify(self):
         super().verify()
