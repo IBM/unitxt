@@ -4,24 +4,22 @@ from src.unitxt.test_utils.metrics import test_metric
 
 metric = MRR()
 
-predictions = [["a", "b", "c", "d", "e", "f"],
-               ["g", "r", "u"],
-               ["a", "b"],
-               [],
-               ["c"]]
+predictions = [["a", "b", "c", "d", "e", "f"], ["g", "r", "u"], ["a", "b"], [], ["c"]]
 
-references = [["c", "d"],  # third hit
-              ["g"],  # first hit
-              [],  # no hit
-              ["a"],  # no hit
-              ["b"]]  # no hit
+references = [
+    ["c", "d"],  # third hit
+    ["g"],  # first hit
+    [],  # no hit
+    ["a"],  # no hit
+    ["b"],
+]  # no hit
 
 instance_targets = [
     {"mrr": 0.33, "score": 0.33, "score_name": "mrr"},
     {"mrr": 1.0, "score": 1.0, "score_name": "mrr"},
     {"mrr": 0, "score": 0, "score_name": "mrr"},
     {"mrr": 0, "score": 0, "score_name": "mrr"},
-    {"mrr": 0, "score": 0, "score_name": "mrr"}
+    {"mrr": 0, "score": 0, "score_name": "mrr"},
 ]
 
 global_target = {
