@@ -98,7 +98,7 @@ class MetricWithConfidenceInterval(Metric):
 
         for score_name in score_names:
             scores = [
-                instance["score"]["instance"][score_name] for instance in instances
+                float(instance["score"]["instance"][score_name]) for instance in instances
             ]
             ci = bootstrap(
                 (scores,),
@@ -1278,3 +1278,114 @@ class NDCG(GlobalMetric):
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
         return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+
+
+class RetrievalMetric(InstanceMetric):
+
+    def compute(
+        self, references: List[Any], prediction: Any, additional_inputs: Dict
+    ) -> dict:
+        # digest input
+        pred_ids: List[Any] = prediction
+        ref_ids: List[Any] = list(dict.fromkeys(references))
+
+        # relevance_at_k: 1-based dictionary of indicators (0/1), telling whether
+        # the doc id retrieved at position k (assuming it is 1-based, so k starts
+        # from 1) is in the gold doc ids or not.
+        # For example, assuming that in the retrieved docs we have correct predictions
+        # at positions 2, 4 and 5 (1-based), the dict will look like like:
+        # {1: 0, 2: 1, 3: 0, 4: 1, 5: 1, ....]
+        relevance_at_k = {k + 1: 1 if doc_id in ref_ids else 0
+                          for k, doc_id in enumerate(pred_ids)}
+
+        # relevance_sum_at_k: 1-based dictionary of counts, where the value at k determines
+        # how many gold doc ids have been observed up to index k.
+        relevance_sum_at_k = {}
+        for k, value in relevance_at_k.items():
+            relevance_sum_at_k[k] = relevance_sum_at_k.get(k - 1, 0) + value
+
+        # precision_at_k: the precision of the top k retrieved documents. For example,
+        # assuming that only 1 out of the first 4 retrieved documents is correct, the
+        # value at 4 will be 1/4.
+        precision_at_k = {k: value / k
+                          for k, value in relevance_sum_at_k.items()}
+
+        # recall_at_k: the recall of the top k retrieved documents. For example,
+        # assuming that only 2 out of the 3 gold documents are in the top 5 results,
+        # the value at 5 will be 2/3.
+        n_refs = len(ref_ids)
+        recall_at_k = {k: value / n_refs if n_refs > 0 else 0
+                       for k, value in relevance_sum_at_k.items()}
+
+        # rank - the 1-based index of the first hit of a gold doc id. So 1
+        # means first position.
+        rank = 0
+        for k, relevance in relevance_at_k.items():
+            if relevance == 1:
+                rank = k
+                break
+
+        # match_at_k: whether we have a match at the top k retrieved documents
+        match_at_k = {k: 1 if value > 0 else 0
+                      for k, value in relevance_sum_at_k.items()}
+
+        return self._compute(relevance_at_k, relevance_sum_at_k,
+                             precision_at_k, recall_at_k, match_at_k, rank)
+
+    @abstractmethod
+    def _compute(self, relevance_at_k, relevance_sum_at_k,
+                 precision_at_k, recall_at_k, match_at_k, rank) -> dict:
+        pass
+
+
+class MRR(RetrievalMetric):
+    reduction_map = {"mean": ["mrr"]}
+    main_score = "mrr"
+
+    def _compute(self, relevance_at_k, relevance_sum_at_k,
+                 precision_at_k, recall_at_k, match_at_k, rank) -> dict:
+        return {self.main_score: 1 / rank if rank > 0 else 0}
+
+
+class MAP(RetrievalMetric):
+    reduction_map = {"mean": ["map"]}
+    main_score = "map"
+
+    def _compute(self, relevance_at_k, relevance_sum_at_k,
+                 precision_at_k, recall_at_k, match_at_k, rank) -> dict:
+        result = 0
+        if len(relevance_at_k) > 0:
+            total = sum(relevance_at_k.values())
+            if total > 0:
+                dot = sum(relevance_at_k[k] * precision_at_k[k]
+                          for k in relevance_at_k)
+                result = dot / total
+        return {self.main_score: result}
+
+
+class RetrievalAtK(RetrievalMetric):
+    k_list: List[int]
+    main_score: str = None
+    reduction_map: Dict[str, List[str]] = None
+
+    def prepare(self):
+        super(RetrievalAtK, self).prepare()
+        self.main_score = self.score_name("match", self.k_list[0])
+        self.reduction_map = {"mean": [self.score_name(measure, k)
+                                       for measure in ["precision", "recall", "match"]
+                                       for k in self.k_list]}
+
+    @staticmethod
+    def score_name(measure: str, k: int):
+        return f"{measure}_at_{k}"
+
+    def _compute(self, relevance_at_k, relevance_sum_at_k,
+                 precision_at_k, recall_at_k, match_at_k, rank) -> dict:
+        result = {}
+        for measure_array, measure_name in [(precision_at_k, "precision"),
+                                            (recall_at_k, "recall"),
+                                            (match_at_k, "match")]:
+            max_k = max(measure_array.keys())
+            for k in self.k_list:
+                result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
+        return result

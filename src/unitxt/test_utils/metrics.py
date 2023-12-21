@@ -27,8 +27,8 @@ def dict_equal(dict1, dict2):
 
 def apply_metric(
     metric: Metric,
-    predictions: List[str],
-    references: List[List[str]],
+    predictions: List[Any],
+    references: List[List[Any]],
     additional_inputs: Optional[List[dict]] = None,
 ):
     if not isoftype(metric, Metric):
@@ -62,8 +62,8 @@ def apply_metric(
 
 def test_metric(
     metric: Metric,
-    predictions: List[str],
-    references: List[List[str]],
+    predictions: List[Any],
+    references: List[List[Any]],
     instance_targets: List[dict],
     global_target: dict,
     additional_inputs: Optional[List[dict]] = None,
