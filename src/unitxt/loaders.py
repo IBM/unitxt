@@ -17,6 +17,7 @@ from .stream import MultiStream, Stream
 logger = get_logger()
 try:
     import ibm_boto3
+
     # from ibm_botocore.client import ClientError
 
     ibm_boto3_available = True
@@ -195,7 +196,9 @@ class LoadFromIBMCloud(Loader):
 
     def verify(self):
         super().verify()
-        assert ibm_boto3_available, "Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
+        assert (
+            ibm_boto3_available
+        ), "Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
         assert (
             self.endpoint_url is not None
         ), f"Please set the {self.endpoint_url_env} environmental variable"
