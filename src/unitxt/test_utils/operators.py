@@ -67,8 +67,8 @@ def check_operator(
 
     outputs = apply_operator(operator, inputs)
 
-    assert (
-        len(list(outputs)) == len(targets)
+    assert len(list(outputs)) == len(
+        targets
     ), f"outputs '{list(outputs)}' and targets '{targets}' must have the same number of instances"
 
     if sort_outputs_by is not None:
