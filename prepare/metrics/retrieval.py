@@ -4,29 +4,41 @@ from src.unitxt.test_utils.metrics import test_metric
 
 metric = RetrievalAtK(k_list=[1, 3])
 
-predictions = [["a", "b", "c", "d", "e", "f"],
-               ["g", "r", "u"],
-               ["a", "b", "c"]]
+predictions = [["a", "b", "c", "d", "e", "f"], ["g", "r", "u"], ["a", "b", "c"]]
 
-references = [["c", "d"],  # third hit
-              ["g"],  # first hit
-              []]  # no hit
+references = [["c", "d"], ["g"], []]  # third hit  # first hit  # no hit
 
 instance_targets = [
-    {"match_at_1": 0, "match_at_3": 1,
-     "precision_at_1": 0.0, "precision_at_3": 0.33,
-     "recall_at_1": 0.0, "recall_at_3": 0.5,
-     "score": 0, "score_name": "match_at_1"},
-
-    {"match_at_1": 1, "match_at_3": 1,
-     "precision_at_1": 1.0, "precision_at_3": 0.33,
-     "recall_at_1": 1.0, "recall_at_3": 1.0,
-     "score": 1, "score_name": "match_at_1"},
-
-    {"match_at_1": 0, "match_at_3": 0,
-     "precision_at_1": 0.0, "precision_at_3": 0.0,
-     "recall_at_1": 0, "recall_at_3": 0,
-     "score": 0, "score_name": "match_at_1"}
+    {
+        "match_at_1": 0,
+        "match_at_3": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.33,
+        "recall_at_1": 0.0,
+        "recall_at_3": 0.5,
+        "score": 0,
+        "score_name": "match_at_1",
+    },
+    {
+        "match_at_1": 1,
+        "match_at_3": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.33,
+        "recall_at_1": 1.0,
+        "recall_at_3": 1.0,
+        "score": 1,
+        "score_name": "match_at_1",
+    },
+    {
+        "match_at_1": 0,
+        "match_at_3": 0,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.0,
+        "recall_at_1": 0,
+        "recall_at_3": 0,
+        "score": 0,
+        "score_name": "match_at_1",
+    },
 ]
 
 global_target = {
