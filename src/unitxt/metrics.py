@@ -1293,7 +1293,7 @@ class RetrievalMetric(InstanceMetric):
         # the doc id retrieved at position k (assuming it is 1-based, so k starts
         # from 1) is in the gold doc ids or not.
         # For example, assuming that in the retrieved docs we have correct predictions
-        # at positions 2, 4 and 5 (1-based), the dict will look like like:
+        # at positions 2, 4 and 5 (1-based), the dict will look like:
         # {1: 0, 2: 1, 3: 0, 4: 1, 5: 1, ....]
         relevance_at_k = {
             k + 1: 1 if doc_id in ref_ids else 0 for k, doc_id in enumerate(pred_ids)
