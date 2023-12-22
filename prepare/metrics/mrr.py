@@ -11,7 +11,7 @@ references = [
     ["g"],  # first hit
     [],  # no hit
     ["a"],  # no hit
-    ["b"],
+    ["b"],   # no hit
 ]  # no hit
 
 instance_targets = [
