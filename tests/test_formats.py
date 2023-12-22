@@ -14,7 +14,7 @@ class TestFormats(unittest.TestCase):
         instance = {
             "source": "1+1",
             "target": "2",
-            "instruction": "solve the math excercises",
+            "instruction": "solve the math exercises",
         }
         demos_instances = [
             {"source": "1+2", "target": "3"},
@@ -22,7 +22,7 @@ class TestFormats(unittest.TestCase):
         ]
 
         result = format.format(instance, demos_instances=demos_instances)
-        target = """Instruction:solve the math excercises
+        target = """Instruction:solve the math exercises
 
 User:1+2
 Agent: 3
@@ -35,7 +35,7 @@ Agent:"""
         self.assertEqual(result, target)
 
     def test_icl_format_with_demonstrations_and_instruction_after_demos(self):
-        format = ICLFormat(
+        iclformat = ICLFormat(
             input_prefix="User:",
             output_prefix="Agent:",
             instruction_prefix="Instruction:",
@@ -46,14 +46,25 @@ Agent:"""
         instance = {
             "source": "1+1",
             "target": "2",
-            "instruction": "solve the math excercises",
+            "instruction": "solve the math exercises",
         }
         demos_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
         ]
 
-        format.format(instance, demos_instances=demos_instances)
+        result = iclformat.format(instance, demos_instances=demos_instances)
+        target = """User:1+2
+Agent: 3
+
+User:4-2
+Agent: 2
+
+User:solve the math exercises
+
+1+1
+Agent:"""
+        self.assertEqual(result, target)
 
     def test_icl_format_without_demonstrations(self):
         format = ICLFormat(

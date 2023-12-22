@@ -3,6 +3,7 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
+from src.unitxt.formats import ICLFormat
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
@@ -41,6 +42,7 @@ from src.unitxt.operators import (
     StreamRefiner,
     TakeByField,
     Unique,
+    WholeInputFormatter,
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream
@@ -257,7 +259,66 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_condition_with_required_values(self):
+    def test_whole_input_formatter(self):
+        iclformat = ICLFormat(
+            input_prefix="User: ",
+            output_prefix="Agent: ",
+            instruction_prefix="Instruction: ",
+            add_instruction_at_start=False,
+            add_instruction_after_demos=True,
+        )
+
+        inputs = [
+            {"source": "1+1", "target": "2", "instruction": "solve the math exercises"},
+            {"source": "3+2", "target": "5", "instruction": "solve the math exercises"},
+            {"source": "7-4", "target": "3", "instruction": "solve the math exercises"},
+            {
+                "source": "12-3",
+                "target": "9",
+                "instruction": "solve the math exercises",
+            },
+        ]
+
+        demos_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+
+        whole_input_formatter = WholeInputFormatter(
+            to_field="whole_input", iclformat=iclformat, demos=demos_instances
+        )
+
+        targets = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+            },
+        ]
+
+        check_operator(
+            operator=whole_input_formatter,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [

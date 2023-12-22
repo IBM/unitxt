@@ -57,6 +57,7 @@ from typing import (
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .formats import ICLFormat
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -213,6 +214,38 @@ class FlattenInstances(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
+
+
+class WholeInputFormatter(StreamInstanceOperator):
+    """Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
+
+    WholeInputFormatter expects its input instance to have been processed by a Template StreamInstanceOperator
+    (from templates.py), or any extension thereof, and hence to contain a field named "source" (and also fields named "target",
+    and "references", but these are not referred to here).
+    The value in field "source" describes (verbalizes) original values in that instance (as read from the source dataset),
+    in the context of the underlying task.
+    To be made into a whole-input-to-the-model, this (verbalization of the) input instance has to be wrapped with
+    potential task-description, instruction, and in case of ICL, also demos.
+    The latter are all packed into input argument iclformat, fed with the actual demos, which are either given
+    through field 'instruction' of the input instance, or specified in arg demos of WholeInputFormatter.
+
+    Args:
+        to_field (str) the name of the field into which the formatted model's input is to be stored.
+        iclformat (ICLFormat)
+        demos (list(dict))
+
+    """
+
+    to_field: str
+    iclformat: ICLFormat
+    demos: List[dict] = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        instance[self.to_field] = self.iclformat.format(instance, self.demos)
+
+        return instance
 
 
 class AddFields(StreamInstanceOperator):
