@@ -32,20 +32,20 @@ def apply_metric(
     additional_inputs: Optional[List[dict]] = None,
 ):
     if not isoftype(metric, Metric):
-        raise ValueError("operator must be an Operator")
+        raise ValueError("metric must be a Metric")
     assert isoftype(predictions, List[Any]), "predictions must be a list"
-    assert isoftype(references, List[Any]), "references must be a list"
+    assert isoftype(references, List[List[Any]]), "references must be a list of lists"
     assert additional_inputs is None or isoftype(
         additional_inputs, List[Any]
-    ), "inputs must be a list"
+    ), "additional_inputs must be a list"
     if additional_inputs is not None:
         test_iterable = [
             {
                 "prediction": prediction,
                 "references": reference,
-                "additional_inputs": additional_inputs,
+                "additional_inputs": additional_input,
             }
-            for prediction, reference, additional_inputs in zip(
+            for prediction, reference, additional_input in zip(
                 predictions, references, additional_inputs
             )
         ]
