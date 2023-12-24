@@ -634,6 +634,50 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         return results
 
 
+class BinaryMetric(GlobalMetric):
+    _metric = None
+    main_score = None
+    metric = None
+    pos_class = "yes"
+    neg_class = "no"
+
+    def prepare(self):
+        super().prepare()
+        self._metric = evaluate.load(self.metric)
+        self.str_to_id = {self.pos_class: 1, self.neg_class: 0}
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in F1 metric"
+        formatted_references = [
+            self.str_to_id[reference[0]] for reference in references
+        ]
+        formatted_predictions = [
+            self.str_to_id.get(prediction, 0) for prediction in predictions
+        ]
+        result = self._metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+        )
+        return {self.main_score: result[self.metric]}
+
+
+class BinaryPrecision(BinaryMetric):
+    main_score = "binary_precision"
+    metric = "precision"
+
+
+class BinaryRecall(BinaryMetric):
+    main_score = "binary_recall"
+    metric = "recall"
+
+
 class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
