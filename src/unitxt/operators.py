@@ -57,7 +57,6 @@ from typing import (
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
-from .formats import ICLFormat
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -217,7 +216,7 @@ class FlattenInstances(StreamInstanceOperator):
 
 
 class WholeInputFormatter(StreamInstanceOperator):
-    """Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
+    r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
     WholeInputFormatter expects its input instance to have been processed by a Template StreamInstanceOperator
     (from templates.py), or any extension thereof, and hence to contain fields named "source" and "target", and to have
@@ -274,7 +273,7 @@ class WholeInputFormatter(StreamInstanceOperator):
         if field_name is not None and field_name in instance:
             field_value = instance[field_name]
             assert (
-                field_value != None
+                field_value is not None
             ), f"Value in field '{field_name}' should not be none. Received instance: {instance}"
             return field_value
         return ""
