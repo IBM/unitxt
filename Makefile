@@ -7,10 +7,11 @@ THIS_FILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 docs-files:
-	cd $(DIR)/docs && sphinx-apidoc -f -o . ../src/unitxt
+	cd $(DIR)/docs && sphinx-apidoc -e -f -o . ../src/unitxt
 
 docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
+
 
 docs: docs-html
 
