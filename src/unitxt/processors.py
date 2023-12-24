@@ -116,6 +116,13 @@ class TakeFirstWord(BaseFieldOperator):
         return ""
 
 
+class YesNoToFloat(BaseFieldOperator):
+    def process(self, instance):
+        if instance == "yes":
+            return 1
+        return 0
+
+
 class StringOrNotString(BaseFieldOperator):
     string: str
 
