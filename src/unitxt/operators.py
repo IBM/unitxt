@@ -1,5 +1,6 @@
 import collections
 import importlib
+import operator
 import os
 import uuid
 from abc import abstractmethod
@@ -1090,6 +1091,31 @@ class FilterByValues(SingleStreamOperator):
             if key in instance and instance[key] == value:
                 return True
         return False
+
+
+class FilterByOrder(SingleStreamOperator):
+    required_values: Dict[str, Any]
+    order: str
+    order_to_func = {
+        "gt": operator.gt,
+        "ge": operator.ge,
+        "lt": operator.lt,
+        "le": operator.le,
+        "ne": operator.ne,
+    }
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for instance in stream:
+            filter = False
+            for key, value in self.required_values.items():
+                if key not in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
+                    )
+                if not self.order_to_func[self.order](instance[key], value):
+                    filter = True
+            if not filter:
+                yield instance
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
