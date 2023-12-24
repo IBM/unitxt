@@ -2,8 +2,8 @@ from src.unitxt import add_to_catalog
 from src.unitxt.metrics import BinaryPrecision, BinaryRecall
 from src.unitxt.test_utils.metrics import test_metric
 
-predictions = ["yes", "yes", "no"]
-references = [["yes"], ["no"], ["yes"]]
+predictions = ["1", "1", "0"]
+references = [["1"], ["0"], ["1"]]
 
 precision_metric = BinaryPrecision()
 
