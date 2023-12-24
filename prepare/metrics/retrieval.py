@@ -1,5 +1,5 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import MAP, RetrievalAtK
+from src.unitxt.metrics import RetrievalAtK
 from src.unitxt.test_utils.metrics import test_metric
 
 metric = RetrievalAtK(k_list=[1, 3])

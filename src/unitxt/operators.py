@@ -277,9 +277,7 @@ class FieldOperator(StreamInstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
-        assert (
-            self._field_to_field
-        ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         for pair in self._field_to_field:
             assert (
@@ -310,8 +308,8 @@ class FieldOperator(StreamInstanceOperator):
         super().prepare()
 
         # prepare is invoked before verify, hence must make some checks here, before the changes done here
-        assert (self.field is None) != (
-            self.field_to_field is None
+        assert (
+            (self.field is None) != (self.field_to_field is None)
         ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
         assert (
             self.to_field is None or self.field_to_field is None
