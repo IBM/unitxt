@@ -1,5 +1,3 @@
-from datasets import load_dataset_builder
-
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -14,13 +12,20 @@ from src.unitxt.test_utils.card import test_card
 
 dataset_name = "yahoo_answers_topics"
 
-ds_builder = load_dataset_builder(dataset_name)
-classlabels = ds_builder.info.features["topic"]
+classes = [
+    "Society & Culture",
+    "Science & Mathematics",
+    "Health",
+    "Education & Reference",
+    "Computers & Internet",
+    "Sports",
+    "Business & Finance",
+    "Entertainment & Music",
+    "Family & Relationships",
+    "Politics & Government",
+]
 
-mappers = {}
-for i in range(len(classlabels.names)):
-    mappers[str(i)] = classlabels.names[i]
-
+mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
     loader=LoadHF(path=f"{dataset_name}"),
@@ -37,7 +42,7 @@ card = TaskCard(
         JoinStr(separator=" ", field="text", to_field="text"),
         AddFields(
             fields={
-                "classes": classlabels.names,
+                "classes": classes,
                 "text_type": "text",
                 "type_of_class": "topic",
             }
