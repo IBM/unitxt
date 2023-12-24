@@ -1087,7 +1087,31 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         return instance
 
 
-class FilterByValues(SingleStreamOperator):
+class BaseFilter(SingleStreamOperator):
+    """Base class for filters."""
+
+    error_on_filtered_all: bool = True
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        yielded = False
+        for instance in stream:
+            if self._is_required(instance) and not self._is_disallowed(instance):
+                yielded = True
+                yield instance
+
+        if not yielded and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+    def _is_required(self, instance: dict) -> bool:
+        return True
+
+    def _is_disallowed(self, instance: dict) -> bool:
+        return False
+
+
+class FilterByValues(BaseFilter):
     """Filters a stream, yielding only instances that match specified required values in the provided fields and do not match specified disallowed values.
 
     Raises an error if a required key is missing.
@@ -1100,7 +1124,6 @@ class FilterByValues(SingleStreamOperator):
 
     required_values: Dict[str, Any] = None
     disallowed_values: Dict[str, Any] = None
-    error_on_filtered_all: bool = True
 
     def verify(self):
         if self.required_values is not None and self.disallowed_values is not None:
@@ -1117,18 +1140,6 @@ class FilterByValues(SingleStreamOperator):
                 )
 
         return super().verify()
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        yielded = False
-        for instance in stream:
-            if self._is_required(instance) and not self._is_disallowed(instance):
-                yielded = True
-                yield instance
-
-        if not yielded and self.error_on_filtered_all:
-            raise RuntimeError(
-                f"FilterByValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
-            )
 
     def _is_required(self, instance: dict) -> bool:
         if not self.required_values:  # If required_values is empty, return True
@@ -1153,7 +1164,21 @@ class FilterByValues(SingleStreamOperator):
         return False
 
 
-class FilterByOrder(SingleStreamOperator):
+class FilterByOrder(BaseFilter):
+    """Filters a stream, yielding only instances for which the required values follows the required order operator.
+
+    Raises an error if a required key is missing.
+
+    Args:
+       required_values (Dict[str, Any]): Values that instances must match to be included in the output.
+       order: the name of the desired order operator between the key and the value in required_values ("gt", "ge", "lt", "le")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByOrder(required_values = {"a":4}, order = "gt") will yield only instances where "a">4
+       FilterByOrder(required_values = {"a":4}, order = "le") will yield only instances where "a"<=4
+    """
+
     required_values: Dict[str, Any]
     order: str
     order_to_func = {
@@ -1161,21 +1186,25 @@ class FilterByOrder(SingleStreamOperator):
         "ge": operator.ge,
         "lt": operator.lt,
         "le": operator.le,
-        "ne": operator.ne,
     }
 
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
-                    )
-                if not self.order_to_func[self.order](instance[key], value):
-                    filter = True
-            if not filter:
-                yield instance
+    def verify(self):
+        if self.order not in self.order_to_func:
+            raise ValueError(
+                f"Unsupported order operator {self.order}, supported {list(self.order_to_func.keys())}"
+            )
+
+        return super().verify()
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.required_values.items():
+            if key not in instance:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByOrder is not found in {instance}"
+                )
+            if not self.order_to_func[self.order](instance[key], value):
+                return False
+        return True
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
@@ -1288,7 +1317,7 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
         self.min_frequency_percent = 0
 
 
-class FilterByListsOfValues(SingleStreamOperator):
+class FilterByListsOfValues(BaseFilter):
     """Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
 
     Args:
@@ -1296,7 +1325,6 @@ class FilterByListsOfValues(SingleStreamOperator):
     """
 
     required_values: Dict[str, List]
-    error_on_filtered_all: bool = True
 
     def verify(self):
         super().verify()
@@ -1306,24 +1334,15 @@ class FilterByListsOfValues(SingleStreamOperator):
                     f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'"
                 )
 
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        filtered_all = True
-        for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
-                    )
-                if instance[key] not in value:
-                    filter = True
-            if not filter:
-                filtered_all = False
-                yield instance
-        if filtered_all and self.error_on_filtered_all:
-            raise RuntimeError(
-                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
-            )
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.required_values.items():
+            if key not in instance:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
+                )
+            if instance[key] not in value:
+                return False
+        return True
 
 
 class Intersect(FieldOperator):
