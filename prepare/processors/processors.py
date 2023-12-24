@@ -8,7 +8,7 @@ from src.unitxt.processors import (
     StringOrNotString,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
-    YesNoToFloat,
+    YesNoToInt,
 )
 
 logger = get_logger()
@@ -38,8 +38,8 @@ add_to_catalog(operator6, "processors.convert_to_boolean", overwrite=True)
 operator7 = TakeFirstWord()
 add_to_catalog(operator7, "processors.take_first_word", overwrite=True)
 
-operator8 = YesNoToFloat()
-add_to_catalog(operator8, "processors.yes_no_to_float", overwrite=True)
+operator8 = YesNoToInt()
+add_to_catalog(operator8, "processors.yes_no_to_int", overwrite=True)
 
 parser = FirstCharacter()
 
