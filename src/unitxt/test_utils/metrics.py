@@ -31,8 +31,7 @@ def apply_metric(
     references: List[List[Any]],
     additional_inputs: Optional[List[dict]] = None,
 ):
-    if not isoftype(metric, Metric):
-        raise ValueError("metric must be a Metric")
+    assert isoftype(metric, Metric), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
     assert additional_inputs is None or isoftype(
