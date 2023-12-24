@@ -42,6 +42,22 @@ class TestPostProcessors(unittest.TestCase):
             parsed = parser.process(input)
             self.assertEqual(target, parsed)
 
+    def test_take_first_word(self):
+        parser, _ = fetch_artifact("processors.take_first_word")
+        inputs = ["- yes, I think it is"]
+        targets = ["yes"]
+
+        for input, target in zip(inputs, targets):
+            parsed = parser.process(input)
+            self.assertEqual(target, parsed)
+
+        inputs = ["..."]
+        targets = [""]
+
+        for input, target in zip(inputs, targets):
+            parsed = parser.process(input)
+            self.assertEqual(target, parsed)
+
     def test_to_span_label_pairs_surface_only(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
         inputs = [r"John\,\: Doe, New York", "None"]
