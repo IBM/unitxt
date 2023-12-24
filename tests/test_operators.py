@@ -21,6 +21,7 @@ from src.unitxt.operators import (
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByListsOfValues,
+    FilterByOrder,
     FilterByValues,
     FlattenInstances,
     FromIterables,
@@ -328,6 +329,24 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_filter_by_order(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByOrder(required_values={"a": 1}, order="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_order_bad_order(self):
+        with self.assertRaises(ValueError):
+            FilterByOrder(required_values={"a": 1}, order="gte")
 
     def test_filter_by_list_of_values(self):
         inputs = [
