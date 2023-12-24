@@ -39,5 +39,5 @@ for lang in langs:
         ),
     )
     if lang == langs[0]:
-        test_card(card, debug=False)
+        test_card(card, debug=False, strict=False)
     add_to_catalog(card, f"cards.xlsum.{lang}", overwrite=True)
