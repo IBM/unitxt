@@ -98,8 +98,7 @@ class MetricWithConfidenceInterval(Metric):
 
         for score_name in score_names:
             scores = [
-                float(instance["score"]["instance"][score_name])
-                for instance in instances
+                instance["score"]["instance"][score_name] for instance in instances
             ]
             ci = bootstrap(
                 (scores,),
@@ -1329,7 +1328,7 @@ class RetrievalMetric(InstanceMetric):
 
         # match_at_k: whether we have a match at the top k retrieved documents
         match_at_k = {
-            k: 1 if value > 0 else 0 for k, value in relevance_sum_at_k.items()
+            k: 1.0 if value > 0 else 0.0 for k, value in relevance_sum_at_k.items()
         }
 
         return self._compute(
