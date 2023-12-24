@@ -1,6 +1,6 @@
-from unitxt import add_to_catalog
-from unitxt.metrics import BinaryPrecision, BinaryRecall
-from unitxt.test_utils.metrics import test_metric
+from src.unitxt import add_to_catalog
+from src.unitxt.metrics import BinaryPrecision, BinaryRecall
+from src.unitxt.test_utils.metrics import test_metric
 
 predictions = ["yes", "yes", "no"]
 references = [["yes"], ["no"], ["yes"]]
