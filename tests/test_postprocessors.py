@@ -58,6 +58,15 @@ class TestPostProcessors(unittest.TestCase):
             parsed = parser.process(input)
             self.assertEqual(target, parsed)
 
+    def test_yes_no_to_float(self):
+        parser, _ = fetch_artifact("processors.yes_no_to_float")
+        inputs = ["yes", "no", "yaa"]
+        targets = [1, 0, 0]
+
+        for input, target in zip(inputs, targets):
+            parsed = parser.process(input)
+            self.assertEqual(target, parsed)
+
     def test_to_span_label_pairs_surface_only(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
         inputs = [r"John\,\: Doe, New York", "None"]
