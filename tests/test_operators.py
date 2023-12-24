@@ -380,8 +380,8 @@ class TestOperators(unittest.TestCase):
             output_prefix="Agent: ",
             instruction_prefix="Instruction: ",
             overall_output_size_limit=80,
-            add_instruction_at_start=False,
-            add_instruction_after_demos=True,
+            add_instruction_at_start=True,
+            add_instruction_after_demos=False,
         )
 
         tergets_short = [
@@ -393,7 +393,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -403,7 +403,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -413,7 +413,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -423,7 +423,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 12-3\nAgent: ",
             },
         ]
 
