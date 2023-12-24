@@ -43,7 +43,6 @@ class TestExamples(unittest.TestCase):
         for file in all_preparation_files:
             with self.subTest(file=file):
                 logger.info(f"Testing preparation file: {file}.")
-                import_module_from_file(file)
                 try:
                     import_module_from_file(file)
                 except MissingKaggleCredentialsError as e:
