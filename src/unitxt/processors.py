@@ -108,6 +108,14 @@ class FirstCharacter(BaseFieldOperator):
         return ""
 
 
+class TakeFirstWord(BaseFieldOperator):
+    def process(self, instance):
+        match = re.search(r"[\w]+", instance)
+        if match:
+            return instance[match.start() : match.end()]
+        return ""
+
+
 class StringOrNotString(BaseFieldOperator):
     string: str
 
