@@ -268,45 +268,87 @@ class TestOperators(unittest.TestCase):
             add_instruction_after_demos=True,
         )
 
-        inputs = [
-            {"source": "1+1", "target": "2", "instruction": "solve the math exercises"},
-            {"source": "3+2", "target": "5", "instruction": "solve the math exercises"},
-            {"source": "7-4", "target": "3", "instruction": "solve the math exercises"},
-            {
-                "source": "12-3",
-                "target": "9",
-                "instruction": "solve the math exercises",
-            },
-        ]
-
-        demos_instances = [
+        demo_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
         ]
 
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+            },
+        ]
+
         whole_input_formatter = WholeInputFormatter(
-            to_field="whole_input", iclformat=iclformat, demos=demos_instances
+            to_field="whole_input",
+            demos_field="demos",
+            input_prefix="User: ",
+            output_prefix="Agent: ",
+            instruction_prefix="Instruction: ",
+            add_instruction_at_start=False,
+            add_instruction_after_demos=True,
         )
 
         targets = [
             {
                 "source": "1+1",
                 "target": "2",
+                "instruction": "solve the math exercises",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
                 "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
                 "source": "3+2",
                 "target": "5",
+                "instruction": "solve the math exercises",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
                 "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
                 "source": "7-4",
                 "target": "3",
+                "instruction": "solve the math exercises",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
                 "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
                 "source": "12-3",
                 "target": "9",
+                "instruction": "solve the math exercises",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
                 "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
         ]
@@ -316,6 +358,14 @@ class TestOperators(unittest.TestCase):
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+        iclformat_outputs = [
+            iclformat.format(instance, demos_instances=demo_instances)
+            for instance in inputs
+        ]
+        self.assertListEqual(
+            iclformat_outputs, [target["whole_input"] for target in targets]
         )
 
     def test_filter_by_values_with_required_values(self):
