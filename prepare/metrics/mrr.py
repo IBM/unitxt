@@ -11,8 +11,8 @@ references = [
     ["g"],  # first hit
     [],  # no hit
     ["a"],  # no hit
-    ["b"],   # no hit
-] 
+    ["b"],  # no hit
+]
 
 instance_targets = [
     {"mrr": 0.33, "score": 0.33, "score_name": "mrr"},
