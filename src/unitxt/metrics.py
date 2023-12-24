@@ -676,13 +676,10 @@ class BinaryMetric(GlobalMetric):
     _metric = None
     main_score = None
     metric = None
-    pos_class = "yes"
-    neg_class = "no"
 
     def prepare(self):
         super().prepare()
         self._metric = evaluate.load(self.metric)
-        self.str_to_id = {self.pos_class: 1, self.neg_class: 0}
 
     def compute(
         self,
@@ -692,13 +689,12 @@ class BinaryMetric(GlobalMetric):
     ) -> dict:
         assert all(
             len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 metric"
-        formatted_references = [
-            self.str_to_id[reference[0]] for reference in references
-        ]
-        formatted_predictions = [
-            self.str_to_id.get(prediction, 0) for prediction in predictions
-        ]
+        ), f"Only a single reference per prediction is allowed in {self.metic_name} metric"
+        formatted_references = [int(reference[0]) for reference in references]
+        assert all(
+            prediction in ["0", "1"] for prediction in predictions
+        ), "Predictions must be '0' or '1'"
+        formatted_predictions = [int(prediction) for prediction in predictions]
         result = self._metric.compute(
             predictions=formatted_predictions,
             references=formatted_references,
