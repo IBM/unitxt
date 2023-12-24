@@ -368,7 +368,54 @@ class TestOperators(unittest.TestCase):
             iclformat_outputs, [target["whole_input"] for target in targets]
         )
 
-        # iclformat throws "instruction" out the instance. We return it toward the next test:
+        # iclformat throws "instruction" out the instance. We use it to test instruction=="":
+        targets_no_instruction = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 1+1\nAgent: ",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 3+2\nAgent: ",
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 7-4\nAgent: ",
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 12-3\nAgent: ",
+            },
+        ]
+
+        check_operator(
+            operator=whole_input_formatter,
+            inputs=inputs,
+            targets=targets_no_instruction,
+            tester=self,
+        )
+
+        # iclformat throws "instruction" out the instance. We return it toward the next test, that does expects non empty instructions
         for instance in inputs:
             instance["instruction"] = "solve the math exercises"
 
