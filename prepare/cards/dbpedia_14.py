@@ -1,5 +1,3 @@
-from datasets import load_dataset_builder
-
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -13,13 +11,24 @@ from src.unitxt.test_utils.card import test_card
 
 dataset_name = "dbpedia_14"
 
-ds_builder = load_dataset_builder(dataset_name)
-classlabels = ds_builder.info.features["label"]
+classes = [
+    "Company",
+    "Educational Institution",
+    "Artist",
+    "Athlete",
+    "Office Holder",
+    "Mean Of Transportation",
+    "Building",
+    "Natural Place",
+    "Village",
+    "Animal",
+    "Plant",
+    "Album",
+    "Film",
+    "Written Work",
+]
 
-mappers = {}
-for i in range(len(classlabels.names)):
-    mappers[str(i)] = classlabels.names[i]
-
+mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
     loader=LoadHF(path=f"{dataset_name}"),
@@ -31,8 +40,8 @@ card = TaskCard(
         RenameFields(field_to_field={"content": "text"}),
         AddFields(
             fields={
-                "classes": classlabels.names,
-                "text_type": "text",  # TODO consider paragraph ?
+                "classes": classes,
+                "text_type": "paragraph",
                 "type_of_class": "topic",
             }
         ),
