@@ -4,8 +4,8 @@ from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
 templates = {
     "mmlu": "The following are multiple choice questions (with answers) about {topic}.\n{question}.\nAnswers: \n{choices}.\nAnswer:",
     "helm": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
-    "lm_eval_harness": "Question: {question}.\nChoices:\n{choices}.\nAnswer:",
-    "fm_eval": """The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:""".strip(),
+    "fm_eval": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:".strip(),
+    "lm_eval_harness": "{question}\n{choices}\nAnswer:" "",
 }
 
 for k, v in templates.items():
@@ -18,6 +18,41 @@ for k, v in templates.items():
     add_to_catalog(
         template, f"templates.qa.multiple_choice.original.{k}", overwrite=True
     )
+
+# https://github.com/EleutherAI/lm-evaluation-harness/blob/9e03d9d024be9bc3e92f8c63b5595c1e12c119da/lm_eval/tasks/mmlu/default/_default_template_yaml
+# from lm-eval-harness
+#'The following are multiple choice questions (with answers) about abstract algebra.\n\nFind the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.\nA. 0\nB. 4\nC. 2\nD. 6\nAnswer:'
+input_format = """
+The following are multiple choice questions (with answers) about {topic}.
+
+{question}
+{choices}
+Answer:
+""".strip()
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.original.lm_eval_harness",
+    overwrite=True,
+)
+
+
+# input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
+# add_to_catalog(
+#     MultipleChoiceTemplate(
+#         input_format=input_format,
+#         target_field="answer",
+#         choices_seperator="\n",
+#         postprocessors=["processors.first_character"],
+#     ),
+#     "templates.qa.multiple_choice.lm_eval_harness",
+#     overwrite=True,
+# )
 
 # with context
 
@@ -167,31 +202,31 @@ add_to_catalog(
     overwrite=True,
 )
 
-# lm_eval_harness
+# # lm_eval_harness
 
-input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.lm_eval_harness",
-    overwrite=True,
-)
+# input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
+# add_to_catalog(
+#     MultipleChoiceTemplate(
+#         input_format=input_format,
+#         target_field="answer",
+#         choices_seperator="\n",
+#         postprocessors=["processors.first_character"],
+#     ),
+#     "templates.qa.multiple_choice.lm_eval_harness",
+#     overwrite=True,
+# )
 
-input_format = "Context: {context}\nQuestion: {question}\nChoices:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.contextual.lm_eval_harness",
-    overwrite=True,
-)
+# input_format = "Context: {context}\nQuestion: {question}\nChoices:\n{choices}\nAnswer:"
+# add_to_catalog(
+#     MultipleChoiceTemplate(
+#         input_format=input_format,
+#         target_field="answer",
+#         choices_seperator="\n",
+#         postprocessors=["processors.first_character"],
+#     ),
+#     "templates.qa.multiple_choice.contextual.lm_eval_harness",
+#     overwrite=True,
+# )
 
 # fm_eval
 
@@ -221,15 +256,15 @@ add_to_catalog(
     overwrite=True,
 )
 
-add_to_catalog(
-    TemplatesList(
-        [
-            "templates.qa.multiple_choice.contextual.lm_eval_harness",
-        ]
-    ),
-    "templates.qa.multiple_choice.contextual.all",
-    overwrite=True,
-)
+# add_to_catalog(
+#     TemplatesList(
+#         [
+#             "templates.qa.multiple_choice.contextual.lm_eval_harness",
+#         ]
+#     ),
+#     "templates.qa.multiple_choice.contextual.all",
+#     overwrite=True,
+# )
 
 add_to_catalog(
     TemplatesList(
@@ -243,6 +278,7 @@ add_to_catalog(
     overwrite=True,
 )
 
+
 add_to_catalog(
     TemplatesList(
         [
@@ -255,12 +291,12 @@ add_to_catalog(
     overwrite=True,
 )
 
-add_to_catalog(
-    TemplatesList(
-        [
-            "templates.qa.multiple_choice.lm_eval_harness",
-        ]
-    ),
-    "templates.qa.multiple_choice.all",
-    overwrite=True,
-)
+# add_to_catalog(
+#     TemplatesList(
+#         [
+#             "templates.qa.multiple_choice.lm_eval_harness",
+#         ]
+#     ),
+#     "templates.qa.multiple_choice.all",
+#     overwrite=True,
+# )
