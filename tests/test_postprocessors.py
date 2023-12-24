@@ -58,10 +58,10 @@ class TestPostProcessors(unittest.TestCase):
             parsed = parser.process(input)
             self.assertEqual(target, parsed)
 
-    def test_yes_no_to_float(self):
-        parser, _ = fetch_artifact("processors.yes_no_to_float")
+    def test_yes_no_to_int(self):
+        parser, _ = fetch_artifact("processors.yes_no_to_int")
         inputs = ["yes", "no", "yaa"]
-        targets = [1, 0, 0]
+        targets = ["1", "0", "0"]
 
         for input, target in zip(inputs, targets):
             parsed = parser.process(input)
