@@ -9,6 +9,6 @@
         "translation"
     ],
     "metrics": [
-        "metrics.bleu"
+        "metrics.normalized_sacrebleu"
     ]
 }
