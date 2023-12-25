@@ -4,13 +4,13 @@ import uuid
 from abc import abstractmethod
 from collections import Counter
 from dataclasses import field
+from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
-from statistics import mean
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -485,7 +485,7 @@ class StringContainment(InstanceMetric):
     ) -> dict:
         result = {
             self.main_score: float(
-                any(str(reference) in prediction for reference in references)
+                any(str(reference) in str(prediction) for reference in references)
             )
         }
         result["score"] = result[self.main_score]
@@ -1282,7 +1282,8 @@ class NDCG(GlobalMetric):
 
 
 class GroupedInstanceMetric(GlobalMetric):
-    """
+    """GlobalMetric calculated as a function on grouped instances (by additional_inputs), then averaged.
+
     class for GlobalMetrics where each instance belongs to a group defined by the combined values of one or more other variables,
     specified by the dict input in additional_inputs (e.g. an ID and GROUP variable).
     each instance score is determined by a function (specified by `metric'), and within each group, the overall score
@@ -1301,11 +1302,6 @@ class GroupedInstanceMetric(GlobalMetric):
     group_score_name = "mean"
     main_score = "mean"
 
-
-    @classmethod
-    def _group_score(self, x):
-        return self.group_score_func(x)
-
     def compute(self,
         references: List[List[Any]],
         predictions: List[Any],
@@ -1318,7 +1314,7 @@ class GroupedInstanceMetric(GlobalMetric):
                 references, predictions, additional_inputs
         ):
             # allow any number of columns to be used as the identifier
-            keyname = tuple([vv for vv in inputs_dict.values()])
+            keyname = tuple(inputs_dict.values())
             group_to_predictions_and_references[keyname][0].append(pred)
             group_to_predictions_and_references[keyname][1].append(reference)
             group_to_predictions_and_references[keyname][2].append(inputs_dict)
@@ -1332,20 +1328,44 @@ class GroupedInstanceMetric(GlobalMetric):
         return {self.main_score: mean(group_total_scores) if len(group_total_scores) > 0 else np.nan}
 
 
+    @classmethod
+    def _group_score(cls, x):
+        return cls.group_score_func(x)
 
 class MeanGroupedAccuracy(GroupedInstanceMetric):
     metric = Accuracy
-    main_score = 'accuracy'
+    main_score = "accuracy"
+    group_score_func = mean
+
+class MeanGroupedStringContainment(GroupedInstanceMetric):
+    metric = StringContainment
+    main_score = "string_containment"
     group_score_func = mean
 
 
-# PDR (performance drop rate) from https://arxiv.org/pdf/2306.04528.pdf
-# undefined if fewer than 2 elements, or if first element is 0;
-# otherwise, calculate percentage change of average of scores of remaining observations (assumed to be perturbations) relative to the first
+def performance_drop_rate(instance_scores: List):
+    """Percentage change of mean performance on test elements relative to that on a baseline.
 
-PDR = lambda x: np.nan if (len(x) < 2 or x[0] == 0) else 1 - mean(x[1:]) / x[0]
+    from https://arxiv.org/pdf/2306.04528.pdf.
+
+    Args:
+        instance_scores: a list of scores on instances.  Assume the first element is the original, the others are test set
+
+    Returns:
+        numeric PDR metric.
+        If only one element (no test set) or the first is 0 (percentage change is undefined) return NaN
+        otherwise, calculate PDR
+
+    """
+    assert isinstance(instance_scores, list)
+    return np.nan if (len(instance_scores) < 2 or instance_scores[0] == 0) else 1 - mean(instance_scores[1:]) / instance_scores[0]
 
 class MeanGroupedAccuracyPDR(GroupedInstanceMetric):
     metric = Accuracy
-    main_score = "accuracy"
-    group_score_func = PDR
+    main_score = "accuracy_pdr"
+    group_score_func = performance_drop_rate
+
+class MeanGroupedStringContainmentPDR(GroupedInstanceMetric):
+    metric = StringContainment
+    main_score = "string_containment_pdr"
+    group_score_func = performance_drop_rate
