@@ -4,8 +4,13 @@ from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
 templates = {
     "mmlu": "The following are multiple choice questions (with answers) about {topic}.\n{question}.\nAnswers: \n{choices}.\nAnswer:",
     "helm": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
-    "fm_eval": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:".strip(),
-    "lm_eval_harness": "{question}\n{choices}\nAnswer:" "",
+    # "fm_eval": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:".strip(),
+    #     "lm_eval_harness": """
+    # The following are multiple choice questions (with answers) about {topic}.
+    # {question}
+    # {choices}
+    # Answer:
+    # """.strip(),
 }
 
 for k, v in templates.items():
@@ -134,6 +139,12 @@ for template_family in ["original", "context_no_intro", "no_intro", "context"]:
         f"templates.qa.multiple_choice.{template_family}.{template_type}"
         for template_type in templates.keys()
     ]
+
+    if family_list == "original":
+        family_list.append(
+            f"templates.qa.multiple_choice.{template_family}.lm_eval_harness"
+        )
+
     add_to_catalog(
         TemplatesList(family_list),
         f"templates.qa.multiple_choice.{template_family}.all",
