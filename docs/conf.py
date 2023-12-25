@@ -7,9 +7,6 @@ import os
 import sys
 from dataclasses import Field as _Field
 
-from unitxt.artifact import Artifact
-from unitxt.dataclass import Field
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from catalog import build_catalog_rst
