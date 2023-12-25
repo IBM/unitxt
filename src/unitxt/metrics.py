@@ -664,6 +664,11 @@ class BinaryMetric(GlobalMetric):
         return {self.main_score: result[self.metric]}
 
 
+class BinaryF1(BinaryMetric):
+    main_score = "binary_f1"
+    metric = "f1"
+
+
 class BinaryPrecision(BinaryMetric):
     main_score = "binary_precision"
     metric = "precision"
