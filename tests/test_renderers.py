@@ -139,7 +139,7 @@ class TestRenderers(unittest.TestCase):
         instance = {}
         result = renderer.process(instance)
         target = {
-            "instruction": "classify user sentence by its sentiment to either positive, or nagative."
+            "instruction": "classify user sentence by its sentiment to either positive, or negative."
         }
         self.assertDictEqual(result, target)
 
@@ -150,7 +150,7 @@ class TestRenderers(unittest.TestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
             "demos": [
                 {
                     "source": 'This is my sentence: "was so not good"',
@@ -167,7 +167,7 @@ class TestRenderers(unittest.TestCase):
 
         result = renderer.process(instance)
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
         }
@@ -180,12 +180,12 @@ class TestRenderers(unittest.TestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or nagative.",
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
         }
 
         result = renderer.process(instance)
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
         }
@@ -249,7 +249,7 @@ class TestRenderers(unittest.TestCase):
         }
 
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or nagative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
             "inputs": {"text": "was so bad"},
