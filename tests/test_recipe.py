@@ -2,9 +2,8 @@ import collections
 import re
 import unittest
 
-from unitxt.artifact import fetch_artifact
-
 from src.unitxt import dataset_file
+from src.unitxt.artifact import fetch_artifact
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
