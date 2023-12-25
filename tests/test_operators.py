@@ -20,8 +20,8 @@ from src.unitxt.operators import (
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
+    FilterByCondition,
     FilterByListsOfValues,
-    FilterByOrder,
     FilterByValues,
     FlattenInstances,
     FromIterables,
@@ -338,7 +338,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByOrder(required_values={"a": 1}, order="gt"),
+            operator=FilterByCondition(required_values={"a": 1}, condition="gt"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -346,7 +346,7 @@ class TestOperators(unittest.TestCase):
 
     def test_filter_by_order_bad_order(self):
         with self.assertRaises(ValueError):
-            FilterByOrder(required_values={"a": 1}, order="gte")
+            FilterByCondition(required_values={"a": 1}, condition="gte")
 
     def test_filter_by_list_of_values(self):
         inputs = [

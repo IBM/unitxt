@@ -1104,34 +1104,36 @@ class FilterByValues(BaseFilter):
         return False
 
 
-class FilterByOrder(BaseFilter):
-    """Filters a stream, yielding only instances for which the required values follows the required order operator.
+class FilterByCondition(BaseFilter):
+    """Filters a stream, yielding only instances for which the required values follows the required condition operator.
 
     Raises an error if a required key is missing.
 
     Args:
        required_values (Dict[str, Any]): Values that instances must match to be included in the output.
-       order: the name of the desired order operator between the key and the value in required_values ("gt", "ge", "lt", "le")
+       condition: the name of the desired condition operator between the key and the value in required_values ("gt", "ge", "lt", "le", "ne", "eq")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByOrder(required_values = {"a":4}, order = "gt") will yield only instances where "a">4
-       FilterByOrder(required_values = {"a":4}, order = "le") will yield only instances where "a"<=4
+       FilterByCondition(required_values = {"a":4}, condition = "gt") will yield only instances where "a">4
+       FilterByCondition(required_values = {"a":4}, condition = "le") will yield only instances where "a"<=4
     """
 
     required_values: Dict[str, Any]
-    order: str
-    order_to_func = {
+    condition: str
+    condition_to_func = {
         "gt": operator.gt,
         "ge": operator.ge,
         "lt": operator.lt,
         "le": operator.le,
+        "eq": operator.eq,
+        "ne": operator.ne,
     }
 
     def verify(self):
-        if self.order not in self.order_to_func:
+        if self.condition not in self.condition_to_func:
             raise ValueError(
-                f"Unsupported order operator {self.order}, supported {list(self.order_to_func.keys())}"
+                f"Unsupported condition operator {self.condition}, supported {list(self.condition_to_func.keys())}"
             )
 
         return super().verify()
@@ -1140,9 +1142,9 @@ class FilterByOrder(BaseFilter):
         for key, value in self.required_values.items():
             if key not in instance:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByOrder is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
                 )
-            if not self.order_to_func[self.order](instance[key], value):
+            if not self.condition_to_func[self.condition](instance[key], value):
                 return False
         return True
 
