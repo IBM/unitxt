@@ -2,6 +2,8 @@ import collections
 import re
 import unittest
 
+from unitxt.artifact import fetch_artifact
+
 from src.unitxt import dataset_file
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
@@ -358,3 +360,21 @@ class TestRecipes(unittest.TestCase):
         random_generator2 = sampler.random_generator
 
         self.assertNotEqual(random_generator1, random_generator2)
+
+    def test_standard_recipe_with_a_missing_sampler(self):
+        """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
+        task_card, _ = fetch_artifact("cards.sst2")
+        task_card.sampler = None
+        with self.assertRaises(ValueError) as e:
+            StandardRecipeWithIndexes(
+                card=task_card,
+                template_card_index=0,
+                max_train_instances=0,
+                max_test_instances=2,
+                num_demos=1,
+                demos_pool_size=10,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
+        )
