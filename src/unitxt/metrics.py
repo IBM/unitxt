@@ -789,10 +789,11 @@ class F1MultiLabel(GlobalMetric):
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
     classes_to_ignore = ["none"]
+    metric = "f1"
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load("f1", "multilabel")
+        self._metric = evaluate.load(self.metric, "multilabel")
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -853,17 +854,17 @@ class F1MultiLabel(GlobalMetric):
             average=self.average,
             labels=labels_param,
         )
-        if isinstance(result["f1"], numpy.ndarray):
+        if isinstance(result[self.metric], numpy.ndarray):
             from statistics import mean
 
-            assert len(result["f1"]) == len(
-                labels
-            ), f'F1 result ({result["f1"]}) has more entries than labels ({labels})'
-            final_result = {self.main_score: mean(result["f1"])}
+            assert (
+                len(result[self.metric]) == len(labels)
+            ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
+            final_result = {self.main_score: mean(result[self.metric])}
             for i, label in enumerate(labels):
-                final_result["f1_" + label] = result["f1"][i]
+                final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
-            final_result = {self.main_score: result["f1"]}
+            final_result = {self.main_score: result[self.metric]}
         return final_result
 
     def _validate_references_and_prediction(self, references, predictions):
@@ -882,6 +883,18 @@ class F1MultiLabel(GlobalMetric):
                 raise ValueError(
                     f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
                 )
+
+
+class PrecisionMicroMultiLabel(F1MultiLabel):
+    main_score = "precision"
+    metric = "precision"
+    average = "micro"
+
+
+class RecallMicroMultiLabel(F1MultiLabel):
+    main_score = "recall"
+    metric = "recall"
+    average = "micro"
 
 
 class F1MicroMultiLabel(F1MultiLabel):
