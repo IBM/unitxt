@@ -219,7 +219,7 @@ class WholeInputFormatter(StreamInstanceOperator):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
     WholeInputFormatter expects its input instance to have been processed by a Template StreamInstanceOperator
-    (from templates.py), or any extension thereof, and hence to contain fields named "source" and "target", and to have
+    (from templates.py), or any extension thereof, and hence to contain a field named "source", and to have
     been processed by RenderInstruction StreamInstanceOperator (from renderer.py) and hence to contain a non None
     field "instruction".
     Demos are assumed to be included as well, in a field whose name is specified by argument 'demos_field'. That
@@ -239,7 +239,7 @@ class WholeInputFormatter(StreamInstanceOperator):
         system_closing (str): the name of the field containing text or signs to append at the end of the whole-input-to-the-model
         input_prefix: str = ""
         output_prefix: str = ""
-        target_prefix: str = " "
+        target_prefix: str = " "    for the demos
         instruction_prefix: str = ""
         input_output_separator: str = "\n"
         demo_separator: str = "\n\n"
@@ -254,7 +254,7 @@ class WholeInputFormatter(StreamInstanceOperator):
     system_closing: str = None
     input_prefix: str = ""
     output_prefix: str = ""
-    target_prefix: str = " "  # only for compatibility with ICLFormat.  surely sure?
+    target_prefix: str = " "  # the single space here is only for compatibility with ICLFormat.  surely sure?
     instruction_prefix: str = ""
     input_output_separator: str = "\n"
     demo_separator: str = "\n\n"

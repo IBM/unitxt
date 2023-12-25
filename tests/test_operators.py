@@ -415,6 +415,16 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # and test iclformat here, with no instruction, too:
+        iclformat_outputs = [
+            iclformat.format(instance, demos_instances=demo_instances)
+            for instance in inputs
+        ]
+        self.assertListEqual(
+            iclformat_outputs,
+            [target["whole_input"] for target in targets_no_instruction],
+        )
+
         # iclformat throws "instruction" out the instance. We return it toward the next test, that does expects non empty instructions
         for instance in inputs:
             instance["instruction"] = "solve the math exercises"
@@ -431,7 +441,7 @@ class TestOperators(unittest.TestCase):
             add_instruction_after_demos=False,
         )
 
-        tergets_short = [
+        tergets_short = [  # less demos show
             {
                 "source": "1+1",
                 "target": "2",
