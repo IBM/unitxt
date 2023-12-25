@@ -1,0 +1,67 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "lex_glue",
+        "name": "unfair_tos"
+    },
+    "preprocess_steps": [
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "labels": {
+                    "0": "Limitation of liability",
+                    "1": "Unilateral termination",
+                    "2": "Unilateral change",
+                    "3": "Content removal",
+                    "4": "Contract by using",
+                    "5": "Choice of law",
+                    "6": "Jurisdiction",
+                    "7": "Arbitration"
+                }
+            },
+            "process_every_value": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "Limitation of liability",
+                    "Unilateral termination",
+                    "Unilateral change",
+                    "Content removal",
+                    "Contract by using",
+                    "Choice of law",
+                    "Jurisdiction",
+                    "Arbitration"
+                ],
+                "text_type": "text",
+                "type_of_class": "contractual clauses"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "text"
+        ],
+        "outputs": [
+            "labels"
+        ],
+        "metrics": [
+            "metrics.f1_micro",
+            "metrics.accuracy",
+            "metrics.f1_macro"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{text}",
+                "output_format": "{labels}"
+            }
+        ]
+    }
+}

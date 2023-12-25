@@ -1,0 +1,76 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "yahoo_answers_topics"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "topic": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Society & Culture",
+                    "1": "Science & Mathematics",
+                    "2": "Health",
+                    "3": "Education & Reference",
+                    "4": "Computers & Internet",
+                    "5": "Sports",
+                    "6": "Business & Finance",
+                    "7": "Entertainment & Music",
+                    "8": "Family & Relationships",
+                    "9": "Politics & Government"
+                }
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "question_title",
+                "question_content",
+                "best_answer"
+            ],
+            "to_field": "text"
+        },
+        {
+            "type": "join_str",
+            "separator": " ",
+            "field": "text",
+            "to_field": "text"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "Society & Culture",
+                    "Science & Mathematics",
+                    "Health",
+                    "Education & Reference",
+                    "Computers & Internet",
+                    "Sports",
+                    "Business & Finance",
+                    "Entertainment & Music",
+                    "Family & Relationships",
+                    "Politics & Government"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}
