@@ -380,7 +380,7 @@ class AddFields(StreamInstanceOperator):
 
 
 class RemoveFields(StreamInstanceOperator):
-    """Remove specified fields to each instance in a stream.
+    """Remove specified fields from each instance in a stream.
 
     Args:
         fields (List[str]): The fields to remove from each instance.
@@ -1214,6 +1214,7 @@ class FilterByCondition(SingleStreamOperator):
     Raises an error if a required key is missing.
 
     Args:
+<<<<<<< HEAD
        values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
        condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
@@ -1224,6 +1225,11 @@ class FilterByCondition(SingleStreamOperator):
        FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
        FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
 
+=======
+        required_values (Dict[str, Any]): Values that instances must match in order to be included in the output.
+        disallowed_values (Dict[str, Any]): Values that instances must *not* match in order to be included in the output.
+        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+>>>>>>> af5e8e91 (polish some docstrings)
     """
 
     values: Dict[str, Any]
@@ -1398,6 +1404,45 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
         self.min_frequency_percent = 0
 
 
+class FilterByListsOfValues(SingleStreamOperator):
+    """Filters a stream, yielding only instances whose field values are included in the specified value lists.
+
+    Args:
+        required_values (Dict[str, List]): For each field, the list of values, one of which an instance should match
+        in order to be included in the output stream.
+    """
+
+    required_values: Dict[str, List]
+    error_on_filtered_all: bool = True
+
+    def verify(self):
+        super().verify()
+        for key, value in self.required_values.items():
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'"
+                )
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        filtered_all = True
+        for instance in stream:
+            filter = False
+            for key, value in self.required_values.items():
+                if key not in instance:
+                    raise ValueError(
+                        f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
+                    )
+                if instance[key] not in value:
+                    filter = True
+            if not filter:
+                filtered_all = False
+                yield instance
+        if filtered_all and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+
 class Intersect(FieldOperator):
     """Intersects the value of a field, which must be a list, with a given list.
 
@@ -1430,7 +1475,7 @@ class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
 
     Args:
-        unallowed_values (list) - removed_values.
+        unallowed_values (list) - values to be removed.
     """
 
     unallowed_values: List[Any]
