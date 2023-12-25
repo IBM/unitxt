@@ -208,7 +208,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
 
 class StandardRecipe(StandardRecipeWithIndexes):
-    """This class represents a standard recipe for data processing and preperation.
+    """This class represents a standard recipe for data processing and preparation.
 
     This class can be used to prepare a recipe.
     with all necessary steps, refiners and renderers included. It allows to set various
