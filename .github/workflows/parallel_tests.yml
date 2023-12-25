@@ -12,28 +12,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5] # Define the number of shards here
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] # Define the number of shards here
     env:
       OS: ubuntu-latest
-      PYTHON: '3.8'
 
     steps:
-    - name: Checkout the project
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@master
+    - uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.PYTHON }}
-        cache: 'pip'
+        python-version: '3.8'
+        cache: 'pip' # caching pip dependencies
+    - run: pip install -r requirements/base.rqr
+    - run: pip install -r requirements/tests.rqr
+    - run: pip install coverage
 
-    - name: Install Requirements
-      run: |
-        pip install -r requirements/base.rqr
-        pip install -r requirements/tests.rqr
-
-    - name: Install the package that is required for testing and coverage calculation
-      run: pip install coverage
 
     - name: Run tests with coverage (sharded)
       run: |
