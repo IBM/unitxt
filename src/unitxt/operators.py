@@ -1,3 +1,36 @@
+"""This section describes unitxt operators.
+
+Operators: Building Blocks of Unitxt Processing Pipelines
+==============================================================
+
+Within the Unitxt framework, operators serve as the foundational elements used to assemble processing pipelines.
+Each operator is designed to perform specific manipulations on dictionary structures within a stream.
+These operators are callable entities that receive a MultiStream as input.
+The output is a MultiStream, augmented with the operator's manipulations, which are then systematically applied to each instance in the stream when pulled.
+
+Creating Custom Operators
+-------------------------------
+To enhance the functionality of Unitxt, users are encouraged to develop custom operators.
+This can be achieved by inheriting from any of the existing operators listed below or from one of the fundamental :class:`base operators<unitxt.operator>`.
+The primary task in any operator development is to implement the `process` function, which defines the unique manipulations the operator will perform.
+
+General or Specelized Operators
+--------------------------------
+Some operators are specielized in specific task such as:
+
+- :class:`loaders<unitxt.loaders>` for loading data.
+- :class:`splitters<unitxt.splitters>` for fixing data splits.
+
+Other specelized operators are used by unitxt internally:
+
+- :class:`templates<unitxt.templates>` for verbalizing data examples.
+- :class:`formats<unitxt.formats>` for preparing data for models.
+
+The rest of this section is dedicated for general operators.
+
+General Operaotrs List:
+------------------------
+"""
 import collections
 import importlib
 import os
@@ -1511,7 +1544,7 @@ class EncodeLabels(StreamInstanceOperator):
     Example: applying
         EncodeLabels(fields = ["a", "b/*"])
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
-          {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
         Note: dpath is applied here, and hence, fields that are lists, should be included in

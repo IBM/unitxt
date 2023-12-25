@@ -146,29 +146,16 @@
                     "zinc"
                 ],
                 "text_type": "text",
-                "type_of_class": "topic"
+                "type_of_classes": "topic"
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "text"
-        ],
-        "outputs": [
-            "labels"
-        ],
-        "metrics": [
-            "metrics.f1_micro",
-            "metrics.accuracy",
-            "metrics.f1_macro"
-        ]
-    },
+    "task": "tasks.classification.multi_label",
     "templates": {
         "type": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "type": "multi_label_template",
                 "input_format": "{text}",
                 "output_format": "{labels}"
             }
