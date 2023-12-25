@@ -22,6 +22,12 @@ class TestRandomUtils(unittest.TestCase):
         self.assertNotEqual(a, b)
         self.assertEqual(a, c)
 
+    def test_non_string_seed(self):
+        """A test for a seed that is not a string, and is a Hashable object."""
+        a = randomize(sub_seed=50)
+        b = randomize(sub_seed="50")
+        self.assertEqual(a, b)
+
     def test_get_sub_default_random_generator(self):
         sub_seed = "a"
         self.assertEqual(randomize(sub_seed), randomize(sub_seed))
