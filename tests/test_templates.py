@@ -141,7 +141,7 @@ class TestTemplates(unittest.TestCase):
         self._test_multi_reference_template(target="Dan", random_reference=False)
 
     def test_multi_reference_template_with_random_reference(self):
-        self._test_multi_reference_template(target="Yossi", random_reference=True)
+        self._test_multi_reference_template(target="Dan", random_reference=True)
 
     def _test_multi_reference_template_with_exception(
         self, references, expected_exception_message: str

@@ -1,3 +1,4 @@
+import hashlib
 import random as python_random
 
 __default_seed__ = 42
@@ -17,7 +18,14 @@ def new_random_generator(sub_seed: Any) -> python_random.Random:
     """
     if not isinstance(sub_seed, Hashable):
         # e.g. for lists or dicts
-        sub_seed = str(hash(str(sub_seed)))
+        # Create a persistent hash for the input object (using plain hash(..) produces
+        # a value that varies between runs)
+        sub_seed_str = str(sub_seed).encode("utf-8")
+        # limit the hash int size to 2^32
+        sub_seed_hexdigest = hashlib.md5(sub_seed_str).hexdigest()[:8]
+        # convert to int, from base 16:
+        sub_seed_int = int(sub_seed_hexdigest, 16)
+        sub_seed = str(sub_seed_int)
     elif not isinstance(sub_seed, str):
         # for Hashable objects that are not strings
         sub_seed = str(hash(sub_seed))
