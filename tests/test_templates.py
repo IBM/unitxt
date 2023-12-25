@@ -111,9 +111,11 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
-    def test_multi_reference_template(self):
+    def _test_multi_reference_template(self, target, random_reference):
         template = MultiReferenceTemplate(
-            input_format="This is my sentence: {text}", references_field="answer"
+            input_format="This is my sentence: {text}",
+            references_field="answer",
+            random_reference=random_reference,
         )
 
         inputs = [
@@ -128,12 +130,18 @@ class TestTemplates(unittest.TestCase):
                 "inputs": {"text": "who was he?"},
                 "outputs": {"answer": ["Dan", "Yossi"]},
                 "source": "This is my sentence: who was he?",
-                "target": "Dan",
+                "target": target,
                 "references": ["Dan", "Yossi"],
             }
         ]
 
         check_operator(template, inputs, targets, tester=self)
+
+    def test_multi_reference_template_without_random_reference(self):
+        self._test_multi_reference_template(target="Dan", random_reference=False)
+
+    def test_multi_reference_template_with_random_reference(self):
+        self._test_multi_reference_template(target="Yossi", random_reference=True)
 
     def test_multi_reference_template_verify_references_type(self):
         template = MultiReferenceTemplate(
