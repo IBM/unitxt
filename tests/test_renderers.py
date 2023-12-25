@@ -15,7 +15,7 @@ template = InputOutputTemplate(
     input_format='This is my sentence: "{text}"', output_format="{label}"
 )
 instruction = TextualInstruction(
-    "classify user sentence by its sentiment to either positive, or nagative."
+    "classify user sentence by its sentiment to either positive, or negative."
 )
 format = ICLFormat(
     input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:"
