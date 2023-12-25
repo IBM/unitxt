@@ -17,6 +17,7 @@ from .stream import MultiStream, Stream
 logger = get_logger()
 try:
     import ibm_boto3
+
     # from ibm_botocore.client import ClientError
 
     ibm_boto3_available = True

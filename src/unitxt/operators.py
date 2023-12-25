@@ -1,3 +1,36 @@
+"""This section describes unitxt operators.
+
+Operators: Building Blocks of Unitxt Processing Pipelines
+==============================================================
+
+Within the Unitxt framework, operators serve as the foundational elements used to assemble processing pipelines.
+Each operator is designed to perform specific manipulations on dictionary structures within a stream.
+These operators are callable entities that receive a MultiStream as input.
+The output is a MultiStream, augmented with the operator's manipulations, which are then systematically applied to each instance in the stream when pulled.
+
+Creating Custom Operators
+-------------------------------
+To enhance the functionality of Unitxt, users are encouraged to develop custom operators.
+This can be achieved by inheriting from any of the existing operators listed below or from one of the fundamental :class:`base operators<unitxt.operator>`.
+The primary task in any operator development is to implement the `process` function, which defines the unique manipulations the operator will perform.
+
+General or Specelized Operators
+--------------------------------
+Some operators are specielized in specific task such as:
+
+- :class:`loaders<unitxt.loaders>` for loading data.
+- :class:`splitters<unitxt.splitters>` for fixing data splits.
+
+Other specelized operators are used by unitxt internally:
+
+- :class:`templates<unitxt.templates>` for verbalizing data examples.
+- :class:`formats<unitxt.formats>` for preparing data for models.
+
+The rest of this section is dedicated for general operators.
+
+General Operaotrs List:
+------------------------
+"""
 import collections
 import importlib
 import os
@@ -7,6 +40,7 @@ from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
+from random import Random
 from typing import (
     Any,
     Callable,
@@ -32,7 +66,7 @@ from .operator import (
     StreamInstanceOperator,
     StreamSource,
 )
-from .random_utils import get_random, nested_seed
+from .random_utils import new_random_generator
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
@@ -484,16 +518,12 @@ class Augmentor(StreamInstanceOperator):
             except ValueError as e:
                 raise TypeError(f"Failed to get {field_name} from {instance}") from e
 
-            # We are setting a nested seed based on the value processed, to ensure that
-            # the augmentation randomizations do not effect other randomization choices and
-            # to make the augmentation randomization choices different for each text.
-            with nested_seed(str(hash(old_value))):
-                try:
-                    new_value = self.process_value(old_value)
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
-                    ) from e
+            try:
+                new_value = self.process_value(old_value)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
+                ) from e
             dict_set(instance, field_name, new_value, use_dpath=True, not_exist_ok=True)
         return instance
 
@@ -518,11 +548,12 @@ class AugmentWhitespace(Augmentor):
         words = re.split(r"(\s+)", value)
         new_value = ""
 
+        random_generator = new_random_generator(sub_seed=value)
         for word in words:
             if word.isspace():
-                new_value += get_random().choice(
+                new_value += random_generator.choice(
                     ["\n", "\t", " "]
-                ) * get_random().randint(1, 3)
+                ) * random_generator.randint(1, 3)
             else:
                 new_value += word
         return new_value
@@ -621,11 +652,13 @@ class AugmentPrefixSuffix(Augmentor):
         ) = self._calculate_distributions(self.suffixes)
         super().prepare()
 
-    def _get_random_pattern(self, pattern_distribution) -> str:
+    def _get_random_pattern(
+        self, pattern_distribution, random_generator: Random
+    ) -> str:
         string_to_add = ""
         if pattern_distribution["patterns"]:
             string_to_add = "".join(
-                get_random().choices(
+                random_generator.choices(
                     pattern_distribution["patterns"],
                     pattern_distribution["weights"],
                     k=pattern_distribution["length"],
@@ -638,8 +671,13 @@ class AugmentPrefixSuffix(Augmentor):
         new_value = str(value)
         if self.remove_existing_whitespaces:
             new_value = new_value.strip()
-        prefix = self._get_random_pattern(self._prefix_pattern_distribution)
-        suffix = self._get_random_pattern(self._suffix_pattern_distribution)
+        random_generator = new_random_generator(sub_seed=value)
+        prefix = self._get_random_pattern(
+            self._prefix_pattern_distribution, random_generator
+        )
+        suffix = self._get_random_pattern(
+            self._suffix_pattern_distribution, random_generator
+        )
         return prefix + new_value + suffix
 
 
@@ -648,7 +686,8 @@ class ShuffleFieldValues(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         res = list(value)
-        get_random().shuffle(res)
+        random_generator = new_random_generator(sub_seed=res)
+        random_generator.shuffle(res)
         return res
 
 
@@ -1494,8 +1533,14 @@ class Shuffle(PagedStreamOperator):
         page_size (int): The size of each page in the stream. Defaults to 1000.
     """
 
+    random_generator: Random = None
+
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        self.random_generator = new_random_generator(sub_seed="shuffle")
+
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
-        get_random().shuffle(page)
+        self.random_generator.shuffle(page)
         yield from page
 
 
@@ -1511,7 +1556,7 @@ class EncodeLabels(StreamInstanceOperator):
     Example: applying
         EncodeLabels(fields = ["a", "b/*"])
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
-          {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
         Note: dpath is applied here, and hence, fields that are lists, should be included in

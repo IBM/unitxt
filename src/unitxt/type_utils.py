@@ -19,14 +19,13 @@ def isoftype(object, type):
         bool: True if the object is of the specified type, False otherwise.
 
     Examples:
-        >>> isoftype(1, int)
-        True
-        >>> isoftype([1, 2, 3], typing.List[int])
-        True
-        >>> isoftype([1, 2, 3], typing.List[str])
-        False
-        >>> isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]])
-        True
+    .. highlight:: python
+    .. code-block:: python
+
+        isoftype(1, int) # True
+        isoftype([1, 2, 3], typing.List[int]) # True
+        isoftype([1, 2, 3], typing.List[str]) # False
+        isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]]) # True
     """
     if type == typing.Any:
         return True
@@ -149,17 +148,21 @@ def get_origin(type_):
     Return None for unsupported types.
 
     Examples:
-    ```python
-        from typing_utils import get_origin
+        Here are some code examples using `get_origin` from the `typing_utils` module:
 
-        get_origin(Literal[42]) is Literal
-        get_origin(int) is None
-        get_origin(ClassVar[int]) is ClassVar
-        get_origin(Generic) is Generic
-        get_origin(Generic[T]) is Generic
-        get_origin(Union[T, int]) is Union
-        get_origin(List[Tuple[T, T]][int]) == list
-    ```
+        .. code-block:: python
+
+            from typing_utils import get_origin
+
+            # Examples of get_origin usage
+            get_origin(Literal[42]) is Literal  # True
+            get_origin(int) is None  # True
+            get_origin(ClassVar[int]) is ClassVar  # True
+            get_origin(Generic) is Generic  # True
+            get_origin(Generic[T]) is Generic  # True
+            get_origin(Union[T, int]) is Union  # True
+            get_origin(List[Tuple[T, T]][int]) == list  # True
+
     """
     if hasattr(typing, "get_origin"):  # python 3.8+
         _getter = typing.get_origin
@@ -193,15 +196,18 @@ def get_args(type_) -> typing.Tuple:
     For unions, basic simplifications used by Union constructor are performed.
 
     Examples:
-    ```python
-        from typing_utils import get_args
+        Here are some code examples using `get_args` from the `typing_utils` module:
 
-        get_args(Dict[str, int]) == (str, int)
-        get_args(int) == ()
-        get_args(Union[int, Union[T, int], str][int]) == (int, str)
-        get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])
-        get_args(Callable[[], T][int]) == ([], int)
-    ```
+        .. code-block:: python
+
+            from typing_utils import get_args
+
+            # Examples of get_args usage
+            get_args(Dict[str, int]) == (str, int)  # True
+            get_args(int) == ()  # True
+            get_args(Union[int, Union[T, int], str][int]) == (int, str)  # True
+            get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])  # True
+            get_args(Callable[[], T][int]) == ([], int)  # True
     """
     if hasattr(typing, "get_args"):  # python 3.8+
         _getter = typing.get_args
@@ -448,25 +454,30 @@ def issubtype(
     Also works for nested types including ForwardRefs.
 
     Examples:
-    ```python
-        from typing_utils import issubtype
+        Here are some code examples using `issubtype` from the `typing_utils` module:
 
-        issubtype(typing.List, typing.Any) == True
-        issubtype(list, list) == True
-        issubtype(list, typing.List) == True
-        issubtype(list, typing.Sequence) == True
-        issubtype(typing.List[int], list) == True
-        issubtype(typing.List[typing.List], list) == True
-        issubtype(list, typing.List[int]) == False
-        issubtype(list, typing.Union[typing.Tuple, typing.Set]) == False
-        issubtype(typing.List[typing.List], typing.List[typing.Sequence]) == True
-        JSON = typing.Union[
-            int, float, bool, str, None, typing.Sequence["JSON"],
-            typing.Mapping[str, "JSON"]
-        ]
-        issubtype(str, JSON, forward_refs={'JSON': JSON}) == True
-        issubtype(typing.Dict[str, str], JSON, forward_refs={'JSON': JSON}) == True
-        issubtype(typing.Dict[str, bytes], JSON, forward_refs={'JSON': JSON}) == False
-    ```
+        .. code-block:: python
+
+            from typing_utils import issubtype
+
+            # Examples of issubtype checks
+            issubtype(typing.List, typing.Any)  # True
+            issubtype(list, list)  # True
+            issubtype(list, typing.List)  # True
+            issubtype(list, typing.Sequence)  # True
+            issubtype(typing.List[int], list)  # True
+            issubtype(typing.List[typing.List], list)  # True
+            issubtype(list, typing.List[int])  # False
+            issubtype(list, typing.Union[typing.Tuple, typing.Set])  # False
+            issubtype(typing.List[typing.List], typing.List[typing.Sequence])  # True
+
+            # Example with custom JSON type
+            JSON = typing.Union[
+                int, float, bool, str, None, typing.Sequence["JSON"],
+                typing.Mapping[str, "JSON"]
+            ]
+            issubtype(str, JSON, forward_refs={'JSON': JSON})  # True
+            issubtype(typing.Dict[str, str], JSON, forward_refs={'JSON': JSON})  # True
+            issubtype(typing.Dict[str, bytes], JSON, forward_refs={'JSON': JSON})  # False
     """
     return _is_normal_subtype(normalize(left), normalize(right), forward_refs)

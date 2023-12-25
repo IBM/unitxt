@@ -4,7 +4,7 @@ from typing import Dict
 
 from .generator_utils import ReusableGenerator
 from .logging import get_logger
-from .random_utils import nested_seed
+from .random_utils import new_random_generator
 from .stream import Stream
 
 logger = get_logger()
@@ -232,14 +232,14 @@ def random_mix_generator(
 ):
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
-        with nested_seed(old_stream_name) as rand:
-            assert (
-                old_stream_name in input_streams
-            ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
-            for item in input_streams[old_stream_name]:
-                choice = rand.choices(optinal_streams, weights=weights, k=1)[0]
-                if choice == new_stream_name:
-                    yield item
+        random_generator = new_random_generator(sub_seed=old_stream_name)
+        assert (
+            old_stream_name in input_streams
+        ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
+        for item in input_streams[old_stream_name]:
+            choice = random_generator.choices(optinal_streams, weights=weights, k=1)[0]
+            if choice == new_stream_name:
+                yield item
 
 
 def random_mix_streams(input_streams, mapping):
@@ -287,18 +287,17 @@ def random_mix_streams(input_streams, mapping):
     # Build stream routing
     stream_routing = build_stream_routing(mapping)
 
-    with nested_seed():
-        # Create new stream generators
-        for new_stream_name, new_stream_sources in mapping.items():
-            new_streams[new_stream_name] = ReusableGenerator(
-                random_mix_generator,
-                gen_kwargs={
-                    "new_stream_name": new_stream_name,
-                    "new_stream_sources": new_stream_sources,
-                    "stream_routing": stream_routing,
-                    "input_streams": input_streams,
-                },
-            )
+    # Create new stream generators
+    for new_stream_name, new_stream_sources in mapping.items():
+        new_streams[new_stream_name] = ReusableGenerator(
+            random_mix_generator,
+            gen_kwargs={
+                "new_stream_name": new_stream_name,
+                "new_stream_sources": new_stream_sources,
+                "stream_routing": stream_routing,
+                "input_streams": input_streams,
+            },
+        )
 
     return new_streams
 
