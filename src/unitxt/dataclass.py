@@ -312,15 +312,17 @@ class Dataclass(metaclass=DataclassMeta):
        allowing checks and alterations to be made at the time of class creation, providing more control.
 
     Example:
-        ```
+    .. highlight:: python
+    .. code-block:: python
+
         class Parent(Dataclass):
-            final_field: int = FinalField(1) # this field cannot be overridden
+            final_field: int = FinalField(1)  # this field cannot be overridden
             required_field: str = RequiredField()
             also_required_field: float
             abstract_field: int = AbstractField()
 
         class Child(Parent):
-            abstract_field = 3 # now once overridden, this is no longer abstract
+            abstract_field = 3  # now once overridden, this is no longer abstract
             required_field = Field(name="required_field", default="provided", type=str)
 
         class Mixin(Dataclass):
@@ -331,8 +333,8 @@ class Dataclass(metaclass=DataclassMeta):
 
         grand_child = GrandChild()
         logger.info(grand_child.to_dict())
-        ```
 
+        ...
     """
 
     __allow_unexpected_arguments__ = False

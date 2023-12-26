@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_random, get_sub_default_random_generator
+from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -83,6 +83,7 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
+    random_generator: Random = new_random_generator(sub_seed="Sampler")
 
     def prepare(self):
         super().prepare()
@@ -96,6 +97,11 @@ class Sampler(Artifact):
             size = int(size)
         self.sample_size = size
 
+    def init_new_random_generator(self):
+        self.random_generator = new_random_generator(
+            sub_seed="init_new_random_generator"
+        )
+
     @abstractmethod
     def sample(
         self, instances_pool: List[Dict[str, object]]
@@ -104,14 +110,6 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
-    random_generator: Random = None
-
-    def prepare(self):
-        super().prepare()
-        self.random_generator = get_sub_default_random_generator(
-            sub_seed="random_sample_seed"
-        )
-
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
@@ -197,7 +195,7 @@ class DiverseLabelsSampler(Sampler):
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        get_random().shuffle(all_labels)
+        self.random_generator.shuffle(all_labels)
         from collections import Counter
 
         if self.sample_size > len(instances_pool):
@@ -218,10 +216,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = get_random().sample(self.labels_cache[label], allocation)
+            sample = self.random_generator.sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
-        get_random().shuffle(result)
+        self.random_generator.shuffle(result)
         return result
 
 
