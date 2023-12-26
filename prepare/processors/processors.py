@@ -8,6 +8,7 @@ from src.unitxt.processors import (
     StringOrNotString,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
+    ToYesOrNone,
     YesNoToInt,
 )
 
@@ -40,6 +41,9 @@ add_to_catalog(operator7, "processors.take_first_word", overwrite=True)
 
 operator8 = YesNoToInt()
 add_to_catalog(operator8, "processors.yes_no_to_int", overwrite=True)
+
+operator9 = ToYesOrNone()
+add_to_catalog(operator9, "processors.to_yes_or_none", overwrite=True)
 
 parser = FirstCharacter()
 

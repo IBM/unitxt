@@ -5,8 +5,8 @@ from src.unitxt.metrics import PrecisionMicroMultiLabel, RecallMicroMultiLabel
 from src.unitxt.test_utils.metrics import test_metric
 
 #
-predictions = [["1"], ["1"], [], []]
-references = [[["1"]], [[]], [["1"]], [["1"]]]
+predictions = [["yes"], ["yes"], ["none"], ["none"]]
+references = [[["yes"]], [["none"]], [["yes"]], [["yes"]]]
 
 precision_metric = PrecisionMicroMultiLabel()
 
