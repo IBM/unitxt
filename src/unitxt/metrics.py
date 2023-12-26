@@ -1486,3 +1486,27 @@ class RetrievalAtK(RetrievalMetric):
             for k in self.k_list:
                 result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
         return result
+
+
+class KPA(NER):
+    classes_to_ignore = ["none"]
+
+    def compute(
+        self,
+        references: List[Any],
+        predictions: List[Any],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        predictions = [
+            [(prediction, additional_input["keypoint"])]
+            if prediction not in self.classes_to_ignore
+            else []
+            for prediction, additional_input in zip(predictions, additional_inputs)
+        ]
+        references = [
+            [(reference[0], additional_input["keypoint"])]
+            if reference[0] not in self.classes_to_ignore
+            else []
+            for reference, additional_input in zip(references, additional_inputs)
+        ]
+        return super().compute(references, predictions, additional_inputs)
