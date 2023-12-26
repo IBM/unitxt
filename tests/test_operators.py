@@ -259,42 +259,52 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+    def refresh_inputs_for_test_model_input_formatter(self, inputs, instruction, demos):
+        for instance in inputs:
+            instance["instruction"] = instruction
+            instance["demos"] = demos
+            instance["source"] = instance["source1"]
+
     def test_model_input_formatter(self):
         demo_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
         ]
+        instruction = "solve the math exercises"
 
         inputs = [
             {
                 "source": "1+1",
+                "source1": "1+1",
                 "target": "2",
-                "instruction": "solve the math exercises",
+                "instruction": instruction,
                 "demos": demo_instances,
             },
             {
                 "source": "3+2",
+                "source1": "3+2",
                 "target": "5",
-                "instruction": "solve the math exercises",
+                "instruction": instruction,
                 "demos": demo_instances,
             },
             {
                 "source": "7-4",
+                "source1": "7-4",
                 "target": "3",
-                "instruction": "solve the math exercises",
+                "instruction": instruction,
                 "demos": demo_instances,
             },
             {
                 "source": "12-3",
+                "source1": "12-3",
                 "target": "9",
-                "instruction": "solve the math exercises",
+                "instruction": instruction,
                 "demos": demo_instances,
             },
         ]
 
-        # imitating add_instruction_after_demos=True, instruction not ""
+        # imitating add_instruction_after_demos=True, instruction is not ""
         model_input_formatter = ModelInputFormatter(
-            to_field="model_input",
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="{system_prompt}{demos}User: {instruction}{source}\nAgent: ",
@@ -302,44 +312,24 @@ class TestOperators(unittest.TestCase):
 
         targets = [
             {
-                "source": "1+1",
+                "source1": "1+1",
                 "target": "2",
-                "instruction": "solve the math exercises",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
-                "source": "3+2",
+                "source1": "3+2",
                 "target": "5",
-                "instruction": "solve the math exercises",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
-                "source": "7-4",
+                "source1": "7-4",
                 "target": "3",
-                "instruction": "solve the math exercises",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
-                "source": "12-3",
+                "source1": "12-3",
                 "target": "9",
-                "instruction": "solve the math exercises",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
         ]
 
@@ -348,6 +338,11 @@ class TestOperators(unittest.TestCase):
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+        # instruction and demos were poped out, and source overwritten, bring them back in
+        self.refresh_inputs_for_test_model_input_formatter(
+            inputs=inputs, instruction=instruction, demos=demo_instances
         )
 
         # compare with ICLFormat with add_instruction_after_demos=True, and non "" instruction
@@ -365,46 +360,35 @@ class TestOperators(unittest.TestCase):
             for instance in inputs
         ]
         self.assertListEqual(
-            iclformat_outputs, [target["model_input"] for target in targets]
+            iclformat_outputs, [target["source"] for target in targets]
         )
 
         # iclformat throws "instruction" out the input instance. We use the opportunity to test instruction = "":
+        # it does not discard demos
+        # we just need to refresh source:
+        for instance in inputs:
+            instance["source"] = instance["source1"]
+
         targets_no_instruction = [
             {
-                "source": "1+1",
+                "source1": "1+1",
                 "target": "2",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
-                "source": "3+2",
+                "source1": "3+2",
                 "target": "5",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
-                "source": "7-4",
+                "source1": "7-4",
                 "target": "3",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
-                "source": "12-3",
+                "source1": "12-3",
                 "target": "9",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
@@ -415,23 +399,27 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # and test iclformat here, with no instruction in the input instance, too:
+        # and test iclformat here too, with no instruction in the input instance:
+        # demos are fed into iclformat.format. refresh source:
+        for instance in inputs:
+            instance["source"] = instance["source1"]
+
         iclformat_outputs = [
             iclformat.format(instance, demos_instances=demo_instances)
             for instance in inputs
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["model_input"] for target in targets_no_instruction],
+            [target["source"] for target in targets_no_instruction],
         )
 
         # now imitate instruction before demos.
-        # first, install back field "instruction" in the input instances, after iclformat discarded them
-        for instance in inputs:
-            instance["instruction"] = "solve the math exercises"
+        # first, install back fields "instruction" and "demos" in the input instances, and refresh source
+        self.refresh_inputs_for_test_model_input_formatter(
+            inputs=inputs, instruction=instruction, demos=demo_instances
+        )
 
         model_input_formatter = ModelInputFormatter(
-            to_field="model_input",
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             instruction_prefix="Instruction: ",
@@ -440,44 +428,24 @@ class TestOperators(unittest.TestCase):
 
         targets = [
             {
-                "source": "1+1",
+                "source1": "1+1",
                 "target": "2",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "instruction": "solve the math exercises",
-                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
-                "source": "3+2",
+                "source1": "3+2",
                 "target": "5",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "instruction": "solve the math exercises",
-                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
-                "source": "7-4",
+                "source1": "7-4",
                 "target": "3",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "instruction": "solve the math exercises",
-                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
-                "source": "12-3",
+                "source1": "12-3",
                 "target": "9",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "instruction": "solve the math exercises",
-                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
@@ -489,6 +457,11 @@ class TestOperators(unittest.TestCase):
         )
 
         # compare with ICLFormat with add_instruction_at_start=True, and instruction is not ""
+        # refresh:
+        self.refresh_inputs_for_test_model_input_formatter(
+            inputs=inputs, instruction=instruction, demos=demo_instances
+        )
+
         iclformat = ICLFormat(
             input_prefix="User: ",
             output_prefix="Agent: ",
@@ -504,48 +477,35 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["model_input"] for target in targets],
+            [target["source"] for target in targets],
         )
 
-        # as before, continue with instruction = "", as iclformat swallowed it..
+        # as before, continue with instruction = "",
+        # as iclformat swallowed it.. it does not swallow demos, and does not overwrite source
+
         targets_no_instruction = [
             {
-                "source": "1+1",
+                "source1": "1+1",
                 "target": "2",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
-                "source": "3+2",
+                "source1": "3+2",
                 "target": "5",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
-                "source": "7-4",
+                "source1": "7-4",
                 "target": "3",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
-                "source": "12-3",
+                "source1": "12-3",
                 "target": "9",
-                "demos": [
-                    {"source": "1+2", "target": "3"},
-                    {"source": "4-2", "target": "2"},
-                ],
-                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
+
         check_operator(
             operator=model_input_formatter,
             inputs=inputs,
@@ -553,6 +513,10 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # demos are fed into iclformat.format. refresh source. continue with no instruction
+        for instance in inputs:
+            instance["source"] = instance["source1"]
+
         iclformat = ICLFormat(
             input_prefix="User: ",
             output_prefix="Agent: ",
@@ -568,7 +532,7 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["model_input"] for target in targets_no_instruction],
+            [target["source"] for target in targets_no_instruction],
         )
 
     def test_filter_by_values_with_required_values(self):
