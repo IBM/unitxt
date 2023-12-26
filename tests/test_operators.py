@@ -32,6 +32,7 @@ from src.unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    ModelInputFormatter,
     NullAugmentor,
     RemoveFields,
     RemoveValues,
@@ -42,7 +43,6 @@ from src.unitxt.operators import (
     StreamRefiner,
     TakeByField,
     Unique,
-    WholeInputFormatter,
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream
@@ -259,7 +259,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_whole_input_formatter(self):
+    def test_model_input_formatter(self):
         demo_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
@@ -293,11 +293,11 @@ class TestOperators(unittest.TestCase):
         ]
 
         # imitating add_instruction_after_demos=True, instruction not ""
-        whole_input_formatter = WholeInputFormatter(
-            to_field="whole_input",
+        model_input_formatter = ModelInputFormatter(
+            to_field="model_input",
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            general_format="{system_prompt}{demos}User: {instruction}{source}\nAgent: ",
+            model_input_format="{system_prompt}{demos}User: {instruction}{source}\nAgent: ",
         )
 
         targets = [
@@ -309,7 +309,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -319,7 +319,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -329,7 +329,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -339,12 +339,12 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
         ]
 
         check_operator(
-            operator=whole_input_formatter,
+            operator=model_input_formatter,
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -365,7 +365,7 @@ class TestOperators(unittest.TestCase):
             for instance in inputs
         ]
         self.assertListEqual(
-            iclformat_outputs, [target["whole_input"] for target in targets]
+            iclformat_outputs, [target["model_input"] for target in targets]
         )
 
         # iclformat throws "instruction" out the input instance. We use the opportunity to test instruction = "":
@@ -377,7 +377,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -386,7 +386,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -395,7 +395,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -404,12 +404,12 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
         check_operator(
-            operator=whole_input_formatter,
+            operator=model_input_formatter,
             inputs=inputs,
             targets=targets_no_instruction,
             tester=self,
@@ -422,7 +422,7 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["whole_input"] for target in targets_no_instruction],
+            [target["model_input"] for target in targets_no_instruction],
         )
 
         # now imitate instruction before demos.
@@ -430,12 +430,12 @@ class TestOperators(unittest.TestCase):
         for instance in inputs:
             instance["instruction"] = "solve the math exercises"
 
-        whole_input_formatter = WholeInputFormatter(
-            to_field="whole_input",
+        model_input_formatter = ModelInputFormatter(
+            to_field="model_input",
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             instruction_prefix="Instruction: ",
-            general_format="{system_prompt}{instruction}{demos}User: {source}\nAgent: ",
+            model_input_format="{system_prompt}{instruction}{demos}User: {source}\nAgent: ",
         )
 
         targets = [
@@ -447,7 +447,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -457,7 +457,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -467,7 +467,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -477,12 +477,12 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "model_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
         check_operator(
-            operator=whole_input_formatter,
+            operator=model_input_formatter,
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -504,7 +504,7 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["whole_input"] for target in targets],
+            [target["model_input"] for target in targets],
         )
 
         # as before, continue with instruction = "", as iclformat swallowed it..
@@ -516,7 +516,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -525,7 +525,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -534,7 +534,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -543,11 +543,11 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+                "model_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
         check_operator(
-            operator=whole_input_formatter,
+            operator=model_input_formatter,
             inputs=inputs,
             targets=targets_no_instruction,
             tester=self,
@@ -568,7 +568,7 @@ class TestOperators(unittest.TestCase):
         ]
         self.assertListEqual(
             iclformat_outputs,
-            [target["whole_input"] for target in targets_no_instruction],
+            [target["model_input"] for target in targets_no_instruction],
         )
 
     def test_filter_by_values_with_required_values(self):
