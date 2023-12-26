@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from src.unitxt.metric_paired_significance import PairedDifferenceTest
-from src.unitxt.random_utils import *
+from src.unitxt.random_utils import get_sub_default_random_generator
 
 np.set_printoptions(precision=10)
 
@@ -27,11 +27,11 @@ def rmvnorm(mu, cmat, rng, n):
     assert len(mu) == cmat.shape[0]
     d = cmat.shape[0]
     # generate n * d independent standard normal dras
-    Z = np.vstack([rnorm(mu=0, sigma=1, rng=rng, n=n) for _ in range(d)])
+    z = np.vstack([rnorm(mu=0, sigma=1, rng=rng, n=n) for _ in range(d)])
     # cholesky decomposition (LL^T = cmat)
-    L = np.linalg.cholesky(cmat)
+    lmat = np.linalg.cholesky(cmat)
     # add mu row-wise
-    return mu + np.transpose(np.matmul(L, Z))
+    return mu + np.transpose(np.matmul(lmat, z))
 
 
 class TestMetricSignifDifference(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestMetricSignifDifference(unittest.TestCase):
 
         # add some skew
         model_measurement = np.square(model_measurement)
-        return tuple([xx for xx in model_measurement])
+        return tuple(model_measurement)
 
 
     def gen_binary_data(self, same_distr=True, nmodels=None):
@@ -76,10 +76,13 @@ class TestMetricSignifDifference(unittest.TestCase):
             # generate random probabilities for each observation and then binary
             # do this so observation pairs are more correlated than otherwise if used the same p for all
             p = rbeta(alpha=2, beta=5, rng=rng, n=self.nobs)
-            return [rbernoulli_vec(pvec=p, rng=rng) for _ in range(nmodels)]
+            rvals = [rbernoulli_vec(pvec=p, rng=rng) for _ in range(nmodels)]
         else:
+            # last vector of ps is from a different beta distribution
             p = np.vstack([rbeta(alpha=2, beta=5, rng=rng, n=self.nobs) for _ in range(nmodels - 1)] + [rbeta(alpha=5, beta=2, rng=rng, n=self.nobs)])
-            return [rbernoulli_vec(pvec=pp, rng=rng) for pp in p]
+            rvals = [rbernoulli_vec(pvec=pp, rng=rng) for pp in p]
+
+        return rvals
 
 
     def _test_signif(self, expected_pvalues_list: list, expected_effect_sizes, same_distr=True, continuous=True):
@@ -144,7 +147,6 @@ class TestMetricSignifDifference(unittest.TestCase):
                           same_distr=False, continuous=False)
 
     def test_signif_mcnemar_binary(self):
-
         # use Mcnemar's test, not t-test, only on two model samples
         tester = PairedDifferenceTest(nmodels=2)
 
@@ -191,5 +193,3 @@ class TestMetricSignifDifference(unittest.TestCase):
         res_2x2 = tester.signif_pair_diff(samples_list=samples_list)
         self.assertAlmostEqual(first=res_2x2.pvalues[0], second=0.001953125)
         self.assertAlmostEqual(first=res_2x2.effect_sizes[0], second=0.45238095238095233)
-
-
