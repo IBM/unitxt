@@ -7,7 +7,7 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.operators import FilterByValues
+from src.unitxt.operators import FilterByCondition
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "20_newsgroups"
@@ -38,7 +38,7 @@ map_labels = {
 card = TaskCard(
     loader=LoadHF(path=f"SetFit/{dataset_name}"),
     preprocess_steps=[
-        FilterByValues(disallowed_values={"text": ""}),
+        FilterByCondition(required_values={"text": ""}, condition="ne"),
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[10%]", "test": "test"}
         ),

@@ -5,7 +5,7 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
     Apply,
     CopyFields,
-    FilterByValues,
+    FilterByCondition,
     ListFieldValues,
     RemoveFields,
 )
@@ -23,7 +23,9 @@ for lang in langs:
                 field_to_field=[("metadata/language", "extracted_language")],
                 use_query=True,
             ),
-            FilterByValues(required_values={"extracted_language": lang}),
+            FilterByCondition(
+                required_values={"extracted_language": lang}, condition="eq"
+            ),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix(
                 {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
