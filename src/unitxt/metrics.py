@@ -1023,7 +1023,11 @@ class CustomF1(GlobalMetric):
         additional_inputs: List[Dict],
     ) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
-        if isinstance(references[0], list) and isinstance(references[0][0], list):
+        if (
+            isinstance(references[0], list)
+            and len(references[0]) > 0
+            and isinstance(references[0][0], list)
+        ):
             references = [element[0] for element in references]
 
         assert len(references) == len(predictions), (
@@ -1101,7 +1105,7 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             result["f1_macro"] = self.zero_division
             result["recall_macro"] = self.zero_division
-            result["micro_macro"] = self.zero_division
+            result["precision_macro"] = self.zero_division
 
         amount_of_predictions = pd_total
         if amount_of_predictions == 0:
