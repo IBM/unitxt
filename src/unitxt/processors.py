@@ -130,6 +130,15 @@ class ToYesOrNone(BaseFieldOperator):
         return "none"
 
 
+class StanceToProCon(BaseFieldOperator):
+    def process(self, instance):
+        if instance == "positive":
+            return "PRO"
+        if instance in ["negative", "suggestion"]:
+            return "CON"
+        return "none"
+
+
 class StringOrNotString(BaseFieldOperator):
     string: str
 
