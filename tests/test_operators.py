@@ -260,14 +260,6 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_whole_input_formatter(self):
-        iclformat = ICLFormat(
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            instruction_prefix="Instruction: ",
-            add_instruction_at_start=False,
-            add_instruction_after_demos=True,
-        )
-
         demo_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
@@ -300,14 +292,12 @@ class TestOperators(unittest.TestCase):
             },
         ]
 
+        # imitating add_instruction_after_demos=True, instruction not ""
         whole_input_formatter = WholeInputFormatter(
             to_field="whole_input",
             demos_field="demos",
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            instruction_prefix="Instruction: ",
-            add_instruction_at_start=False,
-            add_instruction_after_demos=True,
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            general_format="{system_prompt}{demos}User: {instruction}{source}\nAgent: ",
         )
 
         targets = [
@@ -319,7 +309,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -329,7 +319,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -339,7 +329,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -349,7 +339,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
         ]
 
@@ -360,6 +350,16 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # compare with ICLFormat with add_instruction_after_demos=True, and non "" instruction
+        iclformat = ICLFormat(
+            input_prefix="User: ",
+            output_prefix="Agent: ",
+            instruction_prefix="Instruction: ",
+            target_prefix="",  # normalize this to be like others' default, back from " "
+            add_instruction_at_start=False,
+            add_instruction_after_demos=True,
+        )
+
         iclformat_outputs = [
             iclformat.format(instance, demos_instances=demo_instances)
             for instance in inputs
@@ -368,7 +368,7 @@ class TestOperators(unittest.TestCase):
             iclformat_outputs, [target["whole_input"] for target in targets]
         )
 
-        # iclformat throws "instruction" out the instance. We use it to test instruction=="":
+        # iclformat throws "instruction" out the input instance. We use the opportunity to test instruction = "":
         targets_no_instruction = [
             {
                 "source": "1+1",
@@ -377,7 +377,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 1+1\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -386,7 +386,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 3+2\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -395,7 +395,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 7-4\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -404,7 +404,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "1+2", "target": "3"},
                     {"source": "4-2", "target": "2"},
                 ],
-                "whole_input": "User: 1+2\nAgent:  3\n\nUser: 4-2\nAgent:  2\n\nUser: 12-3\nAgent: ",
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
@@ -415,7 +415,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # and test iclformat here, with no instruction, too:
+        # and test iclformat here, with no instruction in the input instance, too:
         iclformat_outputs = [
             iclformat.format(instance, demos_instances=demo_instances)
             for instance in inputs
@@ -425,23 +425,20 @@ class TestOperators(unittest.TestCase):
             [target["whole_input"] for target in targets_no_instruction],
         )
 
-        # iclformat throws "instruction" out the instance. We return it toward the next test, that does expects non empty instructions
+        # now imitate instruction before demos.
+        # first, install back field "instruction" in the input instances, after iclformat discarded them
         for instance in inputs:
             instance["instruction"] = "solve the math exercises"
 
-        # limit total length of output field "whole_input"
         whole_input_formatter = WholeInputFormatter(
             to_field="whole_input",
             demos_field="demos",
-            input_prefix="User: ",
-            output_prefix="Agent: ",
+            demo_format="User: {source}\nAgent: {target}\n\n",
             instruction_prefix="Instruction: ",
-            overall_output_size_limit=80,
-            add_instruction_at_start=True,
-            add_instruction_after_demos=False,
+            general_format="{system_prompt}{instruction}{demos}User: {source}\nAgent: ",
         )
 
-        tergets_short = [  # less demos show
+        targets = [
             {
                 "source": "1+1",
                 "target": "2",
@@ -450,7 +447,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 1+1\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "source": "3+2",
@@ -460,7 +457,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 3+2\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "source": "7-4",
@@ -470,7 +467,7 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 7-4\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "source": "12-3",
@@ -480,15 +477,98 @@ class TestOperators(unittest.TestCase):
                     {"source": "4-2", "target": "2"},
                 ],
                 "instruction": "solve the math exercises",
-                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent:  3\n\nUser: 12-3\nAgent: ",
+                "whole_input": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
 
         check_operator(
             operator=whole_input_formatter,
             inputs=inputs,
-            targets=tergets_short,
+            targets=targets,
             tester=self,
+        )
+
+        # compare with ICLFormat with add_instruction_at_start=True, and instruction is not ""
+        iclformat = ICLFormat(
+            input_prefix="User: ",
+            output_prefix="Agent: ",
+            instruction_prefix="Instruction: ",
+            target_prefix="",  # normalize this to be like others' default, back from " "
+            add_instruction_at_start=True,
+            add_instruction_after_demos=False,
+        )
+
+        iclformat_outputs = [
+            iclformat.format(instance, demos_instances=demo_instances)
+            for instance in inputs
+        ]
+        self.assertListEqual(
+            iclformat_outputs,
+            [target["whole_input"] for target in targets],
+        )
+
+        # as before, continue with instruction = "", as iclformat swallowed it..
+        targets_no_instruction = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "demos": [
+                    {"source": "1+2", "target": "3"},
+                    {"source": "4-2", "target": "2"},
+                ],
+                "whole_input": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+            },
+        ]
+        check_operator(
+            operator=whole_input_formatter,
+            inputs=inputs,
+            targets=targets_no_instruction,
+            tester=self,
+        )
+
+        iclformat = ICLFormat(
+            input_prefix="User: ",
+            output_prefix="Agent: ",
+            instruction_prefix="Instruction: ",
+            target_prefix="",  # normalize this to be like others' default, back from " "
+            add_instruction_at_start=True,
+            add_instruction_after_demos=False,
+        )
+
+        iclformat_outputs = [
+            iclformat.format(instance, demos_instances=demo_instances)
+            for instance in inputs
+        ]
+        self.assertListEqual(
+            iclformat_outputs,
+            [target["whole_input"] for target in targets_no_instruction],
         )
 
     def test_filter_by_values_with_required_values(self):

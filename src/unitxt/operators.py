@@ -224,49 +224,32 @@ class WholeInputFormatter(StreamInstanceOperator):
     field "instruction".
     Demos are assumed to be included as well, in a field whose name is specified by argument 'demos_field'. That
     field is assumed to contain a list of dicts, each containing keys: "source" and "target" of a single demo.
-    And finally, system_intro, and system_closing (an introduction and closing texts) are also assumed to be included
-    in the instance, in fields whose names are specified by arguments 'system_intro' and 'system_closing'.
+    And finally, system_prompt is also assumed to be included
+    in the instance, in a field whose name is specified by argument 'system_prompt'.
     The value in field "source" of the input instance describes (verbalizes) original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     WholeInputFormatter makes this (verbalization of the) input into a whole-input-to-the-model, by combining it
-    with instruction, demos, system_intro, and system_closing, read from the input instance, through several
+    with instruction, demos, and system_prompt, read from the input instance, through both formatting args
     formatting arguments.
 
     Args:
         to_field (str): the name of the field into which the formatted model's input is to be stored
         demos_field (str): the name of the field that contains the demos, being dicts with "source" and "target" keys
-        system_intro (str): the name of the field containing an introductory text, or signs
-        system_closing (str): the name of the field containing text or signs to append at the end of the whole-input-to-the-model
-        input_prefix: str = ""
-        output_prefix: str = ""
-        target_prefix: str = " "    for the demos
-        instruction_prefix: str = ""
-        input_output_separator: str = "\n"
-        demo_separator: str = "\n\n"
-        add_instruction_at_start: bool = True
-        add_instruction_after_demos: bool = False
-        overall_output_size_limit: int = None
+        system_prompt (str): the name of the field containing an introductory text and or xml tags
+        demo_format (str): formatting string for a single demo, combining fields source and target
+        general_format (str) overall output format, combinig system_prompt, instruction, demos, and source
     """
 
     to_field: str
     demos_field: str = None
-    system_intro: str = None
-    system_closing: str = None
-    input_prefix: str = ""
-    output_prefix: str = ""
-    target_prefix: str = " "  # the single space here is only for compatibility with ICLFormat.  surely sure?
-    instruction_prefix: str = ""
-    input_output_separator: str = "\n"
-    demo_separator: str = "\n\n"
-    add_instruction_at_start: bool = True
-    add_instruction_after_demos: bool = False
-    overall_output_size_limit: int = None
-
-    def _single_source_str(self, source) -> str:
-        return f"{self.input_prefix}{source}{self.input_output_separator}{self.output_prefix}"
-
-    def _single_source_str_with_instruction(self, source, instruction) -> str:
-        return f"{self.input_prefix}{instruction}{self.demo_separator}{source}{self.input_output_separator}{self.output_prefix}"
+    system_prompt: str = None
+    demo_format: str = (
+        "{source}\n{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
+    )
+    general_format: str = (
+        "<SYS>{system_prompt}</SYS>\n{instruction}\n{demos}\n{source}\n"
+    )
+    instruction_prefix: str = ""  # potential prepend for non "" instruction. necessary for backward compatibility with iclformat
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -288,22 +271,17 @@ class WholeInputFormatter(StreamInstanceOperator):
             instance=instance, field_name="source"
         )
 
-        output = self._retrieve_field_and_assert_not_none(
-            instance=instance, field_name=self.system_intro
-        )
-        system_closing = self._retrieve_field_and_assert_not_none(
-            instance=instance, field_name=self.system_closing
+        system_prompt = self._retrieve_field_and_assert_not_none(
+            instance=instance, field_name=self.system_prompt
         )
 
         instruction = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="instruction"
         )
-        if self.add_instruction_at_start and instruction != "":
-            output += self.instruction_prefix + instruction + self.demo_separator
-        if self.add_instruction_after_demos and instruction != "":
-            query_str = self._single_source_str_with_instruction(source, instruction)
-        else:
-            query_str = self._single_source_str(source)
+        if instruction != "":
+            instruction = (
+                self.instruction_prefix + instruction + "\n\n"
+            )  # backward compatibility with ICLFormat
 
         demo_instances = []
         if self.demos_field is not None and self.demos_field in instance:
@@ -313,25 +291,17 @@ class WholeInputFormatter(StreamInstanceOperator):
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
 
+        demos_string = ""
         for demo_instance in demo_instances:
-            demo_str = (
-                self._single_source_str(demo_instance["source"])
-                + self.target_prefix
-                + demo_instance["target"]
-                + self.demo_separator
-            )
+            demo_str = self.demo_format.format(**demo_instance)
+            demos_string += demo_str
 
-            if self.overall_output_size_limit is not None:
-                if (
-                    len(output) + len(demo_str) + len(query_str) + len(system_closing)
-                    > self.overall_output_size_limit
-                ):
-                    continue
-
-            output += demo_str
-
-        output += query_str
-        output += system_closing
+        output = self.general_format.format(
+            system_prompt=system_prompt,
+            instruction=instruction,
+            demos=demos_string,
+            source=source,
+        )
         instance[self.to_field] = output
         return instance
 
