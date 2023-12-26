@@ -33,7 +33,7 @@ recipe = SequentialRecipe(
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],
-                "instruction": "classify the relationship between the two sentences from the choices.",
+                "instruction": "Classify the relationship between the two sentences from the choices.",
             }
         ),
         FormTask(
@@ -45,7 +45,7 @@ recipe = SequentialRecipe(
     ]
 )
 
-assert isinstance(recipe, Artifact), "Artifact must be an instance of Artifact"
+assert isinstance(recipe, Artifact), "recipe must be an instance of Artifact"
 add_to_catalog(recipe, "recipes.wnli", overwrite=True)
 dataset = load_dataset("recipes.wnli")
 print_dict(dataset["train"][0])
