@@ -2,11 +2,10 @@ from typing import List
 
 from .card import TaskCard
 from .dataclass import InternalField, OptionalField
-from .formats import ICLFormat
 from .instructions import Instruction
 from .logging import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, NullAugmentor, StreamRefiner
+from .operators import Augmentor, ModelInputFormatter, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
@@ -29,7 +28,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
-    format: ICLFormat = ICLFormat()
+    format: ModelInputFormatter = ModelInputFormatter()
 
     loader_limit: int = None
 

@@ -2,9 +2,9 @@ from abc import ABC
 from typing import Any, Dict, List, Optional
 
 from .dataclass import InternalField
-from .formats import Format, ICLFormat
 from .instructions import Instruction
 from .operator import Operator, SequentialOperator, StreamInstanceOperator
+from .operators import ModelInputFormatter
 from .templates import Template
 
 
@@ -48,27 +48,20 @@ class RenderInstruction(Renderer, StreamInstanceOperator):
 
 
 class RenderFormat(Renderer, StreamInstanceOperator):
-    format: Format
+    format: StreamInstanceOperator
     demos_field: str = None
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        demos_instances = instance.pop(self.demos_field, None)
-        if demos_instances is not None:
-            instance["source"] = self.format.format(
-                instance, demos_instances=demos_instances
-            )
-        else:
-            instance["source"] = self.format.format(instance)
-        return instance
+        return self.format.process(instance)
 
 
 class StandardRenderer(Renderer, SequentialOperator):
     template: Template
     instruction: Instruction = None
     demos_field: str = None
-    format: ICLFormat = None
+    format: ModelInputFormatter = None
 
     steps: List[Operator] = InternalField(default_factory=list)
 

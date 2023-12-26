@@ -2,6 +2,7 @@ import unittest
 
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
+from src.unitxt.operators import ModelInputFormatter
 from src.unitxt.renderers import (
     RenderDemonstrations,
     RenderFormat,
@@ -18,7 +19,15 @@ instruction = TextualInstruction(
     "classify user sentence by its sentiment to either positive, or negative."
 )
 format = ICLFormat(
-    input_prefix="User:", output_prefix="Agent:", instruction_prefix="Instruction:"
+    input_prefix="User:",
+    output_prefix="Agent:",
+    instruction_prefix="Instruction:",
+    target_prefix="",
+)
+formatting_operator = ModelInputFormatter(
+    instruction_prefix="Instruction:",
+    demo_format="User:{source}\nAgent:{target}\n\n",
+    model_input_format="{system_prompt}{instruction}{demos}User:{source}\nAgent:",
 )
 
 
@@ -144,7 +153,7 @@ class TestRenderers(unittest.TestCase):
         self.assertDictEqual(result, target)
 
     def test_render_format(self):
-        renderer = RenderFormat(format=format, demos_field="demos")
+        renderer = RenderFormat(format=formatting_operator, demos_field="demos")
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
@@ -166,15 +175,16 @@ class TestRenderers(unittest.TestCase):
         }
 
         result = renderer.process(instance)
+
         target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
         }
         self.assertDictEqual(result, target)
 
     def test_render_format_no_demos(self):
-        renderer = RenderFormat(format=format)
+        renderer = RenderFormat(format=formatting_operator)
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
@@ -192,14 +202,12 @@ class TestRenderers(unittest.TestCase):
         self.assertDictEqual(result, target)
 
     def test_render_format_with_prefix_and_suffix(self):
-        format_fix = ICLFormat(
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            target_prefix="",
-            prefix="[INST] <<SYS>>\n",
-            suffix="[/INST]",
+        formatting_operator_fix = ModelInputFormatter(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="[INST] <<SYS>>\n{instruction}{demos}User: {source}\nAgent: [/INST]",
         )
-        renderer = RenderFormat(format=format_fix, demos_field="demos")
+        renderer = RenderFormat(format=formatting_operator_fix, demos_field="demos")
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
@@ -226,13 +234,20 @@ class TestRenderers(unittest.TestCase):
             "target": "negative",
             "references": ["negative"],
         }
+
         self.assertDictEqual(result, target)
 
     def test_standard_renderer(self):
+        formatter = ModelInputFormatter(
+            instruction_prefix="Instruction:",
+            demo_format="User:{source}\nAgent: {target}\n\n",  # the exceptional space in iclformat
+            model_input_format="{system_prompt}{instruction}{demos}User:{source}\nAgent:",
+        )
+
         renderer = StandardRenderer(
             template=template,
             instruction=instruction,
-            format=format,
+            format=formatter,
             demos_field="demos",
         )
 
@@ -266,10 +281,15 @@ class TestRenderers(unittest.TestCase):
         )
         instruction = TextualInstruction("answer the question")
 
+        formatter = ModelInputFormatter(
+            demo_format="User:{source}\nAgent: {target}\n\n",  # the exceptional space in iclformat
+            model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
+        )
+
         renderer = StandardRenderer(
             template=template,
             instruction=instruction,
-            format=format,
+            format=formatter,
             demos_field="demos",
         )
 
@@ -295,7 +315,6 @@ class TestRenderers(unittest.TestCase):
             "inputs": {"text": "who was he?"},
             "outputs": {"answer": ["Dan", "Yossi"]},
         }
-
         check_operator(
             operator=renderer, inputs=[instance], targets=[target], tester=self
         )

@@ -231,16 +231,16 @@ class ModelInputFormatter(StreamInstanceOperator):
     WholeInputFormatter makes this (verbalization of the) input into a whole-input-to-the-model, by combining it
     with instruction, demos, and system_prompt, read from the input instance, through both formatting args
     formatting arguments.
+    Following the Renderers action, the formatted model input is fed into field "source" (overwriting the field)
+    Also following renderers, this operator pops fields "instruction" and "demos" from the input instance.
 
     Args:
-        to_field (str): the name of the field into which the formatted model's input is to be stored
         demos_field (str): the name of the field that contains the demos, being dicts with "source" and "target" keys
         system_prompt (str): the name of the field containing an introductory text and or xml tags
         demo_format (str): formatting string for a single demo, combining fields source and target
-        model_input_format (str) overall output format, combinig system_prompt, instruction, demos, and source
+        model_input_format (str) overall output format, combining system_prompt, instruction, demos, and source
     """
 
-    to_field: str
     demos_field: str = "demos"
     system_prompt: str = None
     demo_format: str = (
@@ -278,6 +278,10 @@ class ModelInputFormatter(StreamInstanceOperator):
         instruction = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="instruction"
         )
+        # pop from instance, as ICLFormat does
+        if "instruction" in instance:
+            instance.pop("instruction")
+
         if instruction != "":
             instruction = (
                 self.instruction_prefix + instruction + "\n\n"
@@ -290,6 +294,8 @@ class ModelInputFormatter(StreamInstanceOperator):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
+            # pop demos from instance, following ICLFormat
+            instance.pop(self.demos_field)
 
         demos_string = ""
         for demo_instance in demo_instances:
@@ -302,7 +308,7 @@ class ModelInputFormatter(StreamInstanceOperator):
             demos=demos_string,
             source=source,
         )
-        instance[self.to_field] = output
+        instance["source"] = output
         return instance
 
 
