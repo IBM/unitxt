@@ -123,6 +123,13 @@ class YesNoToInt(BaseFieldOperator):
         return "0"
 
 
+class ToYesOrNone(BaseFieldOperator):
+    def process(self, instance):
+        if instance == "yes":
+            return "yes"
+        return "none"
+
+
 class StringOrNotString(BaseFieldOperator):
     string: str
 
