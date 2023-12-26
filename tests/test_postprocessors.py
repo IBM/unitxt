@@ -76,6 +76,15 @@ class TestPostProcessors(unittest.TestCase):
             parsed = parser.process(input)
             self.assertEqual(target, parsed)
 
+    def test_stance_to_pro_con(self):
+        parser, _ = fetch_artifact("processors.stance_to_pro_con")
+        inputs = ["positive", "negative", "suggestion", "neutral", "nothing"]
+        targets = ["PRO", "CON", "CON", "none", "none"]
+
+        for input, target in zip(inputs, targets):
+            parsed = parser.process(input)
+            self.assertEqual(target, parsed)
+
     def test_to_span_label_pairs_surface_only(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
         inputs = [r"John\,\: Doe, New York", "None"]

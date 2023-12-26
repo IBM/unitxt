@@ -5,6 +5,7 @@ from src.unitxt.processors import (
     FirstCharacter,
     LowerCase,
     LowerCaseTillPunc,
+    StanceToProCon,
     StringOrNotString,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
@@ -44,6 +45,9 @@ add_to_catalog(operator8, "processors.yes_no_to_int", overwrite=True)
 
 operator9 = ToYesOrNone()
 add_to_catalog(operator9, "processors.to_yes_or_none", overwrite=True)
+
+operator10 = StanceToProCon()
+add_to_catalog(operator10, "processors.stance_to_pro_con", overwrite=True)
 
 parser = FirstCharacter()
 
