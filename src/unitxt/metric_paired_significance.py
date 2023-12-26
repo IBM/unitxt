@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 from itertools import combinations
@@ -39,7 +40,7 @@ def pval_inv(x):
     return rtn
 
 
-def spectal_palette(n):
+def spectral_palette(n):
     # return a list of tuples specifying n equally spaced colors in the Spectral colormap, used to code n levels
     n = int(n)
     assert n >= 1 and n <= 256
@@ -56,12 +57,17 @@ class PairedDifferenceTest:
     # output of signif_pair_diff will be a namedtuple in one of these formats
     PERMUTE_REPORT = namedtuple("DiffTest", " ".join(COMMON_REPORT_FIELDS))
     # additional fields for effect sizes available only if not permute
-    TTEST_REPORT = namedtuple("DiffTest", " ".join(COMMON_REPORT_FIELDS + ["effect_sizes", "effect_size_is_signif"]))
+    TTEST_REPORT = namedtuple("DiffTest", " ".join([*COMMON_REPORT_FIELDS, *["effect_sizes", "effect_size_is_signif"]]))
+    # for heatmap
+    HEATMAP_MATRICES = namedtuple("HeatmapMatrices", "recoded_values_arr, combined_results_arr_with_nan, combined_results combined_results_arr")
 
     def __init__(self, nmodels=2, alpha=0.05, model_names=None):
-        """Args:
-        nmodels: the number of models (samples) to be compared pairwise
-        alpha: statistical false positive rate confidence to be used in evaluating significance
+        """Initialize an object to be used to compare the same set of models across different datasets and metrics.
+
+        Args:
+            nmodels: the number of models (samples) to be compared pairwise
+            alpha: statistical false positive rate confidence to be used in evaluating significance
+            model_names: optional list of names for the models compared, of length nmodels; if None, will be called 'model 1', 'model 2', etc.
         """
         self.nmodels = max(2, int(nmodels))
         # desired false positive rate, criterion for pvalues
@@ -103,9 +109,8 @@ class PairedDifferenceTest:
             samples_list: a list of 1-D numpy arrays
 
         Returns:
-            boolean
+            boolean: True if all observed values are binary 0/1, otherwise False
         """
-        # return True/False if binary, and returns the binary values
         self._check_valid_samples(samples_list)
         uv = np.unique(np.vstack(samples_list))
         return np.all(np.isin(uv, self.binary_values))
@@ -142,6 +147,7 @@ class PairedDifferenceTest:
 
     def mcnemar_test(self, samples_list):
         """Perform McNemar test and return a p-value and effect size.
+
         Use approximation (exact=False) so that effect size can be calculated
 
         Args:
@@ -159,6 +165,7 @@ class PairedDifferenceTest:
         b, c = max(tbl[0,1], 0.5), max(tbl[1,0], 0.5)
         cohens_g = max(b/(b+c), c/(b+c)) - 0.5
         return mcnemar(table=tbl, exact=True).pvalue, cohens_g
+
 
     def iterate_pairs(self, samples_list=None):
         """Iterate over ordered combinations of samples or their indices (if samples_list is None).
@@ -191,7 +198,7 @@ class PairedDifferenceTest:
         assert alternative in ("greater", "less", "two-sided")
         if alternative != "two-sided":
             flds = ("greater", "descending") if alternative == "greater" else ("less", "ascending")
-            print("If 'alternative' is '{}', the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(*flds))
+            warnings.warn("If 'alternative' is '{}', the samples are expected to be sorted in {} order of ANTICIPATED (not OBSERVED) mean value".format(*flds), stacklevel=1)
         if self.nmodels == 2:
             # require more than 2 hypotheses (only if nmodels > 2) to be able to do a correction
             corrected = False
@@ -210,7 +217,7 @@ class PairedDifferenceTest:
             # note, regardless of the significance, the value of the paired expectation E(a_i - b_i) will be the same as the
             # difference in means, i.e. E(a) - E(b).
 
-            # pvalue is low (close to 0) if E(a_i - b_i) is significant (according to altnernative)
+            # pvalue is low (close to 0) if E(a_i - b_i) is significant (according to alternative)
             res = {}
             if permute:
                 pvalues = np.array([permutation_test(data=vec, statistic=self._permute_diff_statistic, alternative=alternative, permutation_type="samples", vectorized=False, random_state=random_state).pvalue
@@ -239,18 +246,18 @@ class PairedDifferenceTest:
 
         return self.PERMUTE_REPORT(*[res[kk] for kk in self.PERMUTE_REPORT._fields]) if permute else self.TTEST_REPORT(*[res[kk] for kk in self.TTEST_REPORT._fields])
 
-    def _is_valid_signif_report(self, test_res):
+    def _check_valid_signif_report(self, test_res):
         """Test if an instance of results from signif_pair_diff is a valid comparison to an object of class PairedDifferenceTest.
 
         Args:
             test_res: a namedtuple outputted from signif_pair_diff, from the same item
-
-        Returns:
-            boolean
         """
-        assert isinstance(test_res, self.PERMUTE_REPORT) or isinstance(test_res, self.TTEST_REPORT)
-        assert len(self.model_names) == len(test_res.model_names)
-        assert all([ii == jj for ii, jj in zip(self.model_names, test_res.model_names)]), "model_names lists must match"
+        try:
+            assert isinstance(test_res, self.PERMUTE_REPORT) or isinstance(test_res, self.TTEST_REPORT)
+            assert len(self.model_names) == len(test_res.model_names), "must have the same number of models"
+            assert all(ii == jj for ii, jj in zip(self.model_names, test_res.model_names)), "model_names lists must match"
+        except ValueError as e:
+            raise ValueError("test_res is incompatible with this PairedDifferenceTest object") from e
 
     def pvalue_lineplot(self, test_res):
         """A lineplot that shows pairs of compared models and arranges them along the x-axis by p-value.
@@ -261,11 +268,9 @@ class PairedDifferenceTest:
         Args:
             test_res: a namedtuple outputted from signif_pair_diff, from the same item
 
-        Returns:
-
         """
-        self._is_valid_signif_report(test_res)
-        pal = spectal_palette(n=self.nmodels)
+        self._check_valid_signif_report(test_res)
+        pal = spectral_palette(n=self.nmodels)
 
         level_order = np.argsort(test_res.sample_means).tolist()
         level_order = [level_order.index(ii) for ii in range(self.nmodels)]
@@ -317,14 +322,15 @@ class PairedDifferenceTest:
                 # if one-sided, the first row has a segment without an arrow
                 arrow_sym = "->" if ((test_res.alternative == "two-sided") or (ii == 1)) else "-"
                 plt.annotate(text="", xytext=(row["pvalue"], row["midpoint"]), xy=(row["pvalue"], row["ends"]),
-                             arrowprops=dict(arrowstyle=arrow_sym, shrinkA=0, shrinkB=0, color=row["color"], linewidth=linewidths[0] if row["is_signif"] else linewidths[1]))
+                             arrowprops={"arrowstyle": arrow_sym, "shrinkA": 0, "shrinkB": 0, "color": row["color"],
+                                         "linewidth": linewidths[0] if row["is_signif"] else linewidths[1]})
         g.set(xlim=xaxis_range, ylim=yaxis_range, title=title)
         g.axes.set_xticks(ticks=pval_trans(tick_vals), labels=tick_vals)
         g.axes.tick_params(right=True, left=True, labelright=True, labelleft=False)
 
         # label sample means
         for colpal, sm, mn in zip(pal, test_res.sample_means, self.model_names):
-            g.text(x=xaxis_range[0], y=sm, s=mn, fontdict=dict(color=colpal, horizontalalignment="right"))
+            g.text(x=xaxis_range[0], y=sm, s=mn, fontdict={"color": colpal, "horizontalalignment": "right"})
 
         color_legend = [Line2D([0], [0], color="red", label=lab, linewidth=lw) for lab, lw in zip(["significant", "not significant"], linewidths)]
         color_legend.append(Line2D([0], [0], color="black", label="threshold", linestyle="dashed"))
@@ -332,28 +338,28 @@ class PairedDifferenceTest:
         plt.tight_layout()
         plt.show()
 
-    def _is_valid_signif_report_list(self, test_results_list: list):
+    def _check_valid_signif_report_list(self, test_results_list: list):
         """Test whether a list of results of signif_pair_diff outputs, on different metrics, can be compared.
 
         Used before running heatmap
 
         Args:
             test_results_list: List of objects that are results of signif_pair_diff, each on a different metric
-
-        Returns:
-
         """
-        assert isinstance(test_results_list, list)
-        # verify same models are being compared, compare to the base
-        for vv in test_results_list:
-            self._is_valid_signif_report(vv)
+        try:
+            assert isinstance(test_results_list, list)
+            # verify same models are being compared, compare to the base
+            for vv in test_results_list:
+                self._check_valid_signif_report(vv)
 
-        # all have same correction
-        assert len(set([vv.corrected for vv in test_results_list])) == 1, "must all have same setting of 'corrected'"
-        # all have same alternative
-        assert len(set([vv.alternative for vv in test_results_list])) == 1, "must all have same setting of 'alternative"
-        # all different metric_names
-        assert len(set([vv.metric_name for vv in test_results_list])) == len(test_results_list), "all metric_name must be different"
+            # all have same correction
+            assert len({vv.corrected for vv in test_results_list}) == 1, "must all have same setting of 'corrected'"
+            # all have same alternative
+            assert len({vv.alternative for vv in test_results_list}) == 1, "must all have same setting of 'alternative"
+            # all different metric_names
+            assert len({vv.metric_name for vv in test_results_list}) == len(test_results_list), "all metric_name must be different"
+        except ValueError as e:
+            raise ValueError("test_results_list must be a list of signif_pair_diff ouputs on the same models for different metric_names") from e
 
     def multiple_metrics_significance_heatmap(self, test_results_list: list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False,
                                               optimize_color=True):
@@ -370,19 +376,89 @@ class PairedDifferenceTest:
         Returns:
 
         """
-        self._is_valid_signif_report_list(test_results_list)
+        self._check_valid_signif_report_list(test_results_list)
         alternative = test_results_list[0].alternative
         optimize_color = False if alternative != "two-sided" else optimize_color
 
-        # combine in a matrix
+        # the heatmap matrices
+        hm = self._form_heatmap_matrices(test_results_list, sort_rows, use_pvalues, hide_insignificant_rows)
+        if optimize_color:
+            hm = self._optimize_heatmap_color_comparisons(hm, use_pvalues)
+        ncomparisons, nmetrics = hm.recoded_values_arr.shape
 
+        # relabel the index by the comparisons
         alt_dict = {"two-sided": {"symbol": "vs", "name": "two-sided"},
                 "less": {"symbol": "<", "name": "lower-tailed"},
                 "greater": {"symbol": ">", "name": "upper-tailed"}}
         symb_format = "{} " + alt_dict[alternative]["symbol"] + " {}"
+
+        hm.combined_results.index = [symb_format.format(idx[0], idx[1]) for idx in hm.combined_results.index]
+
+        fig, ax = plt.subplots(1, 1)
+        # this coloring uses the recoding, ensure color range is symmetric
+        vmx = self.alpha if use_pvalues else np.nanmax(np.abs(hm.combined_results_arr_with_nan))
+        img = ax.matshow(hm.recoded_values_arr, vmin=-1 * vmx, vmax=vmx, cmap="bwr_r", aspect="auto")
+
+        # colorbar
+        cbar = fig.colorbar(img)
+
+        if use_pvalues:
+            # set 5 uniform ticks, which will be from -alpha, with 0 in middle, to alpha
+            # do this, rather than setting ticks manually, to ensure that regardless of the choice of alpha, the labeling of ticks is accurate
+            cbar.ax.locator_params(nbins=5)
+            cbar_ticks = cbar.ax.get_yticklabels()
+            # sometimes cbar get_ticks gives ticks outside of the range even though they don't appear on the plot
+            cbar_ticks = [tt for tt in cbar_ticks if -1 * vmx <= tt.get_position()[1] <= vmx]
+            mpt = np.floor(0.5*len(cbar_ticks)).astype(int)
+            # take the upper end of the ticks (including a midpoint right in the middle, since take floor)
+            rgt = cbar_ticks[mpt:]
+            cbar_tick_pos = np.array([self.alpha - tt.get_position()[1] for tt in rgt])
+            cbar_tick_labels = [tt.get_text() for tt in rgt]
+            # now reflect
+            cbar_tick_labels = cbar_tick_labels + cbar_tick_labels[::-1]
+            # positions are the n
+            cbar_tick_pos = np.concatenate((-1 * cbar_tick_pos, cbar_tick_pos[::-1]))
+            cbar.ax.set_yticks(ticks=cbar_tick_pos, labels=cbar_tick_labels)
+
+        # for effect size, values can be negative or positive, so pad positives with space
+        numfmt = "{:.3f}" if use_pvalues else "{: .3f}"
+
+        # label values using the actual p-values not the recoding
+        for (j, i), val in np.ndenumerate(hm.combined_results_arr_with_nan):
+            if not np.isnan(val):
+                # use white if background would be too dark
+                ax.text(i, j, numfmt.format(val), ha="center", va="center", fontsize="large",
+                        color=("white" if val < 0.5 * vmx else "black") if use_pvalues else ("white" if np.abs(val) > 0.5 * vmx else "black"))
+
+        # label the color bar so it is clear what the blue and red colors meant
+        yrg = [-0.5, ncomparisons-0.5]
+        dy = np.diff(yrg)
+        cbar_y_pos = [yrg[0] + 0.2 * dy, yrg[1] - 0.2 * dy]
+        cbar_x_pos = (nmetrics - 0.5) * 1.02
+        cbar_annot = ["1st > 2nd", "1st < 2nd"]
+        for yy, txt in zip(cbar_y_pos, cbar_annot):
+            ax.annotate(text=txt, xy=(nmetrics - 1, yy), xytext=(cbar_x_pos, yy), rotation=90, va="center")
+
+        ax.set_xticks(ticks=np.arange(hm.combined_results_arr.shape[1]), labels=hm.combined_results.columns)
+        ax.set_yticks(ticks=np.arange(ncomparisons), labels=hm.combined_results.index)
+        ax.set_ylabel("models compared")
+        title = "{} model comparison significant {}".format(alt_dict[alternative]["name"], "p-values" if use_pvalues else "effect size")
+        if hide_insignificant_rows:
+            title += "\ncomparisons with no significant differences are omitted"
+        plt.title(title)
+
+        plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
+                  rowLabels=list(range(1, self.nmodels+1)),
+                  colLabels=["model name"], loc="bottom", cellLoc="left", colLoc="left", edges="open")
+        plt.subplots_adjust()#bottom=0.2)
+        plt.show()
+
+
+    def _form_heatmap_matrices(self, test_results_list, sort_rows=True, use_pvalues=True, hide_insignificant_rows=False):
+        """Internal function for use in multiple_metrics_significance_heatmap to form the matrices that are displayed."""
         # use 1-indexing for names rather than 0
         combined_results = pd.DataFrame({vv.metric_name: vv.pvalues if use_pvalues else vv.effect_sizes for vv in test_results_list},
-                                        index = [(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
+                                        index=[(a + 1, b + 1) for (a, b) in self.iterate_pairs()])
         # the original p-values only, in array form
         combined_results_arr = combined_results.to_numpy()
 
@@ -422,106 +498,53 @@ class PairedDifferenceTest:
             combined_results_arr_with_nan = combined_results_arr_with_nan[row_not_all_nan, :]
             combined_results = combined_results.loc[row_not_all_nan]
 
-        ncomparisons, nmetrics = recoded_values_arr.shape
+        return self.HEATMAP_MATRICES(recoded_values_arr, combined_results_arr_with_nan, combined_results, combined_results_arr)
 
-        def optimize_color_comparisons(recoded_values_arr, combined_results_arr_with_nan, combined_results):
-            from scipy.optimize import minimize
+    def _optimize_heatmap_color_comparisons(self, hm, use_pvalues):
+        """Internal function for use in multiple_metrics_significance_heatmap to optimize the color choice to so most cells have the same color (red/blue)."""
+        assert isinstance(hm, self.HEATMAP_MATRICES)
 
-            row_not_all_nan = np.any(a=np.logical_not(np.isnan(combined_results_arr_with_nan)), axis=1)
-            recoded_sign = np.sign(recoded_values_arr[row_not_all_nan, :])
-            ncomparisons, nmetrics = combined_results_arr_with_nan.shape
-            ncomparisons_not_nan = row_not_all_nan.sum()
-            # default is not to change
-            change_comparison_order = np.zeros(ncomparisons).astype(bool)
+        from scipy.optimize import minimize
 
-            if ncomparisons_not_nan > 0:
-                recoded_sign = recoded_values_arr[row_not_all_nan, :]
-                # sign corresponds to colors; sum of signs is the difference between the number of blue and red cells in the row.
-                # a higher gap means there is more potentially to exploit if we change the order, which will flip the colors
-                # take sum of change indicator (0 -> -0.5, 1 -> 0.5) to make opposite sign
-                # sum across rows, then take absolute value (so red/blue are treated the same), multiply by -1 then minimize to maximize the gap
-                def diff_each_colors(x):
-                    return -1 * np.abs(sum([(ind - 0.5) * np.nansum(rvals) for ind, rvals in zip(x, recoded_sign)]))
+        recoded_values_arr, combined_results_arr_with_nan, combined_results, combined_results_arr = deepcopy(hm)
 
-                ores = minimize(fun=diff_each_colors, x0=np.zeros(ncomparisons_not_nan), bounds=tuple([(0, 1) for rr in range(ncomparisons_not_nan)]))
-                change_comparison_order[row_not_all_nan] = np.round(ores.x).astype(bool)
+        row_not_all_nan = np.any(a=np.logical_not(np.isnan(combined_results_arr_with_nan)), axis=1)
+        recoded_sign = np.sign(recoded_values_arr[row_not_all_nan, :])
+        ncomparisons, nmetrics = combined_results_arr_with_nan.shape
+        ncomparisons_not_nan = row_not_all_nan.sum()
+        # default is not to change
+        change_comparison_order = np.zeros(ncomparisons).astype(bool)
 
-                # reorder index if changed
-                combined_results.index = [(idx[1], idx[0]) if chg else idx for idx, chg in zip(combined_results.index, change_comparison_order)]
-                # change sign of recoded values
-                recoded_values_arr = np.vstack([-1 * row if chg else row for row, chg in zip(recoded_values_arr, change_comparison_order)])
+        if ncomparisons_not_nan > 0:
+            recoded_sign = recoded_values_arr[row_not_all_nan, :]
 
-                # if use effect size, need to change the sign of the printed values as well
-                if not use_pvalues:
-                    combined_results_arr_with_nan = np.vstack([-1 * row if chg else row for row, chg in zip(combined_results_arr_with_nan, change_comparison_order)])
-                    combined_results = combined_results.multiply(other=[-1 if chg else 1 for chg in change_comparison_order], axis=0)
+            # sign corresponds to colors; sum of signs is the difference between the number of blue and red cells in the row.
+            # a higher gap means there is more potentially to exploit if we change the order, which will flip the colors
+            # take sum of change indicator (0 -> -0.5, 1 -> 0.5) to make opposite sign
+            # sum across rows, then take absolute value (so red/blue are treated the same), multiply by -1 then minimize to maximize the gap
+            def diff_each_colors(x):
+                return -1 * np.abs(sum([(ind - 0.5) * np.nansum(rvals) for ind, rvals in zip(x, recoded_sign)]))
 
-            return recoded_values_arr, combined_results_arr_with_nan, combined_results
+            ores = minimize(fun=diff_each_colors, x0=np.zeros(ncomparisons_not_nan),
+                            bounds=tuple([(0, 1) for rr in range(ncomparisons_not_nan)]))
+            change_comparison_order[row_not_all_nan] = np.round(ores.x).astype(bool)
 
-        if optimize_color:
-            recoded_values_arr, combined_results_arr_with_nan, combined_results = optimize_color_comparisons(recoded_values_arr, combined_results_arr_with_nan, combined_results)
+            # reorder index if changed
+            combined_results.index = [(idx[1], idx[0]) if chg else idx for idx, chg in
+                                      zip(combined_results.index, change_comparison_order)]
+            # change sign of recoded values
+            recoded_values_arr = np.vstack(
+                [-1 * row if chg else row for row, chg in zip(recoded_values_arr, change_comparison_order)])
 
-        # relabel the index by the comparisons
-        combined_results.index = [symb_format.format(idx[0], idx[1]) for idx in combined_results.index]
+            # if use effect size, need to change the sign of the printed values as well
+            if not use_pvalues:
+                combined_results_arr_with_nan = np.vstack([-1 * row if chg else row for row, chg in
+                                                           zip(combined_results_arr_with_nan, change_comparison_order)])
+                combined_results = combined_results.multiply(
+                    other=[-1 if chg else 1 for chg in change_comparison_order], axis=0)
 
-        fig, ax = plt.subplots(1, 1)
-        # this coloring uses the recoding, ensure color range is symmetric
-        vmx = self.alpha if use_pvalues else np.nanmax(np.abs(combined_results_arr_with_nan))
-        img = ax.matshow(recoded_values_arr, vmin=-1 * vmx, vmax=vmx, cmap="bwr_r", aspect="auto")
-
-        # colorbar
-        cbar = fig.colorbar(img)
-
-        if use_pvalues:
-            # set 5 uniform ticks, which will be from -alpha, with 0 in middle, to alpha
-            # do this, rather than setting ticks manually, to ensure that regardless of the choice of alpha, the labeling of ticks is accurate
-            cbar.ax.locator_params(nbins=5)
-            cbar_ticks = cbar.ax.get_yticklabels()
-            # sometimes cbar get_ticks gives ticks outside of the range even though they don't appear on the plot
-            cbar_ticks = [tt for tt in cbar_ticks if -1 * vmx <= tt.get_position()[1] <= vmx]
-            mpt = np.floor(0.5*len(cbar_ticks)).astype(int)
-            # take the upper end of the ticks (including a midpoint right in the middle, since take floor)
-            rgt = cbar_ticks[mpt:]
-            cbar_tick_pos = np.array([self.alpha - tt.get_position()[1] for tt in rgt])
-            cbar_tick_labels = [tt.get_text() for tt in rgt]
-            # now reflect
-            cbar_tick_labels = cbar_tick_labels + cbar_tick_labels[::-1]
-            # positions are the n
-            cbar_tick_pos = np.concatenate((-1 * cbar_tick_pos, cbar_tick_pos[::-1]))
-            cbar.ax.set_yticks(ticks=cbar_tick_pos, labels=cbar_tick_labels)
-
-        # for effect size, values can be negative or positive, so pad positives with space
-        numfmt = "{:.3f}" if use_pvalues else "{: .3f}"
-
-        # label values using the actual p-values not the recoding
-        for (j, i), val in np.ndenumerate(combined_results_arr_with_nan):
-            if not np.isnan(val):
-                # use white if background would be too dark
-                ax.text(i, j, numfmt.format(val), ha="center", va="center", fontsize="large",
-                        color=("white" if val < 0.5 * vmx else "black") if use_pvalues else ("white" if np.abs(val) > 0.5 * vmx else "black"))
-
-        # label the color bar so it is clear what the blue and red colors meant
-        yrg = [-0.5, ncomparisons-0.5]
-        dy = np.diff(yrg)
-        cbar_y_pos = [yrg[0] + 0.2 * dy, yrg[1] - 0.2 * dy]
-        cbar_x_pos = (nmetrics - 0.5) * 1.02
-        cbar_annot = ["1st > 2nd", "1st < 2nd"]
-        for yy, txt in zip(cbar_y_pos, cbar_annot):
-            ax.annotate(text=txt, xy=(nmetrics - 1, yy), xytext=(cbar_x_pos, yy), rotation=90, va="center")
-
-        ax.set_xticks(ticks=np.arange(combined_results_arr.shape[1]), labels=combined_results.columns)
-        ax.set_yticks(ticks=np.arange(ncomparisons), labels=combined_results.index)
-        ax.set_ylabel("models compared")
-        title = "{} model comparison significant {}".format(alt_dict[alternative]["name"], "p-values" if use_pvalues else "effect size")
-        if hide_insignificant_rows:
-            title += "\ncomparisons with no significant differences are omitted"
-        plt.title(title)
-
-        plt.table(cellText=[[vv] for vv in test_results_list[0].model_names],
-                  rowLabels=list(range(1, self.nmodels+1)),
-                  colLabels=["model name"], loc="bottom", cellLoc="left", colLoc="left", edges="open")
-        plt.subplots_adjust()#bottom=0.2)
-        plt.show()
+        # only combined_results (the dataframe, with its index), combined_results_arr_with_nan
+        return self.HEATMAP_MATRICES(recoded_values_arr, combined_results_arr_with_nan, combined_results, combined_results_arr)
 
     def metric_significant_pairs_graph(self, test_res, node_color_levels=None, use_pvalues=True, model_name_split_char=None, weight_edges=False):
         """Compare models across a given metric; show a graph where nodes correspond to models, and edges are drawn between pairs that have a significant difference result.
@@ -534,17 +557,47 @@ class PairedDifferenceTest:
             model_name_split_char: string used to split node names on when labeling
             weight_edges: boolean, if True make less significant differences be shown by thicker edge lines
         """
-        self._is_valid_signif_report(test_res)
+        self._check_valid_signif_report(test_res)
         nnodes = len(self.model_names)
         if node_color_levels is not None:
             assert len(node_color_levels) == nnodes
 
-        # random seed so positions results are the same across runs
-        sd = 5
-        np.random.seed(sd)
-        edges = {}
         criterion = "pvalue" if use_pvalues else "effect_size"
-        for pair, is_signif, signif in zip(self.iterate_pairs(), getattr(test_res, f"{criterion}_is_signif"), getattr(test_res, f"{criterion}s")):
+
+        # form the graph and set the edges and node positions
+        dg = self._form_connected_graph(test_res, criterion, model_name_split_char, weight_edges)
+        cleg = self._graph_color_legend(dg, node_color_levels)
+
+        # plot the figure
+        fig, ax = plt.subplots(1, 1)
+        nx.draw_networkx(dg.graph, with_labels=True, pos=dg.positions, ax=ax, node_color=cleg.node_color_vec,
+                         arrows=test_res.alternative != "two-sided", edge_color="gray", width=dg.edge_widths)
+        ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
+        ax.set_ylabel(f"mean model {test_res.metric_name}")
+        # add some space to x limits so label names don't hit the plotting panel edges
+        xlims = ax.get_xlim()
+        # retrieve plotted positions, one for each node (model)
+        x_coords = [cc[0] for cc in dg.positions.values()]
+        x_margin = (max(x_coords) - min(x_coords)) * 0.25
+        ax.set_xlim(xlims[0] - x_margin, xlims[1] + x_margin)
+        direction = {"two-sided": "A vs B", "less": "A < B", "greater": "A > B"}
+        title = "{}: edges connect models with insignificant {} {}".format(test_res.metric_name,
+                                                                                 direction[test_res.alternative],
+                                                                                 criterion.replace("_", " "))
+        ax.set_title(title + "\nthicker lines mean a less significant difference" if weight_edges else title)
+
+        if cleg.color_legend is not None:
+            plt.legend(handles=cleg.color_legend, bbox_to_anchor=(1.01, 1), loc="upper left")
+            plt.tight_layout()
+        plt.show()
+
+
+    def _make_graph(self, test_res, criterion):
+        """Internal function to metric_significant_pairs_graph to form the connected graph nodes and edges."""
+        # add nodes and edges
+        edges = {}
+        for pair, is_signif, signif in zip(self.iterate_pairs(), getattr(test_res, f"{criterion}_is_signif"),
+                                           getattr(test_res, f"{criterion}s")):
             if not is_signif:
                 if pair[0] not in edges:
                     edges[pair[0]] = {"to": [], "weight": []}
@@ -552,7 +605,9 @@ class PairedDifferenceTest:
                 edges[pair[0]]["to"].append(pair[1])
                 edges[pair[0]]["weight"].append(np.abs(signif))
 
-        # form the graph
+        # random seed so positions results are the same across runs
+        sd = 5
+        np.random.seed(sd)
         g = nx.DiGraph()
         for node, others in edges.items():
             if len(others["to"]):
@@ -561,26 +616,73 @@ class PairedDifferenceTest:
             else:
                 g.add_node(node)
 
+        nnodes = len(self.model_names)
         for node in range(nnodes):
             # add lone nodes that aren't connected to any others
             if node not in g.nodes:
                 g.add_node(node)
 
+        # change vertical position only so aligns with the height of the sample mean (the average metric value)
+        pos = nx.spring_layout(g, seed=sd, k=10 / np.sqrt(g.order()))
+        pos = {ii: np.array([pos[ii][0], sm]) for ii, sm in enumerate(test_res.sample_means)}
+        return g, pos
+
+    def _form_connected_graph(self, test_res, criterion, model_name_split_char=None, weight_edges=False):
+        """Internal function to metric_significant_pairs_graph to form the connected graph displayed."""
+        g, pos = self._make_graph(test_res, criterion)
+        nnodes = len(self.model_names)
+
+        # and relabel the nodes with the model names
+        model_names = deepcopy(self.model_names)
+        if model_name_split_char is not None:
+            model_names = [mn.replace(model_name_split_char, "\n") for mn in model_names]
+
+        nodeidx2name = dict(zip(range(nnodes), model_names))
+        # rename the keys
+        pos = {mn: pos[ii] for ii, mn in nodeidx2name.items()}
+        g = nx.relabel_nodes(g, mapping=nodeidx2name)
+        # widths
+        if weight_edges is False:
+            # the default width
+            edge_widths = [1.0] * nnodes
+        else:
+            # range of edge widths to draw
+            width_range = [0.5, 4]
+            signif_ranges = {"pvalue": [self.alpha, 1], "effect_size": [0.8, 5]}
+
+            # translate the significance values into weights
+            weights = np.clip(a=[g[i][j]["weight"] for i, j in g.edges()], a_min=signif_ranges[criterion][0],
+                              a_max=signif_ranges[criterion][1])
+            edge_widths = width_range[0] + (weights - signif_ranges[criterion][0]) * np.diff(width_range) / np.diff(
+                signif_ranges[criterion])
+
+        DIRECTED_GRAPH = namedtuple("DirectedGraph", "graph positions edge_widths node_mapping")
+        return DIRECTED_GRAPH(g, pos, edge_widths, nodeidx2name)
+
+
+    def _graph_color_legend(self, dg, node_color_levels=None):
+        """Internal function to create a color legend and determine the node colors."""
+        nnodes = len(self.model_names)
+        # reverse the order
+        node2index = {node: ii for ii, node in dg.node_mapping.items()}
+
         if node_color_levels is not None:
+            # unique number of categories
             nlevels = len(set(node_color_levels))
             if nlevels > 1:
-                pal = spectal_palette(n=nlevels)
+                pal = spectral_palette(n=nlevels)
                 # reorder levels by node order
                 level2node = defaultdict(list)
+                # means value val in color_node_levels is associated with the ith models
                 for ii, val in enumerate(node_color_levels):
                     level2node[val].append(ii)
-                colors = [[] for ii in range(nnodes)]
+                colors = [[] for _ in range(nnodes)]
                 for ii, val in enumerate(level2node):
                     for node in level2node[val]:
                         # take the ith color
                         colors[node] = pal[ii]
-                # now reorder color vec by node order
-                node_color_levels_vec = [colors[node] for node in g.nodes]
+                # now reorder color vec by the order in which the nodes are stored internally in the graph (not necessarily in numberic order)
+                node_color_levels_vec = [colors[node2index[node]] for node in dg.graph.nodes]
 
                 color_legend = [Line2D([0], [0], marker="o", color="w", label=lab,
                                        markerfacecolor=pal[ii], markersize=12) for ii, lab in enumerate(level2node)]
@@ -592,49 +694,5 @@ class PairedDifferenceTest:
             node_color_levels_vec = ["lightblue"] * nnodes
             color_legend = None
 
-        direction = {"two-sided": "A vs B", "less": "A < B", "greater": "A > B"}
-        pos = nx.spring_layout(g, seed=sd, k=10 / np.sqrt(g.order()))
-        pos = {ii: np.array([pos[ii][0], sm]) for ii, sm in enumerate(test_res.sample_means)}
-
-        # widths
-        if weight_edges is False:
-            # the default width
-            edge_widths = [1.0] * nnodes
-        else:
-            # range of edge widths to draw
-            width_range = [0.5, 4]
-            signif_ranges = {"pvalue": [self.alpha, 1], "effect_size": [0.8, 5]}
-
-            # translate the significance values into weights
-            weights = np.clip(a=[g[i][j]["weight"] for i, j in g.edges()], a_min=signif_ranges[criterion][0], a_max=signif_ranges[criterion][1])
-            edge_widths = width_range[0] + (weights - signif_ranges[criterion][0]) * np.diff(width_range) / np.diff(signif_ranges[criterion])
-
-        model_names = deepcopy(self.model_names)
-        if model_name_split_char is not None:
-            model_names = [mn.replace(model_name_split_char, "\n") for mn in model_names]
-        # rename the keys
-        pos = {mn: pos[ii] for ii, mn in enumerate(model_names)}
-
-        g = nx.relabel_nodes(g, mapping={ii: name for ii, name in enumerate(model_names)})
-        # retrieve plotted positions, one for each node (model)
-
-        x_coords = [cc[0] for cc in pos.values()]
-        x_margin = (max(x_coords) - min(x_coords)) * 0.25
-
-        fig, ax = plt.subplots(1, 1)
-        nx.draw_networkx(g, with_labels=True, pos=pos, ax=ax, node_color=node_color_levels_vec,
-                         arrows=test_res.alternative != "two-sided", edge_color="gray", width=edge_widths)
-        ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
-        ax.set_ylabel(f"mean model {test_res.metric_name}")
-        # add some space to x limits so label names don't
-        xlims = ax.get_xlim()
-        ax.set_xlim(xlims[0] - x_margin, xlims[1] + x_margin)
-        title = "{}: edges connect models with insignificant {} {}".format(test_res.metric_name,
-                                                                                 direction[test_res.alternative],
-                                                                                 criterion.replace("_", " "))
-        ax.set_title(title + "\nthicker lines mean a less significant difference" if weight_edges else title)
-
-        if color_legend is not None:
-            plt.legend(handles=color_legend, bbox_to_anchor=(1.01, 1), loc="upper left")
-            plt.tight_layout()
-        plt.show()
+        GRAPH_COLOR_LEGEND = namedtuple("GraphLegend", "color_legend node_color_vec")
+        return GRAPH_COLOR_LEGEND(color_legend, node_color_levels_vec)
