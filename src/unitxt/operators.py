@@ -215,7 +215,7 @@ class FlattenInstances(StreamInstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class WholeInputFormatter(StreamInstanceOperator):
+class ModelInputFormatter(StreamInstanceOperator):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
     WholeInputFormatter expects its input instance to have been processed by a Template StreamInstanceOperator
@@ -237,16 +237,16 @@ class WholeInputFormatter(StreamInstanceOperator):
         demos_field (str): the name of the field that contains the demos, being dicts with "source" and "target" keys
         system_prompt (str): the name of the field containing an introductory text and or xml tags
         demo_format (str): formatting string for a single demo, combining fields source and target
-        general_format (str) overall output format, combinig system_prompt, instruction, demos, and source
+        model_input_format (str) overall output format, combinig system_prompt, instruction, demos, and source
     """
 
     to_field: str
-    demos_field: str = None
+    demos_field: str = "demos"
     system_prompt: str = None
     demo_format: str = (
         "{source}\n{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
     )
-    general_format: str = (
+    model_input_format: str = (
         "<SYS>{system_prompt}</SYS>\n{instruction}\n{demos}\n{source}\n"
     )
     instruction_prefix: str = ""  # potential prepend for non "" instruction. necessary for backward compatibility with iclformat
@@ -296,7 +296,7 @@ class WholeInputFormatter(StreamInstanceOperator):
             demo_str = self.demo_format.format(**demo_instance)
             demos_string += demo_str
 
-        output = self.general_format.format(
+        output = self.model_input_format.format(
             system_prompt=system_prompt,
             instruction=instruction,
             demos=demos_string,
