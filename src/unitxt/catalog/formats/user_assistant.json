@@ -1,5 +1,5 @@
 {
     "type": "model_input_formatter",
     "demo_format": "<|user|>\n{source}\n<|assistant|>\n {target}\n\n",
-    "model_input_format": "{system_prompt}{instruction}\n{demos}\n<|user|>\n{source}\n<|assistant|>\n"
+    "model_input_format": "{instruction}\n{demos}\n<|user|>\n{source}\n<|assistant|>\n"
 }

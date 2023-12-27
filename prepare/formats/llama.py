@@ -3,7 +3,7 @@ from src.unitxt.operators import ModelInputFormatter
 
 format = ModelInputFormatter(
     demo_format="{source}\n{target}\n\n",
-    model_input_format="[INST] {system_prompt}{instruction}\n{demos}\n{source}\n[/INST]",
+    model_input_format="[INST] {instruction}\n{demos}\n{source}\n[/INST]",
 )
 
 add_to_catalog(format, "formats.llama", overwrite=True)

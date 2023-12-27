@@ -224,29 +224,45 @@ class ModelInputFormatter(StreamInstanceOperator):
     field "instruction".
     Demos are assumed to be included as well, in a field whose name is specified by argument 'demos_field'. That
     field is assumed to contain a list of dicts, each containing keys: "source" and "target" of a single demo.
-    And finally, system_prompt is also assumed to be included
-    in the instance, in a field whose name is specified by argument 'system_prompt'.
     The value in field "source" of the input instance describes (verbalizes) original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     WholeInputFormatter makes this (verbalization of the) input into a whole-input-to-the-model, by combining it
-    with instruction, demos, and system_prompt, read from the input instance, through both formatting args
+    with instruction and demos, read from the input instance, through both formatting args
     formatting arguments.
     Following the Renderers action, the formatted model input is fed into field "source" (overwriting the field)
     Also following renderers, this operator pops fields "instruction" and "demos" from the input instance.
 
     Args:
-        demos_field (str): the name of the field that contains the demos, being dicts with "source" and "target" keys
-        system_prompt (str): the name of the field containing an introductory text and or xml tags
+        demos_field (str): the name of the field that contains the demos, being a list of dicts, each with "source" and "target" keys
         demo_format (str): formatting string for a single demo, combining fields source and target
-        model_input_format (str) overall output format, combining system_prompt, instruction, demos, and source
+        model_input_format (str) overall output format, combining instruction, demos, and source
+
+    Example:
+        when input instance:
+        {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+            "demos": [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
+        }
+        is process-ed by
+        model_input_formatter = ModelInputFormatter(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
+        )
+        the resulting instance is:
+        {
+            "target": "2",
+            "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+        }
     """
 
     demos_field: str = "demos"
-    system_prompt: str = None
     demo_format: str = (
         "{source}\n{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
     )
-    model_input_format: str = "{system_prompt}{instruction}{demos}{source}\n"
+    model_input_format: str = "{instruction}{demos}{source}\n"
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -266,10 +282,6 @@ class ModelInputFormatter(StreamInstanceOperator):
         ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
         source = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="source"
-        )
-
-        system_prompt = self._retrieve_field_and_assert_not_none(
-            instance=instance, field_name=self.system_prompt
         )
 
         instruction = self._retrieve_field_and_assert_not_none(
@@ -298,7 +310,6 @@ class ModelInputFormatter(StreamInstanceOperator):
             demos_string += demo_str
 
         output = self.model_input_format.format(
-            system_prompt=system_prompt,
             instruction=instruction,
             demos=demos_string,
             source=source,
