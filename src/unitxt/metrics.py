@@ -1447,23 +1447,24 @@ class GroupedInstanceMetric(GlobalMetric):
     for the global score and in the confidence interval
     """
 
-
     from statistics import mean
+
     metric = Accuracy
     group_score_func = mean
     group_score_name = "mean"
     main_score = "mean"
 
-    def compute(self,
+    def compute(
+        self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_inputs: List[Dict]) -> dict:
-
+        additional_inputs: List[Dict],
+    ) -> dict:
         from collections import defaultdict
 
         group_to_predictions_and_references = defaultdict(lambda: [[], [], []])
         for reference, pred, inputs_dict in zip(
-                references, predictions, additional_inputs
+            references, predictions, additional_inputs
         ):
             # allow any number of columns to be used as the identifier
             keyname = tuple(inputs_dict.values())
@@ -1472,22 +1473,38 @@ class GroupedInstanceMetric(GlobalMetric):
             group_to_predictions_and_references[keyname][2].append(inputs_dict)
 
         # calculate metric score for each instance by group
-        group_to_scores = {group: [self.metric().compute(prediction=pred, references=refs, additional_inputs=inputs)["score"] for pred, refs, inputs in zip(*instances)]
-                           for group, instances in group_to_predictions_and_references.items()}
+        group_to_scores = {
+            group: [
+                self.metric().compute(
+                    prediction=pred, references=refs, additional_inputs=inputs
+                )["score"]
+                for pred, refs, inputs in zip(*instances)
+            ]
+            for group, instances in group_to_predictions_and_references.items()
+        }
         # now apply function by grop on the instance scores, and discard any NaNs
-        group_total_scores = [self._group_score(scores) for scores in group_to_scores.values()]
-        group_total_scores = [score for score in group_total_scores if not np.isnan(score)]
-        return {self.main_score: mean(group_total_scores) if len(group_total_scores) > 0 else np.nan}
-
+        group_total_scores = [
+            self._group_score(scores) for scores in group_to_scores.values()
+        ]
+        group_total_scores = [
+            score for score in group_total_scores if not np.isnan(score)
+        ]
+        return {
+            self.main_score: mean(group_total_scores)
+            if len(group_total_scores) > 0
+            else np.nan
+        }
 
     @classmethod
     def _group_score(cls, x):
         return cls.group_score_func(x)
 
+
 class MeanGroupedAccuracy(GroupedInstanceMetric):
     metric = Accuracy
     main_score = "accuracy"
     group_score_func = mean
+
 
 class MeanGroupedStringContainment(GroupedInstanceMetric):
     metric = StringContainment
@@ -1510,12 +1527,18 @@ def performance_drop_rate(instance_scores: List):
 
     """
     assert isinstance(instance_scores, list)
-    return np.nan if (len(instance_scores) < 2 or instance_scores[0] == 0) else 1 - mean(instance_scores[1:]) / instance_scores[0]
+    return (
+        np.nan
+        if (len(instance_scores) < 2 or instance_scores[0] == 0)
+        else 1 - mean(instance_scores[1:]) / instance_scores[0]
+    )
+
 
 class MeanGroupedAccuracyPDR(GroupedInstanceMetric):
     metric = Accuracy
     main_score = "accuracy_pdr"
     group_score_func = performance_drop_rate
+
 
 class MeanGroupedStringContainmentPDR(GroupedInstanceMetric):
     metric = StringContainment

@@ -25,16 +25,49 @@ from src.unitxt.test_utils.metrics import apply_metric
 logger = get_logger()
 
 # values of inputs that are common to GroupInstanceMetric tests
-GROUPED_INSTANCE_PREDICTIONS = ["A B", "BC D", "C", "123", "BCD",
-                                10, "  BD", "AB", "I am a dog", "AB C",
-                                "AB 1", "GMA", 0.123, "BD", "abc"]
+GROUPED_INSTANCE_PREDICTIONS = [
+    "A B",
+    "BC D",
+    "C",
+    "123",
+    "BCD",
+    10,
+    "  BD",
+    "AB",
+    "I am a dog",
+    "AB C",
+    "AB 1",
+    "GMA",
+    0.123,
+    "BD",
+    "abc",
+]
 
-GROUPED_INSTANCE_REFERENCES = [["B", "AB", "A"], ["A", "BC D", "BC DF"], ["c", " C"], [13, 23, 234], ["  ", " BD", " BDA"],
-                               [1, 10, 100], ["A", "B", "BD"], ["ABC", "ab", "BC"], ["I am a person", "I AM A DOG", "ABC"], ["AB CD", "AB", "ab"],
-                               ["AB 1", "AB1"], [" GMA 123", "GMA"], ["123", 0.12], ["BDE", "BCE", "bdefs"], [" abcdefg", "AB", "abcd"]]
+GROUPED_INSTANCE_REFERENCES = [
+    ["B", "AB", "A"],
+    ["A", "BC D", "BC DF"],
+    ["c", " C"],
+    [13, 23, 234],
+    ["  ", " BD", " BDA"],
+    [1, 10, 100],
+    ["A", "B", "BD"],
+    ["ABC", "ab", "BC"],
+    ["I am a person", "I AM A DOG", "ABC"],
+    ["AB CD", "AB", "ab"],
+    ["AB 1", "AB1"],
+    [" GMA 123", "GMA"],
+    ["123", 0.12],
+    ["BDE", "BCE", "bdefs"],
+    [" abcdefg", "AB", "abcd"],
+]
 
 # possibly multi-column group identifier
-GROUPED_INSTANCE_ADDL_INPUTS = [{"group": "grp1", "id": 0}] * 5 + [{"group": "grp1", "id": 1}] * 5 + [{"group": "grp2", "id": 0}] * 4 + [{"group": "grp2", "id": 1}] * 1
+GROUPED_INSTANCE_ADDL_INPUTS = (
+    [{"group": "grp1", "id": 0}] * 5
+    + [{"group": "grp1", "id": 1}] * 5
+    + [{"group": "grp2", "id": 0}] * 4
+    + [{"group": "grp2", "id": 1}] * 1
+)
 
 
 class TestMetrics(unittest.TestCase):
@@ -454,38 +487,43 @@ class TestMetrics(unittest.TestCase):
         metric = MeanGroupedAccuracy()
         global_target = 0.225
         outputs = apply_metric(
-            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
 
     def test_mean_grouped_accuracy_pdr(self):
         metric = MeanGroupedAccuracyPDR()
         global_target = 0.8333333333333334
         outputs = apply_metric(
-            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
 
     def test_mean_grouped_string_containment_accuracy(self):
         metric = MeanGroupedStringContainment()
         global_target = 0.4875
         outputs = apply_metric(
-            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
 
     def test_mean_grouped_string_containment_accuracy_pdr(self):
         metric = MeanGroupedStringContainmentPDR()
         global_target = 0.4444444444444445
         outputs = apply_metric(
-            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
@@ -549,6 +587,7 @@ class TestConfidenceIntervals(unittest.TestCase):
     def test_grouped_instance_metric_confidence_interval(self):
         """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
         import numpy as np
+
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedAccuracy(),
             expected_ci_low=0.0,
@@ -560,7 +599,6 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_low=0.17863495754478376,
             expected_ci_high=0.7509403489048032,
         )
-
 
         # these target values will need to be changed once the confidence interval checks if all values are not NaN
         self._test_grouped_instance_confidence_interval(
@@ -575,9 +613,6 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_low=0.07298667127241985,
             expected_ci_high=0.9855049494143078,
         )
-
-
-
 
     def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
         """Test the calculation of confidence intervals for a given metric."""
@@ -612,13 +647,17 @@ class TestConfidenceIntervals(unittest.TestCase):
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )
 
-    def _test_grouped_instance_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
+    def _test_grouped_instance_confidence_interval(
+        self, metric, expected_ci_low, expected_ci_high
+    ):
         """Test the calculation of confidence intervals for a given metric."""
         import numpy as np
 
         outputs = apply_metric(
-            metric=metric, predictions=GROUPED_INSTANCE_PREDICTIONS, references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
 
         expected_global_result = {
