@@ -18,7 +18,7 @@ instruction = TextualInstruction(
 )
 model_input_formatter = ModelInputFormatter(
     demo_format="User:{source}\nAgent:{target}\n\n",
-    model_input_format="{system_prompt}Instruction:{instruction}{demos}User:{source}\nAgent:",
+    model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
 )
 
 
@@ -227,7 +227,7 @@ class TestRenderers(unittest.TestCase):
     def test_standard_renderer(self):
         formatter = ModelInputFormatter(
             demo_format="User:{source}\nAgent: {target}\n\n",  # the exceptional space in iclformat
-            model_input_format="{system_prompt}Instruction:{instruction}{demos}User:{source}\nAgent:",
+            model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
         )
 
         renderer = StandardRenderer(

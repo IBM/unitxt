@@ -3,7 +3,7 @@ from src.unitxt.operators import ModelInputFormatter
 
 format = ModelInputFormatter(
     demo_format="User: {source}\nAgent:  {target}\n\n",
-    model_input_format="{system_prompt}{instruction}\n{demos}\nUser:{source}\nAgent:",
+    model_input_format="{instruction}\n{demos}\nUser:{source}\nAgent:",
 )
 
 add_to_catalog(format, "formats.user_agent", overwrite=True)

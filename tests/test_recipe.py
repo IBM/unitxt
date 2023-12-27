@@ -22,7 +22,7 @@ class TestRecipes(unittest.TestCase):
             ),
             format=ModelInputFormatter(
                 demo_format="User:{source}\nAgent: {target}\n\n",
-                model_input_format="{system_prompt}{instruction}{demos}User:{source}\nAgent:",
+                model_input_format="{instruction}{demos}User:{source}\nAgent:",
             ),
         )
         stream = recipe()

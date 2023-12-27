@@ -307,7 +307,7 @@ class TestOperators(unittest.TestCase):
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{system_prompt}{demos}User: {instruction}{source}\nAgent: ",
+            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
         )
 
         targets = [
@@ -422,7 +422,7 @@ class TestOperators(unittest.TestCase):
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{system_prompt}Instruction: {instruction}{demos}User: {source}\nAgent: ",
+            model_input_format="Instruction: {instruction}{demos}User: {source}\nAgent: ",
         )
 
         targets = [
@@ -508,7 +508,7 @@ class TestOperators(unittest.TestCase):
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{system_prompt}{instruction}{demos}User: {source}\nAgent: ",
+            model_input_format="{instruction}{demos}User: {source}\nAgent: ",
         )
 
         check_operator(
