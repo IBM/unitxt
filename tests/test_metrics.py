@@ -548,7 +548,6 @@ class TestConfidenceIntervals(unittest.TestCase):
 
     def test_grouped_instance_metric_confidence_interval(self):
         """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
-
         import numpy as np
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedAccuracy(),
