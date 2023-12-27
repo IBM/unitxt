@@ -5,9 +5,15 @@ from .dataclass import InternalField, OptionalField
 from .instructions import Instruction
 from .logging import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, ModelInputFormatter, NullAugmentor, StreamRefiner
+from .operators import (
+    AddFields,
+    Augmentor,
+    ModelInputFormatter,
+    NullAugmentor,
+    StreamRefiner,
+)
 from .recipe import Recipe
-from .renderers import StandardRenderer
+from .renderers import RenderDemonstrations
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template
@@ -152,19 +158,26 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.steps.append(self.test_refiner)
 
-        render = StandardRenderer(
-            instruction=self.instruction,
-            template=self.template,
-            format=self.format,
-            demos_field=self.demos_field,
+        # the 4 constituents of StandardRenderer:
+        self.steps.append(self.template)
+        self.steps.append(
+            RenderDemonstrations(template=self.template, demos_field=self.demos_field)
         )
-
-        self.steps.append(render)
+        self.steps.append(
+            AddFields(
+                fields={
+                    "instruction": self.instruction()
+                    if self.instruction is not None
+                    else ""
+                }
+            )
+        )
+        self.steps.append(self.format)
 
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postprocessors = render.get_postprocessors()
+        postprocessors = self.template.get_postprocessors()
 
         self.steps.append(
             ToUnitxtGroup(

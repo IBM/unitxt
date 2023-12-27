@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from .dataclass import InternalField
 from .instructions import Instruction
 from .operator import Operator, SequentialOperator, StreamInstanceOperator
-from .operators import ModelInputFormatter
+from .operators import AddFields, ModelInputFormatter
 from .templates import Template
 
 
@@ -34,19 +34,6 @@ class RenderDemonstrations(Renderer, StreamInstanceOperator):
         return instance
 
 
-class RenderInstruction(Renderer, StreamInstanceOperator):
-    instruction: Instruction
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.instruction is not None:
-            instance["instruction"] = self.instruction()
-        else:
-            instance["instruction"] = ""
-        return instance
-
-
 class StandardRenderer(Renderer, SequentialOperator):
     template: Template
     instruction: Instruction = None
@@ -59,7 +46,13 @@ class StandardRenderer(Renderer, SequentialOperator):
         self.steps = [
             self.template,
             RenderDemonstrations(template=self.template, demos_field=self.demos_field),
-            RenderInstruction(instruction=self.instruction),
+            AddFields(
+                fields={
+                    "instruction": self.instruction()
+                    if self.instruction is not None
+                    else ""
+                }
+            ),
             self.format,
         ]
 
