@@ -1,10 +1,9 @@
 import unittest
 
 from src.unitxt.instructions import TextualInstruction
-from src.unitxt.operators import ModelInputFormatter
+from src.unitxt.operators import AddFields, ModelInputFormatter
 from src.unitxt.renderers import (
     RenderDemonstrations,
-    RenderInstruction,
     StandardRenderer,
 )
 from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
@@ -134,10 +133,12 @@ class TestRenderers(unittest.TestCase):
         self.assertDictEqual(result, target)
 
     def test_render_instruction(self):
-        renderer = RenderInstruction(instruction=instruction)
+        instruction_adder = AddFields(
+            fields={"instruction": instruction() if instruction is not None else ""}
+        )
 
         instance = {}
-        result = renderer.process(instance)
+        result = instruction_adder.process(instance)
         target = {
             "instruction": "classify user sentence by its sentiment to either positive, or negative."
         }
