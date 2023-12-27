@@ -47,16 +47,6 @@ class RenderInstruction(Renderer, StreamInstanceOperator):
         return instance
 
 
-class RenderFormat(Renderer, StreamInstanceOperator):
-    format: StreamInstanceOperator
-    demos_field: str = None
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        return self.format.process(instance)
-
-
 class StandardRenderer(Renderer, SequentialOperator):
     template: Template
     instruction: Instruction = None
@@ -70,7 +60,7 @@ class StandardRenderer(Renderer, SequentialOperator):
             self.template,
             RenderDemonstrations(template=self.template, demos_field=self.demos_field),
             RenderInstruction(instruction=self.instruction),
-            RenderFormat(format=self.format, demos_field=self.demos_field),
+            self.format,
         ]
 
     def get_postprocessors(self):
