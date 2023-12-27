@@ -246,10 +246,7 @@ class ModelInputFormatter(StreamInstanceOperator):
     demo_format: str = (
         "{source}\n{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
     )
-    model_input_format: str = (
-        "<SYS>{system_prompt}</SYS>\n{instruction}\n{demos}\n{source}\n"
-    )
-    instruction_prefix: str = ""  # potential prepend for non "" instruction. necessary for backward compatibility with iclformat
+    model_input_format: str = "{system_prompt}{instruction}{demos}{source}\n"
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -283,9 +280,7 @@ class ModelInputFormatter(StreamInstanceOperator):
             instance.pop("instruction")
 
         if instruction != "":
-            instruction = (
-                self.instruction_prefix + instruction + "\n\n"
-            )  # backward compatibility with ICLFormat
+            instruction = instruction + "\n\n"
 
         demo_instances = []
         if self.demos_field is not None and self.demos_field in instance:
