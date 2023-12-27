@@ -1,5 +1,5 @@
 {
-    "type": "icl_format",
-    "input_prefix": "User: ",
-    "output_prefix": "Agent: "
+    "type": "model_input_formatter",
+    "demo_format": "User:{source}\nAgent: {target}\n\n",
+    "model_input_format": "{system_prompt}{instruction}\n{demos}\nUser:{source}\nAgent:"
 }

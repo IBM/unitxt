@@ -1,4 +1,5 @@
 {
-    "type": "icl_format",
-    "input_output_separator": ""
+    "type": "model_input_formatter",
+    "demo_format": "{source}{target}\n\n",
+    "model_input_format": "{system_prompt}{instruction}\n{demos}\n{source}",
 }

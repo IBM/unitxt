@@ -1,6 +1,5 @@
 {
-    "type": "icl_format",
-    "target_prefix": "",
-    "prefix": "[INST] ",
-    "suffix": "[/INST]"
+    "type": "model_input_formatter",
+    "demo_format": "{source}\n{target}\n\n",
+    "model_input_format": "[INST] {system_prompt}{instruction}\n{demos}\n{source}\n[/INST]",
 }

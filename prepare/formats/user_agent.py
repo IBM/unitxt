@@ -1,9 +1,9 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import ICLFormat
+from src.unitxt.operators import ModelInputFormatter
 
-format = ICLFormat(
-    input_prefix="User: ",
-    output_prefix="Agent: ",
+format = ModelInputFormatter(
+    demo_format="User: {source}\nAgent:  {target}\n\n",
+    model_input_format="{system_prompt}{instruction}\n{demos}\nUser:{source}\nAgent:",
 )
 
 add_to_catalog(format, "formats.user_agent", overwrite=True)

@@ -4,8 +4,8 @@ import unittest
 
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
+from src.unitxt.operators import ModelInputFormatter
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
@@ -20,9 +20,9 @@ class TestRecipes(unittest.TestCase):
                 input_format="{premise}",
                 output_format="{label}",
             ),
-            format=ICLFormat(
-                input_prefix="User:",
-                output_prefix="Agent:",
+            format=ModelInputFormatter(
+                demo_format="User:{source}\nAgent: {target}\n\n",
+                model_input_format="{system_prompt}{instruction}{demos}User:{source}\nAgent:",
             ),
         )
         stream = recipe()
