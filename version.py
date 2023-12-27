@@ -1,1 +1,1 @@
-src / unitxt / version.py
+src/unitxt/version.py
