@@ -3,6 +3,7 @@ import re
 import unittest
 
 from src.unitxt import dataset_file
+from src.unitxt.artifact import fetch_artifact
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
@@ -334,3 +335,45 @@ class TestRecipes(unittest.TestCase):
         iterator = iter(d["train"])
         next(iterator)
         print_dict(next(iterator))
+
+    def test_standard_recipe_with_a_sampler(self):
+        """Check that the sampler is re-initialized before processing a recipe.
+
+        To do so, save the random generator within the sampler before activating the recipe,
+        and compare it to the random generator within the sampler after the revipe was called.
+        The two generators should be different objects, indicating that the sampler was properly
+        re-initialized during the preparation of the recipe.
+        """
+        recipe = StandardRecipeWithIndexes(
+            card="cards.sst2",
+            template_card_index=0,
+            max_train_instances=0,
+            max_test_instances=2,
+            num_demos=1,
+            demos_pool_size=10,
+        )
+        sampler = recipe.card.sampler
+
+        random_generator1 = sampler.random_generator
+        recipe()
+        random_generator2 = sampler.random_generator
+
+        self.assertNotEqual(random_generator1, random_generator2)
+
+    def test_standard_recipe_with_a_missing_sampler(self):
+        """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
+        task_card, _ = fetch_artifact("cards.sst2")
+        task_card.sampler = None
+        with self.assertRaises(ValueError) as e:
+            StandardRecipeWithIndexes(
+                card=task_card,
+                template_card_index=0,
+                max_train_instances=0,
+                max_test_instances=2,
+                num_demos=1,
+                demos_pool_size=10,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
+        )

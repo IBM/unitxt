@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .operator import StreamInstanceOperator
-from .random_utils import get_random
+from .random_utils import new_random_generator
 from .type_utils import isoftype
 
 
@@ -360,7 +360,8 @@ class MultiReferenceTemplate(InputOutputTemplate):
             )
 
         if self.random_reference:
-            target = get_random().choice(references)
+            random_generator = new_random_generator(outputs)
+            target = random_generator.choice(references)
         else:
             target = references[0]
 
