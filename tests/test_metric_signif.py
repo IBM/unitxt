@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from src.unitxt.metric_paired_significance import PairedDifferenceTest
-from src.unitxt.random_utils import get_sub_default_random_generator
+from src.unitxt.random_utils import new_random_generator
 
 np.set_printoptions(precision=10)
 
@@ -31,11 +31,11 @@ def rmvnorm(mu, cmat, rng, n):
     # see https://rinterested.github.io/statistics/multivariate_normal_draws.html
     assert len(mu) == cmat.shape[0]
     d = cmat.shape[0]
-    # generate n * d independent standard normal dras
+    # generate n * d independent standard normal draws
     z = np.vstack([rnorm(mu=0, sigma=1, rng=rng, n=n) for _ in range(d)])
     # cholesky decomposition (LL^T = cmat)
     lmat = np.linalg.cholesky(cmat)
-    # add mu row-wise
+    # add mu row-wise, elementwise to each column
     return mu + np.transpose(np.matmul(lmat, z))
 
 
@@ -55,7 +55,7 @@ class TestMetricSignifDifference(unittest.TestCase):
         cmat.fill(0.7)
         np.fill_diagonal(cmat, 1)
 
-        rng = get_sub_default_random_generator(sub_seed=self.rseed)
+        rng = new_random_generator(sub_seed=self.rseed)
         # different mean for every observation, and are correlated due to pairing
         mu = rnorm(mu=5, sigma=1, rng=rng, n=self.nobs)
 
@@ -84,7 +84,7 @@ class TestMetricSignifDifference(unittest.TestCase):
     def gen_binary_data(self, same_distr=True, nmodels=None):
         # generate only binary data
         nmodels = self.nmodels if nmodels is None else max(2, int(nmodels))
-        rng = get_sub_default_random_generator(sub_seed=self.rseed)
+        rng = new_random_generator(sub_seed=self.rseed)
         if same_distr:
             # generate random probabilities for each observation and then binary
             # do this so observation pairs are more correlated than otherwise if used the same p for all
