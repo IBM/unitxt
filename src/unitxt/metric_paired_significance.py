@@ -3,12 +3,8 @@ from collections import defaultdict, namedtuple
 from copy import deepcopy
 from itertools import combinations
 
-import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from matplotlib.lines import Line2D
 from scipy.stats import gmean, norm, permutation_test, ttest_rel
 from statsmodels.stats.contingency_tables import mcnemar
 from statsmodels.stats.multitest import multipletests
@@ -52,6 +48,8 @@ def pval_inv(x):
 
 
 def spectral_palette(n):
+    import seaborn as sns
+
     # return a list of tuples specifying n equally spaced colors in the Spectral colormap, used to code n levels
     n = int(n)
     assert n >= 1 and n <= 256
@@ -421,6 +419,10 @@ class PairedDifferenceTest:
                 np.max(df["ends"]) - 0.5 * np.abs(np.diff(df["ends"])), 2
             )
 
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from matplotlib.lines import Line2D
+
         fig, ax = plt.subplots(1, 1, figsize=(9, 5))
         g = sns.scatterplot(
             data=pd.DataFrame(
@@ -573,6 +575,8 @@ class PairedDifferenceTest:
         hm.combined_results.index = [
             symb_format.format(idx[0], idx[1]) for idx in hm.combined_results.index
         ]
+
+        import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(1, 1)
         # this coloring uses the recoding, ensure color range is symmetric
@@ -870,6 +874,9 @@ class PairedDifferenceTest:
         cleg = self._graph_color_legend(dg, node_color_levels)
 
         # plot the figure
+        import matplotlib.pyplot as plt
+        import networkx as nx
+
         fig, ax = plt.subplots(1, 1)
         nx.draw_networkx(
             dg.graph,
@@ -925,6 +932,8 @@ class PairedDifferenceTest:
                 edges[pair[0]]["weight"].append(np.abs(signif))
 
         # random seed so positions results are the same across runs
+        import networkx as nx
+
         sd = 5
         np.random.seed(sd)
         g = nx.DiGraph()
@@ -953,6 +962,8 @@ class PairedDifferenceTest:
         self, test_res, criterion, model_name_split_char=None, weight_edges=False
     ):
         """Internal function to metric_significant_pairs_graph to form the connected graph displayed."""
+        import networkx as nx
+
         g, pos = self._make_graph(test_res, criterion)
         nnodes = len(self.model_names)
 
@@ -1004,8 +1015,8 @@ class PairedDifferenceTest:
                 pal = spectral_palette(n=nlevels)
                 # reorder levels by node order
                 level2node = defaultdict(list)
-                # means value val in color_node_levels is associated with the ith models
-                for ii, val in enumerate(node_color_levels):
+                # means value val in color_node_levels is associated with the ith models, but first sort in alphabetical order
+                for ii, val in enumerate(sorted(node_color_levels)):
                     level2node[val].append(ii)
                 colors = [[] for _ in range(nnodes)]
                 for ii, val in enumerate(level2node):
@@ -1016,6 +1027,8 @@ class PairedDifferenceTest:
                 node_color_levels_vec = [
                     colors[node2index[node]] for node in dg.graph.nodes
                 ]
+
+                from matplotlib.lines import Line2D
 
                 color_legend = [
                     Line2D(
