@@ -373,7 +373,7 @@ class TestMetricSignifDifference(unittest.TestCase):
 
     def test_signif_mcnemar_binary(self):
         # use Mcnemar's test, not t-test, only on two model samples
-        tester = PairedDifferenceTest(nmodels=2)
+        tester = PairedDifferenceTest(nmodels=2, model_names=["llama", "flant5"])
 
         # random generation of paired binary data
         binary_same = self.gen_binary_data(same_distr=True, nmodels=tester.nmodels)
