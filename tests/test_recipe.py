@@ -197,6 +197,32 @@ class TestRecipes(unittest.TestCase):
             str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'"
         )
 
+        with self.assertRaises(Exception) as cm:
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.xwinogrande.pt",
+                num_demos=3,
+                demos_pool_size=0,
+            )
+
+        self.assertEqual(
+            str(cm.exception),
+            "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.",
+        )
+
+        with self.assertRaises(Exception) as cm:
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.xwinogrande.pt",
+                num_demos=30,
+                demos_pool_size=10,
+            )
+
+        self.assertEqual(
+            str(cm.exception),
+            "demos_pool_size must be bigger than num_demos (30), Got demos_pool_size=10",
+        )
+
     def test_standard_recipe_with_no_test(self):
         recipe = StandardRecipeWithIndexes(
             template="templates.key_val",
