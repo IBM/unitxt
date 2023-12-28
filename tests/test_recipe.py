@@ -21,8 +21,8 @@ class TestRecipes(unittest.TestCase):
                 output_format="{label}",
             ),
             format=ModelInputFormatter(
-                demo_format="User:{source}\nAgent: {target}\n\n",
-                model_input_format="{instruction}{demos}User:{source}\nAgent:",
+                demo_format="User:{source}\nAgent:{target}\n\n",
+                model_input_format="{instruction}\n\n{demos}User:{source}\nAgent:",
             ),
         )
         stream = recipe()
