@@ -1,0 +1,56 @@
+=================
+Tasks Taxonomy
+=================
+
+Tasks taxonomy allows easy navigation throughout the different tasks. The taxonomy is inspired by `paperswithcode <https://paperswithcode.com>`_.
+
+
+Text classification
+-------
+* Multi-class classification
+
+  * Intent classification
+
+  * Sentiment analysis
+
+* Mutli-label classification
+
+  * Emotion classification
+
+
+Question Answering
+-------
+* Open-Ended Question Answering
+
+* Multiple Choice Question Answering (MCQA)
+
+
+Machine Translation
+-------
+
+
+Text Summarization
+-------
+* Document summarization
+
+* Dialog summarization
+
+
+Text Generation
+-------
+
+
+Named Entity Recognition (NER)
+-------
+
+
+Natural Language Inference
+-------
+
+
+Reading Comprehension
+-------
+* Boolq
+
+Information Retrieval
+-------
