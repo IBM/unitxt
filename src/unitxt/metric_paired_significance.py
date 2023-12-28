@@ -91,18 +91,26 @@ class PairedDifferenceTest:
         self.binary_values = np.array([0, 1])
 
         if nmodels is None:
-            if model_names is None:
-                raise ValueError("at least one of nmodels or model_names must be specified")
-            else:
-                assert isinstance(model_names, list) and len(model_names) >= 2, "model_names must be a list of length >= 2"
+            if model_names is not None:
+                assert (
+                    isinstance(model_names, list) and len(model_names) >= 2
+                ), "model_names must be a list of length >= 2"
                 self.model_names = [str(nm) for nm in model_names]
                 self.nmodels = len(self.model_names)
+            else:
+                raise ValueError(
+                    "at least one of nmodels or model_names must be specified"
+                )
         else:
             # nmodels is not None
-            assert isinstance(nmodels, int) and nmodels >= 2, "nmodels must be an integer >= 2"
+            assert (
+                isinstance(nmodels, int) and nmodels >= 2
+            ), "nmodels must be an integer >= 2"
             self.nmodels = max(2, int(nmodels))
             if model_names is not None:
-                assert len(model_names) == self.nmodels, "length of model_names (={}) must equal nmodels (={})".format(len(model_names), self.nmodels)
+                assert (
+                    len(model_names) == self.nmodels
+                ), f"length of model_names (={len(model_names)}) must equal nmodels (={self.nmodels})"
                 self.model_names = [str(nm) for nm in model_names]
             else:
                 # create default model names
