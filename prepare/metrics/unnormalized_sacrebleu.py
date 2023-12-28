@@ -3,7 +3,11 @@ from src.unitxt.metrics import HuggingfaceMetric
 from src.unitxt.test_utils.metrics import test_metric
 
 metric = HuggingfaceMetric(
-    hf_metric_name="sacrebleu", hf_main_score="score", main_score="sacrebleu", scale=1.0
+    hf_metric_name="sacrebleu",
+    hf_main_score="score",
+    main_score="sacrebleu",
+    scale=1.0,
+    hf_compute_args={"tokenize": "ja-mecab"},
 )
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
