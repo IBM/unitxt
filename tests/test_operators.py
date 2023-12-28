@@ -258,12 +258,6 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def refresh_inputs_for_test_model_input_formatter(self, inputs, instruction, demos):
-        for instance in inputs:
-            instance["instruction"] = instruction
-            instance["demos"] = demos
-            instance["source"] = instance["source1"]
-
     def test_model_input_formatter(self):
         demo_instances = [
             {"source": "1+2", "target": "3"},
@@ -339,55 +333,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # instruction and demos were poped out, and source overwritten, bring demos back in,
-        # refresh source, but make instruction "" for the next test
-        self.refresh_inputs_for_test_model_input_formatter(
-            inputs=inputs, instruction="", demos=demo_instances
-        )
-
-        # test with instruction = "":
-        model_input_formatter = ModelInputFormatter(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
-        )
-
-        targets_no_instruction = [
-            {
-                "source1": "1+1",
-                "target": "2",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
-            },
-            {
-                "source1": "3+2",
-                "target": "5",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
-            },
-            {
-                "source1": "7-4",
-                "target": "3",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
-            },
-            {
-                "source1": "12-3",
-                "target": "9",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
-            },
-        ]
-
-        check_operator(
-            operator=model_input_formatter,
-            inputs=inputs,
-            targets=targets_no_instruction,
-            tester=self,
-        )
-
         # now imitate instruction before demos.
-        # first, install back fields "instruction" and "demos" in the input instances, and refresh source
-        self.refresh_inputs_for_test_model_input_formatter(
-            inputs=inputs, instruction=instruction, demos=demo_instances
-        )
-
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
@@ -424,10 +370,14 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # test instruction before demos, and with instruction = "",
-        # refresh source, but make instruction ""
-        self.refresh_inputs_for_test_model_input_formatter(
-            inputs=inputs, instruction="", demos=demo_instances
+        # test with instruction = "":
+        for instance in inputs:
+            instance.pop("instruction")
+
+        model_input_formatter = ModelInputFormatter(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
         )
 
         targets_no_instruction = [
@@ -452,12 +402,6 @@ class TestOperators(unittest.TestCase):
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
-
-        model_input_formatter = ModelInputFormatter(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{instruction}{demos}User: {source}\nAgent: ",
-        )
 
         check_operator(
             operator=model_input_formatter,
@@ -766,6 +710,24 @@ class TestOperators(unittest.TestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        # check the case no operators are specified in field operators_field. default_operators is none by default
+        check_operator_exception(
+            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="d"),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in ApplyOperatorsField due to: No operators found in field 'd', and no default operators provided.",
+        )
+        # check default operators:
+        check_operator(
+            operator=ApplyOperatorsField(
+                inputs_fields=["a"],
+                operators_field="d",
+                default_operators="processors.to_string",
+            ),
+            inputs=[{"a": 111, "b": 2}, {"a": 222, "b": 3}],
+            targets=[{"a": "111", "b": 2}, {"a": "222", "b": 3}],
             tester=self,
         )
 
