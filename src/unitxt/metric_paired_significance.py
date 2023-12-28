@@ -78,26 +78,35 @@ class PairedDifferenceTest:
         "recoded_values_arr, combined_results_arr_with_nan, combined_results combined_results_arr",
     )
 
-    def __init__(self, nmodels=2, alpha=0.05, model_names=None):
+    def __init__(self, nmodels=None, alpha=0.05, model_names=None):
         """Initialize an object to be used to compare the same set of models across different datasets and metrics.
 
         Args:
-            nmodels: the number of models (samples) to be compared pairwise
+            nmodels: the number of models (samples) to be compared pairwise, must be integer >= 2
             alpha: statistical false positive rate confidence to be used in evaluating significance
             model_names: optional list of names for the models compared, of length nmodels; if None, will be called 'model 1', 'model 2', etc.
         """
-        self.nmodels = max(2, int(nmodels))
-        # desired false positive rate, criterion for pvalues
+        # desired false positive rate, criterion for p-values
         self.alpha = float(np.clip(alpha, a_min=1e-10, a_max=0.5))
         self.binary_values = np.array([0, 1])
-        if model_names is None:
-            self.model_names = [f"model {ii}" for ii in range(1, self.nmodels + 1)]
+
+        if nmodels is None:
+            if model_names is None:
+                raise ValueError("at least one of nmodels or model_names must be specified")
+            else:
+                assert isinstance(model_names, list) and len(model_names) >= 2, "model_names must be a list of length >= 2"
+                self.model_names = [str(nm) for nm in model_names]
+                self.nmodels = len(self.model_names)
         else:
-            assert len(model_names) == self.nmodels
-            assert (
-                len(set(model_names)) == self.nmodels
-            ), "elements of model_names must be unique"
-            self.model_names = model_names
+            # nmodels is not None
+            assert isinstance(nmodels, int) and nmodels >= 2, "nmodels must be an integer >= 2"
+            self.nmodels = max(2, int(nmodels))
+            if model_names is not None:
+                assert len(model_names) == self.nmodels, "length of model_names (={}) must equal nmodels (={})".format(len(model_names), self.nmodels)
+                self.model_names = [str(nm) for nm in model_names]
+            else:
+                # create default model names
+                self.model_names = [f"model {ii}" for ii in range(1, self.nmodels + 1)]
 
     @staticmethod
     def _permute_diff_statistic(lx, ly):
@@ -335,7 +344,7 @@ class PairedDifferenceTest:
             assert isinstance(test_res, self.PERMUTE_REPORT) or isinstance(
                 test_res, self.TTEST_REPORT
             )
-            assert len(self.model_names) == len(
+            assert self.nmodels == len(
                 test_res.model_names
             ), "must have the same number of models"
             assert all(
@@ -861,9 +870,8 @@ class PairedDifferenceTest:
             weight_edges: boolean, if True make less significant differences be shown by thicker edge lines
         """
         self._check_valid_signif_report(test_res)
-        nnodes = len(self.model_names)
         if node_color_levels is not None:
-            assert len(node_color_levels) == nnodes
+            assert len(node_color_levels) == self.nmodels
 
         criterion = "pvalue" if use_pvalues else "effect_size"
 
@@ -944,8 +952,7 @@ class PairedDifferenceTest:
             else:
                 g.add_node(node)
 
-        nnodes = len(self.model_names)
-        for node in range(nnodes):
+        for node in range(self.nmodels):
             # add lone nodes that aren't connected to any others
             if node not in g.nodes:
                 g.add_node(node)
@@ -965,7 +972,6 @@ class PairedDifferenceTest:
         import networkx as nx
 
         g, pos = self._make_graph(test_res, criterion)
-        nnodes = len(self.model_names)
 
         # and relabel the nodes with the model names
         model_names = deepcopy(self.model_names)
@@ -974,14 +980,15 @@ class PairedDifferenceTest:
                 mn.replace(model_name_split_char, "\n") for mn in model_names
             ]
 
-        nodeidx2name = dict(zip(range(nnodes), model_names))
+        # nodes correspond to models
+        nodeidx2name = dict(zip(range(self.nmodels), model_names))
         # rename the keys
         pos = {mn: pos[ii] for ii, mn in nodeidx2name.items()}
         g = nx.relabel_nodes(g, mapping=nodeidx2name)
         # widths
         if weight_edges is False:
             # the default width
-            edge_widths = [1.0] * nnodes
+            edge_widths = [1.0] * self.nmodels
         else:
             # range of edge widths to draw
             width_range = [0.5, 4]
@@ -1004,8 +1011,7 @@ class PairedDifferenceTest:
 
     def _graph_color_legend(self, dg, node_color_levels=None):
         """Internal function to create a color legend and determine the node colors."""
-        nnodes = len(self.model_names)
-        # reverse the order
+        # reverse the key-value mapping
         node2index = {node: ii for ii, node in dg.node_mapping.items()}
 
         if node_color_levels is not None:
@@ -1018,7 +1024,7 @@ class PairedDifferenceTest:
                 # means value val in color_node_levels is associated with the ith models, but first sort in alphabetical order
                 for ii, val in enumerate(sorted(node_color_levels)):
                     level2node[val].append(ii)
-                colors = [[] for _ in range(nnodes)]
+                colors = [[] for _ in range(self.nmodels)]
                 for ii, val in enumerate(level2node):
                     for node in level2node[val]:
                         # take the ith color
@@ -1044,10 +1050,10 @@ class PairedDifferenceTest:
                 ]
             else:
                 # default same color for all
-                node_color_levels_vec = ["lightblue"] * nnodes
+                node_color_levels_vec = ["lightblue"] * self.nmodels
                 color_legend = None
         else:
-            node_color_levels_vec = ["lightblue"] * nnodes
+            node_color_levels_vec = ["lightblue"] * self.nmodels
             color_legend = None
 
         GRAPH_COLOR_LEGEND = namedtuple("GraphLegend", "color_legend node_color_vec")
