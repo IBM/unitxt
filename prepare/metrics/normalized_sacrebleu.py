@@ -8,6 +8,7 @@ metric = HuggingfaceMetric(
     main_score="sacrebleu",
     scale=100.0,
     scaled_fields=["sacrebleu", "precisions"],
+    hf_compute_args={"tokenize": "ja-mecab"},
 )
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]

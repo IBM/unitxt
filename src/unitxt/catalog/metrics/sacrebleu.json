@@ -3,5 +3,8 @@
     "hf_metric_name": "sacrebleu",
     "hf_main_score": "score",
     "main_score": "sacrebleu",
-    "scale": 1.0
+    "scale": 1.0,
+    "hf_compute_args": {
+        "tokenize": "ja-mecab"
+    }
 }
