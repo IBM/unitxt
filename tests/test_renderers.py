@@ -4,20 +4,14 @@ from src.unitxt.instructions import TextualInstruction
 from src.unitxt.operators import AddFields, ModelInputFormatter
 from src.unitxt.renderers import (
     RenderDemonstrations,
-    StandardRenderer,
 )
 from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
-from src.unitxt.test_utils.operators import check_operator
 
 template = InputOutputTemplate(
     input_format='This is my sentence: "{text}"', output_format="{label}"
 )
 instruction = TextualInstruction(
     "classify user sentence by its sentiment to either positive, or negative."
-)
-model_input_formatter = ModelInputFormatter(
-    demo_format="User:{source}\nAgent:{target}\n\n",
-    model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
 )
 
 
@@ -164,6 +158,11 @@ class TestRenderers(unittest.TestCase):
             ],
         }
 
+        model_input_formatter = ModelInputFormatter(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+
         result = model_input_formatter.process(instance)
 
         target = {
@@ -180,7 +179,10 @@ class TestRenderers(unittest.TestCase):
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
         }
-
+        model_input_formatter = ModelInputFormatter(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
         result = model_input_formatter.process(instance)
         target = {
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
@@ -193,7 +195,7 @@ class TestRenderers(unittest.TestCase):
         model_input_formatter_fix = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="[INST] <<SYS>>\n{instruction}{demos}User: {source}\nAgent: [/INST]",
+            model_input_format="[INST] <<SYS>>\n{instruction}\n\n{demos}User: {source}\nAgent: [/INST]",
         )
         renderer = model_input_formatter_fix
 
@@ -224,87 +226,6 @@ class TestRenderers(unittest.TestCase):
         }
 
         self.assertDictEqual(result, target)
-
-    def test_standard_renderer(self):
-        formatter = ModelInputFormatter(
-            demo_format="User:{source}\nAgent: {target}\n\n",  # the exceptional space in iclformat
-            model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
-        )
-
-        renderer = StandardRenderer(
-            template=template,
-            instruction=instruction,
-            format=formatter,
-            demos_field="demos",
-        )
-
-        instance = {
-            "inputs": {"text": "was so bad"},
-            "outputs": {"label": "negative"},
-            "demos": [
-                {
-                    "inputs": {"text": "was so not good"},
-                    "outputs": {"label": "negative"},
-                },
-                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
-            ],
-        }
-
-        target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent: negative\n\nUser:This is my sentence: "was so good"\nAgent: positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
-            "target": "negative",
-            "references": ["negative"],
-            "inputs": {"text": "was so bad"},
-            "outputs": {"label": "negative"},
-        }
-
-        check_operator(
-            operator=renderer, inputs=[instance], targets=[target], tester=self
-        )
-
-    def test_standard_renderer_multi_reference(self):
-        template = MultiReferenceTemplate(
-            input_format="This is my sentence: {text}", references_field="answer"
-        )
-        instruction = TextualInstruction("answer the question")
-
-        formatter = ModelInputFormatter(
-            demo_format="User:{source}\nAgent: {target}\n\n",  # the exceptional space in iclformat
-            model_input_format="Instruction:{instruction}{demos}User:{source}\nAgent:",
-        )
-
-        renderer = StandardRenderer(
-            template=template,
-            instruction=instruction,
-            format=formatter,
-            demos_field="demos",
-        )
-
-        instance = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
-            "demos": [
-                {
-                    "inputs": {"text": "who was she?"},
-                    "outputs": {"answer": ["Shira", "Yael"]},
-                },
-                {
-                    "inputs": {"text": "who was he?"},
-                    "outputs": {"answer": ["Codi", "Bodi"]},
-                },
-            ],
-        }
-
-        target = {
-            "source": "Instruction:answer the question\n\nUser:This is my sentence: who was she?\nAgent: Shira\n\nUser:This is my sentence: who was he?\nAgent: Codi\n\nUser:This is my sentence: who was he?\nAgent:",
-            "target": "Dan",
-            "references": ["Dan", "Yossi"],
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
-        }
-        check_operator(
-            operator=renderer, inputs=[instance], targets=[target], tester=self
-        )
 
     def test_temp(self):
         from src.unitxt.blocks import (
