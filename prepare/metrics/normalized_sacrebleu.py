@@ -65,4 +65,47 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+predictions = [
+    "他の専門家たちと同様に、彼は糖尿病を完治できるかどうかについては懐疑的であり、これらの調査結果はすでにI型糖尿病を患っている人々には何の関連性もないことを指摘しています。"
+]
+references = [
+    [
+        "他の専門家たちと同様に、彼は糖尿病を完治できるかどうかについては懐疑的であり、これらの調査結果はすでにI型糖尿病を患っている人々には何の関連性もないことを指摘しています。"
+    ]
+]
+instance_targets = [
+    {
+        "bp": 1.0,
+        "counts": [57, 56, 55, 54],
+        "precisions": [1.0, 1.0, 1.0, 1.0],
+        "ref_len": 57,
+        "sacrebleu": 1.0,
+        "score": 1.0,
+        "score_name": "sacrebleu",
+        "sys_len": 57,
+        "totals": [57, 56, 55, 54],
+    },
+]
+
+global_target = {
+    "bp": 1.0,
+    "counts": [57, 56, 55, 54],
+    "precisions": [1.0, 1.0, 1.0, 1.0],
+    "ref_len": 57,
+    "sacrebleu": 1.0,
+    "score": 1.0,
+    "score_name": "sacrebleu",
+    "sys_len": 57,
+    "totals": [57, 56, 55, 54],
+}
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
+
 add_to_catalog(metric, "metrics.normalized_sacrebleu", overwrite=True)
