@@ -3,12 +3,14 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
+from src.unitxt import add_to_catalog
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    ApplyStreamOperatorsField,
     Augmentor,
     AugmentPrefixSuffix,
     AugmentWhitespace,
@@ -829,12 +831,12 @@ class TestOperators(unittest.TestCase):
 
     def test_unique_on_single_field(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
+            {"a": [1, 5], "b": 2},
+            {"a": [2, 5], "b": 3},
+            {"a": [2, 5], "b": 4},
         ]
 
-        targets = {(1,), (2,)}
+        targets = {((1, 5),), ((2, 5),)}
 
         outputs = apply_operator(
             operator=Unique(fields=["a"]),
@@ -842,6 +844,32 @@ class TestOperators(unittest.TestCase):
         )
 
         self.assertSetEqual(set(outputs), targets)
+
+    def test_apply_stream_operators_field(self):
+        operator = FilterByValues(disallowed_values={"a": "3"})
+        add_to_catalog(
+            operator, "operators.filter_by_value_for_testing", overwrite=True
+        )
+        inputs = [
+            {"a": "1", "operator": "operators.filter_by_value_for_testing"},
+            {"a": "2"},
+            {"a": "3"},
+            {"a": "4"},
+            {"a": "5"},
+        ]
+        operator = ApplyStreamOperatorsField(field="operator", reversed=True)
+        outputs = list(
+            operator.process(MultiStream.from_iterables({"train": inputs})["train"])
+        )
+        self.assertListEqual(
+            [
+                {"a": "1", "operator": "operators.filter_by_value_for_testing"},
+                {"a": "2"},
+                {"a": "4"},
+                {"a": "5"},
+            ],
+            outputs,
+        )
 
     def test_unique_on_multiple_fields(self):
         inputs = [
@@ -1836,7 +1864,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured:
+        # to field is structured:
         check_operator(
             operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
             inputs=inputs,
@@ -1844,7 +1872,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field:
+        # to field is structured, to stand in place of from field:
         check_operator(
             operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
             inputs=inputs,
@@ -1852,7 +1880,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field, source field is deeper:
+        # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
             inputs=[
@@ -1866,7 +1894,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, source field is structured too, different fields:
+        # to field is structured, from field is structured too, different fields:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
             inputs=[
@@ -1880,7 +1908,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # both source and target are structured, different only in the middle of the path:
+        # both from and to field are structured, different only in the middle of the path:
         check_operator(
             operator=RenameFields(
                 field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
@@ -1890,6 +1918,20 @@ class TestOperators(unittest.TestCase):
             ],
             targets=[
                 {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+        # both from and to field are structured, different down the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"b": {"c": {"f": {"e": 1}}}}, "b": 2},
             ],
             tester=self,
         )
