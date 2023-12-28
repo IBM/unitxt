@@ -242,19 +242,19 @@ class ModelInputFormatter(StreamInstanceOperator):
         {
             "source": "1+1",
             "target": "2",
-            "instruction": "solve the math exercises",
+            "instruction": "Solve the math exercises.",
             "demos": [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
         }
         is process-ed by
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
+            demo_format="Input: {source}\nOutput: {target}\n\n",
+            model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",
         )
         the resulting instance is:
         {
             "target": "2",
-            "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+            "source": "Instruction: Solve the math exercises.\n\nInput: 1+2\nOutput: 3\n\nInput: 4-2\nOutput: 2\n\nInput: 1+1\nOutput: ",
         }
     """
 
@@ -290,9 +290,6 @@ class ModelInputFormatter(StreamInstanceOperator):
         # pop from instance, as ICLFormat does
         if "instruction" in instance:
             instance.pop("instruction")
-
-        if instruction != "":
-            instruction = instruction + "\n\n"
 
         demo_instances = []
         if self.demos_field is not None and self.demos_field in instance:

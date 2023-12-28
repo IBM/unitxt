@@ -3,7 +3,6 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
-from src.unitxt.formats import ICLFormat
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
@@ -303,11 +302,11 @@ class TestOperators(unittest.TestCase):
             },
         ]
 
-        # imitating add_instruction_after_demos=True, instruction is not ""
+        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
+            model_input_format="{demos}User: {instruction}\n\n{source}\nAgent: ",
         )
 
         targets = [
@@ -340,34 +339,18 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # instruction and demos were poped out, and source overwritten, bring them back in
+        # instruction and demos were poped out, and source overwritten, bring demos back in,
+        # refresh source, but make instruction "" for the next test
         self.refresh_inputs_for_test_model_input_formatter(
-            inputs=inputs, instruction=instruction, demos=demo_instances
+            inputs=inputs, instruction="", demos=demo_instances
         )
 
-        # compare with ICLFormat with add_instruction_after_demos=True, and non "" instruction
-        iclformat = ICLFormat(
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            instruction_prefix="Instruction: ",
-            target_prefix="",  # normalize this to be like others' default, back from " "
-            add_instruction_at_start=False,
-            add_instruction_after_demos=True,
+        # test with instruction = "":
+        model_input_formatter = ModelInputFormatter(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
         )
-
-        iclformat_outputs = [
-            iclformat.format(instance, demos_instances=demo_instances)
-            for instance in inputs
-        ]
-        self.assertListEqual(
-            iclformat_outputs, [target["source"] for target in targets]
-        )
-
-        # iclformat throws "instruction" out the input instance. We use the opportunity to test instruction = "":
-        # it does not discard demos
-        # we just need to refresh source:
-        for instance in inputs:
-            instance["source"] = instance["source1"]
 
         targets_no_instruction = [
             {
@@ -399,20 +382,6 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # and test iclformat here too, with no instruction in the input instance:
-        # demos are fed into iclformat.format. refresh source:
-        for instance in inputs:
-            instance["source"] = instance["source1"]
-
-        iclformat_outputs = [
-            iclformat.format(instance, demos_instances=demo_instances)
-            for instance in inputs
-        ]
-        self.assertListEqual(
-            iclformat_outputs,
-            [target["source"] for target in targets_no_instruction],
-        )
-
         # now imitate instruction before demos.
         # first, install back fields "instruction" and "demos" in the input instances, and refresh source
         self.refresh_inputs_for_test_model_input_formatter(
@@ -422,7 +391,7 @@ class TestOperators(unittest.TestCase):
         model_input_formatter = ModelInputFormatter(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="Instruction: {instruction}{demos}User: {source}\nAgent: ",
+            model_input_format="Instruction: {instruction}\n\n{demos}User: {source}\nAgent: ",
         )
 
         targets = [
@@ -455,32 +424,11 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # compare with ICLFormat with add_instruction_at_start=True, and instruction is not ""
-        # refresh:
+        # test instruction before demos, and with instruction = "",
+        # refresh source, but make instruction ""
         self.refresh_inputs_for_test_model_input_formatter(
-            inputs=inputs, instruction=instruction, demos=demo_instances
+            inputs=inputs, instruction="", demos=demo_instances
         )
-
-        iclformat = ICLFormat(
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            instruction_prefix="Instruction: ",
-            target_prefix="",  # normalize this to be like others' default, back from " "
-            add_instruction_at_start=True,
-            add_instruction_after_demos=False,
-        )
-
-        iclformat_outputs = [
-            iclformat.format(instance, demos_instances=demo_instances)
-            for instance in inputs
-        ]
-        self.assertListEqual(
-            iclformat_outputs,
-            [target["source"] for target in targets],
-        )
-
-        # as before, continue with instruction = "",
-        # as iclformat swallowed it.. it does not swallow demos, and does not overwrite source
 
         targets_no_instruction = [
             {
@@ -516,28 +464,6 @@ class TestOperators(unittest.TestCase):
             inputs=inputs,
             targets=targets_no_instruction,
             tester=self,
-        )
-
-        # demos are fed into iclformat.format. refresh source. continue with no instruction
-        for instance in inputs:
-            instance["source"] = instance["source1"]
-
-        iclformat = ICLFormat(
-            input_prefix="User: ",
-            output_prefix="Agent: ",
-            instruction_prefix="Instruction: ",
-            target_prefix="",  # normalize this to be like others' default, back from " "
-            add_instruction_at_start=True,
-            add_instruction_after_demos=False,
-        )
-
-        iclformat_outputs = [
-            iclformat.format(instance, demos_instances=demo_instances)
-            for instance in inputs
-        ]
-        self.assertListEqual(
-            iclformat_outputs,
-            [target["source"] for target in targets_no_instruction],
         )
 
     def test_filter_by_values_with_required_values(self):

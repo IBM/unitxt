@@ -1,10 +1,7 @@
 from abc import ABC
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from .dataclass import InternalField
-from .instructions import Instruction
-from .operator import Operator, SequentialOperator, StreamInstanceOperator
-from .operators import AddFields, ModelInputFormatter
+from .operator import StreamInstanceOperator
 from .templates import Template
 
 
@@ -32,29 +29,6 @@ class RenderDemonstrations(Renderer, StreamInstanceOperator):
         instance[self.demos_field] = processed_demos
 
         return instance
-
-
-class StandardRenderer(Renderer, SequentialOperator):
-    template: Template
-    instruction: Instruction = None
-    demos_field: str = None
-    format: ModelInputFormatter = None
-
-    steps: List[Operator] = InternalField(default_factory=list)
-
-    def prepare(self):
-        self.steps = [
-            self.template,
-            RenderDemonstrations(template=self.template, demos_field=self.demos_field),
-            AddFields(
-                fields={
-                    "instruction": self.instruction()
-                    if self.instruction is not None
-                    else ""
-                }
-            ),
-            self.format,
-        ]
 
     def get_postprocessors(self):
         return self.template.get_postprocessors()
