@@ -29,6 +29,3 @@ class RenderDemonstrations(Renderer, StreamInstanceOperator):
         instance[self.demos_field] = processed_demos
 
         return instance
-
-    def get_postprocessors(self):
-        return self.template.get_postprocessors()
