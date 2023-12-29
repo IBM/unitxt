@@ -412,6 +412,95 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # ICLFormat tests from tests_renderers, migrated here
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+            "demos": [
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
+        }
+
+        model_input_formatter = ModelInputFormatter(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+
+        result = model_input_formatter.process(instance)
+
+        target = {
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+        # no demos
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+        }
+        model_input_formatter = ModelInputFormatter(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+        result = model_input_formatter.process(instance)
+        target = {
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+        # test_model_input_formatter_with_prefix_and_suffix(self):
+        model_input_formatter_fix = ModelInputFormatter(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="[INST] <<SYS>>\n{instruction}\n\n{demos}User: {source}\nAgent: [/INST]",
+        )
+        renderer = model_input_formatter_fix
+
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+            "demos": [
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
+        }
+        self.maxDiff = None
+        result = renderer.process(instance)
+        target = {
+            "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: [/INST]',
+            "target": "negative",
+            "references": ["negative"],
+        }
+
+        self.assertDictEqual(result, target)
+
     def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
