@@ -10,10 +10,10 @@ from .operators import (
     Augmentor,
     ModelInputFormatter,
     NullAugmentor,
+    RenderDemonstrations,
     StreamRefiner,
 )
 from .recipe import Recipe
-from .renderers import RenderDemonstrations
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template

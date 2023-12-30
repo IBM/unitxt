@@ -43,7 +43,6 @@ from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .register import _reset_env_local_catalogs, register_all_artifacts
-from .renderers import __file__ as _
 from .schema import UNITXT_DATASET_SCHEMA
 from .schema import __file__ as _
 from .split_utils import __file__ as _

@@ -38,6 +38,7 @@ from src.unitxt.operators import (
     RemoveFields,
     RemoveValues,
     RenameFields,
+    RenderDemonstrations,
     Shuffle,
     ShuffleFieldValues,
     SplitByValue,
@@ -47,6 +48,7 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream
+from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import (
     apply_operator,
     check_operator,
@@ -2584,3 +2586,84 @@ class TestApplyMetric(unittest.TestCase):
         )
         # check that the second score is present too
         self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
+
+    def test_render_demonstrations(self):
+        template = InputOutputTemplate(
+            input_format='This is my sentence: "{text}"', output_format="{label}"
+        )
+        renderer = RenderDemonstrations(template=template, demos_field="demos")
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                },
+                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
+            ]
+        }
+
+        result = renderer.process(instance)
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "inputs": {"text": "was so good"},
+                    "outputs": {"label": "positive"},
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(result, target)
+
+    def test_render_demonstrations_multi_reference(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        renderer = RenderDemonstrations(template=template, demos_field="demos")
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                },
+            ]
+        }
+
+        result = renderer.process(instance)
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "source": "This is my sentence: who was he?",
+                    "target": "Dan",
+                    "references": ["Dan", "Yossi"],
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "source": "This is my sentence: who was she?",
+                    "target": "Shira",
+                    "references": ["Shira", "Yael"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(result, target)
