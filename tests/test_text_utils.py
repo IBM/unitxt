@@ -51,7 +51,9 @@ class TestTextUtils(unittest.TestCase):
             ("HFLoader", True),
         ]
 
-        for i, (input_string, expected_output) in enumerate(is_camel_case_test_cases, 1):
+        for i, (input_string, expected_output) in enumerate(
+            is_camel_case_test_cases, 1
+        ):
             with self.subTest(i=i):
                 self.assertEqual(is_camel_case(input_string), expected_output)
 
@@ -68,7 +70,9 @@ class TestTextUtils(unittest.TestCase):
             ("snakecase", True),
         ]
 
-        for i, (input_string, expected_output) in enumerate(is_snake_case_test_cases, 1):
+        for i, (input_string, expected_output) in enumerate(
+            is_snake_case_test_cases, 1
+        ):
             with self.subTest(i=i):
                 self.assertEqual(is_snake_case(input_string), expected_output)
 
@@ -87,6 +91,8 @@ class TestTextUtils(unittest.TestCase):
             ("HFLoader", "hf_loader"),
         ]
 
-        for i, (input_string, expected_output) in enumerate(camel_to_snake_case_test_cases, 1):
+        for i, (input_string, expected_output) in enumerate(
+            camel_to_snake_case_test_cases, 1
+        ):
             with self.subTest(i=i):
                 self.assertEqual(camel_to_snake_case(input_string), expected_output)

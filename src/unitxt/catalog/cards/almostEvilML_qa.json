@@ -16,9 +16,15 @@
         {
             "type": "rename_fields",
             "field_to_field": {
-                "INSTRUCTION": "question",
-                "RESPONSE": "answer"
+                "INSTRUCTION": "question"
             }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "RESPONSE"
+            ],
+            "to_field": "answers"
         }
     ],
     "task": {
@@ -27,10 +33,10 @@
             "question"
         ],
         "outputs": [
-            "answer"
+            "answers"
         ],
         "metrics": [
-            "metrics.squad"
+            "metrics.rouge"
         ]
     },
     "templates": "templates.qa.open.all"

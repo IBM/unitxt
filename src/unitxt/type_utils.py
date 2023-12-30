@@ -5,8 +5,7 @@ import typing
 
 
 def isoftype(object, type):
-    """
-    Checks if an object is of a certain typing type, including nested types.
+    """Checks if an object is of a certain typing type, including nested types.
 
     This function supports simple types (like `int`, `str`), typing types
     (like `List[int]`, `Tuple[str, int]`, `Dict[str, int]`), and nested typing
@@ -20,30 +19,43 @@ def isoftype(object, type):
         bool: True if the object is of the specified type, False otherwise.
 
     Examples:
-        >>> isoftype(1, int)
-        True
-        >>> isoftype([1, 2, 3], typing.List[int])
-        True
-        >>> isoftype([1, 2, 3], typing.List[str])
-        False
-        >>> isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]])
-        True
+    .. highlight:: python
+    .. code-block:: python
+
+        isoftype(1, int) # True
+        isoftype([1, 2, 3], typing.List[int]) # True
+        isoftype([1, 2, 3], typing.List[str]) # False
+        isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]]) # True
     """
+    if type == typing.Any:
+        return True
 
     if hasattr(type, "__origin__"):
         origin = type.__origin__
         type_args = typing.get_args(type)
 
+        if origin is typing.Union:
+            return any(isoftype(object, sub_type) for sub_type in type_args)
+
+        if not isinstance(object, origin):
+            return False
+
         if origin is list or origin is set:
             return all(isoftype(element, type_args[0]) for element in object)
-        elif origin is dict:
-            return all(isoftype(key, type_args[0]) and isoftype(value, type_args[1]) for key, value in object.items())
-        elif origin is tuple:
-            return all(isoftype(element, type_arg) for element, type_arg in zip(object, type_args))
-    else:
-        if type == typing.Any:
-            return True
-        return isinstance(object, type)
+
+        if origin is dict:
+            return all(
+                isoftype(key, type_args[0]) and isoftype(value, type_args[1])
+                for key, value in object.items()
+            )
+        if origin is tuple:
+            return all(
+                isoftype(element, type_arg)
+                for element, type_arg in zip(object, type_args)
+            )
+        return None
+
+    return isinstance(object, type)
 
 
 # copied from: https://github.com/bojiang/typing_utils/blob/main/typing_utils/__init__.py
@@ -51,9 +63,9 @@ def isoftype(object, type):
 
 
 if hasattr(typing, "ForwardRef"):  # python3.8
-    ForwardRef = getattr(typing, "ForwardRef")
+    ForwardRef = typing.ForwardRef
 elif hasattr(typing, "_ForwardRef"):  # python3.6
-    ForwardRef = getattr(typing, "_ForwardRef")
+    ForwardRef = typing._ForwardRef
 else:
     raise NotImplementedError()
 
@@ -131,25 +143,29 @@ def _normalize_aliases(type_: Type) -> Type:
 
 def get_origin(type_):
     """Get the unsubscripted version of a type.
+
     This supports generic types, Callable, Tuple, Union, Literal, Final and ClassVar.
     Return None for unsupported types.
 
     Examples:
+        Here are some code examples using `get_origin` from the `typing_utils` module:
 
-    ```python
-        from typing_utils import get_origin
+        .. code-block:: python
 
-        get_origin(Literal[42]) is Literal
-        get_origin(int) is None
-        get_origin(ClassVar[int]) is ClassVar
-        get_origin(Generic) is Generic
-        get_origin(Generic[T]) is Generic
-        get_origin(Union[T, int]) is Union
-        get_origin(List[Tuple[T, T]][int]) == list
-    ```
+            from typing_utils import get_origin
+
+            # Examples of get_origin usage
+            get_origin(Literal[42]) is Literal  # True
+            get_origin(int) is None  # True
+            get_origin(ClassVar[int]) is ClassVar  # True
+            get_origin(Generic) is Generic  # True
+            get_origin(Generic[T]) is Generic  # True
+            get_origin(Union[T, int]) is Union  # True
+            get_origin(List[Tuple[T, T]][int]) == list  # True
+
     """
     if hasattr(typing, "get_origin"):  # python 3.8+
-        _getter = getattr(typing, "get_origin")
+        _getter = typing.get_origin
         ori = _getter(type_)
     elif hasattr(typing.List, "_special"):  # python 3.7
         if isinstance(type_, GenericClass) and not type_._special:
@@ -176,25 +192,30 @@ def get_origin(type_):
 
 def get_args(type_) -> typing.Tuple:
     """Get type arguments with all substitutions performed.
+
     For unions, basic simplifications used by Union constructor are performed.
 
     Examples:
+        Here are some code examples using `get_args` from the `typing_utils` module:
 
-    ```python
-        from typing_utils import get_args
+        .. code-block:: python
 
-        get_args(Dict[str, int]) == (str, int)
-        get_args(int) == ()
-        get_args(Union[int, Union[T, int], str][int]) == (int, str)
-        get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])
-        get_args(Callable[[], T][int]) == ([], int)
-    ```
+            from typing_utils import get_args
+
+            # Examples of get_args usage
+            get_args(Dict[str, int]) == (str, int)  # True
+            get_args(int) == ()  # True
+            get_args(Union[int, Union[T, int], str][int]) == (int, str)  # True
+            get_args(Union[int, Tuple[T, int]][str]) == (int, Tuple[str, int])  # True
+            get_args(Callable[[], T][int]) == ([], int)  # True
     """
     if hasattr(typing, "get_args"):  # python 3.8+
-        _getter = getattr(typing, "get_args")
+        _getter = typing.get_args
         res = _getter(type_)
     elif hasattr(typing.List, "_special"):  # python 3.7
-        if isinstance(type_, GenericClass) and not type_._special:  # backport for python 3.8
+        if (
+            isinstance(type_, GenericClass) and not type_._special
+        ):  # backport for python 3.8
             res = type_.__args__
             if get_origin(type_) is collections.abc.Callable and res[0] is not Ellipsis:
                 res = (list(res[:-1]), res[-1])
@@ -211,29 +232,25 @@ def get_args(type_) -> typing.Tuple:
 
 
 def eval_forward_ref(ref, forward_refs=None):
-    """
-    eval forward_refs in all cPython versions
-    """
+    """Eval forward_refs in all cPython versions."""
     localns = forward_refs or {}
 
     if hasattr(typing, "_eval_type"):  # python3.8 & python 3.9
-        _eval_type = getattr(typing, "_eval_type")
+        _eval_type = typing._eval_type
         return _eval_type(ref, globals(), localns)
 
     if hasattr(ref, "_eval_type"):  # python3.6
-        _eval_type = getattr(ref, "_eval_type")
+        _eval_type = ref._eval_type
         return _eval_type(globals(), localns)
 
     raise NotImplementedError()
 
 
 class NormalizedType(typing.NamedTuple):
-    """
-    Normalized type, made it possible to compare, hash between types.
-    """
+    """Normalized type, made it possible to compare, hash between types."""
 
     origin: Type
-    args: typing.Union[tuple, frozenset] = tuple()
+    args: typing.Union[tuple, frozenset] = ()
 
     def __eq__(self, other):
         if isinstance(other, NormalizedType):
@@ -268,9 +285,7 @@ def _normalize_args(tps: TypeArgs):
 
 
 def normalize(type_: Type) -> NormalizedType:
-    """
-    convert types to NormalizedType instances.
-    """
+    """Convert types to NormalizedType instances."""
     args = get_args(type_)
     origin = get_origin(type_)
     if not origin:
@@ -288,7 +303,11 @@ def _is_origin_subtype(left: OriginType, right: OriginType) -> bool:
     if left is right:
         return True
 
-    if left is not None and left in STATIC_SUBTYPE_MAPPING and right == STATIC_SUBTYPE_MAPPING[left]:
+    if (
+        left is not None
+        and left in STATIC_SUBTYPE_MAPPING
+        and right == STATIC_SUBTYPE_MAPPING[left]
+    ):
         return True
 
     if hasattr(left, "mro"):
@@ -324,22 +343,37 @@ def _is_origin_subtype_args(
             return True
 
         # Union[list, int] <> Union[typing.Sequence, int]
-        return all(any(_is_normal_subtype(e, r, forward_refs) for r in right) for e in excluded)
+        return all(
+            any(_is_normal_subtype(e, r, forward_refs) for r in right) for e in excluded
+        )
 
-    if isinstance(left, collections.abc.Sequence) and not isinstance(left, NormalizedType):
-        if not isinstance(right, collections.abc.Sequence) or isinstance(right, NormalizedType):
+    if isinstance(left, collections.abc.Sequence) and not isinstance(
+        left, NormalizedType
+    ):
+        if not isinstance(right, collections.abc.Sequence) or isinstance(
+            right, NormalizedType
+        ):
             return False
 
-        if left and left[-1].origin is not Ellipsis and right and right[-1].origin is Ellipsis:
+        if (
+            left
+            and left[-1].origin is not Ellipsis
+            and right
+            and right[-1].origin is Ellipsis
+        ):
             # Tuple[type, type] <> Tuple[type, ...]
-            return all(_is_origin_subtype_args(l, right[0], forward_refs) for l in left)
+            return all(
+                _is_origin_subtype_args(lft, right[0], forward_refs) for lft in left
+            )
 
         if len(left) != len(right):
             return False
 
         return all(
-            l is not None and r is not None and _is_origin_subtype_args(l, r, forward_refs)
-            for l, r in itertools.zip_longest(left, right)
+            lft is not None
+            and rgt is not None
+            and _is_origin_subtype_args(lft, rgt, forward_refs)
+            for lft, rgt in itertools.zip_longest(left, right)
         )
 
     assert isinstance(left, NormalizedType)
@@ -367,12 +401,18 @@ def _is_normal_subtype(
     if right.origin is typing.Union and left.origin is typing.Union:
         return _is_origin_subtype_args(left.args, right.args, forward_refs)
     if right.origin is typing.Union:
-        return optional_any(_is_normal_subtype(left, a, forward_refs) for a in right.args)
+        return optional_any(
+            _is_normal_subtype(left, a, forward_refs) for a in right.args
+        )
     if left.origin is typing.Union:
-        return optional_all(_is_normal_subtype(a, right, forward_refs) for a in left.args)
+        return optional_all(
+            _is_normal_subtype(a, right, forward_refs) for a in left.args
+        )
 
     # TypeVar
-    if isinstance(left.origin, typing.TypeVar) and isinstance(right.origin, typing.TypeVar):
+    if isinstance(left.origin, typing.TypeVar) and isinstance(
+        right.origin, typing.TypeVar
+    ):
         if left.origin is right.origin:
             return True
 
@@ -380,7 +420,9 @@ def _is_normal_subtype(
         right_bound = getattr(right.origin, "__bound__", None)
         if right_bound is None or left_bound is None:
             return unknown
-        return _is_normal_subtype(normalize(left_bound), normalize(right_bound), forward_refs)
+        return _is_normal_subtype(
+            normalize(left_bound), normalize(right_bound), forward_refs
+        )
     if isinstance(right.origin, typing.TypeVar):
         return unknown
     if isinstance(left.origin, typing.TypeVar):
@@ -407,30 +449,35 @@ def issubtype(
     forward_refs: typing.Optional[dict] = None,
 ) -> typing.Optional[bool]:
     """Check that the left argument is a subtype of the right.
+
     For unions, check if the type arguments of the left is a subset of the right.
     Also works for nested types including ForwardRefs.
 
     Examples:
+        Here are some code examples using `issubtype` from the `typing_utils` module:
 
-    ```python
-        from typing_utils import issubtype
+        .. code-block:: python
 
-        issubtype(typing.List, typing.Any) == True
-        issubtype(list, list) == True
-        issubtype(list, typing.List) == True
-        issubtype(list, typing.Sequence) == True
-        issubtype(typing.List[int], list) == True
-        issubtype(typing.List[typing.List], list) == True
-        issubtype(list, typing.List[int]) == False
-        issubtype(list, typing.Union[typing.Tuple, typing.Set]) == False
-        issubtype(typing.List[typing.List], typing.List[typing.Sequence]) == True
-        JSON = typing.Union[
-            int, float, bool, str, None, typing.Sequence["JSON"],
-            typing.Mapping[str, "JSON"]
-        ]
-        issubtype(str, JSON, forward_refs={'JSON': JSON}) == True
-        issubtype(typing.Dict[str, str], JSON, forward_refs={'JSON': JSON}) == True
-        issubtype(typing.Dict[str, bytes], JSON, forward_refs={'JSON': JSON}) == False
-    ```
+            from typing_utils import issubtype
+
+            # Examples of issubtype checks
+            issubtype(typing.List, typing.Any)  # True
+            issubtype(list, list)  # True
+            issubtype(list, typing.List)  # True
+            issubtype(list, typing.Sequence)  # True
+            issubtype(typing.List[int], list)  # True
+            issubtype(typing.List[typing.List], list)  # True
+            issubtype(list, typing.List[int])  # False
+            issubtype(list, typing.Union[typing.Tuple, typing.Set])  # False
+            issubtype(typing.List[typing.List], typing.List[typing.Sequence])  # True
+
+            # Example with custom JSON type
+            JSON = typing.Union[
+                int, float, bool, str, None, typing.Sequence["JSON"],
+                typing.Mapping[str, "JSON"]
+            ]
+            issubtype(str, JSON, forward_refs={'JSON': JSON})  # True
+            issubtype(typing.Dict[str, str], JSON, forward_refs={'JSON': JSON})  # True
+            issubtype(typing.Dict[str, bytes], JSON, forward_refs={'JSON': JSON})  # False
     """
     return _is_normal_subtype(normalize(left), normalize(right), forward_refs)

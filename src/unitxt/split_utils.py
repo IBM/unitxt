@@ -3,13 +3,15 @@ import re
 from typing import Dict
 
 from .generator_utils import ReusableGenerator
-from .random_utils import nested_seed
+from .logging import get_logger
+from .random_utils import new_random_generator
 from .stream import Stream
+
+logger = get_logger()
 
 
 def parse_random_mix_string(input_str):
-    """
-    Parses a string of format "source1[percentage1%]+source2[value2]+..." and returns a dictionary.
+    """Parses a string of format "source1[percentage1%]+source2[value2]+..." and returns a dictionary.
 
     Args:
         input_str (str): A string containing source names and their respective proportions. The format is
@@ -28,23 +30,27 @@ def parse_random_mix_string(input_str):
         >>> parse_random_mix_string("dale[90%]+oren[0.7]+mike")
             {'dale': 0.9, 'oren': 0.7, 'mike': 1.0}
     """
-
-    if not re.fullmatch(r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)", input_str):
+    if not re.fullmatch(
+        r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)",
+        input_str,
+    ):
         raise ValueError(f"Invalid input format for split '{input_str}'")
 
     pattern = re.compile(r"([a-zA-Z]+)(\[\d*\.?\d*%?\])?")
     matches = pattern.findall(input_str)
 
     return {
-        name: float(value.strip("[]%")) / 100 if "%" in value else (float(value.strip("[]")) if value else 1.0)
+        name: float(value.strip("[]%")) / 100
+        if "%" in value
+        else (float(value.strip("[]")) if value else 1.0)
         for name, value in matches
     }
 
 
 def parse_slices_string(input_str):
-    """
-    Parses a string of format "source1[value1:value2] + source2[value2:] + source3 + ..." and returns a dictionary:
-    {"source1": [(value1,value2)], "source2": [(value2, None)], "source3": [(None,None)]...}
+    """Parses a string of format "source1[value1:value2] + source2[value2:] + source3 + ..." and returns a dictionary.
+
+    {"source1": [(value1,value2)], "source2": [(value2, None)], "source3": [(None,None)]...}.
 
     If a source appears multiple times with different indices, all index pairs are included in the list.
 
@@ -65,7 +71,6 @@ def parse_slices_string(input_str):
         >>> parse_slices_string("oren[:50]+jake[24:]+test+oren[5:10]")
         {'oren': [(None, 50), (5, 10)], 'jake': [(24, None)], 'test': [(None, None)]}
     """
-
     result_dict = {}
 
     # Split the input string into a list of sources
@@ -82,7 +87,9 @@ def parse_slices_string(input_str):
             name = source
             start = end = None
         else:
-            raise ValueError(f'The input string "{input_str}" is not in the correct format.')
+            raise ValueError(
+                f'The input string "{input_str}" is not in the correct format.'
+            )
 
         if name not in result_dict:
             result_dict[name] = [(start, end)]
@@ -100,14 +107,12 @@ def slice_stream(stream, start, end):
     if end is not None:
         stream = itertools.islice(stream, end)
 
-    for item in stream:
-        yield item
+    yield from stream
     # return stream
 
 
 def slice_streams(input_streams, mapping):
-    """
-    Slices multiple input streams according to a mapping and chains the results together.
+    """Slices multiple input streams according to a mapping and chains the results together.
 
     Args:
         input_streams (dict): A dictionary where the keys are the names of the input streams
@@ -129,13 +134,12 @@ def slice_streams(input_streams, mapping):
         >>> slice_streams(old_streams, mapping)
         {"new_train": [1, 2, 3, 4, 5, 8, 9], "new_test": [12, 13, 14]}
     """
-
     new_streams = {}
     for new_stream, sources in mapping.items():
 
         def generator(new_stream, sources):
             for old_stream, slices in sources.items():
-                if not old_stream in input_streams:
+                if old_stream not in input_streams:
                     raise ValueError(f"'{old_stream}' is not available in input stream")
                 old_stream_content = input_streams[old_stream]
                 for start, end in slices:
@@ -149,8 +153,7 @@ def slice_streams(input_streams, mapping):
 
 
 def build_stream_routing(mapping):
-    """
-    Builds the stream mapping dictionary based on the provided mapping.
+    """Builds the stream mapping dictionary based on the provided mapping.
 
     The stream mapping dictionary represents the mapping of old streams to new streams
     and their respective probabilities. It ensures that the probabilities for each old stream
@@ -178,16 +181,15 @@ def build_stream_routing(mapping):
                 }
             }
             stream_mapping = build_stream_mapping(mapping)
-            print(stream_mapping)
+            logger.info(stream_mapping)
             # Output: {'my_old_stream1': (['my_new_stream', 'my_new_stream2'], [0.6, 0.4]),
             #          'my_old_stream2': (['my_new_stream', 'my_new_stream2'], [0.2, 0.8])}
     """
-
     stream_mapping = {}
 
     # Calculate total weight for each old stream
     total_weights = {}
-    for new_stream, old_streams in mapping.items():
+    for _new_stream, old_streams in mapping.items():
         for old_stream, weight in old_streams.items():
             if old_stream not in total_weights:
                 total_weights[old_stream] = weight
@@ -205,13 +207,12 @@ def build_stream_routing(mapping):
             if total_weights[old_stream] < 1:
                 stream_mapping[old_stream][None] = 1 - total_weights[old_stream]
 
-    stream_mapping = {k: (list(v.keys()), list(v.values())) for k, v in stream_mapping.items()}
-    return stream_mapping
+    return {k: (list(v.keys()), list(v.values())) for k, v in stream_mapping.items()}
 
 
 def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
-    """
-    Renames the streams
+    """Renames the streams.
+
     Args:
         input_streams (dict): A dictionary containing the input streams, where each key is
                               the name of the stream and the value is an iterable or generator
@@ -221,26 +222,28 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
 
     Returns:
         dict: A dictionary containing the generated new streams, where each key is the name
-              of the new stream and the value is a generator representing the stream."""
+    of the new stream and the value is a generator representing the stream.
+    """
     return {mapping.get(key, key): val for key, val in input_streams.items()}
 
 
-def random_mix_generator(new_stream_name, new_stream_sources, stream_routing, input_streams):
+def random_mix_generator(
+    new_stream_name, new_stream_sources, stream_routing, input_streams
+):
     for old_stream_name in new_stream_sources:
         optinal_streams, weights = stream_routing[old_stream_name]
-        with nested_seed(old_stream_name) as rand:
-            assert (
-                old_stream_name in input_streams
-            ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
-            for item in input_streams[old_stream_name]:
-                choice = rand.choices(optinal_streams, weights=weights, k=1)[0]
-                if choice == new_stream_name:
-                    yield item
+        random_generator = new_random_generator(sub_seed=old_stream_name)
+        assert (
+            old_stream_name in input_streams
+        ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
+        for item in input_streams[old_stream_name]:
+            choice = random_generator.choices(optinal_streams, weights=weights, k=1)[0]
+            if choice == new_stream_name:
+                yield item
 
 
 def random_mix_streams(input_streams, mapping):
-    """
-    Creates new streams based on the provided input streams and mapping.
+    """Creates new streams based on the provided input streams and mapping.
 
     The create_streams function generates new streams by selectively including items from
     the old streams based on the specified mapping. Each item will be included in at most
@@ -275,31 +278,29 @@ def random_mix_streams(input_streams, mapping):
             }
             new_streams = create_streams(input_streams, mapping)
             for new_stream_name, new_stream in new_streams.items():
-                print(f"{new_stream_name}:")
+                logger.info(f"{new_stream_name}:")
                 for _, item in zip(range(10), new_stream):
-                    print(item)
+                    logger.info(item)
     """
-
     new_streams = {}
 
     # Build stream routing
     stream_routing = build_stream_routing(mapping)
 
-    with nested_seed():
-        # Create new stream generators
-        for new_stream_name, new_stream_sources in mapping.items():
-            new_streams[new_stream_name] = ReusableGenerator(
-                random_mix_generator,
-                gen_kwargs={
-                    "new_stream_name": new_stream_name,
-                    "new_stream_sources": new_stream_sources,
-                    "stream_routing": stream_routing,
-                    "input_streams": input_streams,
-                },
-            )
+    # Create new stream generators
+    for new_stream_name, new_stream_sources in mapping.items():
+        new_streams[new_stream_name] = ReusableGenerator(
+            random_mix_generator,
+            gen_kwargs={
+                "new_stream_name": new_stream_name,
+                "new_stream_sources": new_stream_sources,
+                "stream_routing": stream_routing,
+                "input_streams": input_streams,
+            },
+        )
 
     return new_streams
 
 
 if __name__ == "__main__":
-    print(parse_random_mix_string("dale[90%]+oren[0.7]+mike"))
+    logger.info(parse_random_mix_string("dale[90%]+oren[0.7]+mike"))

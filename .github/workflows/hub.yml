@@ -21,26 +21,27 @@ jobs:
         python-version: '3.9'
 
     - name: Install Requirements
-      run: >-
-        pip install -r requirements.txt
-        pip install isort
+      run: pip install -r requirements/base.rqr
+
+    - name: Install Requirements
+      run: pip install isort
 
     - name: Prepare dataset imports
       run: >-
-        bash ./make/hf/prepare_dataset_imports.sh
+        bash ./utils/hf/prepare_dataset_imports.sh
 
     - name: Prepare metric imports
       run: >-
-        bash ./make/hf/prepare_metric_imports.sh
+        bash ./utils/hf/prepare_metric_imports.sh
 
     - name: Push dataset to HuggingFace Hub
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
       run: >-
-        python ./make/hf/prepare_dataset.py
+        python ./utils/hf/prepare_dataset.py
 
     - name: Push metric to HuggingFace Hub
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
       run: >-
-        python ./make/hf/prepare_metric.py
+        python ./utils/hf/prepare_metric.py

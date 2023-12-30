@@ -1,4 +1,4 @@
-from copy import deepcopy
+import tempfile
 from typing import Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -13,9 +13,9 @@ class Stream(Dataclass):
     This class provides methods for generating, caching, and manipulating streaming data.
 
     Attributes:
-        generator (function): A generator function for streaming data.
-        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function.
-        caching (bool): Whether the data is cached or not.
+        generator (function): A generator function for streaming data. :no-index:
+        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. :no-index:
+        caching (bool): Whether the data is cached or not. :no-index:
     """
 
     generator: callable
@@ -31,11 +31,11 @@ class Stream(Dataclass):
         """
         if self.caching:
             return Dataset.from_generator
-        else:
-            if self.copying:
-                return CopyingReusableGenerator
-            else:
-                return ReusableGenerator
+
+        if self.copying:
+            return CopyingReusableGenerator
+
+        return ReusableGenerator
 
     def _get_stream(self):
         """Private method to get the stream based on the initiator function.
@@ -48,7 +48,7 @@ class Stream(Dataclass):
     def __iter__(self):
         return iter(self._get_stream())
 
-    def peak(self):
+    def peek(self):
         return next(iter(self))
 
     def take(self, n):
@@ -100,14 +100,29 @@ class MultiStream(dict):
         for stream in self.values():
             stream.copying = copying
 
-    def to_dataset(self) -> DatasetDict:
-        return DatasetDict(
-            {key: Dataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
-        )
+    def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            cache_dir = dir_to_be_deleted if disable_cache else cache_dir
+            return DatasetDict(
+                {
+                    key: Dataset.from_generator(
+                        self.get_generator,
+                        keep_in_memory=disable_cache,
+                        cache_dir=cache_dir,
+                        gen_kwargs={"key": key},
+                    )
+                    for key in self.keys()
+                }
+            )
 
     def to_iterable_dataset(self) -> IterableDatasetDict:
         return IterableDatasetDict(
-            {key: IterableDataset.from_generator(self.get_generator, gen_kwargs={"key": key}) for key in self.keys()}
+            {
+                key: IterableDataset.from_generator(
+                    self.get_generator, gen_kwargs={"key": key}
+                )
+                for key in self.keys()
+            }
         )
 
     def __setitem__(self, key, value):
@@ -116,17 +131,19 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False):
+    def from_generators(
+        cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False
+    ):
         """Creates a MultiStream from a dictionary of ReusableGenerators.
 
         Args:
             generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.
         """
-
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
@@ -141,17 +158,19 @@ class MultiStream(dict):
         )
 
     @classmethod
-    def from_iterables(cls, iterables: Dict[str, Iterable], caching=False, copying=False):
+    def from_iterables(
+        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+    ):
         """Creates a MultiStream from a dictionary of iterables.
 
         Args:
             iterables (Dict[str, Iterable]): A dictionary of iterables.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.
         """
-
         return cls(
             {
                 key: Stream(

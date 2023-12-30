@@ -1,4 +1,3 @@
-from src.unitxt import add_to_catalog
 from src.unitxt.blocks import AddFields, AddID, CopyFields
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
@@ -11,7 +10,10 @@ metric = MetricPipeline(
         AddFields(
             {
                 "prediction_template": {"prediction_text": "PRED", "id": "ID"},
-                "reference_template": {"answers": {"answer_start": [-1], "text": "REF"}, "id": "ID"},
+                "reference_template": {
+                    "answers": {"answer_start": [-1], "text": "REF"},
+                    "id": "ID",
+                },
             },
             use_deepcopy=True,
         ),
@@ -21,6 +23,11 @@ metric = MetricPipeline(
                 ["prediction", "prediction_template/prediction_text"],
                 ["id", "prediction_template/id"],
                 ["id", "reference_template/id"],
+            ],
+            use_query=True,
+        ),
+        CopyFields(
+            field_to_field=[
                 ["reference_template", "references"],
                 ["prediction_template", "prediction"],
             ],
@@ -28,7 +35,10 @@ metric = MetricPipeline(
         ),
     ],
     metric=HuggingfaceMetric(
-        hf_metric_name="squad", main_score="f1", scale=100.0, scaled_fields=["f1", "exact_match"]
+        hf_metric_name="squad",
+        main_score="f1",
+        scale=100.0,
+        scaled_fields=["f1", "exact_match"],
     ),
 )
 
@@ -39,7 +49,16 @@ instance_targets = [
     {"exact_match": 0.0, "f1": 0.67, "score": 0.67, "score_name": "f1"},
     {"exact_match": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-global_target = {"exact_match": 0.33, "f1": 0.56, "score": 0.56, "score_name": "f1"}
+global_target = {
+    "exact_match": 0.33,
+    "f1": 0.56,
+    "score": 0.56,
+    "score_name": "f1",
+    "f1_ci_low": 0.0,
+    "f1_ci_high": 0.89,
+    "score_ci_low": 0.0,
+    "score_ci_high": 0.89,
+}
 
 outputs = test_metric(
     metric=metric,

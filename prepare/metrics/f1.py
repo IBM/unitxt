@@ -1,6 +1,5 @@
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.metrics import (
-    F1,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,

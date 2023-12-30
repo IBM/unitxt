@@ -1,7 +1,8 @@
 {
-    "type": "input_output_template",
-    "input_format": "Context: {context}\nQuestion: {sentence1}\nChoose from {numbers}\nAnswers: {choices}\nAnswer:",
-    "output_format": "{label}",
+    "type": "multiple_choice_template",
+    "input_format": "Context: {context}\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:",
+    "target_field": "answer",
+    "choices_seperator": "\n",
     "postprocessors": [
         "processors.first_character"
     ]

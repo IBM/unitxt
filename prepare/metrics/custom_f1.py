@@ -5,7 +5,10 @@ from src.unitxt.test_utils.metrics import test_metric
 metric = NER()
 # Test1 single line single class
 # 0.1 simple case, multi examples
-predictions = [[("Amir", "Person"), ("Yaron", "Person")], [("Ran", "Person"), ("Yonatan", "Person")]]
+predictions = [
+    [("Amir", "Person"), ("Yaron", "Person")],
+    [("Ran", "Person"), ("Yonatan", "Person")],
+]
 references = [[("Yaron", "Person"), ("Ran", "Person")], [("Yonatan", "Person")]]
 # precision = 1/2, recall 1/2
 # Precision = 1/2, Recall = 1/1,
@@ -48,6 +51,10 @@ global_target = {
     "precision_macro": 0.5,
     "score": 0.57,
     "score_name": "f1_micro",
+    "f1_micro_ci_low": 0.57,
+    "f1_micro_ci_high": 0.57,
+    "score_ci_low": 0.57,
+    "score_ci_high": 0.57,
 }
 
 outputs = test_metric(

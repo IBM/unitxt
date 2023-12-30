@@ -1,93 +1,39 @@
 import random as python_random
-import string
 import unittest
 
-from src.unitxt.random_utils import __default_seed__, nested_seed, random, set_seed
+from src.unitxt.random_utils import (
+    __default_seed__,
+    new_random_generator,
+)
 
 
-def first_randomization():
-    return tuple(random.randint(0, 10000000000000000000000) for _ in range(100))
+def randomize(sub_seed: str):
+    random_generator = new_random_generator(sub_seed=sub_seed)
+    return tuple(
+        random_generator.randint(0, 10000000000000000000000) for _ in range(100)
+    )
 
 
 class TestRandomUtils(unittest.TestCase):
     def test_default_seed(self):
-        set_seed(42)
-        a = first_randomization()
-        set_seed(43)
-        b = first_randomization()
-        set_seed(__default_seed__)
-        c = first_randomization()
+        a = randomize(sub_seed="42")
+        b = randomize(sub_seed="43")
+        c = randomize(sub_seed=str(__default_seed__))
         self.assertNotEqual(a, b)
         self.assertEqual(a, c)
 
-    def test_nested_level_difference(self):
-        with nested_seed():
-            with nested_seed():
-                a = first_randomization()
-
-        with nested_seed():
-            b = first_randomization()
-
-        self.assertNotEqual(a, b)
-
-    def test_nested_level_similarity(self):
-        with nested_seed():
-            with nested_seed():
-                a = first_randomization()
-
-        with nested_seed():
-            with nested_seed():
-                b = first_randomization()
-
+    def test_non_string_seed(self):
+        """A test for a seed that is not a string, and is a Hashable object."""
+        a = randomize(sub_seed=50)
+        b = randomize(sub_seed="50")
         self.assertEqual(a, b)
 
-    def test_sepration_from_global_python_seed(self):
-        with nested_seed():
-            with nested_seed():
-                a = first_randomization()
+    def test_get_sub_default_random_generator(self):
+        sub_seed = "a"
+        self.assertEqual(randomize(sub_seed), randomize(sub_seed))
 
-        with nested_seed():
-            with nested_seed():
-                python_random.seed(10)
-                b = first_randomization()
-
-        self.assertEqual(a, b)
-
-    def test_thread_safety(self):
-        import threading
-        import time
-
-        def thread_function(name, sleep_time, results):
-            time.sleep(sleep_time)
-
-            time.sleep(sleep_time)
-            with nested_seed():
-                time.sleep(sleep_time)
-                with nested_seed():
-                    time.sleep(sleep_time)
-                    a = first_randomization()
-            results[name][0] = a
-
-            time.sleep(sleep_time)
-            with nested_seed():
-                time.sleep(sleep_time)
-                with nested_seed():
-                    time.sleep(sleep_time)
-                    b = first_randomization()
-            results[name][1] = b
-
-        threads = list()
-        results = list()
-        for i in range(100):
-            sleep_time = python_random.randint(0, 100) / 1000
-            results.append([None, None])
-            x = threading.Thread(target=thread_function, args=(i, sleep_time, results))
-            threads.append(x)
-            x.start()
-
-        for index, thread in enumerate(threads):
-            thread.join()
-            self.assertEqual(results[index][0], results[index][1])
-
-        flatten_results = [item for sublist in results for item in sublist]
-        self.assertEqual(len(set(flatten_results)), 1)
+    def test_separation_from_global_python_seed(self):
+        rand1 = randomize(sub_seed="b")
+        python_random.seed(10)
+        rand2 = randomize(sub_seed="b")
+        self.assertEqual(rand1, rand2)

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from .artifact import Artifact
 from .collections import Collection
@@ -25,4 +25,4 @@ class ICLCard(Artifact):
     num_demos: int = None
     sampler_type: str = "random"
     instruction_item: Union[str, int] = None
-    template_item: Union[str, int] = None
+    template_card_index: Union[str, int] = None

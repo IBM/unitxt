@@ -1,0 +1,69 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "dbpedia_14"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Company",
+                    "1": "EducationalInstitution",
+                    "2": "Artist",
+                    "3": "Athlete",
+                    "4": "OfficeHolder",
+                    "5": "MeanOfTransportation",
+                    "6": "Building",
+                    "7": "NaturalPlace",
+                    "8": "Village",
+                    "9": "Animal",
+                    "10": "Plant",
+                    "11": "Album",
+                    "12": "Film",
+                    "13": "WrittenWork"
+                }
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "content": "text"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "Company",
+                    "EducationalInstitution",
+                    "Artist",
+                    "Athlete",
+                    "OfficeHolder",
+                    "MeanOfTransportation",
+                    "Building",
+                    "NaturalPlace",
+                    "Village",
+                    "Animal",
+                    "Plant",
+                    "Album",
+                    "Film",
+                    "WrittenWork"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

@@ -1,10 +1,11 @@
+import random
 import typing
 from dataclasses import field
 from typing import Dict, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
-from .random_utils import random
+from .random_utils import new_random_generator
 
 
 class Collection(Artifact):
@@ -13,8 +14,8 @@ class Collection(Artifact):
     def __getitem__(self, key):
         try:
             return self.items[key]
-        except LookupError:
-            raise LookupError(f"Cannot find item {repr(key)} in {repr(self)}")
+        except LookupError as e:
+            raise LookupError(f"Cannot find item {key!r} in {self!r}") from e
 
 
 class ListCollection(Collection):
@@ -43,13 +44,22 @@ class ItemPicker(Artifact):
     def __call__(self, collection: Collection):
         try:
             return collection[int(self.item)]
-        except (SyntaxError, KeyError, ValueError) as e:  # in case picking from a dictionary
+        except (
+            SyntaxError,
+            KeyError,
+            ValueError,
+        ):  # in case picking from a dictionary
             return collection[self.item]
 
 
 class RandomPicker(Artifact):
+    random_generator: random.Random = field(
+        default_factory=lambda: new_random_generator(sub_seed="random_picker")
+    )
+
     def __call__(self, collection: Collection):
         if isinstance(collection, ListCollection):
-            return random.choice(list(collection.items))
-        elif isinstance(collection, DictCollection):
-            return random.choice(list(collection.items.values()))
+            return self.random_generator.choice(list(collection.items))
+        if isinstance(collection, DictCollection):
+            return self.random_generator.choice(list(collection.items.values()))
+        return None

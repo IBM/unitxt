@@ -1,6 +1,5 @@
 import json
 import re
-from typing import Any
 
 from .operator import BaseFieldOperator
 
@@ -17,23 +16,21 @@ class ToStringStripped(BaseFieldOperator):
 
 class ToListByComma(BaseFieldOperator):
     def process(self, instance):
-        output = [x.strip() for x in instance.split(",")]
-        return output
+        return [x.strip() for x in instance.split(",")]
 
 
 class RegexParser(BaseFieldOperator):
-    """
-    A processor that uses regex in order to parse a string.
-    """
+    """A processor that uses regex in order to parse a string."""
 
     regex: str
     termination_regex: str = None
 
     def process(self, text):
-        if self.termination_regex is not None and re.fullmatch(self.termination_regex, text):
+        if self.termination_regex is not None and re.fullmatch(
+            self.termination_regex, text
+        ):
             return []
-        matches = re.findall(self.regex, text)
-        return matches
+        return re.findall(self.regex, text)
 
 
 class LoadJson(BaseFieldOperator):
@@ -61,7 +58,9 @@ class DictOfListsToPairs(BaseFieldOperator):
             for key, values in obj.items():
                 for value in values:
                     assert isinstance(value, str)
-                    pair = (key, value) if self.position_key_before_value else (value, key)
+                    pair = (
+                        (key, value) if self.position_key_before_value else (value, key)
+                    )
                     result.append(pair)
             return result
         except:
@@ -76,6 +75,16 @@ class TakeFirstNonEmptyLine(BaseFieldOperator):
         return splitted[0].strip()
 
 
+class ConvertToBoolean(BaseFieldOperator):
+    def process(self, instance):
+        clean_instance = str(instance).strip().lower()
+        if any(w in clean_instance for w in ["no", "not", "wrong", "false"]):
+            return "FALSE"
+        if any(w in clean_instance for w in ["yes", "right", "correct", "true"]):
+            return "TRUE"
+        return "OTHER"
+
+
 class LowerCaseTillPunc(BaseFieldOperator):
     def process(self, instance):
         non_empty_line = instance.lower()
@@ -84,6 +93,11 @@ class LowerCaseTillPunc(BaseFieldOperator):
             # Extract text up to the first punctuation
             non_empty_line = non_empty_line[: match.start()]
         return non_empty_line
+
+
+class LowerCase(BaseFieldOperator):
+    def process(self, instance):
+        return instance.lower()
 
 
 class FirstCharacter(BaseFieldOperator):

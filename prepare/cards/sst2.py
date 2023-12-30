@@ -1,9 +1,6 @@
-import datasets as ds
-from src.unitxt import dataset
 from src.unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import AddFields, RenameFields
-from src.unitxt.splitters import RenameSplits
+from src.unitxt.operators import AddFields, ExtractFieldValues, RenameFields
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -12,7 +9,13 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),
         RenameFields(field="sentence", to_field="text"),
-        AddFields(fields={"classes": ["negative", "positive"], "text_type": "sentence", "type_of_class": "sentiment"}),
+        AddFields(
+            fields={
+                "text_type": "sentence",
+                "type_of_class": "sentiment",
+            }
+        ),
+        ExtractFieldValues(field="label", to_field="classes", stream_name="train"),
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",

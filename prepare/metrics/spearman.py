@@ -1,4 +1,5 @@
 import numpy as np
+
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import CastFields, CopyFields
 from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
@@ -29,7 +30,15 @@ instance_targets = [
     {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
 ]
 
-global_target = {"spearmanr": 0.87, "score": 0.87, "score_name": "spearmanr"}
+global_target = {
+    "spearmanr": 0.87,
+    "score": 0.87,
+    "score_name": "spearmanr",
+    "spearmanr_ci_low": np.nan,
+    "spearmanr_ci_high": np.nan,
+    "score_ci_low": np.nan,
+    "score_ci_high": np.nan,
+}
 
 outputs = test_metric(
     metric=metric,

@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "type": "multi_reference_template",
     "input_format": "Question: {question}",
-    "output_format": "{answer}"
+    "references_field": "answers"
 }

@@ -3,6 +3,7 @@ import re
 import unittest
 
 from src.unitxt import dataset_file
+from src.unitxt.artifact import fetch_artifact
 from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
@@ -124,12 +125,14 @@ class TestRecipes(unittest.TestCase):
         )
 
         stream = recipe()
-        self.assertEqual(len(list(stream["train"])), 5)  # 5 elements were moved to demo pool
+        self.assertEqual(
+            len(list(stream["train"])), 5
+        )  # 5 elements were moved to demo pool
         self.assertEqual(len(list(stream["test"])), 10)
 
     def test_standard_recipe_with_loader_limit_errors(self):
         with self.assertRaises(ValueError):
-            recipe = StandardRecipeWithIndexes(
+            StandardRecipeWithIndexes(
                 card="cards.wnli",
                 template="templates.key_val",
                 max_test_instances=10,
@@ -137,14 +140,14 @@ class TestRecipes(unittest.TestCase):
             )
 
         with self.assertRaises(ValueError):
-            recipe = StandardRecipeWithIndexes(
+            StandardRecipeWithIndexes(
                 card="cards.wnli",
                 template="templates.key_val",
                 max_train_instances=10,
                 loader_limit=9,
             )
         with self.assertRaises(ValueError):
-            recipe = StandardRecipeWithIndexes(
+            StandardRecipeWithIndexes(
                 template="templates.key_val",
                 card="cards.wnli",
                 max_validation_instances=10,
@@ -152,7 +155,7 @@ class TestRecipes(unittest.TestCase):
             )
 
         with self.assertRaises(ValueError):
-            recipe = StandardRecipeWithIndexes(
+            StandardRecipeWithIndexes(
                 template="templates.key_val",
                 card="cards.wnli",
                 num_demos=3,
@@ -170,7 +173,9 @@ class TestRecipes(unittest.TestCase):
         with self.assertRaises(Exception) as cm:
             list(recipe()["test"])
 
-        self.assertEqual(str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'")
+        self.assertEqual(
+            str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'"
+        )
 
     def test_standard_recipe_with_no_test(self):
         recipe = StandardRecipeWithIndexes(
@@ -186,36 +191,48 @@ class TestRecipes(unittest.TestCase):
     def test_standard_recipe_with_template_errors(self):
         # Check some template was specified
         with self.assertRaises(AssertionError) as cm:
-            recipe = StandardRecipeWithIndexes(card="cards.wnli")
-        self.assertEqual(str(cm.exception), "Specify either template or template_card_index in card")
+            StandardRecipeWithIndexes(card="cards.wnli")
+        self.assertEqual(
+            str(cm.exception), "Specify either template or template_card_index in card"
+        )
 
         # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
-            recipe = StandardRecipeWithIndexes(
+            StandardRecipeWithIndexes(
                 card="cards.wnli", template="templates.key_val", template_card_index=100
             )
         self.assertTrue(
-            not re.match("Specify either template (.*) or template_card_index (.*) but not both", str(cm.exception))
-            is None
+            re.match(
+                "Specify either template (.*) or template_card_index (.*) but not both",
+                str(cm.exception),
+            )
+            is not None
         )
 
         # Also check if string index is used
         with self.assertRaises(AssertionError) as cm:
-            recipe = StandardRecipeWithIndexes(
-                card="cards.wnli", template="templates.key_val", template_card_index="illegal_template"
+            StandardRecipeWithIndexes(
+                card="cards.wnli",
+                template="templates.key_val",
+                template_card_index="illegal_template",
             )
         self.assertTrue(
-            not re.match("Specify either template (.*) or template_card_index (.*) but not both", str(cm.exception))
-            is None
+            re.match(
+                "Specify either template (.*) or template_card_index (.*) but not both",
+                str(cm.exception),
+            )
+            is not None
         )
 
         # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
-            recipe = StandardRecipeWithIndexes(card="cards.wnli", template_card_index="illegal_template")
+            StandardRecipeWithIndexes(
+                card="cards.wnli", template_card_index="illegal_template"
+            )
         self.assertTrue("is not in card" in str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
-            recipe = StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
+            StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
         self.assertTrue("is not in card" in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
@@ -248,12 +265,10 @@ class TestRecipes(unittest.TestCase):
         stream = recipe()
         sample = list(stream["test"])[1]
         source = sample["source"]
-        pattern = (
-            "Classify the sentiment of following sentence to one of these options: negative, positive. Text: (.*)"
-        )
+        pattern = "Classify the sentiment of following sentence to one of these options: ((negative, positive)|(positive, negative)). Text: (.*)"
         result = re.match(pattern, sample["source"], re.DOTALL)
         assert result, f"Unable to find '{pattern}' in '{source}'"
-        result = result.group(1)
+        result = result.group(4)
         original_text = "unflinchingly bleak and desperate "
         assert (
             result != original_text
@@ -271,7 +286,7 @@ class TestRecipes(unittest.TestCase):
             max_train_instances=0,
             max_test_instances=1,
         )
-        original_source = list(recipe()["test"])[0]["source"]
+        original_source = next(iter(recipe()["test"]))["source"]
 
         recipe = StandardRecipeWithIndexes(
             card="cards.sst2",
@@ -280,7 +295,7 @@ class TestRecipes(unittest.TestCase):
             max_train_instances=0,
             max_test_instances=1,
         )
-        augmented_source = list(recipe()["test"])[0]["source"]
+        augmented_source = next(iter(recipe()["test"]))["source"]
 
         assert (
             original_source != augmented_source
@@ -320,3 +335,45 @@ class TestRecipes(unittest.TestCase):
         iterator = iter(d["train"])
         next(iterator)
         print_dict(next(iterator))
+
+    def test_standard_recipe_with_a_sampler(self):
+        """Check that the sampler is re-initialized before processing a recipe.
+
+        To do so, save the random generator within the sampler before activating the recipe,
+        and compare it to the random generator within the sampler after the revipe was called.
+        The two generators should be different objects, indicating that the sampler was properly
+        re-initialized during the preparation of the recipe.
+        """
+        recipe = StandardRecipeWithIndexes(
+            card="cards.sst2",
+            template_card_index=0,
+            max_train_instances=0,
+            max_test_instances=2,
+            num_demos=1,
+            demos_pool_size=10,
+        )
+        sampler = recipe.card.sampler
+
+        random_generator1 = sampler.random_generator
+        recipe()
+        random_generator2 = sampler.random_generator
+
+        self.assertNotEqual(random_generator1, random_generator2)
+
+    def test_standard_recipe_with_a_missing_sampler(self):
+        """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
+        task_card, _ = fetch_artifact("cards.sst2")
+        task_card.sampler = None
+        with self.assertRaises(ValueError) as e:
+            StandardRecipeWithIndexes(
+                card=task_card,
+                template_card_index=0,
+                max_train_instances=0,
+                max_test_instances=2,
+                num_demos=1,
+                demos_pool_size=10,
+            )
+        self.assertEqual(
+            str(e.exception),
+            "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
+        )

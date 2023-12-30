@@ -1,6 +1,5 @@
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
@@ -9,13 +8,17 @@ from src.unitxt.blocks import (
     TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="ethos", name="binary"),
     preprocess_steps=[
-        SplitRandomMix({"train": "train[10%]", "validation": "train[10%]", "test": "train[80%]"}),
-        MapInstanceValues(mappers={"label": {"0": "not hate speech", "1": "hate speech"}}),
+        Shuffle(page_size=1000000),
+        SplitRandomMix({"train": "train[20%]", "test": "train[80%]"}),
+        MapInstanceValues(
+            mappers={"label": {"0": "not hate speech", "1": "hate speech"}}
+        ),
         AddFields(
             fields={
                 "classes": ["not hate speech", "hate speech"],
@@ -40,12 +43,18 @@ card = TaskCard(
             InputOutputTemplate(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                 output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line", "processors.lower_case_till_punc"],
+                postprocessors=[
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                ],
             ),
             InputOutputTemplate(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                 output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line", "processors.hate_speech_or_not_hate_speech"],
+                postprocessors=[
+                    "processors.take_first_non_empty_line",
+                    "processors.hate_speech_or_not_hate_speech",
+                ],
             ),
         ]
     ),

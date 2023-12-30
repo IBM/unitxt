@@ -1,0 +1,55 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_csv",
+        "files": {
+            "train": "https://raw.githubusercontent.com/sebischair/Medical-Abstracts-TC-Corpus/main/medical_tc_train.csv",
+            "test": "https://raw.githubusercontent.com/sebischair/Medical-Abstracts-TC-Corpus/main/medical_tc_test.csv"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[90%]",
+                "validation": "train[10%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "medical_abstract": "text",
+                "condition_label": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "1": "neoplasms",
+                    "2": "digestive system diseases",
+                    "3": "nervous system diseases",
+                    "4": "cardiovascular diseases",
+                    "5": "general pathological conditions"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "neoplasms",
+                    "digestive system diseases",
+                    "nervous system diseases",
+                    "cardiovascular diseases",
+                    "general pathological conditions"
+                ],
+                "text_type": "abstract",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

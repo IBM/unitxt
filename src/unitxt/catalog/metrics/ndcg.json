@@ -1,0 +1,30 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "nDCG",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "references/0",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "prediction": "float",
+                "references": "float"
+            },
+            "failure_defaults": {
+                "prediction": null
+            },
+            "use_nested_query": true
+        }
+    ],
+    "metric": {
+        "type": "ndcg"
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "ag_news"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "World",
+                    "1": "Sports",
+                    "2": "Business",
+                    "3": "Sci/Tech"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "World",
+                    "Sports",
+                    "Business",
+                    "Sci/Tech"
+                ],
+                "text_type": "sentence",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}
