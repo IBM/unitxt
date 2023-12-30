@@ -533,3 +533,38 @@ class TestTemplates(unittest.TestCase):
         )
         target = "hello: world, int_list: 0, 1"
         self.assertEqual(result, target)
+
+    def test_render_template(self):
+        instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
+        template = InputOutputTemplate(
+            input_format='This is my sentence: "{text}"', output_format="{label}"
+        )
+
+        result = template.process(instance)
+        target = {
+            "inputs": {"text": "was so bad"},
+            "outputs": {"label": "negative"},
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+    def test_render_multi_reference_template(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        instance = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+        }
+
+        result = template.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+        }
+        self.assertDictEqual(result, target)

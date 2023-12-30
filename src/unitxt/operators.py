@@ -70,6 +70,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .stream import Stream
+from .templates import Template
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -1727,6 +1728,25 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(
                 instance, field_name, new_values, use_dpath=True, set_multiple=True
             )
+
+        return instance
+
+
+class RenderDemonstrations(StreamInstanceOperator):
+    template: Template
+    demos_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        demos = instance.get(self.demos_field, [])
+
+        processed_demos = []
+        for demo_instance in demos:
+            demo_instance = self.template.process(demo_instance)
+            processed_demos.append(demo_instance)
+
+        instance[self.demos_field] = processed_demos
 
         return instance
 
