@@ -282,8 +282,10 @@ class FieldOperator(StreamInstanceOperator):
           operation would happen in-place and its result would replace the value of "field". Defaults to None
         field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
           to names of fields to save the results into. Inner List, if used, should be of length 2.
-          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
-          process a result from, a result to be stored in field of a different name. Defaults to None
+          The order by which the elements of 'field_to_field' are processed is not guaranteed. Hence, in order to ensure
+          uniquely defined results in the to_fields, (1) two different fields are not allowed to feed the same to_field,
+          and (2) a field playing the role of a to_field can not also play the role of a from_field (i.e. a field to
+          process a result from). A field is allowed to feed two different to_fields.  Defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
 
@@ -317,13 +319,15 @@ class FieldOperator(StreamInstanceOperator):
             assert (
                 len(pair) == 2
             ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
-        # The order of pairs in _field_to_field is not always uniquely determined by the input.
-        # In particular, when the input is a dictionary.
+        # At this point, self._field_to_field is already defined, py self.prepare(), from either format of the actual input.
+        # The order by which the pairs in _field_to_field are processed can affect the end result. Yet, this order is
+        # not always uniquely determined by the input, in particular, when the input is a dictionary.
         # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
-        # where h is different from f, it is not clear if when f defines the new value of h
+        # it is not clear if when f defines the new value of h
         # (e.g., through an add-constant operation), f is before or after being determined by g.
-        # The following asserts that such ambiguity does not exist in the input.
-
+        # Another potential source of ambiguity is when _field_to_field contains two different pairs, (g,f) and (h,f).
+        # it is not clear which pair will be applied last, determining the end result in f.
+        # The following asserts that neither ambiguity exists in the input.
         if len(self._field_to_field) == 1:
             return
         for ind in range(len(self._field_to_field)):
@@ -332,6 +336,19 @@ class FieldOperator(StreamInstanceOperator):
             ] + [t for _, t in self._field_to_field[ind + 1 :]]:
                 raise ValueError(
                     f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
+                )
+            if (
+                len(
+                    {
+                        ff
+                        for [ff, tt] in self._field_to_field
+                        if tt == self._field_to_field[ind][1]
+                    }
+                )
+                > 1
+            ):
+                raise ValueError(
+                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][1]}' is to be determined by more than a single 'from_field', which makes its end value ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
                 )
 
     @abstractmethod
