@@ -1438,10 +1438,10 @@ class GroupedInstanceMetric(GlobalMetric):
 
     class for GlobalMetrics where each instance belongs to a group defined by the combined values of one or more other variables,
     specified by the dict input in additional_inputs (e.g. an ID and GROUP variable).
-    each instance score is determined by a function (specified by `metric'), and within each group, the overall score
-    is calculated by applying another function (specified by `group_score_func') across the instance scores.  Then the
-    overall score is calculated by the mean of these group_score_func scores.  For instance, if group_score_func = median and
-    metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
+    each instance score is determined by a function (specified by `instance_score_metric'), and within each group, the overall score
+    is calculated by applying another function (specified by `group_score_aggregation_func') across the instance scores.  Then the
+    overall score is calculated by the mean of these group_score_aggregation_func scores.  For instance, if group_score_aggregation_func = median and
+    instance_score_metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
     the medians (excluding any NaN values)
     Note: the implementation could be more efficient, because the instance accuracies only need to be calculated once
     for the global score and in the confidence interval
@@ -1449,9 +1449,9 @@ class GroupedInstanceMetric(GlobalMetric):
 
     from statistics import mean
 
-    metric = Accuracy
-    group_score_func = mean
-    group_score_name = "mean"
+    # these attributes are meant to be overridden by any inheriting class
+    instance_score_metric = Accuracy()
+    group_score_aggregation_func = mean
     main_score = "mean"
 
     def compute(
@@ -1475,7 +1475,7 @@ class GroupedInstanceMetric(GlobalMetric):
         # calculate metric score for each instance by group
         group_to_scores = {
             group: [
-                self.metric().compute(
+                self.instance_score_metric.compute(
                     prediction=pred, references=refs, additional_inputs=inputs
                 )["score"]
                 for pred, refs, inputs in zip(*instances)
@@ -1497,19 +1497,18 @@ class GroupedInstanceMetric(GlobalMetric):
 
     @classmethod
     def _group_score(cls, x):
-        return cls.group_score_func(x)
-
+        return cls.group_score_aggregation_func(x)
 
 class MeanGroupedAccuracy(GroupedInstanceMetric):
-    metric = Accuracy
+    instance_score_metric = Accuracy()
     main_score = "accuracy"
-    group_score_func = mean
+    group_score_aggregation_func = mean
 
 
 class MeanGroupedStringContainment(GroupedInstanceMetric):
-    metric = StringContainment
+    instance_score_metric = StringContainment()
     main_score = "string_containment"
-    group_score_func = mean
+    group_score_aggregation_func = mean
 
 
 def performance_drop_rate(instance_scores: List):
@@ -1535,12 +1534,13 @@ def performance_drop_rate(instance_scores: List):
 
 
 class MeanGroupedAccuracyPDR(GroupedInstanceMetric):
-    metric = Accuracy
+    instance_score_metric = Accuracy()
     main_score = "accuracy_pdr"
-    group_score_func = performance_drop_rate
+    group_score_aggregation_func = performance_drop_rate
 
 
 class MeanGroupedStringContainmentPDR(GroupedInstanceMetric):
-    metric = StringContainment
+    instance_score_metric = StringContainment()
     main_score = "string_containment_pdr"
-    group_score_func = performance_drop_rate
+    group_score_aggregation_func = performance_drop_rate
+
