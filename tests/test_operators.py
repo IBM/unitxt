@@ -1729,6 +1729,17 @@ class TestOperators(unittest.TestCase):
             "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
         )
 
+        # test if not two different from_field determine the same to_field, in field_to_field, to be caught on init
+        with self.assertRaises(ValueError) as ve:
+            AddConstant(
+                field_to_field={"a": "c", "b": "c"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
+            str(ve.exception),
+            "In the 'field_to_field' input argument, '{'a': 'c', 'b': 'c'}', field 'c' is to be determined by more than a single 'from_field', which makes its end value ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+        )
+
     def test_copy_paste_fields(self):
         inputs = [
             {"a": [1, 3]},
