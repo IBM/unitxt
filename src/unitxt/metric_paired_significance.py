@@ -11,7 +11,7 @@ from statsmodels.stats.multitest import multipletests
 
 COMMON_REPORT_FIELDS = [
     "model_names",
-    "metric_name",
+    "metric",
     "pvalues",
     "alternative",
     "permute",
@@ -65,6 +65,8 @@ class PairedDifferenceTest:
     receive across observations.
     """
 
+    # samples must be formatted as a namedtuple
+    SAMPLE = namedtuple("Sample", "data model metric")
     # output of signif_pair_diff will be a namedtuple in one of these formats
     PERMUTE_REPORT = namedtuple("DiffTest", " ".join(COMMON_REPORT_FIELDS))
     # additional fields for effect sizes available only if not permute
@@ -109,8 +111,8 @@ class PairedDifferenceTest:
             self.nmodels = max(2, int(nmodels))
             if model_names is not None:
                 assert (
-                    len(model_names) == self.nmodels
-                ), f"length of model_names (={len(model_names)}) must equal nmodels (={self.nmodels})"
+                    len(model_names) == self.nmodels and len(set(model_names)) == self.nmodels
+                ), f"length of model_names (={len(model_names)}) must equal nmodels (={self.nmodels}) and consist of {self.nmodels} unique strings"
                 self.model_names = [str(nm) for nm in model_names]
             else:
                 # create default model names
@@ -128,19 +130,35 @@ class PairedDifferenceTest:
         """
         return np.mean(lx) - np.mean(ly)
 
-    def _check_valid_samples(self, samples_list):
-        """Check if samples_list is valid (is of length nmodels), all have same length, and at least 2.
+    def format_as_samples(self, samples_list, metric="unknown"):
+        """Format a list of samples as a list of namedtuples for this object (assumes come from the model_names here).
 
         Args:
-            samples_list: a list of 1-D numpy arrays
+            samples_list: list of equal-length np.arrays, each representing a model's values of a given metric
+            metric: string name of metric (score function) that the samples are realizations of
+        Returns:
+            list of namedtuples of type SAMPLE
         """
-        # list of equal-length samples greater than size 2
-        len_elements = np.unique([len(vec) for vec in samples_list])
-        assert (
-            (len(samples_list) == self.nmodels)
-            and (len(np.unique(len_elements)) == 1)
-            and (len_elements[0] >= 2)
-        )
+        assert isinstance(samples_list, list)
+        assert len(samples_list) == self.nmodels, f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
+        assert len({len(ss) for ss in samples_list}) == 1, "all samples in samples_list must be of the same length"
+        assert len(samples_list[0]) >= 2, "samples must all have at least 2 observations"
+
+        return [self.SAMPLE(ss, mn, str(metric)) for ss, mn in zip(samples_list, self.model_names)]
+
+    def _check_valid_samples(self, samples_list):
+        """Check if samples_list is valid input for significance testing (come from same models as model_names, etc.).
+
+        Args:
+            samples_list: a list of SAMPLES namedtuples
+        """
+        assert isinstance(samples_list, list)
+        assert all(isinstance(ss, self.SAMPLE) for ss in samples_list), "all elements in samples_list must be SAMPLE namedtuples"
+
+        assert len(samples_list) == self.nmodels, f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
+        assert len({len(ss.data) for ss in samples_list}) == 1, "all samples' data field in samples_list must be of the same length"
+        assert all(mn == sn for mn, sn in zip(self.model_names, [ss.model for ss in samples_list])), "samoles_list model names must be the same as self.model_names"
+        assert len({ss.metric for ss in samples_list}) == 1, "all samples' metric field must be the same"
 
     def _check_binary(self, samples_list):
         """Check if samples are binary-valued.
@@ -152,7 +170,7 @@ class PairedDifferenceTest:
             boolean: True if all observed values are binary 0/1, otherwise False
         """
         self._check_valid_samples(samples_list)
-        uv = np.unique(np.vstack(samples_list))
+        uv = np.unique(np.vstack([ss.data for ss in samples_list]))
         return np.all(np.isin(uv, self.binary_values))
 
     def _can_use_mcnemar(self, samples_list, alternative="two-sided"):
@@ -181,7 +199,7 @@ class PairedDifferenceTest:
         # make sure that a cross tabulation is done that is 2x2 in case some value combinations are missing
         cat_binary = pd.CategoricalDtype(categories=self.binary_values, ordered=False)
         # encode as categorical binary with all values, use dropna=False to avoid dropping missing combinations
-        df = pd.DataFrame(np.transpose(np.vstack(samples_list))).astype(cat_binary)
+        df = pd.DataFrame(np.transpose(np.vstack([ss.data for ss in samples_list]))).astype(cat_binary)
         # need to allow floats for continuity correction
         return pd.crosstab(df[0], df[1], dropna=False).to_numpy()
 
@@ -224,17 +242,15 @@ class PairedDifferenceTest:
     def signif_pair_diff(
         self,
         samples_list,
-        metric_name="unknown",
         alternative="two-sided",
         permute=False,
         corrected=True,
         random_state=None,
     ):
-        """Conduct pairedd-observation est of difference in means between samples.
+        """Conduct paired-observation estimation of difference in means between samples.
 
         Args:
-            samples_list: a list of 1-D numpy arrays
-            metric_name: string of metric name that samples correspond to
+            samples_list: a list of SAMPLES namedtuples
             alternative: alternative hypothesis to be used; one-sided (greater/less) should only be used if the arrays have been ordered
             permute: whether or not to use permutation test (requires some simulation)
             corrected: whether or not to apply a correction for control of false positive rate given the number of hypotheses (used when nmodels > 2)
@@ -243,6 +259,7 @@ class PairedDifferenceTest:
         Returns:
             dict
         """
+        self._check_valid_samples(samples_list)
         # because sample ordering is not fixed, do either greater (one-sided) or two-sided
         assert alternative in ("greater", "less", "two-sided")
         if alternative != "two-sided":
@@ -264,7 +281,7 @@ class PairedDifferenceTest:
         # first see if can use McNemar's test, better for binary data; only works for two-sided hypotheses with two samples
         # validity check
         if self._can_use_mcnemar(samples_list, alternative):
-            pvalue, eff_size = self.mcnemar_test(samples_list=samples_list)
+            pvalue, eff_size = self.mcnemar_test(samples_list=[ss.data for ss in samples_list])
             permute = False
             res = {
                 "pvalues": np.array([pvalue]),
@@ -292,20 +309,20 @@ class PairedDifferenceTest:
                             vectorized=False,
                             random_state=random_state,
                         ).pvalue
-                        for vec in self.iterate_pairs(samples_list=samples_list)
+                        for vec in self.iterate_pairs(samples_list=[ss.data for ss in samples_list])
                     ]
                 )
             else:
                 test_res = [
                     ttest_rel(a=vec[0], b=vec[1], alternative=alternative)
-                    for vec in self.iterate_pairs(samples_list=samples_list)
+                    for vec in self.iterate_pairs(samples_list=[ss.data for ss in samples_list])
                 ]
                 pvalues = np.array([vv.pvalue for vv in test_res])
                 # effect size is the statistic / sqrt(n); equivalent of Cohen's d statistic
-                # permutation test don't have effect sizes
+                # permutation test doesn't have effect sizes
                 res["effect_sizes"] = np.array(
                     [vv.statistic for vv in test_res]
-                ) / np.sqrt(np.sqrt(len(samples_list[0])))
+                ) / np.sqrt(np.sqrt(len(samples_list[0].data)))
                 if alternative == "two-sided":
                     # magnitude in either direction
                     res["effect_size_is_signif"] = np.abs(res["effect_sizes"]) >= 0.8
@@ -330,8 +347,8 @@ class PairedDifferenceTest:
                 "corrected": corrected,
                 "alternative": alternative,
                 "permute": permute,
-                "sample_means": np.array([np.mean(vec) for vec in samples_list]),
-                "metric_name": metric_name,
+                "sample_means": np.array([np.mean(ss.data) for ss in samples_list]),
+                "metric": samples_list[0].metric,
                 "model_names": self.model_names,
             }
         )
@@ -539,8 +556,8 @@ class PairedDifferenceTest:
             assert (
                 len({vv.alternative for vv in test_results_list}) == 1
             ), "must all have same setting of 'alternative"
-            # all different metric_names
-            assert len({vv.metric_name for vv in test_results_list}) == len(
+            # all different metric names
+            assert len({vv.metric for vv in test_results_list}) == len(
                 test_results_list
             ), "all metric_name must be different"
         except ValueError as e:
@@ -559,7 +576,7 @@ class PairedDifferenceTest:
         """Summarize comparisons of multiple models across at least one metric; all metrics must be done on the same model comparisons.
 
         Args:
-            test_results_list: list where each element corresponds to a different metric_name result of signif_pair_diff on the same
+            test_results_list: list where each element corresponds to a different metric result of signif_pair_diff on the same
             set of models compared
             sort_rows: boolean, whether to sort rows so that the most significant comparisons appear at the top
             use_pvalues: boolean, if True use p-values otherwise effect sizes
@@ -699,7 +716,7 @@ class PairedDifferenceTest:
         # use 1-indexing for names rather than 0
         combined_results = pd.DataFrame(
             {
-                vv.metric_name: vv.pvalues if use_pvalues else vv.effect_sizes
+                vv.metric: vv.pvalues if use_pvalues else vv.effect_sizes
                 for vv in test_results_list
             },
             index=[(a + 1, b + 1) for (a, b) in self.iterate_pairs()],
@@ -724,7 +741,7 @@ class PairedDifferenceTest:
         # color by sign (works for p-values and effect size)
         statistic_sign = pd.DataFrame(
             {
-                vv.metric_name: np.sign(
+                vv.metric: np.sign(
                     [
                         vv.sample_means[ii] - vv.sample_means[jj]
                         for ii, jj in self.iterate_pairs()
@@ -905,7 +922,7 @@ class PairedDifferenceTest:
             width=dg.edge_widths,
         )
         ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
-        ax.set_ylabel(f"mean model {test_res.metric_name}")
+        ax.set_ylabel(f"mean model {test_res.metric}")
         # add some space to x limits so label names don't hit the plotting panel edges
         xlims = ax.get_xlim()
         # retrieve plotted positions, one for each node (model)
@@ -914,7 +931,7 @@ class PairedDifferenceTest:
         ax.set_xlim(xlims[0] - x_margin, xlims[1] + x_margin)
         direction = {"two-sided": "A vs B", "less": "A < B", "greater": "A > B"}
         title = "{}: edges connect models with insignificant {} {}".format(
-            test_res.metric_name,
+            test_res.metric,
             direction[test_res.alternative],
             criterion.replace("_", " "),
         )
@@ -1030,10 +1047,10 @@ class PairedDifferenceTest:
                 # reorder levels by node order
                 level2node = defaultdict(list)
                 # means value val in color_node_levels is associated with the ith models, but first sort in alphabetical order
-                for ii, val in enumerate(sorted(node_color_levels)):
+                for ii, val in enumerate(node_color_levels):
                     level2node[val].append(ii)
                 colors = [[] for _ in range(self.nmodels)]
-                for ii, val in enumerate(level2node):
+                for ii, val in enumerate(sorted(level2node)):
                     for node in level2node[val]:
                         # take the ith color
                         colors[node] = pal[ii]
@@ -1054,7 +1071,7 @@ class PairedDifferenceTest:
                         markerfacecolor=pal[ii],
                         markersize=12,
                     )
-                    for ii, lab in enumerate(level2node)
+                    for ii, lab in enumerate(sorted(level2node))
                 ]
             else:
                 # default same color for all
