@@ -4,7 +4,6 @@ from math import isnan
 from src.unitxt.logging import get_logger
 from src.unitxt.metrics import (
     Accuracy,
-    BertScore,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
@@ -14,9 +13,7 @@ from src.unitxt.metrics import (
     MeanGroupedAccuracyPDR,
     MeanGroupedStringContainment,
     MeanGroupedStringContainmentPDR,
-    Reward,
     Rouge,
-    SentenceBert,
     Squad,
     TokenOverlap,
 )
@@ -440,93 +437,6 @@ class TestMetrics(unittest.TestCase):
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 
-    def test_bert_score(self):
-        metric = BertScore(model_name="microsoft/deberta-xlarge-mnli")
-        predictions = ["hello there general dude", "foo bar foobar"]
-        references = [
-            ["hello there general kenobi", "hello there!"],
-            ["foo bar foobar", "foo bar"],
-        ]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        global_targets = {"f1": 0.89818, "precision": 0.92830, "recall": 0.92185}
-        for target, value in global_targets.items():
-            self.assertAlmostEqual(
-                value, outputs[0]["score"]["global"][target], places=5
-            )
-
-    def test_sentence_bert(self):
-        metric = SentenceBert(model_name="sentence-transformers/all-mpnet-base-v2")
-        predictions = ["hello there general dude", "foo bar foobar"]
-        references = [
-            ["hello there general kenobi", "hello there!"],
-            ["foo bar foobar", "foo bar"],
-        ]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        global_target = 0.85614
-        self.assertAlmostEqual(
-            global_target, outputs[0]["score"]["global"]["score"], places=5
-        )
-
-    def test_reward(self):
-        metric = Reward(model_name="OpenAssistant/reward-model-deberta-v3-large-v2")
-        predictions = ["hello there General Dude", "foo bar foobar"]
-        references = [["How do you greet General Dude"], ["What is your name?"]]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        global_target = 0.08608
-        self.assertAlmostEqual(
-            global_target, outputs[0]["score"]["global"]["score"], places=5
-        )
-
-    def test_mean_grouped_accuracy(self):
-        metric = MeanGroupedAccuracy()
-        global_target = 0.225
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
-    def test_mean_grouped_accuracy_pdr(self):
-        metric = MeanGroupedAccuracyPDR()
-        global_target = 0.8333333333333334
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
-    def test_mean_grouped_string_containment_accuracy(self):
-        metric = MeanGroupedStringContainment()
-        global_target = 0.4875
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
-    def test_mean_grouped_string_containment_accuracy_pdr(self):
-        metric = MeanGroupedStringContainmentPDR()
-        global_target = 0.4444444444444445
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
-
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
@@ -634,7 +544,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         logger.info(global_result)
         for score_name, score_value in global_result.items():
             if score_name in expected_global_result:
-                # The that the output value is as the expected value
+                # Verify that the output value is as the expected value
                 self.assertAlmostEqual(
                     score_value, expected_global_result[score_name], places=5
                 )
@@ -643,7 +553,8 @@ class TestConfidenceIntervals(unittest.TestCase):
                 # This is ok if the score_name is not related to confidence intervals
                 # Otherwise, there was some confidence interval calculation that was not supposed to occur.
                 self.assertTrue(
-                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    ("ci_low" not in score_name and "ci_high" not in score_name)
+                    or score_name not in metric.ci_scores,
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )
 

@@ -64,6 +64,7 @@ class MetricWithConfidenceInterval(Metric):
     # Use None to disable confidence interval computation.
     n_resamples: int = None
     confidence_level: float = 0.95
+    ci_scores: List[str] = None
 
     @staticmethod
     def new_random_generator():
@@ -82,7 +83,7 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
-    def score_based_confidence_interval(self, score_names: List[str], instances):
+    def score_based_confidence_interval(self, instances):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
 
         score_names: List[str]
@@ -96,6 +97,10 @@ class MetricWithConfidenceInterval(Metric):
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
+
+        score_names = (
+            self.ci_scores if self.ci_scores is not None else [self.main_score]
+        )
 
         for score_name in score_names:
             scores = [
@@ -344,7 +349,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score_name"] = self.main_score
 
                 confidence_interval = self.score_based_confidence_interval(
-                    score_names=[self.main_score], instances=instances
+                    instances=instances
                 )
                 global_score.update(confidence_interval)
 
@@ -414,7 +419,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score_name"] = self.main_score
 
                 confidence_interval = self.score_based_confidence_interval(
-                    score_names=[self.main_score], instances=instances
+                    instances=instances
                 )
                 global_score.update(confidence_interval)
 
@@ -1098,6 +1103,7 @@ def normalize_answer(s):
 class TokenOverlap(InstanceMetric):
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
+    ci_scores = ["f1", "precision", "recall"]
 
     def compute(
         self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
@@ -1131,6 +1137,7 @@ class BertScore(HuggingfaceBulkMetric):
     main_score = "f1"
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     hf_metric_fields = ["f1", "precision", "recall"]
+    ci_scores = ["f1", "precision", "recall"]
     model_name: str
 
     def prepare(self):
@@ -1400,13 +1407,12 @@ class RetrievalAtK(RetrievalMetric):
     def prepare(self):
         super().prepare()
         self.main_score = self.score_name("match", self.k_list[0])
-        self.reduction_map = {
-            "mean": [
-                self.score_name(measure, k)
-                for measure in ["precision", "recall", "match"]
-                for k in self.k_list
-            ]
-        }
+        self.ci_scores = [
+            self.score_name(measure, k)
+            for measure in ["precision", "recall", "match"]
+            for k in self.k_list
+        ]
+        self.reduction_map = {"mean": self.ci_scores}
 
     @staticmethod
     def score_name(measure: str, k: int):
