@@ -219,24 +219,22 @@ class FlattenInstances(StreamInstanceOperator):
 class ModelInputFormatter(StreamInstanceOperator):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
-    WholeInputFormatter expects its input instance to have been processed by a Template StreamInstanceOperator
-    (from templates.py), or any extension thereof, and hence to contain a field named "source", and to have
-    been processed by RenderInstruction StreamInstanceOperator (from renderer.py) and hence to contain a non None
-    field "instruction".
-    Demos are assumed to be included as well, in a field whose name is specified by argument 'demos_field'. That
-    field is assumed to contain a list of dicts, each containing keys: "source" and "target" of a single demo.
-    The value in field "source" of the input instance describes (verbalizes) original values in the instance (as read
+    ModelInputFormatter expects the input instance to contain:
+    1. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
-    WholeInputFormatter makes this (verbalization of the) input into a whole-input-to-the-model, by combining it
-    with instruction and demos, read from the input instance, through both formatting args
-    formatting arguments.
-    Following the Renderers action, the formatted model input is fed into field "source" (overwriting the field)
-    Also following renderers, this operator pops fields "instruction" and "demos" from the input instance.
+    2. A field named "instruction" that contains a (non-None) string.
+    3. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
+    and "target", representing a single demo.
+
+    ModelInputFormatter formats the above fields into a single string to be inputted to the model. This string overwrites
+    field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
+    ModelInputFormatter also pops field "instruction" and the field containing the demos out from the input instance.
 
     Args:
         demos_field (str): the name of the field that contains the demos, being a list of dicts, each with "source" and "target" keys
-        demo_format (str): formatting string for a single demo, combining fields source and target
-        model_input_format (str) overall output format, combining instruction, demos, and source
+        demo_format (str): formatting string for a single demo, combining fields "source" and "target"
+        model_input_format (str) overall product format, combining instruction and source (as read from fields "instruction"
+        and "source" of the input instance), together with demos (as formatted into one string)
 
     Example:
         when input instance:
@@ -288,7 +286,7 @@ class ModelInputFormatter(StreamInstanceOperator):
         instruction = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="instruction"
         )
-        # pop from instance, as ICLFormat does
+        # pop "instruction" from instance
         if "instruction" in instance:
             instance.pop("instruction")
 
@@ -299,7 +297,7 @@ class ModelInputFormatter(StreamInstanceOperator):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            # pop demos from instance, following ICLFormat
+            # pop demos from instance
             instance.pop(self.demos_field)
 
         demos_string = ""
