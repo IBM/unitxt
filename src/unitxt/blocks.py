@@ -17,6 +17,7 @@ from .operators import (
     CopyFields,
     DivideAllFieldsBy,
     MapInstanceValues,
+    ModelInputFormatter,
     RenameFields,
 )
 from .processors import ToString, ToStringStripped

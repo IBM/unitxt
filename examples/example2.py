@@ -4,7 +4,7 @@ from src.unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    RenderFormatTemplate,
+    ModelInputFormatter,
     SequentialRecipe,
     SplitRandomMix,
 )
@@ -38,14 +38,13 @@ recipe = SequentialRecipe(
             outputs=["label"],
             metrics=["metrics.accuracy"],
         ),
-        RenderFormatTemplate(
-            template=InputOutputTemplate(
-                input_format="""
+        InputOutputTemplate(
+            input_format="""
                 Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
                 """.strip(),
-                output_format="{label}",
-            ),
+            output_format="{label}",
         ),
+        ModelInputFormatter(model_input_format="User: {source}\nAgent: "),
     ]
 )
 

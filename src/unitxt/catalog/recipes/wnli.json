@@ -30,7 +30,7 @@
                     "entailment",
                     "not entailment"
                 ],
-                "instruction": "classify the relationship between the two sentences from the choices."
+                "instruction": "Classify the relationship between the two sentences from the choices."
             }
         },
         {
@@ -49,7 +49,12 @@
             ]
         },
         {
-            "type": "render_auto_format_template"
+            "type": "input_output_template",
+            "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+            "output_format": "{label}"
+        },
+        {
+            "type": "model_input_formatter"
         }
     ]
 }
