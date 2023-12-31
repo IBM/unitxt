@@ -220,6 +220,7 @@ class YesNoTemplate(Template):
     label_field: str = None
     yes_answer: str = "Yes"
     no_answer: str = "No"
+
     postprocessors: List[str] = field(
         default_factory=lambda: ["processors.to_string_stripped"]
     )
@@ -328,6 +329,7 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
     labels_seprator: str = ", "
+
     postprocessors: List[str] = ["processors.to_list_by_comma"]
     output_format: str = "{labels}"
     empty_label: str = "None"
