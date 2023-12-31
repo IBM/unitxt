@@ -38,7 +38,11 @@
                 "choices": [
                     "entailment",
                     "not entailment"
-                ]
+                ],
+                "instance": {
+                    "type": "textual_instruction",
+                    "text": "classify if this sentence is entailment or not entailment."
+                }
             }
         },
         {
@@ -62,6 +66,11 @@
             ]
         },
         {
+            "type": "input_output_template",
+            "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+            "output_format": "{label}"
+        },
+        {
             "type": "spread_split",
             "source_stream": "demos_pool",
             "target_field": "demos",
@@ -71,17 +80,9 @@
             }
         },
         {
-            "type": "render_templated_icl",
-            "instruction": {
-                "type": "textual_instruction",
-                "text": "classify if this sentence is entailment or not entailment."
-            },
-            "template": {
-                "type": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
-            },
-            "demos_field": "demos"
+            "type": "model_input_formatter",
+            "demo_format": "User: {source}\nAgent: {target}\n\n",
+            "model_input_format": "{demos}User: {source}\nAgent: "
         }
     ]
 }
