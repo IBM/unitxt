@@ -7,6 +7,18 @@ from src.unitxt.random_utils import new_random_generator
 
 np.set_printoptions(precision=10)
 
+def assertfail(func):
+    # pass a lambda function with an assertion
+    # returns True if there is an AssertionError
+    try:
+        func()
+    except AssertionError:
+        return True
+
+def gen_unequal_indices(r=3):
+    r = max(1, int(r))
+    return iter([(ii, jj) for ii in range(r) for jj in range(r) if jj != ii])
+
 
 def rbernoulli_vec(pvec, rng):
     # binary variable with probability of 1 being given by a vector pvec (which determines the length)
@@ -110,13 +122,10 @@ class TestMetricSignifDifference(unittest.TestCase):
         same_distr=True,
         continuous=True,
     ):
-        model_res = (
-            self.gen_continuous_data(same_distr)
-            if continuous
-            else self.gen_binary_data(same_distr=same_distr)
-        )
-        tester = PairedDifferenceTest(nmodels=self.nmodels)
 
+        tester = PairedDifferenceTest(nmodels=self.nmodels)
+        model_res = self.gen_continuous_data(same_distr) if continuous else self.gen_binary_data(same_distr=same_distr)
+        model_res = tester.format_as_samples(list(model_res))
         # use default paired t-test
         res_twosided = tester.signif_pair_diff(
             samples_list=model_res, alternative="two-sided"
@@ -377,26 +386,26 @@ class TestMetricSignifDifference(unittest.TestCase):
         assert tester.nmodels == 2
 
         # random generation of paired binary data
-        binary_same = self.gen_binary_data(same_distr=True, nmodels=tester.nmodels)
+        binary_same = tester.format_as_samples(list(self.gen_binary_data(same_distr=True, nmodels=tester.nmodels)))
         res = tester.signif_pair_diff(samples_list=binary_same)
         self.assertAlmostEqual(first=res.pvalues[0], second=1.0)
         self.assertAlmostEqual(first=res.effect_sizes[0], second=0.033333333333333326)
 
-        binary_diff = self.gen_binary_data(same_distr=False, nmodels=tester.nmodels)
+        binary_diff = tester.format_as_samples(list(self.gen_binary_data(same_distr=False, nmodels=tester.nmodels)))
         res = tester.signif_pair_diff(samples_list=binary_diff)
         self.assertAlmostEqual(first=res.pvalues[0], second=3.6729034036397934e-08)
         self.assertAlmostEqual(first=res.effect_sizes[0], second=0.44285714285714284)
 
         # handle some corner cases where the samples do not result in a 2x2 contingency table automatically
         # contingency table is 1x1
-        samples_list = [np.ones(shape=100), np.ones(shape=100)]
+        samples_list = tester.format_as_samples([np.ones(shape=100), np.ones(shape=100)])
         res_1x1 = tester.signif_pair_diff(samples_list=samples_list)
         # p-value is 1 meaning there is no difference since both have same values exactly, with no variability
         self.assertAlmostEqual(first=res_1x1.pvalues[0], second=1.0)
         self.assertAlmostEqual(first=res_1x1.effect_sizes[0], second=0.0)
 
         # also 1x1 but different values 0 and 1
-        samples_list = [np.ones(shape=100), np.zeros(shape=100)]
+        samples_list = tester.format_as_samples([np.ones(shape=100), np.zeros(shape=100)])
         res_1x1 = tester.signif_pair_diff(samples_list=samples_list)
         # p-value is essentially 0 because there is a complete difference and no variability
         self.assertAlmostEqual(first=res_1x1.pvalues[0], second=1.5777218104420236e-30)
@@ -405,13 +414,13 @@ class TestMetricSignifDifference(unittest.TestCase):
         )
 
         # contingency table is 1x2
-        samples_list = [np.ones(shape=100), np.repeat(a=[0, 1], repeats=[47, 53])]
+        samples_list = tester.format_as_samples([np.ones(shape=100), np.repeat(a=[0, 1], repeats=[47, 53])])
         res_1x2 = tester.signif_pair_diff(samples_list=samples_list)
         self.assertAlmostEqual(first=res_1x2.pvalues[0], second=1.4210854715202004e-14)
         self.assertAlmostEqual(first=res_1x2.effect_sizes[0], second=0.4894736842105263)
 
         # contingency table is 2x1
-        samples_list = [np.repeat(a=[0, 1], repeats=[49, 51]), np.zeros(shape=100)]
+        samples_list = tester.format_as_samples([np.repeat(a=[0, 1], repeats=[49, 51]), np.zeros(shape=100)])
         res_2x1 = tester.signif_pair_diff(samples_list=samples_list)
         self.assertAlmostEqual(first=res_2x1.pvalues[0], second=8.881784197001252e-16)
         self.assertAlmostEqual(
@@ -419,12 +428,89 @@ class TestMetricSignifDifference(unittest.TestCase):
         )
 
         # contingency table is 2x2 but with one combination missing, which needs a continuity correction
-        samples_list = [
+        samples_list = tester.format_as_samples([
             np.repeat(a=[0, 1], repeats=[50, 50]),
             np.repeat(a=[0, 1], repeats=[40, 60]),
-        ]
+        ])
         res_2x2 = tester.signif_pair_diff(samples_list=samples_list)
         self.assertAlmostEqual(first=res_2x2.pvalues[0], second=0.001953125)
         self.assertAlmostEqual(
             first=res_2x2.effect_sizes[0], second=0.45238095238095233
         )
+
+    def test_sample_and_report_compabibility_with_tester(self):
+        """Verify that a report is compatible with an object of class PairedDifferenceTest (for p-value lineplot and connected graph)."""
+        tester_3models_unnamed = PairedDifferenceTest(nmodels=3) # will be named model1, model2, model3
+        tester_3models_named = PairedDifferenceTest(model_names=["llama", "flan-t5", "granite"])
+        tester_2models_unnamed = PairedDifferenceTest(nmodels=2)
+
+        samples_3models = list(self.gen_binary_data(same_distr=True, nmodels=3))
+        samples_2models = list(self.gen_binary_data(same_distr=True, nmodels=2))
+
+        metric_names = ["precision", "recall"]
+
+        # format samples according to model names of the tester
+        # the two 3 models testers are incompatible because the model_names differ
+        # tester with 2 models is incompatible with the others because number of models differ
+        samples_3models_unnamed = [tester_3models_unnamed.format_as_samples(samples_list=samples_3models, metric=mn) for mn in metric_names]
+        samples_3models_named = [tester_3models_named.format_as_samples(samples_list=samples_3models, metric=mn) for mn in metric_names]
+        samples_2models_unnamed = [tester_2models_unnamed.format_as_samples(samples_list=samples_2models, metric=mn) for mn in metric_names]
+
+        # # assertions should pass when compatible
+        # for kk in range(2):
+        #     tester_3models_named._check_valid_samples(samples_3models_named[kk])
+        #     tester_3models_unnamed._check_valid_samples(samples_3models_unnamed[kk])
+        #     tester_2models_unnamed._check_valid_samples(samples_2models_unnamed[kk])
+
+        # any tester should be incompatbible with a sample not formatted for it
+        testers = [tester_3models_named, tester_3models_unnamed, tester_2models_unnamed]
+        samples = [samples_3models_named, samples_3models_unnamed, samples_2models_unnamed]
+
+        #     for ii in range(len(testers)):
+        #         for jj in range(len(samples)):
+        #             if ii == jj:
+        #                 for sss in samples[jj]:
+        #                 # testers and samples that are fit to each other should be compatible and pass assertions                        # assert assertfail(lambda: testers[ii]._check_valid_samples(sss))
+        #                     testers[ii]._check_valid_samples(sss)
+        #             else:
+        #                 for sss in samples[jj]:
+        #                     assertfail(lambda: testers[ii]._check_valid_samples(sss))
+        #                 # else:
+        #                 #
+        #             # assert tt._check_valid_samples(sss) if ii == jj else assertfail(lambda: tt._check_valid_samples(sss))
+        #             #     else:
+        #             #
+        #             #     # assert ii == jj
+        #             # # else:
+        #             # #     # for sss in ss:
+        #             # #     # testers and samples that are fit to each other should be compatible and pass assertions
+        #             # #
+        #
+        # # for ii, tt in enumerate(testers):
+        # #         for jj, ss in enumerate(samples):
+        # #             if jj != ii:
+        # #                 for sss in ss:
+        # #                     assert assertfail(lambda: testers[ii]._check_valid_samples(samples_list=sss))
+
+        # signif_reports = [[tt.signif_pair_diff(samples_list=ss[ii]) for ii in range(2)] for tt, ss in zip(testers, samples)]
+        #
+        # # check that significance test reports are compatible with the one that generated it
+        # for tt, reports in zip(testers, signif_reports):
+        #     for rr in reports:
+        #         tt._check_valid_signif_report(test_res=rr)
+        #
+        # # and other ones should be incompatible
+        # for ii, jj in gen_unequal_indices(r=3):
+        #     for kk in range(2):
+        #         assert assertfail(lambda: testers[ii]._check_valid_signif_report(test_res=signif_reports[jj][kk]))
+        #
+        # # for heatmap: check that each group of reports are compatible with each other
+        # for tt, reports in zip(testers, signif_reports):
+        #     tt._check_valid_signif_report_list(reports)
+        #
+        # # and other ones should be incompatible
+        # for ii, jj in gen_unequal_indices(r=3):
+        #     # tester incompatible with other samples
+        #     assert assertfail(lambda: testers[ii]._check_valid_signif_report_list(signif_reports[jj]))
+        #     # now check it fails if there is a mix and match between reports from different testers where one is incomptabile
+        #     assert assertfail(lambda: testers[ii]._check_valid_signif_report_list([signif_reports[ii][0], signif_reports[jj][1]]))
