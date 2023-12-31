@@ -2703,7 +2703,7 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
 
     def test_model_input_formatter_with_demonstrations_and_instruction_after_demos(
-        self
+        self,
     ):
         demo_instances = [
             {"source": "1+2", "target": "3"},

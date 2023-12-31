@@ -209,6 +209,26 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+        err_input_template = InputOutputTemplate(
+            input_format="This is my text:'{no_text}'", output_format="{label}"
+        )
+        with self.assertRaises(KeyError) as ke:
+            err_input_template.process(inputs[0])
+        self.assertEqual(
+            "\"Available inputs are ['text'] but input format requires a different ones: 'This is my text:'{no_text}''\"",
+            str(ke.exception),
+        )
+
+        err_output_template = InputOutputTemplate(
+            input_format="This is my text:'{text}'", output_format="{no_label}"
+        )
+        with self.assertRaises(KeyError) as ke:
+            err_output_template.process(inputs[0])
+        self.assertEqual(
+            "\"Available outputs are dict_keys(['label']) but output format requires a different one: {no_label}\"",
+            str(ke.exception),
+        )
+
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
         template = YesNoTemplate(
