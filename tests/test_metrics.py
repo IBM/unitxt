@@ -11,6 +11,7 @@ from src.unitxt.metrics import (
     F1Weighted,
     MeanGroupedAccuracy,
     MeanGroupedAccuracyPDR,
+    MeanGroupedF1MacroMultiLabel,
     MeanGroupedStringContainment,
     MeanGroupedStringContainmentPDR,
     Rouge,
@@ -58,6 +59,44 @@ GROUPED_INSTANCE_REFERENCES = [
     [" abcdefg", "AB", "abcd"],
 ]
 
+GROUPED_INSTANCE_PREDICTIONS_F1 = [
+    "A",
+    "B",
+    "B",
+    "A",
+    "B",
+    "B",
+    "A",
+    "A",
+    "B",
+    "B",
+    "A",
+    "B",
+    "A",
+    "A",
+    "B",
+]
+GROUPED_INSTANCE_PREDICTIONS_F1 = [[pp] for pp in GROUPED_INSTANCE_PREDICTIONS_F1]
+
+GROUPED_INSTANCE_REFERENCES_F1 = [
+    ["A", "B"],
+    ["A", "C"],
+    ["B", "C", "A"],
+    ["A"],
+    ["B", "A"],
+    ["C", "B"],
+    ["A"],
+    ["B", "C"],
+    ["A", "B", "C"],
+    ["A", "B"],
+    ["B", "C"],
+    ["C"],
+    ["C", "B"],
+    ["B", "A"],
+    ["B"],
+]
+GROUPED_INSTANCE_REFERENCES_F1 = [[rr] for rr in GROUPED_INSTANCE_REFERENCES_F1]
+
 # possibly multi-column group identifier
 GROUPED_INSTANCE_ADDL_INPUTS = (
     [{"group": "grp1", "id": 0}] * 5
@@ -65,6 +104,10 @@ GROUPED_INSTANCE_ADDL_INPUTS = (
     + [{"group": "grp2", "id": 0}] * 4
     + [{"group": "grp2", "id": 1}] * 1
 )
+group_by_fields = ["group", "id"]
+# construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
+for ai in GROUPED_INSTANCE_ADDL_INPUTS:
+    ai.update({"group_id": "_".join([str(ai[ff]) for ff in group_by_fields])})
 
 
 class TestMetrics(unittest.TestCase):
@@ -437,6 +480,42 @@ class TestMetrics(unittest.TestCase):
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 
+    def test_grouped_instance_metrics(self):
+        accuracy_metrics = [
+            MeanGroupedAccuracy(),
+            MeanGroupedStringContainment(),
+            MeanGroupedAccuracyPDR(),
+            MeanGroupedStringContainmentPDR(),
+        ]
+        global_targets = [0.225, 0.4875, 0.8333333333333334, 0.4444444444444445]
+        for metric, target in zip(accuracy_metrics, global_targets):
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            self.assertAlmostEqual(
+                target,
+                outputs[0]["score"]["global"]["score"],
+                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
+            )
+
+        f1_metrics = [MeanGroupedF1MacroMultiLabel()]
+        global_targets = [0.5145833333333334]
+        for metric, target in zip(f1_metrics, global_targets):
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS_F1,
+                references=GROUPED_INSTANCE_REFERENCES_F1,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            self.assertAlmostEqual(
+                target,
+                outputs[0]["score"]["global"]["score"],
+                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
+            )
+
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
@@ -496,32 +575,45 @@ class TestConfidenceIntervals(unittest.TestCase):
 
     def test_grouped_instance_metric_confidence_interval(self):
         """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
-        import numpy as np
-
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedAccuracy(),
             expected_ci_low=0.0,
-            expected_ci_high=0.4444209814609315,
+            expected_ci_high=0.44928030391197404,
+            references=GROUPED_INSTANCE_REFERENCES,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedStringContainment(),
-            expected_ci_low=0.17863495754478376,
-            expected_ci_high=0.7509403489048032,
+            expected_ci_low=0.16666666666666666,
+            expected_ci_high=0.7262856966170391,
+            references=GROUPED_INSTANCE_REFERENCES,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
         )
 
-        # these target values will need to be changed once the confidence interval checks if all values are not NaN
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedAccuracyPDR(),
-            expected_ci_low=np.nan,
-            expected_ci_high=np.nan,
+            expected_ci_low=0.5,
+            expected_ci_high=1.0,
+            references=GROUPED_INSTANCE_REFERENCES,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
         )
 
-        # these target values will need to be changed once the confidence interval checks if all values are not NaN
         self._test_grouped_instance_confidence_interval(
             metric=MeanGroupedStringContainmentPDR(),
-            expected_ci_low=0.07298667127241985,
-            expected_ci_high=0.9855049494143078,
+            expected_ci_low=0.125,
+            expected_ci_high=1.0,
+            references=GROUPED_INSTANCE_REFERENCES,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+        )
+
+        # F1-based scores
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedF1MacroMultiLabel(),
+            expected_ci_low=0.3868197023010366,
+            expected_ci_high=0.7289820104995464,
+            references=GROUPED_INSTANCE_REFERENCES_F1,
+            predictions=GROUPED_INSTANCE_PREDICTIONS_F1,
         )
 
     def _test_confidence_interval(self, metric, expected_ci_low, expected_ci_high):
@@ -559,15 +651,15 @@ class TestConfidenceIntervals(unittest.TestCase):
                 )
 
     def _test_grouped_instance_confidence_interval(
-        self, metric, expected_ci_low, expected_ci_high
+        self, metric, expected_ci_low, expected_ci_high, references, predictions
     ):
         """Test the calculation of confidence intervals for a given metric."""
         import numpy as np
 
         outputs = apply_metric(
             metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
+            predictions=predictions,
+            references=references,
             additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
 
