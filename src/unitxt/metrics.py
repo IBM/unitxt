@@ -480,6 +480,7 @@ class Accuracy(InstanceMetric):
         result["score_name"] = self.main_score
         return result
 
+
 class StringContainment(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
@@ -1476,7 +1477,11 @@ class GroupedInstanceMetric(GlobalMetric):
             references, predictions, additional_inputs
         ):
             # self.grouping_field should either be a single column or one created by the user in the dataset cards
-            keyname = str(inputs_dict[self.grouping_field]) if self.grouping_field in inputs_dict else ''
+            keyname = (
+                str(inputs_dict[self.grouping_field])
+                if self.grouping_field in inputs_dict
+                else ""
+            )
             group_to_predictions_and_references[keyname][0].append(pred)
             group_to_predictions_and_references[keyname][1].append(reference)
             group_to_predictions_and_references[keyname][2].append(inputs_dict)
@@ -1507,6 +1512,7 @@ class GroupedInstanceMetric(GlobalMetric):
     @classmethod
     def _group_score(cls, x):
         return cls.group_score_aggregation_func(x)
+
 
 class MeanGroupedAccuracy(GroupedInstanceMetric):
     instance_score_metric = Accuracy()
@@ -1552,4 +1558,3 @@ class MeanGroupedStringContainmentPDR(GroupedInstanceMetric):
     instance_score_metric = StringContainment()
     main_score = "string_containment_pdr"
     group_score_aggregation_func = performance_drop_rate
-
