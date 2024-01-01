@@ -3,6 +3,15 @@ from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
 from src.unitxt.operators import CopyFields, MapInstanceValues
 from src.unitxt.test_utils.metrics import test_metric
 
+language_to_tokenizer = {
+    "deutch": "",
+    "french": "",
+    "romanian": "",
+    "english": "",
+    "en": "",
+    "ja": "ja-mecab",
+}
+
 metric = MetricPipeline(
     main_score="sacrebleu",
     preprocess_steps=[
@@ -15,7 +24,7 @@ metric = MetricPipeline(
             get_default="en",
         ),
         MapInstanceValues(
-            mappers={"additional_inputs/tokenize": {"en": "", "ja": "ja-mecab"}},
+            mappers={"additional_inputs/tokenize": language_to_tokenizer},
             strict=True,
             use_query=True,
         ),
