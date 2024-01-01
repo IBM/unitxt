@@ -196,7 +196,7 @@ def test_with_eval(
         message = (
             f"The results of running the main metric in used in the card ({score_name}) "
             f"over random predictions returns a different score than expected.\n"
-            f"Usually, one would expect a low score of {exact_match_score} in this case, but returned metric score was {score}.\n"
+            f"Usually, one would expect a low score of {full_mismatch_score} in this case, but returned metric score was {score}.\n"
         )
         error_message = (
             f"{message}"
