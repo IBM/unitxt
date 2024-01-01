@@ -18,13 +18,13 @@
             "type": "map_instance_values",
             "mappers": {
                 "additional_inputs/tokenize": {
-                    "deutch": "",
-                    "french": "",
-                    "romanian": "",
-                    "english": "",
-                    "en": "",
-                    "ja": "ja-mecab",
-                    "japanese" : "ja-mecab"
+                    "deutch": null,
+                    "french": null,
+                    "romanian": null,
+                    "english": null,
+                    "en": null,
+                    "japanese": "ja-mecab",
+                    "ja": "ja-mecab"
                 }
             },
             "strict": true,
