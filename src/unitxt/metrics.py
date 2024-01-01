@@ -31,6 +31,7 @@ logger = get_logger()
 # global and instances metrics. Use None to disable confidence interval computation by default.
 _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
 _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+_N_RESAMPLES_DEFAULT_FOR_GROUPED_INSTANCE_METRICS = 250
 
 
 def abstract_factory():
@@ -192,6 +193,75 @@ class MetricWithConfidenceInterval(Metric):
             result["score_ci_high"] = ci.high
             result[f"{score_name}_ci_low"] = ci.low
             result[f"{score_name}_ci_high"] = ci.high
+        return result
+
+    def compute_grouped_instance_confidence_intervals(self, instances):
+        """Computed confidence intervals for GroupedInstanceMetrics, using only the instance scores and group ID."""
+        assert isinstance(self, GroupedInstanceMetric)
+        random_gen = self.new_random_generator()
+
+        def statistic(arr, axis):
+            # arr is a 2d array where each row is a resampling, so we
+            # iterate over the rows and compute the metric on each resampling
+            def metric(sampled_instances):
+                try:
+                    return self.compute(sampled_instances)[self.main_score]
+                except Exception as e:
+                    # this happens in edge cases, for example, when the sampling creates a
+                    # sample where all strings are empty and this fails bleu.
+                    logger.info(f"Warning in {self.__class__.__name__}", e)
+                    return np.nan
+
+            scores = numpy.apply_along_axis(
+                lambda x: metric(
+                    sampled_instances=[instances[i] for i in x],
+                ),
+                axis=axis,
+                arr=arr,
+            )
+
+            # when running with bca interval (default), the statistic is called twice: with the
+            # original data and with the resamples. here we want to focus only on the latter.
+            if scores.size > 1:
+                # here we deal with samples on which the metric could not be computed. These are
+                # edge cases - for example, when the sample contains only empty strings.
+                # CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
+                # cases in which the metric is not computable. Therefore, we ignore these edge cases
+                # as part of the computation of CI. The question is how to implement this policy.
+                # Options:
+                # 1. skip the errors and return a shorter array => this fails because Scipy demans
+                # this callback (i.e. the statistic() callback) to return an array of the same size
+                # as the number of resamples
+                # 2. Put np.nan for the errors => this fails because in such case the ci itself
+                # becomes np.nan. So one edge case can fail the whole CI computation.
+                # 3. Replace the errors with a sampling from the successful cases => this is what
+                # is implemented.
+                error_indices = numpy.isnan(scores)
+                n_errors = sum(error_indices)
+                if n_errors > 0:
+                    # replace NaNs with resampling from other non-NaN scores
+                    scores[error_indices] = random_gen.choice(
+                        scores[~error_indices], n_errors, replace=True
+                    )
+
+            return scores
+
+        self._verify_instance_scores(instances)
+        result = {}
+        num_predictions = len(instances)
+        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
+            identifiers = list(range(num_predictions))
+            ci = bootstrap(
+                (identifiers,),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=random_gen,
+            ).confidence_interval
+            result["score_ci_low"] = ci.low
+            result["score_ci_high"] = ci.high
+            result[f"{self.main_score}_ci_low"] = ci.low
+            result[f"{self.main_score}_ci_high"] = ci.high
         return result
 
 
@@ -1439,19 +1509,22 @@ class RetrievalAtK(RetrievalMetric):
         return result
 
 
-class GroupedInstanceMetric(GlobalMetric):
-    """GlobalMetric calculated as a function on grouped instances (by additional_inputs), then averaged.
+class GroupedInstanceMetric(InstanceMetric):
+    """metrics based on applying an aggregation function to instance scores by groups, then averaged.
 
-    sub-class of GlobalMetrics where each instance belongs to a group defined by the field grouping_field (by default 'group_id').
-    If the combination of multiple fields defines group, grouping_field should be defined in the dataset card.  This field is received
-    by the additional_inputs fields.
-    each instance score is determined by an InstanceMetric (specified by `instance_score_metric'), and within each group, the overall score
-    is calculated by applying another function (specified by `group_score_aggregation_func') across the instance scores.  Then the
-    overall score is calculated by the mean of these group_score_aggregation_func scores.  For instance, if group_score_aggregation_func = median and
-    instance_score_metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
-    the medians (excluding any NaN values)
-    Note: the implementation could be more efficient, because the InstanceMetric scores only need to be calculated once
-    for the global score and in the confidence interval.
+    Instance group is specified by the field name given by grouping_field (by default 'group_id'). If instance groups
+        are to be defined by a combination of more than one field (say 'group' and 'repetition') then a new field 'group_id'
+        can be created in the cards by pasting these values together.
+    A new metric is specified by controlling the following two attributes:
+    -instance_score_metric (default Accuracy): a score to be calculated on each instance (can also be a GlobalMetric, not just InstanceMetric)
+    -group_score_aggregation_func (default mean): a function accepting a vector input of instance scores, and returing a float value
+    parameter main_score should be a string describing this overall metric.
+    The default is thus to take the prediction vs reference accuracy, average this by groups (the group_score_aggregation_func) then average these
+
+    Example of use: We have a Q&A dataset.  For each original question, we have paraphrased it a number of times, and generated a predicted answer to the paraphrase.
+    Each set of paraphrases for a given original question can be thought of as a group.  If instance_score_metric is Accuracy, we have
+    the accuracy for each paraphrase.  If, say, group_score_aggregation_func is variance, we can then calculate the variance of the accuracies
+    (giving us a sense of the sensitivity of accuracy to perturbation), and then average across the original questions (the groups).
     """
 
     from statistics import mean
@@ -1459,70 +1532,113 @@ class GroupedInstanceMetric(GlobalMetric):
     # these attributes are meant to be overridden by any inheriting class
     instance_score_metric = Accuracy()
     group_score_aggregation_func = mean
-    main_score = "mean"
+    # main_score should be a name describing the combination of the group aggregation and instance score functions
+    main_score = "group_mean_accuracy"
     # in dataset card, user should have a field named group_id, or create it by pasting values of multiple fields,
     #   if a group is defined by the combination of more than one field
     grouping_field = "group_id"
+    reduction_map = {"mean": ["accuracy"]}
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        additional_inputs: List[Dict],
-    ) -> dict:
+    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GROUPED_INSTANCE_METRICS
+
+    def _verify_instance_scores(self, instances):
+        """Verify that a list of instances have had scores calculated for them.
+
+        Args:
+            instances: list of instances (outputted from compute) with scores
+        """
+        assert all(
+            "score" in instance for instance in instances
+        ), "all instances must have a score field"
+        assert all(
+            "instance" in instance["score"] for instance in instances
+        ), "all instances should have an instance score calculated"
+
+    def compute(self, instances):
+        """Compute the grouped aggregation function on a list of instances and their instance scores.
+
+        Args:
+            instances: list of instances (outputted from compute) with scores
+
+        Returns: dict with global score (calculated as mean of the aggregation function values after being applied on each group)
+
+        """
         from collections import defaultdict
 
-        group_to_predictions_and_references = defaultdict(lambda: [[], [], []])
-        for reference, pred, inputs_dict in zip(
-            references, predictions, additional_inputs
-        ):
-            # self.grouping_field should either be a single column or one created by the user in the dataset cards
+        group_to_instance_scores = defaultdict(list)
+        for instance in instances:
             keyname = (
-                str(inputs_dict[self.grouping_field])
-                if self.grouping_field in inputs_dict
+                str(instance["additional_inputs"][self.grouping_field])
+                if self.grouping_field in instance["additional_inputs"]
                 else ""
             )
-            group_to_predictions_and_references[keyname][0].append(pred)
-            group_to_predictions_and_references[keyname][1].append(reference)
-            group_to_predictions_and_references[keyname][2].append(inputs_dict)
+            group_to_instance_scores[keyname].append(
+                instance["score"]["instance"]["score"]
+            )
 
-        # calculate metric score for each instance by group
-        group_to_scores = {
-            group: [
-                self.instance_score_metric.compute(
-                    prediction=pred, references=refs, additional_inputs=inputs
-                )["score"]
-                for pred, refs, inputs in zip(*instances)
-            ]
-            for group, instances in group_to_predictions_and_references.items()
-        }
-        # now apply function by grop on the instance scores, and discard any NaNs
         group_total_scores = [
-            self._group_score(scores) for scores in group_to_scores.values()
+            self._group_score(scores) for scores in group_to_instance_scores.values()
         ]
         group_total_scores = [
             score for score in group_total_scores if not np.isnan(score)
         ]
-        return {
+        result = {
             self.main_score: mean(group_total_scores)
             if len(group_total_scores) > 0
             else np.nan
         }
+        result.update({"score": result[self.main_score], "score_name": self.main_score})
+
+        return result
 
     @classmethod
     def _group_score(cls, x):
+        """Apply the group_score_aggregation_func on a list of instance scores (for a given group)."""
         return cls.group_score_aggregation_func(x)
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        # calculate the instance scores
+        instance_scores = list(self.instance_score_metric.process(stream, stream_name))
+        global_score = {}
+        # mean across aggregation function applied to instance scores by group
+        self._verify_instance_scores(instance_scores)
+        result = self.compute(instance_scores)
+        global_score.update(result)
+        confidence_interval = self.compute_grouped_instance_confidence_intervals(
+            instance_scores
+        )
+        global_score.update(confidence_interval)
+
+        for instance in instance_scores:
+            instance["score"]["global"] = global_score
+            # replace the instance_score_metric value (the original value in score:instance with the aggregate function applied
+            new_instance_score = self.compute([instance])
+            new_instance_score.update(
+                {
+                    "score": new_instance_score[self.main_score],
+                    "score_name": self.main_score,
+                }
+            )
+            instance["score"]["instance"] = new_instance_score
+            yield instance
 
 
 class MeanGroupedAccuracy(GroupedInstanceMetric):
     instance_score_metric = Accuracy()
-    main_score = "accuracy"
+    main_score = "group_mean_accuracy"
     group_score_aggregation_func = mean
 
 
 class MeanGroupedStringContainment(GroupedInstanceMetric):
     instance_score_metric = StringContainment()
-    main_score = "string_containment"
+    main_score = "group_mean_string_containment"
+    group_score_aggregation_func = mean
+
+
+class MeanGroupedF1MacroMultiLabel(GroupedInstanceMetric):
+    # example of instance_score_metric being a GlobalMetric
+    instance_score_metric = F1MacroMultiLabel()
+    main_score = "group_mean_f1_macro"
     group_score_aggregation_func = mean
 
 
@@ -1550,11 +1666,11 @@ def performance_drop_rate(instance_scores: List):
 
 class MeanGroupedAccuracyPDR(GroupedInstanceMetric):
     instance_score_metric = Accuracy()
-    main_score = "accuracy_pdr"
+    main_score = "group_mean_accuracy_pdr"
     group_score_aggregation_func = performance_drop_rate
 
 
 class MeanGroupedStringContainmentPDR(GroupedInstanceMetric):
     instance_score_metric = StringContainment()
-    main_score = "string_containment_pdr"
+    main_score = "group_mean_string_containment_pdr"
     group_score_aggregation_func = performance_drop_rate
