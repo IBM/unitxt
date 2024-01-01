@@ -229,7 +229,7 @@ def test_card(
     disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
     if disable is not None:
         logger.info(
-            "test_card() functionality is disable because UNITXT_TEST_CARD_DISABLE environment variable is set"
+            "test_card() functionality is disabled because UNITXT_TEST_CARD_DISABLE environment variable is set"
         )
         return
     test_adding_to_catalog(card)
