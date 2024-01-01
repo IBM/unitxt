@@ -18,19 +18,19 @@
             "mappers": {
                 "label": {
                     "0": "Company",
-                    "1": "EducationalInstitution",
+                    "1": "Educational Institution",
                     "2": "Artist",
                     "3": "Athlete",
-                    "4": "OfficeHolder",
-                    "5": "MeanOfTransportation",
+                    "4": "Office Holder",
+                    "5": "Mean Of Transportation",
                     "6": "Building",
-                    "7": "NaturalPlace",
+                    "7": "Natural Place",
                     "8": "Village",
                     "9": "Animal",
                     "10": "Plant",
                     "11": "Album",
                     "12": "Film",
-                    "13": "WrittenWork"
+                    "13": "Written Work"
                 }
             }
         },
@@ -45,21 +45,21 @@
             "fields": {
                 "classes": [
                     "Company",
-                    "EducationalInstitution",
+                    "Educational Institution",
                     "Artist",
                     "Athlete",
-                    "OfficeHolder",
-                    "MeanOfTransportation",
+                    "Office Holder",
+                    "Mean Of Transportation",
                     "Building",
-                    "NaturalPlace",
+                    "Natural Place",
                     "Village",
                     "Animal",
                     "Plant",
                     "Album",
                     "Film",
-                    "WrittenWork"
+                    "Written Work"
                 ],
-                "text_type": "text",
+                "text_type": "paragraph",
                 "type_of_class": "topic"
             }
         }
