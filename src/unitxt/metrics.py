@@ -1,7 +1,7 @@
 import re
 import string
 import uuid
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from collections import Counter
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -1304,6 +1304,155 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
+
+
+class Perplexity(BulkInstanceMetric):
+    """ Computes the likelihood of generating text Y after text X - P(Y|X) """
+
+    main_score = "score"
+    reduction_map = {"mean": ["score"]}
+
+    perplexity_prompt: str = 'Generate a conversation between a user and an agent based on the given content:'
+    batch_size: int = 32
+    model_name: str
+
+    class AbstractLM(ABC):
+
+        def __init__(self, model_name):
+            import torch
+            from transformers import AutoTokenizer
+            self.model_name = model_name
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.model = self.model_class().from_pretrained(self.model_name)
+            self.is_cuda = torch.cuda.is_available()
+
+        def compute_lm(self, source, target, batch_size: int) -> List[float]:
+            import torch
+
+            with torch.no_grad():
+                # break the documents to batches
+                n_batches = int(len(source) / batch_size)
+                new_scores = list()
+                batch_range = range(n_batches + 1)
+                for batch in batch_range:
+                    batch_source = source[batch * batch_size: (batch + 1) * batch_size]
+                    batch_target = target[batch * batch_size: (batch + 1) * batch_size]
+                    if len(batch_source) > 0:
+                        # tokenize the source and target
+                        tokens_source = self.tokenizer(batch_source, padding=True, return_tensors="pt")
+                        tokens_target = self.tokenizer(batch_target, padding=True, return_tensors="pt")
+
+                        # compute the logits
+                        logits, labels = self.compute_batch(tokens_source, tokens_target)
+
+                        # the model returns mean over all batch. We run the CE again without reduction
+                        # and extarct the mean for each document
+                        loss_fct = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
+                        loss = loss_fct(
+                            logits.view(-1, logits.size(-1)),
+                            labels.view(-1))
+                        loss = loss.view(len(batch_source), -1)
+
+                        # for each document, do mean only over the non zero values (sum(labels>0))
+                        batch_loss = (-1.0 * torch.sum(loss, dim=1) / torch.sum(labels > 0, dim=1)).tolist()
+
+                        # append the batch scores to the list of all scores
+                        new_scores += batch_loss
+
+            return new_scores
+
+        @abstractmethod
+        def model_class(self):
+            pass
+
+        @abstractmethod
+        def compute_batch(self, tokens_source, tokens_target):
+            pass
+
+    class EncoderDecoderLM(AbstractLM):
+
+        def model_class(self):
+            from transformers import AutoModelForSeq2SeqLM
+            return AutoModelForSeq2SeqLM
+
+        def compute_batch(self, tokens_source, tokens_target):
+            tokens_docs_ids = tokens_source['input_ids']
+            attention = tokens_source['attention_mask']
+            labels = tokens_target['input_ids']
+
+            if self.is_cuda:
+                tokens_docs_ids, attention, labels = tokens_docs_ids.cuda(), attention.cuda(), labels.cuda()
+
+            logits = self.model(input_ids=tokens_docs_ids.long(),
+                                attention_mask=attention.long(),
+                                labels=labels.long()).logits
+
+            # replace the padding token in the labels by -100
+            labels[labels == self.tokenizer.pad_token_id] = -100
+
+            return logits, labels
+
+    class DecoderOnlyLM(AbstractLM):
+
+        def model_class(self):
+            from transformers import AutoModelForCausalLM
+            return AutoModelForCausalLM
+
+        def compute_batch(self, tokens_source, tokens_target):
+            import torch
+
+            tokens = torch.cat([tokens_source['input_ids'], tokens_target['input_ids']], dim=1)
+            attention = torch.cat([tokens_source['attention_mask'], tokens_target['attention_mask']], dim=1)
+            labels = torch.cat([
+                torch.zeros_like(tokens_source['input_ids']).fill_(-100),
+                tokens_target['input_ids'],
+            ], dim=1)
+
+            # replace the padding token in the labels by -100
+            labels[labels == self.tokenizer.pad_token_id] = -100
+
+            if self.is_cuda:
+                tokens, attention, labels = tokens.cuda(), attention.cuda(), labels.cuda()
+
+            # no need to pass labels as we calculate the loss below per document
+            model_output = self.model(input_ids=tokens.long(),
+                                      attention_mask=attention.long())
+            logits = model_output.logits
+
+            shifted_logits = logits[..., :-1, :].contiguous()
+            shifted_labels = labels[..., 1:].contiguous()
+
+            return shifted_logits, shifted_labels
+
+    def compute(self, references: List[List[Any]], predictions: List[Any], additional_inputs: List[Dict]) \
+            -> Dict[str, Any]:
+        """
+        Computes the likelihood of generating text Y after text X - P(Y|X)
+
+        :param references: the list of X texts as a list of singletons.
+        :param predictions: the list of Y texts as a plain list of strings
+        :param additional_inputs:
+
+        :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
+        """
+
+        # make sure all references are singletons
+        assert all(len(ref) == 1 for ref in references)
+
+        # add the instruction as prefix
+        references = [f"{self.perplexity_prompt} {ref[0]}" for ref in references]
+
+        # check if the model is enc-dec or dec-only to use the right perplexity computation
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+        lm = self.EncoderDecoderLM(model_name=self.model_name) if config.is_encoder_decoder is True \
+            else self.DecoderOnlyLM(model_name=self.model_name)
+
+        # compute P(Q|P) and store in queue
+        scores = lm.compute_lm(source=references, target=predictions,
+                               batch_size=self.batch_size)
+
+        return scores
 
 
 class NDCG(GlobalMetric):
