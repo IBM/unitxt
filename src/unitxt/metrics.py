@@ -480,7 +480,6 @@ class Accuracy(InstanceMetric):
         result["score_name"] = self.main_score
         return result
 
-
 class StringContainment(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
@@ -1442,15 +1441,16 @@ class RetrievalAtK(RetrievalMetric):
 class GroupedInstanceMetric(GlobalMetric):
     """GlobalMetric calculated as a function on grouped instances (by additional_inputs), then averaged.
 
-    class for GlobalMetrics where each instance belongs to a group defined by the combined values of one or more other variables,
-    specified by the dict input in additional_inputs (e.g. an ID and GROUP variable).
-    each instance score is determined by a function (specified by `instance_score_metric'), and within each group, the overall score
+    sub-class of GlobalMetrics where each instance belongs to a group defined by the field grouping_field (by default 'group_id').
+    If the combination of multiple fields defines group, grouping_field should be defined in the dataset card.  This field is received
+    by the additional_inputs fields.
+    each instance score is determined by an InstanceMetric (specified by `instance_score_metric'), and within each group, the overall score
     is calculated by applying another function (specified by `group_score_aggregation_func') across the instance scores.  Then the
     overall score is calculated by the mean of these group_score_aggregation_func scores.  For instance, if group_score_aggregation_func = median and
     instance_score_metric = Accuracy, we calculate the Accuracy of each instance, take the median within each group, then the mean of
     the medians (excluding any NaN values)
-    Note: the implementation could be more efficient, because the instance accuracies only need to be calculated once
-    for the global score and in the confidence interval
+    Note: the implementation could be more efficient, because the InstanceMetric scores only need to be calculated once
+    for the global score and in the confidence interval.
     """
 
     from statistics import mean
@@ -1459,6 +1459,9 @@ class GroupedInstanceMetric(GlobalMetric):
     instance_score_metric = Accuracy()
     group_score_aggregation_func = mean
     main_score = "mean"
+    # in dataset card, user should have a field named group_id, or create it by pasting values of multiple fields,
+    #   if a group is defined by the combination of more than one field
+    grouping_field = "group_id"
 
     def compute(
         self,
@@ -1472,8 +1475,8 @@ class GroupedInstanceMetric(GlobalMetric):
         for reference, pred, inputs_dict in zip(
             references, predictions, additional_inputs
         ):
-            # allow any number of columns to be used as the identifier
-            keyname = tuple(inputs_dict.values())
+            # self.grouping_field should either be a single column or one created by the user in the dataset cards
+            keyname = str(inputs_dict[self.grouping_field]) if self.grouping_field in inputs_dict else ''
             group_to_predictions_and_references[keyname][0].append(pred)
             group_to_predictions_and_references[keyname][1].append(reference)
             group_to_predictions_and_references[keyname][2].append(inputs_dict)
