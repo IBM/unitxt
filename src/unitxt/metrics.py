@@ -940,23 +940,32 @@ class CustomF1(GlobalMetric):
     zero_division = 0.0
 
     @abstractmethod
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         pass
 
     @abstractmethod
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         pass
 
-    def group_elements(self, elements_list):
+    def should_ignore_element(self, element, additional_input):
+        return False
+
+    def group_elements(self, elements_list, additional_input):
+        if not isinstance(elements_list, list):
+            elements_list = [elements_list]
         return {
             k: Counter(
                 [
-                    self.get_element_representation(value)
+                    self.get_element_representation(value, additional_input)
                     for value in elements_list
-                    if self.get_element_group(value) == k
+                    if self.get_element_group(value, additional_input) == k
                 ]
             )
-            for k in {self.get_element_group(e) for e in elements_list}
+            for k in {
+                self.get_element_group(e, additional_input)
+                for e in elements_list
+                if not self.should_ignore_element(e, additional_input)
+            }
         }
 
     def calculate_groups_ratio(self, actual_group, total_group):
@@ -978,6 +987,15 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
+    def get_classes(self, references, additional_inputs):
+        classes = set()
+        for sublist, additional_input in zip(references, additional_inputs):
+            for e in sublist:
+                if self.should_ignore_element(e, additional_input):
+                    continue
+                classes.add(self.get_element_group(e, additional_input))
+        return classes
+
     def compute(
         self,
         references: List[Any],
@@ -996,16 +1014,19 @@ class CustomF1(GlobalMetric):
             f"references size ({len(references)})"
             f" doesn't mach predictions sise ({len(references)})."
         )
+
         if self.classes is None:
-            classes = {
-                self.get_element_group(e) for sublist in references for e in sublist
-            }
+            classes = self.get_classes(references, additional_inputs)
         else:
             classes = self.classes
         groups_statistics = {}
-        for references_batch, predictions_batch in zip(references, predictions):
-            grouped_references = self.group_elements(references_batch)
-            grouped_predictions = self.group_elements(predictions_batch)
+        for references_batch, predictions_batch, additional_input in zip(
+            references, predictions, additional_inputs
+        ):
+            grouped_references = self.group_elements(references_batch, additional_input)
+            grouped_predictions = self.group_elements(
+                predictions_batch, additional_input
+            )
             all_groups = set(grouped_references.keys()).union(
                 grouped_predictions.keys()
             )
@@ -1085,10 +1106,10 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         return element[1]
 
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         return str(element)
 
 
@@ -1449,25 +1470,12 @@ class RetrievalAtK(RetrievalMetric):
         return result
 
 
-class KPA(NER):
-    classes_to_ignore = ["none"]
+class KPA(CustomF1):
+    def get_element_group(self, element, additional_input):
+        return additional_input["keypoint"]
 
-    def compute(
-        self,
-        references: List[Any],
-        predictions: List[Any],
-        additional_inputs: List[Dict],
-    ) -> dict:
-        predictions = [
-            [(prediction, additional_input["keypoint"])]
-            if prediction not in self.classes_to_ignore
-            else []
-            for prediction, additional_input in zip(predictions, additional_inputs)
-        ]
-        references = [
-            [(reference[0], additional_input["keypoint"])]
-            if reference[0] not in self.classes_to_ignore
-            else []
-            for reference, additional_input in zip(references, additional_inputs)
-        ]
-        return super().compute(references, predictions, additional_inputs)
+    def get_element_representation(self, element, additional_input):
+        return additional_input["keypoint"]
+
+    def should_ignore_element(self, element, additional_input):
+        return element == "none"
