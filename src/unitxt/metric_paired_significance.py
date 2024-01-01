@@ -111,7 +111,8 @@ class PairedDifferenceTest:
             self.nmodels = max(2, int(nmodels))
             if model_names is not None:
                 assert (
-                    len(model_names) == self.nmodels and len(set(model_names)) == self.nmodels
+                    len(model_names) == self.nmodels
+                    and len(set(model_names)) == self.nmodels
                 ), f"length of model_names (={len(model_names)}) must equal nmodels (={self.nmodels}) and consist of {self.nmodels} unique strings"
                 self.model_names = [str(nm) for nm in model_names]
             else:
@@ -140,11 +141,20 @@ class PairedDifferenceTest:
             list of namedtuples of type SAMPLE
         """
         assert isinstance(samples_list, list)
-        assert len(samples_list) == self.nmodels, f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
-        assert len({len(ss) for ss in samples_list}) == 1, "all samples in samples_list must be of the same length"
-        assert len(samples_list[0]) >= 2, "samples must all have at least 2 observations"
+        assert (
+            len(samples_list) == self.nmodels
+        ), f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
+        assert (
+            len({len(ss) for ss in samples_list}) == 1
+        ), "all samples in samples_list must be of the same length"
+        assert (
+            len(samples_list[0]) >= 2
+        ), "samples must all have at least 2 observations"
 
-        return [self.SAMPLE(ss, mn, str(metric)) for ss, mn in zip(samples_list, self.model_names)]
+        return [
+            self.SAMPLE(ss, mn, str(metric))
+            for ss, mn in zip(samples_list, self.model_names)
+        ]
 
     def _check_valid_samples(self, samples_list):
         """Check if samples_list is valid input for significance testing (come from same models as model_names, etc.).
@@ -153,12 +163,23 @@ class PairedDifferenceTest:
             samples_list: a list of SAMPLES namedtuples
         """
         assert isinstance(samples_list, list)
-        assert all(isinstance(ss, self.SAMPLE) for ss in samples_list), "all elements in samples_list must be SAMPLE namedtuples"
+        assert all(
+            isinstance(ss, self.SAMPLE) for ss in samples_list
+        ), "all elements in samples_list must be SAMPLE namedtuples"
 
-        assert len(samples_list) == self.nmodels, f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
-        assert len({len(ss.data) for ss in samples_list}) == 1, "all samples' data field in samples_list must be of the same length"
-        assert all(mn == sn for mn, sn in zip(self.model_names, [ss.model for ss in samples_list])), "samoles_list model names must be the same as self.model_names"
-        assert len({ss.metric for ss in samples_list}) == 1, "all samples' metric field must be the same"
+        assert (
+            len(samples_list) == self.nmodels
+        ), f"samples_list (length {len(samples_list)} must equal self.nmodels ({self.nmodels}"
+        assert (
+            len({len(ss.data) for ss in samples_list}) == 1
+        ), "all samples' data field in samples_list must be of the same length"
+        assert all(
+            mn == sn
+            for mn, sn in zip(self.model_names, [ss.model for ss in samples_list])
+        ), "samples_list model names must be the same as self.model_names"
+        assert (
+            len({ss.metric for ss in samples_list}) == 1
+        ), "all samples' metric field must be the same"
 
     def _check_binary(self, samples_list):
         """Check if samples are binary-valued.
@@ -199,7 +220,9 @@ class PairedDifferenceTest:
         # make sure that a cross tabulation is done that is 2x2 in case some value combinations are missing
         cat_binary = pd.CategoricalDtype(categories=self.binary_values, ordered=False)
         # encode as categorical binary with all values, use dropna=False to avoid dropping missing combinations
-        df = pd.DataFrame(np.transpose(np.vstack([ss.data for ss in samples_list]))).astype(cat_binary)
+        df = pd.DataFrame(
+            np.transpose(np.vstack([ss.data for ss in samples_list]))
+        ).astype(cat_binary)
         # need to allow floats for continuity correction
         return pd.crosstab(df[0], df[1], dropna=False).to_numpy()
 
@@ -281,7 +304,9 @@ class PairedDifferenceTest:
         # first see if can use McNemar's test, better for binary data; only works for two-sided hypotheses with two samples
         # validity check
         if self._can_use_mcnemar(samples_list, alternative):
-            pvalue, eff_size = self.mcnemar_test(samples_list=[ss.data for ss in samples_list])
+            pvalue, eff_size = self.mcnemar_test(
+                samples_list=[ss.data for ss in samples_list]
+            )
             permute = False
             res = {
                 "pvalues": np.array([pvalue]),
@@ -309,13 +334,17 @@ class PairedDifferenceTest:
                             vectorized=False,
                             random_state=random_state,
                         ).pvalue
-                        for vec in self.iterate_pairs(samples_list=[ss.data for ss in samples_list])
+                        for vec in self.iterate_pairs(
+                            samples_list=[ss.data for ss in samples_list]
+                        )
                     ]
                 )
             else:
                 test_res = [
                     ttest_rel(a=vec[0], b=vec[1], alternative=alternative)
-                    for vec in self.iterate_pairs(samples_list=[ss.data for ss in samples_list])
+                    for vec in self.iterate_pairs(
+                        samples_list=[ss.data for ss in samples_list]
+                    )
                 ]
                 pvalues = np.array([vv.pvalue for vv in test_res])
                 # effect size is the statistic / sqrt(n); equivalent of Cohen's d statistic
