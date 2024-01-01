@@ -1,14 +1,33 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric
+from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.operators import CopyFields, MapInstanceValues
 from src.unitxt.test_utils.metrics import test_metric
 
-metric = HuggingfaceMetric(
-    hf_metric_name="sacrebleu",
-    hf_main_score="score",
+metric = MetricPipeline(
     main_score="sacrebleu",
-    scale=100.0,
-    scaled_fields=["sacrebleu", "precisions"],
-    hf_compute_args={"tokenize": "ja-mecab"},
+    preprocess_steps=[
+        CopyFields(
+            field_to_field=[
+                ("additional_inputs/target_language", "additional_inputs/tokenize")
+            ],
+            use_query=True,
+            not_exist_ok=True,
+            get_default="en",
+        ),
+        MapInstanceValues(
+            mappers={"additional_inputs/tokenize": {"en": "", "ja": "ja-mecab"}},
+            strict=True,
+            use_query=True,
+        ),
+    ],
+    metric=HuggingfaceMetric(
+        hf_metric_name="sacrebleu",
+        hf_main_score="score",
+        main_score="sacrebleu",
+        scale=100.0,
+        scaled_fields=["sacrebleu", "precisions"],
+        hf_additional_input_fields_pass_one_value=["tokenize"],
+    ),
 )
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
@@ -51,10 +70,10 @@ global_target = {
     "sys_len": 10,
     "ref_len": 7,
     "score_name": "sacrebleu",
-    "score_ci_low": 0.4,
-    "score_ci_high": 0.4,
-    "sacrebleu_ci_low": 0.4,
-    "sacrebleu_ci_high": 0.4,
+    "score_ci_low": 0.11,
+    "score_ci_high": 1.0,
+    "sacrebleu_ci_low": 0.11,
+    "sacrebleu_ci_high": 1.0,
 }
 
 outputs = test_metric(
@@ -73,6 +92,7 @@ references = [
         "他の専門家たちと同様に、彼は糖尿病を完治できるかどうかについては懐疑的であり、これらの調査結果はすでにI型糖尿病を患っている人々には何の関連性もないことを指摘しています。"
     ]
 ]
+additional_inputs = [{"target_language": "ja"}]
 instance_targets = [
     {
         "bp": 1.0,
@@ -105,6 +125,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
+    additional_inputs=additional_inputs,
 )
 
 

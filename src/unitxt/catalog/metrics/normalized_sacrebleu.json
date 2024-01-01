@@ -1,14 +1,43 @@
 {
-    "type": "huggingface_metric",
-    "hf_metric_name": "sacrebleu",
-    "hf_main_score": "score",
+    "type": "metric_pipeline",
     "main_score": "sacrebleu",
-    "scale": 100.0,
-    "scaled_fields": [
-        "sacrebleu",
-        "precisions"
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "additional_inputs/target_language",
+                    "additional_inputs/tokenize"
+                ]
+            ],
+            "use_query": true,
+            "not_exist_ok": true,
+            "get_default": "en"
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "additional_inputs/tokenize": {
+                    "en": "",
+                    "ja": "ja-mecab"
+                }
+            },
+            "strict": true,
+            "use_query": true
+        }
     ],
-    "hf_compute_args": {
-        "tokenize": "ja-mecab"
+    "metric": {
+        "type": "huggingface_metric",
+        "hf_metric_name": "sacrebleu",
+        "hf_main_score": "score",
+        "main_score": "sacrebleu",
+        "scale": 100.0,
+        "scaled_fields": [
+            "sacrebleu",
+            "precisions"
+        ],
+        "hf_additional_input_fields_pass_one_value": [
+            "tokenize"
+        ]
     }
 }
