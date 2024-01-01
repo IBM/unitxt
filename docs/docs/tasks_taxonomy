@@ -7,11 +7,19 @@ Tasks taxonomy allows easy navigation throughout the different tasks. The taxono
 
 Text classification
 -------
+* Binary classification
+ * ethos
+
 * Multi-class classification
 
   * Intent classification
+   * amazon massive
 
   * Sentiment analysis
+   * sst2
+
+  * cola
+  * ethos
 
 * Mutli-label classification
 
@@ -20,10 +28,22 @@ Text classification
 
 Question Answering
 -------
+
 * Open-Ended Question Answering
 
-* Multiple Choice Question Answering (MCQA)
+ * Contextual QA
 
+* Multiple Choice Question Answering (MCQA)
+ 
+ * Contextual QA
+  * belebele
+  * boolq
+  * copa
+
+ * Non-contextual QA
+  * arc
+  * mmlu
+ 
 
 Machine Translation
 -------
@@ -32,8 +52,10 @@ Machine Translation
 Text Summarization
 -------
 * Document summarization
+ * cnn dailymail
 
-* Dialog summarization
+* Multi-document summarization
+
 
 
 Text Generation
@@ -42,15 +64,14 @@ Text Generation
 
 Named Entity Recognition (NER)
 -------
-
+*
 
 Natural Language Inference
 -------
 
+* wnli
+* xnli
 
-Reading Comprehension
--------
-* Boolq
 
 Information Retrieval
 -------
