@@ -226,6 +226,12 @@ def test_card(
     full_mismatch_score=0.0,
     **kwargs,
 ):
+    disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
+    if disable is not None:
+        logger.info(
+            "test_card() functionality is disable because UNITXT_TEST_CARD_DISABLE environment variable is set"
+        )
+        return
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
