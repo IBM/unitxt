@@ -152,7 +152,6 @@ def test_with_eval(
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
-
     # metric = evaluate.load('unitxt/metric')
     predictions = []
     for example in examples:
@@ -161,28 +160,62 @@ def test_with_eval(
         )
 
     results = _compute(predictions=predictions, references=examples)
-    if exact_match_score is not None and not math.isclose(
-        results[0]["score"]["global"]["groups_mean_score"], exact_match_score
-    ):
+    score_name = results[0]["score"]["global"]["score_name"]
+    score = results[0]["score"]["global"]["score"]
+
+    if exact_match_score is not None and not math.isclose(score, exact_match_score):
         message = (
-            f"Metric on examples equal predicions is no {exact_match_score}, but {results[0]['score']['global']['groups_mean_score']}."
-            f" If you are using matthews_correlation, it is possible that this is because all your examples come from "
-            f"one class. Consider setting strict=False"
+            f"The results of running the main metric in used in the card ({score_name}) "
+            f"over simulated predictions that are equal to the references returns a different score than expected.\n"
+            f"One would expect a perfect score of {exact_match_score} in this case, but returned metric score was {score}.\n"
+        )
+        error_message = (
+            f"{message}"
+            f"This usually indicates an error in the metric or post processors, but can be also an acceptable edge case.\n"
+            f"In anycase, this requires a review.  If this is acceptable, set strict=False in the call to test_card().\n"
+            f"The predictions passed to the metrics were:\n {predictions}\n"
+        )
+        warning_message = (
+            f"{message}"
+            f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
+            f"The predictions passed to the metrics were:\n {predictions}\n"
         )
         if strict:
-            raise AssertionError(message)
-
-        logger.warning(f"Warning: {message}")
+            raise AssertionError(error_message)
+        logger.info("*" * 80)
+        logger.info(warning_message)
+        logger.info("*" * 80)
 
     predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     results = _compute(predictions=predictions, references=examples)
-    if (
-        full_mismatch_score is not None
-        and results[0]["score"]["global"]["groups_mean_score"] != full_mismatch_score
-    ):
-        logger.info(
-            f"Warning: metric on random predictions is not {full_mismatch_score}, but {results[0]['score']['global']['groups_mean_score']} "
+
+    score_name = results[0]["score"]["global"]["score_name"]
+    score = results[0]["score"]["global"]["score"]
+
+    if full_mismatch_score is not None and score != full_mismatch_score:
+        message = (
+            f"The results of running the main metric in used in the card ({score_name}) "
+            f"over random predictions returns a different score than expected.\n"
+            f"Usually, one would expect a low score of {exact_match_score} in this case, but returned metric score was {score}.\n"
         )
+        error_message = (
+            f"{message}"
+            f"This can indicates an error in the metric or post processors, but can be also an acceptable edge case.\n"
+            f"For example, in a metric that checks character level edit distance, a low none zero score is expected on random data"
+            f"In anycase, this requires a review.  If this is acceptable, set strict=False in the call to test_card().\n"
+            f"The predictions passed to the metrics were:\n {predictions}\n"
+        )
+        warning_message = (
+            f"{message}"
+            f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
+            f"The predictions passed to the metrics were:\n {predictions}\n"
+        )
+        if strict:
+            raise AssertionError(error_message)
+
+        logger.info("*" * 80)
+        logger.info(warning_message)
+        logger.info("*" * 80)
 
 
 def test_card(
