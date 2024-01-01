@@ -23,9 +23,7 @@ for lang in langs:
                 field_to_field=[("metadata/language", "extracted_language")],
                 use_query=True,
             ),
-            FilterByCondition(
-                required_values={"extracted_language": lang}, condition="eq"
-            ),
+            FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix(
                 {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
