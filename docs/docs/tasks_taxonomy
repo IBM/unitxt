@@ -9,6 +9,7 @@ Text classification
 -------
 * Binary classification
  * ethos
+ * wsc
 
 * Multi-class classification
 
@@ -32,6 +33,7 @@ Question Answering
 * Open-Ended Question Answering
 
  * Contextual QA
+  * squad
 
 * Multiple Choice Question Answering (MCQA)
  
@@ -39,20 +41,29 @@ Question Answering
   * belebele
   * boolq
   * copa
+  * hellaswag
+  * race
+  * sciq
 
  * Non-contextual QA
   * arc
   * mmlu
+  * openbookqa
+  * piqa
+  * wingrande
  
 
 Machine Translation
 -------
-
+* wmt_en_de
+* wmt_en_fr
 
 Text Summarization
 -------
 * Document summarization
  * cnn dailymail
+ * mlsum
+ * xlsum
 
 * Multi-document summarization
 
@@ -71,7 +82,12 @@ Natural Language Inference
 
 * wnli
 * xnli
+* qnli
+* rte
 
+Semantic Textual Similarity
+-------
+* stsb
 
 Information Retrieval
 -------
