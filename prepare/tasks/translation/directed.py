@@ -5,7 +5,7 @@ add_to_catalog(
     FormTask(
         inputs=["text", "source_language", "target_language"],
         outputs=["translation"],
-        metrics=["metrics.bleu"],
+        metrics=["metrics.normalized_sacrebleu"],
     ),
     "tasks.translation.directed",
     overwrite=True,

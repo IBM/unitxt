@@ -7,17 +7,19 @@ THIS_FILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 docs-files:
-	cd $(DIR)/docs && sphinx-apidoc -f -o . ../src/unitxt
+	cd $(DIR)/docs && sphinx-apidoc -e -f -o . ../src/unitxt
 
 docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
 
-docs: docs-html
-
-test-docs: docs
+clear-docs:
 	rm $(DIR)/docs/modules.rst
 	rm $(DIR)/docs/unitxt.rst
 	rm $(DIR)/docs/unitxt.*.rst
+
+docs: docs-html
+
+test-docs: docs clear-docs
 
 format:
 	bash $(DIR)/utils/format
@@ -29,14 +31,17 @@ new-version:
 version-tag:
 	bash $(DIR)/utils/create_tag_for_new_version
 
-docs-server: docs
+build-docs-server:
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
+
+docs-server: docs
+	trap 'make clear-docs' EXIT; \
+	make build-docs-server
 
 profile:
 	bash profile/profile.sh
 
 pypi:
-	. $(DIR)/SECRETS.SH
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 

@@ -5,6 +5,10 @@
 
 import os
 import sys
+from dataclasses import Field as _Field
+
+from unitxt.artifact import Artifact
+from unitxt.dataclass import Field
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -43,3 +47,36 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_nav_header_background": "#ff66ff",
 }
+
+autodoc_default_flags = [
+    "members",
+    "private-members",
+    "special-members",
+    #'undoc-members',
+    "show-inheritance",
+]
+
+
+def autodoc_skip_member(app, what, name, obj, would_skip, options):
+    if would_skip:
+        return True
+
+    if isinstance(obj, (Field, _Field, bool, int, str, float)):
+        return True
+
+    if obj is None or type(obj) is object:
+        return True
+
+    if hasattr(obj, "__qualname__"):
+        class_name = obj.__qualname__.split(".")[0]
+        if (
+            class_name
+            and Artifact.is_registered_class_name(class_name)
+            and class_name != name
+        ):
+            return True
+    return None
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", autodoc_skip_member)

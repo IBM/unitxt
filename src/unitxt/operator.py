@@ -5,7 +5,6 @@ from typing import Any, Dict, Generator, List, Optional
 
 from .artifact import Artifact
 from .dataclass import NonPositionalField
-from .random_utils import nested_seed
 from .stream import MultiStream, Stream
 
 
@@ -88,11 +87,10 @@ class SourceOperator(StreamSource):
     caching: bool = NonPositionalField(default=None)
 
     def __call__(self) -> MultiStream:
-        with nested_seed():
-            multi_stream = self.process()
-            if self.caching is not None:
-                multi_stream.set_caching(self.caching)
-            return multi_stream
+        multi_stream = self.process()
+        if self.caching is not None:
+            multi_stream.set_caching(self.caching)
+        return multi_stream
 
     @abstractmethod
     def process(self) -> MultiStream:
@@ -111,11 +109,10 @@ class StreamInitializerOperator(StreamSource):
     caching: bool = NonPositionalField(default=None)
 
     def __call__(self, *args, **kwargs) -> MultiStream:
-        with nested_seed():
-            multi_stream = self.process(*args, **kwargs)
-            if self.caching is not None:
-                multi_stream.set_caching(self.caching)
-            return self.process(*args, **kwargs)
+        multi_stream = self.process(*args, **kwargs)
+        if self.caching is not None:
+            multi_stream.set_caching(self.caching)
+        return self.process(*args, **kwargs)
 
     @abstractmethod
     def process(self, *args, **kwargs) -> MultiStream:
@@ -131,11 +128,14 @@ class MultiStreamOperator(StreamingOperator):
     caching: bool = NonPositionalField(default=None)
 
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        with nested_seed():
-            result = self._process_multi_stream(multi_stream)
-            if self.caching is not None:
-                result.set_caching(self.caching)
-            return result
+        self.before_process_multi_stream()
+        result = self._process_multi_stream(multi_stream)
+        if self.caching is not None:
+            result.set_caching(self.caching)
+        return result
+
+    def before_process_multi_stream(self):
+        pass
 
     def _process_multi_stream(
         self, multi_stream: Optional[MultiStream] = None
@@ -448,8 +448,7 @@ class SequentialOperatorInitilizer(SequentialOperator):
     """
 
     def __call__(self, *args, **kwargs) -> MultiStream:
-        with nested_seed():
-            return self.process(*args, **kwargs)
+        return self.process(*args, **kwargs)
 
     def process(self, *args, **kwargs) -> MultiStream:
         assert (

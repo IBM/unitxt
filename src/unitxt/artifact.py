@@ -158,6 +158,11 @@ class Artifact(Dataclass):
         return type in cls._class_register
 
     @classmethod
+    def is_registered_class_name(cls, class_name: str):
+        snake_case_key = camel_to_snake_case(class_name)
+        return cls.is_registered_type(snake_case_key)
+
+    @classmethod
     def is_registered_class(cls, clz: object):
         return clz in set(cls._class_register.values())
 

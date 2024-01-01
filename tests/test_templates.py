@@ -111,9 +111,11 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
-    def test_multi_reference_template(self):
+    def _test_multi_reference_template(self, target, random_reference):
         template = MultiReferenceTemplate(
-            input_format="This is my sentence: {text}", references_field="answer"
+            input_format="This is my sentence: {text}",
+            references_field="answer",
+            random_reference=random_reference,
         )
 
         inputs = [
@@ -128,24 +130,45 @@ class TestTemplates(unittest.TestCase):
                 "inputs": {"text": "who was he?"},
                 "outputs": {"answer": ["Dan", "Yossi"]},
                 "source": "This is my sentence: who was he?",
-                "target": "Dan",
+                "target": target,
                 "references": ["Dan", "Yossi"],
             }
         ]
 
         check_operator(template, inputs, targets, tester=self)
 
-    def test_multi_reference_template_verify_references_type(self):
+    def test_multi_reference_template_without_random_reference(self):
+        self._test_multi_reference_template(target="Dan", random_reference=False)
+
+    def test_multi_reference_template_with_random_reference(self):
+        self._test_multi_reference_template(target="Dan", random_reference=True)
+
+    def _test_multi_reference_template_with_exception(
+        self, references, expected_exception_message: str
+    ):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
         instance = {
             "inputs": {"text": "who was he?"},
-            "outputs": {"answer": [0, "dkd"]},
+            "outputs": {"answer": references},
         }
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             template.process(instance)
+        self.assertEqual(str(e.exception), expected_exception_message)
+
+    def test_multi_reference_template_with_empty_references(self):
+        self._test_multi_reference_template_with_exception(
+            references=[],
+            expected_exception_message="No references found. MultiReferenceTemplate requires at least one reference.",
+        )
+
+    def test_multi_reference_template_with_wrong_references_type(self):
+        self._test_multi_reference_template_with_exception(
+            references=[0, "dkd"],
+            expected_exception_message="MultiReferenceTemplate requires references field 'answer' to be List[str]. Got answer<list>: [0, 'dkd']",
+        )
 
     def test_input_output_template(self):
         template = InputOutputTemplate(
