@@ -4,11 +4,12 @@ from src.unitxt.operators import CopyFields, MapInstanceValues
 from src.unitxt.test_utils.metrics import test_metric
 
 language_to_tokenizer = {
-    "deutch": "",
-    "french": "",
-    "romanian": "",
-    "english": "",
-    "en": "",
+    "deutch": None,
+    "french": None,
+    "romanian": None,
+    "english": None,
+    "en": None,
+    "japanese": "ja-mecab",
     "ja": "ja-mecab",
 }
 
