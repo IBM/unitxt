@@ -466,8 +466,8 @@ class TestMetricSignifDifference(unittest.TestCase):
             first=res_2x2.effect_sizes[0], second=0.45238095238095233
         )
 
-    def test_sample_and_report_compabibility_with_tester(self):
-        """Verify that a report is compatible with an object of class PairedDifferenceTest (for p-value lineplot and connected graph)."""
+    def test_sample_and_report_compatibility_with_tester(self):
+        """Verify that reports and samples are compatible with an object of class PairedDifferenceTest."""
         tester_3models_unnamed = PairedDifferenceTest(
             nmodels=3
         )  # will be named model1, model2, model3
