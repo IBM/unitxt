@@ -38,7 +38,7 @@ map_labels = {
 card = TaskCard(
     loader=LoadHF(path=f"SetFit/{dataset_name}"),
     preprocess_steps=[
-        FilterByCondition(required_values={"text": ""}, condition="ne"),
+        FilterByCondition(values={"text": ""}, condition="ne"),
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[10%]", "test": "test"}
         ),

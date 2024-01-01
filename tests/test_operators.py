@@ -265,9 +265,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByCondition(
-                required_values={"a": 1, "b": 3}, condition="eq"
-            ),
+            operator=FilterByCondition(values={"a": 1, "b": 3}, condition="eq"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -275,7 +273,7 @@ class TestOperators(unittest.TestCase):
 
         exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
-            operator=FilterByCondition(required_values={"c": "5"}, condition="eq"),
+            operator=FilterByCondition(values={"c": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
             tester=self,
@@ -289,9 +287,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByCondition(
-                required_values={"a": 1, "b": 2}, condition="ne"
-            ),
+            operator=FilterByCondition(values={"a": 1, "b": 2}, condition="ne"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -305,7 +301,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByCondition(required_values={"a": 1}, condition="gt"),
+            operator=FilterByCondition(values={"a": 1}, condition="gt"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -313,7 +309,7 @@ class TestOperators(unittest.TestCase):
 
     def test_filter_by_condition_bad_condition(self):
         with self.assertRaises(ValueError):
-            FilterByCondition(required_values={"a": 1}, condition="gte")
+            FilterByCondition(values={"a": 1}, condition="gte")
 
     def test_filter_by_condition_not_in(self):
         inputs = [
@@ -327,9 +323,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByCondition(
-                required_values={"b": [3, 4]}, condition="not in"
-            ),
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="not in"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -346,7 +340,7 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=FilterByCondition(
-                required_values={"b": [3, 4], "a": [1]},
+                values={"b": [3, 4], "a": [1]},
                 condition="not in",
                 error_on_filtered_all=False,
             ),
@@ -368,7 +362,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByCondition(required_values={"b": [3, 4]}, condition="in"),
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="in"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -376,7 +370,7 @@ class TestOperators(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByCondition(required_values={"b": "5"}, condition="in"),
+                operator=FilterByCondition(values={"b": "5"}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -388,9 +382,7 @@ class TestOperators(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByCondition(
-                    required_values={"c": ["5"]}, condition="in"
-                ),
+                operator=FilterByCondition(values={"c": ["5"]}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -405,7 +397,7 @@ class TestOperators(unittest.TestCase):
         with self.assertRaises(RuntimeError) as e:
             check_operator(
                 operator=FilterByCondition(
-                    required_values={"b": ["weird_value"]}, condition="in"
+                    values={"b": ["weird_value"]}, condition="in"
                 ),
                 inputs=inputs,
                 targets=[],

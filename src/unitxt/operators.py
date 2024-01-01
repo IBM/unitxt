@@ -1072,19 +1072,19 @@ class FilterByCondition(SingleStreamOperator):
     Raises an error if a required key is missing.
 
     Args:
-       required_values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
-       condition: the name of the desired condition operator between the key and the value in required_values ("gt", "ge", "lt", "le", "ne", "eq")
+       values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
+       condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(required_values = {"a":4}, condition = "gt") will yield only instances where "a">4
-       FilterByCondition(required_values = {"a":4}, condition = "le") will yield only instances where "a"<=4
-       FilterByCondition(required_values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
-       FilterByCondition(required_values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
+       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where "a">4
+       FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
+       FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
+       FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
 
     """
 
-    required_values: Dict[str, Any]
+    values: Dict[str, Any]
     condition: str
     condition_to_func = {
         "gt": operator.gt,
@@ -1116,7 +1116,7 @@ class FilterByCondition(SingleStreamOperator):
                 f"Unsupported condition operator '{self.condition}', supported {list(self.condition_to_func.keys())}"
             )
 
-        for key, value in self.required_values.items():
+        for key, value in self.values.items():
             if self.condition in ["in", "not it"] and not isinstance(value, list):
                 raise ValueError(
                     f"The filter for key ('{key}') in FilterByCondition with condition '{self.condition}' must be list but is not : '{value}'"
@@ -1124,7 +1124,7 @@ class FilterByCondition(SingleStreamOperator):
         return super().verify()
 
     def _is_required(self, instance: dict) -> bool:
-        for key, value in self.required_values.items():
+        for key, value in self.values.items():
             if key not in instance:
                 raise ValueError(
                     f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
@@ -1358,7 +1358,7 @@ class SplitByValue(MultiStreamOperator):
             for unique_values in stream_unique_values:
                 filtering_values = dict(zip(self.fields, unique_values))
                 filtered_streams = FilterByCondition(
-                    required_values=filtering_values, condition="eq"
+                    values=filtering_values, condition="eq"
                 )._process_single_stream(stream)
                 filtered_stream_name = (
                     stream_name + "_" + nested_tuple_to_string(unique_values)
