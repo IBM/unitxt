@@ -201,7 +201,7 @@ def test_with_eval(
         error_message = (
             f"{message}"
             f"This can indicates an error in the metric or post processors, but can be also an acceptable edge case.\n"
-            f"For example, in a metric that checks character level edit distance, a low none zero score is expected on random data"
+            f"For example, in a metric that checks character level edit distance, a low none zero score is expected on random data.\n"
             f"In anycase, this requires a review.  If this is acceptable, set strict=False in the call to test_card().\n"
             f"The predictions passed to the metrics were:\n {wrong_predictions}\n"
         )
