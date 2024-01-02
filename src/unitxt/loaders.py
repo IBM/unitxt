@@ -140,7 +140,7 @@ class LoadFromIBMCloud(Loader):
     aws_secret_access_key_env: str
     bucket_name: str
     data_dir: str = None
-    data_files: Sequence[str]
+    data_files: Union[Sequence[str], Dict[str, str]]
     caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -217,7 +217,13 @@ class LoadFromIBMCloud(Loader):
         local_dir = os.path.join(self.cache_dir, self.bucket_name, self.data_dir)
         if not os.path.exists(local_dir):
             Path(local_dir).mkdir(parents=True, exist_ok=True)
-        for data_file in self.data_files:
+
+        if isinstance(self.data_files, Dict):
+            data_files_names = self.data_files.values()
+        else:
+            data_files_names = self.data_files
+
+        for data_file in data_files_names:
             local_file = os.path.join(local_dir, data_file)
             if not self.caching or not os.path.exists(local_file):
                 # Build object key based on parameters. Slash character is not
@@ -230,6 +236,12 @@ class LoadFromIBMCloud(Loader):
                 self._download_from_cos(
                     cos, self.bucket_name, object_key, local_dir + "/" + data_file
                 )
-        dataset = hf_load_dataset(local_dir, streaming=False)
+
+        if isinstance(self.data_files, list):
+            dataset = hf_load_dataset(local_dir, streaming=False)
+        else:
+            dataset = hf_load_dataset(
+                local_dir, streaming=False, data_files=self.data_files
+            )
 
         return MultiStream.from_iterables(dataset)
