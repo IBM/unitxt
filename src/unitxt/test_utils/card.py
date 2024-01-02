@@ -194,7 +194,7 @@ def test_with_eval(
 
     if full_mismatch_score is not None and score != full_mismatch_score:
         message = (
-            f"The results of running the main metric in used in the card ({score_name}) "
+            f"The results of running the main metric used in the card ({score_name}) "
             f"over random predictions returns a different score than expected.\n"
             f"Usually, one would expect a low score of {full_mismatch_score} in this case, but returned metric score was {score}.\n"
         )
