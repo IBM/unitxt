@@ -9,6 +9,13 @@ np.set_printoptions(precision=10)
 
 
 # functions return True (pass assertions) if the call raises an AssertionError
+def fail_tester_def(nmodels, model_names):
+    try:
+        PairedDifferenceTest(nmodels=nmodels, model_names=model_names)
+    except AssertionError:
+        return True
+
+
 def fail_tester_sample_list(tstr, samp_list):
     try:
         tstr._check_valid_samples(samp_list)
@@ -28,6 +35,33 @@ def fail_tester_report_list(tstr, srep_list):
         tstr._check_valid_signif_report_list(test_results_list=srep_list)
     except AssertionError:
         return True
+
+
+def insert_random_nans(arr, nan_frac, rng):
+    """Insert NaNs in random locations of an array.
+
+    Args:
+        arr: numpy array
+        nan_frac: fraction of elements to make NaN
+        rng: random number generator
+    Returns:
+        numpy array
+    """
+    nan_frac = np.clip(nan_frac, 0.0, 1.0)
+    if nan_frac > 0:
+        nobs = np.prod(arr.shape)
+        element_indices = [dim.reshape(1, nobs) for dim in np.indices(arr.shape)]
+        n_to_resample = max(int(nan_frac * nobs), 1)
+        # select n_to_resample indices without replacement by shuffling and then taking the first ones.
+        idx_resampled = np.arange(nobs).astype(int)
+        rng.shuffle(idx_resampled)
+        idx_resampled = idx_resampled[:n_to_resample]
+        # keep only the indices selected for each dimension
+        element_indices = [dim[0, idx_resampled] for dim in element_indices]
+        # need to convert to float dtpe
+        arr = arr.astype(float)
+        arr[tuple(element_indices)] = np.nan
+    return arr
 
 
 # generate random numbers with specific distributions, passing a created random number generator (rng) object
@@ -69,11 +103,12 @@ class TestMetricSignifDifference(unittest.TestCase):
         cls.nobs = max(3, int(nobs))
         cls.rseed = "4"
 
-    def gen_continuous_data(self, same_distr=True):
+    def gen_continuous_data(self, same_distr=True, nan_frac=0.0):
         # assume we have a dataset with nobs observations
         # generate a matrix of size (nmodels, nobs) representing the results of nmodels results on the same nobs observations
         # same_distr means they follow the same distribution
         # covariance matrix to generate observations that are paired.  Each have correlation 0.7 and variance 1
+        nan_frac = np.clip(nan_frac, 0.0, 0.5)
         cmat = np.empty((self.nmodels, self.nmodels))
         cmat.fill(0.7)
         np.fill_diagonal(cmat, 1)
@@ -102,17 +137,25 @@ class TestMetricSignifDifference(unittest.TestCase):
 
         # add some skew
         model_measurement = np.square(model_measurement)
+
+        if nan_frac > 0:
+            # set some observations to NaN
+            model_measurement = insert_random_nans(
+                arr=model_measurement, nan_frac=nan_frac, rng=rng
+            )
+
         return tuple(model_measurement)
 
-    def gen_binary_data(self, same_distr=True, nmodels=None):
+    def gen_binary_data(self, same_distr=True, nmodels=None, nan_frac=0.0):
         # generate only binary data
+        nan_frac = np.clip(nan_frac, 0.0, 0.5)
         nmodels = self.nmodels if nmodels is None else max(2, int(nmodels))
         rng = new_random_generator(sub_seed=self.rseed)
         if same_distr:
             # generate random probabilities for each observation and then binary
             # do this so observation pairs are more correlated than otherwise if used the same p for all
             p = rbeta(alpha=2, beta=5, rng=rng, n=self.nobs)
-            rvals = [rbernoulli_vec(pvec=p, rng=rng) for _ in range(nmodels)]
+            rvals = tuple(rbernoulli_vec(pvec=p, rng=rng) for _ in range(nmodels))
         else:
             # last vector of ps is from a different beta distribution
             p = np.vstack(
@@ -122,7 +165,13 @@ class TestMetricSignifDifference(unittest.TestCase):
                 ]
                 + [rbeta(alpha=5, beta=2, rng=rng, n=self.nobs)]
             )
-            rvals = [rbernoulli_vec(pvec=pp, rng=rng) for pp in p]
+            rvals = tuple(rbernoulli_vec(pvec=pp, rng=rng) for pp in p)
+
+        if nan_frac > 0:
+            # set some observations to NaN
+            rvals = tuple(
+                insert_random_nans(arr=np.vstack(rvals), nan_frac=nan_frac, rng=rng)
+            )
 
         return rvals
 
@@ -132,12 +181,13 @@ class TestMetricSignifDifference(unittest.TestCase):
         expected_effect_sizes,
         same_distr=True,
         continuous=True,
+        nan_frac=0.0,
     ):
         tester = PairedDifferenceTest(nmodels=self.nmodels)
         model_res = (
-            self.gen_continuous_data(same_distr)
+            self.gen_continuous_data(same_distr=same_distr, nan_frac=nan_frac)
             if continuous
-            else self.gen_binary_data(same_distr=same_distr)
+            else self.gen_binary_data(same_distr=same_distr, nan_frac=nan_frac)
         )
         model_res = tester.format_as_samples(list(model_res))
         # use default paired t-test
@@ -220,7 +270,14 @@ class TestMetricSignifDifference(unittest.TestCase):
                 ),
             ],
             expected_effect_sizes=np.array(
-                [0.2363223971, 0.1607737558, 0.1429445904, -0.0605006595, -0.0993183451]
+                [
+                    0.0888714738,
+                    0.0604606283,
+                    0.0537557869,
+                    -0.0227518967,
+                    -0.0373496876,
+                    -0.0169736471,
+                ]
             ),
         )
 
@@ -271,12 +328,12 @@ class TestMetricSignifDifference(unittest.TestCase):
             ],
             expected_effect_sizes=np.array(
                 [
-                    0.2363223971,
-                    -2.7312549788,
-                    -5.609456644,
-                    -3.1778374839,
-                    -5.8056079522,
-                    -3.9294197371,
+                    0.0888714738,
+                    -1.0271165921,
+                    -2.1094940006,
+                    -1.1950585471,
+                    -2.1832587222,
+                    -1.4776988017,
                 ]
             ),
             same_distr=False,
@@ -329,12 +386,12 @@ class TestMetricSignifDifference(unittest.TestCase):
             ],
             expected_effect_sizes=np.array(
                 [
-                    0.0961866125,
-                    -0.1995634093,
-                    -0.2723195343,
-                    -0.2574435301,
-                    -0.435721617,
-                    -0.0903444948,
+                    0.0361719673,
+                    -0.0750478774,
+                    -0.1024085683,
+                    -0.0968142936,
+                    -0.1638576061,
+                    -0.0339749787,
                 ]
             ),
             same_distr=True,
@@ -382,16 +439,75 @@ class TestMetricSignifDifference(unittest.TestCase):
             ],
             expected_effect_sizes=np.array(
                 [
-                    0.1409103279,
-                    0.1590304389,
-                    -0.8578412784,
+                    0.0529907815,
+                    0.059805036,
+                    -0.3226000565,
                     0.0,
-                    -1.0621120379,
-                    -1.225742824,
+                    -0.3994181815,
+                    -0.4609532255,
                 ]
             ),
             same_distr=False,
             continuous=False,
+        )
+
+    def test_signif_diff_distr_continuous_withnans(self):
+        # here the last one or two samples (models) have higher mean, so the 'less' alternative should be appropriate
+        self._test_signif(
+            expected_pvalues_list=[
+                np.array(
+                    [
+                        8.0403134724e-02,
+                        6.1789619147e-07,
+                        2.7594308037e-14,
+                        1.8481662661e-09,
+                        6.4826358171e-16,
+                        1.1730464405e-11,
+                    ]
+                ),
+                np.array(
+                    [
+                        9.5979843264e-01,
+                        3.0894811960e-07,
+                        1.3797154018e-14,
+                        9.2408313332e-10,
+                        3.2413179085e-16,
+                        5.8652322026e-12,
+                    ]
+                ),
+                np.array(
+                    [
+                        0.0802,
+                        0.0011994002,
+                        0.0011994002,
+                        0.0011994002,
+                        0.0011994002,
+                        0.0011994002,
+                    ]
+                ),
+                np.array(
+                    [
+                        9.6000000e-01,
+                        5.9985002e-04,
+                        5.9985002e-04,
+                        5.9985002e-04,
+                        5.9985002e-04,
+                        5.9985002e-04,
+                    ]
+                ),
+            ],
+            expected_effect_sizes=np.array(
+                [
+                    0.2766177489,
+                    -0.9416828704,
+                    -2.171134034,
+                    -1.1939492245,
+                    -2.3271605465,
+                    -1.5068155859,
+                ]
+            ),
+            same_distr=False,
+            nan_frac=0.1,
         )
 
     def test_signif_mcnemar_binary(self):
@@ -466,10 +582,43 @@ class TestMetricSignifDifference(unittest.TestCase):
             first=res_2x2.effect_sizes[0], second=0.45238095238095233
         )
 
+    def test_signif_mcnemar_binary_withnans(self):
+        # use Mcnemar's test, not t-test, only on two model samples
+        tester = PairedDifferenceTest(model_names=["llama", "flan-t5"])
+        assert tester.nmodels == 2
+
+        # random generation of paired binary data
+        binary_same = tester.format_as_samples(
+            list(
+                self.gen_binary_data(
+                    same_distr=True, nmodels=tester.nmodels, nan_frac=0.1
+                )
+            )
+        )
+        res = tester.signif_pair_diff(samples_list=binary_same)
+        self.assertAlmostEqual(first=res.pvalues[0], second=0.7744140625)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.0833333333)
+
+        binary_diff = tester.format_as_samples(
+            list(
+                self.gen_binary_data(
+                    same_distr=False, nmodels=tester.nmodels, nan_frac=0.1
+                )
+            )
+        )
+        res = tester.signif_pair_diff(samples_list=binary_diff)
+        self.assertAlmostEqual(first=res.pvalues[0], second=8.6799263954e-07)
+        self.assertAlmostEqual(first=res.effect_sizes[0], second=0.4333333333)
+
     def test_sample_and_report_compatibility_with_tester(self):
         """Verify that reports and samples are compatible with an object of class PairedDifferenceTest."""
+        # verify some initial conditions; two arguments need to be compatible
+        fail_tester_def(nmodels=3, model_names=["llama", "flan-t5"])
+        fail_tester_def(nmodels=3, model_names=["llama", "flan-t5", "llama"])
+
+        # set up valid models
         tester_3models_unnamed = PairedDifferenceTest(
-            nmodels=3
+            nmodels=3, alpha=0.01
         )  # will be named model1, model2, model3
         tester_3models_named = PairedDifferenceTest(
             model_names=["llama", "flan-t5", "granite"]
@@ -484,7 +633,7 @@ class TestMetricSignifDifference(unittest.TestCase):
         metric_names = ["precision", "recall"]
 
         # format samples according to model names of the tester
-        # the two 3 models testers are incompatible because the model_names differ
+        # the two 3 models testers are incompatible because the model_names differ, and have different alphas
         # tester with 2 models is incompatible with the others because number of models differ
         # 1st element of each of samples is model samples for metric 1 for that tester
         samples = [

@@ -18,6 +18,8 @@ COMMON_REPORT_FIELDS = [
     "corrected",
     "pvalue_is_signif",
     "sample_means",
+    "num_obs",
+    "pvalue_alpha",
 ]
 
 
@@ -58,6 +60,20 @@ def spectral_palette(n):
     )
 
 
+def obs_idx_is_never_nan(arr_list):
+    """Check if an index in a list of arrays is never NaN.
+
+    Args:
+        arr_list: a list of numpy arrays of the same length
+
+    Returns:
+        boolean array, where index is True if that index is never NaN in any array, otherwise False
+    """
+    return np.apply_along_axis(
+        arr=np.vstack(arr_list), axis=0, func1d=lambda x: np.isnan(x).sum() == 0
+    )
+
+
 class PairedDifferenceTest:
     """Class to conduct test of statistical significance (from 0) in average differences between sample values for the same observation index.
 
@@ -79,6 +95,8 @@ class PairedDifferenceTest:
         "HeatmapMatrices",
         "recoded_values_arr, combined_results_arr_with_nan, combined_results combined_results_arr",
     )
+    # minimum number of observations to allow to use McNemar's test
+    MIN_BINARY_CONTINGENCY_SAMPLES = 5
 
     def __init__(self, nmodels=None, alpha=0.05, model_names=None):
         """Initialize an object to be used to compare the same set of models across different datasets and metrics.
@@ -129,7 +147,11 @@ class PairedDifferenceTest:
             lx: first sample
             ly: second sample
         """
-        return np.mean(lx) - np.mean(ly)
+        obs_not_nan_for_all_samples = obs_idx_is_never_nan([lx, ly])
+        # select only the pairs for which both values are not NaN
+        return np.mean(lx[obs_not_nan_for_all_samples]) - np.mean(
+            ly[obs_not_nan_for_all_samples]
+        )
 
     def format_as_samples(self, samples_list, metric="unknown"):
         """Format a list of samples as a list of namedtuples for this object (assumes come from the model_names here).
@@ -188,11 +210,11 @@ class PairedDifferenceTest:
             samples_list: a list of 1-D numpy arrays
 
         Returns:
-            boolean: True if all observed values are binary 0/1, otherwise False
+            boolean: True if all observed values, ignoring NaNs, are binary 0/1, otherwise False
         """
         self._check_valid_samples(samples_list)
         uv = np.unique(np.vstack([ss.data for ss in samples_list]))
-        return np.all(np.isin(uv, self.binary_values))
+        return np.all(np.isin(uv[~np.isnan(uv)], self.binary_values))
 
     def _can_use_mcnemar(self, samples_list, alternative="two-sided"):
         """Check if can use the McNemar test (accepts only 2 binary equal-length samples) which simplifies computation.
@@ -205,7 +227,16 @@ class PairedDifferenceTest:
             boolean
         """
         is_binary = self._check_binary(samples_list)
-        return is_binary and (len(samples_list) == 2) and (alternative == "two-sided")
+        obs_not_nan_for_all_samples = obs_idx_is_never_nan(
+            [ss.data for ss in samples_list]
+        )
+        # require at least 5 obsservations for which the values in all samples are not NaN
+        return (
+            is_binary
+            and (len(samples_list) == 2)
+            and (alternative == "two-sided")
+            and obs_not_nan_for_all_samples.sum() >= self.MIN_BINARY_CONTINGENCY_SAMPLES
+        )
 
     def _handle_binary_data_contingency(self, samples_list, continuity_correction=True):
         """Convert samples into 2x2 contingency table form, even if some value combinations are not observed.
@@ -219,11 +250,14 @@ class PairedDifferenceTest:
         """
         # make sure that a cross tabulation is done that is 2x2 in case some value combinations are missing
         cat_binary = pd.CategoricalDtype(categories=self.binary_values, ordered=False)
-        # encode as categorical binary with all values, use dropna=False to avoid dropping missing combinations
-        df = pd.DataFrame(
-            np.transpose(np.vstack([ss.data for ss in samples_list]))
-        ).astype(cat_binary)
-        # need to allow floats for continuity correction
+        df = pd.DataFrame(np.transpose(np.vstack([ss.data for ss in samples_list])))
+        # drop any rows for which there is at least one NaN value
+        df.dropna(axis=0, how="any", inplace=True)
+        # encode as categorical binary with all values
+        df = df.astype(cat_binary)
+
+        assert len(df) >= self.MIN_BINARY_CONTINGENCY_SAMPLES
+        # need to allow floats for continuity correction; use dropna=False in crosstab to avoid dropping missing combinations
         return pd.crosstab(df[0], df[1], dropna=False).to_numpy()
 
     def mcnemar_test(self, samples_list):
@@ -340,18 +374,36 @@ class PairedDifferenceTest:
                     ]
                 )
             else:
-                test_res = [
-                    ttest_rel(a=vec[0], b=vec[1], alternative=alternative)
+                obs_is_not_nan_for_both = [
+                    obs_idx_is_never_nan([vec[0], vec[1]])
                     for vec in self.iterate_pairs(
                         samples_list=[ss.data for ss in samples_list]
                     )
                 ]
+
+                test_res = [
+                    ttest_rel(
+                        a=vec[0][include], b=vec[1][include], alternative=alternative
+                    )
+                    for vec, include in zip(
+                        self.iterate_pairs(
+                            samples_list=[ss.data for ss in samples_list]
+                        ),
+                        obs_is_not_nan_for_both,
+                    )
+                ]
                 pvalues = np.array([vv.pvalue for vv in test_res])
-                # effect size is the statistic / sqrt(n); equivalent of Cohen's d statistic
+                # effect size is the statistic / sqrt(n), where we include only non NaNs; equivalent of Cohen's d statistic
+                # see e.g. https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Paired_T-Tests_using_Effect_Size.pdf
                 # permutation test doesn't have effect sizes
+                # this affects only the statistic, not the reported num_obs in the report
                 res["effect_sizes"] = np.array(
-                    [vv.statistic for vv in test_res]
-                ) / np.sqrt(np.sqrt(len(samples_list[0].data)))
+                    [
+                        tr.statistic / np.sqrt(include.sum())
+                        for tr, include in zip(test_res, obs_is_not_nan_for_both)
+                    ]
+                )
+
                 if alternative == "two-sided":
                     # magnitude in either direction
                     res["effect_size_is_signif"] = np.abs(res["effect_sizes"]) >= 0.8
@@ -360,7 +412,7 @@ class PairedDifferenceTest:
                     res["effect_size_is_signif"] = (
                         res["effect_sizes"] >= 0.8
                         if alternative == "greater"
-                        else res["effect_sizes"] <= 0.8
+                        else res["effect_sizes"] <= -0.8
                     )
 
             if corrected:
@@ -376,9 +428,11 @@ class PairedDifferenceTest:
                 "corrected": corrected,
                 "alternative": alternative,
                 "permute": permute,
-                "sample_means": np.array([np.mean(ss.data) for ss in samples_list]),
+                "sample_means": np.array([np.nanmean(ss.data) for ss in samples_list]),
                 "metric": samples_list[0].metric,
                 "model_names": self.model_names,
+                "num_obs": len(samples_list[0].data),
+                "pvalue_alpha": self.alpha,
             }
         )
 
@@ -404,6 +458,10 @@ class PairedDifferenceTest:
             assert all(
                 ii == jj for ii, jj in zip(self.model_names, test_res.model_names)
             ), "model_names lists must match"
+            assert (
+                self.alpha == test_res.pvalue_alpha
+            ), f"significance tests must have used alpha={self.alpha}"
+
         except ValueError as e:
             raise ValueError(
                 "test_res is incompatible with this PairedDifferenceTest object"
@@ -589,6 +647,12 @@ class PairedDifferenceTest:
             assert len({vv.metric for vv in test_results_list}) == len(
                 test_results_list
             ), "all metric_name must be different"
+            assert (
+                len({vv.num_obs for vv in test_results_list}) == 1
+            ), "must all be performed on samples of the same size"
+            assert (
+                len({vv.pvalue_alpha for vv in test_results_list}) == 1
+            ), "must all have used the same alpha setting"
         except ValueError as e:
             raise ValueError(
                 "test_results_list must be a list of signif_pair_diff ouputs on the same models for different metric_names"
