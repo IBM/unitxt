@@ -936,7 +936,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
 
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
-    classes = None
+    groups = None
     zero_division = 0.0
 
     @abstractmethod
@@ -987,18 +987,18 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
-    def get_classes(self, references, additional_inputs):
-        classes = set()
-        for sublist, additional_input in zip(references, additional_inputs):
+    def get_groups(self, elements, additional_inputs):
+        groups = set()
+        for sublist, additional_input in zip(elements, additional_inputs):
             for e in sublist:
                 if self.should_ignore_element(e, additional_input):
                     continue
-                classes.add(self.get_element_group(e, additional_input))
-        return classes
+                groups.add(self.get_element_group(e, additional_input))
+        return groups
 
     def compute(
         self,
-        references: List[Any],
+        references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
     ) -> dict:
@@ -1015,10 +1015,10 @@ class CustomF1(GlobalMetric):
             f" doesn't mach predictions sise ({len(references)})."
         )
 
-        if self.classes is None:
-            classes = self.get_classes(references, additional_inputs)
+        if self.groups is None:
+            groups = self.get_groups(references, additional_inputs)
         else:
-            classes = self.classes
+            groups = self.groups
         groups_statistics = {}
         for references_batch, predictions_batch, additional_input in zip(
             references, predictions, additional_inputs
@@ -1069,7 +1069,7 @@ class CustomF1(GlobalMetric):
                 rn_total + rn,
                 rd_total + rd,
             )
-            if group in classes:
+            if group in groups:
                 f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
                 recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
                 precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
