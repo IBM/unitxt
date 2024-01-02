@@ -153,13 +153,13 @@ def test_with_eval(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
     # metric = evaluate.load('unitxt/metric')
-    predictions = []
+    correct_predictions = []
     for example in examples:
-        predictions.append(
+        correct_predictions.append(
             example["references"][0] if len(example["references"]) > 0 else []
         )
 
-    results = _compute(predictions=predictions, references=examples)
+    results = _compute(predictions=correct_predictions, references=examples)
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
@@ -173,12 +173,12 @@ def test_with_eval(
             f"{message}"
             f"This usually indicates an error in the metric or post processors, but can be also an acceptable edge case.\n"
             f"In anycase, this requires a review.  If this is acceptable, set strict=False in the call to test_card().\n"
-            f"The predictions passed to the metrics were:\n {predictions}\n"
+            f"The predictions passed to the metrics were:\n {correct_predictions}\n"
         )
         warning_message = (
             f"{message}"
             f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
-            f"The predictions passed to the metrics were:\n {predictions}\n"
+            f"The predictions passed to the metrics were:\n {correct_predictions}\n"
         )
         if strict:
             raise AssertionError(error_message)
@@ -186,8 +186,8 @@ def test_with_eval(
         logger.info(warning_message)
         logger.info("*" * 80)
 
-    predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
-    results = _compute(predictions=predictions, references=examples)
+    wrong_predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+    results = _compute(predictions=wrong_predictions, references=examples)
 
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
@@ -203,12 +203,12 @@ def test_with_eval(
             f"This can indicates an error in the metric or post processors, but can be also an acceptable edge case.\n"
             f"For example, in a metric that checks character level edit distance, a low none zero score is expected on random data"
             f"In anycase, this requires a review.  If this is acceptable, set strict=False in the call to test_card().\n"
-            f"The predictions passed to the metrics were:\n {predictions}\n"
+            f"The predictions passed to the metrics were:\n {wrong_predictions}\n"
         )
         warning_message = (
             f"{message}"
             f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
-            f"The predictions passed to the metrics were:\n {predictions}\n"
+            f"The predictions passed to the metrics were:\n {wrong_predictions}\n"
         )
         if strict:
             raise AssertionError(error_message)
