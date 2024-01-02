@@ -165,7 +165,7 @@ def test_with_eval(
 
     if exact_match_score is not None and not math.isclose(score, exact_match_score):
         message = (
-            f"The results of running the main metric in used in the card ({score_name}) "
+            f"The results of running the main metric used in the card ({score_name}) "
             f"over simulated predictions that are equal to the references returns a different score than expected.\n"
             f"One would expect a perfect score of {exact_match_score} in this case, but returned metric score was {score}.\n"
         )
