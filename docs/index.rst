@@ -29,6 +29,7 @@ Our aspiration is to be simple, adaptable, and transparent.
    docs/concepts
    docs/backend
    docs/operators
+   docs/contributors_guide
 
    modules
    catalog
