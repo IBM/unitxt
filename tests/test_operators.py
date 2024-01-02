@@ -1711,33 +1711,45 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=AddConstant(
-                field_to_field=[["a", "b"]], add=5, process_every_value=True
+                field_to_field={"a": "b", "c": "d"}, add=5, process_every_value=True
             ),
-            inputs=[{"a": [1, 2, 3]}],
-            targets=[{"a": [1, 2, 3], "b": [6, 7, 8]}],
+            inputs=[{"a": [1, 2, 3], "c": [4, 5, 6]}],
+            targets=[
+                {"a": [1, 2, 3], "b": [6, 7, 8], "c": [4, 5, 6], "d": [9, 10, 11]}
+            ],
             tester=self,
         )
 
         # test the loop in field_to_field, to be caught on init
-        with self.assertRaises(ValueError) as ve:
+        with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
             ).process(instance={"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
-            str(ve.exception),
-            "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+            str(ae.exception),
+            "In input argument 'field_to_field': {'a': 'b', 'b': 'a'}, field b is mapped to field a, while the latter is mapped to b. Whether b or a is processed first might impact end result.",
         )
 
-        # test if not two different from_field determine the same to_field, in field_to_field, to be caught on init
-        with self.assertRaises(ValueError) as ve:
+        # test if two different from_field determine the same to_field, in field_to_field, to be caught on init
+        with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "c", "b": "c"}, add=15, process_every_value=True
             ).process(instance={"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
+            str(ae.exception),
+            "In input argument 'field_to_field': {'a': 'c', 'b': 'c'}, two different fields: a and b are mapped to field c. Whether a or b is processed last might impact end result.",
+        )
+
+        with self.assertRaises(ValueError) as ve:
+            AddConstant(
+                field_to_field={"a", "c", "b"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
             str(ve.exception),
-            "In the 'field_to_field' input argument, '{'a': 'c', 'b': 'c'}', field 'c' is to be determined by more than a single 'from_field', which makes its end value ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+            "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str].",
         )
 
     def test_copy_paste_fields(self):
