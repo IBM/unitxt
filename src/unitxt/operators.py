@@ -49,6 +49,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -326,7 +327,10 @@ class FieldOperator(StreamInstanceOperator):
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
-        if isoftype(self.field_to_field, List[List[str]]):
+        # for backward compatibility also allow list of tupples of two strings
+        if isoftype(self.field_to_field, List[List[str]]) or isoftype(
+            self.field_to_field, List[Tuple[str, str]]
+        ):
             for pair in self._field_to_field:
                 assert (
                     len(pair) == 2
