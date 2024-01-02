@@ -177,7 +177,7 @@ def test_with_eval(
         )
         warning_message = (
             f"{message}"
-            f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
+            f"This is flagged as only as a warning because strict=False was set in the call to test_card().\n"
             f"The predictions passed to the metrics were:\n {correct_predictions}\n"
         )
         if strict:
@@ -207,7 +207,7 @@ def test_with_eval(
         )
         warning_message = (
             f"{message}"
-            f"This is flagged as only as a warning because strict=False was set in the call to test_card()."
+            f"This is flagged as only as a warning because strict=False was set in the call to test_card().\n"
             f"The predictions passed to the metrics were:\n {wrong_predictions}\n"
         )
         if strict:
