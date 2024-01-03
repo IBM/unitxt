@@ -70,7 +70,6 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .stream import Stream
-from .templates import Template
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -390,8 +389,6 @@ class FieldOperator(StreamInstanceOperator):
           order. The end result might depend on that order if either (1) two different fields are mapped to the same
           to_field, or (2) a field shows both as a key and as a value in different mappings.
           The operator throws an AssertionError in either of these cases.
-          Note that same field can be mapped to two different to_field-s. That does not make the end result depend
-          on order of processing of the fields.
           field_to_field defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
@@ -1726,25 +1723,6 @@ class EncodeLabels(StreamInstanceOperator):
             dict_set(
                 instance, field_name, new_values, use_dpath=True, set_multiple=True
             )
-
-        return instance
-
-
-class RenderDemonstrations(StreamInstanceOperator):
-    template: Template
-    demos_field: str
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        demos = instance.get(self.demos_field, [])
-
-        processed_demos = []
-        for demo_instance in demos:
-            demo_instance = self.template.process(demo_instance)
-            processed_demos.append(demo_instance)
-
-        instance[self.demos_field] = processed_demos
 
         return instance
 
