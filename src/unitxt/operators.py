@@ -216,19 +216,19 @@ class FlattenInstances(StreamInstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class ModelInputFormatter(StreamInstanceOperator):
+class SystemFormat(StreamInstanceOperator):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
-    ModelInputFormatter expects the input instance to contain:
+    SystemFormat expects the input instance to contain:
     1. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     2. A field named "instruction" that contains a (non-None) string.
     3. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
 
-    ModelInputFormatter formats the above fields into a single string to be inputted to the model. This string overwrites
+    SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
-    ModelInputFormatter also pops field "instruction" and the field containing the demos out from the input instance.
+    SystemFormat also pops field "instruction" and the field containing the demos out from the input instance.
 
     Args:
         demos_field (str): the name of the field that contains the demos, being a list of dicts, each with "source" and "target" keys
@@ -245,7 +245,7 @@ class ModelInputFormatter(StreamInstanceOperator):
             "demos": [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
         }
         is process-ed by
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demos_field="demos",
             demo_format="Input: {source}\nOutput: {target}\n\n",
             model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",

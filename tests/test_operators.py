@@ -33,7 +33,6 @@ from src.unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
-    ModelInputFormatter,
     NullAugmentor,
     RemoveFields,
     RemoveValues,
@@ -43,6 +42,7 @@ from src.unitxt.operators import (
     ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
+    SystemFormat,
     TakeByField,
     Unique,
     ZipFieldValues,
@@ -262,7 +262,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_model_input_formatter(self):
+    def test_system_format(self):
         demo_instances = [
             {"source": "1+2", "target": "3"},
             {"source": "4-2", "target": "2"},
@@ -301,7 +301,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="{demos}User: {instruction}\n\n{source}\nAgent: ",
@@ -331,14 +331,14 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=model_input_formatter,
+            operator=system_format,
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
         # now imitate instruction before demos.
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="Instruction: {instruction}\n\n{demos}User: {source}\nAgent: ",
@@ -368,7 +368,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=model_input_formatter,
+            operator=system_format,
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -378,7 +378,7 @@ class TestOperators(unittest.TestCase):
         for instance in inputs:
             instance.pop("instruction")
 
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="{demos}User: {instruction}{source}\nAgent: ",
@@ -408,7 +408,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=model_input_formatter,
+            operator=system_format,
             inputs=inputs,
             targets=targets_no_instruction,
             tester=self,
@@ -434,12 +434,12 @@ class TestOperators(unittest.TestCase):
             ],
         }
 
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
         )
 
-        result = model_input_formatter.process(instance)
+        result = system_format.process(instance)
 
         target = {
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
@@ -455,11 +455,11 @@ class TestOperators(unittest.TestCase):
             "references": ["negative"],
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
         }
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
         )
-        result = model_input_formatter.process(instance)
+        result = system_format.process(instance)
         target = {
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
@@ -467,13 +467,13 @@ class TestOperators(unittest.TestCase):
         }
         self.assertDictEqual(result, target)
 
-        # test_model_input_formatter_with_prefix_and_suffix(self):
-        model_input_formatter_fix = ModelInputFormatter(
+        # test_system_format_with_prefix_and_suffix(self):
+        system_format_fix = SystemFormat(
             demos_field="demos",
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="[INST] <<SYS>>\n{instruction}\n\n{demos}User: {source}\nAgent: [/INST]",
         )
-        renderer = model_input_formatter_fix
+        renderer = system_format_fix
 
         instance = {
             "source": 'This is my sentence: "was so bad"',
@@ -2690,8 +2690,7 @@ Agent:2
 User:1+1
 Agent:"""
 
-        # compare here with ModelInputFormatter
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
         )
@@ -2699,10 +2698,10 @@ Agent:"""
         instance["instruction"] = "solve the math exercises"
         instance["demos"] = demos_instances
 
-        instance_out = model_input_formatter.process(instance)
+        instance_out = system_format.process(instance)
         self.assertEqual(instance_out["source"], target)
 
-    def test_model_input_formatter_with_demonstrations_and_instruction_after_demos(
+    def test_system_format_with_demonstrations_and_instruction_after_demos(
         self,
     ):
         demo_instances = [
@@ -2726,16 +2725,16 @@ User:solve the math exercises
 
 1+1
 Agent:"""
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="{demos}User:{instruction}\n\n{source}\nAgent:",
         )
 
-        instance_out = model_input_formatter.process(instance)
+        instance_out = system_format.process(instance)
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)
 
-    def test_model_input_formatter_without_demonstrations(self):
+    def test_system_format_without_demonstrations(self):
         instance = {
             "source": "1+1",
             "target": "2",
@@ -2747,12 +2746,12 @@ Agent:"""
 User:1+1
 Agent:"""
 
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
         )
 
-        instance_out = model_input_formatter.process(instance)
+        instance_out = system_format.process(instance)
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)
 
@@ -2761,24 +2760,24 @@ Agent:"""
         target = """User:1+1
 Agent:"""
 
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="{instruction}{demos}User:{source}\nAgent:",
         )
-        instance_out = model_input_formatter.process(instance)
+        instance_out = system_format.process(instance)
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance_out["source"], target)
 
-    def test_model_input_formatter_without_demonstrations_and_empty_instruction(self):
+    def test_system_format_without_demonstrations_and_empty_instruction(self):
         instance = {"source": "1+1", "target": "2", "instruction": ""}
 
         target = """User:1+1
 Agent:"""
 
-        model_input_formatter = ModelInputFormatter(
+        system_format = SystemFormat(
             demo_format="User:{source}\nAgent:{target}\n\n",
             model_input_format="{instruction}{demos}User:{source}\nAgent:",
         )
-        instance_out = model_input_formatter.process(instance)
+        instance_out = system_format.process(instance)
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)

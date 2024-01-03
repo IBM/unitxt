@@ -5,7 +5,7 @@ import unittest
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.instructions import TextualInstruction
-from src.unitxt.operators import ModelInputFormatter
+from src.unitxt.operators import SystemFormat
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
@@ -20,7 +20,7 @@ class TestRecipes(unittest.TestCase):
                 input_format="{premise}",
                 output_format="{label}",
             ),
-            format=ModelInputFormatter(
+            format=SystemFormat(
                 demo_format="User:{source}\nAgent:{target}\n\n",
                 model_input_format="{instruction}\n\n{demos}User:{source}\nAgent:",
             ),

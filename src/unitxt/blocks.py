@@ -17,8 +17,8 @@ from .operators import (
     CopyFields,
     DivideAllFieldsBy,
     MapInstanceValues,
-    ModelInputFormatter,
     RenameFields,
+    SystemFormat,
 )
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
