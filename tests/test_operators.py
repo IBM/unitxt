@@ -37,7 +37,6 @@ from src.unitxt.operators import (
     RemoveFields,
     RemoveValues,
     RenameFields,
-    RenderDemonstrations,
     Shuffle,
     ShuffleFieldValues,
     SplitByValue,
@@ -2591,7 +2590,6 @@ class TestApplyMetric(unittest.TestCase):
         template = InputOutputTemplate(
             input_format='This is my sentence: "{text}"', output_format="{label}"
         )
-        renderer = RenderDemonstrations(template=template, demos_field="demos")
 
         instance = {
             "demos": [
@@ -2603,7 +2601,8 @@ class TestApplyMetric(unittest.TestCase):
             ]
         }
 
-        result = renderer.process(instance)
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
 
         target = {
             "demos": [
@@ -2624,13 +2623,12 @@ class TestApplyMetric(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(instance, target)
 
     def test_render_demonstrations_multi_reference(self):
         template = MultiReferenceTemplate(
             input_format="This is my sentence: {text}", references_field="answer"
         )
-        renderer = RenderDemonstrations(template=template, demos_field="demos")
 
         instance = {
             "demos": [
@@ -2645,7 +2643,8 @@ class TestApplyMetric(unittest.TestCase):
             ]
         }
 
-        result = renderer.process(instance)
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
 
         target = {
             "demos": [
@@ -2666,7 +2665,7 @@ class TestApplyMetric(unittest.TestCase):
             ]
         }
 
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(instance, target)
 
     def test_icl_format_with_demonstrations(self):
         instance = {
