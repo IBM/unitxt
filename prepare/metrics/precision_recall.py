@@ -67,7 +67,6 @@ outputs = test_metric(
     instance_targets=instance_targets_precision_macro,
     global_target=global_target_precision_macro,
 )
-# add_to_catalog(precision_metric, "metrics.precision", overwrite=True)
 
 
 global_target_recall_micro = {
@@ -118,7 +117,6 @@ outputs = test_metric(
     instance_targets=instance_targets_recall_macro,
     global_target=global_target_recall_macro,
 )
-# add_to_catalog(recall_metric, "metrics.recall", overwrite=True)
 
 
 # multi-class case
@@ -189,7 +187,6 @@ outputs = test_metric(
     instance_targets=instance_targets_precision_macro,
     global_target=global_target_precision_macro,
 )
-# add_to_catalog(precision_metric, "metrics.precision", overwrite=True)
 
 
 global_target_recall_micro = {
