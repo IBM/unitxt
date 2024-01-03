@@ -72,31 +72,31 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
-                    f"demos_pool_size must be bigger than num_demos ({self.num_demos}), Got demos_pool_size={self.demos_pool_size}"
+                    f"num_demos (got: {self.num_demos}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
                 )
             if self.loader_limit and self.demos_pool_size > self.loader_limit:
                 raise ValueError(
-                    f"demos_pool_size must be bigger than loader_limit ({self.loader_limit}), Got demos_pool_size={self.demos_pool_size}"
+                    f"demos_pool_size should not exceed loader_limit ({self.loader_limit}), Got demos_pool_size={self.demos_pool_size}"
                 )
 
         if self.loader_limit:
             if self.max_test_instances and self.max_test_instances > self.loader_limit:
                 raise ValueError(
-                    f"max_test_instances must be bigger than loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
+                    f"max_test_instances should not exceed loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
                 )
             if (
                 self.max_validation_instances
                 and self.max_validation_instances > self.loader_limit
             ):
                 raise ValueError(
-                    f"max_validation_instances must be bigger than loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
+                    f"max_validation_instances should not exceed loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
                 )
             if (
                 self.max_train_instances
                 and self.max_train_instances > self.loader_limit
             ):
                 raise ValueError(
-                    f"max_train_instances must be bigger than loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
+                    f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
 
     def prepare(self):

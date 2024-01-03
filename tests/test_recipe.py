@@ -220,7 +220,7 @@ class TestRecipes(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "demos_pool_size must be bigger than num_demos (30), Got demos_pool_size=10",
+            "num_demos (got: 30) should not exceed demos_pool_size (got: 10)",
         )
 
     def test_standard_recipe_with_no_test(self):
