@@ -2,7 +2,7 @@ import json
 from typing import Any, List, Optional
 
 from ..logging import get_logger
-from ..metrics import GlobalMetric, Metric
+from ..metrics import GlobalMetric, Metric, MetricPipeline
 from ..stream import MultiStream
 from ..type_utils import isoftype
 
@@ -72,8 +72,13 @@ def test_metric(
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 
-    if isinstance(metric, GlobalMetric) and metric.n_resamples:
-        metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
+    # Use a low number of resamples in testing for GlobalMetric, to save runtime
+    if isinstance(metric, MetricPipeline):
+        ci_metric = metric.metric
+    else:
+        ci_metric = metric
+    if isinstance(ci_metric, GlobalMetric) and ci_metric.n_resamples:
+        ci_metric.n_resamples = 3
     outputs = apply_metric(metric, predictions, references, additional_inputs)
 
     errors = []
