@@ -32,13 +32,13 @@ by:
 
 .. code-block:: console
 
-    Make version=<new version number> new-version
+    make version=<new version number> new-version
 
 for example:
 
 .. code-block:: console
 
-    Make version=1.4.1 new-version
+    make version=1.4.1 new-version
 
 This will create a branch named with the new version number,
 and will push the new branch to the remote git Unitxt repo.
