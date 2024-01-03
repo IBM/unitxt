@@ -9,7 +9,6 @@ from .operators import (
     AddFields,
     Augmentor,
     NullAugmentor,
-    RenderDemonstrations,
     StreamRefiner,
     SystemFormat,
 )
@@ -138,14 +137,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
             self.sampler.set_size(self.num_demos)
 
-            self.steps.append(
-                AddDemosField(
-                    source_stream=self.demos_pool_name,
-                    target_field=self.demos_field,
-                    sampler=self.sampler,
-                )
-            )
-
         self.train_refiner.max_instances = self.max_train_instances
         self.train_refiner.apply_to_streams = ["train"]
         self.steps.append(self.train_refiner)
@@ -160,9 +151,14 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         # the 4 constituents of StandardRenderer:
         self.steps.append(self.template)
-        self.steps.append(
-            RenderDemonstrations(template=self.template, demos_field=self.demos_field)
-        )
+        if self.num_demos > 0:
+            self.steps.append(
+                AddDemosField(
+                    source_stream=self.demos_pool_name,
+                    target_field=self.demos_field,
+                    sampler=self.sampler,
+                )
+            )
         self.steps.append(
             AddFields(
                 fields={
