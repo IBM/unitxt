@@ -140,7 +140,12 @@ class LoadFromIBMCloud(Loader):
     aws_secret_access_key_env: str
     bucket_name: str
     data_dir: str = None
-    data_files: Union[Sequence[str], Dict[str, str]]
+
+    # Can be either:
+    # 1. a list of file names, the split of each file is determined by the file name pattern
+    # 2. Mapping: split -> file_name, e.g. {"test" : "test.json", "train": "train.json"}
+    # 3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
+    data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -218,8 +223,10 @@ class LoadFromIBMCloud(Loader):
         if not os.path.exists(local_dir):
             Path(local_dir).mkdir(parents=True, exist_ok=True)
 
-        if isinstance(self.data_files, Dict):
-            data_files_names = self.data_files.values()
+        if isinstance(self.data_files, Mapping):
+            data_files_names = list(self.data_files.values())
+            if not isinstance(data_files_names[0], str):
+                data_files_names = list(itertools.chain(*data_files_names))
         else:
             data_files_names = self.data_files
 
