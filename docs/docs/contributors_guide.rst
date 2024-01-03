@@ -4,12 +4,20 @@ Contributors Guide
 
 This guide will assist you in contributing to unitxt.
 
-Editing the Unitxt documentation
+---------------------
+The Unitxt Documentation
 ---------------------
 
 The unitxt external documentation is at https://unitxt.readthedocs.io/en/main/docs/introduction.html.
 
-The source documentation files are located within the **docs** directory (https://github.com/IBM/unitxt/tree/main/docs).
+The documentation is produced from two sources:
+
+- RST files located within the **docs** directory (https://github.com/IBM/unitxt/tree/main/docs).
+- From the docstrings within the library python files. Changes to the docstrings are automatically propagated
+  into the documentation for the latest version.
+
+Editing the RST files
+***********
 
 The main file is **index.rst**. Files for the different sections are under **docs/docs**.
 
@@ -31,7 +39,7 @@ To test the documentation locally:
 
 3. Access the documentation at http://localhost:8478/.
 
-
+---------------------
 Creating a new Unitxt release
 ---------------------
 
