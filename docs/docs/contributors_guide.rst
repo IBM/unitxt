@@ -7,9 +7,11 @@ This guide will assist you in contributing to unitxt.
 Editing the Unitxt documentation
 ---------------------
 
-The unitxt documentation files are located within the `docs` directory (https://github.com/IBM/unitxt/tree/main/docs).
+The unitxt external documentation is at https://unitxt.readthedocs.io/en/main/docs/introduction.html.
 
-The main file is **index.rst**. Files for the different sections are under `docs/docs`.
+The source documentation files are located within the **docs** directory (https://github.com/IBM/unitxt/tree/main/docs).
+
+The main file is **index.rst**. Files for the different sections are under **docs/docs**.
 
 To update the documentation, edit the **.rst** documentation files.
 
