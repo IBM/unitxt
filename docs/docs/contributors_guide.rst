@@ -7,7 +7,7 @@ This guide will assist you in contributing to unitxt.
 Creating a new Unitxt release
 ---------------------
 
-The following process describes how to create a new release of Unitxt:
+The following process describes how to create a new release of Unitxt.
 
 1. In a development environment, checkout the main branch:
 
@@ -40,14 +40,14 @@ for example:
 
     Make version=1.4.1 new-version
 
-This will create a branch named with the version number,
+This will create a branch named with the new version number,
 and will push the new branch to the remote git Unitxt repo.
 
 5. Create a pull request for merging the new branch to the main branch, on the
 Unitxt git repo https://github.com/IBM/unitxt.
 
 6. Squash and merge the new pull request. It is ok to skip the tests for this PR since it changes only the
-version number. This can be done by marking "merge without waiting got the requirements" within the
+version number. This can be done by marking "merge without waiting for the requirements" within the
 pull request
 (note this option may not be available in the UI, since it requires specific permissions that are not given to all contributors).
 
@@ -68,22 +68,20 @@ Make sure your local main is now after the merge, with an updated version number
 
 This will tag the main branch with a new tag equal to the updated version number.
 
-9. Go to the Unitxt Releases list: https://github.com/IBM/unitxt/releases
+9. Go to the Unitxt Releases list: https://github.com/IBM/unitxt/releases.
 
 10. Choose "Draft a new release", and choose the new tag that was just created.
-The new release name will be "Unitxt <new version number", for example "Unitxt 1.4.0".
+The new release name should be "Unitxt <new version number", for example "Unitxt 1.4.0".
 
 11. Use "Generate release notes" to create an initial list of changed for the new release.
-Use "Save Draft" to first save this auto-generated list.
+Click "Save Draft" to first save this auto-generated list.
 
 12. Edit the release notes:
 
 - Remove minor items, such as smaller version bumps.
-- Add sections Enhancements, Bug fixes, Non backward compatible changes
-(see release notes of previous versions for examples).
-- For each auto-generated item in the "What's Changed" section, copy it, if needed, to
-one of the above sections. Add a description that is concise and clear.
-Follow previous release notes for examples.
+- Add sections Enhancements, Bug fixes, Non backward compatible changes (see release notes of previous versions for examples).
+- For each auto-generated item in the "What's Changed" section, copy it, if needed, to one of the above sections.
+  Add a description that is concise and clear. Follow previous release notes for examples.
 
 13. Click "Publish release".
 
@@ -91,8 +89,8 @@ Follow previous release notes for examples.
 The actions are available at https://github.com/IBM/unitxt/actions.
 
 - Check that the action "Release new version to PyPI" completes successfully
-(https://github.com/IBM/unitxt/actions/workflows/pipy.yml).
+  (https://github.com/IBM/unitxt/actions/workflows/pipy.yml).
 - The action "Release new version HuggingFace Hub" is currently known to be failing (since 1.2.0).
 
-15. Check that the new release is available on pypi (https://pypi.org/project/unitxt/).
+15. Check that the new release is available on pypi (https://pypi.org/project/unitxt).
 
