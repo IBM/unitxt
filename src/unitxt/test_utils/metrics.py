@@ -83,12 +83,17 @@ def test_metric(
             f"global score must be equal, got {json.dumps(global_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(global_target, sort_keys=True, ensure_ascii=False)}"
         )
 
-    for output, instance_target in zip(outputs, instance_targets):
-        instance_score = round_floats(output["score"]["instance"])
-        if not dict_equal(instance_score, instance_target):
-            errors.append(
-                f"instance score must be equal, got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
-            )
+    if len(outputs) == len(instance_targets):
+        for output, instance_target in zip(outputs, instance_targets):
+            instance_score = round_floats(output["score"]["instance"])
+            if not dict_equal(instance_score, instance_target):
+                errors.append(
+                    f"instance score must be equal, got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
+                )
+    else:
+        errors.append(
+            f"Metric outputs count does not match instance targets count, got {len(outputs)} =/= {len(instance_targets)}"
+        )
 
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))
