@@ -8,10 +8,10 @@ from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import (
     AddFields,
     Augmentor,
-    ModelInputFormatter,
     NullAugmentor,
     RenderDemonstrations,
     StreamRefiner,
+    SystemFormat,
 )
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
@@ -34,7 +34,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = None
-    format: ModelInputFormatter = ModelInputFormatter()
+    format: SystemFormat = SystemFormat()
 
     loader_limit: int = None
 
@@ -231,7 +231,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         template (Template, optional): Template object to be used for the recipe.
         instruction (Instruction, optional): Instruction object to be used for the recipe.
         loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
-        format (ModelInputFormatter, optional): ModelInputFormatter object to be used for the recipe.
+        format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.

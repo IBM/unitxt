@@ -1,7 +1,7 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ModelInputFormatter
+from src.unitxt.operators import SystemFormat
 
-format = ModelInputFormatter(
+format = SystemFormat(
     demo_format="{source}{target}\n\n",
     model_input_format="{instruction}\n{demos}\n{source}",
 )

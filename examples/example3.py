@@ -4,13 +4,13 @@ from src.unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    ModelInputFormatter,
     NormalizeListFields,
     RandomSampler,
     SequentialRecipe,
     SliceSplit,
     SplitRandomMix,
     SpreadSplit,
+    SystemFormat,
     TextualInstruction,
 )
 from src.unitxt.catalog import add_to_catalog
@@ -66,7 +66,7 @@ recipe = SequentialRecipe(
             target_field="demos",
             sampler=RandomSampler(sample_size=5),
         ),
-        ModelInputFormatter(
+        SystemFormat(
             demo_format="User: {source}\nAgent: {target}\n\n",
             model_input_format="{demos}User: {source}\nAgent: ",
         ),

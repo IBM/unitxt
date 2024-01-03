@@ -4,9 +4,9 @@ from src.unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    ModelInputFormatter,
     SequentialRecipe,
     SplitRandomMix,
+    SystemFormat,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.load import load_dataset
@@ -44,7 +44,7 @@ recipe = SequentialRecipe(
                 """.strip(),
             output_format="{label}",
         ),
-        ModelInputFormatter(model_input_format="User: {source}\nAgent: "),
+        SystemFormat(model_input_format="User: {source}\nAgent: "),
     ]
 )
 

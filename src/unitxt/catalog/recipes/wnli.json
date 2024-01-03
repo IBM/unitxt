@@ -54,7 +54,7 @@
             "output_format": "{label}"
         },
         {
-            "type": "model_input_formatter"
+            "type": "system_format"
         }
     ]
 }
