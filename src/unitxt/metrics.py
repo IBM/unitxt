@@ -840,14 +840,26 @@ class F1MultiLabel(GlobalMetric):
                 )
 
 
+class PrecisionMacroMultiLabel(F1MultiLabel):
+    main_score = "precision_macro"
+    metric = "precision"
+    average = "macro"
+
+
 class PrecisionMicroMultiLabel(F1MultiLabel):
-    main_score = "precision"
+    main_score = "precision_micro"
     metric = "precision"
     average = "micro"
 
 
+class RecallMacroMultiLabel(F1MultiLabel):
+    main_score = "recall_macro"
+    metric = "recall"
+    average = "macro"
+
+
 class RecallMicroMultiLabel(F1MultiLabel):
-    main_score = "recall"
+    main_score = "recall_micro"
     metric = "recall"
     average = "micro"
 
