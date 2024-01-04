@@ -1,4 +1,5 @@
 import unittest
+from typing import Dict, List, Tuple
 
 from src.unitxt.templates import (
     InputOutputTemplate,
@@ -8,6 +9,8 @@ from src.unitxt.templates import (
     MultiReferenceTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
+    Template,
+    TemplatesDict,
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
@@ -209,6 +212,9 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+        # if "source" and "target" in instance - instance is not modified
+        check_operator(template, targets, targets, tester=self)
+
         err_input_template = InputOutputTemplate(
             input_format="This is my text:'{no_text}'", output_format="{label}"
         )
@@ -228,6 +234,25 @@ class TestTemplates(unittest.TestCase):
             "\"Available outputs are dict_keys(['label']) but output format requires a different one: {no_label}\"",
             str(ke.exception),
         )
+
+        class ToCoverTemplate(Template):
+            def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+                return super().inputs_to_source(inputs)
+
+            def outputs_to_target_and_references(
+                self, outputs: Dict[str, object]
+            ) -> Tuple[str, List[str]]:
+                return super().outputs_to_target_and_references(outputs)
+
+        to_cover_template = ToCoverTemplate()
+        to_cover_template.inputs_to_source({"a": 1})
+        to_cover_template.outputs_to_target_and_references({"a": 1})
+
+        class ToCoverTemplateDict(TemplatesDict):
+            def verify(self):
+                super().verify()
+
+        ToCoverTemplateDict()
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
