@@ -40,26 +40,12 @@ add_to_catalog(
         input_format=input_format,
         target_field="answer",
         choices_seperator="\n",
+        target_choice_format=" {choice_numeral}",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.original.lm_eval_harness",
     overwrite=True,
 )
-
-
-# input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
-# add_to_catalog(
-#     MultipleChoiceTemplate(
-#         input_format=input_format,
-#         target_field="answer",
-#         choices_seperator="\n",
-#         postprocessors=["processors.first_character"],
-#     ),
-#     "templates.qa.multiple_choice.lm_eval_harness",
-#     overwrite=True,
-# )
-
-# with context
 
 
 def replace_if_context_not_there(s, oldvalue, newvalue):
@@ -213,32 +199,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-# # lm_eval_harness
-
-# input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
-# add_to_catalog(
-#     MultipleChoiceTemplate(
-#         input_format=input_format,
-#         target_field="answer",
-#         choices_seperator="\n",
-#         postprocessors=["processors.first_character"],
-#     ),
-#     "templates.qa.multiple_choice.lm_eval_harness",
-#     overwrite=True,
-# )
-
-# input_format = "Context: {context}\nQuestion: {question}\nChoices:\n{choices}\nAnswer:"
-# add_to_catalog(
-#     MultipleChoiceTemplate(
-#         input_format=input_format,
-#         target_field="answer",
-#         choices_seperator="\n",
-#         postprocessors=["processors.first_character"],
-#     ),
-#     "templates.qa.multiple_choice.contextual.lm_eval_harness",
-#     overwrite=True,
-# )
-
 # fm_eval
 
 input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers:\n{choices}\nAnswer:"
@@ -267,16 +227,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-# add_to_catalog(
-#     TemplatesList(
-#         [
-#             "templates.qa.multiple_choice.contextual.lm_eval_harness",
-#         ]
-#     ),
-#     "templates.qa.multiple_choice.contextual.all",
-#     overwrite=True,
-# )
-
 add_to_catalog(
     TemplatesList(
         [
@@ -301,13 +251,3 @@ add_to_catalog(
     "templates.qa.multiple_choice.with_topic.all",
     overwrite=True,
 )
-
-# add_to_catalog(
-#     TemplatesList(
-#         [
-#             "templates.qa.multiple_choice.lm_eval_harness",
-#         ]
-#     ),
-#     "templates.qa.multiple_choice.all",
-#     overwrite=True,
-# )

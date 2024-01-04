@@ -5,7 +5,4 @@
     "choices_seperator": "",
     "source_choice_format": "{choice_text}",
     "target_choice_format": " {choice_text}",
-    "postprocessors": [
-        "processors.first_character"
-    ]
 }
