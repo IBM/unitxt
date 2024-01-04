@@ -1373,45 +1373,6 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
         self.min_frequency_percent = 0
 
 
-class FilterByListsOfValues(SingleStreamOperator):
-    """Filters a stream, yielding only instances whose field values are included in the specified value lists.
-
-    Args:
-        required_values (Dict[str, List]): For each field, the list of values, one of which an instance should match
-        in order to be included in the output stream.
-    """
-
-    required_values: Dict[str, List]
-    error_on_filtered_all: bool = True
-
-    def verify(self):
-        super().verify()
-        for key, value in self.required_values.items():
-            if not isinstance(value, list):
-                raise ValueError(
-                    f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'"
-                )
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        filtered_all = True
-        for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
-                    )
-                if instance[key] not in value:
-                    filter = True
-            if not filter:
-                filtered_all = False
-                yield instance
-        if filtered_all and self.error_on_filtered_all:
-            raise RuntimeError(
-                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
-            )
-
-
 class Intersect(FieldOperator):
     """Intersects the value of a field, which must be a list, with a given list.
 
