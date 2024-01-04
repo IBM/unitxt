@@ -1,0 +1,96 @@
+=================
+Tasks Taxonomy
+=================
+
+Tasks taxonomy allows easy navigation throughout the different tasks. The taxonomy is inspired by `paperswithcode <https://paperswithcode.com>`_.
+
+
+Text classification
+-------
+* Binary classification
+ * ethos
+ * wsc
+
+* Multi-class classification
+
+  * Intent classification
+   * amazon massive
+
+  * Sentiment analysis
+   * sst2
+
+  * cola
+  * ethos
+
+* Mutli-label classification
+
+  * Emotion classification
+
+
+Question Answering
+-------
+
+* Open-Ended Question Answering
+
+ * Contextual QA
+  * squad
+
+* Multiple Choice Question Answering (MCQA)
+ 
+ * Contextual QA
+  * belebele
+  * boolq
+  * copa
+  * hellaswag
+  * race
+  * sciq
+
+ * Non-contextual QA
+  * arc
+  * mmlu
+  * openbookqa
+  * piqa
+  * wingrande
+ 
+
+Machine Translation
+-------
+* wmt_en_de
+* wmt_en_fr
+
+Text Summarization
+-------
+* Document summarization
+ * cnn dailymail
+ * mlsum
+ * xlsum
+
+* Multi-document summarization
+
+
+
+Text Generation
+-------
+
+
+Named Entity Recognition (NER)
+-------
+*
+
+Natural Language Inference
+-------
+
+* wnli
+* xnli
+* qnli
+* rte
+
+Semantic Textual Similarity
+-------
+* stsb
+
+Information Retrieval
+-------
+
+Code
+-------
