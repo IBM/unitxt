@@ -536,9 +536,28 @@ class HuggingfaceMetric(GlobalMetric):
 
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
+    # This are fixed arguments  passed to compute method
     hf_compute_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    # These are additional input fields passed to HF compute method (a list with one value per instance)
     hf_additional_input_fields: List = OptionalField(default_factory=list)
+    # These are additional input fields that are passed as one value
+    hf_additional_input_fields_pass_one_value: List = OptionalField(
+        default_factory=list
+    )
+
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
+
+    def verify(self):
+        assert (
+            self.hf_additional_input_fields is None
+            or isoftype(self.hf_additional_input_fields, List[str])
+        ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
+        assert (
+            self.hf_additional_input_fields_pass_one_value is None
+            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
+
+        return super().verify()
 
     def prepare(self):
         super().prepare()
@@ -561,8 +580,22 @@ class HuggingfaceMetric(GlobalMetric):
                 additional_input[additional_input_field]
                 for additional_input in additional_inputs
             ]
-        # add check that all required fields in self.metrics are in passed_additional_inputs
+        for additional_input_field in self.hf_additional_input_fields_pass_one_value:
+            assert (
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
 
+            values = {
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
+            }
+            assert (
+                len(values) == 1
+            ), f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
+
+            passed_additional_inputs[additional_input_field] = next(iter(values))
+
+        # add check that all required fields in self.metrics are in passed_additional_inputs       print(passed_additional_inputs)
         result = self.metric.compute(
             predictions=predictions,
             references=references,

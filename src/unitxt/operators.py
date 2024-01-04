@@ -50,6 +50,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -283,8 +284,16 @@ class FieldOperator(StreamInstanceOperator):
           operation would happen in-place and its result would replace the value of "field". Defaults to None
         field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
           to names of fields to save the results into. Inner List, if used, should be of length 2.
-          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
-          process a result from, a result to be stored in field of a different name. Defaults to None
+          A field is processed by feeding its value into method 'process_value' and storing the result in to_field that
+          is mapped to the field.
+          When the type of argument 'field_to_field' is List, the order by which the fields are processed is their order
+          in the (outer) List. But when the type of argument 'field_to_field' is Dict, there is no uniquely determined
+          order. The end result might depend on that order if either (1) two different fields are mapped to the same
+          to_field, or (2) a field shows both as a key and as a value in different mappings.
+          The operator throws an AssertionError in either of these cases.
+          Note that same field can be mapped to two different to_field-s. That does not make the end result depend
+          on order of processing of the fields.
+          field_to_field defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
 
@@ -313,27 +322,39 @@ class FieldOperator(StreamInstanceOperator):
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            len(self._field_to_field) > 0
+        ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
-        for pair in self._field_to_field:
-            assert (
-                len(pair) == 2
-            ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
-        # The order of pairs in _field_to_field is not always uniquely determined by the input.
-        # In particular, when the input is a dictionary.
-        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
-        # where h is different from f, it is not clear if when f defines the new value of h
-        # (e.g., through an add-constant operation), f is before or after being determined by g.
-        # The following asserts that such ambiguity does not exist in the input.
-
-        if len(self._field_to_field) == 1:
+        if self.field_to_field is None:
             return
-        for ind in range(len(self._field_to_field)):
-            if self._field_to_field[ind][0] in [
-                t for _, t in self._field_to_field[:ind]
-            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
-                raise ValueError(
-                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
-                )
+        # for backward compatibility also allow list of tupples of two strings
+        if isoftype(self.field_to_field, List[List[str]]) or isoftype(
+            self.field_to_field, List[Tuple[str, str]]
+        ):
+            for pair in self._field_to_field:
+                assert (
+                    len(pair) == 2
+                ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+            # order of field processing is uniquely determined by the input field_to_field when a list
+            return
+        if isoftype(self.field_to_field, Dict[str, str]):
+            if len(self.field_to_field) < 2:
+                return
+            for ff, tt in self.field_to_field.items():
+                for f, t in self.field_to_field.items():
+                    if f == ff:
+                        continue
+                    assert (
+                        t != ff
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, field {f} is mapped to field {t}, while the latter is mapped to {tt}. Whether {f} or {t} is processed first might impact end result."
+                    assert (
+                        tt != t
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, two different fields: {ff} and {f} are mapped to field {tt}. Whether {ff} or {f} is processed last might impact end result."
+            return
+        raise ValueError(
+            "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str]."
+        )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
