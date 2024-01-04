@@ -1,7 +1,8 @@
 datasets
 evaluate
 nltk
-sacrebleu[ja]
+sacrebleu
+mecab-python3
 absl-py
 rouge_score
 scikit-learn
