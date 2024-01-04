@@ -1189,7 +1189,6 @@ class FilterByCondition(SingleStreamOperator):
     Raises an error if a required key is missing.
 
     Args:
-<<<<<<< HEAD
        values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
        condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
@@ -1200,11 +1199,6 @@ class FilterByCondition(SingleStreamOperator):
        FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
        FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
 
-=======
-        required_values (Dict[str, Any]): Values that instances must match in order to be included in the output.
-        disallowed_values (Dict[str, Any]): Values that instances must *not* match in order to be included in the output.
-        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
->>>>>>> af5e8e91 (polish some docstrings)
     """
 
     values: Dict[str, Any]

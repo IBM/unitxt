@@ -936,16 +936,14 @@ class TestOperators(unittest.TestCase):
         self.assertSetEqual(set(outputs), targets)
 
     def test_apply_stream_operators_field(self):
-        operator = FilterByValues(disallowed_values={"a": "3"})
-        add_to_catalog(
-            operator, "operators.filter_by_value_for_testing", overwrite=True
-        )
+        operator = AddConstant(field="a", add=10)
+        add_to_catalog(operator, "operators.add_constant_for_testing", overwrite=True)
         inputs = [
-            {"a": "1", "operator": "operators.filter_by_value_for_testing"},
-            {"a": "2"},
-            {"a": "3"},
-            {"a": "4"},
-            {"a": "5"},
+            {"a": 1, "operator": "operators.add_constant_for_testing"},
+            {"a": 2},
+            {"a": 3},
+            {"a": 4},
+            {"a": 5},
         ]
         operator = ApplyStreamOperatorsField(field="operator", reversed=True)
         outputs = list(
@@ -953,10 +951,11 @@ class TestOperators(unittest.TestCase):
         )
         self.assertListEqual(
             [
-                {"a": "1", "operator": "operators.filter_by_value_for_testing"},
-                {"a": "2"},
-                {"a": "4"},
-                {"a": "5"},
+                {"a": 11, "operator": "operators.add_constant_for_testing"},
+                {"a": 12},
+                {"a": 13},
+                {"a": 14},
+                {"a": 15},
             ],
             outputs,
         )
