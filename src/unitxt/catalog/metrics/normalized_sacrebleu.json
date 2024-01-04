@@ -22,6 +22,10 @@
                     "french": null,
                     "romanian": null,
                     "english": null,
+                    "fr": null,
+                    "de": null,
+                    "es": null,
+                    "pt": null,
                     "en": null,
                     "japanese": "ja-mecab",
                     "ja": "ja-mecab"
