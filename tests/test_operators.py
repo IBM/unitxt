@@ -20,8 +20,7 @@ from src.unitxt.operators import (
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
-    FilterByListsOfValues,
-    FilterByValues,
+    FilterByCondition,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -258,7 +257,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_values_with_required_values(self):
+    def test_filter_by_condition_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -266,56 +265,21 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByValues(required_values={"a": 1, "b": 3}),
+            operator=FilterByCondition(values={"a": 1, "b": 3}, condition="eq"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-        exception_text = "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}"
+        exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
-            operator=FilterByValues(required_values={"c": "5"}),
+            operator=FilterByCondition(values={"c": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
             tester=self,
         )
 
-    def test_filter_by_values_with_contradicting_definition(self):
-        with self.assertRaises(ValueError):
-            FilterByValues(disallowed_values={"a": 2}, required_values={"a": 1})
-
-    def test_filter_by_values_with_required_values_and_disallowed_values(self):
-        inputs = [{"a": 2, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
-
-        targets = []
-
-        with self.assertRaises(RuntimeError):
-            check_operator(
-                operator=FilterByValues(
-                    disallowed_values={"a": 2}, required_values={"b": 2}
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-
-    def test_filter_by_values_with_filter_all(self):
-        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
-
-        targets = [
-            {"a": 1, "b": 3},
-        ]
-
-        check_operator(
-            operator=FilterByValues(
-                disallowed_values={"a": 2}, required_values={"b": 3}
-            ),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
-
-    def test_filter_by_values_with_disallowed_values(self):
+    def test_filter_by_condition_ne(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -323,13 +287,69 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByValues(disallowed_values={"a": 1, "b": 2}),
+            operator=FilterByCondition(values={"a": 1, "b": 2}, condition="ne"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_filter_by_list_of_values(self):
+    def test_filter_by_condition_gt(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"a": 1}, condition="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_condition_bad_condition(self):
+        with self.assertRaises(ValueError):
+            FilterByCondition(values={"a": 1}, condition="gte")
+
+    def test_filter_by_condition_not_in(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="not in"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_condition_not_in_multiple(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = []
+
+        check_operator(
+            operator=FilterByCondition(
+                values={"b": [3, 4], "a": [1]},
+                condition="not in",
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_condition_in(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -342,7 +362,7 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByListsOfValues(required_values={"b": [3, 4]}),
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="in"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -350,40 +370,42 @@ class TestOperators(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"b": "5"}),
+                operator=FilterByCondition(values={"b": "5"}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
             str(cm.exception),
-            "The filter for key ('b') in FilterByListsOfValues is not a list but '5'",
+            "The filter for key ('b') in FilterByCondition with condition 'in' must be list but is not : '5'",
         )
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"c": ["5"]}),
+                operator=FilterByCondition(values={"c": ["5"]}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
             str(cm.exception),
-            "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}",
+            "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
         )
 
-    def test_filter_by_values_error_when_the_entire_stream_is_filtered(self):
+    def test_filter_by_condition_error_when_the_entire_stream_is_filtered(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
         with self.assertRaises(RuntimeError) as e:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"b": ["weird_value"]}),
+                operator=FilterByCondition(
+                    values={"b": ["weird_value"]}, condition="in"
+                ),
                 inputs=inputs,
                 targets=[],
                 tester=self,
             )
         self.assertEqual(
             str(e.exception),
-            "FilterByListsOfValues filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
         )
 
     def test_intersect(self):

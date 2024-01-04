@@ -5,8 +5,12 @@ from src.unitxt.processors import (
     FirstCharacter,
     LowerCase,
     LowerCaseTillPunc,
+    StanceToProCon,
     StringOrNotString,
     TakeFirstNonEmptyLine,
+    TakeFirstWord,
+    ToYesOrNone,
+    YesNoToInt,
 )
 
 logger = get_logger()
@@ -32,6 +36,18 @@ add_to_catalog(operator5, "processors.toxic_or_not_toxic", overwrite=True)
 
 operator6 = ConvertToBoolean()
 add_to_catalog(operator6, "processors.convert_to_boolean", overwrite=True)
+
+operator7 = TakeFirstWord()
+add_to_catalog(operator7, "processors.take_first_word", overwrite=True)
+
+operator8 = YesNoToInt()
+add_to_catalog(operator8, "processors.yes_no_to_int", overwrite=True)
+
+operator9 = ToYesOrNone()
+add_to_catalog(operator9, "processors.to_yes_or_none", overwrite=True)
+
+operator10 = StanceToProCon()
+add_to_catalog(operator10, "processors.stance_to_pro_con", overwrite=True)
 
 parser = FirstCharacter()
 
