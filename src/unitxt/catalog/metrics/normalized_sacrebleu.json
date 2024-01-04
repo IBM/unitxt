@@ -22,12 +22,17 @@
                     "french": null,
                     "romanian": null,
                     "english": null,
+                    "German": null,
+                    "French": null,
+                    "Spanish": null,
+                    "Portuguese": null,
                     "fr": null,
                     "de": null,
                     "es": null,
                     "pt": null,
                     "en": null,
                     "japanese": "ja-mecab",
+                    "Japanese": "ja-mecab",
                     "ja": "ja-mecab"
                 }
             },

@@ -8,12 +8,17 @@ language_to_tokenizer = {
     "french": None,
     "romanian": None,
     "english": None,
+    "German": None,
+    "French": None,
+    "Spanish": None,
+    "Portuguese": None,
     "fr": None,
     "de": None,
     "es": None,
     "pt": None,
     "en": None,
     "japanese": "ja-mecab",
+    "Japanese": "ja-mecab",
     "ja": "ja-mecab",
 }
 
