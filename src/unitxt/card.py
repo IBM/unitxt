@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 
 from .artifact import Artifact
 from .collections import Collection
@@ -16,13 +16,3 @@ class TaskCard(Artifact):
     templates: Collection = None
     instructions: Collection = None
     sampler: Sampler = OptionalField(default_factory=RandomSampler)
-
-
-class ICLCard(Artifact):
-    demos_pool_name: str = "demos_pool"
-    demos_pool_size: int = None
-    demos_field: str = "demos"
-    num_demos: int = None
-    sampler_type: str = "random"
-    instruction_item: Union[str, int] = None
-    template_card_index: Union[str, int] = None

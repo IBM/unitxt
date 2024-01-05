@@ -248,11 +248,12 @@ class TestTemplates(unittest.TestCase):
         to_cover_template.inputs_to_source({"a": 1})
         to_cover_template.outputs_to_target_and_references({"a": 1})
 
-        class ToCoverTemplateDict(TemplatesDict):
+        class ToCoverTemplatesDict(TemplatesDict):
             def verify(self):
                 super().verify()
 
-        ToCoverTemplateDict()
+        to_cover_templates_dict = ToCoverTemplatesDict()
+        to_cover_templates_dict.verify()
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
