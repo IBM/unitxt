@@ -21,6 +21,7 @@ from src.unitxt.operators import (
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByCondition,
+    FilterByLambdaCondition,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -270,6 +271,14 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={"a": "lambda x: x==1", "b": "lambda x: x==3"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
         exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
@@ -292,6 +301,14 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={"a": "lambda x: x!=1", "b": "lambda x: x!=2"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_gt(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -302,6 +319,12 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=FilterByCondition(values={"a": 1}, condition="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByLambdaCondition(lambda_conditions={"a": "lambda x: x>1"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -328,6 +351,14 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={"b": "lambda x: x not in [3, 4]"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_not_in_multiple(self):
         inputs = [
@@ -342,6 +373,18 @@ class TestOperators(unittest.TestCase):
             operator=FilterByCondition(
                 values={"b": [3, 4], "a": [1]},
                 condition="not in",
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={
+                    "b": "lambda x: x not in [3, 4]",
+                    "a": "lambda x: x not in [1]",
+                },
                 error_on_filtered_all=False,
             ),
             inputs=inputs,
@@ -367,7 +410,14 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
-
+        check_operator(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={"b": "lambda x: x in [3, 4]"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=FilterByCondition(values={"b": "5"}, condition="in"),
