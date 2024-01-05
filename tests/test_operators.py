@@ -532,6 +532,12 @@ class TestOperators(unittest.TestCase):
             exception_text=exception_text,
             tester=self,
         )
+        check_operator_exception(
+            operator=FilterByLambdaCondition(lambda_conditions={"c": "lambda x: x==5"}),
+            inputs=inputs,
+            exception_text=exception_text,
+            tester=self,
+        )
 
     def test_filter_by_condition_ne(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -578,6 +584,8 @@ class TestOperators(unittest.TestCase):
     def test_filter_by_condition_bad_condition(self):
         with self.assertRaises(ValueError):
             FilterByCondition(values={"a": 1}, condition="gte")
+        with self.assertRaises(AssertionError):
+            FilterByLambdaCondition(lambda_conditions={"a": "lambda x: 8*x"})
 
     def test_filter_by_condition_not_in(self):
         inputs = [
@@ -634,6 +642,18 @@ class TestOperators(unittest.TestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByLambdaCondition(
+                lambda_conditions={
+                    "b": "lambda x: x not in [3, 4]",
+                    "a": "lambda x: x not in [1]",
+                },
+                error_on_filtered_all=True,
+            ),
+            inputs=inputs,
+            exception_text="FilterByLambdaCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
             tester=self,
         )
 
