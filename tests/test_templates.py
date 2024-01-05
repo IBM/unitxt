@@ -558,6 +558,20 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+        # check error and more options, to code cover additional lines
+        template = MultipleChoiceTemplate(
+            input_format="Text: {no_text}, Choices: {no_choices}.",
+            postprocessors=["post1", "post2"],
+        )
+        with self.assertRaises(ValueError) as ve:
+            check_operator(template, inputs, targets, tester=self)
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are dict_keys(['numerals', 'choices', 'text']) but input format requires a different one: Text: {no_text}, Choices: {no_choices}.\"",
+            str(ve.exception),
+        )
+
+        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
+
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
 
