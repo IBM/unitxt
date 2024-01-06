@@ -3,12 +3,14 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
+from src.unitxt import add_to_catalog
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    ApplyStreamOperatorsField,
     Augmentor,
     AugmentPrefixSuffix,
     AugmentWhitespace,
@@ -630,6 +632,24 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # check the case no operators are specified in field operators_field. default_operators is none by default
+        check_operator_exception(
+            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="d"),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in ApplyOperatorsField due to: No operators found in field 'd', and no default operators provided.",
+        )
+        # check default operators:
+        check_operator(
+            operator=ApplyOperatorsField(
+                inputs_fields=["a"],
+                operators_field="d",
+                default_operators="processors.to_string",
+            ),
+            inputs=[{"a": 111, "b": 2}, {"a": 222, "b": 3}],
+            targets=[{"a": "111", "b": 2}, {"a": "222", "b": 3}],
+            tester=self,
+        )
+
     def test_add_fields(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -741,6 +761,31 @@ class TestOperators(unittest.TestCase):
         )
 
         self.assertSetEqual(set(outputs), targets)
+
+    def test_apply_stream_operators_field(self):
+        operator = AddConstant(field="a", add=10)
+        add_to_catalog(operator, "operators.add_constant_for_testing", overwrite=True)
+        inputs = [
+            {"a": 1, "operator": "operators.add_constant_for_testing"},
+            {"a": 2},
+            {"a": 3},
+            {"a": 4},
+            {"a": 5},
+        ]
+        operator = ApplyStreamOperatorsField(field="operator", reversed=True)
+        outputs = list(
+            operator.process(MultiStream.from_iterables({"train": inputs})["train"])
+        )
+        self.assertListEqual(
+            [
+                {"a": 11, "operator": "operators.add_constant_for_testing"},
+                {"a": 12},
+                {"a": 13},
+                {"a": 14},
+                {"a": 15},
+            ],
+            outputs,
+        )
 
     def test_unique_on_multiple_fields(self):
         inputs = [
@@ -1789,6 +1834,20 @@ class TestOperators(unittest.TestCase):
             ],
             targets=[
                 {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+        # both from and to field are structured, different down the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"b": {"c": {"f": {"e": 1}}}}, "b": 2},
             ],
             tester=self,
         )
