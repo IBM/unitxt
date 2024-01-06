@@ -1630,7 +1630,7 @@ class AddFieldNamePrefix(StreamInstanceOperator):
     """Adds a prefix to each field name in each instance of a stream.
 
     Args:
-        prefix_dict (Dict[str, str]): A dictionary mapping stream names to prefixes.
+        prefix_dict (Dict[str, str]): A dictionary mapping field names to prefixes.
     """
 
     prefix_dict: Dict[str, str]
