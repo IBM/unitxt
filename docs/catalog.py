@@ -2,6 +2,7 @@ import json
 import os
 
 from unitxt.artifact import Artifact
+from unitxt.utils import load_json
 
 depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
 
@@ -87,9 +88,7 @@ def build_catalog_rst():
             )
         else:
             if ".json" in rel_path:
-                rel_path = rel_path.replace(".json", "")
-                with open(path) as f:
-                    artifact = json.load(f)
+                artifact = load_json(path)
                 label = rel_path.replace("/", ".")[1:]
                 content = make_content(artifact, label, all_labels)
                 section = write_section(
