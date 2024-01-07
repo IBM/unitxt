@@ -1,4 +1,4 @@
-from src.unitxt.blocks import AddFields, LoadHF, TaskCard
+from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import CastFields, RenameFields
 from src.unitxt.test_utils.card import test_card
@@ -14,14 +14,11 @@ card = TaskCard(
                 "endings": "choices",
             }
         ),
-        AddFields(
-            {"question": "Pick the best ending to the context."}
-        ),  # https://rowanzellers.com/hellaswag/
         RenameFields(field_to_field={"label": "answer"}),
         CastFields(fields={"answer": "int"}),
     ],
-    task="tasks.qa.multiple_choice.contextual_with_topic",
-    templates="templates.qa.multiple_choice.contextual_with_topic.all",
+    task="tasks.completion.multiple_choice.standard",
+    templates="templates.completion.multiple_choice.all",
 )
-test_card(card)
+test_card(card, debug=False)
 add_to_catalog(card, "cards.hellaswag", overwrite=True)
