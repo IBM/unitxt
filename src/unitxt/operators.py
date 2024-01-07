@@ -1263,6 +1263,47 @@ class FilterByCondition(SingleStreamOperator):
         return True
 
 
+class FilterByQuery(SingleStreamOperator):
+    """Filters a stream, yielding only instances which fulfil all the conditions specified as strings to be python's eval-uated.
+
+    Raises an error if a field for which a condition is specified is missing from the instance
+
+    Args:
+       queries (List[str]): a list of conditions encoded as strings, that are to be processed by python's eval()
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(lambda_conditions = {"a > 4"}) will yield only instances where "a">4
+       FilterByCondition(lambda_conditions = {"a <= 4"}) will yield only instances where "a"<=4
+       FilterByCondition(lambda_conditions = {"a in [4, 8]"}) will yield only instances where "a" is 4 or 8
+       FilterByCondition(lambda_conditions = {"a not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
+
+    """
+
+    queries: List[str]
+    error_on_filtered_all: bool = True
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        yielded = False
+        for instance in stream:
+            if self._is_required(instance):
+                yielded = True
+                yield instance
+
+        if not yielded and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+    def _is_required(self, instance: dict) -> bool:
+        for query in self.queries:
+            is_instance_ok = eval(query, None, instance)
+            if not is_instance_ok:
+                return False
+
+        return True
+
+
 class ExtractMostCommonFieldValues(MultiStreamOperator):
     field: str
     stream_name: str
@@ -1565,27 +1606,6 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
-
-
-class AddFieldNamePrefix(StreamInstanceOperator):
-    """Adds a prefix to each field name in each instance of a stream.
-
-    Args:
-        prefix_dict (Dict[str, str]): A dictionary mapping stream names to prefixes.
-    """
-
-    prefix_dict: Dict[str, str]
-
-    def prepare(self):
-        return super().prepare()
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        return {
-            self.prefix_dict[stream_name] + key: value
-            for key, value in instance.items()
-        }
 
 
 class MergeStreams(MultiStreamOperator):

@@ -23,6 +23,7 @@ from src.unitxt.operators import (
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByCondition,
+    FilterByQuery,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -515,12 +516,24 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(queries=["a == 1 and b == 3"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
         exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
             operator=FilterByCondition(values={"c": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByQuery(queries=["c == 5"]),
+            inputs=inputs,
+            exception_text="name 'c' is not defined",
             tester=self,
         )
 
@@ -537,6 +550,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(queries=["a != 1 and b != 2"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_gt(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -547,6 +566,12 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=FilterByCondition(values={"a": 1}, condition="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(queries=["a>1"]),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -573,6 +598,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(queries=["b not in [3, 4]"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_not_in_multiple(self):
         inputs = [
@@ -591,6 +622,30 @@ class TestOperators(unittest.TestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(
+                queries=[
+                    "b not in [3, 4]",
+                    "a not in [1]",
+                ],
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByQuery(
+                queries=[
+                    "b not in [3, 4]",
+                    "a not in [1]",
+                ],
+                error_on_filtered_all=True,
+            ),
+            inputs=inputs,
+            exception_text="FilterByQuery filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
             tester=self,
         )
 
@@ -612,7 +667,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
-
+        check_operator(
+            operator=FilterByQuery(queries=["b in [3, 4]"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=FilterByCondition(values={"b": "5"}, condition="in"),
