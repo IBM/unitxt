@@ -23,7 +23,7 @@ from src.unitxt.operators import (
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByCondition,
-    FilterByLambdaCondition,
+    FilterByQuery,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -517,9 +517,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={"a": "lambda x: x==1", "b": "lambda x: x==3"}
-            ),
+            operator=FilterByQuery(queries=["a == 1 and b == 3"]),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -533,9 +531,9 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByLambdaCondition(lambda_conditions={"c": "lambda x: x==5"}),
+            operator=FilterByQuery(queries=["c == 5"]),
             inputs=inputs,
-            exception_text=exception_text,
+            exception_text="name 'c' is not defined",
             tester=self,
         )
 
@@ -553,9 +551,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={"a": "lambda x: x!=1", "b": "lambda x: x!=2"}
-            ),
+            operator=FilterByQuery(queries=["a != 1 and b != 2"]),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -575,7 +571,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(lambda_conditions={"a": "lambda x: x>1"}),
+            operator=FilterByQuery(queries=["a>1"]),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -584,8 +580,6 @@ class TestOperators(unittest.TestCase):
     def test_filter_by_condition_bad_condition(self):
         with self.assertRaises(ValueError):
             FilterByCondition(values={"a": 1}, condition="gte")
-        with self.assertRaises(AssertionError):
-            FilterByLambdaCondition(lambda_conditions={"a": "lambda x: 8*x"})
 
     def test_filter_by_condition_not_in(self):
         inputs = [
@@ -605,9 +599,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={"b": "lambda x: x not in [3, 4]"}
-            ),
+            operator=FilterByQuery(queries=["b not in [3, 4]"]),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -633,11 +625,11 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={
-                    "b": "lambda x: x not in [3, 4]",
-                    "a": "lambda x: x not in [1]",
-                },
+            operator=FilterByQuery(
+                queries=[
+                    "b not in [3, 4]",
+                    "a not in [1]",
+                ],
                 error_on_filtered_all=False,
             ),
             inputs=inputs,
@@ -645,15 +637,15 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={
-                    "b": "lambda x: x not in [3, 4]",
-                    "a": "lambda x: x not in [1]",
-                },
+            operator=FilterByQuery(
+                queries=[
+                    "b not in [3, 4]",
+                    "a not in [1]",
+                ],
                 error_on_filtered_all=True,
             ),
             inputs=inputs,
-            exception_text="FilterByLambdaCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            exception_text="FilterByQuery filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
             tester=self,
         )
 
@@ -676,9 +668,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByLambdaCondition(
-                lambda_conditions={"b": "lambda x: x in [3, 4]"}
-            ),
+            operator=FilterByQuery(queries=["b in [3, 4]"]),
             inputs=inputs,
             targets=targets,
             tester=self,
