@@ -1626,27 +1626,6 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
-class AddFieldNamePrefix(StreamInstanceOperator):
-    """Adds a prefix to each field name in each instance of a stream.
-
-    Args:
-        prefix_dict (Dict[str, str]): A dictionary mapping field names to prefixes.
-    """
-
-    prefix_dict: Dict[str, str]
-
-    def prepare(self):
-        return super().prepare()
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        return {
-            self.prefix_dict[stream_name] + key: value
-            for key, value in instance.items()
-        }
-
-
 class MergeStreams(MultiStreamOperator):
     """Merges multiple streams into a single stream.
 
