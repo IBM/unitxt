@@ -1263,30 +1263,25 @@ class FilterByCondition(SingleStreamOperator):
         return True
 
 
-class FilterByLambdaCondition(SingleStreamOperator):
-    """Filters a stream, yielding only instances for which the input specified fields fulfil the conditions assigned to them.
+class FilterByQuery(SingleStreamOperator):
+    """Filters a stream, yielding only instances which fulfil all the conditions specified as strings to be python's eval-uated.
 
     Raises an error if a field for which a condition is specified is missing from the instance
 
     Args:
-       lambda_conditions (Dict[str, str]): a mapping of fields to lambda conditions encoded as strings
+       queries (List[str]): a list of conditions encoded as strings, that are to be processed by python's eval()
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(lambda_conditions = {"a": "lambda x: x > 4"}) will yield only instances where "a">4
-       FilterByCondition(lambda_conditions = {"a": "lambda x: x <= 4"}) will yield only instances where "a"<=4
-       FilterByCondition(lambda_conditions = {"a": "lambda x: x in [4, 8]"}) will yield only instances where "a" is 4 or 8
-       FilterByCondition(lambda_conditions = {"a": "lambda x: x not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
+       FilterByCondition(lambda_conditions = {"a > 4"}) will yield only instances where "a">4
+       FilterByCondition(lambda_conditions = {"a <= 4"}) will yield only instances where "a"<=4
+       FilterByCondition(lambda_conditions = {"a in [4, 8]"}) will yield only instances where "a" is 4 or 8
+       FilterByCondition(lambda_conditions = {"a not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
 
     """
 
-    lambda_conditions: Dict[str, str]
+    queries: List[str]
     error_on_filtered_all: bool = True
-
-    def prepare(self):
-        self.functs = {}
-        for key, val in self.lambda_conditions.items():
-            self.functs[key] = eval(val)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
@@ -1300,23 +1295,10 @@ class FilterByLambdaCondition(SingleStreamOperator):
                 f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
             )
 
-    def verify(self):
-        # verify that each lambda condition is decodable to an actual lambda function
-        for key, val in self.lambda_conditions.items():
-            f = eval(val)
-            assert (
-                f(1) in [True, False]
-            ), f"lambda expression, {val}, specified for field {key}, is not decodable from a string to a lambda condition."
-
-        return super().verify()
-
     def _is_required(self, instance: dict) -> bool:
-        for key in self.functs.keys():
-            if key not in instance:
-                raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
-                )
-            if not self.functs[key](instance[key]):
+        for query in self.queries:
+            is_instance_ok = eval(query, None, instance)
+            if not is_instance_ok:
                 return False
 
         return True
