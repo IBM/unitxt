@@ -31,5 +31,5 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
 )
 
-test_card(card, strict=False)
+test_card(card, strict=False, full_mismatch_score=-1.0)
 add_to_catalog(card, "cards.cola", overwrite=True)

@@ -35,6 +35,7 @@ from .operators import (
     ApplyStreamOperatorsField,
     FlattenInstances,
     MergeStreams,
+    PrintMultiStream,
     SplitByValue,
 )
 from .operators import __file__ as _
@@ -139,24 +140,31 @@ class MetricRecipe(SequentialOperatorInitilizer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            PrintMultiStream(title="after FromPredictionsAndOriginalData"),
             Apply(
                 "additional_inputs",
                 function=_from_key_value_pairs,
                 to_field="additional_inputs",
             ),
+            PrintMultiStream(title="after Apply to additional inputs"),
             ApplyOperatorsField(
                 inputs_fields=["prediction", "references"],
                 fields_to_treat_as_list=["references"],
                 operators_field="postprocessors",
                 default_operators=["processors.to_string_stripped"],
             ),
+            PrintMultiStream(title="after ApplyOperators for to_string_stripped"),
             SplitByValue(["group"]),
+            PrintMultiStream(title="after Split by value [group]"),
             ApplyMetric(
                 "metrics",
                 calc_confidence_intervals=self.calc_confidence_intervals,
             ),
+            PrintMultiStream(title="after ApplyMetric"),
             MultiStreamScoreMean(),
+            PrintMultiStream(title="after MultiStreamScoreMean"),
             MergeStreams(),
+            PrintMultiStream(title="after MergeStreams"),
         ]
 
 

@@ -33,6 +33,8 @@ General Operaotrs List:
 """
 import collections
 import importlib
+import json
+import logging
 import operator
 import os
 import uuid
@@ -1261,6 +1263,23 @@ class FilterByCondition(SingleStreamOperator):
                 if not func(instance[key], value):
                     return False
         return True
+
+
+class PrintMultiStream(MultiStreamOperator):
+    title: str
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        logging.info(f"{self.title}  number of streams = {len(multi_stream)}")
+        for stream_name, stream in multi_stream.items():
+            logging.info(stream_name)
+            cntr = 1
+            for instance in stream:
+                logging.info(f"{cntr}  {json.dumps(instance)}")
+                cntr += 1
+                if cntr > 10:
+                    break
+
+        return multi_stream
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
