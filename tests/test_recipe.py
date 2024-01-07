@@ -4,8 +4,8 @@ import unittest
 
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.formats import ICLFormat
 from src.unitxt.instructions import TextualInstruction
+from src.unitxt.operators import SystemFormat
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
@@ -20,15 +20,35 @@ class TestRecipes(unittest.TestCase):
                 input_format="{premise}",
                 output_format="{label}",
             ),
-            format=ICLFormat(
-                input_prefix="User:",
-                output_prefix="Agent:",
+            format=SystemFormat(
+                demo_format="User:{source}\nAgent:{target}\n\n",
+                model_input_format="{instruction}\n\n{demos}User:{source}\nAgent:",
             ),
         )
         stream = recipe()
 
         for instance in stream["train"]:
             print_dict(instance)
+            self.assertDictEqual(
+                instance,
+                {
+                    "metrics": ["metrics.accuracy"],
+                    "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
+                    "target": "not entailment",
+                    "references": ["not entailment"],
+                    "additional_inputs": {
+                        "key": ["choices", "premise", "hypothesis", "label"],
+                        "value": [
+                            "['entailment', 'not entailment']",
+                            "I stuck a pin through a carrot. When I pulled the pin out, it had a hole.",
+                            "The carrot had a hole.",
+                            "not entailment",
+                        ],
+                    },
+                    "group": "unitxt",
+                    "postprocessors": ["processors.to_string_stripped"],
+                },
+            )
             break
 
     def test_standard_recipe_with_catalog(self):
@@ -175,6 +195,32 @@ class TestRecipes(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'"
+        )
+
+        with self.assertRaises(Exception) as cm:
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.xwinogrande.pt",
+                num_demos=3,
+                demos_pool_size=0,
+            )
+
+        self.assertEqual(
+            str(cm.exception),
+            "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.",
+        )
+
+        with self.assertRaises(Exception) as cm:
+            recipe = StandardRecipeWithIndexes(
+                template="templates.key_val",
+                card="cards.xwinogrande.pt",
+                num_demos=30,
+                demos_pool_size=10,
+            )
+
+        self.assertEqual(
+            str(cm.exception),
+            "num_demos (got: 30) should not exceed demos_pool_size (got: 10)",
         )
 
     def test_standard_recipe_with_no_test(self):

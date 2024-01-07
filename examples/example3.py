@@ -6,11 +6,11 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     NormalizeListFields,
     RandomSampler,
-    RenderTemplatedICL,
     SequentialRecipe,
     SliceSplit,
     SplitRandomMix,
     SpreadSplit,
+    SystemFormat,
     TextualInstruction,
 )
 from src.unitxt.catalog import add_to_catalog
@@ -44,6 +44,9 @@ recipe = SequentialRecipe(
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],
+                "instance": TextualInstruction(
+                    "classify if this sentence is entailment or not entailment."
+                ),
             }
         ),
         NormalizeListFields(fields=["choices"]),
@@ -52,22 +55,20 @@ recipe = SequentialRecipe(
             outputs=["label"],
             metrics=["metrics.accuracy"],
         ),
+        InputOutputTemplate(
+            input_format="""
+                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
+                """.strip(),
+            output_format="{label}",
+        ),
         SpreadSplit(
             source_stream="demos_pool",
             target_field="demos",
             sampler=RandomSampler(sample_size=5),
         ),
-        RenderTemplatedICL(
-            instruction=TextualInstruction(
-                "classify if this sentence is entailment or not entailment."
-            ),
-            template=InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
-                """.strip(),
-                output_format="{label}",
-            ),
-            demos_field="demos",
+        SystemFormat(
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {source}\nAgent: ",
         ),
     ]
 )

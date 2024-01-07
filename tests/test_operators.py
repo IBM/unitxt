@@ -42,11 +42,13 @@ from src.unitxt.operators import (
     ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
+    SystemFormat,
     TakeByField,
     Unique,
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream
+from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import (
     apply_operator,
     check_operator,
@@ -260,7 +262,248 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_filter_by_condition_with_required_values(self):
+    def test_system_format(self):
+        demo_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+        instruction = "solve the math exercises"
+
+        inputs = [
+            {
+                "source": "1+1",
+                "source1": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+            },
+            {
+                "source": "3+2",
+                "source1": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+            },
+            {
+                "source": "7-4",
+                "source1": "7-4",
+                "target": "3",
+                "instruction": instruction,
+                "demos": demo_instances,
+            },
+            {
+                "source": "12-3",
+                "source1": "12-3",
+                "target": "9",
+                "instruction": instruction,
+                "demos": demo_instances,
+            },
+        ]
+
+        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
+        system_format = SystemFormat(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {instruction}\n\n{source}\nAgent: ",
+        )
+
+        targets = [
+            {
+                "source1": "1+1",
+                "target": "2",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+            },
+            {
+                "source1": "3+2",
+                "target": "5",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+            },
+            {
+                "source1": "7-4",
+                "target": "3",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+            },
+            {
+                "source1": "12-3",
+                "target": "9",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # now imitate instruction before demos.
+        system_format = SystemFormat(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="Instruction: {instruction}\n\n{demos}User: {source}\nAgent: ",
+        )
+
+        targets = [
+            {
+                "source1": "1+1",
+                "target": "2",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+            },
+            {
+                "source1": "3+2",
+                "target": "5",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+            },
+            {
+                "source1": "7-4",
+                "target": "3",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+            },
+            {
+                "source1": "12-3",
+                "target": "9",
+                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        # test with instruction = "":
+        for instance in inputs:
+            instance.pop("instruction")
+
+        system_format = SystemFormat(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
+        )
+
+        targets_no_instruction = [
+            {
+                "source1": "1+1",
+                "target": "2",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
+            },
+            {
+                "source1": "3+2",
+                "target": "5",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
+            },
+            {
+                "source1": "7-4",
+                "target": "3",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
+            },
+            {
+                "source1": "12-3",
+                "target": "9",
+                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets_no_instruction,
+            tester=self,
+        )
+
+        # ICLFormat tests from tests_renderers, migrated here
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+            "demos": [
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
+        }
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+
+        result = system_format.process(instance)
+
+        target = {
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+        # no demos
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+        }
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+        result = system_format.process(instance)
+        target = {
+            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+        # test_system_format_with_prefix_and_suffix(self):
+        system_format_fix = SystemFormat(
+            demos_field="demos",
+            demo_format="User: {source}\nAgent: {target}\n\n",
+            model_input_format="[INST] <<SYS>>\n{instruction}\n\n{demos}User: {source}\nAgent: [/INST]",
+        )
+        renderer = system_format_fix
+
+        instance = {
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+            "demos": [
+                {
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
+        }
+        self.maxDiff = None
+        result = renderer.process(instance)
+        target = {
+            "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: [/INST]',
+            "target": "negative",
+            "references": ["negative"],
+        }
+
+        self.assertDictEqual(result, target)
+
+    def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -738,12 +981,12 @@ class TestOperators(unittest.TestCase):
 
     def test_unique_on_single_field(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
+            {"a": [1, 5], "b": 2},
+            {"a": [2, 5], "b": 3},
+            {"a": [2, 5], "b": 4},
         ]
 
-        targets = {(1,), (2,)}
+        targets = {((1, 5),), ((2, 5),)}
 
         outputs = apply_operator(
             operator=Unique(fields=["a"]),
@@ -1770,7 +2013,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured:
+        # to field is structured:
         check_operator(
             operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
             inputs=inputs,
@@ -1778,7 +2021,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field:
+        # to field is structured, to stand in place of from field:
         check_operator(
             operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
             inputs=inputs,
@@ -1786,7 +2029,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field, source field is deeper:
+        # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
             inputs=[
@@ -1800,7 +2043,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, source field is structured too, different fields:
+        # to field is structured, from field is structured too, different fields:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
             inputs=[
@@ -1814,7 +2057,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # both source and target are structured, different only in the middle of the path:
+        # both from and to field are structured, different only in the middle of the path:
         check_operator(
             operator=RenameFields(
                 field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
@@ -2401,3 +2644,198 @@ class TestApplyMetric(unittest.TestCase):
         )
         # check that the second score is present too
         self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
+
+    def test_render_demonstrations(self):
+        template = InputOutputTemplate(
+            input_format='This is my sentence: "{text}"', output_format="{label}"
+        )
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                },
+                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
+            ]
+        }
+
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "inputs": {"text": "was so good"},
+                    "outputs": {"label": "positive"},
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(instance, target)
+
+    def test_render_demonstrations_multi_reference(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                },
+            ]
+        }
+
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "source": "This is my sentence: who was he?",
+                    "target": "Dan",
+                    "references": ["Dan", "Yossi"],
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "source": "This is my sentence: who was she?",
+                    "target": "Shira",
+                    "references": ["Shira", "Yael"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(instance, target)
+
+    def test_icl_format_with_demonstrations(self):
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+        }
+        demos_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+
+        target = """Instruction:solve the math exercises
+
+User:1+2
+Agent:3
+
+User:4-2
+Agent:2
+
+User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+        # refresh instance, from which icl_format popped the instruction, and add demos into it:
+        instance["instruction"] = "solve the math exercises"
+        instance["demos"] = demos_instances
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+
+    def test_system_format_with_demonstrations_and_instruction_after_demos(
+        self,
+    ):
+        demo_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+            "demos": demo_instances,
+        }
+
+        target = """User:1+2
+Agent:3
+
+User:4-2
+Agent:2
+
+User:solve the math exercises
+
+1+1
+Agent:"""
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{demos}User:{instruction}\n\n{source}\nAgent:",
+        )
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)
+
+    def test_system_format_without_demonstrations(self):
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+        }
+
+        target = """Instruction:solve the math exercises
+
+User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)
+
+    def test_model_input_formater_without_demonstrations_or_instruction(self):
+        instance = {"source": "1+1", "target": "2"}
+        target = """User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{instruction}{demos}User:{source}\nAgent:",
+        )
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance_out["source"], target)
+
+    def test_system_format_without_demonstrations_and_empty_instruction(self):
+        instance = {"source": "1+1", "target": "2", "instruction": ""}
+
+        target = """User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{instruction}{demos}User:{source}\nAgent:",
+        )
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)

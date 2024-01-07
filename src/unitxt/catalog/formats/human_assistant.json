@@ -1,6 +1,5 @@
 {
-    "type": "icl_format",
-    "input_prefix": "Human: ",
-    "output_prefix": "Assistant: ",
-    "input_output_separator": "\n"
+    "type": "system_format",
+    "demo_format": "Human: {source}\nAssistant: {target}\n\n",
+    "model_input_format": "{instruction}\n{demos}Human: {source}\nAssistant: "
 }
