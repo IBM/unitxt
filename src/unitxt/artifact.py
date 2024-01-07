@@ -11,6 +11,7 @@ from .dataclass import Dataclass, Field, fields
 from .logging import get_logger
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
+from .utils import load_json, save_json
 
 logger = get_logger()
 
@@ -190,17 +191,8 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path):
-        with open(path) as f:
-            try:
-                d = json.load(f)
-            except json.decoder.JSONDecodeError as e:
-                with open(path) as f:
-                    file_content = "\n".join(f.readlines())
-                raise RuntimeError(
-                    f"Failed to decode artifact at {path} with file content:\n{file_content}"
-                ) from e
+        d = load_json(path)
         return cls.from_dict(d)
-
 
     def prepare(self):
         pass
@@ -231,11 +223,8 @@ class Artifact(Dataclass):
         return {"type": self.type, **self._init_dict}
 
     def save(self, path):
-        with open(path, "w") as f:
-            init_dict = self.to_dict()
-            dumped = json.dumps(init_dict, indent=4, ensure_ascii=False)
-            f.write(dumped)
-            f.write("\n")
+        data = self.to_dict()
+        save_json(path, data)
 
 
 class ArtifactList(list, Artifact):
