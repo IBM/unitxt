@@ -725,6 +725,17 @@ class TestOperators(unittest.TestCase):
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         operator = ExecuteQuery(queries_to_fields=[["f'{a} {b}'", "c"]])
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        with self.assertRaises(ValueError) as ve:
+            check_operator(
+                operator=operator,
+                inputs=[{"x": 2, "y": 3}],
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in ExecuteQuery due to: name 'a' is not defined",
+            str(ve.exception),
+        )
         with self.assertRaises(AssertionError) as ae:
             operator = ExecuteQuery(queries_to_fields=["a", "b"])
         self.assertEqual(
