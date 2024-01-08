@@ -15,7 +15,7 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
             ),
         ],
         task="tasks.qa.multiple_choice.original",
-        templates="templates.qa.multiple_choice.all",
+        templates="templates.qa.multiple_choice.no_intro.all",
     )
     if lang == "pt":
         test_card(card, demos_taken_from="test")

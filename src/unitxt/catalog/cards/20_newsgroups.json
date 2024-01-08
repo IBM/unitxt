@@ -6,10 +6,11 @@
     },
     "preprocess_steps": [
         {
-            "type": "filter_by_values",
-            "disallowed_values": {
+            "type": "filter_by_condition",
+            "required_values": {
                 "text": ""
-            }
+            },
+            "condition": "ne"
         },
         {
             "type": "split_random_mix",

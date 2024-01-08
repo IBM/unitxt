@@ -1,4 +1,5 @@
 import unittest
+from typing import Dict, List, Tuple
 
 from src.unitxt.templates import (
     InputOutputTemplate,
@@ -8,6 +9,8 @@ from src.unitxt.templates import (
     MultiReferenceTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
+    Template,
+    TemplatesDict,
     YesNoTemplate,
 )
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
@@ -208,6 +211,49 @@ class TestTemplates(unittest.TestCase):
         targets = [{**target, **input} for target, input in zip(targets, inputs)]
 
         check_operator(template, inputs, targets, tester=self)
+
+        # if "source" and "target" in instance - instance is not modified
+        check_operator(template, targets, targets, tester=self)
+
+        err_input_template = InputOutputTemplate(
+            input_format="This is my text:'{no_text}'", output_format="{label}"
+        )
+        with self.assertRaises(KeyError) as ke:
+            err_input_template.process(inputs[0])
+        self.assertEqual(
+            "\"Available inputs are ['text'] but input format requires a different ones: 'This is my text:'{no_text}''\"",
+            str(ke.exception),
+        )
+
+        err_output_template = InputOutputTemplate(
+            input_format="This is my text:'{text}'", output_format="{no_label}"
+        )
+        with self.assertRaises(KeyError) as ke:
+            err_output_template.process(inputs[0])
+        self.assertEqual(
+            "\"Available outputs are dict_keys(['label']) but output format requires a different one: {no_label}\"",
+            str(ke.exception),
+        )
+
+        class ToCoverTemplate(Template):
+            def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+                return super().inputs_to_source(inputs)
+
+            def outputs_to_target_and_references(
+                self, outputs: Dict[str, object]
+            ) -> Tuple[str, List[str]]:
+                return super().outputs_to_target_and_references(outputs)
+
+        to_cover_template = ToCoverTemplate()
+        to_cover_template.inputs_to_source({"a": 1})
+        to_cover_template.outputs_to_target_and_references({"a": 1})
+
+        class ToCoverTemplatesDict(TemplatesDict):
+            def verify(self):
+                super().verify()
+
+        to_cover_templates_dict = ToCoverTemplatesDict()
+        to_cover_templates_dict.verify()
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
@@ -512,6 +558,20 @@ class TestTemplates(unittest.TestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+        # check error and more options, to code cover additional lines
+        template = MultipleChoiceTemplate(
+            input_format="Text: {no_text}, Choices: {no_choices}.",
+            postprocessors=["post1", "post2"],
+        )
+        with self.assertRaises(ValueError) as ve:
+            check_operator(template, inputs, targets, tester=self)
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are dict_keys(['numerals', 'choices', 'text']) but input format requires a different one: Text: {no_text}, Choices: {no_choices}.\"",
+            str(ve.exception),
+        )
+
+        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
+
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
 
@@ -533,3 +593,38 @@ class TestTemplates(unittest.TestCase):
         )
         target = "hello: world, int_list: 0, 1"
         self.assertEqual(result, target)
+
+    def test_render_template(self):
+        instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
+        template = InputOutputTemplate(
+            input_format='This is my sentence: "{text}"', output_format="{label}"
+        )
+
+        result = template.process(instance)
+        target = {
+            "inputs": {"text": "was so bad"},
+            "outputs": {"label": "negative"},
+            "source": 'This is my sentence: "was so bad"',
+            "target": "negative",
+            "references": ["negative"],
+        }
+        self.assertDictEqual(result, target)
+
+    def test_render_multi_reference_template(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+        instance = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+        }
+
+        result = template.process(instance)
+        target = {
+            "inputs": {"text": "who was he?"},
+            "outputs": {"answer": ["Dan", "Yossi"]},
+            "source": "This is my sentence: who was he?",
+            "target": "Dan",
+            "references": ["Dan", "Yossi"],
+        }
+        self.assertDictEqual(result, target)
