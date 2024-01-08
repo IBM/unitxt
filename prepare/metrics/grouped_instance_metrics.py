@@ -1,5 +1,3 @@
-import numpy as np
-
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
     MeanGroupedAccuracy,
@@ -61,11 +59,8 @@ for ai in additional_inputs:
 
 
 instance_targets_string_containment = [
-    {"score": 1.0
-    },
-    {
-        "score": 1.0
-    },
+    {"score": 1.0},
+    {"score": 1.0},
     {
         "score": 0.0,
     },
@@ -108,7 +103,9 @@ instance_targets_string_containment = [
 ]
 
 for instance in instance_targets_string_containment:
-    instance.update({"string_containment": instance["score"], "score_name": "string_containment"})
+    instance.update(
+        {"string_containment": instance["score"], "score_name": "string_containment"}
+    )
 
 instance_targets_accuracy = [
     {"score": 0.0},
@@ -185,10 +182,10 @@ global_target = {
     "group_pdr_accuracy": 0.83,
     "score": 0.83,
     "score_name": "group_pdr_accuracy",
-    "score_ci_low": np.nan,
-    "score_ci_high": np.nan,
-    "group_pdr_accuracy_ci_low": np.nan,
-    "group_pdr_accuracy_ci_high": np.nan,
+    "score_ci_low": 0.38,
+    "score_ci_high": 1.0,
+    "group_pdr_accuracy_ci_low": 0.38,
+    "group_pdr_accuracy_ci_high": 1.0,
 }
 
 
@@ -209,10 +206,10 @@ global_target = {
     "group_pdr_string_containment": 0.44,
     "score": 0.44,
     "score_name": "group_pdr_string_containment",
-    "score_ci_low": np.nan,
-    "score_ci_high": np.nan,
-    "group_pdr_string_containment_ci_low": np.nan,
-    "group_pdr_string_containment_ci_high": np.nan,
+    "score_ci_low": 0.14,
+    "score_ci_high": 1.0,
+    "group_pdr_string_containment_ci_low": 0.14,
+    "group_pdr_string_containment_ci_high": 1.0,
 }
 
 
@@ -284,60 +281,39 @@ instance_targets_f1 = [
 ]
 
 
-global_target = {"group_mean_f1": 0.5,
-                 "score": 0.5,
-                 "score_name": "group_mean_f1",
-                 "group_mean_f1_ci_low": 0.32,
-                 "group_mean_f1_ci_high": 0.79,
-                 "score_ci_low": 0.32,
-                 "score_ci_high": 0.79,
-                 "group_mean_precision": 0.5,
-                 "group_mean_precision_ci_low": 0.32,
-                 "group_mean_precision_ci_high": 0.79,
-                 "group_mean_recall": 0.5,
-                 "group_mean_recall_ci_low": 0.32,
-                 "group_mean_recall_ci_high": 0.79}
+global_target = {
+    "group_mean_f1": 0.5,
+    "score": 0.5,
+    "score_name": "group_mean_f1",
+    "group_mean_f1_ci_low": 0.32,
+    "group_mean_f1_ci_high": 0.79,
+    "score_ci_low": 0.32,
+    "score_ci_high": 0.79,
+    "group_mean_precision": 0.5,
+    "group_mean_precision_ci_low": 0.32,
+    "group_mean_precision_ci_high": 0.79,
+    "group_mean_recall": 0.5,
+    "group_mean_recall_ci_low": 0.32,
+    "group_mean_recall_ci_high": 0.79,
+}
 
-instance_targets_token_overlap = [{"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-                                  {"precision": 1.0,
-                                   "recall": 1.0,
-                                   "f1": 1.0,
-                                   "score": 1.0,
-                                   "score_name": "f1"}]
-
+instance_targets_token_overlap = [
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+]
 
 
 metric = MeanGroupedTokenOverlap()
