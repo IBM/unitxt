@@ -1304,6 +1304,46 @@ class FilterByQuery(SingleStreamOperator):
         return True
 
 
+class ExecuteQuery(StreamInstanceOperator):
+    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in the associated to_field.
+
+    Raises an error if a field mentioned in the query is missing from the instance.
+
+    Args:
+       queries_to_fields (List[List[str]]): inner lists of length 2, a mapping from queries to field names. Execution
+       follows the order of the outer list.
+
+    Examples:
+       When instance {"a": 2, "b": 3} is process-ed by operator
+       ExecuteQuery(queries_to_fields =  [["a+b", "c"],["c+10", "d"]])
+       the result is {"a": 2, "b": 3, "c": 5, "d": 15}
+
+       When instance {"a": "hello", "b": "world"} is process-ed by operator
+       ExecuteQuery(queries_to_fields = [["a+' '+b", "c"]])
+       the result is {"a": "hello", "b": "world", "c": "hello world"}
+
+    """
+
+    queries_to_fields: List[List[str]]
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        for query, to_field in self.queries_to_fields:
+            val = eval(query, None, instance)
+            instance[to_field] = val
+        return instance
+
+    def verify(self):
+        assert isoftype(
+            self.queries_to_fields, List[List[str]]
+        ), f"Arg 'queries_to_fields' should be of type List[List[str]]. However, arg is {self.queries_to_fields}."
+        for inner in self.queries_to_fields:
+            assert (
+                len(inner) == 2
+            ), f"Inner lists in arg 'queries_to_fields' should be of length 2. Received this inner list: {inner}."
+
+
 class ExtractMostCommonFieldValues(MultiStreamOperator):
     field: str
     stream_name: str

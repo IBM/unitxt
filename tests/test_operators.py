@@ -19,6 +19,7 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
+    ExecuteQuery,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
@@ -711,6 +712,30 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(e.exception),
             "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+        )
+
+    def test_execute_query(self):
+        inputs = [{"a": 2, "b": 3}]
+        operator = ExecuteQuery(queries_to_fields=[["a+b", "c"], ["c+10", "d"]])
+        targets = [{"a": 2, "b": 3, "c": 5, "d": 15}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        inputs = [{"a": "hello", "b": "world"}]
+        operator = ExecuteQuery(queries_to_fields=[["a+' '+b", "c"]])
+        targets = [{"a": "hello", "b": "world", "c": "hello world"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        operator = ExecuteQuery(queries_to_fields=[["f'{a} {b}'", "c"]])
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        with self.assertRaises(AssertionError) as ae:
+            operator = ExecuteQuery(queries_to_fields=["a", "b"])
+        self.assertEqual(
+            "Arg 'queries_to_fields' should be of type List[List[str]]. However, arg is ['a', 'b'].",
+            str(ae.exception),
+        )
+        with self.assertRaises(AssertionError) as ae:
+            operator = ExecuteQuery(queries_to_fields=[["a", "b", "c"]])
+        self.assertEqual(
+            "Inner lists in arg 'queries_to_fields' should be of length 2. Received this inner list: ['a', 'b', 'c'].",
+            str(ae.exception),
         )
 
     def test_intersect(self):
