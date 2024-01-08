@@ -748,6 +748,20 @@ class TestOperators(unittest.TestCase):
             "Inner lists in arg 'queries_to_fields' should be of length 2. Received this inner list: ['a', 'b', 'c'].",
             str(ae.exception),
         )
+        inputs = [
+            {
+                "labels": ["person", "location", "person"],
+                "entity": ["Jane", "New York", "John"],
+            }
+        ]
+        operator = ExecuteQuery(
+            queries_to_fields=[
+                ['[e for l,e in zip(labels, entity) if l=="person"]', "entity"],
+                ['[l for l in labels if l == "person"]', "labels"],
+            ]
+        )
+        targets = [{"labels": ["person", "person"], "entity": ["Jane", "John"]}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
     def test_intersect(self):
         inputs = [
