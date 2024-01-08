@@ -2,8 +2,9 @@ import re
 import string
 import uuid
 from abc import abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import field
+from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
@@ -82,7 +83,48 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
-    def score_based_confidence_interval(self, instances):
+    # def score_based_confidence_interval(self, instances, statistic=None, score_names: Optional[List[str]] = None, func_name=""):
+    #     """Compute confidence intervals based on existing scores, already computed on the input instances.
+    #
+    #     score_names: List[str]
+    #         Compute a confidence interval for each score_name from this list.
+    #     instances:
+    #         The instances for which the confidence intervals are computed.
+    #     """
+    #     result = {}
+    #
+    #     if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
+    #         return result
+    #
+    #     if score_names is None:
+    #         score_names = (
+    #             self.ci_scores if self.ci_scores is not None else [self.main_score]
+    #         )
+    #         if statistic is not None:
+    #             def statistic(instances, field_name):
+    #                 return mean([instance[field_name] for instance in instances])
+    #
+    #     for score_name in score_names:
+    #         def statistic_wrap(x, field_name=score_name):
+    #             return statistic(instances=x, field_name=field_name)
+    #
+    #         ci = bootstrap(
+    #             (instances,),
+    #             statistic=statistic_wrap,#lambda x: statistic(instances=x, field_name=score_name),
+    #             n_resamples=self.n_resamples,
+    #             confidence_level=self.confidence_level,
+    #             random_state=self.new_random_generator(),
+    #         ).confidence_interval
+    #         full_score_name = score_name if len(func_name) == 0 else "_".join([str(func_name), score_name])
+    #         result[f"{full_score_name}_ci_low"] = ci.low
+    #         result[f"{full_score_name}_ci_high"] = ci.high
+    #         if score_name == self.main_score:
+    #             result["score_ci_low"] = ci.low
+    #             result["score_ci_high"] = ci.high
+    #     return result
+
+
+    def score_based_confidence_interval(self, instances, aggregation_func=None, score_names: Optional[List[str]] = None, func_name=""):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
 
         score_names: List[str]
@@ -90,34 +132,63 @@ class MetricWithConfidenceInterval(Metric):
         instances:
             The instances for which the confidence intervals are computed.
         """
-        from statistics import mean
-
         result = {}
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
+        identifiers = list(range(len(instances)))
 
-        score_names = (
-            self.ci_scores if self.ci_scores is not None else [self.main_score]
-        )
+
+
+        if score_names is None:
+            score_names = (
+                self.ci_scores if self.ci_scores is not None else [self.main_score]
+            )
+            if aggregation_func is not None:
+                def aggregation_func(instances, field_name):
+                    return mean([instance[field_name] for instance in instances])
+
 
         for score_name in score_names:
-            scores = [
-                instance["score"]["instance"][score_name] for instance in instances
-            ]
+            def statistic(arr, axis, score_name=score_name):
+                # arr is a 2d array where each row is a resampling, so we
+                # iterate over the rows and compute the metric on each resampling
+                def metric(instances):
+                    try:
+                        return aggregation_func(instances, score_name)
+                    except Exception as e:
+                        # this happens in edge cases, for example, when the sampling creates a
+                        # sample where all strings are empty and this fails bleu.
+                        logger.info(f"Warning in {self.__class__.__name__}", e)
+                        return np.nan
+
+                scores = numpy.apply_along_axis(
+                    lambda x: metric([instances[ii] for ii in x],
+                                     ),
+                    axis=axis,
+                    arr=arr,
+                )
+                return scores
+
+
             ci = bootstrap(
-                (scores,),
-                statistic=mean,
+                (identifiers,),
+                statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
                 random_state=self.new_random_generator(),
             ).confidence_interval
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            full_score_name = score_name if len(func_name) == 0 else "_".join([str(func_name), score_name])
+            result[f"{full_score_name}_ci_low"] = ci.low
+            result[f"{full_score_name}_ci_high"] = ci.high
             if score_name == self.main_score:
                 result["score_ci_low"] = ci.low
                 result["score_ci_high"] = ci.high
         return result
+
+
+
+
 
     def compute_global_confidence_intervals(
         self, references, predictions, additional_inputs, score_name
@@ -334,8 +405,6 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
 
             if reduction == "mean":
-                from statistics import mean
-
                 for field_name in fields:
                     global_score[field_name] = mean(
                         [
@@ -368,7 +437,11 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    implemented_reductions: List[str] = field(default_factory=lambda: ["mean", "group_mean"])
+
+    # for grouped metrics: a field that contains the group id. None to disable grouping.
+    # Grouped metrics aggregate the instance score per group, and then average over group scores.
+    grouping_field: str = None
 
     @property
     @abstractmethod
@@ -376,6 +449,59 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+
+        instances, global_score = self.compute_instance_scores(stream, stream_name)
+
+        for reduction, fields in self.reduction_map.items():
+            assert (
+                reduction in self.implemented_reductions
+            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+
+            aggregation_func = None
+            if reduction == "mean":
+                aggregation_func = self.aggregate
+
+            if reduction == "group_mean":
+                if not self.grouping_field:
+                    raise ValueError("self.grouping_field is None, . "
+                                     "This field is required for group based metric computation.")
+                # # for group_mean, expects a dict
+                assert isinstance(fields, dict)
+                assert "agg_func" in fields, "fields should have a key 'agg_func' consisting of a 2-element list of a function name and function definition"
+                assert callable(fields["agg_func"][1]), "second item in fields['agg_func'] should be a callable function"
+                score_fields = [self.main_score] if "score_fields" not in fields else fields["score_fields"]
+                def aggregation_func(instances, field_name, field=fields["agg_func"][1]):
+                    return self.grouped_aggregate(instances, field_name, field)
+
+            if not aggregation_func:
+                raise ValueError(f"No aggregation_func was defined for reduction {reduction}. "
+                                 f"Please specify a valid reduction method in reduction_map {self.reduction_map}.")
+
+            for field_name in (score_fields if reduction == "group_mean" else fields):
+                if reduction == "group_mean":
+                    field_name_full_prefix = "group_" + str(fields["agg_func"][0])
+                    field_name_full = "_".join([field_name_full_prefix, field_name])
+                else:
+                    field_name_full_prefix = ""
+                    field_name_full = field_name
+                global_score[field_name_full] = aggregation_func(instances, field_name)
+                if field_name == self.main_score:
+                    global_score["score"] = global_score[field_name_full]
+                    global_score["score_name"] = field_name_full
+                # lambda instances, score_name: [fv for fv in [aggregation_func(instances=instances, field_name=score_name)] if not np.isnan(fv)]
+                def bootstrap_aggregation_func(instances, field_name, agg_func=aggregation_func):
+                    return agg_func(instances=instances, field_name=field_name)
+
+                confidence_interval = self.score_based_confidence_interval(
+                    instances=instances, aggregation_func=bootstrap_aggregation_func,
+                    score_names=[field_name], func_name=field_name_full_prefix
+                )
+                global_score.update(confidence_interval)
+
+        for instance in instances:
+            yield from instance
+
+    def compute_instance_scores(self, stream: Stream, stream_name: Optional[str] = None):
         global_score = {}
         instances = []
 
@@ -399,31 +525,37 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             instances.append(instance)
 
-        for reduction, fields in self.reduction_map.items():
-            assert (
-                reduction in self.implemented_reductions
-            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
-
-            if reduction == "mean":
-                from statistics import mean
-
-                for field_name in fields:
-                    scores = [
-                        instance["score"]["instance"][field_name]
-                        for instance in instances
-                    ]
-                    global_score[field_name] = mean(scores)
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name]
-                        global_score["score_name"] = self.main_score
-
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=instances
-                )
-                global_score.update(confidence_interval)
-
         for instance in instances:
             yield instance
+
+        return instances, global_score
+
+    @staticmethod
+    def aggregate(instances, field_name):
+        scores = [
+            instance["score"]["instance"][field_name]
+            for instance in instances
+        ]
+        return np.nanmean(scores)
+
+    def grouped_aggregate(self, instances, field_name, aggregation_func):
+        group_to_instance_scores = defaultdict(list)
+        for instance in instances:
+            additional_inputs = instance["additional_inputs"]
+            if self.grouping_field not in additional_inputs:
+                raise ValueError(f"Missing '{self.grouping_field}' from instance {instance}. "
+                                 f"This field is required for group based metric computation.")
+            group_key = additional_inputs[self.grouping_field]  # do we need to convert to str?
+            group_to_instance_scores[group_key].append(
+                instance["score"]["instance"][field_name]
+            )
+
+        group_total_scores = [
+            aggregation_func(scores) for scores in group_to_instance_scores.values()
+        ]
+        group_total_scores = [score for score in group_total_scores if not np.isnan(score)]
+        # ignore NaNs in aggregation
+        return mean(group_total_scores) if len(group_total_scores) else np.nan
 
     @abstractmethod
     def compute(
@@ -489,7 +621,7 @@ class StringContainment(InstanceMetric):
     ) -> dict:
         result = {
             self.main_score: float(
-                any(str(reference) in prediction for reference in references)
+                any(str(reference) in str(prediction) for reference in references)
             )
         }
         result["score"] = result[self.main_score]
@@ -1436,3 +1568,47 @@ class RetrievalAtK(RetrievalMetric):
             for k in self.k_list:
                 result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
         return result
+
+
+# define metrics that return means of an aggregation function applied across levels of a grouping variable
+def performance_drop_rate(instance_scores: List):
+    """Percentage change of mean performance on test elements relative to that on a baseline.
+
+    from https://arxiv.org/pdf/2306.04528.pdf.
+
+    Args:
+        instance_scores: a list of scores on instances.  Assume the first element is the original, the others are test set
+
+    Returns:
+        numeric PDR metric.
+        If only one element (no test set) or the first is 0 (percentage change is undefined) return NaN
+        otherwise, calculate PDR
+
+    """
+    assert isinstance(instance_scores, list)
+    return (
+        np.nan
+        if (len(instance_scores) < 2 or instance_scores[0] == 0)
+        else 1 - mean(instance_scores[1:]) / instance_scores[0]
+    )
+
+
+class MeanGroupedAccuracy(Accuracy):
+    grouping_field = "group_id"
+    reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
+
+class MeanGroupedAccuracyPDR(Accuracy):
+    grouping_field = "group_id"
+    reduction_map = {"group_mean": {"agg_func": ["pdr", performance_drop_rate]}}
+
+class MeanGroupedStringContainment(StringContainment):
+    grouping_field = "group_id"
+    reduction_map = {"group_mean": {"agg_func": ["mean", np.nanmean]}}
+
+class MeanGroupedStringContainmentPDR(StringContainment):
+    grouping_field = "group_id"
+    reduction_map = {"group_mean": {"agg_func": ["pdr", performance_drop_rate]}}
+
+class MeanGroupedTokenOverlap(TokenOverlap):
+    grouping_field = "group_id"
+    reduction_map = {"group_mean": {"agg_func": ["mean", np.nanmean], "score_fields": ["f1", "precision", "recall"]}}
