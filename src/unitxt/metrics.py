@@ -2,7 +2,7 @@ import re
 import string
 import uuid
 from abc import abstractmethod
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import field
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -82,46 +82,6 @@ class MetricWithConfidenceInterval(Metric):
             and self.n_resamples > 1
             and num_predictions > 1
         )
-
-    # def score_based_confidence_interval(self, instances, statistic=None, score_names: Optional[List[str]] = None, func_name=""):
-    #     """Compute confidence intervals based on existing scores, already computed on the input instances.
-    #
-    #     score_names: List[str]
-    #         Compute a confidence interval for each score_name from this list.
-    #     instances:
-    #         The instances for which the confidence intervals are computed.
-    #     """
-    #     result = {}
-    #
-    #     if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
-    #         return result
-    #
-    #     if score_names is None:
-    #         score_names = (
-    #             self.ci_scores if self.ci_scores is not None else [self.main_score]
-    #         )
-    #         if statistic is not None:
-    #             def statistic(instances, field_name):
-    #                 return mean([instance[field_name] for instance in instances])
-    #
-    #     for score_name in score_names:
-    #         def statistic_wrap(x, field_name=score_name):
-    #             return statistic(instances=x, field_name=field_name)
-    #
-    #         ci = bootstrap(
-    #             (instances,),
-    #             statistic=statistic_wrap,#lambda x: statistic(instances=x, field_name=score_name),
-    #             n_resamples=self.n_resamples,
-    #             confidence_level=self.confidence_level,
-    #             random_state=self.new_random_generator(),
-    #         ).confidence_interval
-    #         full_score_name = score_name if len(func_name) == 0 else "_".join([str(func_name), score_name])
-    #         result[f"{full_score_name}_ci_low"] = ci.low
-    #         result[f"{full_score_name}_ci_high"] = ci.high
-    #         if score_name == self.main_score:
-    #             result["score_ci_low"] = ci.low
-    #             result["score_ci_high"] = ci.high
-    #     return result
 
     def score_based_confidence_interval(
         self,
@@ -589,6 +549,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         return np.nanmean(scores)
 
     def grouped_aggregate(self, instances, field_name, aggregation_func):
+        from collections import defaultdict
+
         group_to_instance_scores = defaultdict(list)
         for instance in instances:
             additional_inputs = instance["additional_inputs"]
@@ -724,9 +686,28 @@ class HuggingfaceMetric(GlobalMetric):
 
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
+    # This are fixed arguments  passed to compute method
     hf_compute_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    # These are additional input fields passed to HF compute method (a list with one value per instance)
     hf_additional_input_fields: List = OptionalField(default_factory=list)
+    # These are additional input fields that are passed as one value
+    hf_additional_input_fields_pass_one_value: List = OptionalField(
+        default_factory=list
+    )
+
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
+
+    def verify(self):
+        assert (
+            self.hf_additional_input_fields is None
+            or isoftype(self.hf_additional_input_fields, List[str])
+        ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
+        assert (
+            self.hf_additional_input_fields_pass_one_value is None
+            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
+
+        return super().verify()
 
     def prepare(self):
         super().prepare()
@@ -749,8 +730,22 @@ class HuggingfaceMetric(GlobalMetric):
                 additional_input[additional_input_field]
                 for additional_input in additional_inputs
             ]
-        # add check that all required fields in self.metrics are in passed_additional_inputs
+        for additional_input_field in self.hf_additional_input_fields_pass_one_value:
+            assert (
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
 
+            values = {
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
+            }
+            assert (
+                len(values) == 1
+            ), f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
+
+            passed_additional_inputs[additional_input_field] = next(iter(values))
+
+        # add check that all required fields in self.metrics are in passed_additional_inputs       print(passed_additional_inputs)
         result = self.metric.compute(
             predictions=predictions,
             references=references,
@@ -899,10 +894,11 @@ class F1MultiLabel(GlobalMetric):
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
     classes_to_ignore = ["none"]
+    metric = "f1"
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load("f1", "multilabel")
+        self._metric = evaluate.load(self.metric, "multilabel")
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -963,17 +959,17 @@ class F1MultiLabel(GlobalMetric):
             average=self.average,
             labels=labels_param,
         )
-        if isinstance(result["f1"], numpy.ndarray):
+        if isinstance(result[self.metric], numpy.ndarray):
             from statistics import mean
 
-            assert len(result["f1"]) == len(
-                labels
-            ), f'F1 result ({result["f1"]}) has more entries than labels ({labels})'
-            final_result = {self.main_score: mean(result["f1"])}
+            assert (
+                len(result[self.metric]) == len(labels)
+            ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
+            final_result = {self.main_score: mean(result[self.metric])}
             for i, label in enumerate(labels):
-                final_result["f1_" + label] = result["f1"][i]
+                final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
-            final_result = {self.main_score: result["f1"]}
+            final_result = {self.main_score: result[self.metric]}
         return final_result
 
     def _validate_references_and_prediction(self, references, predictions):
@@ -992,6 +988,30 @@ class F1MultiLabel(GlobalMetric):
                 raise ValueError(
                     f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
                 )
+
+
+class PrecisionMacroMultiLabel(F1MultiLabel):
+    main_score = "precision_macro"
+    metric = "precision"
+    average = "macro"
+
+
+class PrecisionMicroMultiLabel(F1MultiLabel):
+    main_score = "precision_micro"
+    metric = "precision"
+    average = "micro"
+
+
+class RecallMacroMultiLabel(F1MultiLabel):
+    main_score = "recall_macro"
+    metric = "recall"
+    average = "macro"
+
+
+class RecallMicroMultiLabel(F1MultiLabel):
+    main_score = "recall_micro"
+    metric = "recall"
+    average = "micro"
 
 
 class F1MicroMultiLabel(F1MultiLabel):
@@ -1116,27 +1136,36 @@ class MatthewsCorrelation(HuggingfaceMetric):
 
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
-    classes = None
+    groups = None
     zero_division = 0.0
 
     @abstractmethod
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         pass
 
     @abstractmethod
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         pass
 
-    def group_elements(self, elements_list):
+    def should_ignore_element(self, element, additional_input):
+        return False
+
+    def group_elements(self, elements_list, additional_input):
+        if not isinstance(elements_list, list):
+            elements_list = [elements_list]
         return {
             k: Counter(
                 [
-                    self.get_element_representation(value)
+                    self.get_element_representation(value, additional_input)
                     for value in elements_list
-                    if self.get_element_group(value) == k
+                    if self.get_element_group(value, additional_input) == k
                 ]
             )
-            for k in {self.get_element_group(e) for e in elements_list}
+            for k in {
+                self.get_element_group(e, additional_input)
+                for e in elements_list
+                if not self.should_ignore_element(e, additional_input)
+            }
         }
 
     def calculate_groups_ratio(self, actual_group, total_group):
@@ -1158,30 +1187,46 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
+    def get_groups(self, elements, additional_inputs):
+        groups = set()
+        for sublist, additional_input in zip(elements, additional_inputs):
+            for e in sublist:
+                if self.should_ignore_element(e, additional_input):
+                    continue
+                groups.add(self.get_element_group(e, additional_input))
+        return groups
+
     def compute(
         self,
-        references: List[Any],
+        references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
     ) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
-        if isinstance(references[0], list) and isinstance(references[0][0], list):
+        if (
+            isinstance(references[0], list)
+            and len(references[0]) > 0
+            and isinstance(references[0][0], list)
+        ):
             references = [element[0] for element in references]
 
         assert len(references) == len(predictions), (
             f"references size ({len(references)})"
             f" doesn't mach predictions sise ({len(references)})."
         )
-        if self.classes is None:
-            classes = {
-                self.get_element_group(e) for sublist in references for e in sublist
-            }
+
+        if self.groups is None:
+            groups = self.get_groups(references, additional_inputs)
         else:
-            classes = self.classes
+            groups = self.groups
         groups_statistics = {}
-        for references_batch, predictions_batch in zip(references, predictions):
-            grouped_references = self.group_elements(references_batch)
-            grouped_predictions = self.group_elements(predictions_batch)
+        for references_batch, predictions_batch, additional_input in zip(
+            references, predictions, additional_inputs
+        ):
+            grouped_references = self.group_elements(references_batch, additional_input)
+            grouped_predictions = self.group_elements(
+                predictions_batch, additional_input
+            )
             all_groups = set(grouped_references.keys()).union(
                 grouped_predictions.keys()
             )
@@ -1224,7 +1269,7 @@ class CustomF1(GlobalMetric):
                 rn_total + rn,
                 rd_total + rd,
             )
-            if group in classes:
+            if group in groups:
                 f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
                 recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
                 precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
@@ -1243,7 +1288,7 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             result["f1_macro"] = self.zero_division
             result["recall_macro"] = self.zero_division
-            result["micro_macro"] = self.zero_division
+            result["precision_macro"] = self.zero_division
 
         amount_of_predictions = pd_total
         if amount_of_predictions == 0:
@@ -1261,10 +1306,10 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         return element[1]
 
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         return str(element)
 
 
@@ -1624,6 +1669,17 @@ class RetrievalAtK(RetrievalMetric):
             for k in self.k_list:
                 result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
         return result
+
+
+class KPA(CustomF1):
+    def get_element_group(self, element, additional_input):
+        return additional_input["keypoint"]
+
+    def get_element_representation(self, element, additional_input):
+        return additional_input["keypoint"]
+
+    def should_ignore_element(self, element, additional_input):
+        return element == "none"
 
 
 # define metrics that return means of an aggregation function applied across levels of a grouping variable
