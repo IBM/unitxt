@@ -33,13 +33,11 @@ class Instruction(StreamInstanceOperator):
 class TextualInstruction(Instruction):
     text: str
 
-    @abstractmethod
     def get_instruction(self, instance: Dict[str, object]) -> str:
         return self.text
 
 
 class EmptyInstruction(Instruction):
-    @abstractmethod
     def get_instruction(self, instance: Dict[str, object]) -> str:
         return ""
 
