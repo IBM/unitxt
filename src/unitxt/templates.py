@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -8,12 +8,6 @@ from .dataclass import NonPositionalField
 from .operator import StreamInstanceOperator
 from .random_utils import new_random_generator
 from .type_utils import isoftype
-
-
-class Renderer(ABC):
-    @abstractmethod
-    def get_postprocessors(self) -> List[str]:
-        pass
 
 
 class Template(StreamInstanceOperator):

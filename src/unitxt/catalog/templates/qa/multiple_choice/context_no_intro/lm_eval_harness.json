@@ -1,6 +1,6 @@
 {
     "type": "multiple_choice_template",
-    "input_format": "Context: {context}\nQuestion: {question}.\nChoices:\n{choices}.\nAnswer:",
+    "input_format": "{context}\n{question}\n{choices}\nAnswer:",
     "target_field": "answer",
     "choices_seperator": "\n",
     "postprocessors": [

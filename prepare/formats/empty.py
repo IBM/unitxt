@@ -1,6 +1,6 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import ICLFormat
+from src.unitxt.operators import SystemFormat
 
-format = ICLFormat()
+format = SystemFormat()
 
 add_to_catalog(format, "formats.empty", overwrite=True)
