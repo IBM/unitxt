@@ -9,6 +9,11 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    MeanGroupedAccuracy,
+    MeanGroupedAccuracyPDR,
+    MeanGroupedStringContainment,
+    MeanGroupedStringContainmentPDR,
+    MeanGroupedTokenOverlap,
     Rouge,
     Squad,
     TokenOverlap,
@@ -16,6 +21,91 @@ from src.unitxt.metrics import (
 from src.unitxt.test_utils.metrics import apply_metric
 
 logger = get_logger()
+
+# values of inputs that are common to grouped_mean type InstanceMetric
+GROUPED_INSTANCE_PREDICTIONS = [
+    "A B",
+    "BC D",
+    "C",
+    "123",
+    "BCD",
+    10,
+    "  BD",
+    "AB",
+    "I am a dog",
+    "AB C",
+    "AB 1",
+    "GMA",
+    0.123,
+    "BD",
+    "abc",
+]
+
+GROUPED_INSTANCE_REFERENCES = [
+    ["B", "AB", "A"],
+    ["A", "BC D", "BC DF"],
+    ["c", " C"],
+    [13, 23, 234],
+    ["  ", " BD", " BDA"],
+    [1, 10, 100],
+    ["A", "B", "BD"],
+    ["ABC", "ab", "BC"],
+    ["I am a person", "I AM A DOG", "ABC"],
+    ["AB CD", "AB", "ab"],
+    ["AB 1", "AB1"],
+    [" GMA 123", "GMA"],
+    ["123", 0.12],
+    ["BDE", "BCE", "bdefs"],
+    [" abcdefg", "AB", "abcd"],
+]
+
+GROUPED_INSTANCE_PREDICTIONS_SHORT = [
+    "A",
+    "B",
+    "B",
+    "A",
+    "B",
+    "B",
+    "A",
+    "A",
+    "B",
+    "B",
+    "A",
+    "B",
+    "A",
+    "A",
+    "B",
+]
+
+GROUPED_INSTANCE_REFERENCES_SHORT = [
+    ["A", "B"],
+    ["A", "C"],
+    ["B", "C", "A"],
+    ["A"],
+    ["B", "A"],
+    ["C", "B"],
+    ["A"],
+    ["B", "C"],
+    ["A", "B", "C"],
+    ["A", "B"],
+    ["B", "C"],
+    ["C"],
+    ["C", "B"],
+    ["B", "A"],
+    ["B"],
+]
+
+# possibly multi-column group identifier
+GROUPED_INSTANCE_ADDL_INPUTS = (
+    [{"group": "grp1", "id": 0}] * 5
+    + [{"group": "grp1", "id": 1}] * 5
+    + [{"group": "grp2", "id": 0}] * 4
+    + [{"group": "grp2", "id": 1}] * 1
+)
+group_by_fields = ["group", "id"]
+# construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
+for ai in GROUPED_INSTANCE_ADDL_INPUTS:
+    ai.update({"group_id": "_".join([str(ai[ff]) for ff in group_by_fields])})
 
 
 class TestMetrics(unittest.TestCase):
@@ -388,6 +478,42 @@ class TestMetrics(unittest.TestCase):
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
 
+    def test_grouped_instance_metrics(self):
+        accuracy_metrics = [
+            MeanGroupedAccuracy(),
+            MeanGroupedStringContainment(),
+            MeanGroupedAccuracyPDR(),
+            MeanGroupedStringContainmentPDR(),
+        ]
+        global_targets = [0.225, 0.4875, 0.8333333333333334, 0.4444444444444445]
+        for metric, target in zip(accuracy_metrics, global_targets):
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            self.assertAlmostEqual(
+                target,
+                outputs[0]["score"]["global"]["score"],
+                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
+            )
+
+        f1_metrics = [MeanGroupedTokenOverlap()]
+        global_targets = [0.5]
+        for metric, target in zip(f1_metrics, global_targets):
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS_SHORT,
+                references=GROUPED_INSTANCE_REFERENCES_SHORT,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            self.assertAlmostEqual(
+                target,
+                outputs[0]["score"]["global"]["score"],
+                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
+            )
+
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
@@ -478,3 +604,103 @@ class TestConfidenceIntervals(unittest.TestCase):
                     or score_name not in metric.ci_scores,
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )
+
+    def test_grouped_instance_metric_confidence_interval(self):
+        import numpy as np
+        """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedAccuracy(),
+            expected_ci_low=0.025,
+            expected_ci_high=0.44047619047619047,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedStringContainment(),
+            expected_ci_low=0.15627449950197503,
+            expected_ci_high=0.7080527276705951,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedAccuracyPDR(),
+            expected_ci_low=np.nan,
+            expected_ci_high=np.nan,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedStringContainmentPDR(),
+            expected_ci_low=np.nan,
+            expected_ci_high=np.nan,
+        )
+
+        # F1-based scores
+        self._test_grouped_instance_confidence_interval(
+            metric=MeanGroupedTokenOverlap(),
+            references=GROUPED_INSTANCE_REFERENCES_SHORT,
+            predictions=GROUPED_INSTANCE_PREDICTIONS_SHORT,
+            expected_global_result={"group_mean_f1": 0.5,
+                                    "score": 0.5,
+                                    "score_name": "group_mean_f1",
+                                    "group_mean_f1_ci_low": 0.32199800893327996,
+                                    "group_mean_f1_ci_high": 0.7899498235031469,
+                                    "score_ci_low": 0.32199800893327996,
+                                    "score_ci_high": 0.7899498235031469,
+                                    "group_mean_precision": 0.5,
+                                    "group_mean_precision_ci_low": 0.32199800893327996,
+                                    "group_mean_precision_ci_high": 0.7899498235031469,
+                                    "group_mean_recall": 0.5,
+                                    "group_mean_recall_ci_low": 0.32199800893327996,
+                                    "group_mean_recall_ci_high": 0.7899498235031469}
+
+        )
+
+    def _test_grouped_instance_confidence_interval(
+            self, metric, expected_ci_low=0.0, expected_ci_high=1.0,
+            references=GROUPED_INSTANCE_REFERENCES, predictions=GROUPED_INSTANCE_PREDICTIONS, expected_global_result=None
+    ):
+        """Test the calculation of confidence intervals for a given metric."""
+        import numpy as np
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+        )
+
+        group_score_name = "_".join(["group", metric.reduction_map["group_mean"]["agg_func"][0], metric.main_score])
+
+        if expected_global_result is None:
+            expected_global_result = {
+                f"{group_score_name}_ci_low": expected_ci_low,
+                f"{group_score_name}_ci_high": expected_ci_high,
+                "score_ci_low": expected_ci_low,
+                "score_ci_high": expected_ci_high,
+            }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        logger.info(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                # Test that the output value is the same as the expected value
+                # allow for cases where value is NaN
+                if not isinstance(score_value, str):
+                    if np.isnan(expected_global_result[score_name]):
+                        assert np.isnan(score_value)
+                    elif np.isnan(score_value):
+                        assert np.isnan(expected_global_result[score_name])
+                    else:
+                        self.assertAlmostEqual(
+                            score_value, expected_global_result[score_name], places=5, msg=f"score mismatch for {group_score_name}"
+                        )
+                else:
+                    self.assertEqual(score_value, expected_global_result[score_name])
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )
+
+
