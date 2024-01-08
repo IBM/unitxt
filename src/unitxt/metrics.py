@@ -1705,27 +1705,27 @@ def performance_drop_rate(instance_scores: List):
     )
 
 
-class MeanGroupedAccuracy(Accuracy):
+class GroupMeanAccuracy(Accuracy):
     grouping_field = "group_id"
     reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
 
 
-class MeanGroupedAccuracyPDR(Accuracy):
+class GroupPDRAccuracy(Accuracy):
     grouping_field = "group_id"
     reduction_map = {"group_mean": {"agg_func": ["pdr", performance_drop_rate]}}
 
 
-class MeanGroupedStringContainment(StringContainment):
+class GroupMeanStringContainment(StringContainment):
     grouping_field = "group_id"
     reduction_map = {"group_mean": {"agg_func": ["mean", np.nanmean]}}
 
 
-class MeanGroupedStringContainmentPDR(StringContainment):
+class GroupPDRStringContainment(StringContainment):
     grouping_field = "group_id"
     reduction_map = {"group_mean": {"agg_func": ["pdr", performance_drop_rate]}}
 
 
-class MeanGroupedTokenOverlap(TokenOverlap):
+class GroupMeanTokenOverlap(TokenOverlap):
     grouping_field = "group_id"
     reduction_map = {
         "group_mean": {

@@ -1,10 +1,10 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
-    MeanGroupedAccuracy,
-    MeanGroupedAccuracyPDR,
-    MeanGroupedStringContainment,
-    MeanGroupedStringContainmentPDR,
-    MeanGroupedTokenOverlap,
+    GroupMeanAccuracy,
+    GroupMeanStringContainment,
+    GroupMeanTokenOverlap,
+    GroupPDRAccuracy,
+    GroupPDRStringContainment,
 )
 from src.unitxt.test_utils.metrics import test_metric
 
@@ -128,7 +128,7 @@ instance_targets_accuracy = [
 for instance in instance_targets_accuracy:
     instance.update({"accuracy": instance["score"], "score_name": "accuracy"})
 
-metric = MeanGroupedAccuracy()
+metric = GroupMeanAccuracy()
 global_target = {
     "group_mean_accuracy": 0.23,
     "score": 0.23,
@@ -152,7 +152,7 @@ outputs = test_metric(
 add_to_catalog(metric, "metrics.group_mean_accuracy", overwrite=True)
 
 
-metric = MeanGroupedStringContainment()
+metric = GroupMeanStringContainment()
 global_target = {
     "group_mean_string_containment": 0.49,
     "score": 0.49,
@@ -177,7 +177,7 @@ add_to_catalog(metric, "metrics.group_mean_string_containment", overwrite=True)
 
 
 # PDR
-metric = MeanGroupedAccuracyPDR()
+metric = GroupPDRAccuracy()
 global_target = {
     "group_pdr_accuracy": 0.83,
     "score": 0.83,
@@ -201,7 +201,7 @@ outputs = test_metric(
 add_to_catalog(metric, "metrics.group_pdr_accuracy", overwrite=True)
 
 
-metric = MeanGroupedStringContainmentPDR()
+metric = GroupPDRStringContainment()
 global_target = {
     "group_pdr_string_containment": 0.44,
     "score": 0.44,
@@ -261,24 +261,6 @@ short_references = [
     ["B", "A"],
     ["B"],
 ]
-# f1_references = [[rr] for rr in f1_references]
-instance_targets_f1 = [
-    {"group_mean_f1_macro": 0.5, "score": 0.5, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.0, "score": 0.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.33, "score": 0.33, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 1.0, "score": 1.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.5, "score": 0.5, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.5, "score": 0.5, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 1.0, "score": 1.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.0, "score": 0.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.33, "score": 0.33, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.5, "score": 0.5, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.0, "score": 0.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.0, "score": 0.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.0, "score": 0.0, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 0.5, "score": 0.5, "score_name": "group_mean_f1_macro"},
-    {"group_mean_f1_macro": 1.0, "score": 1.0, "score_name": "group_mean_f1_macro"},
-]
 
 
 global_target = {
@@ -316,7 +298,7 @@ instance_targets_token_overlap = [
 ]
 
 
-metric = MeanGroupedTokenOverlap()
+metric = GroupMeanTokenOverlap()
 
 outputs = test_metric(
     metric=metric,
@@ -327,4 +309,4 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.group_mean_f1_macro_multilabel", overwrite=True)
+add_to_catalog(metric, "metrics.group_mean_token_overlap", overwrite=True)
