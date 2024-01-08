@@ -9,11 +9,11 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
-    MeanGroupedAccuracy,
-    MeanGroupedAccuracyPDR,
-    MeanGroupedStringContainment,
-    MeanGroupedStringContainmentPDR,
-    MeanGroupedTokenOverlap,
+    GroupMeanAccuracy,
+    GroupMeanStringContainment,
+    GroupMeanTokenOverlap,
+    GroupPDRAccuracy,
+    GroupPDRStringContainment,
     Rouge,
     Squad,
     TokenOverlap,
@@ -480,10 +480,10 @@ class TestMetrics(unittest.TestCase):
 
     def test_grouped_instance_metrics(self):
         accuracy_metrics = [
-            MeanGroupedAccuracy(),
-            MeanGroupedStringContainment(),
-            MeanGroupedAccuracyPDR(),
-            MeanGroupedStringContainmentPDR(),
+            GroupMeanAccuracy(),
+            GroupMeanStringContainment(),
+            GroupPDRAccuracy(),
+            GroupPDRStringContainment(),
         ]
         global_targets = [0.225, 0.4875, 0.8333333333333334, 0.4444444444444445]
         for metric, target in zip(accuracy_metrics, global_targets):
@@ -499,7 +499,7 @@ class TestMetrics(unittest.TestCase):
                 msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
             )
 
-        f1_metrics = [MeanGroupedTokenOverlap()]
+        f1_metrics = [GroupMeanTokenOverlap()]
         global_targets = [0.5]
         for metric, target in zip(f1_metrics, global_targets):
             outputs = apply_metric(
@@ -608,32 +608,32 @@ class TestConfidenceIntervals(unittest.TestCase):
     def test_grouped_instance_metric_confidence_interval(self):
         """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
         self._test_grouped_instance_confidence_interval(
-            metric=MeanGroupedAccuracy(),
+            metric=GroupMeanAccuracy(),
             expected_ci_low=0.025,
             expected_ci_high=0.44047619047619047,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=MeanGroupedStringContainment(),
+            metric=GroupMeanStringContainment(),
             expected_ci_low=0.15627449950197503,
             expected_ci_high=0.7080527276705951,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=MeanGroupedAccuracyPDR(),
+            metric=GroupPDRAccuracy(),
             expected_ci_low=0.375,
             expected_ci_high=1.0,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=MeanGroupedStringContainmentPDR(),
+            metric=GroupPDRStringContainment(),
             expected_ci_low=0.14285714285714288,
             expected_ci_high=1.0,
         )
 
         # F1-based scores
         self._test_grouped_instance_confidence_interval(
-            metric=MeanGroupedTokenOverlap(),
+            metric=GroupMeanTokenOverlap(),
             references=GROUPED_INSTANCE_REFERENCES_SHORT,
             predictions=GROUPED_INSTANCE_PREDICTIONS_SHORT,
             expected_global_result={
