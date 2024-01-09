@@ -1085,6 +1085,132 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         return instance
 
 
+class GlobalMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
+    """computes a metric along (all) instances of each stream in the nultistream.
+
+    Input args specify both field names to extract values from the instance, values that are aimed to be similar,
+    the metric by which these two are compared, and the overall evaluation of the comparision along all
+    instances, or only some of them that comply with a condition inputted as an arg too.
+
+    field "metrics_scores" is assumed to be contained in each instance, containig a (potentiall empty) list of
+    metric results. The operator will append the result of its evaluation to that list in every instance
+    of the stream
+    metric, instantiated from metric_name is expected to score given two vectors: references and predictions, both
+    consisting of components of same type
+    comparator, instantiated from comparator_name scores two components, one from each vector. the higher the score
+    the more similar, in the expected sense, are both components.
+
+    if no metric_name, comparator is employed, and its average over all instances is computed
+    if no comparator name, metric is expected to deal with several references from one instance, like Huggingface Rouge
+
+    """
+
+    pred_field_name: str = "prediction"
+    refs_field_name: str = "references"
+    global_metric_name: str  # or a lambda expression that receives a vector of either singles or pairs, that comparator generates for it
+    wrapper_of_args_for_global_metric: str = None
+    lambda_label_mapper: str = "lambda x: x"
+    local_scorer_name: str = (
+        None  # rouge can swallow a list of references or a lambda expression
+    )
+    is_global_cooked_from_locals: bool = False
+
+    def prepare(self):
+        import evaluate
+
+        assert (
+            self.global_metric_name is not None
+        ), "'metric_name' is the essence of this operator, should not be none"
+        if "lambda " in self.global_metric_name:
+            self.global_metric = eval(self.global_metric_name)
+        else:
+            try:
+                self.global_metric = evaluate.load(self.global_metric_name)
+                self.global_metric = self.global_metric.compute
+            except:
+                self.get_artifact(self.global_metric_name)
+
+        self.comparator = (
+            None
+            if self.local_scorer_name is None
+            else eval(self.local_scorer_name)
+            if "lambda " in self.local_scorer_name
+            else self.get_artifact(self.local_scorer_name)
+        )
+        self.label_mapper = eval(self.lambda_label_mapper)
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        ms_to_return = {}
+        for stream_name, stream in multi_stream.items():
+            stream_refs_preds = []
+            for instance in stream:
+                if (
+                    self.pred_field_name not in instance
+                    or self.refs_field_name not in instance
+                    or instance[self.pred_field_name] is None
+                    or instance[self.refs_field_name] is None
+                    or not isinstance(instance[self.refs_field_name], list)
+                    or len(instance[self.refs_field_name]) == 0
+                ):
+                    continue
+                local_refs = [
+                    self.label_mapper(r) for r in instance[self.refs_field_name]
+                ]
+                local_pred = self.label_mapper(instance[self.pred_field_name])
+                if (
+                    self.comparator is None
+                ):  # e.g. with Rouge, refs of an individual instance, comes as a list
+                    stream_refs_preds.append((local_refs, local_pred))
+                    continue
+                # select best reference for the given prediction
+                best_ref = local_refs[0]
+                best_ref_score = self.comparator(local_pred, best_ref)
+                for i in range(1, len(local_refs)):
+                    comp_score = self.comparator(local_pred, local_refs[i])
+                    if comp_score > best_ref_score:
+                        best_ref_score = comp_score
+                        best_ref = local_refs[i]
+                if self.is_global_cooked_from_locals:
+                    stream_refs_preds.append(best_ref_score)
+                else:
+                    stream_refs_preds.append((best_ref, local_pred))
+            # now produce the overall metric for the stream
+            if (
+                self.is_global_cooked_from_locals
+            ):  # stream_refs_preds is a list of score
+                global_res = self.global_metric(stream_refs_preds)
+
+            else:  # stream_refs_preds is a list of pairs (r, p)
+                refs = [r for r, p in stream_refs_preds]
+                preds = [p for r, p in stream_refs_preds]
+                if self.wrapper_of_args_for_global_metric is not None:
+                    global_res = self.global_metric(
+                        **eval(
+                            self.wrapper_of_args_for_global_metric,
+                            None,
+                            {"refs": refs, "preds": preds},
+                        )
+                    )
+                else:
+                    global_res = self.global_metric(refs, preds)
+            # now spread the new score in all instances, appending it to the end of the list they have in field "metrics"
+            # current_metrics.append(global_metric_score)
+            updatemetrics = AddFields(
+                fields={
+                    "metrics_scores/"
+                    + stream_name
+                    + "_"
+                    + self.global_metric_name: global_res
+                },
+                use_query=True,
+            )
+
+            ms_to_return[stream_name] = updatemetrics._process_single_stream(
+                stream, stream_name
+            )
+        return MultiStream.from_iterables(ms_to_return)
+
+
 class FilterByCondition(SingleStreamOperator):
     """Filters a stream, yielding only instances for which the required values follows the required condition operator.
 

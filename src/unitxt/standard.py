@@ -12,6 +12,7 @@ from .operators import (
     StreamRefiner,
 )
 from .recipe import Recipe
+from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template
@@ -26,6 +27,16 @@ class CreateDemosPool(SeparateSplit):
 
 class AddDemosField(SpreadSplit):
     pass
+
+
+class NaiveRecipe(SourceSequentialOperator):
+    card: TaskCard
+
+    def prepare(self):
+        _reset_env_local_catalogs()
+        register_all_artifacts()
+        self.steps = [self.card.loader]
+        self.steps.extend(self.card.preprocess_steps)
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
