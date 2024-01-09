@@ -10,7 +10,7 @@ class Tasker:
 class FormTask(Tasker, StreamInstanceOperator):
     inputs: List[str]
     outputs: List[str]
-    metrics: List[str]
+    metrics: List[str] = None
     augmentable_inputs: List[str] = []
 
     def verify(self):

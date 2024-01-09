@@ -11,7 +11,7 @@ from .task import FormTask
 
 class TaskCard(Artifact):
     loader: Loader
-    task: FormTask
+    task: FormTask = None
     preprocess_steps: List[StreamingOperator] = None
     templates: Collection = None
     instructions: Collection = None

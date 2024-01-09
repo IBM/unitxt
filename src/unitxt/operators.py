@@ -41,6 +41,7 @@ from collections import Counter
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
+from math import isclose, sqrt
 from random import Random
 from typing import (
     Any,
@@ -54,9 +55,12 @@ from typing import (
     Union,
 )
 
+import sklearn.metrics
+
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .logging_utils import get_logger
 from .operator import (
     MultiStream,
     MultiStreamOperator,
@@ -1127,6 +1131,258 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         # we now have a list of nanes of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
         return operator.process_instance(instance)
+
+
+class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
+    """computes a metric for classification results along (all) instances of each stream in the nultistream.
+
+    Input arg 'refs_field_name' specifies the field that contains references: list of potential classes for every instance.
+    Input arg 'refs_field_name' specifies the field that contains the prediction (made by the evaluated classifier) which is a single class.
+
+    The operator first gathers the confusion matrix from the input stream, and then feed it to a
+    compute_classification_score_from_confusion_matrix that is implemented by the various extensions of this class.
+
+    finally, this operator spreads the computed score over every instances of the stream, named by the metric name
+    specified by arg 'global_metric_name'
+
+    """
+
+    pred_field_name: str = "prediction"
+    refs_field_name: str = "references"
+    global_metric_names: List[
+        str
+    ] = None  # or a lambda expression that receives a vector of either singles or pairs, that comparator generates for it
+
+    def verify(self):
+        assert (
+            self.global_metric_names is not None
+            and isoftype(self.global_metric_names, List[str])
+            and len(self.global_metric_names) > 0
+        ), "'metric_name' is the essence of this operator, should not be none"
+
+    def prepare(self):
+        self.dispatcher = {
+            "metrics.matthews_correlation": self.compute_matthews_correlation_coefficient_from_confusion_matrix,
+            "metrics.f1_micro": self.compute_f1_micro_from_confusion_matrix,
+            "metrics.f1_macro": self.compute_f1_macro_from_confusion_matrix,
+            "metrics.accuracy": self.compute_f1_micro_from_confusion_matrix,
+        }  # accuracy is same as f1_micro
+        self.logger = get_logger()
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        ms_to_return = {}
+        for stream_name, stream in multi_stream.items():
+            conf_mat_counter = Counter()
+            for instance in stream:
+                if (
+                    self.pred_field_name not in instance
+                    or self.refs_field_name not in instance
+                    or instance[self.pred_field_name] is None
+                    or instance[self.refs_field_name] is None
+                    or not isinstance(instance[self.refs_field_name], list)
+                    or len(instance[self.refs_field_name]) == 0
+                ):
+                    raise ValueError(
+                        f"Prediction field '{self.pred_field_name}', or reference field '{self.refs_field_name}' are not in the expected format in instance {instance}"
+                    )
+
+                conf_mat_counter.update(
+                    [
+                        (r, instance[self.pred_field_name])
+                        for r in instance[self.refs_field_name]
+                    ]
+                )
+            # now produce the overall, global metric for the stream, for all metrics requested
+            fields = {}
+            for metric_name in self.global_metric_names:
+                scorer = self.dispatcher[metric_name]
+                score = scorer(conf_mat_counter)
+                fields[
+                    "global_metrics_scores_computed_per_stream/"
+                    + stream_name
+                    + "/"
+                    + metric_name
+                ] = score
+
+            # now spread the new score in all instances of the stream
+            updatemetrics = AddFields(fields=fields, use_query=True)
+            ms_to_return[stream_name] = updatemetrics._process_single_stream(
+                stream, stream_name
+            )
+
+        return MultiStream.from_iterables(ms_to_return)
+
+    def compute_matthews_correlation_coefficient_from_confusion_matrix(
+        self, conf_mat: Counter
+    ) -> Any:
+        # follow https://dwbi1.wordpress.com/2022/10/05/mcc-formula-for-multiclass-classification/   that follows scikit-learn
+        classes = list({r for r, p in conf_mat.keys()})  # true classes
+        predictions = list(
+            {p for r, p in conf_mat.keys()}
+        )  # predictions, could also be a super set or a subset of classes
+        intersect = [r for r in classes if r in predictions]
+        tk = {
+            ref: sum(conf_mat[(r, p)] for r, p in conf_mat.keys() if r == ref)
+            for ref in classes
+        }
+        tksquared = sum(tk[ref] * tk[ref] for ref in tk.keys())
+        pk = {
+            pred: sum(conf_mat[(r, p)] for r, p in conf_mat.keys() if p == pred)
+            for pred in predictions
+        }
+        pksquared = sum(pk[pred] * pk[pred] for pred in pk.keys())
+
+        c = sum(conf_mat[(r, r)] for r in classes)
+        s = sum(conf_mat.values())
+        nominator = s * c - sum(tk[c] * pk[c] for c in intersect)
+        denominator = sqrt(float(s * s - pksquared)) * sqrt(float(s * s - tksquared))
+
+        originals = list(
+            conf_mat.elements()
+        )  # list of pairs (r,p) as were accumulated in the main class
+        refs = [r for r, p in originals]
+        preds = [p for r, p in originals]
+
+        sklearn_mcc = sklearn.metrics.matthews_corrcoef(refs, preds)
+        self.logger.info(sklearn_mcc)
+        self.logger.info(f"nominator = {nominator} and denominator = {denominator}")
+        if isclose(nominator, 0.0) and isclose(denominator, 0.0):
+            mcc = 0.0
+        else:
+            mcc = nominator / denominator
+        self.logger.info(mcc)
+        assert isclose(mcc, sklearn_mcc), "not a good implementation"
+        return mcc
+
+    def compute_f1_micro_from_confusion_matrix(self, conf_mat: Counter) -> Any:
+        # e.g. from here: https://www.baeldung.com/cs/multi-class-f1-score
+        # or from here: https://iamirmasoud.com/2022/06/19/understanding-micro-macro-and-weighted-averages-for-scikit-learn-metrics-in-multi-class-classification-with-example/
+        overall_true_positive = sum(
+            conf_mat[r, p] for r, p in conf_mat.keys() if r == p
+        )
+        over_all_numof_instances = sum(conf_mat.values())
+        precision = float(overall_true_positive) / float(over_all_numof_instances)
+        # for micro, overall_precision == overall_recall, we thus have:
+        # our_micro_f1 = 2 * precision * precision / (precision + precision) = precision
+        # as nicely explained here:
+        # https://simonhessner.de/why-are-precision-recall-and-f1-score-equal-when-using-micro-averaging-in-a-multi-class-problem/
+        our_f1_micro = precision
+        self.logger.info(our_f1_micro)
+        originals = list(
+            conf_mat.elements()
+        )  # list of pairs (r,p) as were accumulated in the main class
+        refs = [r for r, p in originals]
+        preds = [p for r, p in originals]
+
+        sklearn_f1_micro = sklearn.metrics.f1_score(refs, preds, average="micro")
+        self.logger.info(sklearn_f1_micro)
+
+        assert isclose(our_f1_micro, sklearn_f1_micro), "not a good implementation"
+        assert isclose(
+            our_f1_micro, sklearn.metrics.accuracy_score(refs, preds)
+        ), "not a good implementation"
+
+        return our_f1_micro
+
+    def compute_f1_macro_from_confusion_matrix(self, conf_mat: Counter) -> Any:
+        # e.g. from here: https://www.baeldung.com/cs/multi-class-f1-score
+        # or from here: https://iamirmasoud.com/2022/06/19/understanding-micro-macro-and-weighted-averages-for-scikit-learn-metrics-in-multi-class-classification-with-example/
+
+        true_classes = list({r for r, p in conf_mat.keys()})  # true classes
+        predictions = list(
+            {p for r, p in conf_mat.keys()}
+        )  # predictions, could also be a super set or a subset of classes
+        intersect = [r for r in true_classes if r in predictions]
+        precision = {
+            pred: float(conf_mat[(pred, pred)])
+            / float(sum(conf_mat[(r, p)] for r, p in conf_mat.keys() if p == pred))
+            for pred in intersect
+        }
+        recall = {
+            ref: float(conf_mat[(ref, ref)])
+            / float(sum(conf_mat[(r, p)] for r, p in conf_mat.keys() if r == ref))
+            for ref in intersect
+        }
+
+        f1 = {
+            c: 2 * precision[c] * recall[c] / (precision[c] + recall[c])
+            for c in intersect
+        }
+        # for classes that never showed in any prediction, we have recall = 0,
+        # and for classes that only showed as predictions (string-perturbated of class name) we have precision == 0
+        # at any rate, these deserve f1 = 0, to contribute to average..
+        f1.update({c: 0 for c in predictions if c not in intersect})
+        f1.update({c: 0 for c in true_classes if c not in intersect})
+        our_f1_macro = sum(f1.values()) / float(
+            len(f1)
+        )  # un weighted average over the classes
+        self.logger.info(our_f1_macro)
+
+        originals = list(
+            conf_mat.elements()
+        )  # list of pairs (r,p) as were accumulated in the main class
+        refs = [r for r, p in originals]
+        preds = [p for r, p in originals]
+
+        sklearn_f1_macro = sklearn.metrics.f1_score(refs, preds, average="macro")
+        self.logger.info(sklearn_f1_macro)
+
+        assert isclose(our_f1_macro, sklearn_f1_macro), "not a good implementation"
+
+        return our_f1_macro
+
+
+class Perturbate(FieldOperator):
+    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+
+    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    relevant perturbation
+    """
+
+    select_from: List[Any] = []
+    percentage_to_perturbate: int = 1  # 1 percent
+
+    def verify(self):
+        assert (
+            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
+        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+
+    def prepare(self):
+        super().prepare()
+        self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
+        self.can_select_from = len(self.select_from) > 1
+
+    def process_value(self, value: Any) -> Any:
+        perturbate = (
+            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
+        )
+        if not perturbate:
+            return value
+
+        if value in self.select_from and self.can_select_from:
+            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            if self.random_generator.random() < 0.8:
+                return self.random_generator.choice(
+                    [v for v in self.select_from if v != value]
+                )
+
+        if isinstance(value, float):
+            return value * (0.5 + self.random_generator.random())
+
+        if isinstance(value, int):
+            perturb = 1 if self.random_generator.random() < 0.5 else -1
+            return value + perturb
+
+        if isinstance(value, str):
+            if len(value) < 2:
+                # give up perturbation
+                return value
+            # throw one char out
+            prefix_len = self.random_generator.randint(1, len(value) - 1)
+            return value[:prefix_len] + value[prefix_len + 1 :]
+
+        # and in any other case:
+        return value
 
 
 class FilterByCondition(SingleStreamOperator):
