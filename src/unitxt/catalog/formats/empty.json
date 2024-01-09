@@ -1,3 +1,5 @@
 {
-    "type": "system_format"
+    "type": "system_format",
+    "demo_format": "{source}\n {target}\n\n",
+    "model_input_format": "{instruction}{demos}{source}\n"
 }
