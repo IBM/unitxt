@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 from unitxt.artifact import Artifact
 from unitxt.utils import load_json
@@ -56,6 +57,9 @@ def make_content(artifact, label, all_labels=None):
         + "\n"
     )
 
+    if artifact_class.__doc__:
+        result += artifact_class.__doc__ + "\n"
+
     references = []
     for label in all_labels:
         if f'"{label}"' in result:
@@ -72,14 +76,15 @@ def build_catalog_rst():
     start_directory = os.path.join(current_dir, "..", "src", "unitxt", "catalog")
 
     for path, is_dir, _ in custom_walk(start_directory):
-        rel_path = path.replace(start_directory, "")
+        rel_path = path.replace(start_directory + "/", "")
         if not is_dir and ".json" in rel_path:
             rel_path = rel_path.replace(".json", "")
-            label = rel_path.replace("/", ".")[1:]
+            label = rel_path.replace("/", ".")
             all_labels.add(label)
 
+    current_directory = os.path.dirname(os.path.abspath(__file__))
     for path, is_dir, depth in custom_walk(start_directory):
-        rel_path = path.replace(start_directory, "")
+        rel_path = path.replace(start_directory + "/", "")
         if is_dir:
             prints.append(
                 write_title(
@@ -89,15 +94,26 @@ def build_catalog_rst():
         else:
             if ".json" in rel_path:
                 artifact = load_json(path)
-                label = rel_path.replace("/", ".")[1:]
+                label = rel_path.replace("/", ".")
                 content = make_content(artifact, label, all_labels)
                 section = write_section(
                     rel_path.split("/")[-1], content, label, depth + 1
                 )
-                prints.append(section)
 
-    current_directory = os.path.dirname(os.path.abspath(__file__))
+                artifact_doc_path = os.path.join(
+                    current_directory,
+                    os.path.dirname(rel_path),
+                    Path(rel_path).stem + ".rst",
+                )
+                Path(artifact_doc_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(artifact_doc_path, "w+") as f:
+                    f.write(section)
+
     target_file = os.path.join(current_directory, "catalog.rst")
 
     with open(target_file, "w+") as f:
         f.write("\n\n".join(prints))
+
+
+if __name__ == "__main__":
+    build_catalog_rst()
