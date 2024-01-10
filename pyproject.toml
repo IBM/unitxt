@@ -43,6 +43,7 @@ target-version = "py38"
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]
 "docs/conf.py" = ["E402"]
+"prepare/instructions/models/llama.py" = ["RUF001"]
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
