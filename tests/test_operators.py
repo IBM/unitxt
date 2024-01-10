@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Any, Dict
 
 from src.unitxt import add_to_catalog
+from src.unitxt.formats import SystemFormat
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
@@ -43,7 +44,6 @@ from src.unitxt.operators import (
     ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
-    SystemFormat,
     TakeByField,
     Unique,
     ZipFieldValues,
