@@ -42,9 +42,7 @@ def custom_walk(top, depth=0):
             yield (entry.path, False, depth)
 
 
-def make_content(artifact, label, all_labels=None):
-    if all_labels is None:
-        all_labels = {}
+def make_content(artifact, label, all_labels):
     artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
     class_name = artifact_class.__name__
