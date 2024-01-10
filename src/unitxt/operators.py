@@ -1269,24 +1269,24 @@ class FilterByQuery(SingleStreamOperator):
     Raises an error if a field for which a condition is specified is missing from the instance
 
     Args:
-       queries (List[str]): a list of conditions encoded as strings, that are to be processed by python's eval()
+       query (str): a condition over fields of the instance, to be processed by python's eval()
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(lambda_conditions = {"a > 4"}) will yield only instances where "a">4
-       FilterByCondition(lambda_conditions = {"a <= 4"}) will yield only instances where "a"<=4
-       FilterByCondition(lambda_conditions = {"a in [4, 8]"}) will yield only instances where "a" is 4 or 8
-       FilterByCondition(lambda_conditions = {"a not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
+       FilterByQuery(query = {"a > 4"}) will yield only instances where "a">4
+       FilterByQuery(query = {"a <= 4 and b > 5"}) will yield only instances where field 'a' has a value not exceeding 4 and field 'b' has a value greater than 5
+       FilterByQuery(query = {"a in [4, 8]"}) will yield only instances where "a" is 4 or 8
+       FilterByQuery(query = {"a not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
 
     """
 
-    queries: List[str]
+    query: str
     error_on_filtered_all: bool = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
         for instance in stream:
-            if self._is_required(instance):
+            if eval(self.query, None, instance):
                 yielded = True
                 yield instance
 
@@ -1295,53 +1295,35 @@ class FilterByQuery(SingleStreamOperator):
                 f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
             )
 
-    def _is_required(self, instance: dict) -> bool:
-        for query in self.queries:
-            is_instance_ok = eval(query, None, instance)
-            if not is_instance_ok:
-                return False
-
-        return True
-
 
 class ExecuteQuery(StreamInstanceOperator):
-    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in the associated to_field.
+    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
 
     Args:
-       queries_to_fields (List[List[str]]): inner lists of length 2, a mapping from queries to field names. Execution
-       follows the order of the outer list.
+       query (str): an expression to be evaluated over the fields of the instance
+       to_field (str): the field where the result is to be stored into
 
     Examples:
        When instance {"a": 2, "b": 3} is process-ed by operator
-       ExecuteQuery(queries_to_fields =  [["a+b", "c"],["c+10", "d"]])
-       the result is {"a": 2, "b": 3, "c": 5, "d": 15}
+       ExecuteQuery(query="a+b", to_field = "c")
+       the result is {"a": 2, "b": 3, "c": 5}
 
        When instance {"a": "hello", "b": "world"} is process-ed by operator
-       ExecuteQuery(queries_to_fields = [["a+' '+b", "c"]])
+       ExecuteQuery(query = "a+' '+b", to_field = "c")
        the result is {"a": "hello", "b": "world", "c": "hello world"}
 
     """
 
-    queries_to_fields: List[List[str]]
+    query: str
+    to_field: str
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        for query, to_field in self.queries_to_fields:
-            val = eval(query, None, instance)
-            instance[to_field] = val
+        instance[self.to_field] = eval(self.query, None, instance)
         return instance
-
-    def verify(self):
-        assert isoftype(
-            self.queries_to_fields, List[List[str]]
-        ), f"Arg 'queries_to_fields' should be of type List[List[str]]. However, arg is {self.queries_to_fields}."
-        for inner in self.queries_to_fields:
-            assert (
-                len(inner) == 2
-            ), f"Inner lists in arg 'queries_to_fields' should be of length 2. Received this inner list: {inner}."
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
