@@ -13,7 +13,7 @@ from scipy.stats import bootstrap
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,

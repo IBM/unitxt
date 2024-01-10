@@ -1,7 +1,8 @@
 import unittest
 from math import isnan
 
-from src.unitxt.logging import get_logger
+from unitxt.logging_utils import get_logger
+
 from src.unitxt.metrics import (
     Accuracy,
     F1Macro,

@@ -3,8 +3,9 @@ import importlib.util
 import os
 import unittest
 
+from unitxt.logging_utils import get_logger
+
 from src.unitxt.loaders import MissingKaggleCredentialsError
-from src.unitxt.logging import get_logger
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 logger = get_logger()

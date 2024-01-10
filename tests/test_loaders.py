@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
+from unitxt.logging_utils import get_logger
 
 from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
-from src.unitxt.logging import get_logger
 
 logger = get_logger()
 

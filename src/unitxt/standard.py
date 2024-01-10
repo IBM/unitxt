@@ -3,7 +3,7 @@ from typing import List
 from .card import TaskCard
 from .dataclass import Field, InternalField, OptionalField
 from .instructions import EmptyInstruction, Instruction
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import (
     Augmentor,
