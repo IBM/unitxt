@@ -1,0 +1,5 @@
+{
+    "type": "perplexity",
+    "model_name": "google/flan-t5-small",
+    "perplexity_prompt": "Generate a question based on the given content:"
+}
