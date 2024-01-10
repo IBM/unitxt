@@ -70,7 +70,6 @@ def make_content(artifact, label, all_labels=None):
 
 
 def build_catalog_rst():
-    prints = [write_title("Catalog", "catalog", 0)]
     all_labels = set()
     current_dir = os.path.dirname(__file__)
     start_directory = os.path.join(current_dir, "..", "src", "unitxt", "catalog")
@@ -86,10 +85,8 @@ def build_catalog_rst():
     for path, is_dir, depth in custom_walk(start_directory):
         rel_path = path.replace(start_directory + "/", "")
         if is_dir:
-            prints.append(
-                write_title(
-                    rel_path.split("/")[-1], rel_path.replace("/", "."), depth + 1
-                )
+            create_dir_contents_rst(
+                start_directory, current_directory, path, rel_path, depth
             )
         else:
             if ".json" in rel_path:
@@ -109,10 +106,35 @@ def build_catalog_rst():
                 with open(artifact_doc_path, "w+") as f:
                     f.write(section)
 
-    target_file = os.path.join(current_directory, "catalog.rst")
+    create_dir_contents_rst(
+        start_directory,
+        current_directory,
+        dir_path=start_directory,
+        rel_path="catalog",
+        depth=0,
+    )
 
-    with open(target_file, "w+") as f:
-        f.write("\n\n".join(prints))
+
+def create_dir_contents_rst(
+    start_directory, current_directory, dir_path, rel_path, depth
+):
+    dir_doc_path = os.path.join(
+        current_directory,
+        rel_path + ".rst",
+    )
+    title = rel_path.split("/")[-1]
+    if title:
+        title = f"{title[0].upper()}{title[1:]}"
+    label = rel_path.replace("/", ".")
+    dir_doc_content = write_title(title, label, depth + 1)
+
+    for dir_entry in os.scandir(dir_path):
+        sub_rel_path = dir_entry.path.replace(start_directory + "/", "")
+        sub_label = sub_rel_path.replace("/", ".")
+        sub_name = os.path.basename(dir_entry.path)
+        dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n\n"
+    with open(dir_doc_path, "w+") as f:
+        f.write(dir_doc_content)
 
 
 if __name__ == "__main__":
