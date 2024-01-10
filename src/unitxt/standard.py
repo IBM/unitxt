@@ -1,12 +1,11 @@
 from typing import List
 
 from .card import TaskCard
-from .dataclass import InternalField, OptionalField
-from .instructions import Instruction
+from .dataclass import Field, InternalField, OptionalField
+from .instructions import EmptyInstruction, Instruction
 from .logging import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import (
-    AddFields,
     Augmentor,
     NullAugmentor,
     StreamRefiner,
@@ -32,8 +31,8 @@ class AddDemosField(SpreadSplit):
 class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
-    instruction: Instruction = None
-    format: SystemFormat = SystemFormat()
+    instruction: Instruction = Field(default_factory=EmptyInstruction)
+    format: SystemFormat = Field(default_factory=SystemFormat)
 
     loader_limit: int = None
 
@@ -149,7 +148,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.steps.append(self.test_refiner)
 
-        # the 4 constituents of StandardRenderer:
         self.steps.append(self.template)
         if self.num_demos > 0:
             self.steps.append(
@@ -159,17 +157,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     sampler=self.sampler,
                 )
             )
-        self.steps.append(
-            AddFields(
-                fields={
-                    "instruction": self.instruction()
-                    if self.instruction is not None
-                    else ""
-                }
-            )
-        )
+        self.steps.append(self.instruction)
         self.steps.append(self.format)
-
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
