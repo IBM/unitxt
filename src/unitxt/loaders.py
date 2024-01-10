@@ -10,7 +10,7 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import SourceOperator
 from .stream import MultiStream, Stream
 

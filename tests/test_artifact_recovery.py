@@ -1,11 +1,12 @@
 import unittest
 
+from unitxt.logging_utils import get_logger
+
 from src.unitxt.artifact import (
     Artifact,
     MissingArtifactTypeError,
     UnrecognizedArtifactTypeError,
 )
-from src.unitxt.logging import get_logger
 
 logger = get_logger()
 

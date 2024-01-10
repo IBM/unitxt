@@ -1,7 +1,7 @@
 import json
 from typing import Any, List, Optional
 
-from ..logging import get_logger
+from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..stream import MultiStream
 from ..type_utils import isoftype
