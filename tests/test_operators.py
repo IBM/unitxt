@@ -518,7 +518,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(queries=["a == 1 and b == 3"]),
+            operator=FilterByQuery(query="a == 1 and b == 3"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -532,7 +532,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByQuery(queries=["c == 5"]),
+            operator=FilterByQuery(query="c == 5"),
             inputs=inputs,
             exception_text="name 'c' is not defined",
             tester=self,
@@ -552,7 +552,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(queries=["a != 1 and b != 2"]),
+            operator=FilterByQuery(query="a != 1 and b != 2"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -572,7 +572,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(queries=["a>1"]),
+            operator=FilterByQuery(query="a>1"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -600,7 +600,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(queries=["b not in [3, 4]"]),
+            operator=FilterByQuery(query="b not in [3, 4]"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -627,10 +627,7 @@ class TestOperators(unittest.TestCase):
         )
         check_operator(
             operator=FilterByQuery(
-                queries=[
-                    "b not in [3, 4]",
-                    "a not in [1]",
-                ],
+                query="b not in [3, 4] and a not in [1]",
                 error_on_filtered_all=False,
             ),
             inputs=inputs,
@@ -639,10 +636,7 @@ class TestOperators(unittest.TestCase):
         )
         check_operator_exception(
             operator=FilterByQuery(
-                queries=[
-                    "b not in [3, 4]",
-                    "a not in [1]",
-                ],
+                query="b not in [3, 4] and a not in [1]",
                 error_on_filtered_all=True,
             ),
             inputs=inputs,
@@ -669,7 +663,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(queries=["b in [3, 4]"]),
+            operator=FilterByQuery(query="b in [3, 4]"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -697,6 +691,14 @@ class TestOperators(unittest.TestCase):
             str(cm.exception),
             "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
         )
+        with self.assertRaises(Exception) as ne:
+            check_operator(
+                operator=FilterByQuery(query="c in ['5']"),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual("name 'c' is not defined", str(ne.exception))
 
     def test_filter_by_condition_error_when_the_entire_stream_is_filtered(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -716,14 +718,14 @@ class TestOperators(unittest.TestCase):
 
     def test_execute_query(self):
         inputs = [{"a": 2, "b": 3}]
-        operator = ExecuteQuery(queries_to_fields=[["a+b", "c"], ["c+10", "d"]])
-        targets = [{"a": 2, "b": 3, "c": 5, "d": 15}]
+        operator = ExecuteQuery(query="a+b", to_field="c")
+        targets = [{"a": 2, "b": 3, "c": 5}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         inputs = [{"a": "hello", "b": "world"}]
-        operator = ExecuteQuery(queries_to_fields=[["a+' '+b", "c"]])
+        operator = ExecuteQuery(query="a+' '+b", to_field="c")
         targets = [{"a": "hello", "b": "world", "c": "hello world"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
-        operator = ExecuteQuery(queries_to_fields=[["f'{a} {b}'", "c"]])
+        operator = ExecuteQuery(query="f'{a} {b}'", to_field="c")
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         with self.assertRaises(ValueError) as ve:
             check_operator(
@@ -736,32 +738,6 @@ class TestOperators(unittest.TestCase):
             "Error processing instance '0' from stream 'test' in ExecuteQuery due to: name 'a' is not defined",
             str(ve.exception),
         )
-        with self.assertRaises(AssertionError) as ae:
-            operator = ExecuteQuery(queries_to_fields=["a", "b"])
-        self.assertEqual(
-            "Arg 'queries_to_fields' should be of type List[List[str]]. However, arg is ['a', 'b'].",
-            str(ae.exception),
-        )
-        with self.assertRaises(AssertionError) as ae:
-            operator = ExecuteQuery(queries_to_fields=[["a", "b", "c"]])
-        self.assertEqual(
-            "Inner lists in arg 'queries_to_fields' should be of length 2. Received this inner list: ['a', 'b', 'c'].",
-            str(ae.exception),
-        )
-        inputs = [
-            {
-                "labels": ["person", "location", "person"],
-                "entity": ["Jane", "New York", "John"],
-            }
-        ]
-        operator = ExecuteQuery(
-            queries_to_fields=[
-                ['[e for l,e in zip(labels, entity) if l=="person"]', "entity"],
-                ['[l for l in labels if l == "person"]', "labels"],
-            ]
-        )
-        targets = [{"labels": ["person", "person"], "entity": ["Jane", "John"]}]
-        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
 
     def test_intersect(self):
         inputs = [
