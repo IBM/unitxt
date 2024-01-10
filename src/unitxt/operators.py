@@ -1264,19 +1264,19 @@ class FilterByCondition(SingleStreamOperator):
 
 
 class FilterByQuery(SingleStreamOperator):
-    """Filters a stream, yielding only instances which fulfil all the conditions specified as strings to be python's eval-uated.
+    """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
 
-    Raises an error if a field for which a condition is specified is missing from the instance
+    Raises an error if a field participating in the specified condition is missing from the instance
 
     Args:
        query (str): a condition over fields of the instance, to be processed by python's eval()
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByQuery(query = {"a > 4"}) will yield only instances where "a">4
-       FilterByQuery(query = {"a <= 4 and b > 5"}) will yield only instances where field 'a' has a value not exceeding 4 and field 'b' has a value greater than 5
-       FilterByQuery(query = {"a in [4, 8]"}) will yield only instances where "a" is 4 or 8
-       FilterByQuery(query = {"a not in [4, 8]"}) will yield only instances where "a" is neither 4 nor 8
+       FilterByQuery(query = "a > 4") will yield only instances where "a">4
+       FilterByQuery(query = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
+       FilterByQuery(query = "a in [4, 8]") will yield only instances where "a" is 4 or 8
+       FilterByQuery(query = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
 
     """
 
