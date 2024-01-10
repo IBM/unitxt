@@ -1,0 +1,5 @@
+{
+    "type": "perplexity",
+    "model_name": "google/flan-t5-small",
+    "perplexity_prompt": "Complete the given content:"
+}
