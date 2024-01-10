@@ -203,9 +203,9 @@ test(perplexity_answer, a_instances, a_global)
 test(perplexity_chat, chat_instances, chat_global)
 test(perplexity_chat_bloom, chat_instances_bloom, chat_global_bloom)
 
-add_to_catalog(perplexity, "metrics.perplexity.flan.t5.small", overwrite=True)
+add_to_catalog(perplexity, "metrics.perplexity.flan_t5_small", overwrite=True)
 add_to_catalog(
-    perplexity_question, "metrics.perplexity_q.flan.t5.small", overwrite=True
+    perplexity_question, "metrics.perplexity_q.flan_t5_small", overwrite=True
 )
-add_to_catalog(perplexity_answer, "metrics.perplexity_a.flan.t5.small", overwrite=True)
-add_to_catalog(perplexity_chat, "metrics.perplexity_chat.flan.t5.small", overwrite=True)
+add_to_catalog(perplexity_answer, "metrics.perplexity_a.flan_t5_small", overwrite=True)
+add_to_catalog(perplexity_chat, "metrics.perplexity_chat.flan_t5_small", overwrite=True)
