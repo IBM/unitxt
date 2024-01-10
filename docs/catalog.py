@@ -5,41 +5,29 @@ from pathlib import Path
 from unitxt.artifact import Artifact
 from unitxt.utils import load_json
 
-depth_levels = ["=", "-", "^", '"', "'", "~", "*", "+", "#", "_"]
 
-
-def write_section(title, content, label, depth):
-    if depth < 0 or depth > len(depth_levels) - 1:
-        raise ValueError(
-            f"Depth should be between 0 and {len(depth_levels)}, Got {depth}"
-        )
-
-    underline_char = depth_levels[depth]
+def write_section(title, content, label):
+    underline_char = "-"
     underline = underline_char * len(title)
     return (
         f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n{content}\n\n|\n|\n\n"
     )
 
 
-def write_title(title, label, depth):
-    if depth < 0 or depth > len(depth_levels) - 1:
-        raise ValueError(
-            f"Depth should be between 0 and {len(depth_levels)}, Got {depth}"
-        )
-
-    underline_char = depth_levels[depth]
+def write_title(title, label):
+    underline_char = "-"
     underline = underline_char * len(title)
 
     return f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n"
 
 
-def custom_walk(top, depth=0):
+def custom_walk(top):
     for entry in os.scandir(top):
         if entry.is_dir():
-            yield (entry.path, True, depth)
-            yield from custom_walk(entry.path, depth + 1)
+            yield (entry.path, True)
+            yield from custom_walk(entry.path)
         else:
-            yield (entry.path, False, depth)
+            yield (entry.path, False)
 
 
 def make_content(artifact, label, all_labels):
@@ -72,7 +60,7 @@ def build_catalog_rst():
     current_dir = os.path.dirname(__file__)
     start_directory = os.path.join(current_dir, "..", "src", "unitxt", "catalog")
 
-    for path, is_dir, _ in custom_walk(start_directory):
+    for path, is_dir in custom_walk(start_directory):
         rel_path = path.replace(start_directory + "/", "")
         if not is_dir and ".json" in rel_path:
             rel_path = rel_path.replace(".json", "")
@@ -80,20 +68,16 @@ def build_catalog_rst():
             all_labels.add(label)
 
     current_directory = os.path.dirname(os.path.abspath(__file__))
-    for path, is_dir, depth in custom_walk(start_directory):
+    for path, is_dir in custom_walk(start_directory):
         rel_path = path.replace(start_directory + "/", "")
         if is_dir:
-            create_dir_contents_rst(
-                start_directory, current_directory, path, rel_path, depth
-            )
+            create_dir_contents_rst(start_directory, current_directory, path, rel_path)
         else:
             if ".json" in rel_path:
                 artifact = load_json(path)
                 label = rel_path.replace("/", ".")
                 content = make_content(artifact, label, all_labels)
-                section = write_section(
-                    rel_path.split("/")[-1], content, label, depth + 1
-                )
+                section = write_section(rel_path.split("/")[-1], content, label)
 
                 artifact_doc_path = os.path.join(
                     current_directory,
@@ -109,13 +93,10 @@ def build_catalog_rst():
         current_directory,
         dir_path=start_directory,
         rel_path="catalog",
-        depth=0,
     )
 
 
-def create_dir_contents_rst(
-    start_directory, current_directory, dir_path, rel_path, depth
-):
+def create_dir_contents_rst(start_directory, current_directory, dir_path, rel_path):
     dir_doc_path = os.path.join(
         current_directory,
         rel_path + ".rst",
@@ -124,7 +105,7 @@ def create_dir_contents_rst(
     if title:
         title = f"{title[0].upper()}{title[1:]}"
     label = rel_path.replace("/", ".")
-    dir_doc_content = write_title(title, label, depth + 1)
+    dir_doc_content = write_title(title, label)
 
     for dir_entry in os.scandir(dir_path):
         sub_rel_path = dir_entry.path.replace(start_directory + "/", "")
