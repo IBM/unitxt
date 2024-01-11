@@ -6,18 +6,19 @@ data = load_cards_data()
 tasks = gr.Dropdown(choices=data.keys(), label="Task")
 cards = gr.Dropdown(choices=[], label="Dataset Card")
 templates = gr.Dropdown(choices=[],label='Template')
-instructions = gr.Dropdown(choices=get_catalog_items('instructions'), label='Instruction')
-formats = gr.Dropdown(choices=get_catalog_items('formats'),label='Format')
+instructions = gr.Dropdown(choices=[None]+get_catalog_items('instructions'), label='Instruction')
+formats = gr.Dropdown(choices=[None]+get_catalog_items('formats'),label='Format')
 num_shots = gr.Slider(minimum=0,maximum=5,step=1,label='Num Shots')
-augmentors = gr.Dropdown(choices=get_catalog_items('augmentors'),label='Augmentor')
+augmentors = gr.Dropdown(choices=[None]+get_catalog_items('augmentors'),label='Augmentor')
 
 parameters = [tasks,cards,templates,instructions, formats, num_shots, augmentors]
-
-
-#TODO - avoid error in dataset when task is cleared
-#TODO - allow changing to None in each dropdown
-#TODO - move between samples
+# where is summarization?
 #TODO - allow choosing augmentor only when possible
+#TODO - cache issue of remembering previous choice
+#TODO - minimize code to copy
+#TODO - move between samples
+# color parts of the prompt
+
 #TODO - add model, output, score etc.
 # if no train, choose test (add to ui?)
 # augmentor as additional option
@@ -63,7 +64,10 @@ def build_command(prompt_data):
     return command
 
 def get_datasets(task_choice):
-    return gr.update(choices=data[task_choice].keys())
+    if isinstance(task_choice,str):
+        if task_choice in data:
+            return gr.update(choices=data[task_choice].keys())
+    return gr.update(choices=[])
 
 
 def get_templates(task_choice, dataset_choice):
@@ -71,9 +75,8 @@ def get_templates(task_choice, dataset_choice):
         return gr.update(choices = [],value = None)
     return gr.update(choices = data[task_choice][dataset_choice])
 
+################################
 demo = gr.Blocks()
-
-
 
 with demo:
     tasks.change(get_datasets,inputs=tasks,outputs=cards)
