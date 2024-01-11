@@ -30,24 +30,24 @@ def load_cards_data():
         return True
 
     cards_data = dict()
-    cards_dir = os.path.join(cons.CATALOG_DIR,'cards')
-    cards = get_all_files_in_dir(cards_dir,recursive=True)
+    cards = get_catalog_items('cards')
     for card in cards:
-        data = load_json(card)
+        data = load_json(get_file_from_item_name(card))
         if not is_valid_data(data):
-            continue
-        dataset = f"cards.{os.path.basename(card)}".replace('.json','')        
+            continue      
         task = data['task']
         is_augmentable = check_augmentable(task)
         templates = get_templates(data['templates'])
-        cards_data.setdefault(task,{}).update({dataset:templates,cons.AUGMENTABLE:is_augmentable})
+        cards_data.setdefault(task,{}).update({card:templates,cons.AUGMENTABLE:is_augmentable})
     return cards_data
 
 def check_augmentable(task_name):
-    task_file = os.path.join(cons.CATALOG_DIR,task_name.replace('.',os.sep)+'.json')
+    task_file = get_file_from_item_name(task_name)
     task_data = load_json(task_file)
     return cons.AUGMENTABLE in task_data
 
+def get_file_from_item_name(item_name):
+    return os.path.join(cons.CATALOG_DIR,item_name.replace('.',os.sep)+'.json')
 
 def get_catalog_items(items_type):
     items = []
