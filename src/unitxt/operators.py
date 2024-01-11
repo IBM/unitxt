@@ -1045,7 +1045,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
             a list of values, each of which is to be processed.
         operators_field (str): name of the field that contains the list of names of the operators to be applied,
-            one after the other, for the processing.
+            one after the other, for the processing. Operators are all (extensions of) FieldOperator
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
 
     Example:
@@ -1078,9 +1078,9 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
             for field_name in self.inputs_fields:
                 value = instance[field_name]
                 if field_name in self.fields_to_treat_as_list:
-                    instance[field_name] = [operator.process(v) for v in value]
+                    instance[field_name] = [operator.process_value(v) for v in value]
                 else:
-                    instance[field_name] = operator.process(value)
+                    instance[field_name] = operator.process_value(value)
 
         return instance
 

@@ -1,3 +1,4 @@
 {
-    "type": "lower_case_till_punc"
+    "type": "lower_case_till_punc",
+    "field": "TBD"
 }

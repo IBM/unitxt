@@ -30,7 +30,7 @@ class TestExamples(unittest.TestCase):
         from src.unitxt.metrics import Accuracy
         from src.unitxt.text_utils import print_dict
 
-        add_to_catalog(ToString(), "processors.to_string", overwrite=True)
+        add_to_catalog(ToString(field="TBD"), "processors.to_string", overwrite=True)
         add_to_catalog(Accuracy(), "metrics.accuracy", overwrite=True)
 
         data = [
