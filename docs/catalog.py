@@ -58,10 +58,14 @@ def make_content(artifact, label, all_labels):
 class CatalogEntry:
     """A single catalog entry is an artifact json file, or a catalog directory."""
 
-    def __init__(self, path: str, is_dir: bool, start_directory: str):
+    def __init__(
+        self, path: str, is_dir: bool, start_directory: str, relative_path=None
+    ):
         self.path = path
         self.is_dir = is_dir
-        self.rel_path = path.replace(start_directory + "/", "")
+        self.rel_path = (
+            relative_path if relative_path else path.replace(start_directory + "/", "")
+        )
 
     @staticmethod
     def from_dir_entry(dir_entry: os.DirEntry, start_directory):
@@ -79,7 +83,7 @@ class CatalogEntry:
         return label.replace("/", ".")
 
     def get_title(self):
-        return self.rel_path.split("/")[-1]
+        return Path(self.rel_path).stem
 
     def get_artifact_doc_path(self, destination_directory):
         return os.path.join(
@@ -101,7 +105,7 @@ class CatalogEntry:
             )
             sub_label = sub_catalog_entry.get_label()
             sub_name = os.path.basename(sub_dir_entry.path)
-            dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n\n"
+            dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n" f"*************\n\n"
 
         dir_doc_path = os.path.join(
             destination_directory,
@@ -162,7 +166,10 @@ class CatalogDocsBuilder:
                 )
 
         catalog_main_entry = CatalogEntry(
-            path=self.start_directory, is_dir=True, start_directory=self.start_directory
+            path=self.start_directory + "/",
+            is_dir=True,
+            start_directory=self.start_directory,
+            relative_path="catalog",
         )
         catalog_main_entry.write_dir_contents_to_rst(
             destination_directory=current_directory,
