@@ -108,8 +108,6 @@ class MetricWithConfidenceInterval(Metric):
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
-        # resample the indices of the instances, which contain the scores
-        identifiers = list(range(len(instances)))
 
         if score_names is None:
             score_names = (
@@ -125,18 +123,12 @@ class MetricWithConfidenceInterval(Metric):
             def statistic(arr, axis, score_name=score_name):
                 # arr is a 2d array where each row is a resampling, so we
                 # iterate over the rows and compute the metric on each resampling
-                def metric(instances):
-                    try:
-                        return aggregation_func(instances, score_name)
-                    except Exception as e:
-                        # this happens in edge cases, for example, when the sampling creates a
-                        # sample where all strings are empty and this fails bleu.
-                        logger.info(f"Warning in {self.__class__.__name__}", e)
-                        return np.nan
+                # def metric(instances):
+                #     return aggregation_func(instances, score_name)
 
                 scores = numpy.apply_along_axis(
-                    lambda x: metric(
-                        [instances[ii] for ii in x],
+                    lambda resamled_instances: aggregation_func(
+                        resamled_instances, score_name
                     ),
                     axis=axis,
                     arr=arr,
@@ -146,7 +138,7 @@ class MetricWithConfidenceInterval(Metric):
 
             # apply bootstrap only on the relevant field
             ci = bootstrap(
-                (identifiers,),
+                (instances,),
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
@@ -455,13 +447,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             if "score_fields" in fields:
                 assert isinstance(fields["score_fields"], list)
 
-            return (
-                [self.main_score]
-                if "score_fields" not in fields
-                else fields["score_fields"]
-            )
-        return [self.main_score]
-
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream, stream_name)
 
@@ -475,7 +460,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 aggregation_func = self.aggregate
 
             if reduction == "group_mean":
-                score_fields = self._validate_group_mean_reduction()
+                self._validate_group_mean_reduction()
+                score_fields = (
+                    [self.main_score]
+                    if "score_fields" not in fields
+                    else fields["score_fields"]
+                )
 
                 def aggregation_func(
                     instances, field_name, field=fields["agg_func"][1]
@@ -546,7 +536,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     @staticmethod
     def aggregate(instances, field_name):
         scores = [instance["score"]["instance"][field_name] for instance in instances]
-        return np.nanmean(scores)
+        import warnings
+
+        with warnings.catch_warnings():
+            # in case instances is empty, return NaN but avoid printing a RuntimeWarning
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            return np.nanmean(scores)
 
     def grouped_aggregate(self, instances, field_name, aggregation_func):
         from collections import defaultdict
@@ -569,11 +564,15 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         group_total_scores = [
             aggregation_func(scores) for scores in group_to_instance_scores.values()
         ]
-        group_total_scores = [
-            score for score in group_total_scores if not np.isnan(score)
-        ]
-        # ignore NaNs in aggregation
-        return mean(group_total_scores) if len(group_total_scores) else np.nan
+        import warnings
+
+        with warnings.catch_warnings():
+            # final mean should be mean of group_total_score, ignoring NaN, hence nanmean
+            # but if the group function values is NaN for ALL groups, nanmean throws a
+            # RuntimeWarning that it is calculating the mean of an empty slice (with no non-Nans)
+            # this is the desired behavior, but we want to avoid the warning here
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            return np.nanmean(group_total_scores)
 
     @abstractmethod
     def compute(
