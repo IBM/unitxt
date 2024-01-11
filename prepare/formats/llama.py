@@ -1,5 +1,5 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import SystemFormat
+from src.unitxt.formats import SystemFormat
 
 format = SystemFormat(
     demo_format="{source}\n{target}\n\n",
