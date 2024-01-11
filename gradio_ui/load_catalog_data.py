@@ -38,9 +38,15 @@ def load_cards_data():
             continue
         dataset = f"cards.{os.path.basename(card)}".replace('.json','')        
         task = data['task']
+        is_augmentable = check_augmentable(task)
         templates = get_templates(data['templates'])
-        cards_data.setdefault(task,{}).update({dataset:templates})
+        cards_data.setdefault(task,{}).update({dataset:templates,cons.AUGMENTABLE:is_augmentable})
     return cards_data
+
+def check_augmentable(task_name):
+    task_file = os.path.join(cons.CATALOG_DIR,task_name.replace('.',os.sep)+'.json')
+    task_data = load_json(task_file)
+    return cons.AUGMENTABLE in task_data
 
 
 def get_catalog_items(items_type):
@@ -55,4 +61,6 @@ def get_catalog_items(items_type):
         items.append(key)
     return items
 
-print(get_catalog_items('formats'))
+
+if __name__ == "__main__":
+    print(load_cards_data())

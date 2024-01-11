@@ -1,6 +1,7 @@
 import gradio as gr
 from gradio_ui.load_catalog_data import load_cards_data, get_catalog_items
 from unitxt.standard import StandardRecipe
+import constants as cons
 
 data = load_cards_data()
 tasks = gr.Dropdown(choices=data.keys(), label="Task")
@@ -9,16 +10,16 @@ templates = gr.Dropdown(choices=[],label='Template')
 instructions = gr.Dropdown(choices=[None]+get_catalog_items('instructions'), label='Instruction')
 formats = gr.Dropdown(choices=[None]+get_catalog_items('formats'),label='Format')
 num_shots = gr.Slider(minimum=0,maximum=5,step=1,label='Num Shots')
-augmentors = gr.Dropdown(choices=[None]+get_catalog_items('augmentors'),label='Augmentor')
+augmentors = gr.Dropdown(choices=[],label='Augmentor')
 
 parameters = [tasks,cards,templates,instructions, formats, num_shots, augmentors]
 # where is summarization?
-#TODO - allow choosing augmentor only when possible
+
 #TODO - cache issue of remembering previous choice
 #TODO - minimize code to copy
 #TODO - move between samples
 # color parts of the prompt
-
+#TODO fix code syntax - dataset = load_dataset('unitxt/data', 'card=cards.piqa,template=templates.qa.multiple_choice.no_intro.mmlu,num_demos=2,demos_pool_size=100,instruction=instructions.empty,format=formats.user_agent')
 #TODO - add model, output, score etc.
 # if no train, choose test (add to ui?)
 # augmentor as additional option
@@ -63,12 +64,23 @@ def build_command(prompt_data):
     """
     return command
 
-def get_datasets(task_choice):
+def update_choices_per_task(task_choice):
+    datasets_choices = gr.update(choices=[])
+    augmentors_choices = gr.update(choices=[])
     if isinstance(task_choice,str):
-        if task_choice in data:
-            return gr.update(choices=data[task_choice].keys())
-    return gr.update(choices=[])
+         if task_choice in data:
+            datasets_choices = get_datasets(task_choice)
+            augmentors_choices = get_augmentors(task_choice)
+    return datasets_choices, augmentors_choices
 
+def get_datasets(task_choice):
+     return gr.update(choices=data[task_choice].keys())
+
+def get_augmentors(task_choice):
+    print(data[task_choice][cons.AUGMENTABLE])
+    if data[task_choice][cons.AUGMENTABLE]:
+       return gr.update(choices=[None]+get_catalog_items('augmentors'))
+    return gr.update(choices=[])
 
 def get_templates(task_choice, dataset_choice):
     if not isinstance(dataset_choice,str):
@@ -79,7 +91,7 @@ def get_templates(task_choice, dataset_choice):
 demo = gr.Blocks()
 
 with demo:
-    tasks.change(get_datasets,inputs=tasks,outputs=cards)
+    tasks.change(update_choices_per_task,inputs=tasks,outputs=[cards,augmentors])
     cards.change(get_templates,inputs=[tasks,cards], outputs=templates)
     prompt = gr.Interface(
                 fn=run_unitxt,
