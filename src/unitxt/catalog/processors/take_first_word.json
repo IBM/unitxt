@@ -1,3 +1,4 @@
 {
-    "type": "take_first_word"
+    "type": "take_first_word",
+    "field": "TBD"
 }

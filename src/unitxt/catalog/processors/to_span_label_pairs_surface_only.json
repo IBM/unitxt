@@ -1,5 +1,6 @@
 {
     "type": "regex_parser",
     "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
-    "termination_regex": "^\\s*None\\s*$"
+    "termination_regex": "^\\s*None\\s*$",
+    "field": "TBD"
 }

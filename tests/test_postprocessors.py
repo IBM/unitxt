@@ -18,7 +18,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = ["TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "OTHER"]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_to_span_label_pairs(self):
@@ -30,7 +30,7 @@ class TestPostProcessors(unittest.TestCase):
         ]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_to_list_by_comma(self):
@@ -39,7 +39,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = [["cat", "dog"], ["man", "woman", "dog"]]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_take_first_word(self):
@@ -48,14 +48,14 @@ class TestPostProcessors(unittest.TestCase):
         targets = ["yes"]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
         inputs = ["..."]
         targets = [""]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_yes_no_to_int(self):
@@ -64,7 +64,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = ["1", "0", "0"]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_to_yes_or_none(self):
@@ -73,7 +73,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = ["yes", "none", "none"]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_stance_to_pro_con(self):
@@ -82,7 +82,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = ["PRO", "CON", "CON", "none", "none"]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_to_span_label_pairs_surface_only(self):
@@ -91,7 +91,7 @@ class TestPostProcessors(unittest.TestCase):
         targets = [[("John\\,\\: Doe", ""), ("New York", "")], []]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_load_json(self):
@@ -107,7 +107,7 @@ class TestPostProcessors(unittest.TestCase):
         ]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_dict_of_lists_to_value_key_pairs(self):
@@ -123,7 +123,7 @@ class TestPostProcessors(unittest.TestCase):
         ]
 
         for input, target in zip(inputs, targets):
-            parsed = parser.process(input)
+            parsed = parser.process_value(input)
             self.assertEqual(target, parsed)
 
     def test_span_labeling_json_template_errors(self):
@@ -140,7 +140,7 @@ class TestPostProcessors(unittest.TestCase):
         for pred, post_target1, post_target2 in zip(
             predictions, post1_targets, post2_targets
         ):
-            post1 = postprocessor1.process(pred)
+            post1 = postprocessor1.process_value(pred)
             self.assertEqual(post1, post_target1)
-            post2 = postprocessor2.process(post1)
+            post2 = postprocessor2.process_value(post1)
             self.assertEqual(post2, post_target2)

@@ -1,31 +1,32 @@
 import json
 import re
+from typing import Any
 
-from .operator import BaseFieldOperator
-
-
-class ToString(BaseFieldOperator):
-    def process(self, instance):
-        return str(instance)
+from .operators import FieldOperator
 
 
-class ToStringStripped(BaseFieldOperator):
-    def process(self, instance):
-        return str(instance).strip()
+class ToString(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text)
 
 
-class ToListByComma(BaseFieldOperator):
-    def process(self, instance):
-        return [x.strip() for x in instance.split(",")]
+class ToStringStripped(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).strip()
 
 
-class RegexParser(BaseFieldOperator):
+class ToListByComma(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return [x.strip() for x in text.split(",")]
+
+
+class RegexParser(FieldOperator):
     """A processor that uses regex in order to parse a string."""
 
     regex: str
     termination_regex: str = None
 
-    def process(self, text):
+    def process_value(self, text: Any) -> Any:
         if self.termination_regex is not None and re.fullmatch(
             self.termination_regex, text
         ):
@@ -33,26 +34,26 @@ class RegexParser(BaseFieldOperator):
         return re.findall(self.regex, text)
 
 
-class LoadJson(BaseFieldOperator):
-    def process(self, text):
+class LoadJson(FieldOperator):
+    def process_value(self, text: Any) -> Any:
         try:
             return json.loads(text)
         except json.JSONDecodeError:
             return []
 
 
-class ListToEmptyEntitiesTuples(BaseFieldOperator):
-    def process(self, lst):
+class ListToEmptyEntitiesTuples(FieldOperator):
+    def process_value(self, lst: Any) -> Any:
         try:
             return [(str(item), "") for item in lst]
         except json.JSONDecodeError:
             return []
 
 
-class DictOfListsToPairs(BaseFieldOperator):
+class DictOfListsToPairs(FieldOperator):
     position_key_before_value: bool = True
 
-    def process(self, obj):
+    def process_value(self, obj: Any) -> Any:
         try:
             result = []
             for key, values in obj.items():
@@ -67,17 +68,17 @@ class DictOfListsToPairs(BaseFieldOperator):
             return []
 
 
-class TakeFirstNonEmptyLine(BaseFieldOperator):
-    def process(self, instance):
-        splitted = str(instance).strip().split("\n")
+class TakeFirstNonEmptyLine(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        splitted = str(text).strip().split("\n")
         if len(splitted) == 0:
             return ""
         return splitted[0].strip()
 
 
-class ConvertToBoolean(BaseFieldOperator):
-    def process(self, instance):
-        clean_instance = str(instance).strip().lower()
+class ConvertToBoolean(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        clean_instance = str(text).strip().lower()
         if any(w in clean_instance for w in ["no", "not", "wrong", "false"]):
             return "FALSE"
         if any(w in clean_instance for w in ["yes", "right", "correct", "true"]):
@@ -85,9 +86,9 @@ class ConvertToBoolean(BaseFieldOperator):
         return "OTHER"
 
 
-class LowerCaseTillPunc(BaseFieldOperator):
-    def process(self, instance):
-        non_empty_line = instance.lower()
+class LowerCaseTillPunc(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        non_empty_line = text.lower()
         match = re.search(r"[.,!?;]", non_empty_line)
         if match:
             # Extract text up to the first punctuation
@@ -95,56 +96,56 @@ class LowerCaseTillPunc(BaseFieldOperator):
         return non_empty_line
 
 
-class LowerCase(BaseFieldOperator):
-    def process(self, instance):
-        return instance.lower()
+class LowerCase(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return text.lower()
 
 
-class FirstCharacter(BaseFieldOperator):
-    def process(self, instance):
-        match = re.search(r"\s*(\w)", instance)
+class FirstCharacter(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\s*(\w)", text)
         if match:
             return match.groups(0)[0]
         return ""
 
 
-class TakeFirstWord(BaseFieldOperator):
-    def process(self, instance):
-        match = re.search(r"[\w]+", instance)
+class TakeFirstWord(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"[\w]+", text)
         if match:
-            return instance[match.start() : match.end()]
+            return text[match.start() : match.end()]
         return ""
 
 
-class YesNoToInt(BaseFieldOperator):
-    def process(self, instance):
-        if instance == "yes":
+class YesNoToInt(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "yes":
             return "1"
         return "0"
 
 
-class ToYesOrNone(BaseFieldOperator):
-    def process(self, instance):
-        if instance == "yes":
+class ToYesOrNone(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "yes":
             return "yes"
         return "none"
 
 
-class StanceToProCon(BaseFieldOperator):
-    def process(self, instance):
-        if instance == "positive":
+class StanceToProCon(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "positive":
             return "PRO"
-        if instance in ["negative", "suggestion"]:
+        if text in ["negative", "suggestion"]:
             return "CON"
         return "none"
 
 
-class StringOrNotString(BaseFieldOperator):
+class StringOrNotString(FieldOperator):
     string: str
 
-    def process(self, instance):
-        if "not " + self.string.lower() in instance.lower():
+    def process_value(self, text: Any) -> Any:
+        if "not " + self.string.lower() in text.lower():
             return "not " + self.string.lower()
-        if self.string.lower() in instance.lower():
+        if self.string.lower() in text.lower():
             return self.string.lower()
-        return instance
+        return text
