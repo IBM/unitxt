@@ -130,8 +130,8 @@ for instance in instance_targets_accuracy:
 
 metric = GroupMeanAccuracy()
 global_target = {
-    "group_mean_accuracy": 0.23,
-    "score": 0.23,
+    "group_mean_accuracy": 0.22,
+    "score": 0.22,
     "score_name": "group_mean_accuracy",
     "score_ci_low": 0.02,
     "score_ci_high": 0.44,

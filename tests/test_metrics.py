@@ -610,13 +610,13 @@ class TestConfidenceIntervals(unittest.TestCase):
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanAccuracy(),
             expected_ci_low=0.025,
-            expected_ci_high=0.44047619047619047,
+            expected_ci_high=0.44105968464125495,
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanStringContainment(),
-            expected_ci_low=0.15627449950197503,
-            expected_ci_high=0.7080527276705951,
+            expected_ci_low=0.15556138609239942,
+            expected_ci_high=0.707936507936508,
         )
 
         self._test_grouped_instance_confidence_interval(
@@ -640,16 +640,16 @@ class TestConfidenceIntervals(unittest.TestCase):
                 "group_mean_f1": 0.5,
                 "score": 0.5,
                 "score_name": "group_mean_f1",
-                "group_mean_f1_ci_low": 0.32199800893327996,
-                "group_mean_f1_ci_high": 0.7899498235031469,
-                "score_ci_low": 0.32199800893327996,
-                "score_ci_high": 0.7899498235031469,
+                "group_mean_f1_ci_low": 0.32222222222222224,
+                "group_mean_f1_ci_high": 0.7900160821100434,
+                "score_ci_low": 0.32222222222222224,
+                "score_ci_high": 0.7900160821100434,
                 "group_mean_precision": 0.5,
-                "group_mean_precision_ci_low": 0.32199800893327996,
-                "group_mean_precision_ci_high": 0.7899498235031469,
+                "group_mean_precision_ci_low": 0.32222222222222224,
+                "group_mean_precision_ci_high": 0.7900160821100434,
                 "group_mean_recall": 0.5,
-                "group_mean_recall_ci_low": 0.32199800893327996,
-                "group_mean_recall_ci_high": 0.7899498235031469,
+                "group_mean_recall_ci_low": 0.32222222222222224,
+                "group_mean_recall_ci_high": 0.7900160821100434,
             },
         )
 
