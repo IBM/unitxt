@@ -56,6 +56,8 @@ def make_content(artifact, label, all_labels):
 
 
 class CatalogEntry:
+    """A single catalog entry is an artifact json file, or a catalog directory."""
+
     def __init__(self, path: str, is_dir: bool, start_directory: str):
         self.path = path
         self.is_dir = is_dir
@@ -122,6 +124,11 @@ class CatalogEntry:
 
 
 class CatalogDocsBuilder:
+    """Creates the catalog documentation.
+
+    The builder goes over the catalog, and produces RST doc files for its contents.
+    """
+
     def __init__(self):
         current_dir = os.path.dirname(__file__)
         self.start_directory = os.path.join(
