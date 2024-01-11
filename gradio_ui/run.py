@@ -15,15 +15,14 @@ num_shots = gr.Slider(minimum=0,maximum=5,step=1,label='Num Shots')
 augmentors = gr.Dropdown(choices=[],label='Augmentor')
 
 parameters = [tasks,cards,templates,instructions, formats, num_shots, augmentors]
-# where is summarization?
-#TODO - move between samples
-#TODO - cache issue of remembering previous choice
-#TODO - minimize code to copy
 
-# color parts of the prompt
+#TODO - move between samples
+#TODO - minimize code to copy, minimize augmentor
+
+#TODO color parts of the prompt
 #TODO - add model, output, score etc.
-# if no train, choose test (add to ui?)
-# augmentor as additional option
+#TODO if no train, choose test (add to ui?)
+
 
 def safe_add(parameter,key, args):
     if isinstance(parameter,str):
@@ -52,6 +51,7 @@ def build_prompt(prompt_args):
     try:
         recipe = StandardRecipe(**prompt_args)
     except UnitxtArtifactNotFoundError as e:
+        print(e)
         return ['unitxt.artifact.UnitxtArtifactNotFoundError']
 
     dataset = recipe()
