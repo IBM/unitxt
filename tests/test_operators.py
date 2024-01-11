@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Any, Dict
 
 from src.unitxt import add_to_catalog
+from src.unitxt.formats import SystemFormat
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
@@ -19,10 +20,12 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
+    ExecuteQuery,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByCondition,
+    FilterByQuery,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -41,7 +44,6 @@ from src.unitxt.operators import (
     ShuffleFieldValues,
     SplitByValue,
     StreamRefiner,
-    SystemFormat,
     TakeByField,
     Unique,
     ZipFieldValues,
@@ -261,247 +263,6 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-    def test_system_format(self):
-        demo_instances = [
-            {"source": "1+2", "target": "3"},
-            {"source": "4-2", "target": "2"},
-        ]
-        instruction = "solve the math exercises"
-
-        inputs = [
-            {
-                "source": "1+1",
-                "source1": "1+1",
-                "target": "2",
-                "instruction": instruction,
-                "demos": demo_instances,
-            },
-            {
-                "source": "3+2",
-                "source1": "3+2",
-                "target": "5",
-                "instruction": instruction,
-                "demos": demo_instances,
-            },
-            {
-                "source": "7-4",
-                "source1": "7-4",
-                "target": "3",
-                "instruction": instruction,
-                "demos": demo_instances,
-            },
-            {
-                "source": "12-3",
-                "source1": "12-3",
-                "target": "9",
-                "instruction": instruction,
-                "demos": demo_instances,
-            },
-        ]
-
-        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
-        system_format = SystemFormat(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{demos}User: {instruction}\n\n{source}\nAgent: ",
-        )
-
-        targets = [
-            {
-                "source1": "1+1",
-                "target": "2",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
-            },
-            {
-                "source1": "3+2",
-                "target": "5",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
-            },
-            {
-                "source1": "7-4",
-                "target": "3",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
-            },
-            {
-                "source1": "12-3",
-                "target": "9",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
-            },
-        ]
-
-        check_operator(
-            operator=system_format,
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
-
-        # now imitate instruction before demos.
-        system_format = SystemFormat(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="Instruction: {instruction}\n\n{demos}User: {source}\nAgent: ",
-        )
-
-        targets = [
-            {
-                "source1": "1+1",
-                "target": "2",
-                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
-            },
-            {
-                "source1": "3+2",
-                "target": "5",
-                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
-            },
-            {
-                "source1": "7-4",
-                "target": "3",
-                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
-            },
-            {
-                "source1": "12-3",
-                "target": "9",
-                "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
-            },
-        ]
-
-        check_operator(
-            operator=system_format,
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
-
-        # test with instruction = "":
-        for instance in inputs:
-            instance.pop("instruction")
-
-        system_format = SystemFormat(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="{demos}User: {instruction}{source}\nAgent: ",
-        )
-
-        targets_no_instruction = [
-            {
-                "source1": "1+1",
-                "target": "2",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
-            },
-            {
-                "source1": "3+2",
-                "target": "5",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
-            },
-            {
-                "source1": "7-4",
-                "target": "3",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
-            },
-            {
-                "source1": "12-3",
-                "target": "9",
-                "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
-            },
-        ]
-
-        check_operator(
-            operator=system_format,
-            inputs=inputs,
-            targets=targets_no_instruction,
-            tester=self,
-        )
-
-        # ICLFormat tests from tests_renderers, migrated here
-        instance = {
-            "source": 'This is my sentence: "was so bad"',
-            "target": "negative",
-            "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
-            "demos": [
-                {
-                    "source": 'This is my sentence: "was so not good"',
-                    "target": "negative",
-                    "references": ["negative"],
-                },
-                {
-                    "source": 'This is my sentence: "was so good"',
-                    "target": "positive",
-                    "references": ["positive"],
-                },
-            ],
-        }
-
-        system_format = SystemFormat(
-            demo_format="User:{source}\nAgent:{target}\n\n",
-            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
-        )
-
-        result = system_format.process(instance)
-
-        target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
-            "target": "negative",
-            "references": ["negative"],
-        }
-        self.assertDictEqual(result, target)
-
-        # no demos
-        instance = {
-            "source": 'This is my sentence: "was so bad"',
-            "target": "negative",
-            "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
-        }
-        system_format = SystemFormat(
-            demo_format="User:{source}\nAgent:{target}\n\n",
-            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
-        )
-        result = system_format.process(instance)
-        target = {
-            "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
-            "target": "negative",
-            "references": ["negative"],
-        }
-        self.assertDictEqual(result, target)
-
-        # test_system_format_with_prefix_and_suffix(self):
-        system_format_fix = SystemFormat(
-            demos_field="demos",
-            demo_format="User: {source}\nAgent: {target}\n\n",
-            model_input_format="[INST] <<SYS>>\n{instruction}\n\n{demos}User: {source}\nAgent: [/INST]",
-        )
-        renderer = system_format_fix
-
-        instance = {
-            "source": 'This is my sentence: "was so bad"',
-            "target": "negative",
-            "references": ["negative"],
-            "instruction": "classify user sentence by its sentiment to either positive, or negative.",
-            "demos": [
-                {
-                    "source": 'This is my sentence: "was so not good"',
-                    "target": "negative",
-                    "references": ["negative"],
-                },
-                {
-                    "source": 'This is my sentence: "was so good"',
-                    "target": "positive",
-                    "references": ["positive"],
-                },
-            ],
-        }
-        self.maxDiff = None
-        result = renderer.process(instance)
-        target = {
-            "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: [/INST]',
-            "target": "negative",
-            "references": ["negative"],
-        }
-
-        self.assertDictEqual(result, target)
-
     def test_filter_by_values_with_required_values(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
@@ -515,12 +276,24 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(query="a == 1 and b == 3"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
         exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
             operator=FilterByCondition(values={"c": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByQuery(query="c == 5"),
+            inputs=inputs,
+            exception_text="name 'c' is not defined",
             tester=self,
         )
 
@@ -537,6 +310,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(query="a != 1 and b != 2"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_gt(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -547,6 +326,12 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=FilterByCondition(values={"a": 1}, condition="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(query="a>1"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -573,6 +358,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
+        check_operator(
+            operator=FilterByQuery(query="b not in [3, 4]"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_filter_by_condition_not_in_multiple(self):
         inputs = [
@@ -591,6 +382,24 @@ class TestOperators(unittest.TestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(
+                query="b not in [3, 4] and a not in [1]",
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByQuery(
+                query="b not in [3, 4] and a not in [1]",
+                error_on_filtered_all=True,
+            ),
+            inputs=inputs,
+            exception_text="FilterByQuery filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
             tester=self,
         )
 
@@ -612,7 +421,12 @@ class TestOperators(unittest.TestCase):
             targets=targets,
             tester=self,
         )
-
+        check_operator(
+            operator=FilterByQuery(query="b in [3, 4]"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=FilterByCondition(values={"b": "5"}, condition="in"),
@@ -636,6 +450,14 @@ class TestOperators(unittest.TestCase):
             str(cm.exception),
             "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
         )
+        with self.assertRaises(Exception) as ne:
+            check_operator(
+                operator=FilterByQuery(query="c in ['5']"),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual("name 'c' is not defined", str(ne.exception))
 
     def test_filter_by_condition_error_when_the_entire_stream_is_filtered(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -651,6 +473,29 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             str(e.exception),
             "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+        )
+
+    def test_execute_query(self):
+        inputs = [{"a": 2, "b": 3}]
+        operator = ExecuteQuery(query="a+b", to_field="c")
+        targets = [{"a": 2, "b": 3, "c": 5}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        inputs = [{"a": "hello", "b": "world"}]
+        operator = ExecuteQuery(query="a+' '+b", to_field="c")
+        targets = [{"a": "hello", "b": "world", "c": "hello world"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        operator = ExecuteQuery(query="f'{a} {b}'", to_field="c")
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        with self.assertRaises(ValueError) as ve:
+            check_operator(
+                operator=operator,
+                inputs=[{"x": 2, "y": 3}],
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in ExecuteQuery due to: name 'a' is not defined",
+            str(ve.exception),
         )
 
     def test_intersect(self):

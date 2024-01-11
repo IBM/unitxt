@@ -7,9 +7,7 @@ from src.unitxt.blocks import (
     RenameFields,
     SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
-from src.unitxt.templates import MultiLabelTemplate
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "reuters21578"
@@ -151,19 +149,12 @@ for subset in get_dataset_config_names(dataset_name):
                 fields={
                     "classes": classlabels[subset],
                     "text_type": "text",
-                    "type_of_classes": "topic",
+                    "type_of_classes": "topics",
                 }
             ),
         ],
         task="tasks.classification.multi_label",
-        templates=TemplatesList(
-            [
-                MultiLabelTemplate(
-                    input_format="{text}",
-                    output_format="{labels}",
-                ),
-            ]
-        ),
+        templates="templates.classification.multi_label.all",
     )
     test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

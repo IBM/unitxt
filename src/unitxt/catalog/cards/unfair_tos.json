@@ -36,32 +36,21 @@
                     "Arbitration"
                 ],
                 "text_type": "text",
-                "type_of_class": "contractual clauses"
+                "type_of_classes": "contractual clauses"
             }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "labels": {
+                    "[]": [
+                        "none"
+                    ]
+                }
+            },
+            "strict": false
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "text"
-        ],
-        "outputs": [
-            "labels"
-        ],
-        "metrics": [
-            "metrics.f1_micro",
-            "metrics.accuracy",
-            "metrics.f1_macro"
-        ]
-    },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "{text}",
-                "output_format": "{labels}"
-            }
-        ]
-    }
+    "task": "tasks.classification.multi_label",
+    "templates": "templates.classification.multi_label.all"
 }

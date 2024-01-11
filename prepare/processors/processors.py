@@ -1,5 +1,5 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.logging import get_logger
+from src.unitxt.logging_utils import get_logger
 from src.unitxt.processors import (
     ConvertToBoolean,
     FirstCharacter,
