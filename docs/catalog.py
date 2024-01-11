@@ -108,6 +108,18 @@ class CatalogEntry:
         with open(dir_doc_path, "w+") as f:
             f.write(dir_doc_content)
 
+    def write_json_contents_to_rst(self, all_labels, destination_directory):
+        artifact = load_json(self.path)
+        label = self.get_label()
+        content = make_content(artifact, label, all_labels)
+        section = write_section(self.get_title(), content, label)
+        artifact_doc_path = self.get_artifact_doc_path(
+            destination_directory=destination_directory
+        )
+        Path(artifact_doc_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(artifact_doc_path, "w+") as f:
+            f.write(section)
+
 
 class CatalogDocsBuilder:
     def __init__(self):
@@ -138,16 +150,9 @@ class CatalogDocsBuilder:
                     start_directory=self.start_directory,
                 )
             elif catalog_entry.is_json():
-                artifact = load_json(catalog_entry.path)
-                label = catalog_entry.get_label()
-                content = make_content(artifact, label, all_labels)
-                section = write_section(catalog_entry.get_title(), content, label)
-                artifact_doc_path = catalog_entry.get_artifact_doc_path(
-                    destination_directory=current_directory
+                catalog_entry.write_json_contents_to_rst(
+                    all_labels, destination_directory=current_directory
                 )
-                Path(artifact_doc_path).parent.mkdir(parents=True, exist_ok=True)
-                with open(artifact_doc_path, "w+") as f:
-                    f.write(section)
 
         catalog_main_entry = CatalogEntry(
             path=self.start_directory, is_dir=True, start_directory=self.start_directory
