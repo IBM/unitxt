@@ -3,7 +3,7 @@ import os
 
 from huggingface_hub import HfApi
 
-from .logging import get_logger
+from src.unitxt.logging_utils import get_logger
 
 logger = get_logger()
 
