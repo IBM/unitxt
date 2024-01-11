@@ -44,6 +44,8 @@ target-version = "py38"
 "src/unitxt/operators.py" = ["C901"]
 "docs/conf.py" = ["E402"]
 "prepare/instructions/models/llama.py" = ["RUF001"]
+"utils/hf/prepare_dataset.py" = ["T201"]
+"utils/hf/prepare_metric.py" = ["T201"]
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
