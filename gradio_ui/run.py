@@ -1,7 +1,6 @@
 import gradio as gr
 from gradio_ui.load_catalog_data import load_cards_data, get_catalog_items
 from unitxt.standard import StandardRecipe
-from unitxt.artifact import UnitxtArtifactNotFoundError
 import constants as cons
 
 data = load_cards_data()
@@ -32,7 +31,7 @@ def safe_add(parameter,key, args):
 def run_unitxt(task,dataset,template,instruction,format,num_demos,augmentor):
     if not isinstance(dataset,str) or not isinstance(template,str):
         return '','','',''
-    prompt_args = {'card':dataset, 'template': template}
+    prompt_args = {'card':dataset, 'template': template, cons.LOADER_LIMIT:100}
     if num_demos!=0:
         prompt_args.update({'num_demos':num_demos, 'demos_pool_size':100})
     safe_add(instruction,'instruction',prompt_args)
@@ -42,18 +41,11 @@ def run_unitxt(task,dataset,template,instruction,format,num_demos,augmentor):
     prompt_list = build_prompt(prompt_args)
     prompt = prompt_list[0]
     command = build_command(prompt_args)
-    if 'source' not in prompt:
-        return prompt,prompt,prompt,command
     return prompt['source'],prompt['metrics'],prompt['target'],command
 
 
 def build_prompt(prompt_args): 
-    try:
-        recipe = StandardRecipe(**prompt_args)
-    except UnitxtArtifactNotFoundError as e:
-        print(e)
-        return ['unitxt.artifact.UnitxtArtifactNotFoundError']
-
+    recipe = StandardRecipe(**prompt_args)
     dataset = recipe()
     prompt_list = []
     for instance in dataset["train"]:
@@ -62,7 +54,7 @@ def build_prompt(prompt_args):
         prompt_list.append(instance)
 
 def build_command(prompt_data):
-    parameters_str = [f"{key}='{prompt_data[key]}'" for key in prompt_data]
+    parameters_str = [f"{key}='{prompt_data[key]}'" for key in prompt_data if key!=cons.LOADER_LIMIT]
     parameters_str = ",".join(parameters_str).replace("'",'')
         
     command = f"""
@@ -79,19 +71,20 @@ def update_choices_per_task(task_choice):
     augmentors_choices = gr.update(choices=[])
     if isinstance(task_choice,str):
          if task_choice in data:
-            datasets_choices = get_datasets(task_choice)
-            augmentors_choices = get_augmentors(task_choice)
+            datasets_choices = gr.update(choices=get_datasets(task_choice))
+            augmentors_choices = gr.update(choices=get_augmentors(task_choice))
     return datasets_choices, augmentors_choices
+
 
 def get_datasets(task_choice):
      datasets_list = list(data[task_choice].keys())
      datasets_list.remove(cons.AUGMENTABLE)
-     return gr.update(choices=datasets_list)
+     return datasets_list
 
 def get_augmentors(task_choice):
     if data[task_choice][cons.AUGMENTABLE]:
-       return gr.update(choices=[None]+get_catalog_items('augmentors'))
-    return gr.update(choices=[])
+       return [None]+get_catalog_items('augmentors')
+    return []
 
 def get_templates(task_choice, dataset_choice):
     if not isinstance(dataset_choice,str):
@@ -103,7 +96,6 @@ demo = gr.Blocks()
 
 with demo:
     logo = gr.Image('assets/banner.png', height=50, width=70,show_label=False,show_download_button=False,show_share_button=False)
-    
     tasks.change(update_choices_per_task,inputs=tasks,outputs=[cards,augmentors])
     cards.change(get_templates,inputs=[tasks,cards], outputs=templates)
     prompt = gr.Interface(

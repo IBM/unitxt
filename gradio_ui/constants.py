@@ -3,3 +3,4 @@ CATALOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
                                'unitxt','catalog')
 
 AUGMENTABLE = 'augmentable_inputs'
+LOADER_LIMIT = 'loader_limit'
