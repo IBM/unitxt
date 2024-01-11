@@ -111,6 +111,7 @@ class CatalogEntry:
             destination_directory,
             self.rel_path + ".rst",
         )
+        Path(dir_doc_path).parent.mkdir(exist_ok=True, parents=True)
         with open(dir_doc_path, "w+") as f:
             f.write(dir_doc_content)
 
