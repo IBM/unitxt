@@ -979,6 +979,22 @@ class MatthewsCorrelation(HuggingfaceMetric):
         formatted_predictions = [
             self.get_str_id(prediction) for prediction in predictions
         ]
+
+        if len(Counter(formatted_predictions)) == 1 and all(
+            p == r for p, r in zip(formatted_predictions, formatted_references)
+        ):
+            # override because when all components are identical, there is only TP or only TN, out of the four
+            # {TP, TN, FP, FN}, and by definition, mcc is them 0.0, in spite of the full correlation
+            return {"matthews_correlation": 1.0}
+
+        if len(Counter(formatted_predictions)) == 1 and all(
+            p != r for p, r in zip(formatted_predictions, formatted_references)
+        ):
+            # override because when all components of predictions are identical, and none hits its reference,
+            # we only have FP or only FN, out of the four {TP, TN, FP, FN}, and by definition, mcc is them 0.0,
+            # in spite of the perfect anti-correlation.
+            return {"matthews_correlation": -1.0}
+
         return self.metric.compute(
             predictions=formatted_predictions, references=formatted_references
         )
