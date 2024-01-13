@@ -3,7 +3,7 @@ import unittest
 from datasets import load_dataset
 
 from src import unitxt
-from src.unitxt.logging import get_logger
+from src.unitxt.logging_utils import get_logger
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 logger = get_logger()

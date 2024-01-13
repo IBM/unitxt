@@ -2,14 +2,14 @@ from typing import List
 
 from .card import TaskCard
 from .dataclass import Field, InternalField, OptionalField
+from .formats import Format, SystemFormat
 from .instructions import EmptyInstruction, Instruction
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import (
     Augmentor,
     NullAugmentor,
     StreamRefiner,
-    SystemFormat,
 )
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
@@ -32,7 +32,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
     instruction: Instruction = Field(default_factory=EmptyInstruction)
-    format: SystemFormat = Field(default_factory=SystemFormat)
+    format: Format = Field(default_factory=SystemFormat)
 
     loader_limit: int = None
 

@@ -6,7 +6,7 @@ from typing import Optional
 import requests
 
 from .artifact import Artifact, Artifactory
-from .logging import get_logger
+from .logging_utils import get_logger
 from .version import version
 
 logger = get_logger()

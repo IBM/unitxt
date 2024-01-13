@@ -1,7 +1,7 @@
 import os
 import random
 
-from . import logging
+from . import logging_utils
 from .catalog import add_to_catalog
 from .load import load_dataset
 from .register import register_all_artifacts, register_local_catalog

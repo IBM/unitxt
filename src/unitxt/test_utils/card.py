@@ -5,7 +5,7 @@ import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
-from ..logging import get_logger
+from ..logging_utils import get_logger
 from ..metric import _compute
 from ..standard import StandardRecipe
 from ..templates import TemplatesDict

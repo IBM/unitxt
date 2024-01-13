@@ -3,7 +3,7 @@ import re
 from typing import Dict
 
 from .generator_utils import ReusableGenerator
-from .logging import get_logger
+from .logging_utils import get_logger
 from .random_utils import new_random_generator
 from .stream import Stream
 
