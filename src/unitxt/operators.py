@@ -1283,7 +1283,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
-        all_values = []
+        counter = Counter()
         for instance in stream:
             if (not isinstance(instance[self.field], list)) and (
                 self.process_every_value is True
@@ -1295,21 +1295,21 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                 self.process_every_value is False
             ):
                 # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
-                all_values.append(
-                    (*instance[self.field],)
+                counter.update(
+                    [(*instance[self.field],)]
                     if isinstance(instance[self.field], list)
-                    else instance[self.field]
+                    else [instance[self.field]]
                 )  # convert to a tuple if list, to enable the use of Counter which would not accept
-                # a list as an entity to count its occurrences
+                # a list as an hashable entity to count its occurrences
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
-                all_values.extend(instance[self.field])
-        counter = Counter(
-            all_values
-        )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
+                counter.update(instance[self.field])
+        # here counter counts occurrences of individual values, or tupples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
-            top_frequency = len(all_values) * self.overall_top_frequency_percent / 100.0
+            top_frequency = (
+                sum(counter.values()) * self.overall_top_frequency_percent / 100.0
+            )
             sum_counts = 0
             for _i, p in enumerate(values_and_counts):
                 sum_counts += p[1]
@@ -1317,7 +1317,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                     break
             values_and_counts = counter.most_common(_i + 1)
         if self.min_frequency_percent > 0:
-            min_frequency = self.min_frequency_percent * len(all_values) / 100.0
+            min_frequency = self.min_frequency_percent * sum(counter.values()) / 100.0
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
         values_to_keep = [
