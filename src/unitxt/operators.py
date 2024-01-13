@@ -880,61 +880,54 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class CopyWithPerturbation(StreamInstanceOperator):
-    """Assumes that instance contains field 'target' and copies its content, with some perturbation, to field 'prediction'.
+class CopyWithPerturbation(FieldOperator):
+    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
 
-    The operator also assumes that field "source" shows in instance, and it is a decent piece of text.
-    If target is a class (task was classification) then this operator assumes that field named 'classes' lists all the
-    potential classes.
+    The operator assumes that field "source" shows in instance, and it is a decent piece of text.
+    When target is a class (task was classification), argument 'select_from' can be used to list the other potential classes.
     """
 
-    is_class: bool = False
-    is_float: bool = False
-    is_text: bool = False
-    percentage_to_perturbate: int = 0
+    select_from: List[Any] = []
+    percentage_to_perturbate: int = 1  # 1 percent
 
-    def prepare(self):
-        assert (
-            isinstance(self.is_class, bool)
-            and isinstance(self.is_float, bool)
-            and isinstance(self.is_text, bool)
-        ), "All three args 'is_..' should be boolean"
-        assert (
-            1 == self.is_class + self.is_float + self.is_text
-        ), "Exactly one of the three boolean args 'is_..' should be True"
+    def verify(self):
         assert (
             0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
         ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
 
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        random_generator = new_random_generator(sub_seed=instance["source"])
+    def prepare(self):
+        super().prepare()
+        self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
 
-        perturbate = random_generator.randint(1, 100) <= self.percentage_to_perturbate
+    def process_value(self, value: Any) -> Any:
+        perturbate = (
+            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
+        )
         if not perturbate:
-            instance["prediction"] = instance["target"]
-            return instance
+            return value
 
-        if self.is_class:
-            instance["prediction"] = random_generator.choice(instance["classes"])
-        if self.is_text:
-            if len(instance["target"]) < 2:
+        if value in self.select_from:
+            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            if self.random_generator.random() < 0.8:
+                return self.random_generator.choice(self.select_from)
+
+        if isinstance(value, float):
+            return value * (0.5 + self.random_generator.random())
+
+        if isinstance(value, int):
+            perturb = 1 if self.random_generator.random() < 0.5 else -1
+            return value + perturb
+
+        if isinstance(value, str):
+            if len(value) < 2:
                 # give up perturbation
-                instance["prediction"] = instance["target"]
-            else:
-                # throw one char out
-                prefix_len = random_generator.randint(1, len(instance["target"]) - 1)
-                instance["prediction"] = (
-                    instance["target"][:prefix_len]
-                    + instance["target"][prefix_len + 1 :]
-                )
-        if self.is_float:
-            instance["prediction"] = instance["target"] * (
-                0.5 + random_generator.random()
-            )
+                return value
+            # throw one char out
+            prefix_len = self.random_generator.randint(1, len(value) - 1)
+            return value[:prefix_len] + value[prefix_len + 1 :]
 
-        return instance
+        # and in any other case:
+        return value
 
 
 class CopyFields(FieldOperator):
