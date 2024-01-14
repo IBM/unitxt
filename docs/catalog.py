@@ -76,7 +76,7 @@ class CatalogEntry:
         )
 
     def is_json(self):
-        return not self.is_dir and ".json" in self.rel_path
+        return not self.is_dir and self.rel_path.endswith(".json")
 
     def get_label(self):
         label = self.rel_path.replace(".json", "")
