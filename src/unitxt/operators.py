@@ -880,11 +880,11 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class CopyWithPerturbation(FieldOperator):
+class Perturbate(FieldOperator):
     """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
 
-    The operator assumes that field "source" shows in instance, and it is a decent piece of text.
-    When target is a class (task was classification), argument 'select_from' can be used to list the other potential classes.
+    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    relevant perturbation
     """
 
     select_from: List[Any] = []

@@ -17,7 +17,6 @@ from src.unitxt.operators import (
     AugmentWhitespace,
     CastFields,
     CopyFields,
-    CopyWithPerturbation,
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
@@ -38,6 +37,7 @@ from src.unitxt.operators import (
     MapInstanceValues,
     MergeStreams,
     NullAugmentor,
+    Perturbate,
     RemoveFields,
     RemoveValues,
     RenameFields,
@@ -2626,18 +2626,18 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)
 
-    def test_copy_with_perturbation(self):
+    def test_perturbate(self):
         instance = {
             "target": 1,
             "classes": [0, 1],
             "source": "Classify the given text to yes or no",
         }
-        operator = CopyWithPerturbation(
+        operator = Perturbate(
             field="target", to_field="prediction", percentage_to_perturbate=0
         )
         out = operator.process(instance)
         self.assertEqual(out["target"], out["prediction"])
-        operator = CopyWithPerturbation(
+        operator = Perturbate(
             field="target",
             to_field="prediction",
             select_from=[0, 1],
@@ -2651,7 +2651,7 @@ Agent:"""
         self.assertGreaterEqual(counter[0], 25)
         self.assertGreaterEqual(counter[1], 25)
         instance["target"] = "abcdefghijklmnop"
-        operator = CopyWithPerturbation(
+        operator = Perturbate(
             field="target", to_field="prediction", percentage_to_perturbate=100
         )
         out = operator.process(instance)
@@ -2663,9 +2663,7 @@ Agent:"""
         out = operator.process(instance)
         self.assertNotEqual(out["target"], out["prediction"])
         with self.assertRaises(AssertionError) as ae:
-            operator = CopyWithPerturbation(
-                field="target", percentage_to_perturbate=200
-            )
+            operator = Perturbate(field="target", percentage_to_perturbate=200)
         self.assertEqual(
             "'percentage_to_perturbate' should be in the range 0..100. Received 200",
             str(ae.exception),
