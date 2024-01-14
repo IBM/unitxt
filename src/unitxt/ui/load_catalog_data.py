@@ -5,6 +5,14 @@ from ..utils import load_json
 from .constants import AUGMENTABLE_STR, CATALOG_DIR
 
 
+def get_catalog_dirs():
+    dirs = [CATALOG_DIR]
+    env_dirs = os.environ["UNITXT_ARTIFACTORIES"]
+    if env_dirs:
+        dirs.extend(env_dirs.split(":"))
+    return dirs
+
+
 def get_templates(template_data):
     def get_from_str(template_str):
         if template_data.endswith(".all"):
