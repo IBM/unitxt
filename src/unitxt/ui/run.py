@@ -130,8 +130,7 @@ with demo:
     # LOGO
     logo = gr.Image(
         "assets/banner.png",
-        height=50,
-        width=70,
+        width="25%",
         show_label=False,
         show_download_button=False,
         show_share_button=False,
