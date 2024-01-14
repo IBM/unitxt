@@ -145,6 +145,6 @@ with demo:
         fn=run_unitxt,
         inputs=parameters,
         outputs=output_components,
-        allow_flagging=False,
+        allow_flagging="never",
         live=True,
     )

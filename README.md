@@ -47,6 +47,15 @@ cd unitxt
 pip install -e ".[dev]"
 pre-commit install
 ```
+
+### Run Unitxt UI
+
+To launch unitxt ui run:
+```
+from unitxt import ui
+ui.launch()
+```
+
 ### Ensuring a Linear Git History
 
 Configure your Git to maintain a linear history with these commands:
