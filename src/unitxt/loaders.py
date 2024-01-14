@@ -1,3 +1,27 @@
+"""This section describes unitxt loaders.
+
+Loaders: Generators of Unitxt Multistreams from existing date sources
+==============================================================
+
+Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
+postprocessing the model's output, preparing it for any given evaluator.
+
+Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
+of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
+The journey starts by a Unitxt Loeader bearing a Multistream from the given datasource.
+A loader, therefore, is the first item on any Unitxt Recipe.
+
+Unitxt catalog contains several loaders for the most popular datasource formats.
+All these loaders inherit from Loader, and hence, implementing a loader to expand over a new type of datasource, is
+straight forward.
+
+Operators in Unitxt catalog:
+LoadHF : loads from Huggingface dataset.
+LoadCSV: loads from csv (comma separated value) files
+LoadFromKaggle: loads datasets from the kaggle.com community site
+LoadFromIBMCloud: loads a dataset from the IBM cloud.
+------------------------
+"""
 import importlib
 import itertools
 import os
@@ -31,7 +55,7 @@ class Loader(SourceOperator):
     # The loader can use this value to limit the amount of data downloaded from the source
     # to reduce loading time.  However, this may not always be possible, so the
     # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
-    # stream after, after load is complete.
+    # stream, after load is complete.
     loader_limit: int = None
     pass
 
