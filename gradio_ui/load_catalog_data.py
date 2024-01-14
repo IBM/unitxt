@@ -1,66 +1,72 @@
-from unitxt.utils import load_json
-from unitxt.file_utils import get_all_files_in_dir
 import os
-import constants as cons
 
+import constants as cons
+from unitxt.file_utils import get_all_files_in_dir
+from unitxt.utils import load_json
 
 
 def get_templates(template_data):
-        def get_from_str(template_str):
-            if template_data.endswith('.all'):
-                subfolders = template_str.split('.')[:-1]+['all.json']
-                template_file = os.path.join(*([cons.CATALOG_DIR]+subfolders))
-                return set(load_json(template_file)['items'])
-            else:
-                return {template_str}
+    def get_from_str(template_str):
+        if template_data.endswith(".all"):
+            subfolders = template_str.split(".")[:-1] + ["all.json"]
+            template_file = os.path.join(*([cons.CATALOG_DIR, *subfolders]))
+            return set(load_json(template_file)["items"])
 
-        if isinstance(template_data,str):
-            return get_from_str(template_data)
-        else:
-            templates = set()
-            for item in template_data:
-                templates.update(get_from_str(item))
-            return templates
+        return {template_str}
+
+    if isinstance(template_data, str):
+        return get_from_str(template_data)
+
+    templates = set()
+    for item in template_data:
+        templates.update(get_from_str(item))
+    return templates
+
 
 def load_cards_data():
     def is_valid_data(data):
-        for item in ['task','templates']:
-            if isinstance(data[item],dict):
+        for item in ["task", "templates"]:
+            if isinstance(data[item], dict):
                 return False
         return True
 
-    cards_data = dict()
-    cards = get_catalog_items('cards')
+    cards_data = {}
+    cards = get_catalog_items("cards")
     for card in cards:
         data = load_json(get_file_from_item_name(card))
         if not is_valid_data(data):
-            continue      
-        task = data['task']
+            continue
+        task = data["task"]
         is_augmentable = check_augmentable(task)
-        templates = get_templates(data['templates'])
-        cards_data.setdefault(task,{}).update({card:templates,cons.AUGMENTABLE:is_augmentable})
+        templates = get_templates(data["templates"])
+        cards_data.setdefault(task, {}).update(
+            {card: templates, cons.AUGMENTABLE_STR: is_augmentable}
+        )
     return cards_data
+
 
 def check_augmentable(task_name):
     task_file = get_file_from_item_name(task_name)
     task_data = load_json(task_file)
-    return cons.AUGMENTABLE in task_data
+    return cons.AUGMENTABLE_STR in task_data
+
 
 def get_file_from_item_name(item_name):
-    return os.path.join(cons.CATALOG_DIR,item_name.replace('.',os.sep)+'.json')
+    return os.path.join(cons.CATALOG_DIR, item_name.replace(".", os.sep) + ".json")
+
 
 def get_catalog_items(items_type):
     items = []
-    items_dir = os.path.join(cons.CATALOG_DIR,items_type)
-    files = get_all_files_in_dir(items_dir,recursive=True)    
+    items_dir = os.path.join(cons.CATALOG_DIR, items_type)
+    files = get_all_files_in_dir(items_dir, recursive=True)
     for file in files:
         key = file.split(os.sep)
         start_index = key.index(items_type)
         key = key[start_index:]
-        key = '.'.join(key).replace('.json','')
+        key = ".".join(key).replace(".json", "")
         items.append(key)
     return items
 
 
 if __name__ == "__main__":
-    print(load_cards_data())
+    load_cards_data()

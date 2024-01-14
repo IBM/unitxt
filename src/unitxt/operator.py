@@ -316,7 +316,7 @@ class StreamInstanceOperatorValidator(StreamInstanceOperator):
         try:
             first_instance = next(iterator)
         except StopIteration as e:
-            raise StopIteration(f"Strem '{stream_name}' is empty") from e
+            raise StopIteration(f"Stream '{stream_name}' is empty") from e
         result = self._process_instance(first_instance, stream_name)
         self.validate(result)
         yield result
