@@ -2,7 +2,7 @@ import constants as cons
 import gradio as gr
 from unitxt.standard import StandardRecipe
 
-from gradio_ui.load_catalog_data import get_catalog_items, load_cards_data
+from ui.load_catalog_data import get_catalog_items, load_cards_data
 
 # TODO - move between samples
 # TODO - minimize code to copy, minimize augmentor
