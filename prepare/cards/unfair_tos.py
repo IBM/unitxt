@@ -7,6 +7,7 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     TaskCard,
 )
+from src.unitxt.splitters import DiverseLabelsSampler
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "unfair_tos"
@@ -31,6 +32,7 @@ card = TaskCard(
         ),
         MapInstanceValues(mappers={"labels": {"[]": ["none"]}}, strict=False),
     ],
+    sampler=DiverseLabelsSampler(choices="classes", labels="labels"),
     task="tasks.classification.multi_label",
     templates="templates.classification.multi_label.all",
 )
