@@ -51,6 +51,11 @@
             "strict": false
         }
     ],
+    "sampler": {
+        "type": "diverse_labels_sampler",
+        "choices": "classes",
+        "labels": "labels"
+    },
     "task": "tasks.classification.multi_label",
     "templates": "templates.classification.multi_label.all"
 }
