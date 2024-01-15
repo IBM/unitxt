@@ -1,6 +1,10 @@
 {
     "type": "templates_list",
     "items": [
-        "templates.translation.directed.simple"
+        "templates.translation.directed.simple",
+        "templates.translation.directed.formal",
+        "templates.translation.directed.casual",
+        "templates.translation.directed.playful",
+        "templates.translation.directed.instructional"
     ]
 }

@@ -2,6 +2,9 @@
     "type": "templates_list",
     "items": [
         "templates.qa.contextual.simple",
-        "templates.qa.contextual.simple2"
+        "templates.qa.contextual.simple_question_first",
+        "templates.qa.contextual.simple2",
+        "templates.qa.contextual.simple3",
+        "templates.qa.contextual.simple4"
     ]
 }
