@@ -45,7 +45,10 @@ def load_cards_data():
             if not is_valid_data(data):
                 continue
             task = data["task"]
-            is_augmentable = check_augmentable(task, dir)
+            if task not in cards_data:
+                is_augmentable = check_augmentable(task, dir)
+            else:
+                is_augmentable = cards_data[task][AUGMENTABLE_STR]
             templates = get_templates(data["templates"], dir)
             cards_data.setdefault(task, {}).update(
                 {card: templates, AUGMENTABLE_STR: is_augmentable}
@@ -60,7 +63,14 @@ def check_augmentable(task_name, dir):
 
 
 def get_file_from_item_name(item_name, dir):
-    return os.path.join(dir, item_name.replace(".", os.sep) + ".json")
+    file = os.path.join(dir, item_name.replace(".", os.sep) + ".json")
+    if not os.path.exists(file):
+        file = os.path.join(
+            dir, item_name.replace("all", "").replace(".", os.sep), "json", "all.json"
+        )
+        if not os.path.exists(file):
+            file = os.path.join(CATALOG_DIR, item_name.replace(".", os.sep) + ".json")
+    return file
 
 
 def get_catalog_items_from_dir(items_type, dir):
