@@ -1,1 +1,2 @@
 include src/unitxt/catalog/*.json
+include src/unitxt/ui/banner.png
