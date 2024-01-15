@@ -12,27 +12,6 @@
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "document",
-            "document_type"
-        ],
-        "outputs": [
-            "summary"
-        ],
-        "metrics": [
-            "metrics.rouge"
-        ]
-    },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "{document}",
-                "output_format": "{summary}"
-            }
-        ]
-    }
+    "task": "tasks.summarization.abstractive",
+    "templates": "templates.summarization.abstractive.all"
 }
