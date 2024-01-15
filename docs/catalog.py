@@ -6,14 +6,6 @@ from unitxt.artifact import Artifact
 from unitxt.utils import load_json
 
 
-def write_section(title, content, label):
-    underline_char = "-"
-    underline = underline_char * len(title)
-    return (
-        f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n{content}\n\n|\n|\n\n"
-    )
-
-
 def write_title(title, label):
     underline_char = "-"
     underline = underline_char * len(title)
@@ -33,9 +25,12 @@ def custom_walk(top):
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
-    class_name = artifact_class.__name__
-    artifact_class_id = f"{artifact_class.__module__}.{class_name}"
-    result = f".. note:: ID: ``{label}``  |  Type: :class:`{class_name} <{artifact_class_id}>`\n\n   .. code-block:: json\n\n      "
+    type_class_name = artifact_class.__name__
+    artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
+    result = (
+        f".. note:: ID: ``{label}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
+        f"   .. code-block:: json\n\n      "
+    )
     result += (
         json.dumps(artifact, sort_keys=True, indent=4, ensure_ascii=False).replace(
             "\n", "\n      "
@@ -44,6 +39,7 @@ def make_content(artifact, label, all_labels):
     )
 
     if artifact_class.__doc__:
+        result += f"Explanation about `{type_class_name}`:\n\n"
         result += artifact_class.__doc__ + "\n"
 
     references = []
@@ -132,13 +128,24 @@ class CatalogEntry:
         artifact = load_json(self.path)
         label = self.get_label()
         content = make_content(artifact, label, all_labels)
-        section = write_section(self.get_title(), content, label)
+
+        underline_char = "-"
+        underline = underline_char * len(self.get_title())
+        artifact_doc_contents = (
+            f".. _{label}:\n\n"
+            f"----------\n\n"
+            f"{self.get_title()}\n"
+            f"{underline}\n\n"
+            f"{content}\n\n"
+            f"|\n"
+            f"|\n\n"
+        )
         artifact_doc_path = self.get_artifact_doc_path(
             destination_directory=destination_directory
         )
         Path(artifact_doc_path).parent.mkdir(parents=True, exist_ok=True)
         with open(artifact_doc_path, "w+") as f:
-            f.write(section)
+            f.write(artifact_doc_contents)
 
 
 class CatalogDocsBuilder:
