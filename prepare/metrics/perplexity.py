@@ -6,11 +6,13 @@ from src.unitxt.test_utils.metrics import test_metric
 def test(metric, instance_scores, global_scores):
     references = []
     predictions = []
+    additional_inputs = []
     instance_targets = []
 
     for r, p, pr in instance_scores:
-        references.append([r])
-        predictions.append(p)
+        references.append([None])
+        predictions.append(None)
+        additional_inputs.append({"x": p, "y": r})
         instance_targets.append(
             {"perplexity": pr, "score": pr, "score_name": "perplexity"}
         )
@@ -29,6 +31,7 @@ def test(metric, instance_scores, global_scores):
         metric=metric,
         predictions=predictions,
         references=references,
+        additional_inputs=additional_inputs,
         instance_targets=instance_targets,
         global_target=global_target,
     )

@@ -1324,17 +1324,18 @@ class Perplexity(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         """Computes the likelihood of generating text Y after text X - P(Y|X).
 
-        :param references: the list of Y texts as a list of singletons.
-        :param predictions: the list of X texts as a plain list of strings
+        :param references: ignored
+        :param predictions: ignored
+        :param additional_inputs: a list of dicts, where entry i's key 'x' is for text X_i,
+        and 'y' is for text Y_i.
 
         :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
         """
-        # make sure all references are singletons
-        assert all(len(ref) == 1 for ref in references)
+        xs = [entry["x"] for entry in additional_inputs]
+        ys = [entry["y"] for entry in additional_inputs]
 
         # add the instruction as prefix
-        predictions = [f"{self.perplexity_prompt} {x}" for x in predictions]
-        references = [y[0] for y in references]
+        xs = [f"{self.perplexity_prompt} {x}" for x in xs]
 
         # check if the model is enc-dec or dec-only to use the right perplexity computation
         from transformers import AutoConfig
@@ -1347,9 +1348,7 @@ class Perplexity(BulkInstanceMetric):
         )
 
         # compute P(Q|P) and store in queue
-        scores = lm.compute_lm(
-            source=predictions, target=references, batch_size=self.batch_size
-        )
+        scores = lm.compute_lm(source=xs, target=ys, batch_size=self.batch_size)
 
         return [{self.main_score: score} for score in scores]
 

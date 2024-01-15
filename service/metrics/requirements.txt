@@ -1,0 +1,5 @@
+pydantic
+fastapi
+uvicorn[standard]
+python-jose[cryptography]
+unitxt[all]
