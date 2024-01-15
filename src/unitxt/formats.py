@@ -35,23 +35,35 @@ class SystemFormat(Format):
 
     Example:
         when input instance:
-        {
-            "source": "1+1",
-            "target": "2",
-            "instruction": "Solve the math exercises.",
-            "demos": [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
-        }
-        is process-ed by
-        system_format = SystemFormat(
-            demos_field="demos",
-            demo_format="Input: {source}\nOutput: {target}\n\n",
-            model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",
-        )
+
+        .. code-block::
+
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": "Solve the math exercises.",
+                "demos": [{"source": "1+2", "target": "3"}, {"source": "4-2", "target": "2"}]
+            }
+
+        is processed by
+
+        .. code-block::
+
+            system_format = SystemFormat(
+                demos_field="demos",
+                demo_format="Input: {source}\nOutput: {target}\n\n",
+                model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",
+            )
+
         the resulting instance is:
-        {
-            "target": "2",
-            "source": "Instruction: Solve the math exercises.\n\nInput: 1+2\nOutput: 3\n\nInput: 4-2\nOutput: 2\n\nInput: 1+1\nOutput: ",
-        }
+
+        .. code-block::
+
+            {
+                "target": "2",
+                "source": "Instruction: Solve the math exercises.\n\nInput: 1+2\nOutput: 3\n\nInput: 4-2\nOutput: 2\n\nInput: 1+1\nOutput: ",
+            }
+
     """
 
     demos_field: str = "demos"
