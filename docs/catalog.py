@@ -99,18 +99,26 @@ class CatalogEntry:
         label = self.get_label()
         dir_doc_content = write_title(title, label)
 
-        for sub_dir_entry in os.scandir(self.path):
-            sub_catalog_entry = CatalogEntry.from_dir_entry(
+        sub_catalog_entries = [
+            CatalogEntry.from_dir_entry(
                 dir_entry=sub_dir_entry, start_directory=start_directory
             )
-            # TODO sort put folders on top and alphabetic order
-            sub_label = sub_catalog_entry.get_label()
+            for sub_dir_entry in os.scandir(self.path)
+        ]
+
+        sub_dir_entries = [entry for entry in sub_catalog_entries if entry.is_dir]
+        sub_dir_entries.sort(key=lambda entry: entry.path)
+        for sub_dir_entry in sub_dir_entries:
+            sub_label = sub_dir_entry.get_label()
             sub_name = os.path.basename(sub_dir_entry.path)
-            folder_mark = "📁 " if sub_catalog_entry.is_dir else ""
-            folder_slash = "/" if sub_catalog_entry.is_dir else ""
-            dir_doc_content += (
-                f":ref:`{folder_mark}{sub_name}{folder_slash} <{sub_label}>`\n\n"
-            )
+            dir_doc_content += f":ref:`📁 {sub_name}/ <{sub_label}>`\n\n"
+
+        sub_file_entries = [entry for entry in sub_catalog_entries if not entry.is_dir]
+        sub_file_entries.sort(key=lambda entry: entry.path)
+        for sub_file_entry in sub_file_entries:
+            sub_label = sub_file_entry.get_label()
+            sub_name = os.path.basename(sub_file_entry.path)
+            dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n\n"
 
         dir_doc_path = os.path.join(
             destination_directory,
