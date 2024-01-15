@@ -103,9 +103,14 @@ class CatalogEntry:
             sub_catalog_entry = CatalogEntry.from_dir_entry(
                 dir_entry=sub_dir_entry, start_directory=start_directory
             )
+            # TODO sort put folders on top and alphabetic order
             sub_label = sub_catalog_entry.get_label()
             sub_name = os.path.basename(sub_dir_entry.path)
-            dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n" f"*************\n\n"
+            folder_mark = "📁 " if sub_catalog_entry.is_dir else ""
+            folder_slash = "/" if sub_catalog_entry.is_dir else ""
+            dir_doc_content += (
+                f":ref:`{folder_mark}{sub_name}{folder_slash} <{sub_label}>`\n\n"
+            )
 
         dir_doc_path = os.path.join(
             destination_directory,
