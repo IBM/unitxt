@@ -26,7 +26,7 @@ def get_templates(template_data, dir):
         templates = set()
         for item in template_data:
             templates.update(get_from_str(item))
-    templates.add("templates.key_val")
+    templates.add("templates.key_val_with_new_lines")
     return templates
 
 
