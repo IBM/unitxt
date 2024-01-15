@@ -21,11 +21,12 @@ def get_templates(template_data, dir):
         return {template_str}
 
     if isinstance(template_data, str):
-        return get_from_str(template_data)
-
-    templates = set()
-    for item in template_data:
-        templates.update(get_from_str(item))
+        templates = get_from_str(template_data)
+    else:
+        templates = set()
+        for item in template_data:
+            templates.update(get_from_str(item))
+    templates.add("templates.key_val")
     return templates
 
 
