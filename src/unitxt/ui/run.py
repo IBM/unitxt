@@ -1,9 +1,13 @@
+import evaluate
 import gradio as gr
 from transformers import pipeline
 
+from unitxt import metric_url
 from unitxt.standard import StandardRecipe
 from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
+
+metric = evaluate.load(metric_url)
 
 
 def safe_add(parameter, key, args):
@@ -23,7 +27,7 @@ def run_unitxt(
     index=0,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", "", ""
+        return "", "", "", "", "", ""
     prompt_args = {"card": dataset, "template": template, cons.LOADER_LIMIT_STR: 100}
     if num_demos != 0:
         prompt_args.update(
@@ -37,17 +41,23 @@ def run_unitxt(
     selected_prompt = prompts_list[index]
     command = build_command(prompt_args)
     selected_prediction = ""
+    results = ""
     if model_name:
         predictions = generate(
             model_name, [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list]
         )
         selected_prediction = predictions[index]
+        results = metric.compute(
+            predictions=predictions,
+            references=[prompt[cons.PROPT_TARGET_STR] for prompt in prompts_list],
+        )
     return (
         selected_prompt[cons.PROMPT_SOURCE_STR],
         selected_prompt[cons.PROMPT_METRICS_STR],
         selected_prompt[cons.PROPT_TARGET_STR],
         command,
         selected_prediction,
+        results,
     )
 
 
@@ -111,8 +121,14 @@ def get_templates(task_choice, dataset_choice):
 
 def generate(model_name, prompts):
     def get_prediction(generator, prompt):
-        output = generator(prompt, num_return_sequences=1)
+        output = generator(prompt, num_return_sequences=1, max_length=500)
         return output[0]["generated_text"]
+
+    def strip_predictions(predictions, prompts):
+        stripped_predictions = []
+        for i in range(len(predictions)):
+            stripped_predictions.append(predictions[i].replace(prompts[i], ""))
+        return stripped_predictions
 
     try:
         generator = pipeline("text-generation", model=model_name)
@@ -129,7 +145,7 @@ def generate(model_name, prompts):
         for prompt in prompts:
             prediction = get_prediction(generator, prompt)
             predictions.append(prediction)
-    return predictions
+    return strip_predictions(predictions, prompts)
 
 
 # LOAD DATA
@@ -177,8 +193,9 @@ target = gr.Textbox(lines=1, label="Target")
 prediction = gr.Textbox(
     lines=1, label="Model prediction", value="Select a model to get a prediction"
 )
+results = gr.Textbox(lines=1, label="Evaluation results")
 code = gr.Code(label="Code", language="python", min_width=10)
-output_components = [selected_prompt, metrics, target, code, prediction]
+output_components = [selected_prompt, metrics, target, code, prediction, results]
 
 
 ######################
@@ -206,7 +223,7 @@ with demo:
         inputs=parameters,
         outputs=output_components,
         allow_flagging="never",
-        live=True,
+        # live=True,
     )
 
 if __name__ == "__main__":
