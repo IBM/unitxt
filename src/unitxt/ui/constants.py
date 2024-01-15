@@ -4,7 +4,7 @@ CATALOG_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "catalog",
 )
-
+BANNER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "banner.png")
 AUGMENTABLE_STR = "augmentable_inputs"
 LOADER_LIMIT_STR = "loader_limit"
 PROMPT_SOURCE_STR = "source"

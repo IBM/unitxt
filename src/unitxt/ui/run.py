@@ -129,7 +129,7 @@ demo = gr.Blocks()
 with demo:
     # LOGO
     logo = gr.Image(
-        "assets/banner.png",
+        cons.BANNER_PATH,
         width="25%",
         show_label=False,
         show_download_button=False,
