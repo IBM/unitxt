@@ -4,21 +4,31 @@ from unitxt.standard import StandardRecipe
 from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 
-# TODO - move between samples
-# TODO - minimize code to copy, minimize augmentor
-# TODO additional comments from Yotam
-# TODO color parts of the prompt
-# TODO - add model, output, score etc.
-
-
 def safe_add(parameter, key, args):
     if isinstance(parameter, str):
         args[key] = parameter
 
 
-def run_unitxt(task, dataset, template, instruction, format, num_demos, augmentor):
+def run_unitxt(task, dataset, template, instruction, format, num_demos, augmentor,model_name,index=0):
     if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", ""
+        return "", "", "", "",""
+    else:
+        args = {'dataset':dataset,'template':template,
+                'instruction':instruction, 'format':format, 
+                'num_demos':num_demos,'augmentor':augmentor,
+                'model_name':model_name, 'index':index}
+        # elements = (dataset, template, instruction, 
+        #        format, num_demos, augmentor, model_name, index)
+        for key in args:
+            el = args[key]
+            if not (isinstance(el,str) or isinstance(el,int)):
+                el=None
+            
+        return run_unitxt_data(**args)
+
+
+def run_unitxt_data(dataset, template, instruction=None, 
+               format=None, num_demos=0, augmentor=None, model_name=None, index=0):    
     prompt_args = {"card": dataset, "template": template, cons.LOADER_LIMIT_STR: 100}
     if num_demos != 0:
         prompt_args.update(
@@ -29,13 +39,18 @@ def run_unitxt(task, dataset, template, instruction, format, num_demos, augmento
     safe_add(augmentor, "augmentor", prompt_args)
 
     prompts_list = build_prompt(prompt_args)
-    prompt = prompts_list[0]
+    selected_prompt = prompts_list[index]
     command = build_command(prompt_args)
+    selected_prediction = ""
+    if model_name:
+        predictions = generate(model_name,[prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list])
+        selected_prediction = predictions[index]
     return (
-        prompt[cons.PROMPT_SOURCE_STR],
-        prompt[cons.PROMPT_METRICS_STR],
-        prompt[cons.PROPT_TARGET_STR],
+        selected_prompt[cons.PROMPT_SOURCE_STR],
+        selected_prompt[cons.PROMPT_METRICS_STR],
+        selected_prompt[cons.PROPT_TARGET_STR],
         command,
+        selected_prediction
     )
 
 
@@ -96,6 +111,26 @@ def get_templates(task_choice, dataset_choice):
         return gr.update(choices=[], value=None)
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
+def generate(model_name, prompts):
+    def get_prediction(generator,prompt):
+        output = generator(prompt, max_length=30, num_return_sequences=1)
+        return output[0]['generated_text']
+    try:
+        generator = pipeline('text-generation', model=model_name)
+    except Exception as e:
+        return f"""
+        Try a different model name
+        Exception: 
+        {e}
+        """
+    if isinstance(prompts,str):
+        predictions = get_prediction(generator,prompts)
+    else:
+        predictions = []
+        for prompt in prompts:
+            prediction = get_prediction(generator,prompt)
+            predictions.append(prediction)
+    return predictions
 
 # LOAD DATA
 data = load_cards_data()
@@ -111,13 +146,16 @@ instructions = gr.Dropdown(
 formats = gr.Dropdown(choices=[None, *get_catalog_items("formats")], label="Format")
 num_shots = gr.Slider(minimum=0, maximum=5, step=1, label="Num Shots")
 augmentors = gr.Dropdown(choices=[], label="Augmentor")
-parameters = [tasks, cards, templates, instructions, formats, num_shots, augmentors]
+model_choice = gr.Dropdown(label='model',choices=[None,'gpt2'],allow_custom_value=True, info='A hugging face model name can also be manually typed here')
+sample_choice = gr.Slider(label='Sample Selector',minimum=0,maximum=cons.PROMPT_SAMPLE_SIZE, info= 'change to see a different sample from the datset')
+parameters = [tasks, cards, templates, instructions, formats, num_shots, augmentors, model_choice, sample_choice]
 # output
-prompt = gr.Textbox(lines=5, show_copy_button=True, label="Prompt")
-metrics = gr.Textbox(lines=1, show_copy_button=True, label="Metrics")
-target = gr.Textbox(lines=1, show_copy_button=True, label="Target")
+selected_prompt = gr.Textbox(lines=5, show_copy_button=True, label="Prompt")
+metrics = gr.Textbox(lines=1, label="Metrics")
+target = gr.Textbox(lines=1, label="Target")
+prediction = gr.Textbox(lines=1, label='Model prediction',value='Select a model to get a prediction')
 code = gr.Code(label="Code", language="python", min_width=10)
-output_components = [prompt, metrics, target, code]
+output_components = [selected_prompt, metrics, target, code, prediction]
 
 
 ######################
