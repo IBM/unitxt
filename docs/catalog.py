@@ -39,8 +39,8 @@ def make_content(artifact, label, all_labels):
     )
 
     if artifact_class.__doc__:
-        result += f"Explanation about `{type_class_name}`:\n\n"
-        result += "+++++++++++++++++++\n"
+        result += f"\nExplanation about `{type_class_name}`\n"
+        result += "+++++++++++++++++++\n\n"
         result += artifact_class.__doc__ + "\n"
 
     references = []
