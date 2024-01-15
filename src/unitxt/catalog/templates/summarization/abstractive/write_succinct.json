@@ -1,0 +1,8 @@
+{
+    "type": "input_output_template",
+    "input_format": "Write a succinct summary of the following {document_type}: {document}.",
+    "output_format": "{summary}",
+    "postprocessors": [
+        "processors.take_first_non_empty_line"
+    ]
+}
