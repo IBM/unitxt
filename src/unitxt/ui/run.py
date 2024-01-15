@@ -49,7 +49,7 @@ def run_unitxt(
         selected_prediction = predictions[index]
         results = metric.compute(
             predictions=predictions,
-            references=[prompt[cons.PROPT_TARGET_STR] for prompt in prompts_list],
+            references=prompts_list,
         )
     return (
         selected_prompt[cons.PROMPT_SOURCE_STR],
@@ -57,7 +57,7 @@ def run_unitxt(
         selected_prompt[cons.PROPT_TARGET_STR],
         command,
         selected_prediction,
-        results,
+        results[index]["score"],
     )
 
 
@@ -121,7 +121,7 @@ def get_templates(task_choice, dataset_choice):
 
 def generate(model_name, prompts):
     def get_prediction(generator, prompt):
-        output = generator(prompt, num_return_sequences=1, max_length=500)
+        output = generator(prompt, num_return_sequences=1, max_length=cons.MAX_LENGTH)
         return output[0]["generated_text"]
 
     def strip_predictions(predictions, prompts):
