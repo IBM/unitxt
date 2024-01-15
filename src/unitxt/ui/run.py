@@ -1,8 +1,8 @@
 import gradio as gr
 
-from ..standard import StandardRecipe
-from . import constants as cons
-from .load_catalog_data import get_catalog_items, load_cards_data
+from unitxt.standard import StandardRecipe
+from unitxt.ui import constants as cons
+from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 
 # TODO - move between samples
 # TODO - minimize code to copy, minimize augmentor
@@ -147,3 +147,6 @@ with demo:
         allow_flagging="never",
         live=True,
     )
+
+if __name__ == "__main__":
+    demo.launch(debug=True)
