@@ -82,7 +82,7 @@ def update_choices_per_task(task_choice):
 def get_datasets(task_choice):
     datasets_list = list(data[task_choice].keys())
     datasets_list.remove(cons.AUGMENTABLE_STR)
-    return datasets_list
+    return sorted(datasets_list)
 
 
 def get_augmentors(task_choice):
@@ -94,7 +94,7 @@ def get_augmentors(task_choice):
 def get_templates(task_choice, dataset_choice):
     if not isinstance(dataset_choice, str):
         return gr.update(choices=[], value=None)
-    return gr.update(choices=data[task_choice][dataset_choice])
+    return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
 # LOAD DATA
@@ -102,7 +102,7 @@ data = load_cards_data()
 
 # UI ELEMENTS
 # input
-tasks = gr.Dropdown(choices=data.keys(), label="Task")
+tasks = gr.Dropdown(choices=sorted(data.keys()), label="Task")
 cards = gr.Dropdown(choices=[], label="Dataset Card")
 templates = gr.Dropdown(choices=[], label="Template")
 instructions = gr.Dropdown(

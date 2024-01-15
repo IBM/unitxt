@@ -91,7 +91,7 @@ def get_catalog_items(items_type):
     items = []
     for dir in get_catalog_dirs():
         items.extend(get_catalog_items_from_dir(items_type, dir))
-    return items
+    return sorted(items)
 
 
 if __name__ == "__main__":
