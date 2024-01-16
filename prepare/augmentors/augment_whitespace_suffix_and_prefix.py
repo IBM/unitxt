@@ -1,6 +1,6 @@
-from unitxt import add_to_catalog
-from unitxt.operators import AugmentPrefixSuffix
-from unitxt.test_utils.operators import apply_operator
+from src.unitxt import add_to_catalog
+from src.unitxt.operators import AugmentPrefixSuffix
+from src.unitxt.test_utils.operators import apply_operator
 
 pattern_distribution = {
     " ": 20,
