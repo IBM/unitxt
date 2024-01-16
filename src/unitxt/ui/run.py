@@ -27,7 +27,7 @@ def run_unitxt_entry(
     augmentor=None,
     model_name=None,
     index=0,
-    max_length=cons.MAX_LENGTH,
+    max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
         return "", "", "", "", "", ""
@@ -43,8 +43,8 @@ def run_unitxt_entry(
         model_name = None
     if not isinstance(index, int):
         index = 0
-    if not isinstance(max_length, float):
-        max_length = cons.MAX_LENGTH
+    if not isinstance(max_new_tokens, float):
+        max_new_tokens = cons.MAX_NEW_TOKENS
     return run_unitxt(
         dataset,
         template,
@@ -54,7 +54,7 @@ def run_unitxt_entry(
         augmentor,
         model_name,
         index,
-        max_length,
+        max_new_tokens,
     )
 
 
@@ -83,10 +83,8 @@ def run_unitxt(
     augmentor=None,
     model_name=None,
     index=0,
-    max_length=cons.MAX_LENGTH,
+    max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
-    # if not isinstance(dataset, str) or not isinstance(template, str):
-    #     return "", "", "", "", "", ""
     prompts_list, prompt_args = get_prompts(
         dataset, template, num_demos, instruction, format, augmentor
     )
@@ -98,7 +96,7 @@ def run_unitxt(
         predictions = generate(
             model_name,
             [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list],
-            int(max_length),
+            int(max_new_tokens),
         )
         selected_prediction = predictions[index]
         results = metric.compute(
@@ -130,7 +128,7 @@ def build_prompt(prompt_args):
     prompt_list = []
     try:
         prompt_list = collect_prompts("train")
-    except RuntimeError:
+    except (RuntimeError, KeyError):
         prompt_list = collect_prompts("test")
     return prompt_list
 
@@ -174,9 +172,11 @@ def get_templates(task_choice, dataset_choice):
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
-def generate(model_name, prompts, max_length):
+def generate(model_name, prompts, max_new_tokens):
     def get_prediction(generator, prompt):
-        output = generator(prompt, num_return_sequences=1, max_length=max_length)
+        output = generator(
+            prompt, num_return_sequences=1, max_new_tokens=max_new_tokens
+        )
         return output[0]["generated_text"]
 
     def strip_predictions(predictions, prompts):
@@ -228,9 +228,9 @@ sample_choice = gr.Slider(
     step=1,
     minimum=0,
     maximum=cons.PROMPT_SAMPLE_SIZE,
-    info="change to see a different sample from the datset",
+    info="change to see a different sample from the dataset",
 )
-max_length = gr.Number(label="Max Length for prediction")
+max_new_tokens = gr.Number(label="Max New Tokens", value=cons.MAX_NEW_TOKENS)
 parameters = [
     tasks,
     cards,
@@ -241,14 +241,16 @@ parameters = [
     augmentors,
     model_choice,
     sample_choice,
-    max_length,
+    max_new_tokens,
 ]
 # output
 selected_prompt = gr.Textbox(lines=5, show_copy_button=True, label="Prompt")
 metrics = gr.Textbox(lines=1, label="Metrics")
 target = gr.Textbox(lines=1, label="Target")
 prediction = gr.Textbox(
-    lines=1, label="Model prediction", value="Select a model to get a prediction"
+    lines=1,
+    label="Model prediction",
+    value="Select a model or type a Hugging Face model name to get a prediction",
 )
 results = gr.Textbox(lines=1, label="Evaluation results")
 code = gr.Code(label="Code", language="python", min_width=10)
