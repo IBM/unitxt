@@ -1,4 +1,15 @@
 {
-    "type": "first_character",
-    "field": "TBD"
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "first_character",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "first_character",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
 }

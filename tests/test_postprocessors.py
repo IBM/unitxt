@@ -1,6 +1,12 @@
 import unittest
+from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
+from src.unitxt.test_utils.operators import check_operator
+
+
+def list_to_stream_with_prediction_and_references(list: List[Any]) -> List[Any]:
+    return [{"prediction": item, "references": [item]} for item in list]
 
 
 class TestPostProcessors(unittest.TestCase):
@@ -17,9 +23,12 @@ class TestPostProcessors(unittest.TestCase):
         ]
         targets = ["TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "OTHER"]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_to_span_label_pairs(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs")
@@ -29,70 +38,93 @@ class TestPostProcessors(unittest.TestCase):
             [],
         ]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_to_list_by_comma(self):
         parser, _ = fetch_artifact("processors.to_list_by_comma")
         inputs = ["cat, dog", "man, woman, dog"]
         targets = [["cat", "dog"], ["man", "woman", "dog"]]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_take_first_word(self):
         parser, _ = fetch_artifact("processors.take_first_word")
         inputs = ["- yes, I think it is"]
         targets = ["yes"]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
-
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
         inputs = ["..."]
         targets = [""]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_yes_no_to_int(self):
         parser, _ = fetch_artifact("processors.yes_no_to_int")
         inputs = ["yes", "no", "yaa"]
         targets = ["1", "0", "0"]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_to_yes_or_none(self):
         parser, _ = fetch_artifact("processors.to_yes_or_none")
         inputs = ["yes", "no", "yaa"]
         targets = ["yes", "none", "none"]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_stance_to_pro_con(self):
         parser, _ = fetch_artifact("processors.stance_to_pro_con")
         inputs = ["positive", "negative", "suggestion", "neutral", "nothing"]
         targets = ["PRO", "CON", "CON", "none", "none"]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_to_span_label_pairs_surface_only(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs_surface_only")
         inputs = [r"John\,\: Doe, New York", "None"]
         targets = [[("John\\,\\: Doe", ""), ("New York", "")], []]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_load_json(self):
         parser, _ = fetch_artifact("processors.load_json")
@@ -106,9 +138,12 @@ class TestPostProcessors(unittest.TestCase):
             [],
         ]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_dict_of_lists_to_value_key_pairs(self):
         parser, _ = fetch_artifact("processors.dict_of_lists_to_value_key_pairs")
@@ -122,9 +157,12 @@ class TestPostProcessors(unittest.TestCase):
             [],
         ]
 
-        for input, target in zip(inputs, targets):
-            parsed = parser.process_value(input)
-            self.assertEqual(target, parsed)
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
 
     def test_span_labeling_json_template_errors(self):
         postprocessor1, _ = fetch_artifact("processors.load_json")
@@ -137,10 +175,15 @@ class TestPostProcessors(unittest.TestCase):
         post1_targets = [{}, {"d": {"b": "c"}}, [], ["djje", "djjjd"]]
         post2_targets = [[], [("b", "d")], [], []]
 
-        for pred, post_target1, post_target2 in zip(
-            predictions, post1_targets, post2_targets
-        ):
-            post1 = postprocessor1.process_value(pred)
-            self.assertEqual(post1, post_target1)
-            post2 = postprocessor2.process_value(post1)
-            self.assertEqual(post2, post_target2)
+        check_operator(
+            operator=postprocessor1,
+            inputs=list_to_stream_with_prediction_and_references(predictions),
+            targets=list_to_stream_with_prediction_and_references(post1_targets),
+            tester=self,
+        )
+        check_operator(
+            operator=postprocessor2,
+            inputs=list_to_stream_with_prediction_and_references(post1_targets),
+            targets=list_to_stream_with_prediction_and_references(post2_targets),
+            tester=self,
+        )
