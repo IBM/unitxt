@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import evaluate
 import gradio as gr
 from transformers import pipeline
@@ -15,7 +17,7 @@ def safe_add(parameter, key, args):
         args[key] = parameter
 
 
-def run_unitxt(
+def run_unitxt_entry(
     task,
     dataset,
     template,
@@ -25,9 +27,39 @@ def run_unitxt(
     augmentor=None,
     model_name=None,
     index=0,
+    max_length=cons.MAX_LENGTH,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
         return "", "", "", "", "", ""
+    if not isinstance(instruction, str):
+        instruction = None
+    if not isinstance(format, str):
+        format = None
+    if not isinstance(num_demos, int):
+        num_demos = 0
+    if not isinstance(augmentor, str):
+        augmentor = None
+    if not isinstance(model_name, str):
+        model_name = None
+    if not isinstance(index, int):
+        index = 0
+    if not isinstance(max_length, float):
+        max_length = cons.MAX_LENGTH
+    return run_unitxt(
+        dataset,
+        template,
+        instruction,
+        format,
+        num_demos,
+        augmentor,
+        model_name,
+        index,
+        max_length,
+    )
+
+
+@lru_cache
+def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
     prompt_args = {"card": dataset, "template": template, cons.LOADER_LIMIT_STR: 100}
     if num_demos != 0:
         prompt_args.update(
@@ -38,26 +70,49 @@ def run_unitxt(
     safe_add(augmentor, "augmentor", prompt_args)
 
     prompts_list = build_prompt(prompt_args)
+    return prompts_list, prompt_args
+
+
+@lru_cache
+def run_unitxt(
+    dataset,
+    template,
+    instruction=None,
+    format=None,
+    num_demos=0,
+    augmentor=None,
+    model_name=None,
+    index=0,
+    max_length=cons.MAX_LENGTH,
+):
+    # if not isinstance(dataset, str) or not isinstance(template, str):
+    #     return "", "", "", "", "", ""
+    prompts_list, prompt_args = get_prompts(
+        dataset, template, num_demos, instruction, format, augmentor
+    )
     selected_prompt = prompts_list[index]
     command = build_command(prompt_args)
     selected_prediction = ""
-    results = ""
+    selected_result = ""
     if model_name:
         predictions = generate(
-            model_name, [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list]
+            model_name,
+            [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list],
+            int(max_length),
         )
         selected_prediction = predictions[index]
         results = metric.compute(
             predictions=predictions,
             references=prompts_list,
         )
+        selected_result = results[index]["score"]
     return (
         selected_prompt[cons.PROMPT_SOURCE_STR],
         selected_prompt[cons.PROMPT_METRICS_STR],
         selected_prompt[cons.PROPT_TARGET_STR],
         command,
         selected_prediction,
-        results[index]["score"],
+        selected_result,
     )
 
 
@@ -119,9 +174,9 @@ def get_templates(task_choice, dataset_choice):
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
-def generate(model_name, prompts):
+def generate(model_name, prompts, max_length):
     def get_prediction(generator, prompt):
-        output = generator(prompt, num_return_sequences=1, max_length=cons.MAX_LENGTH)
+        output = generator(prompt, num_return_sequences=1, max_length=max_length)
         return output[0]["generated_text"]
 
     def strip_predictions(predictions, prompts):
@@ -175,6 +230,7 @@ sample_choice = gr.Slider(
     maximum=cons.PROMPT_SAMPLE_SIZE,
     info="change to see a different sample from the datset",
 )
+max_length = gr.Number(label="Max Length for prediction")
 parameters = [
     tasks,
     cards,
@@ -185,6 +241,7 @@ parameters = [
     augmentors,
     model_choice,
     sample_choice,
+    max_length,
 ]
 # output
 selected_prompt = gr.Textbox(lines=5, show_copy_button=True, label="Prompt")
@@ -218,8 +275,8 @@ with demo:
     tasks.change(update_choices_per_task, inputs=tasks, outputs=[cards, augmentors])
     cards.change(get_templates, inputs=[tasks, cards], outputs=templates)
 
-    get_prompts = gr.Interface(
-        fn=run_unitxt,
+    result = gr.Interface(
+        fn=run_unitxt_entry,
         inputs=parameters,
         outputs=output_components,
         allow_flagging="never",
