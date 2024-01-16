@@ -1,0 +1,54 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_csv",
+        "files": {
+            "train": "https://raw.githubusercontent.com/IBM/watson-machine-learning-samples/master/cloud/data/cfpb_complaints/cfpb_compliants.csv"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[70%]",
+                "validation": "train[10%]",
+                "test": "train[20%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "narrative": "text",
+                "product": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "retail_banking": "retail banking",
+                    "mortgages_and_loans": "mortgages and loans",
+                    "debt_collection": "debt collection",
+                    "credit_card": "credit card",
+                    "credit_reporting": "credit reporting"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "retail banking",
+                    "mortgages and loans",
+                    "debt collection",
+                    "credit card",
+                    "credit reporting"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

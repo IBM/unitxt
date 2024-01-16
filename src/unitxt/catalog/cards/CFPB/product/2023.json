@@ -1,0 +1,62 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_csv",
+        "files": {
+            "train": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_max=2023-01-04&date_received_min=2022-01-04&field=all&format=csv&has_narrative=true&lens=product&no_aggs=true&size=340390&sub_lens=sub_product&trend_depth=5&trend_interval=month"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[70%]",
+                "validation": "train[10%]",
+                "test": "train[20%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "Consumer complaint narrative": "text",
+                "Product": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "Credit reporting, credit repair services, or other personal consumer reports": "credit reporting or credit repair services or other personal consumer reports",
+                    "Credit card or prepaid card": "credit card or prepaid card",
+                    "Payday loan, title loan, or personal loan": "payday loan or title loan or personal loan",
+                    "Debt collection": "debt collection",
+                    "Mortgage": "mortgage",
+                    "Checking or savings account": "checking or savings account",
+                    "Money transfer, virtual currency, or money service": "money transfer or virtual currency or money service",
+                    "Vehicle loan or lease": "vehicle loan or lease",
+                    "Student loan": "student loan"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "credit reporting or credit repair services or other personal consumer reports",
+                    "credit card or prepaid card",
+                    "payday loan or title loan or personal loan",
+                    "debt collection",
+                    "mortgage",
+                    "checking or savings account",
+                    "money transfer or virtual currency or money service",
+                    "vehicle loan or lease",
+                    "student loan"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}
