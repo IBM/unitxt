@@ -33,7 +33,7 @@ def run_unitxt_entry(
     # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", "", "", "", ""
+        return "", "", "", "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME
     if not isinstance(instruction, str):
         instruction = None
     if not isinstance(format, str):
@@ -114,6 +114,17 @@ def unhash_dict(input_frozenset):
     }
 
 
+def create_dataframe(scores):
+    try:
+        scores.pop("score_name")
+        scores.pop("score")
+        df = pd.DataFrame(list(scores.items()), columns=["Score Name", "Score"])
+        df = df.round(decimals=3)
+        return df
+    except Exception:
+        return cons.EMPTY_SCORES_FRAME
+
+
 def run_unitxt(
     dataset,
     template,
@@ -125,29 +136,49 @@ def run_unitxt(
     index=0,
     # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
-    prompts_list, prompt_args = get_prompts(
-        dataset, template, num_demos, instruction, format, augmentor
-    )
-    selected_prompt = prompts_list[index]
-    command = build_command(prompt_args)
+    try:
+        prompts_list, prompt_args = get_prompts(
+            dataset, template, num_demos, instruction, format, augmentor
+        )
+        selected_prompt = prompts_list[index]
+        prompt_text = (selected_prompt[cons.PROMPT_SOURCE_STR],)
+        prompt_metrics = (selected_prompt[cons.PROMPT_METRICS_STR],)
+        prompt_target = (selected_prompt[cons.PROPT_TARGET_STR],)
+        command = build_command(prompt_args)
+    except Exception as e:
+        prompt_text = f"""
+    Oops... this combination didnt work! Try something else.
+
+    Exception: {e!r}
+
+    For more details, see standard output.
+    """
+        prompt_metrics = ""
+        prompt_target = ""
+        command = ""
     selected_prediction = ""
-    instance_result = ""
-    agg_result = ""
+    instance_result = cons.EMPTY_SCORES_FRAME
+    agg_result = cons.EMPTY_SCORES_FRAME
     if run_model:
-        predictions, results = get_predictions_and_scores(
-            tuple(hash_dict(prompt) for prompt in prompts_list)
-        )
-        selected_prediction = predictions[index]
-        selected_result = results[index]["score"]
-        instance_result = selected_result["instance"]
-        agg_result = pd.DataFrame(
-            list(selected_result["global"].items()), columns=["Score Name", "Score"]
-        )
+        try:
+            predictions, results = get_predictions_and_scores(
+                tuple(hash_dict(prompt) for prompt in prompts_list)
+            )
+            selected_prediction = predictions[index]
+            selected_result = results[index]["score"]
+            instance_result = create_dataframe(selected_result["instance"])
+            agg_result = create_dataframe(selected_result["global"])
+        except Exception as e:
+            selected_prediction = f"""
+            An exceptions has occured:
+            {e!r}
+            For more details, see standard output
+            """
 
     return (
-        selected_prompt[cons.PROMPT_SOURCE_STR],
-        selected_prompt[cons.PROMPT_METRICS_STR],
-        selected_prompt[cons.PROPT_TARGET_STR],
+        prompt_text,
+        prompt_metrics,
+        prompt_target,
         command,
         selected_prediction,
         instance_result,
@@ -296,13 +327,18 @@ target = gr.Textbox(lines=1, label="Target")
 prediction = gr.Textbox(
     lines=1,
     label="Model prediction",
-    value="Select a model to get a prediction",
+    value=" ",
 )
-instance_scores = gr.Textbox(lines=1, label="Instance Score")
+instance_scores = gr.DataFrame(
+    label="Instance scores",
+    value=cons.EMPTY_SCORES_FRAME,
+    height=150,
+)
 global_scores = gr.DataFrame(
     label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
-    value=pd.DataFrame(list({"": ""}.items()), columns=["Score Name", "Score"]),
-    height=200,
+    value=cons.EMPTY_SCORES_FRAME,
+    height=150,
+    wrap=True,
 )
 code = gr.Code(label="Code", language="python", lines=1)
 output_components = [
