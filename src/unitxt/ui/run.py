@@ -188,7 +188,7 @@ def generate_flan(prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
     for prompt in prompts:
         input_ids = flan_tokenizer(prompt, return_tensors="pt").input_ids
         output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
-        predictions.append(flan_tokenizer.decode(output[0]))
+        predictions.append(flan_tokenizer.decode(output[0], skip_special_tokens=True))
     return predictions
 
 
