@@ -1,7 +1,5 @@
 import os
 
-import pandas as pd
-
 CATALOG_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "catalog",
@@ -17,6 +15,7 @@ PROMPT_SAMPLE_SIZE = 5
 MAX_NEW_TOKENS = 30
 FLAN_T5_BASE = "flan-t5-base"
 GPT2 = "gpt2"
-EMPTY_SCORES_FRAME = pd.DataFrame(
-    list({"": ""}.items()), columns=["Score Name", "Score"]
-)
+# EMPTY_SCORES_FRAME = pd.DataFrame(
+#     list({"": ""}.items()), columns=["Score Name", "Score"]
+# )
+EMPTY_SCORES_FRAME = list({"": ""}.items())

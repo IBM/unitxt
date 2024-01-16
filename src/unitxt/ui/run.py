@@ -2,7 +2,6 @@ from functools import lru_cache
 
 import evaluate
 import gradio as gr
-import pandas as pd
 from transformers import T5ForConditionalGeneration, T5Tokenizer, pipeline
 
 from unitxt import metric_url
@@ -118,13 +117,14 @@ def create_dataframe(scores):
     try:
         scores.pop("score_name")
         scores.pop("score")
-        df = pd.DataFrame(list(scores.items()), columns=["Score Name", "Score"])
-        df = df.round(decimals=3)
+        rounded_scores = {key: round(value, 3) for key, value in scores.items()}
+        df = list(rounded_scores.items())
         return df
     except Exception:
         return cons.EMPTY_SCORES_FRAME
 
 
+@lru_cache
 def run_unitxt(
     dataset,
     template,
@@ -332,11 +332,13 @@ prediction = gr.Textbox(
 instance_scores = gr.DataFrame(
     label="Instance scores",
     value=cons.EMPTY_SCORES_FRAME,
+    headers=["Score Name", "Score"],
     height=150,
 )
 global_scores = gr.DataFrame(
     label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
     value=cons.EMPTY_SCORES_FRAME,
+    headers=["Score Name", "Score"],
     height=150,
     wrap=True,
 )
