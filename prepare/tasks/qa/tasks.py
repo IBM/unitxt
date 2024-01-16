@@ -26,7 +26,7 @@ add_to_catalog(
     FormTask(
         inputs=["question"],
         outputs=["answer"],
-        metrics=["metrics.squad"],  # TODO: check change to rouge
+        metrics=["metrics.rouge"],
     ),
     "tasks.qa.open",
     overwrite=True,
