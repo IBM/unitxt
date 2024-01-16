@@ -6,4 +6,4 @@ format = SystemFormat(
     model_input_format="{instruction}{demos}### Instruction:\n{source}\n\n\n### Response: ",
 )
 
-add_to_catalog(format, "formats.alpaca_instruct", overwrite=True)
+add_to_catalog(format, "formats.models.alpaca_instruct", overwrite=True)
