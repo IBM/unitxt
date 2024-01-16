@@ -74,6 +74,45 @@ def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
 
 
 @lru_cache
+def get_predictions_and_scores(prompts_hashable):
+    prompts_list = [unhash_dict(prompt) for prompt in prompts_hashable]
+    prompts_sources = (prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list)
+    predictions = generate(
+        model_name=cons.FLAN_T5_BASE,
+        prompts=prompts_sources,
+    )
+    results = metric.compute(
+        predictions=predictions,
+        references=prompts_list,
+    )
+    return predictions, results
+
+
+def hash_dict(input_dict):
+    return frozenset(
+        (
+            key,
+            hash_dict(value)
+            if isinstance(value, dict)
+            else tuple(value)
+            if isinstance(value, list)
+            else value,
+        )
+        for key, value in input_dict.items()
+    )
+
+
+def unhash_dict(input_frozenset):
+    return {
+        key: unhash_dict(value)
+        if isinstance(value, frozenset)
+        else value
+        if not isinstance(value, tuple)
+        else list(value)
+        for key, value in input_frozenset
+    }
+
+
 def run_unitxt(
     dataset,
     template,
@@ -94,16 +133,10 @@ def run_unitxt(
     instance_result = ""
     agg_result = ""
     if run_model:
-        predictions = generate(
-            model_name=cons.FLAN_T5_BASE,
-            prompts=[prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list],
-            # int(max_new_tokens),
+        predictions, results = get_predictions_and_scores(
+            tuple(hash_dict(prompt) for prompt in prompts_list)
         )
         selected_prediction = predictions[index]
-        results = metric.compute(
-            predictions=predictions,
-            references=prompts_list,
-        )
         selected_result = results[index]["score"]
         instance_result = selected_result["instance"]
         agg_result = selected_result["global"]
@@ -229,16 +262,15 @@ instructions = gr.Dropdown(
     choices=[None, *get_catalog_items("instructions")], label="Instruction"
 )
 formats = gr.Dropdown(choices=[None, *get_catalog_items("formats")], label="Format")
-num_shots = gr.Slider(minimum=0, maximum=5, step=1, label="Num Shots")
+num_shots = gr.Radio(choices=list(range(6)), label="Num Shots", value=0)
 augmentors = gr.Dropdown(choices=[], label="Augmentor")
 run_model = gr.Checkbox(value=False, label=f"Predict with {cons.FLAN_T5_BASE}")
 
-sample_choice = gr.Slider(
-    label="Sample Selector",
-    step=1,
-    minimum=0,
-    maximum=cons.PROMPT_SAMPLE_SIZE,
-    info="change to see a different sample from the dataset",
+sample_choice = gr.Radio(
+    label="Select sample to view",
+    choices=list(range(cons.PROMPT_SAMPLE_SIZE)),
+    info="switch to see a different sample from the dataset",
+    value=0,
 )
 # max_new_tokens = gr.Number(label="Max New Tokens", value=cons.MAX_NEW_TOKENS)
 parameters = [
@@ -266,7 +298,7 @@ instance_scores = gr.Textbox(lines=1, label="Instance Score")
 global_scores = gr.Textbox(
     lines=1, label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions"
 )
-code = gr.Code(label="Code", language="python")
+code = gr.Code(label="Code", language="python", lines=1)
 output_components = [
     selected_prompt,
     metrics,
