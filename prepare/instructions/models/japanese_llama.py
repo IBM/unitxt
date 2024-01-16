@@ -1,5 +1,5 @@
-from unitxt.catalog import add_to_catalog
-from unitxt.instructions import TextualInstruction
+from src.unitxt.catalog import add_to_catalog
+from src.unitxt.instructions import TextualInstruction
 
 instruction = TextualInstruction(
     "<<SYS>>\nあなたは誠実で優秀な日本人のアシスタントです。\n<</SYS>>\n\n"
