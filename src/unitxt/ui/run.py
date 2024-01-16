@@ -2,7 +2,7 @@ from functools import lru_cache
 
 import evaluate
 import gradio as gr
-from transformers import pipeline
+from transformers import T5ForConditionalGeneration, T5Tokenizer, pipeline
 
 from unitxt import metric_url
 from unitxt.standard import StandardRecipe
@@ -10,6 +10,8 @@ from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 
 metric = evaluate.load(metric_url)
+flan_tokenizer = T5Tokenizer.from_pretrained(f"google/{cons.FLAN_T5_BASE}")
+flan_model = T5ForConditionalGeneration.from_pretrained(f"google/{cons.FLAN_T5_BASE}")
 
 
 def safe_add(parameter, key, args):
@@ -25,9 +27,9 @@ def run_unitxt_entry(
     format=None,
     num_demos=0,
     augmentor=None,
-    model_name=None,
+    run_model=False,
     index=0,
-    max_new_tokens=cons.MAX_NEW_TOKENS,
+    # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
         return "", "", "", "", "", "", ""
@@ -39,12 +41,10 @@ def run_unitxt_entry(
         num_demos = 0
     if not isinstance(augmentor, str):
         augmentor = None
-    if not isinstance(model_name, str):
-        model_name = None
     if not isinstance(index, int):
         index = 0
-    if not isinstance(max_new_tokens, float):
-        max_new_tokens = cons.MAX_NEW_TOKENS
+    # if not isinstance(max_new_tokens, float):
+    #     max_new_tokens = cons.MAX_NEW_TOKENS
     return run_unitxt(
         dataset,
         template,
@@ -52,9 +52,9 @@ def run_unitxt_entry(
         format,
         num_demos,
         augmentor,
-        model_name,
+        run_model,
         index,
-        max_new_tokens,
+        # max_new_tokens,
     )
 
 
@@ -81,9 +81,9 @@ def run_unitxt(
     format=None,
     num_demos=0,
     augmentor=None,
-    model_name=None,
+    run_model=False,
     index=0,
-    max_new_tokens=cons.MAX_NEW_TOKENS,
+    # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     prompts_list, prompt_args = get_prompts(
         dataset, template, num_demos, instruction, format, augmentor
@@ -91,13 +91,13 @@ def run_unitxt(
     selected_prompt = prompts_list[index]
     command = build_command(prompt_args)
     selected_prediction = ""
-    selected_result = ""
+    instance_result = ""
     agg_result = ""
-    if model_name:
+    if run_model:
         predictions = generate(
-            model_name,
-            [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list],
-            int(max_new_tokens),
+            model_name=cons.FLAN_T5_BASE,
+            prompts=[prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list],
+            # int(max_new_tokens),
         )
         selected_prediction = predictions[index]
         results = metric.compute(
@@ -113,7 +113,7 @@ def run_unitxt(
         selected_prompt[cons.PROPT_TARGET_STR],
         command,
         selected_prediction,
-        selected_result,
+        instance_result,
         agg_result,
     )
 
@@ -176,7 +176,23 @@ def get_templates(task_choice, dataset_choice):
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
-def generate(model_name, prompts, max_new_tokens):
+def generate(model_name, prompts):
+    if model_name == cons.GPT2:
+        return generate_pipeline(model_name, prompts)
+    if model_name == cons.FLAN_T5_BASE:
+        return generate_flan(prompts)
+
+
+def generate_flan(prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
+    predictions = []
+    for prompt in prompts:
+        input_ids = flan_tokenizer(prompt, return_tensors="pt").input_ids
+        output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
+        predictions.append(flan_tokenizer.decode(output[0]))
+    return predictions
+
+
+def generate_pipeline(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
     def get_prediction(generator, prompt):
         output = generator(
             prompt, num_return_sequences=1, max_new_tokens=max_new_tokens
@@ -189,14 +205,8 @@ def generate(model_name, prompts, max_new_tokens):
             stripped_predictions.append(predictions[i].replace(prompts[i], ""))
         return stripped_predictions
 
-    try:
-        generator = pipeline("text-generation", model=model_name)
-    except Exception as e:
-        return f"""
-        Try a different model name
-        Exception:
-        {e}
-        """
+    generator = pipeline("text-generation", model=model_name)
+
     if isinstance(prompts, str):
         predictions = get_prediction(generator, prompts)
     else:
@@ -221,12 +231,8 @@ instructions = gr.Dropdown(
 formats = gr.Dropdown(choices=[None, *get_catalog_items("formats")], label="Format")
 num_shots = gr.Slider(minimum=0, maximum=5, step=1, label="Num Shots")
 augmentors = gr.Dropdown(choices=[], label="Augmentor")
-model_choice = gr.Dropdown(
-    label="model",
-    choices=[None, "gpt2"],
-    allow_custom_value=True,
-    info="A hugging face model name can also be manually typed here",
-)
+run_model = gr.Checkbox(value=False, label=f"Predict with {cons.FLAN_T5_BASE}")
+
 sample_choice = gr.Slider(
     label="Sample Selector",
     step=1,
@@ -234,7 +240,7 @@ sample_choice = gr.Slider(
     maximum=cons.PROMPT_SAMPLE_SIZE,
     info="change to see a different sample from the dataset",
 )
-max_new_tokens = gr.Number(label="Max New Tokens", value=cons.MAX_NEW_TOKENS)
+# max_new_tokens = gr.Number(label="Max New Tokens", value=cons.MAX_NEW_TOKENS)
 parameters = [
     tasks,
     cards,
@@ -243,18 +249,18 @@ parameters = [
     formats,
     num_shots,
     augmentors,
-    model_choice,
+    run_model,
     sample_choice,
-    max_new_tokens,
+    # max_new_tokens,
 ]
 # output
-selected_prompt = gr.Textbox(lines=5, show_copy_button=True, label="Prompt")
+selected_prompt = gr.Textbox(lines=3, show_copy_button=True, label="Prompt")
 metrics = gr.Textbox(lines=1, label="Metrics")
 target = gr.Textbox(lines=1, label="Target")
 prediction = gr.Textbox(
     lines=1,
     label="Model prediction",
-    value="Select a model or type a Hugging Face model name to get a prediction",
+    value="Select a model to get a prediction",
 )
 instance_scores = gr.Textbox(lines=1, label="Instance Score")
 global_scores = gr.Textbox(
