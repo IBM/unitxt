@@ -83,6 +83,17 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
+    @staticmethod
+    def aggregate_instance_scores(instances, field_name):
+        """Calculate mean of a set of instance scores (given by field_name)"""
+        scores = [instance["score"]["instance"][field_name] for instance in instances]
+        import warnings
+
+        with warnings.catch_warnings():
+            # in case instances is empty, return NaN but avoid printing a RuntimeWarning
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            return np.nanmean(scores)
+
     def score_based_confidence_interval(
         self,
         instances: List[dict],
@@ -114,8 +125,7 @@ class MetricWithConfidenceInterval(Metric):
         func_name = str(func_name)
         if aggregation_func is None:
             # by default mean aggregation
-            def aggregation_func(instances, field_name):
-                return mean([instance[field_name] for instance in instances])
+            aggregation_func = self.aggregate_instance_scores
 
         for score_name in score_names:
             # need to redefine the statistic function within the loop because score_name is a loop variable, to avoid ruff errors
@@ -537,15 +547,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         return instances, global_score
 
-    @staticmethod
-    def aggregate_instance_scores(instances, field_name):
-        scores = [instance["score"]["instance"][field_name] for instance in instances]
-        import warnings
-
-        with warnings.catch_warnings():
-            # in case instances is empty, return NaN but avoid printing a RuntimeWarning
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            return np.nanmean(scores)
 
     def aggregate_instance_scores_by_group(
         self, instances, field_name, aggregation_func
@@ -1793,6 +1794,7 @@ class RetrievalMetric(InstanceMetric):
 class MRR(RetrievalMetric):
     reduction_map = {"mean": ["mrr"]}
     main_score = "mrr"
+    ci_scores = ["mrr"]
 
     def _compute(
         self,
@@ -1809,6 +1811,7 @@ class MRR(RetrievalMetric):
 class MAP(RetrievalMetric):
     reduction_map = {"mean": ["map"]}
     main_score = "map"
+    ci_scores = ["map"]
 
     def _compute(
         self,
