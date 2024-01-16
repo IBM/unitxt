@@ -85,7 +85,12 @@ class MetricWithConfidenceInterval(Metric):
 
     @staticmethod
     def aggregate_instance_scores(instances, field_name):
-        """Calculate mean of a set of instance scores (given by field_name)"""
+        """Calculate mean of a set of instance scores (given by field_name), ignoring NaNs.
+
+        Args:
+            instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
+            field_name: score field names to compute mean for.
+        """
         scores = [instance["score"]["instance"][field_name] for instance in instances]
         import warnings
 
@@ -106,17 +111,17 @@ class MetricWithConfidenceInterval(Metric):
         Unlike GlobalMetric, this is simply a function of the instance scores (possibly taking into account additional_inputs field),
          so they don't need to be recomputed after every bootstrap draw.
 
-        instances:
-            The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
-        score_names: List[str]
-            Compute a confidence interval for each score_name from this list.
-        aggregation_func:
-            A function with arguments instances, field_name; is applied on list of instances (which may include additional_inputs
-            field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
-            instances after resampling, if aggregation_func=None.
-        func_name:
-            An optional function name (if aggregation_func is not the mean) to append to each score_name in the results.
-            Used primarily for group_mean reductions.
+        Args:
+            instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
+            score_names: List of instance score field names to compute a confidence interval for.
+            aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include additional_inputs
+                field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
+                instances after resampling, if aggregation_func=None.
+            func_name: An optional function name (if aggregation_func is not the mean) to append to each score_name in the results.
+                Used primarily for group_mean reductions.
+
+        Returns:
+            Dict of confidence interval values
         """
         result = {}
 
@@ -546,7 +551,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instances.append(instance)
 
         return instances, global_score
-
 
     def aggregate_instance_scores_by_group(
         self, instances, field_name, aggregation_func
