@@ -1,8 +1,11 @@
 import json
 
-from unitxt import add_to_catalog
-from unitxt.blocks import SpanLabelingTemplate, TemplatesList
-from unitxt.templates import SpanLabelingJsonTemplate
+from src.unitxt import add_to_catalog
+from src.unitxt.templates import (
+    SpanLabelingJsonTemplate,
+    SpanLabelingTemplate,
+    TemplatesList,
+)
 
 """
 Templates for a targeted sentiment extraction task.
