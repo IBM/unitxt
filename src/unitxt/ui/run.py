@@ -2,6 +2,7 @@ from functools import lru_cache
 
 import evaluate
 import gradio as gr
+import pandas as pd
 from transformers import T5ForConditionalGeneration, T5Tokenizer, pipeline
 
 from unitxt import metric_url
@@ -139,7 +140,10 @@ def run_unitxt(
         selected_prediction = predictions[index]
         selected_result = results[index]["score"]
         instance_result = selected_result["instance"]
-        agg_result = selected_result["global"]
+        agg_result = pd.DataFrame(
+            list(selected_result["global"].items()), columns=["Score Name", "Score"]
+        )
+
     return (
         selected_prompt[cons.PROMPT_SOURCE_STR],
         selected_prompt[cons.PROMPT_METRICS_STR],
@@ -295,8 +299,10 @@ prediction = gr.Textbox(
     value="Select a model to get a prediction",
 )
 instance_scores = gr.Textbox(lines=1, label="Instance Score")
-global_scores = gr.Textbox(
-    lines=1, label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions"
+global_scores = gr.DataFrame(
+    label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
+    value=pd.DataFrame(list({"": ""}.items()), columns=["Score Name", "Score"]),
+    height=200,
 )
 code = gr.Code(label="Code", language="python", lines=1)
 output_components = [
