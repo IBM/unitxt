@@ -1,3 +1,4 @@
 {
-    "type": "to_yes_or_none"
+    "type": "to_yes_or_none",
+    "field": "TBD"
 }

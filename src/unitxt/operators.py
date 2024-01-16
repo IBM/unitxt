@@ -880,6 +880,56 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
+class Perturbate(FieldOperator):
+    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+
+    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    relevant perturbation
+    """
+
+    select_from: List[Any] = []
+    percentage_to_perturbate: int = 1  # 1 percent
+
+    def verify(self):
+        assert (
+            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
+        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+
+    def prepare(self):
+        super().prepare()
+        self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
+
+    def process_value(self, value: Any) -> Any:
+        perturbate = (
+            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
+        )
+        if not perturbate:
+            return value
+
+        if value in self.select_from:
+            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            if self.random_generator.random() < 0.8:
+                return self.random_generator.choice(self.select_from)
+
+        if isinstance(value, float):
+            return value * (0.5 + self.random_generator.random())
+
+        if isinstance(value, int):
+            perturb = 1 if self.random_generator.random() < 0.5 else -1
+            return value + perturb
+
+        if isinstance(value, str):
+            if len(value) < 2:
+                # give up perturbation
+                return value
+            # throw one char out
+            prefix_len = self.random_generator.randint(1, len(value) - 1)
+            return value[:prefix_len] + value[prefix_len + 1 :]
+
+        # and in any other case:
+        return value
+
+
 class CopyFields(FieldOperator):
     """Copies values from specified fields to specified fields.
 
@@ -1045,7 +1095,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
             a list of values, each of which is to be processed.
         operators_field (str): name of the field that contains the list of names of the operators to be applied,
-            one after the other, for the processing.
+            one after the other, for the processing. Operators are all (extensions of) FieldOperator
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
 
     Example:
@@ -1078,9 +1128,9 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
             for field_name in self.inputs_fields:
                 value = instance[field_name]
                 if field_name in self.fields_to_treat_as_list:
-                    instance[field_name] = [operator.process(v) for v in value]
+                    instance[field_name] = [operator.process_value(v) for v in value]
                 else:
-                    instance[field_name] = operator.process(value)
+                    instance[field_name] = operator.process_value(value)
 
         return instance
 
@@ -1283,7 +1333,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
-        all_values = []
+        counter = Counter()
         for instance in stream:
             if (not isinstance(instance[self.field], list)) and (
                 self.process_every_value is True
@@ -1295,21 +1345,21 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                 self.process_every_value is False
             ):
                 # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
-                all_values.append(
-                    (*instance[self.field],)
+                counter.update(
+                    [(*instance[self.field],)]
                     if isinstance(instance[self.field], list)
-                    else instance[self.field]
+                    else [instance[self.field]]
                 )  # convert to a tuple if list, to enable the use of Counter which would not accept
-                # a list as an entity to count its occurrences
+                # a list as an hashable entity to count its occurrences
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
-                all_values.extend(instance[self.field])
-        counter = Counter(
-            all_values
-        )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
+                counter.update(instance[self.field])
+        # here counter counts occurrences of individual values, or tupples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
-            top_frequency = len(all_values) * self.overall_top_frequency_percent / 100.0
+            top_frequency = (
+                sum(counter.values()) * self.overall_top_frequency_percent / 100.0
+            )
             sum_counts = 0
             for _i, p in enumerate(values_and_counts):
                 sum_counts += p[1]
@@ -1317,7 +1367,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                     break
             values_and_counts = counter.most_common(_i + 1)
         if self.min_frequency_percent > 0:
-            min_frequency = self.min_frequency_percent * len(all_values) / 100.0
+            min_frequency = self.min_frequency_percent * sum(counter.values()) / 100.0
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
         values_to_keep = [

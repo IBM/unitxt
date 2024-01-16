@@ -45,7 +45,7 @@ setuptools.setup(
     url="https://github.com/ibm/unitxt",
     packages=setuptools.find_packages("src"),
     package_dir={"": "src"},
-    package_data={"unitxt": ["catalog/*.json"]},
+    package_data={"unitxt": ["catalog/*.json", "ui/banner.png"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
