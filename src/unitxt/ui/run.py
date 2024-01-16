@@ -115,8 +115,10 @@ def unhash_dict(input_frozenset):
 
 def create_dataframe(scores):
     try:
-        scores.pop("score_name")
-        scores.pop("score")
+        if "score_name" in scores:
+            scores.pop("score_name")
+        if "score" in scores:
+            scores.pop("score")
         rounded_scores = {key: round(value, 3) for key, value in scores.items()}
         df = list(rounded_scores.items())
         return df
