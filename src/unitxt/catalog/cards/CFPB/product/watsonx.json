@@ -23,14 +23,26 @@
             }
         },
         {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "retail_banking": "retail banking",
+                    "mortgages_and_loans": "mortgages and loans",
+                    "debt_collection": "debt collection",
+                    "credit_card": "credit card",
+                    "credit_reporting": "credit reporting"
+                }
+            }
+        },
+        {
             "type": "add_fields",
             "fields": {
                 "classes": [
-                    "retail_banking",
-                    "mortgages_and_loans",
-                    "debt_collection",
-                    "credit_card",
-                    "credit_reporting"
+                    "retail banking",
+                    "mortgages and loans",
+                    "debt collection",
+                    "credit card",
+                    "credit reporting"
                 ],
                 "text_type": "text",
                 "type_of_class": "topic"
