@@ -31,7 +31,7 @@ def add_templates():
         )
         full_template_name = f"templates.{task_name}.{template_name}"
         template_list.append(full_template_name)
-        add_to_catalog(template, full_template_name)
+        add_to_catalog(template, full_template_name, overwrite=True)
 
     sentiments = ["positive", "negative", "neutral"]
 
@@ -49,7 +49,7 @@ def add_templates():
         )
         full_template_name = f"templates.{task_name}.as_json.{template_name}"
         template_list.append(full_template_name)
-        add_to_catalog(template, full_template_name)
+        add_to_catalog(template, full_template_name, overwrite=True)
 
     add_to_catalog(
         TemplatesList(template_list), f"templates.{task_name}.all", overwrite=True
@@ -79,7 +79,7 @@ def add_single_sentiment_templates():
                 f"templates.{task_name}.{sentiment}.{single_sentiment_template_name}"
             )
             template_list.append(full_template_name)
-            add_to_catalog(template, full_template_name)
+            add_to_catalog(template, full_template_name, overwrite=True)
         add_to_catalog(
             TemplatesList(template_list),
             f"templates.{task_name}.{sentiment}.all",
