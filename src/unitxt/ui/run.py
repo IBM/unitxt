@@ -30,7 +30,7 @@ def run_unitxt_entry(
     max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", "", "", ""
+        return "", "", "", "", "", "", ""
     if not isinstance(instruction, str):
         instruction = None
     if not isinstance(format, str):
@@ -92,6 +92,7 @@ def run_unitxt(
     command = build_command(prompt_args)
     selected_prediction = ""
     selected_result = ""
+    agg_result = ""
     if model_name:
         predictions = generate(
             model_name,
@@ -104,6 +105,8 @@ def run_unitxt(
             references=prompts_list,
         )
         selected_result = results[index]["score"]
+        instance_result = selected_result["instance"]
+        agg_result = selected_result["global"]
     return (
         selected_prompt[cons.PROMPT_SOURCE_STR],
         selected_prompt[cons.PROMPT_METRICS_STR],
@@ -111,6 +114,7 @@ def run_unitxt(
         command,
         selected_prediction,
         selected_result,
+        agg_result,
     )
 
 
@@ -252,9 +256,20 @@ prediction = gr.Textbox(
     label="Model prediction",
     value="Select a model or type a Hugging Face model name to get a prediction",
 )
-results = gr.Textbox(lines=1, label="Evaluation results")
-code = gr.Code(label="Code", language="python", min_width=10)
-output_components = [selected_prompt, metrics, target, code, prediction, results]
+instance_scores = gr.Textbox(lines=1, label="Instance Score")
+global_scores = gr.Textbox(
+    lines=1, label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions"
+)
+code = gr.Code(label="Code", language="python")
+output_components = [
+    selected_prompt,
+    metrics,
+    target,
+    code,
+    prediction,
+    instance_scores,
+    global_scores,
+]
 
 
 ######################
