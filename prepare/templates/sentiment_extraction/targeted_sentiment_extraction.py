@@ -51,7 +51,9 @@ def add_templates():
         template_list.append(full_template_name)
         add_to_catalog(template, full_template_name)
 
-    add_to_catalog(TemplatesList(template_list), f"templates.{task_name}.all")
+    add_to_catalog(
+        TemplatesList(template_list), f"templates.{task_name}.all", overwrite=True
+    )
 
 
 def add_single_sentiment_templates():
@@ -79,7 +81,9 @@ def add_single_sentiment_templates():
             template_list.append(full_template_name)
             add_to_catalog(template, full_template_name)
         add_to_catalog(
-            TemplatesList(template_list), f"templates.{task_name}.{sentiment}.all"
+            TemplatesList(template_list),
+            f"templates.{task_name}.{sentiment}.all",
+            overwrite=True,
         )
 
 
