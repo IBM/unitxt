@@ -79,6 +79,8 @@ def get_catalog_items_from_dir(items_type, dir):
     items_dir = os.path.join(dir, items_type)
     files = get_all_files_in_dir(items_dir, recursive=True)
     for file in files:
+        if "DS_Store" in file:
+            continue
         key = file.split(os.sep)
         start_index = key.index(items_type)
         key = key[start_index:]

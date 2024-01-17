@@ -31,8 +31,16 @@ def run_unitxt_entry(
     index=0,
     # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
-    if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME,""
+    is_dataset = isinstance(dataset, str)
+    is_template = isinstance(template, str)
+    if not is_dataset or not is_template:
+        if is_dataset:
+            msg = "Please select a template"
+        else:
+            msg = "Please select Dataset Card and a template"
+
+        return msg, "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME, ""
+
     if not isinstance(instruction, str):
         instruction = None
     if not isinstance(format, str):
@@ -144,7 +152,7 @@ def run_unitxt(
         selected_prompt = prompts_list[index]
         prompt_text = selected_prompt[cons.PROMPT_SOURCE_STR]
         prompt_target = selected_prompt[cons.PROPT_TARGET_STR]
-        command = build_command(prompt_args)
+        command = build_command(prompt_args, with_prediction=run_model)
     except Exception as e:
         prompt_text = f"""
     Oops... this combination didnt work! Try something else.
@@ -203,15 +211,33 @@ def build_prompt(prompt_args):
     return prompt_list
 
 
-def build_command(prompt_data):
+def build_command(prompt_data, with_prediction):
     parameters_str = [
         f"{key}='{prompt_data[key]}'"
         for key in prompt_data
         if key != cons.LOADER_LIMIT_STR
     ]
     parameters_str = ",".join(parameters_str).replace("'", "")
+    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str}')"
 
-    return f"dataset = load_dataset('unitxt/data', '{parameters_str}')"
+    code = f"""
+{cons.DATASET_IMPORT_STR}
+
+{load_dataset_code}
+    """
+    if with_prediction:
+        imports_code = f"""
+{cons.PREDICTIONS_IMPORTS_STR}
+{cons.DATASET_IMPORT_STR}
+        """
+
+        code = f"""
+{imports_code}
+
+{load_dataset_code}
+{cons.PREDICTION_CODE_STR}
+        """
+    return code
 
 
 def update_choices_per_task(task_choice):
@@ -250,11 +276,15 @@ def generate(model_name, prompts):
 
 
 def generate_flan(prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
-    predictions = []
-    for prompt in prompts:
-        input_ids = flan_tokenizer(prompt, return_tensors="pt").input_ids
-        output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
-        predictions.append(flan_tokenizer.decode(output[0], skip_special_tokens=True))
+    prompt_texts = [prompt["{cons.PROMPT_SOURCE_STR}"] for prompt in prompts]
+    input_ids = flan_tokenizer(
+        prompt_texts, return_tensors="pt", padding=True, truncation=True
+    ).input_ids
+    output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
+    predictions = [
+        flan_tokenizer.decode(output_item, skip_special_tokens=True)
+        for output_item in output
+    ]
     return predictions
 
 
