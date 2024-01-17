@@ -84,7 +84,7 @@ def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
 @lru_cache
 def get_predictions_and_scores(prompts_hashable):
     prompts_list = [unhash_dict(prompt) for prompt in prompts_hashable]
-    prompts_sources = (prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list)
+    prompts_sources = [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list]
     predictions = generate(
         model_name=cons.FLAN_T5_BASE,
         prompts=prompts_sources,
@@ -158,8 +158,6 @@ def run_unitxt(
     Oops... this combination didnt work! Try something else.
 
     Exception: {e!r}
-
-    For more details, see standard output.
     """
         prompt_target = ""
         command = ""
@@ -177,9 +175,9 @@ def run_unitxt(
             agg_result = create_dataframe(selected_result["global"])
         except Exception as e:
             selected_prediction = f"""
-            An exceptions has occured:
+            An exception has occured:
+
             {e!r}
-            For more details, see standard output
             """
 
     return (
@@ -276,9 +274,8 @@ def generate(model_name, prompts):
 
 
 def generate_flan(prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
-    prompt_texts = [prompt["{cons.PROMPT_SOURCE_STR}"] for prompt in prompts]
     input_ids = flan_tokenizer(
-        prompt_texts, return_tensors="pt", padding=True, truncation=True
+        prompts, return_tensors="pt", padding=True, truncation=True
     ).input_ids
     output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
     predictions = [
