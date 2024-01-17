@@ -254,7 +254,7 @@ class PagedStreamOperator(SingleStreamOperator):
     def _process_page(
         self, page: List[Dict], stream_name: Optional[str] = None
     ) -> Generator:
-        self.process(page, stream_name)
+        yield from self.process(page, stream_name)
 
     @abstractmethod
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
