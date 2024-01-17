@@ -95,4 +95,7 @@ def get_catalog_items(items_type):
 
 
 if __name__ == "__main__":
-    load_cards_data()
+    my_dictionary = load_cards_data()
+    with open("cards_data.csv", "w") as file:
+        for key, value in my_dictionary.items():
+            file.write(f"{key}: {value}\n")

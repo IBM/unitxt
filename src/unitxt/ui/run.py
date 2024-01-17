@@ -142,9 +142,8 @@ def run_unitxt(
             dataset, template, num_demos, instruction, format, augmentor
         )
         selected_prompt = prompts_list[index]
-        prompt_text = (selected_prompt[cons.PROMPT_SOURCE_STR],)
-        prompt_metrics = (selected_prompt[cons.PROMPT_METRICS_STR],)
-        prompt_target = (selected_prompt[cons.PROPT_TARGET_STR],)
+        prompt_text = selected_prompt[cons.PROMPT_SOURCE_STR]
+        prompt_target = selected_prompt[cons.PROPT_TARGET_STR]
         command = build_command(prompt_args)
     except Exception as e:
         prompt_text = f"""
@@ -154,7 +153,6 @@ def run_unitxt(
 
     For more details, see standard output.
     """
-        prompt_metrics = ""
         prompt_target = ""
         command = ""
     selected_prediction = ""
@@ -178,7 +176,6 @@ def run_unitxt(
 
     return (
         prompt_text,
-        prompt_metrics,
         prompt_target,
         command,
         selected_prediction,
@@ -346,7 +343,6 @@ global_scores = gr.DataFrame(
 code = gr.Code(label="Code", language="python", lines=1)
 output_components = [
     selected_prompt,
-    metrics,
     target,
     code,
     prediction,
