@@ -124,8 +124,7 @@ def create_dataframe(scores):
             if val in scores:
                 scores.pop(val)
         rounded_scores = {key: round(value, 3) for key, value in scores.items()}
-        df = list(rounded_scores.items())
-        return df
+        return list(rounded_scores.items())
     except Exception:
         return cons.EMPTY_SCORES_FRAME
 
@@ -265,11 +264,10 @@ def get_templates(task_choice, dataset_choice):
 
 def generate(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
     model = pipeline(model=f"google/{model_name}")
-    predictions = [
+    return [
         output["generated_text"]
         for output in model(prompts, max_new_tokens=max_new_tokens)
     ]
-    return predictions
 
 
 # LOAD DATA
