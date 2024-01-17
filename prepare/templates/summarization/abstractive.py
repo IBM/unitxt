@@ -7,7 +7,7 @@ add_to_catalog(
         "crucial information.\n Text: {text}",
         output_format="{target}",
     ),
-    "templates.summarization.general.formal",
+    "templates.summarization.abstractive.formal",
     overwrite=True,
 )
 
@@ -17,7 +17,7 @@ add_to_catalog(
         "crucial information.\n{text}",
         output_format="{target}",
     ),
-    "templates.summarization.general.formal_without_label",
+    "templates.summarization.abstractive.formal_without_label",
     overwrite=True,
 )
 
@@ -27,7 +27,7 @@ add_to_catalog(
         "Text: {text}",
         output_format="{target}",
     ),
-    "templates.summarization.general.casual",
+    "templates.summarization.abstractive.casual",
     overwrite=True,
 )
 
@@ -37,7 +37,7 @@ add_to_catalog(
         "information.\nText: {text}",
         output_format="{target}",
     ),
-    "templates.summarization.general.professional",
+    "templates.summarization.abstractive.professional",
     overwrite=True,
 )
 
@@ -47,20 +47,20 @@ add_to_catalog(
         "extracting the central ideas and imperative information.\nText: {text}",
         output_format="{target}",
     ),
-    "templates.summarization.general.instructive",
+    "templates.summarization.abstractive.instructive",
     overwrite=True,
 )
 
 add_to_catalog(
     TemplatesList(
         [
-            "templates.summarization.general.formal",
-            "templates.summarization.general.formal_without_label",
-            "templates.summarization.general.casual",
-            "templates.summarization.general.professional",
-            "templates.summarization.general.instructive",
+            "templates.summarization.abstractive.formal",
+            "templates.summarization.abstractive.formal_without_label",
+            "templates.summarization.abstractive.casual",
+            "templates.summarization.abstractive.professional",
+            "templates.summarization.abstractive.instructive",
         ]
     ),
-    "templates.summarization.general.all",
+    "templates.summarization.abstractive.all",
     overwrite=True,
 )
