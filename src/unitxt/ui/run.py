@@ -2,16 +2,13 @@ from functools import lru_cache
 
 import evaluate
 import gradio as gr
-from transformers import T5ForConditionalGeneration, T5Tokenizer, pipeline
+from transformers import pipeline
 
-from unitxt import metric_url
 from unitxt.standard import StandardRecipe
 from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 
-metric = evaluate.load(metric_url)
-flan_tokenizer = T5Tokenizer.from_pretrained(f"google/{cons.FLAN_T5_BASE}")
-flan_model = T5ForConditionalGeneration.from_pretrained(f"google/{cons.FLAN_T5_BASE}")
+metric = evaluate.load(cons.UNITEXT_METRIC_STR)
 
 
 def safe_add(parameter, key, args):
@@ -216,7 +213,7 @@ def build_command(prompt_data, with_prediction):
         if key != cons.LOADER_LIMIT_STR
     ]
     parameters_str = ",".join(parameters_str).replace("'", "")
-    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str}')"
+    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str},max_train_instances=5', split='train')"
 
     code = f"""
 {cons.DATASET_IMPORT_STR}
@@ -266,48 +263,13 @@ def get_templates(task_choice, dataset_choice):
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
-def generate(model_name, prompts):
-    if model_name == cons.GPT2:
-        return generate_pipeline(model_name, prompts)
-    if model_name == cons.FLAN_T5_BASE:
-        return generate_flan(prompts)
-
-
-def generate_flan(prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
-    input_ids = flan_tokenizer(
-        prompts, return_tensors="pt", padding=True, truncation=True
-    ).input_ids
-    output = flan_model.generate(input_ids, max_new_tokens=max_new_tokens)
+def generate(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
+    model = pipeline(model=f"google/{model_name}")
     predictions = [
-        flan_tokenizer.decode(output_item, skip_special_tokens=True)
-        for output_item in output
+        output["generated_text"]
+        for output in model(prompts, max_new_tokens=max_new_tokens)
     ]
     return predictions
-
-
-def generate_pipeline(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
-    def get_prediction(generator, prompt):
-        output = generator(
-            prompt, num_return_sequences=1, max_new_tokens=max_new_tokens
-        )
-        return output[0]["generated_text"]
-
-    def strip_predictions(predictions, prompts):
-        stripped_predictions = []
-        for i in range(len(predictions)):
-            stripped_predictions.append(predictions[i].replace(prompts[i], ""))
-        return stripped_predictions
-
-    generator = pipeline("text-generation", model=model_name)
-
-    if isinstance(prompts, str):
-        predictions = get_prediction(generator, prompts)
-    else:
-        predictions = []
-        for prompt in prompts:
-            prediction = get_prediction(generator, prompt)
-            predictions.append(prediction)
-    return strip_predictions(predictions, prompts)
 
 
 # LOAD DATA
