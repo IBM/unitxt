@@ -53,4 +53,9 @@ setuptools.setup(
     python_requires=">=3.8",
     install_requires=extras_require["base"],
     extras_require=extras_require,
+    entry_points={
+        "console_scripts": [
+            "unitxt-explore=unitxt.ui:launch",
+        ],
+    },
 )
