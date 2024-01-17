@@ -58,6 +58,6 @@ add_to_catalog(
             "templates.qa.contextualized.abstractive.simple4",
         ]
     ),
-    "templates.qa." ".abstractive.all",
+    "templates.qa.contextualized.abstractive.all",
     overwrite=True,
 )
