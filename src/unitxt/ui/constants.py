@@ -15,7 +15,5 @@ PROMPT_SAMPLE_SIZE = 5
 MAX_NEW_TOKENS = 30
 FLAN_T5_BASE = "flan-t5-base"
 GPT2 = "gpt2"
-# EMPTY_SCORES_FRAME = pd.DataFrame(
-#     list({"": ""}.items()), columns=["Score Name", "Score"]
-# )
 EMPTY_SCORES_FRAME = list({"": ""}.items())
+SCORE_FRAME_HEADERS = ["Score Name", "Score"]

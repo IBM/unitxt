@@ -115,10 +115,9 @@ def unhash_dict(input_frozenset):
 
 def create_dataframe(scores):
     try:
-        if "score_name" in scores:
-            scores.pop("score_name")
-        if "score" in scores:
-            scores.pop("score")
+        for val in ["score_name", "score"]:
+            if val in scores:
+                scores.pop(val)
         rounded_scores = {key: round(value, 3) for key, value in scores.items()}
         df = list(rounded_scores.items())
         return df
@@ -334,13 +333,13 @@ prediction = gr.Textbox(
 instance_scores = gr.DataFrame(
     label="Instance scores",
     value=cons.EMPTY_SCORES_FRAME,
-    headers=["Score Name", "Score"],
+    headers=cons.SCORE_FRAME_HEADERS,
     height=150,
 )
 global_scores = gr.DataFrame(
     label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
     value=cons.EMPTY_SCORES_FRAME,
-    headers=["Score Name", "Score"],
+    headers=cons.SCORE_FRAME_HEADERS,
     height=150,
     wrap=True,
 )
