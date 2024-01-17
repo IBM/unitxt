@@ -32,7 +32,7 @@ def run_unitxt_entry(
     # max_new_tokens=cons.MAX_NEW_TOKENS,
 ):
     if not isinstance(dataset, str) or not isinstance(template, str):
-        return "", "", "", "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME
+        return "", "", "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME,""
     if not isinstance(instruction, str):
         instruction = None
     if not isinstance(format, str):
@@ -177,10 +177,10 @@ def run_unitxt(
     return (
         prompt_text,
         prompt_target,
-        command,
         selected_prediction,
         instance_result,
         agg_result,
+        command,
     )
 
 
@@ -344,10 +344,10 @@ code = gr.Code(label="Code", language="python", lines=1)
 output_components = [
     selected_prompt,
     target,
-    code,
     prediction,
     instance_scores,
     global_scores,
+    code,
 ]
 
 
