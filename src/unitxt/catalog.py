@@ -5,7 +5,7 @@ from typing import Optional
 
 import requests
 
-from .artifact import Artifact, Artifactory
+from .artifact import Artifact, Artifactory, reset_artifacts_cache
 from .logging_utils import get_logger
 from .version import version
 
@@ -123,6 +123,7 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
+    reset_artifacts_cache()
     if catalog is None:
         if catalog_path is None:
             catalog_path = default_catalog_path
