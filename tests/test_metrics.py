@@ -12,6 +12,8 @@ from src.unitxt.metrics import (
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
+    GroupNormCohensHAccuracy,
+    GroupNormCohensHStringContainment,
     GroupPDRAccuracy,
     GroupPDRStringContainment,
     Rouge,
@@ -484,8 +486,17 @@ class TestMetrics(unittest.TestCase):
             GroupMeanStringContainment(),
             GroupPDRAccuracy(),
             GroupPDRStringContainment(),
+            GroupNormCohensHAccuracy(),
+            GroupNormCohensHStringContainment(),
         ]
-        global_targets = [0.225, 0.4875, 0.8333333333333334, 0.4444444444444445]
+        global_targets = [
+            0.225,
+            0.4875,
+            0.8333333333333334,
+            0.4444444444444445,
+            -0.4249467048786864,
+            -0.4639421840102023,
+        ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
                 metric=metric,
@@ -708,6 +719,18 @@ class TestConfidenceIntervals(unittest.TestCase):
             metric=GroupPDRStringContainment(),
             expected_ci_low=0.14285714285714288,
             expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupNormCohensHAccuracy(),
+            expected_ci_low=-0.9232678869571689,
+            expected_ci_high=-0.3333333333333333,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupNormCohensHStringContainment(),
+            expected_ci_low=-0.743586957620825,
+            expected_ci_high=-0.3916963890211997,
         )
 
         # F1-based scores

@@ -3,6 +3,8 @@ from src.unitxt.metrics import (
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
+    GroupNormCohensHAccuracy,
+    GroupNormCohensHStringContainment,
     GroupPDRAccuracy,
     GroupPDRStringContainment,
 )
@@ -223,6 +225,54 @@ outputs = test_metric(
 )
 
 add_to_catalog(metric, "metrics.group_pdr_string_containment", overwrite=True)
+
+# Try Cohen's h instead of PDR since is symmetric and defined when baseline is 0
+metric = GroupNormCohensHAccuracy()
+global_target = {
+    "group_norm_cohens_h_accuracy": -0.42,
+    "score": -0.42,
+    "score_name": "group_norm_cohens_h_accuracy",
+    "score_ci_low": -0.92,
+    "score_ci_high": -0.33,
+    "group_norm_cohens_h_accuracy_ci_low": -0.92,
+    "group_norm_cohens_h_accuracy_ci_high": -0.33,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(metric, "metrics.group_norm_cohens_h_accuracy", overwrite=True)
+
+
+metric = GroupNormCohensHStringContainment()
+global_target = {
+    "group_norm_cohens_h_string_containment": -0.46,
+    "score": -0.46,
+    "score_name": "group_norm_cohens_h_string_containment",
+    "score_ci_low": -0.74,
+    "score_ci_high": -0.39,
+    "group_norm_cohens_h_string_containment_ci_low": -0.74,
+    "group_norm_cohens_h_string_containment_ci_high": -0.39,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_string_containment,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(metric, "metrics.group_norm_cohens_h_string_containment", overwrite=True)
 
 
 # create references and predictions with only 3 unique values
