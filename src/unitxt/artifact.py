@@ -5,6 +5,7 @@ import os
 import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
+from functools import lru_cache
 from typing import Dict, List, Union, final
 
 from .dataclass import Dataclass, Field, fields
@@ -252,6 +253,7 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
+@lru_cache(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
@@ -263,6 +265,7 @@ def fetch_artifact(name):
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
 
+@lru_cache(maxsize=None)
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
     logger.info(f"Artifact {identifer} is fetched from {artifactory}")
