@@ -1762,14 +1762,18 @@ class LengthBalancer(DeterministicBalancer):
 
     Args:
         segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
-           into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
-           beyond, namely, the length of segments_boudaries)
+        into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
+        beyond, namely, the length of segments_boudaries)
 
         fields (Optional, List[str])
 
     Example:
         when input [{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}] is fed into
-        LengthBalancer(fields=["a"], segments_boundaries=[1])
+
+        .. code-block::
+
+            LengthBalancer(fields=["a"], segments_boundaries=[1])
+
         input instances will be counted and balanced against two categories: empty total length (less than 1), and non-empty.
     """
 
