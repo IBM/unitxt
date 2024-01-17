@@ -38,17 +38,24 @@
                 "text_type": "text",
                 "type_of_classes": "contractual clauses"
             }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "labels": {
+                    "[]": [
+                        "none"
+                    ]
+                }
+            },
+            "strict": false
         }
     ],
+    "sampler": {
+        "type": "diverse_labels_sampler",
+        "choices": "classes",
+        "labels": "labels"
+    },
     "task": "tasks.classification.multi_label",
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "multi_label_template",
-                "input_format": "{text}",
-                "output_format": "{labels}"
-            }
-        ]
-    }
+    "templates": "templates.classification.multi_label.all"
 }

@@ -2,15 +2,14 @@ from src.unitxt.artifact import Artifact
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
+    InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
-    RenderAutoFormatTemplate,
     SequentialRecipe,
     SplitRandomMix,
 )
 from src.unitxt.catalog import add_to_catalog
-
-# from src.unitxt.catalog import add_to_catalog
+from src.unitxt.formats import SystemFormat
 from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
 
@@ -33,7 +32,7 @@ recipe = SequentialRecipe(
         AddFields(
             fields={
                 "choices": ["entailment", "not entailment"],
-                "instruction": "classify the relationship between the two sentences from the choices.",
+                "instruction": "Classify the relationship between the two sentences from the choices.",
             }
         ),
         FormTask(
@@ -41,11 +40,17 @@ recipe = SequentialRecipe(
             outputs=["label"],
             metrics=["metrics.accuracy"],
         ),
-        RenderAutoFormatTemplate(),
+        InputOutputTemplate(
+            input_format="""
+            Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
+            """.strip(),
+            output_format="{label}",
+        ),
+        SystemFormat(model_input_format="User: {source}\nAgent: "),
     ]
 )
 
-assert isinstance(recipe, Artifact), "Artifact must be an instance of Artifact"
+assert isinstance(recipe, Artifact), "recipe must be an instance of Artifact"
 add_to_catalog(recipe, "recipes.wnli", overwrite=True)
 dataset = load_dataset("recipes.wnli")
 print_dict(dataset["train"][0])

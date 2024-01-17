@@ -5,10 +5,9 @@ from src.unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
-    MultiLabelTemplate,
     TaskCard,
-    TemplatesList,
 )
+from src.unitxt.splitters import DiverseLabelsSampler
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "unfair_tos"
@@ -31,16 +30,13 @@ card = TaskCard(
                 "type_of_classes": "contractual clauses",
             }
         ),
+        MapInstanceValues(mappers={"labels": {"[]": ["none"]}}, strict=False),
     ],
+    sampler=DiverseLabelsSampler(choices="classes", labels="labels"),
     task="tasks.classification.multi_label",
-    templates=TemplatesList(
-        [
-            MultiLabelTemplate(
-                input_format="{text}",
-                output_format="{labels}",
-            ),
-        ]
-    ),
+    templates="templates.classification.multi_label.all",
 )
-test_card(card, debug=False)
+test_card(
+    card, strict=False, debug=False
+)  # Not strict because first predictions are none
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)

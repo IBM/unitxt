@@ -20,6 +20,7 @@ from .load import __file__ as _
 from .loaders import __file__ as _
 from .logging import __file__ as _
 from .metric_paired_significance import __file__ as _
+from .logging_utils import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import (
@@ -44,7 +45,6 @@ from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .register import _reset_env_local_catalogs, register_all_artifacts
-from .renderers import __file__ as _
 from .schema import UNITXT_DATASET_SCHEMA
 from .schema import __file__ as _
 from .split_utils import __file__ as _

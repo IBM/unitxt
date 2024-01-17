@@ -5,7 +5,7 @@ from src.unitxt.artifact import (
     MissingArtifactTypeError,
     UnrecognizedArtifactTypeError,
 )
-from src.unitxt.logging import get_logger
+from src.unitxt.logging_utils import get_logger
 
 logger = get_logger()
 

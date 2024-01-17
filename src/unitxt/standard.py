@@ -1,14 +1,17 @@
 from typing import List
 
 from .card import TaskCard
-from .dataclass import InternalField, OptionalField
-from .formats import ICLFormat
-from .instructions import Instruction
-from .logging import get_logger
+from .dataclass import Field, InternalField, OptionalField
+from .formats import Format, SystemFormat
+from .instructions import EmptyInstruction, Instruction
+from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, NullAugmentor, StreamRefiner
+from .operators import (
+    Augmentor,
+    NullAugmentor,
+    StreamRefiner,
+)
 from .recipe import Recipe
-from .renderers import StandardRenderer
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .templates import Template
@@ -28,8 +31,8 @@ class AddDemosField(SpreadSplit):
 class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
-    instruction: Instruction = None
-    format: ICLFormat = ICLFormat()
+    instruction: Instruction = Field(default_factory=EmptyInstruction)
+    format: Format = Field(default_factory=SystemFormat)
 
     loader_limit: int = None
 
@@ -67,31 +70,31 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
-                    f"demos_pool_size must be bigger than num_demos ({self.num_demos}), Got demos_pool_size={self.demos_pool_size}"
+                    f"num_demos (got: {self.num_demos}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
                 )
             if self.loader_limit and self.demos_pool_size > self.loader_limit:
                 raise ValueError(
-                    f"demos_pool_size must be bigger than loader_limit ({self.loader_limit}), Got demos_pool_size={self.demos_pool_size}"
+                    f"demos_pool_size should not exceed loader_limit ({self.loader_limit}), Got demos_pool_size={self.demos_pool_size}"
                 )
 
         if self.loader_limit:
             if self.max_test_instances and self.max_test_instances > self.loader_limit:
                 raise ValueError(
-                    f"max_test_instances must be bigger than loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
+                    f"max_test_instances should not exceed loader_limit ({self.loader_limit}), Got max_test_instances={self.max_test_instances}"
                 )
             if (
                 self.max_validation_instances
                 and self.max_validation_instances > self.loader_limit
             ):
                 raise ValueError(
-                    f"max_validation_instances must be bigger than loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
+                    f"max_validation_instances should not exceed loader_limit ({self.loader_limit}), Got max_validation_instances={self.max_validation_instances}"
                 )
             if (
                 self.max_train_instances
                 and self.max_train_instances > self.loader_limit
             ):
                 raise ValueError(
-                    f"max_train_instances must be bigger than loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
+                    f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
 
     def prepare(self):
@@ -133,14 +136,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
             self.sampler.set_size(self.num_demos)
 
-            self.steps.append(
-                AddDemosField(
-                    source_stream=self.demos_pool_name,
-                    target_field=self.demos_field,
-                    sampler=self.sampler,
-                )
-            )
-
         self.train_refiner.max_instances = self.max_train_instances
         self.train_refiner.apply_to_streams = ["train"]
         self.steps.append(self.train_refiner)
@@ -153,19 +148,21 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.steps.append(self.test_refiner)
 
-        render = StandardRenderer(
-            instruction=self.instruction,
-            template=self.template,
-            format=self.format,
-            demos_field=self.demos_field,
-        )
-
-        self.steps.append(render)
-
+        self.steps.append(self.template)
+        if self.num_demos > 0:
+            self.steps.append(
+                AddDemosField(
+                    source_stream=self.demos_pool_name,
+                    target_field=self.demos_field,
+                    sampler=self.sampler,
+                )
+            )
+        self.steps.append(self.instruction)
+        self.steps.append(self.format)
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postprocessors = render.get_postprocessors()
+        postprocessors = self.template.get_postprocessors()
 
         self.steps.append(
             ToUnitxtGroup(
@@ -208,7 +205,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
 
 class StandardRecipe(StandardRecipeWithIndexes):
-    """This class represents a standard recipe for data processing and preperation.
+    """This class represents a standard recipe for data processing and preparation.
 
     This class can be used to prepare a recipe.
     with all necessary steps, refiners and renderers included. It allows to set various
@@ -219,7 +216,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         template (Template, optional): Template object to be used for the recipe.
         instruction (Instruction, optional): Instruction object to be used for the recipe.
         loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
-        format (ICLFormat, optional): ICLFormat object to be used for the recipe.
+        format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.

@@ -3,12 +3,15 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
+from src.unitxt import add_to_catalog
+from src.unitxt.formats import SystemFormat
 from src.unitxt.operators import (
     AddConstant,
     AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    ApplyStreamOperatorsField,
     Augmentor,
     AugmentPrefixSuffix,
     AugmentWhitespace,
@@ -17,11 +20,12 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
+    ExecuteQuery,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
-    FilterByListsOfValues,
-    FilterByValues,
+    FilterByCondition,
+    FilterByQuery,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -33,6 +37,7 @@ from src.unitxt.operators import (
     MapInstanceValues,
     MergeStreams,
     NullAugmentor,
+    Perturbate,
     RemoveFields,
     RemoveValues,
     RenameFields,
@@ -45,6 +50,7 @@ from src.unitxt.operators import (
     ZipFieldValues,
 )
 from src.unitxt.stream import MultiStream
+from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import (
     apply_operator,
     check_operator,
@@ -266,56 +272,33 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByValues(required_values={"a": 1, "b": 3}),
+            operator=FilterByCondition(values={"a": 1, "b": 3}, condition="eq"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(query="a == 1 and b == 3"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-        exception_text = "Required filter field ('c') in FilterByValues is not found in {'a': 1, 'b': 2}"
+        exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
         check_operator_exception(
-            operator=FilterByValues(required_values={"c": "5"}),
+            operator=FilterByCondition(values={"c": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
             tester=self,
         )
-
-    def test_filter_by_values_with_contradicting_definition(self):
-        with self.assertRaises(ValueError):
-            FilterByValues(disallowed_values={"a": 2}, required_values={"a": 1})
-
-    def test_filter_by_values_with_required_values_and_disallowed_values(self):
-        inputs = [{"a": 2, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
-
-        targets = []
-
-        with self.assertRaises(RuntimeError):
-            check_operator(
-                operator=FilterByValues(
-                    disallowed_values={"a": 2}, required_values={"b": 2}
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-
-    def test_filter_by_values_with_filter_all(self):
-        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
-
-        targets = [
-            {"a": 1, "b": 3},
-        ]
-
-        check_operator(
-            operator=FilterByValues(
-                disallowed_values={"a": 2}, required_values={"b": 3}
-            ),
+        check_operator_exception(
+            operator=FilterByQuery(query="c == 5"),
             inputs=inputs,
-            targets=targets,
+            exception_text="name 'c' is not defined",
             tester=self,
         )
 
-    def test_filter_by_values_with_disallowed_values(self):
+    def test_filter_by_condition_ne(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -323,13 +306,105 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByValues(disallowed_values={"a": 1, "b": 2}),
+            operator=FilterByCondition(values={"a": 1, "b": 2}, condition="ne"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(query="a != 1 and b != 2"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_filter_by_list_of_values(self):
+    def test_filter_by_condition_gt(self):
+        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+
+        targets = [
+            {"a": 2, "b": 3},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"a": 1}, condition="gt"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(query="a>1"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_condition_bad_condition(self):
+        with self.assertRaises(ValueError):
+            FilterByCondition(values={"a": 1}, condition="gte")
+
+    def test_filter_by_condition_not_in(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2},
+        ]
+
+        check_operator(
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="not in"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(query="b not in [3, 4]"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_filter_by_condition_not_in_multiple(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = []
+
+        check_operator(
+            operator=FilterByCondition(
+                values={"b": [3, 4], "a": [1]},
+                condition="not in",
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator(
+            operator=FilterByQuery(
+                query="b not in [3, 4] and a not in [1]",
+                error_on_filtered_all=False,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        check_operator_exception(
+            operator=FilterByQuery(
+                query="b not in [3, 4] and a not in [1]",
+                error_on_filtered_all=True,
+            ),
+            inputs=inputs,
+            exception_text="FilterByQuery filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            tester=self,
+        )
+
+    def test_filter_by_condition_in(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -342,48 +417,86 @@ class TestOperators(unittest.TestCase):
         ]
 
         check_operator(
-            operator=FilterByListsOfValues(required_values={"b": [3, 4]}),
+            operator=FilterByCondition(values={"b": [3, 4]}, condition="in"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
-
+        check_operator(
+            operator=FilterByQuery(query="b in [3, 4]"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"b": "5"}),
+                operator=FilterByCondition(values={"b": "5"}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
             str(cm.exception),
-            "The filter for key ('b') in FilterByListsOfValues is not a list but '5'",
+            "The filter for key ('b') in FilterByCondition with condition 'in' must be list but is not : '5'",
         )
 
         with self.assertRaises(ValueError) as cm:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"c": ["5"]}),
+                operator=FilterByCondition(values={"c": ["5"]}, condition="in"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
             )
         self.assertEqual(
             str(cm.exception),
-            "Required filter field ('c') in FilterByListsOfValues is not found in {'a': 1, 'b': 2}",
+            "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
         )
+        with self.assertRaises(Exception) as ne:
+            check_operator(
+                operator=FilterByQuery(query="c in ['5']"),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual("name 'c' is not defined", str(ne.exception))
 
-    def test_filter_by_values_error_when_the_entire_stream_is_filtered(self):
+    def test_filter_by_condition_error_when_the_entire_stream_is_filtered(self):
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
         with self.assertRaises(RuntimeError) as e:
             check_operator(
-                operator=FilterByListsOfValues(required_values={"b": ["weird_value"]}),
+                operator=FilterByCondition(
+                    values={"b": ["weird_value"]}, condition="in"
+                ),
                 inputs=inputs,
                 targets=[],
                 tester=self,
             )
         self.assertEqual(
             str(e.exception),
-            "FilterByListsOfValues filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+        )
+
+    def test_execute_query(self):
+        inputs = [{"a": 2, "b": 3}]
+        operator = ExecuteQuery(query="a+b", to_field="c")
+        targets = [{"a": 2, "b": 3, "c": 5}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        inputs = [{"a": "hello", "b": "world"}]
+        operator = ExecuteQuery(query="a+' '+b", to_field="c")
+        targets = [{"a": "hello", "b": "world", "c": "hello world"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        operator = ExecuteQuery(query="f'{a} {b}'", to_field="c")
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+        with self.assertRaises(ValueError) as ve:
+            check_operator(
+                operator=operator,
+                inputs=[{"x": 2, "y": 3}],
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in ExecuteQuery due to: name 'a' is not defined",
+            str(ve.exception),
         )
 
     def test_intersect(self):
@@ -538,6 +651,24 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
+        # check the case no operators are specified in field operators_field. default_operators is none by default
+        check_operator_exception(
+            operator=ApplyOperatorsField(inputs_fields=["a"], operators_field="d"),
+            inputs=inputs,
+            exception_text="Error processing instance '0' from stream 'test' in ApplyOperatorsField due to: No operators found in field 'd', and no default operators provided.",
+        )
+        # check default operators:
+        check_operator(
+            operator=ApplyOperatorsField(
+                inputs_fields=["a"],
+                operators_field="d",
+                default_operators="processors.to_string",
+            ),
+            inputs=[{"a": 111, "b": 2}, {"a": 222, "b": 3}],
+            targets=[{"a": "111", "b": 2}, {"a": "222", "b": 3}],
+            tester=self,
+        )
+
     def test_add_fields(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -636,12 +767,12 @@ class TestOperators(unittest.TestCase):
 
     def test_unique_on_single_field(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 3},
-            {"a": 2, "b": 4},
+            {"a": [1, 5], "b": 2},
+            {"a": [2, 5], "b": 3},
+            {"a": [2, 5], "b": 4},
         ]
 
-        targets = {(1,), (2,)}
+        targets = {((1, 5),), ((2, 5),)}
 
         outputs = apply_operator(
             operator=Unique(fields=["a"]),
@@ -649,6 +780,31 @@ class TestOperators(unittest.TestCase):
         )
 
         self.assertSetEqual(set(outputs), targets)
+
+    def test_apply_stream_operators_field(self):
+        operator = AddConstant(field="a", add=10)
+        add_to_catalog(operator, "operators.add_constant_for_testing", overwrite=True)
+        inputs = [
+            {"a": 1, "operator": "operators.add_constant_for_testing"},
+            {"a": 2},
+            {"a": 3},
+            {"a": 4},
+            {"a": 5},
+        ]
+        operator = ApplyStreamOperatorsField(field="operator", reversed=True)
+        outputs = list(
+            operator.process(MultiStream.from_iterables({"train": inputs})["train"])
+        )
+        self.assertListEqual(
+            [
+                {"a": 11, "operator": "operators.add_constant_for_testing"},
+                {"a": 12},
+                {"a": 13},
+                {"a": 14},
+                {"a": 15},
+            ],
+            outputs,
+        )
 
     def test_unique_on_multiple_fields(self):
         inputs = [
@@ -1643,7 +1799,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured:
+        # to field is structured:
         check_operator(
             operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
             inputs=inputs,
@@ -1651,7 +1807,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field:
+        # to field is structured, to stand in place of from field:
         check_operator(
             operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
             inputs=inputs,
@@ -1659,7 +1815,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, to stand in place of source field, source field is deeper:
+        # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
             inputs=[
@@ -1673,7 +1829,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # target field is structured, source field is structured too, different fields:
+        # to field is structured, from field is structured too, different fields:
         check_operator(
             operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
             inputs=[
@@ -1687,7 +1843,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
 
-        # both source and target are structured, different only in the middle of the path:
+        # both from and to field are structured, different only in the middle of the path:
         check_operator(
             operator=RenameFields(
                 field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
@@ -1697,6 +1853,20 @@ class TestOperators(unittest.TestCase):
             ],
             targets=[
                 {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            tester=self,
+        )
+
+        # both from and to field are structured, different down the path:
+        check_operator(
+            operator=RenameFields(
+                field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True
+            ),
+            inputs=[
+                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+            ],
+            targets=[
+                {"a": {"b": {"c": {"f": {"e": 1}}}}, "b": 2},
             ],
             tester=self,
         )
@@ -1711,22 +1881,45 @@ class TestOperators(unittest.TestCase):
 
         check_operator(
             operator=AddConstant(
-                field_to_field=[["a", "b"]], add=5, process_every_value=True
+                field_to_field={"a": "b", "c": "d"}, add=5, process_every_value=True
             ),
-            inputs=[{"a": [1, 2, 3]}],
-            targets=[{"a": [1, 2, 3], "b": [6, 7, 8]}],
+            inputs=[{"a": [1, 2, 3], "c": [4, 5, 6]}],
+            targets=[
+                {"a": [1, 2, 3], "b": [6, 7, 8], "c": [4, 5, 6], "d": [9, 10, 11]}
+            ],
             tester=self,
         )
 
         # test the loop in field_to_field, to be caught on init
-        with self.assertRaises(ValueError) as ve:
+        with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
             ).process(instance={"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
+            str(ae.exception),
+            "In input argument 'field_to_field': {'a': 'b', 'b': 'a'}, field b is mapped to field a, while the latter is mapped to b. Whether b or a is processed first might impact end result.",
+        )
+
+        # test if two different from_field determine the same to_field, in field_to_field, to be caught on init
+        with self.assertRaises(AssertionError) as ae:
+            AddConstant(
+                field_to_field={"a": "c", "b": "c"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
+            str(ae.exception),
+            "In input argument 'field_to_field': {'a': 'c', 'b': 'c'}, two different fields: a and b are mapped to field c. Whether a or b is processed last might impact end result.",
+        )
+
+        with self.assertRaises(ValueError) as ve:
+            AddConstant(
+                field_to_field={"a", "c", "b"}, add=15, process_every_value=True
+            ).process(instance={"a": [1, 2, 3], "b": [11]})
+
+        self.assertEqual(
             str(ve.exception),
-            "In the 'field_to_field' input argument, '{'a': 'b', 'b': 'a'}', field 'a' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator.",
+            "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str].",
         )
 
     def test_copy_paste_fields(self):
@@ -2237,3 +2430,241 @@ class TestApplyMetric(unittest.TestCase):
         )
         # check that the second score is present too
         self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
+
+    def test_render_demonstrations(self):
+        template = InputOutputTemplate(
+            input_format='This is my sentence: "{text}"', output_format="{label}"
+        )
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                },
+                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
+            ]
+        }
+
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "was so not good"},
+                    "outputs": {"label": "negative"},
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "inputs": {"text": "was so good"},
+                    "outputs": {"label": "positive"},
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(instance, target)
+
+    def test_render_demonstrations_multi_reference(self):
+        template = MultiReferenceTemplate(
+            input_format="This is my sentence: {text}", references_field="answer"
+        )
+
+        instance = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                },
+            ]
+        }
+
+        demos_out = [template.process(demo_inst) for demo_inst in instance["demos"]]
+        instance["demos"] = demos_out
+
+        target = {
+            "demos": [
+                {
+                    "inputs": {"text": "who was he?"},
+                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "source": "This is my sentence: who was he?",
+                    "target": "Dan",
+                    "references": ["Dan", "Yossi"],
+                },
+                {
+                    "inputs": {"text": "who was she?"},
+                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "source": "This is my sentence: who was she?",
+                    "target": "Shira",
+                    "references": ["Shira", "Yael"],
+                },
+            ]
+        }
+
+        self.assertDictEqual(instance, target)
+
+    def test_icl_format_with_demonstrations(self):
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+        }
+        demos_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+
+        target = """Instruction:solve the math exercises
+
+User:1+2
+Agent:3
+
+User:4-2
+Agent:2
+
+User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+        # refresh instance, from which icl_format popped the instruction, and add demos into it:
+        instance["instruction"] = "solve the math exercises"
+        instance["demos"] = demos_instances
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+
+    def test_system_format_with_demonstrations_and_instruction_after_demos(
+        self,
+    ):
+        demo_instances = [
+            {"source": "1+2", "target": "3"},
+            {"source": "4-2", "target": "2"},
+        ]
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+            "demos": demo_instances,
+        }
+
+        target = """User:1+2
+Agent:3
+
+User:4-2
+Agent:2
+
+User:solve the math exercises
+
+1+1
+Agent:"""
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{demos}User:{instruction}\n\n{source}\nAgent:",
+        )
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)
+
+    def test_system_format_without_demonstrations(self):
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "solve the math exercises",
+        }
+
+        target = """Instruction:solve the math exercises
+
+User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="Instruction:{instruction}\n\n{demos}User:{source}\nAgent:",
+        )
+
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)
+
+    def test_model_input_formater_without_demonstrations_or_instruction(self):
+        instance = {"source": "1+1", "target": "2"}
+        target = """User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{instruction}{demos}User:{source}\nAgent:",
+        )
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance_out["source"], target)
+
+    def test_system_format_without_demonstrations_and_empty_instruction(self):
+        instance = {"source": "1+1", "target": "2", "instruction": ""}
+
+        target = """User:1+1
+Agent:"""
+
+        system_format = SystemFormat(
+            demo_format="User:{source}\nAgent:{target}\n\n",
+            model_input_format="{instruction}{demos}User:{source}\nAgent:",
+        )
+        instance_out = system_format.process(instance)
+        self.assertEqual(instance_out["source"], target)
+        self.assertEqual(instance["source"], target)
+
+    def test_perturbate(self):
+        instance = {
+            "target": 1,
+            "classes": [0, 1],
+            "source": "Classify the given text to yes or no",
+        }
+        operator = Perturbate(
+            field="target", to_field="prediction", percentage_to_perturbate=0
+        )
+        out = operator.process(instance)
+        self.assertEqual(out["target"], out["prediction"])
+        operator = Perturbate(
+            field="target",
+            to_field="prediction",
+            select_from=[0, 1],
+            percentage_to_perturbate=100,
+        )
+        predictions = []
+        for _ in range(100):
+            out = operator.process(instance)
+            predictions.append(out["prediction"])
+        counter = Counter(predictions)
+        self.assertGreaterEqual(counter[0], 25)
+        self.assertGreaterEqual(counter[1], 25)
+        instance["target"] = "abcdefghijklmnop"
+        operator = Perturbate(
+            field="target", to_field="prediction", percentage_to_perturbate=100
+        )
+        out = operator.process(instance)
+        self.assertGreater(len(out["target"]), len(out["prediction"]))
+        instance["target"] = "a"
+        out = operator.process(instance)
+        self.assertEqual(out["target"], out["prediction"])
+        instance["target"] = 10.0
+        out = operator.process(instance)
+        self.assertNotEqual(out["target"], out["prediction"])
+        with self.assertRaises(AssertionError) as ae:
+            operator = Perturbate(field="target", percentage_to_perturbate=200)
+        self.assertEqual(
+            "'percentage_to_perturbate' should be in the range 0..100. Received 200",
+            str(ae.exception),
+        )

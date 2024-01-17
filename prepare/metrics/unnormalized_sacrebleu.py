@@ -1,9 +1,33 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric
+from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.operators import CopyFields, MapInstanceValues
 from src.unitxt.test_utils.metrics import test_metric
 
-metric = HuggingfaceMetric(
-    hf_metric_name="sacrebleu", hf_main_score="score", main_score="sacrebleu", scale=1.0
+metric = MetricPipeline(
+    main_score="sacrebleu",
+    preprocess_steps=[
+        CopyFields(
+            field_to_field=[
+                ("additional_inputs/target_language", "additional_inputs/tokenize")
+            ],
+            use_query=True,
+            not_exist_ok=True,
+            get_default="en",
+        ),
+        MapInstanceValues(
+            mappers={"additional_inputs/tokenize": {"en": "", "ja": "ja-mecab"}},
+            strict=True,
+            use_query=True,
+        ),
+    ],
+    metric=HuggingfaceMetric(
+        hf_metric_name="sacrebleu",
+        hf_main_score="score",
+        main_score="sacrebleu",
+        scale=1.0,
+        scaled_fields=["sacrebleu", "precisions"],
+        hf_additional_input_fields_pass_one_value=["tokenize"],
+    ),
 )
 
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
@@ -46,10 +70,10 @@ global_target = {
     "sys_len": 10,
     "ref_len": 7,
     "score_name": "sacrebleu",
-    "sacrebleu_ci_low": 39.76,
-    "sacrebleu_ci_high": 39.76,
-    "score_ci_low": 39.76,
-    "score_ci_high": 39.76,
+    "sacrebleu_ci_low": 11.48,
+    "sacrebleu_ci_high": 100.0,
+    "score_ci_low": 11.48,
+    "score_ci_high": 100.0,
 }
 
 outputs = test_metric(

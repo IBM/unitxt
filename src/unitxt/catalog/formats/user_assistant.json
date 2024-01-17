@@ -1,6 +1,5 @@
 {
-    "type": "icl_format",
-    "input_prefix": "<|user|>\n",
-    "output_prefix": "<|assistant|>\n",
-    "input_output_separator": "\n"
+    "type": "system_format",
+    "demo_format": "<|user|>\n{source}\n<|assistant|>\n {target}\n\n",
+    "model_input_format": "{instruction}{demos}<|user|>\n{source}\n<|assistant|>\n"
 }

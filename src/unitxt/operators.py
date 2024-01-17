@@ -33,6 +33,7 @@ General Operaotrs List:
 """
 import collections
 import importlib
+import operator
 import os
 import uuid
 from abc import abstractmethod
@@ -49,6 +50,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -257,7 +259,7 @@ class AddFields(StreamInstanceOperator):
 
 
 class RemoveFields(StreamInstanceOperator):
-    """Remove specified fields to each instance in a stream.
+    """Remove specified fields from each instance in a stream.
 
     Args:
         fields (List[str]): The fields to remove from each instance.
@@ -282,8 +284,14 @@ class FieldOperator(StreamInstanceOperator):
           operation would happen in-place and its result would replace the value of "field". Defaults to None
         field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
           to names of fields to save the results into. Inner List, if used, should be of length 2.
-          Duplicates are allowed. A given name of field to store a result into, can not be also a name of a field to
-          process a result from, a result to be stored in field of a different name. Defaults to None
+          A field is processed by feeding its value into method 'process_value' and storing the result in to_field that
+          is mapped to the field.
+          When the type of argument 'field_to_field' is List, the order by which the fields are processed is their order
+          in the (outer) List. But when the type of argument 'field_to_field' is Dict, there is no uniquely determined
+          order. The end result might depend on that order if either (1) two different fields are mapped to the same
+          to_field, or (2) a field shows both as a key and as a value in different mappings.
+          The operator throws an AssertionError in either of these cases.
+          field_to_field defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
         use_query (bool): Whether to use dpath style queries. Defaults to False.
 
@@ -312,27 +320,39 @@ class FieldOperator(StreamInstanceOperator):
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
         assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            len(self._field_to_field) > 0
+        ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
-        for pair in self._field_to_field:
-            assert (
-                len(pair) == 2
-            ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
-        # The order of pairs in _field_to_field is not always uniquely determined by the input.
-        # In particular, when the input is a dictionary.
-        # Hence, if _field_to_field contains two pairs, (g,f) and (f,h),
-        # where h is different from f, it is not clear if when f defines the new value of h
-        # (e.g., through an add-constant operation), f is before or after being determined by g.
-        # The following asserts that such ambiguity does not exist in the input.
-
-        if len(self._field_to_field) == 1:
+        if self.field_to_field is None:
             return
-        for ind in range(len(self._field_to_field)):
-            if self._field_to_field[ind][0] in [
-                t for _, t in self._field_to_field[:ind]
-            ] + [t for _, t in self._field_to_field[ind + 1 :]]:
-                raise ValueError(
-                    f"In the 'field_to_field' input argument, '{self.field_to_field}', field '{self._field_to_field[ind][0]}' shows as 'from_field' in one mapping and as 'to_field' in another mapping, which makes its value, when playing the role of 'from_field', ambiguous. Hint: break 'field_to_field' into two invocations of the operator."
-                )
+        # for backward compatibility also allow list of tupples of two strings
+        if isoftype(self.field_to_field, List[List[str]]) or isoftype(
+            self.field_to_field, List[Tuple[str, str]]
+        ):
+            for pair in self._field_to_field:
+                assert (
+                    len(pair) == 2
+                ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
+            # order of field processing is uniquely determined by the input field_to_field when a list
+            return
+        if isoftype(self.field_to_field, Dict[str, str]):
+            if len(self.field_to_field) < 2:
+                return
+            for ff, tt in self.field_to_field.items():
+                for f, t in self.field_to_field.items():
+                    if f == ff:
+                        continue
+                    assert (
+                        t != ff
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, field {f} is mapped to field {t}, while the latter is mapped to {tt}. Whether {f} or {t} is processed first might impact end result."
+                    assert (
+                        tt != t
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, two different fields: {ff} and {f} are mapped to field {tt}. Whether {ff} or {f} is processed last might impact end result."
+            return
+        raise ValueError(
+            "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str]."
+        )
 
     @abstractmethod
     def process_value(self, value: Any) -> Any:
@@ -860,6 +880,56 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
+class Perturbate(FieldOperator):
+    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+
+    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    relevant perturbation
+    """
+
+    select_from: List[Any] = []
+    percentage_to_perturbate: int = 1  # 1 percent
+
+    def verify(self):
+        assert (
+            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
+        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+
+    def prepare(self):
+        super().prepare()
+        self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
+
+    def process_value(self, value: Any) -> Any:
+        perturbate = (
+            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
+        )
+        if not perturbate:
+            return value
+
+        if value in self.select_from:
+            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            if self.random_generator.random() < 0.8:
+                return self.random_generator.choice(self.select_from)
+
+        if isinstance(value, float):
+            return value * (0.5 + self.random_generator.random())
+
+        if isinstance(value, int):
+            perturb = 1 if self.random_generator.random() < 0.5 else -1
+            return value + perturb
+
+        if isinstance(value, str):
+            if len(value) < 2:
+                # give up perturbation
+                return value
+            # throw one char out
+            prefix_len = self.random_generator.randint(1, len(value) - 1)
+            return value[:prefix_len] + value[prefix_len + 1 :]
+
+        # and in any other case:
+        return value
+
+
 class CopyFields(FieldOperator):
     """Copies values from specified fields to specified fields.
 
@@ -1025,7 +1095,7 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
             a list of values, each of which is to be processed.
         operators_field (str): name of the field that contains the list of names of the operators to be applied,
-            one after the other, for the processing.
+            one after the other, for the processing. Operators are all (extensions of) FieldOperator
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
 
     Example:
@@ -1058,77 +1128,154 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
             for field_name in self.inputs_fields:
                 value = instance[field_name]
                 if field_name in self.fields_to_treat_as_list:
-                    instance[field_name] = [operator.process(v) for v in value]
+                    instance[field_name] = [operator.process_value(v) for v in value]
                 else:
-                    instance[field_name] = operator.process(value)
+                    instance[field_name] = operator.process_value(value)
 
         return instance
 
 
-class FilterByValues(SingleStreamOperator):
-    """Filters a stream, yielding only instances that match specified required values in the provided fields and do not match specified disallowed values.
+class FilterByCondition(SingleStreamOperator):
+    """Filters a stream, yielding only instances for which the required values follows the required condition operator.
 
     Raises an error if a required key is missing.
 
     Args:
-        required_values (Dict[str, Any]): Values that instances must match to be included in the output.
-        disallowed_values (Dict[str, Any]): Values that instances must not match to be excluded from the output.
-        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+       values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
+       condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where "a">4
+       FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
+       FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
+       FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
+
     """
 
-    required_values: Dict[str, Any] = None
-    disallowed_values: Dict[str, Any] = None
+    values: Dict[str, Any]
+    condition: str
+    condition_to_func = {
+        "gt": operator.gt,
+        "ge": operator.ge,
+        "lt": operator.lt,
+        "le": operator.le,
+        "eq": operator.eq,
+        "ne": operator.ne,
+        "in": None,  # Handled as special case
+        "not in": None,  # Handled as special case
+    }
     error_on_filtered_all: bool = True
-
-    def verify(self):
-        if self.required_values is not None and self.disallowed_values is not None:
-            if (
-                len(
-                    set(self.required_values.keys()).intersection(
-                        set(self.disallowed_values.keys())
-                    )
-                )
-                > 0
-            ):
-                raise ValueError(
-                    "FilterByValues should not have the same keys in both required_values and disallowed_values"
-                )
-
-        return super().verify()
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
         for instance in stream:
-            if self._is_required(instance) and not self._is_disallowed(instance):
+            if self._is_required(instance):
                 yielded = True
                 yield instance
 
         if not yielded and self.error_on_filtered_all:
             raise RuntimeError(
-                f"FilterByValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+                f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
             )
 
-    def _is_required(self, instance: dict) -> bool:
-        if not self.required_values:  # If required_values is empty, return True
-            return True
+    def verify(self):
+        if self.condition not in self.condition_to_func:
+            raise ValueError(
+                f"Unsupported condition operator '{self.condition}', supported {list(self.condition_to_func.keys())}"
+            )
 
-        for key, value in self.required_values.items():
+        for key, value in self.values.items():
+            if self.condition in ["in", "not it"] and not isinstance(value, list):
+                raise ValueError(
+                    f"The filter for key ('{key}') in FilterByCondition with condition '{self.condition}' must be list but is not : '{value}'"
+                )
+        return super().verify()
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.values.items():
             if key not in instance:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByValues is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
                 )
-            if instance[key] != value:
-                return False
+            if self.condition == "in":
+                if instance[key] not in value:
+                    return False
+            elif self.condition == "not in":
+                if instance[key] in value:
+                    return False
+            else:
+                func = self.condition_to_func[self.condition]
+                if func is None:
+                    raise ValueError(
+                        f"Function not defined for condition '{self.condition}'"
+                    )
+                if not func(instance[key], value):
+                    return False
         return True
 
-    def _is_disallowed(self, instance: dict) -> bool:
-        if not self.disallowed_values:  # If disallowed_values is empty, return False
-            return False
 
-        for key, value in self.disallowed_values.items():
-            if key in instance and instance[key] == value:
-                return True
-        return False
+class FilterByQuery(SingleStreamOperator):
+    """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
+
+    Raises an error if a field participating in the specified condition is missing from the instance
+
+    Args:
+       query (str): a condition over fields of the instance, to be processed by python's eval()
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByQuery(query = "a > 4") will yield only instances where "a">4
+       FilterByQuery(query = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
+       FilterByQuery(query = "a in [4, 8]") will yield only instances where "a" is 4 or 8
+       FilterByQuery(query = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
+
+    """
+
+    query: str
+    error_on_filtered_all: bool = True
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        yielded = False
+        for instance in stream:
+            if eval(self.query, None, instance):
+                yielded = True
+                yield instance
+
+        if not yielded and self.error_on_filtered_all:
+            raise RuntimeError(
+                f"{self.__class__.__name__} filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
+            )
+
+
+class ExecuteQuery(StreamInstanceOperator):
+    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
+
+    Raises an error if a field mentioned in the query is missing from the instance.
+
+    Args:
+       query (str): an expression to be evaluated over the fields of the instance
+       to_field (str): the field where the result is to be stored into
+
+    Examples:
+       When instance {"a": 2, "b": 3} is process-ed by operator
+       ExecuteQuery(query="a+b", to_field = "c")
+       the result is {"a": 2, "b": 3, "c": 5}
+
+       When instance {"a": "hello", "b": "world"} is process-ed by operator
+       ExecuteQuery(query = "a+' '+b", to_field = "c")
+       the result is {"a": "hello", "b": "world", "c": "hello world"}
+
+    """
+
+    query: str
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        instance[self.to_field] = eval(self.query, None, instance)
+        return instance
 
 
 class ExtractMostCommonFieldValues(MultiStreamOperator):
@@ -1186,7 +1333,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         stream = multi_stream[self.stream_name]
-        all_values = []
+        counter = Counter()
         for instance in stream:
             if (not isinstance(instance[self.field], list)) and (
                 self.process_every_value is True
@@ -1198,21 +1345,21 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                 self.process_every_value is False
             ):
                 # either not a list, or is a list but process_every_value == False : view contetns of 'field' as one entity whose occurrences are counted.
-                all_values.append(
-                    (*instance[self.field],)
+                counter.update(
+                    [(*instance[self.field],)]
                     if isinstance(instance[self.field], list)
-                    else instance[self.field]
+                    else [instance[self.field]]
                 )  # convert to a tuple if list, to enable the use of Counter which would not accept
-                # a list as an entity to count its occurrences
+                # a list as an hashable entity to count its occurrences
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
-                all_values.extend(instance[self.field])
-        counter = Counter(
-            all_values
-        )  # here all_values is a list of individual values, or tupples. Hence, Counter is feasible
+                counter.update(instance[self.field])
+        # here counter counts occurrences of individual values, or tupples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
-            top_frequency = len(all_values) * self.overall_top_frequency_percent / 100.0
+            top_frequency = (
+                sum(counter.values()) * self.overall_top_frequency_percent / 100.0
+            )
             sum_counts = 0
             for _i, p in enumerate(values_and_counts):
                 sum_counts += p[1]
@@ -1220,7 +1367,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
                     break
             values_and_counts = counter.most_common(_i + 1)
         if self.min_frequency_percent > 0:
-            min_frequency = self.min_frequency_percent * len(all_values) / 100.0
+            min_frequency = self.min_frequency_percent * sum(counter.values()) / 100.0
             while values_and_counts[-1][1] < min_frequency:
                 values_and_counts.pop()
         values_to_keep = [
@@ -1239,44 +1386,6 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
     def prepare(self):
         self.overall_top_frequency_percent = 100
         self.min_frequency_percent = 0
-
-
-class FilterByListsOfValues(SingleStreamOperator):
-    """Filters a stream, yielding only instances that  whose field values are included in the specified value lists.
-
-    Args:
-        required_values (Dict[str, List]): For each field, the list of values that instances should match to be included in the output.
-    """
-
-    required_values: Dict[str, List]
-    error_on_filtered_all: bool = True
-
-    def verify(self):
-        super().verify()
-        for key, value in self.required_values.items():
-            if not isinstance(value, list):
-                raise ValueError(
-                    f"The filter for key ('{key}') in FilterByListsOfValues is not a list but '{value}'"
-                )
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        filtered_all = True
-        for instance in stream:
-            filter = False
-            for key, value in self.required_values.items():
-                if key not in instance:
-                    raise ValueError(
-                        f"Required filter field ('{key}') in FilterByListsOfValues is not found in {instance}"
-                    )
-                if instance[key] not in value:
-                    filter = True
-            if not filter:
-                filtered_all = False
-                yield instance
-        if filtered_all and self.error_on_filtered_all:
-            raise RuntimeError(
-                f"FilterByListsOfValues filtered out every instance in stream '{stream_name}'. If this is intended set error_on_filtered_all=False"
-            )
 
 
 class Intersect(FieldOperator):
@@ -1311,7 +1420,7 @@ class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
 
     Args:
-        unallowed_values (list) - removed_values.
+        unallowed_values (list) - values to be removed.
     """
 
     unallowed_values: List[Any]
@@ -1380,8 +1489,8 @@ class SplitByValue(MultiStreamOperator):
             stream_unique_values = uniques[stream_name]
             for unique_values in stream_unique_values:
                 filtering_values = dict(zip(self.fields, unique_values))
-                filtered_streams = FilterByValues(
-                    required_values=filtering_values
+                filtered_streams = FilterByCondition(
+                    values=filtering_values, condition="eq"
                 )._process_single_stream(stream)
                 filtered_stream_name = (
                     stream_name + "_" + nested_tuple_to_string(unique_values)
@@ -1471,27 +1580,6 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
-
-
-class AddFieldNamePrefix(StreamInstanceOperator):
-    """Adds a prefix to each field name in each instance of a stream.
-
-    Args:
-        prefix_dict (Dict[str, str]): A dictionary mapping stream names to prefixes.
-    """
-
-    prefix_dict: Dict[str, str]
-
-    def prepare(self):
-        return super().prepare()
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        return {
-            self.prefix_dict[stream_name] + key: value
-            for key, value in instance.items()
-        }
 
 
 class MergeStreams(MultiStreamOperator):

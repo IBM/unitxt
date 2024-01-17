@@ -1,0 +1,15 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "input"
+    ],
+    "outputs": [
+        "output"
+    ],
+    "metrics": [
+        "metrics.normalized_sacrebleu"
+    ],
+    "augmentable_inputs": [
+        "input"
+    ]
+}

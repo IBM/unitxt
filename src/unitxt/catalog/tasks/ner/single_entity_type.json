@@ -1,0 +1,19 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "text",
+        "entity_type"
+    ],
+    "outputs": [
+        "spans_starts",
+        "spans_ends",
+        "text",
+        "labels"
+    ],
+    "metrics": [
+        "metrics.ner"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
+}

@@ -7,7 +7,7 @@ import ibm_boto3
 import pandas as pd
 
 from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
-from src.unitxt.logging import get_logger
+from src.unitxt.logging_utils import get_logger
 
 logger = get_logger()
 
@@ -64,17 +64,22 @@ class TestLoaders(unittest.TestCase):
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
         os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
-        loader = LoadFromIBMCloud(
-            endpoint_url_env="DUMMY_URL_ENV",
-            aws_access_key_id_env="DUMMY_KEY_ENV",
-            aws_secret_access_key_env="DUMMY_SECRET_ENV",
-            bucket_name="DUMMY_BUCKET",
-            data_dir="DUMMY_DATA_DIR",
-            data_files=["train.csv", "test.csv"],
-        )
-        with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
-            ms = loader()
-            self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})
+        for data_files in [
+            ["train.csv", "test.csv"],
+            {"train": "train.csv", "test": "test.csv"},
+            {"train": ["train.csv"], "test": ["test.csv"]},
+        ]:
+            loader = LoadFromIBMCloud(
+                endpoint_url_env="DUMMY_URL_ENV",
+                aws_access_key_id_env="DUMMY_KEY_ENV",
+                aws_secret_access_key_env="DUMMY_SECRET_ENV",
+                bucket_name="DUMMY_BUCKET",
+                data_dir="DUMMY_DATA_DIR",
+                data_files=data_files,
+            )
+            with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
+                ms = loader()
+                self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})
 
     def test_load_from_HF_compressed(self):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file

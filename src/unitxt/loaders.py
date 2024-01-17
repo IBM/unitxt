@@ -1,3 +1,27 @@
+"""This section describes unitxt loaders.
+
+Loaders: Generators of Unitxt Multistreams from existing date sources
+==============================================================
+
+Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
+postprocessing the model's output, preparing it for any given evaluator.
+
+Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
+of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
+The journey starts by a Unitxt Loeader bearing a Multistream from the given datasource.
+A loader, therefore, is the first item on any Unitxt Recipe.
+
+Unitxt catalog contains several loaders for the most popular datasource formats.
+All these loaders inherit from Loader, and hence, implementing a loader to expand over a new type of datasource, is
+straight forward.
+
+Operators in Unitxt catalog:
+LoadHF : loads from Huggingface dataset.
+LoadCSV: loads from csv (comma separated value) files
+LoadFromKaggle: loads datasets from the kaggle.com community site
+LoadFromIBMCloud: loads a dataset from the IBM cloud.
+------------------------
+"""
 import importlib
 import itertools
 import os
@@ -10,7 +34,7 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import SourceOperator
 from .stream import MultiStream, Stream
 
@@ -31,7 +55,7 @@ class Loader(SourceOperator):
     # The loader can use this value to limit the amount of data downloaded from the source
     # to reduce loading time.  However, this may not always be possible, so the
     # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
-    # stream after, after load is complete.
+    # stream, after load is complete.
     loader_limit: int = None
     pass
 
@@ -140,7 +164,12 @@ class LoadFromIBMCloud(Loader):
     aws_secret_access_key_env: str
     bucket_name: str
     data_dir: str = None
-    data_files: Sequence[str]
+
+    # Can be either:
+    # 1. a list of file names, the split of each file is determined by the file name pattern
+    # 2. Mapping: split -> file_name, e.g. {"test" : "test.json", "train": "train.json"}
+    # 3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
+    data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -217,7 +246,15 @@ class LoadFromIBMCloud(Loader):
         local_dir = os.path.join(self.cache_dir, self.bucket_name, self.data_dir)
         if not os.path.exists(local_dir):
             Path(local_dir).mkdir(parents=True, exist_ok=True)
-        for data_file in self.data_files:
+
+        if isinstance(self.data_files, Mapping):
+            data_files_names = list(self.data_files.values())
+            if not isinstance(data_files_names[0], str):
+                data_files_names = list(itertools.chain(*data_files_names))
+        else:
+            data_files_names = self.data_files
+
+        for data_file in data_files_names:
             local_file = os.path.join(local_dir, data_file)
             if not self.caching or not os.path.exists(local_file):
                 # Build object key based on parameters. Slash character is not
@@ -230,6 +267,12 @@ class LoadFromIBMCloud(Loader):
                 self._download_from_cos(
                     cos, self.bucket_name, object_key, local_dir + "/" + data_file
                 )
-        dataset = hf_load_dataset(local_dir, streaming=False)
+
+        if isinstance(self.data_files, list):
+            dataset = hf_load_dataset(local_dir, streaming=False)
+        else:
+            dataset = hf_load_dataset(
+                local_dir, streaming=False, data_files=self.data_files
+            )
 
         return MultiStream.from_iterables(dataset)

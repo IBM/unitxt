@@ -1,3 +1,3 @@
-from src.unitxt import logging
+from src.unitxt import logging_utils
 
-logging.enable_explicit_format()
+logging_utils.enable_explicit_format()
