@@ -15,18 +15,6 @@ from .type_utils import issubtype
 from .utils import load_json, save_json
 
 logger = get_logger()
-enable_artifact_caching = (
-    True  # You can toggle this flag to enable/disable caching globally
-)
-
-
-def cache_artifacts(*lru_args, **lru_kwargs):
-    def wrapper(func):
-        if enable_artifact_caching:
-            return lru_cache(*lru_args, **lru_kwargs)(func)
-        return func
-
-    return wrapper
 
 
 class Artifactories:
@@ -265,7 +253,7 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-@cache_artifacts(maxsize=None)
+@lru_cache(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
@@ -277,11 +265,16 @@ def fetch_artifact(name):
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
 
-@cache_artifacts(maxsize=None)
+@lru_cache(maxsize=None)
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
     logger.info(f"Artifact {identifer} is fetched from {artifactory}")
     return artifact
+
+
+def reset_artifacts_cache():
+    fetch_artifact.cache_clear()
+    verbosed_fetch_artifact.cache_clear()
 
 
 def maybe_recover_artifact(artifact):
