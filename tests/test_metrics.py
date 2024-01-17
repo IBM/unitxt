@@ -514,6 +514,85 @@ class TestMetrics(unittest.TestCase):
                 msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
             )
 
+    def test_grouped_instance_metric_errors(self):
+        """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
+        from statistics import mean
+
+        class NoGroupField(Accuracy):
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
+
+        with self.assertRaises(ValueError):
+            # should raise error because no grouping_field
+            metric = NoGroupField()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        from dataclasses import field
+        from typing import List
+
+        class NoAggFuncReduction(Accuracy):
+            implemented_reductions: List[str] = field(
+                default_factory=lambda: ["mean", "group_mean", "some_other_func"]
+            )
+            grouping_field = "group_id"
+            reduction_map = {"some_other_func": {"agg_func": ["mean", mean]}}
+
+        with self.assertRaises(ValueError):
+            # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
+            metric = NoAggFuncReduction()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoAggFunc(Accuracy):
+            grouping_field = "group_id"
+            reduction_map = {"group_mean": {"func": ["mean", mean]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because no "agg_func" field in group_mean
+            metric = NoAggFunc()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoCallableAggFunc(Accuracy):
+            grouping_field = "group_id"
+            reduction_map = {"group_mean": {"agg_func": ["mean", "some string"]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because second field of agg_func should be callable
+            metric = NoCallableAggFunc()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class WrongGroupID(Accuracy):
+            grouping_field = "random_id_name"
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
+
+        with self.assertRaises(ValueError):
+            # should raise error because grouping_field is not found in the additional inputs
+            metric = WrongGroupID()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
 
 class TestConfidenceIntervals(unittest.TestCase):
     def test_confidence_interval_off(self):
