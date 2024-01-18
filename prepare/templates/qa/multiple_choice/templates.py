@@ -2,252 +2,134 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 templates = {
-    "mmlu": "The following are multiple choice questions (with answers) about {topic}.\n{question}.\nAnswers: \n{choices}.\nAnswer:",
-    "helm": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
-    # "fm_eval": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:".strip(),
-    #     "lm_eval_harness": """
-    # The following are multiple choice questions (with answers) about {topic}.
-    # {question}
-    # {choices}
-    # Answer:
-    # """.strip(),
+    "original": {
+        "mmlu": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n{question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n{question}.\n選択肢: {choices}.\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\{question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n{question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n{question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\n{question}.\nAatworten: {choices}.\nAatwort:",
+            
+        },
+        "helm": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n\n質問: {question}.\n選択肢: {choices}.\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\nPergunta: {question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n\nPregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n\nQuestion: {question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\nFrage: {question}.\nAatworten: {choices}.\nAatwort:",
+        },
+        "lm_eval_harness": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n\n{question}\n{choices}\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n\n{question}.\n{choices}\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\n{question}.\n{choices}\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n\n{question}.\n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n\n{question}.\n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\n{question}.\n{choices}.\nAatwort:",
+
+        },
+    },
+    "no_intro":{
+        "helm": {
+            "en": "Question: {question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "質問: {question}.\n選択肢: \n{choices}.\n答え:",
+            "pt": "Pergunta: {question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Pregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Question: {question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Frage: {question}.\nAatworten: {choices}.\nAatwort:",
+        },  
+        "lm_eval_harness": {
+            "en": "{question}\n{choices}\nAnswer:",
+            "ja": "{question}\n{choices}\n答え:",
+            "pt": "{question}\n{choices}\nResposta:",
+            "es": "{question}\n{choices}\nRespuesta:",
+            "fr": "{question}\n{choices}\nRéponse:",
+            "de": "{question}\n{choices}\nAatwort:",
+        },
+        "mmlu": {
+            "en": "{question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja":"{question}.\n選択肢: \n{choices}.\n答え:",
+            "pt": "{question}.\nResposta: \n{choices}.\nResposta:",
+            "es": "{question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "{question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "{question}.\nAatworten: {choices}.\nAatwort:",
+        },
+
+    },
+    "context_no_intro": {
+        "helm": {
+            "en": "Context: {context}\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "テキスト: {context}\n質問: {question}.\n選択肢: \n{choices}.\n答え:",
+            "pt": "Contexto: {context}\nPergunta: {question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Contexto: {context}\nPregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Contexte: {context}\nQuestion: {question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Zusammenhang: {context}\nFrage: {question}.\nAatworten: {choices}.\nAatwort:",
+            
+        },  
+        "mmlu": {
+            "en": "{context}\n{question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "{context}\n{question}.\n選択肢: \n{choices}.\n答え:",
+            "pt": "{context}\n{question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "{context}\n{question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "{context}\n{question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "{context}\n{question}.\nAatworten: \n{choices}.\nAatwort:",
+        },
+        "lm_eval_harness": {
+            "en": "{context}\n{question}\n{choices}\nAnswer:",
+            "ja": "{context}\n{question}\n{choices}\n答え:",
+            "pt": "{context}\n{question}\n{choices}\nResposta:",
+            "es": "{context}\n{question}\n{choices}\nRespuesta:",
+            "fr": "{context}\n{question}.\n{choices}\nRéponse:",
+            "de": "{context}\n{question}.\n{choices}\nAatwort:",
+        },
+    },
+    "context": {
+        "mmlu": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n{context}\n{question}.\n答え: {choices}.\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n{context}\n{question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n{context}\n{question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n{context}\n{question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n{context}\n{question}.\nAatworten: {choices}.\nAatwort:",
+        },
+        "helm": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n\nテキスト: {context}\n質問: {question}.\n答え: {choices}.\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\nContexto: {context}\nPergunta: {question}.\nRespostas: \n{choices}.\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n\nContexto: {context}\nPregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n\nContexte: {context}\nQuestion: {question}.\nRéponses \n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\nZusammenhang: {context}\nFrage: {question}.\nAatworten: {choices}.\nAatwort:",
+        },
+        "lm_eval_harness": {
+            "en": "The following are multiple choice questions (with answers) about {topic}.\n\n{context}\n{question}\n{choices}\nAnswer:",
+            "ja": "次は {topic}に関する選択式の問題です。\n\n{context}\n{question}.\n{choices}\n答え:",
+            "pt": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\n{context}\n{question}.\n{choices}\nResposta:",
+            "es": "Las siguientes son preguntas de opción múltiple (con respuestas) sobre {topic}.\n\n{context}\n{question}.\n{choices}.\nRespuesta:",
+            "fr": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n\n{context}\n{question}.\n{choices}.\nRéponse:",
+            "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\n{context}\n{question}.\n{choices}.\nAatwort:",
+        },
+    },
 }
 
-for k, v in templates.items():
-    template = MultipleChoiceTemplate(
-        input_format=v,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    )
-    add_to_catalog(
-        template, f"templates.qa.multiple_choice.original.{k}", overwrite=True
-    )
-
-# https://github.com/EleutherAI/lm-evaluation-harness/blob/9e03d9d024be9bc3e92f8c63b5595c1e12c119da/lm_eval/tasks/mmlu/default/_default_template_yaml
-# from lm-eval-harness
-#'The following are multiple choice questions (with answers) about abstract algebra.\n\nFind the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.\nA. 0\nB. 4\nC. 2\nD. 6\nAnswer:'
-input_format = """
-The following are multiple choice questions (with answers) about {topic}.
-
-{question}
-{choices}
-Answer:
-""".strip()
-
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        target_choice_format=" {choice_numeral}",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.original.lm_eval_harness",
-    overwrite=True,
-)
-
-
-def replace_if_context_not_there(s, oldvalue, newvalue):
-    if "{context}" in s:
-        return s
-
-    return s.replace(oldvalue, newvalue)
-
-
-templates_with_context = {
-    key: replace_if_context_not_there(
-        replace_if_context_not_there(
-            val,
-            "Question:",
-            "Context: {context}\nQuestion:",
-        ),
-        "{question}",
-        "{context}\n{question}",
-    )
-    for key, val in templates.items()
-}
-
-for k, v in templates_with_context.items():
-    template = MultipleChoiceTemplate(
-        input_format=v,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    )
-    add_to_catalog(
-        template, f"templates.qa.multiple_choice.context.{k}", overwrite=True
-    )
-
-
-# context no intro
-templates_context_no_intro = {
-    key: val.replace(
-        "The following are multiple choice questions (with answers) about {topic}.", ""
-    ).strip()
-    for key, val in templates_with_context.items()
-}
-
-for k, v in templates_context_no_intro.items():
-    template = MultipleChoiceTemplate(
-        input_format=v,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    )
-    add_to_catalog(
-        template, f"templates.qa.multiple_choice.context_no_intro.{k}", overwrite=True
-    )
-
-# no intro
-templates_no_intro = {
-    key: val.replace(
-        "The following are multiple choice questions (with answers) about {topic}.", ""
-    ).strip()
-    for key, val in templates.items()
-}
-
-for k, v in templates_no_intro.items():
-    template = MultipleChoiceTemplate(
-        input_format=v,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    )
-    add_to_catalog(
-        template, f"templates.qa.multiple_choice.no_intro.{k}", overwrite=True
-    )
-
-# add template aggragations
-template_list = []
-for template_family in ["original", "context_no_intro", "no_intro", "context"]:
-    family_list = [
-        f"templates.qa.multiple_choice.{template_family}.{template_type}"
-        for template_type in templates.keys()
-    ]
-
-    if family_list == "original":
-        family_list.append(
-            f"templates.qa.multiple_choice.{template_family}.lm_eval_harness"
-        )
-
-    add_to_catalog(
-        TemplatesList(family_list),
-        f"templates.qa.multiple_choice.{template_family}.all",
-        overwrite=True,
-    )
-    template_list.extend(family_list)
-
-add_to_catalog(
-    TemplatesList(template_list),
-    "templates.qa.multiple_choice.all",
-    overwrite=True,
-)
-
-
-output_format = "{answer}"
-
-# MMLU (original)
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n{question}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.with_topic.mmlu",
-    overwrite=True,
-)
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{question}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.contextual_with_topic.mmlu",
-    overwrite=True,
-)
-
-# HELM
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.with_topic.helm",
-    overwrite=True,
-)
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {question}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.contextual_with_topic.helm",
-    overwrite=True,
-)
-
-# fm_eval
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        add_numerals_as_field="numerals",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.with_topic.fm_eval",
-    overwrite=True,
-)
-
-input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {question}\nChoose from {numerals}\nAnswers:\n{choices}\nAnswer:"
-add_to_catalog(
-    MultipleChoiceTemplate(
-        input_format=input_format,
-        target_field="answer",
-        choices_seperator="\n",
-        add_numerals_as_field="numerals",
-        postprocessors=["processors.first_character"],
-    ),
-    "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
-    overwrite=True,
-)
-
-add_to_catalog(
-    TemplatesList(
-        [
-            "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
-            "templates.qa.multiple_choice.contextual_with_topic.mmlu",
-            "templates.qa.multiple_choice.contextual_with_topic.helm",
-        ]
-    ),
-    "templates.qa.multiple_choice.contextual_with_topic.all",
-    overwrite=True,
-)
-
-
-add_to_catalog(
-    TemplatesList(
-        [
-            "templates.qa.multiple_choice.with_topic.fm_eval",
-            "templates.qa.multiple_choice.with_topic.mmlu",
-            "templates.qa.multiple_choice.with_topic.helm",
-        ]
-    ),
-    "templates.qa.multiple_choice.with_topic.all",
-    overwrite=True,
-)
+for template_type, template_type_groups in templates.items():
+    for bechmark_name, template_groups in template_type_groups.items():
+        for language, input_format in template_groups.items():
+            template = MultipleChoiceTemplate(
+                input_format=input_format,
+                target_field="answer",
+                choices_seperator="\n",
+                target_choice_format=" {choice_numeral}"
+                if "lm_eval_harness" in bechmark_name
+                else "{choice_numeral}",
+                postprocessors=["processors.first_character"],
+            )
+            template_handle = f"templates.qa.multiple_choice.{template_type}.{bechmark_name}.{language}"
+            # .replace(
+            #     ".en", ""
+            # )
+            add_to_catalog(
+                template,
+                template_handle,
+                overwrite=True,
+            )
