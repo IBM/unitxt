@@ -1330,7 +1330,8 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
         """
-        sources = [], targets = []
+        sources = []
+        targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
                 sources.append(f"{self.perplexity_prompt} {instance_reference}")
