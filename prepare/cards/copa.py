@@ -20,7 +20,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.qa.multiple_choice.contextual",
-    templates="templates.qa.multiple_choice.contextual.all",
+    templates="templates.qa.multiple_choice.context.all",
 )
 
 test_card(card)

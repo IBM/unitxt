@@ -16,7 +16,7 @@ for subset in ["all", "high", "middle"]:
             ),
         ],
         task="tasks.qa.multiple_choice.contextual",
-        templates="templates.qa.multiple_choice.contextual.all",
+        templates="templates.qa.multiple_choice.context.all",
     )
     if subset == "middle":
         test_card(card)
