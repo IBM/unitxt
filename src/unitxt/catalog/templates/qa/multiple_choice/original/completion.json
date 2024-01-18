@@ -1,8 +1,0 @@
-{
-    "type": "multiple_choice_template",
-    "input_format": "\n{question}\n{choices}\nAnswer:",
-    "target_field": "answer",
-    "choices_seperator": "",
-    "source_choice_format": "{choice_text}",
-    "target_choice_format": " {choice_text}"
-}
