@@ -189,3 +189,17 @@ metric = MetricPipeline(
 )
 
 add_to_catalog(metric, "metrics.rag.mrr", overwrite=True)
+
+metric = MetricPipeline(
+    main_score="score",
+    preprocess_steps=[
+        CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+        CopyFields(
+            field_to_field=[("question", "prediction")],
+            use_query=True,
+        ),
+    ],
+    metric="metrics.perplexity_q.flan_t5_small",
+)
+
+add_to_catalog(metric, "metrics.rag.context_relevancy", overwrite=True)
