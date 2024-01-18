@@ -696,7 +696,7 @@ class TestConfidenceIntervals(unittest.TestCase):
                 )
 
     def test_grouped_instance_metric_confidence_interval(self):
-        """Test the calculation of confidence intervals for grouped instance metrics (a subclass of global metrics)."""
+        """Test the calculation of confidence intervals for grouped instance metrics (sub-types of InstanceMetric with group_mean reduction)."""
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanAccuracy(),
             expected_ci_low=0.025,
