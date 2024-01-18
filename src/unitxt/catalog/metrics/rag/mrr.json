@@ -6,8 +6,8 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "contexts_ids",
-                    "predictions"
+                    "context_ids",
+                    "prediction"
                 ]
             ],
             "use_query": true
@@ -16,7 +16,7 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "ground_truths_contexts_ids",
+                    "ground_truths_context_ids",
                     "references"
                 ]
             ],

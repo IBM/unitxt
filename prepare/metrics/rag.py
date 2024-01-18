@@ -179,9 +179,9 @@ add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(field_to_field=[("contexts_ids", "predictions")], use_query=True),
+        CopyFields(field_to_field=[("context_ids", "prediction")], use_query=True),
         CopyFields(
-            field_to_field=[("ground_truths_contexts_ids", "references")],
+            field_to_field=[("ground_truths_context_ids", "references")],
             use_query=True,
         ),
     ],
