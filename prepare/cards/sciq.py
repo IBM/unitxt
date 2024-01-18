@@ -22,7 +22,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.qa.multiple_choice.contextual",
-    templates="templates.qa.multiple_choice.contextual.all",
+    templates="templates.qa.multiple_choice.context.all",
 )
 test_card(card)
 add_to_catalog(card, "cards.sciq", overwrite=True)
