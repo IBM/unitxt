@@ -175,3 +175,17 @@ for metric_id, metric in metrics.items():
     add_to_catalog(metric, metric_id, overwrite=True)
 
 add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
+
+metric = MetricPipeline(
+    main_score="score",
+    preprocess_steps=[
+        CopyFields(field_to_field=[("contexts_ids", "predictions")], use_query=True),
+        CopyFields(
+            field_to_field=[("ground_truths_contexts_ids", "references")],
+            use_query=True,
+        ),
+    ],
+    metric="metrics.mrr",
+)
+
+add_to_catalog(metric, "metrics.rag.mrr", overwrite=True)
