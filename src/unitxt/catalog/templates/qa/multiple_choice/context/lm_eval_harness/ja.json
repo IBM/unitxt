@@ -1,0 +1,10 @@
+{
+    "type": "multiple_choice_template",
+    "input_format": "次は {topic}に関する選択式の問題です。\n\n{context}\n{question}.\n{choices}\n答え:",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "target_choice_format": " {choice_numeral}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}
