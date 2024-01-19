@@ -52,8 +52,6 @@ card = TaskCard(
             }
         ),
         ApplyOperatorsField(
-            inputs_fields=["prediction", "references"],
-            fields_to_treat_as_list=["references"],
             operators_field="postprocessors",
             default_operators=["processors.to_string_stripped"],
         ),

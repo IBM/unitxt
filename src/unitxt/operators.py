@@ -33,6 +33,7 @@ General Operaotrs List:
 """
 import collections
 import importlib
+import logging
 import operator
 import os
 import uuid
@@ -888,7 +889,7 @@ class TakeByField(StreamInstanceOperator):
 class Perturbate(FieldOperator):
     """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
 
-    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    When task is classification, argument 'select_from' can be used to list the other potential classes, as a
     relevant perturbation
     """
 
@@ -1166,13 +1167,35 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
             "metrics.f1_micro": self.compute_f1_micro_from_confusion_matrix,
             "metrics.f1_macro": self.compute_f1_macro_from_confusion_matrix,
             "metrics.accuracy": self.compute_f1_micro_from_confusion_matrix,
+            "metrics.pearson": self.compute_pearson_from_confusion_matrix,
+            "metrics.spearman": self.compute_spearman_from_confusion_matrix,
         }  # accuracy is same as f1_micro
         self.logger = get_logger()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
+        import numpy as np
+        from scipy.stats import binom
+
+        _num_of_bootstrap_resamples = 1000
+
         ms_to_return = {}
         for stream_name, stream in multi_stream.items():
+            # for (an approximation of) bootstrapping, first count the number of instances in the stream:
+            numof_instances = 0
+            for _ in stream:
+                numof_instances += 1
+            p_binom = 1.0 / float(numof_instances)
+            # prepare an array of _NUM_OF_BOOTSTRAP_RESAMPLES confusion matrices, to count each over a resample.
+            # the chance of a given instance to be included in one given resample is 1/num_of_instances,
+            # that repeats numjof_instances. We thus have that the number of times a given instance is
+            # included in a given resample is binomially distributed, with p = 1/numof_instances, and n = numof_instances.
+            # for such n and p,  poisson is a very good estimation. if runs faster - can use poisson.
+            # bootstrapping by resampling, for ci  computation:
+            # https://library.virginia.edu/data/articles/bootstrap-estimates-of-confidence-intervals#:~:text=Bootstrapping%20is%20a%20statistical%20procedure,small%20sample%20of%20that%20population.
             conf_mat_counter = Counter()
+            boot_strap_conf_mats = []
+            for _ in range(_num_of_bootstrap_resamples):
+                boot_strap_conf_mats.append(Counter())
             for instance in stream:
                 if (
                     self.pred_field_name not in instance
@@ -1192,17 +1215,35 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
                         for r in instance[self.refs_field_name]
                     ]
                 )
-            # now produce the overall, global metric for the stream, for all metrics requested
+                # number of times to count this instance against each of the bootstrap counters:
+                num_of_counter_activations = binom.rvs(
+                    n=numof_instances, p=p_binom, size=_num_of_bootstrap_resamples
+                )
+                for boot_strap_conf_mat, num_of_counter_activation in zip(
+                    boot_strap_conf_mats, num_of_counter_activations
+                ):
+                    boot_strap_conf_mat.update(
+                        [
+                            (r, instance[self.pred_field_name])
+                            for r in instance[self.refs_field_name]
+                        ]
+                        * num_of_counter_activation
+                    )
+            # now produce the overall, global metric for the stream, for all metrics requested, all with same confusion matrix
             fields = {}
             for metric_name in self.global_metric_names:
                 scorer = self.dispatcher[metric_name]
                 score = scorer(conf_mat_counter)
+                bootstrap_scores = []
+                for i in range(_num_of_bootstrap_resamples):
+                    bootstrap_scores.append(scorer(boot_strap_conf_mats[i]))
+                ci = np.percentile(bootstrap_scores, [2.5, 97.5])
                 fields[
                     "global_metrics_scores_computed_per_stream/"
                     + stream_name
                     + "/"
                     + metric_name
-                ] = score
+                ] = {"score": score, "ci": ci}
 
             # now spread the new score in all instances of the stream
             updatemetrics = AddFields(fields=fields, use_query=True)
@@ -1244,13 +1285,13 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         preds = [p for r, p in originals]
 
         sklearn_mcc = sklearn.metrics.matthews_corrcoef(refs, preds)
-        self.logger.info(sklearn_mcc)
-        self.logger.info(f"nominator = {nominator} and denominator = {denominator}")
+        # self.logger.info(sklearn_mcc)
+        # self.logger.info(f"nominator = {nominator} and denominator = {denominator}")
         if isclose(nominator, 0.0) and isclose(denominator, 0.0):
             mcc = 0.0
         else:
             mcc = nominator / denominator
-        self.logger.info(mcc)
+        # self.logger.info(mcc)
         assert isclose(mcc, sklearn_mcc), "not a good implementation"
         return mcc
 
@@ -1267,7 +1308,7 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         # as nicely explained here:
         # https://simonhessner.de/why-are-precision-recall-and-f1-score-equal-when-using-micro-averaging-in-a-multi-class-problem/
         our_f1_micro = precision
-        self.logger.info(our_f1_micro)
+        # self.logger.info(our_f1_micro)
         originals = list(
             conf_mat.elements()
         )  # list of pairs (r,p) as were accumulated in the main class
@@ -1275,7 +1316,7 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         preds = [p for r, p in originals]
 
         sklearn_f1_micro = sklearn.metrics.f1_score(refs, preds, average="micro")
-        self.logger.info(sklearn_f1_micro)
+        # self.logger.info(sklearn_f1_micro)
 
         assert isclose(our_f1_micro, sklearn_f1_micro), "not a good implementation"
         assert isclose(
@@ -1306,6 +1347,8 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
 
         f1 = {
             c: 2 * precision[c] * recall[c] / (precision[c] + recall[c])
+            if (precision[c] + recall[c]) > 0
+            else 0.0
             for c in intersect
         }
         # for classes that never showed in any prediction, we have recall = 0,
@@ -1316,7 +1359,7 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         our_f1_macro = sum(f1.values()) / float(
             len(f1)
         )  # un weighted average over the classes
-        self.logger.info(our_f1_macro)
+        # self.logger.info(our_f1_macro)
 
         originals = list(
             conf_mat.elements()
@@ -1325,64 +1368,96 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         preds = [p for r, p in originals]
 
         sklearn_f1_macro = sklearn.metrics.f1_score(refs, preds, average="macro")
-        self.logger.info(sklearn_f1_macro)
+        # self.logger.info(sklearn_f1_macro)
 
         assert isclose(our_f1_macro, sklearn_f1_macro), "not a good implementation"
 
         return our_f1_macro
 
-
-class Perturbate(FieldOperator):
-    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
-
-    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
-    relevant perturbation
-    """
-
-    select_from: List[Any] = []
-    percentage_to_perturbate: int = 1  # 1 percent
-
-    def verify(self):
-        assert (
-            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
-        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
-
-    def prepare(self):
-        super().prepare()
-        self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
-        self.can_select_from = len(self.select_from) > 1
-
-    def process_value(self, value: Any) -> Any:
-        perturbate = (
-            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
+    # good for evaluations over a modes scale, say 1,2,..,10 or so. ref and pred should be integers, and not too big
+    # so that confusion matrix makes sense
+    def compute_pearson_from_confusion_matrix(self, conf_mat: Counter) -> Any:
+        # formula: m_pred, m_ref: the means of preds and refs.
+        # nominator: sum (pred - m_pred)(ref - m_ref)
+        # denominator: sqrt ( (sum ((pred -_m_pred)^2)) (sum ((ref -_m_ref)^2)) )
+        # screen out all non integer preds:
+        valid_keys = list(
+            {(r, p) for (r, p) in conf_mat.keys() if isinstance(p, int)}
+        )  # all refs are int by definition
+        valid_preds = list({p for (r, p) in valid_keys})
+        valid_refs = list({r for (r, p) in valid_keys})
+        # marginal distributions:
+        md_preds = {
+            pred: sum(conf_mat[(r, p)] for r, p in valid_keys if p == pred)
+            for pred in valid_preds
+        }
+        md_refs = {
+            ref: sum(conf_mat[(r, p)] for r, p in valid_keys if r == ref)
+            for ref in valid_refs
+        }
+        # averages:
+        mean_pred = float(sum(pred * md_preds[pred] for pred in md_preds)) / float(
+            sum(md_preds.values())
         )
-        if not perturbate:
-            return value
+        mean_refs = float(sum(ref * md_refs[ref] for ref in md_refs)) / float(
+            sum(md_refs.values())
+        )
+        nominator = sum(
+            (r - mean_refs) * (p - mean_pred) * conf_mat[r, p] for r, p in valid_keys
+        )
+        denominator = sqrt(
+            (sum(((r - mean_refs) ** 2) * md_refs[r] for r in valid_refs))
+            * (sum(((p - mean_pred) ** 2) * md_preds[p] for p in valid_preds))
+        )
+        if denominator == 0.0:
+            return 0.0
+        our_pearson = nominator / denominator
 
-        if value in self.select_from and self.can_select_from:
-            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
-            if self.random_generator.random() < 0.8:
-                return self.random_generator.choice(
-                    [v for v in self.select_from if v != value]
-                )
+        import scipy.stats
 
-        if isinstance(value, float):
-            return value * (0.5 + self.random_generator.random())
+        originals = list(
+            conf_mat.elements()
+        )  # list of pairs (r,p) as were accumulated in the main class
+        refs = [r for r, p in originals]
+        preds = [p for r, p in originals]
+        pearson, pvalue = scipy.stats.pearsonr(refs, preds)
+        assert isclose(pearson, our_pearson), "not a good implemenation"
 
-        if isinstance(value, int):
-            perturb = 1 if self.random_generator.random() < 0.5 else -1
-            return value + perturb
+        return our_pearson
 
-        if isinstance(value, str):
-            if len(value) < 2:
-                # give up perturbation
-                return value
-            # throw one char out
-            prefix_len = self.random_generator.randint(1, len(value) - 1)
-            return value[:prefix_len] + value[prefix_len + 1 :]
+    def compute_spearman_from_confusion_matrix(self, conf_mat: Counter) -> Any:
+        # see wikipedia. first convert to ranked values of preds and refs:
+        valid_keys = list(
+            {(r, p) for (r, p) in conf_mat.keys() if isinstance(p, int)}
+        )  # all refs are int by definition
+        valid_preds = list({p for (r, p) in valid_keys})
+        valid_refs = list({r for (r, p) in valid_keys})
+        conf_mat_ranked_keys = {}
+        for r, p in conf_mat.keys():
+            conf_mat_ranked_keys[
+                1 + sorted(valid_refs).index(r), 1 + sorted(valid_preds).index(p)
+            ] = conf_mat[r, p]
+        our_spearman = self.compute_pearson_from_confusion_matrix(
+            Counter(conf_mat_ranked_keys)
+        )
 
-        # and in any other case:
-        return value
+        import pandas as pd
+        import scipy.stats
+
+        originals = list(
+            conf_mat.elements()
+        )  # list of pairs (r,p) as were accumulated in the main class
+        df = pd.DataFrame(originals, columns=["refs", "preds"])
+        pandas_spearman = df.corr(method="spearman")
+        logging.info(pandas_spearman)
+        pandas_spearman = pandas_spearman[0][1]
+        refs = [r for r, p in originals]
+        preds = [p for r, p in originals]
+        spearman, pvalue = scipy.stats.spearmanr(refs, preds)
+        assert isclose(pandas_spearman, spearman), "pandas is different from scipy"
+        assert isclose(spearman, our_spearman), "not a good implemenation"
+
+        return our_spearman
 
 
 class FilterByCondition(SingleStreamOperator):
