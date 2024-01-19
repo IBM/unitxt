@@ -33,7 +33,6 @@ General Operaotrs List:
 """
 import collections
 import importlib
-import logging
 import operator
 import os
 import uuid
@@ -1174,17 +1173,18 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         import numpy as np
-        from scipy.stats import binom
+        from scipy.stats import poisson
 
         _num_of_bootstrap_resamples = 1000
 
         ms_to_return = {}
         for stream_name, stream in multi_stream.items():
             # for (an approximation of) bootstrapping, first count the number of instances in the stream:
-            numof_instances = 0
-            for _ in stream:
-                numof_instances += 1
-            p_binom = 1.0 / float(numof_instances)
+            # numof_instances = 0
+            # for _ in stream:
+            #     numof_instances += 1
+            # p_binom = 1.0 / float(numof_instances)
+
             # prepare an array of _NUM_OF_BOOTSTRAP_RESAMPLES confusion matrices, to count each over a resample.
             # the chance of a given instance to be included in one given resample is 1/num_of_instances,
             # that repeats numjof_instances. We thus have that the number of times a given instance is
@@ -1192,6 +1192,9 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
             # for such n and p,  poisson is a very good estimation. if runs faster - can use poisson.
             # bootstrapping by resampling, for ci  computation:
             # https://library.virginia.edu/data/articles/bootstrap-estimates-of-confidence-intervals#:~:text=Bootstrapping%20is%20a%20statistical%20procedure,small%20sample%20of%20that%20population.
+            # now, because we are talking a very small p and a very large n, with average expected of success = 1,
+            # we can very well approximate with poisson, mu=1, no need to count the number of instances
+
             conf_mat_counter = Counter()
             boot_strap_conf_mats = []
             for _ in range(_num_of_bootstrap_resamples):
@@ -1216,8 +1219,11 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
                     ]
                 )
                 # number of times to count this instance against each of the bootstrap counters:
-                num_of_counter_activations = binom.rvs(
-                    n=numof_instances, p=p_binom, size=_num_of_bootstrap_resamples
+                # num_of_counter_activations = binom.rvs(
+                #     n=numof_instances, p=p_binom, size=_num_of_bootstrap_resamples
+                # )
+                num_of_counter_activations = poisson.rvs(
+                    mu=1, size=_num_of_bootstrap_resamples
                 )
                 for boot_strap_conf_mat, num_of_counter_activation in zip(
                     boot_strap_conf_mats, num_of_counter_activations
@@ -1382,8 +1388,12 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
         # denominator: sqrt ( (sum ((pred -_m_pred)^2)) (sum ((ref -_m_ref)^2)) )
         # screen out all non integer preds:
         valid_keys = list(
-            {(r, p) for (r, p) in conf_mat.keys() if isinstance(p, int)}
-        )  # all refs are int by definition
+            {
+                (r, p)
+                for (r, p) in conf_mat.keys()
+                if isinstance(p, int) or isinstance(p, float)
+            }
+        )  # all refs are int or float, rounded to 2 digits by definition
         valid_preds = list({p for (r, p) in valid_keys})
         valid_refs = list({r for (r, p) in valid_keys})
         # marginal distributions:
@@ -1427,35 +1437,63 @@ class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
 
     def compute_spearman_from_confusion_matrix(self, conf_mat: Counter) -> Any:
         # see wikipedia. first convert to ranked values of preds and refs:
+        # from documentation inside scipy, by the average method (the default), on repeating values,
+        # * 'average': The average of the ranks that would have been assigned to
+        #             all the tied values is assigned to each value.
+
         valid_keys = list(
-            {(r, p) for (r, p) in conf_mat.keys() if isinstance(p, int)}
+            {
+                (r, p)
+                for (r, p) in conf_mat.keys()
+                if isinstance(p, int) or isinstance(p, float)
+            }
         )  # all refs are int by definition
-        valid_preds = list({p for (r, p) in valid_keys})
-        valid_refs = list({r for (r, p) in valid_keys})
+        valid_preds = sorted({p for (r, p) in valid_keys})
+        valid_preds_occurrences = {
+            pred: sum(conf_mat[r, p] for (r, p) in valid_keys if p == pred)
+            for pred in valid_preds
+        }
+        valid_refs = sorted({r for (r, p) in valid_keys})
+        valid_refs_occurrences = {
+            ref: sum(conf_mat[r, p] for (r, p) in valid_keys if r == ref)
+            for ref in valid_refs
+        }
+        mapped_thus_far = 0
+        rank_of_pred = {}
+        for valid_pred in valid_preds:
+            rank = (
+                (mapped_thus_far + 1)
+                + (mapped_thus_far + valid_preds_occurrences[valid_pred])
+            ) / 2  # avg rank
+            rank_of_pred[valid_pred] = rank
+            mapped_thus_far += valid_preds_occurrences[valid_pred]
+        mapped_thus_far = 0
+        rank_of_ref = {}
+        for valid_ref in valid_refs:
+            rank = (
+                (mapped_thus_far + 1)
+                + (mapped_thus_far + valid_refs_occurrences[valid_ref])
+            ) / 2
+            rank_of_ref[valid_ref] = rank
+            mapped_thus_far += valid_refs_occurrences[valid_ref]
+
         conf_mat_ranked_keys = {}
-        for r, p in conf_mat.keys():
-            conf_mat_ranked_keys[
-                1 + sorted(valid_refs).index(r), 1 + sorted(valid_preds).index(p)
-            ] = conf_mat[r, p]
+        for r, p in valid_keys:
+            conf_mat_ranked_keys[(rank_of_ref[r], rank_of_pred[p])] = conf_mat[r, p]
         our_spearman = self.compute_pearson_from_confusion_matrix(
             Counter(conf_mat_ranked_keys)
         )
-
-        import pandas as pd
+        # self.logger.info(f"our spearman: {our_spearman}")
         import scipy.stats
 
         originals = list(
             conf_mat.elements()
         )  # list of pairs (r,p) as were accumulated in the main class
-        df = pd.DataFrame(originals, columns=["refs", "preds"])
-        pandas_spearman = df.corr(method="spearman")
-        logging.info(pandas_spearman)
-        pandas_spearman = pandas_spearman[0][1]
         refs = [r for r, p in originals]
         preds = [p for r, p in originals]
-        spearman, pvalue = scipy.stats.spearmanr(refs, preds)
-        assert isclose(pandas_spearman, spearman), "pandas is different from scipy"
-        assert isclose(spearman, our_spearman), "not a good implemenation"
+        scipy_spearman, pvalue = scipy.stats.spearmanr(refs, preds)
+        # self.logger.info(f"scipy spearman: {scipy_spearman}")
+        assert isclose(scipy_spearman, our_spearman), "not a good implementation"
 
         return our_spearman
 

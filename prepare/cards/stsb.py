@@ -38,14 +38,15 @@ card = TaskCard(
         ),
         # round float numbers just for the fun
         ExecuteQuery(
-            query="[int(0.5 + float(v)) for v in references]", to_field="references"
+            query="[round(float(v), 2) for v in references]", to_field="references"
         ),
-        ExecuteQuery(query="int(0.5 + float(target))", to_field="target"),
+        ExecuteQuery(query="round(float(target), 2)", to_field="target"),
         Perturbate(
             field="target",
             to_field="prediction",
             percentage_to_perturbate=30,
         ),
+        ExecuteQuery(query="round(float(prediction), 2)", to_field="prediction"),
         GlobalClassificationMetricOnly(
             pred_field_name="prediction",
             refs_field_name="references",
