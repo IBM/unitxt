@@ -1,0 +1,31 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "jlh-ibm/earnings_call"
+    },
+    "preprocess_steps": [
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "earning call",
+                "classes": [
+                    "positive",
+                    "negative"
+                ],
+                "type_of_class": "sentiment"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{text}\nQuestion: Classify the above paragraph into one of the following sentiments: negative/positive.",
+                "output_format": "{label}"
+            }
+        ]
+    }
+}
