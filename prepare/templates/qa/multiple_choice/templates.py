@@ -156,3 +156,147 @@ for template_type in template_handels.template_type.unique():
             name=cur_handle,
             overwrite=True,
         )
+
+
+output_format = "{answer}"
+
+# MMLU (original)
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n{question}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.with_topic.mmlu",
+    overwrite=True,
+)
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{question}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.contextual_with_topic.mmlu",
+    overwrite=True,
+)
+
+# HELM
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.with_topic.helm",
+    overwrite=True,
+)
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {question}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.contextual_with_topic.helm",
+    overwrite=True,
+)
+
+# lm_eval_harness
+
+input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.lm_eval_harness",
+    overwrite=True,
+)
+
+input_format = "Context: {context}\nQuestion: {question}\nChoices:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.contextual.lm_eval_harness",
+    overwrite=True,
+)
+
+# fm_eval
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nQuestion: {question}\nChoose from {numerals}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        add_numerals_as_field="numerals",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.with_topic.fm_eval",
+    overwrite=True,
+)
+
+input_format = "The following are multiple choice questions (with answers) about {topic}.\n\nContext: {context}\nQuestion: {question}\nChoose from {numerals}\nAnswers:\n{choices}\nAnswer:"
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format=input_format,
+        target_field="answer",
+        choices_seperator="\n",
+        add_numerals_as_field="numerals",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.contextual.lm_eval_harness",
+        ]
+    ),
+    "templates.qa.multiple_choice.contextual.all",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
+            "templates.qa.multiple_choice.contextual_with_topic.mmlu",
+            "templates.qa.multiple_choice.contextual_with_topic.helm",
+        ]
+    ),
+    "templates.qa.multiple_choice.contextual_with_topic.all",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.with_topic.fm_eval",
+            "templates.qa.multiple_choice.with_topic.mmlu",
+            "templates.qa.multiple_choice.with_topic.helm",
+        ]
+    ),
+    "templates.qa.multiple_choice.with_topic.all",
+    overwrite=True,
+)
