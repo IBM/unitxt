@@ -84,27 +84,23 @@ class MetricWithConfidenceInterval(Metric):
         )
 
     @staticmethod
-    def aggregate_instance_scores(instances, field_name):
-        """Calculate mean of a set of instance scores (given by field_name), ignoring NaNs.
+    def average_instance_scores(instances, field_name):
+        """Calculate mean of a set of instance scores (given by field_name).
 
         Args:
             instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
             field_name: score field names to compute mean for.
         """
-        scores = [instance["score"]["instance"][field_name] for instance in instances]
-        import warnings
-
-        with warnings.catch_warnings():
-            # in case instances is empty, return NaN but avoid printing a RuntimeWarning
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            return np.nanmean(scores)
+        return mean(
+            [instance["score"]["instance"][field_name] for instance in instances]
+        )
 
     def score_based_confidence_interval(
         self,
         instances: List[dict],
         score_names: List[str],
         aggregation_func=None,
-        func_name="",
+        ci_score_prefix="",
     ):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
 
@@ -117,8 +113,8 @@ class MetricWithConfidenceInterval(Metric):
             aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include additional_inputs
                 field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
                 instances after resampling, if aggregation_func=None.
-            func_name: An optional function name (if aggregation_func is not the mean) to append to each score_name in the results.
-                Used primarily for group_mean reductions.
+            ci_score_prefix: An optional string prefix to the score_name in the CI.  Useful in cases where the
+                aggregation_func is something other than the mean
 
         Returns:
             Dict of confidence interval values
@@ -127,10 +123,10 @@ class MetricWithConfidenceInterval(Metric):
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
-        func_name = str(func_name)
+        ci_score_prefix = str(ci_score_prefix)
         if aggregation_func is None:
             # by default mean aggregation
-            aggregation_func = self.aggregate_instance_scores
+            aggregation_func = self.average_instance_scores
 
         for score_name in score_names:
             # need to redefine the statistic function within the loop because score_name is a loop variable, to avoid ruff errors
@@ -155,9 +151,7 @@ class MetricWithConfidenceInterval(Metric):
                 confidence_level=self.confidence_level,
                 random_state=self.new_random_generator(),
             ).confidence_interval
-            full_score_name = (
-                score_name if len(func_name) == 0 else func_name + "_" + score_name
-            )
+            full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
             if score_name == self.main_score:
@@ -433,8 +427,11 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: ["mean", "group_mean"]
     )
 
-    # for grouped metrics: a field that contains the group id. None to disable grouping.
-    # Grouped metrics aggregate the instance score per group, and then average over group scores.
+    # InstanceMetric currently allows two reductions, 'mean', which calculates the mean of instance scores,'
+    # and 'group_mean', which first applies an aggregation function specified in the reduction_map
+    # to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
+    # of the group scores; if grouping_field is None, grouping is disabled.
+    # see _validate_group_mean_reduction for an example and proper formatting of the reduction_map
     grouping_field: str = None
 
     @property
@@ -443,6 +440,21 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
     def _validate_group_mean_reduction(self):
+        """Ensure that group_mean reduction_map is properly formatted.
+
+        Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
+
+        class GroupVarianceAccuracy(Accuracy):
+            grouping_field = 'group_id'
+            reduction_map = {'group_mean': {'agg_func': ['variance', np.var]}}
+
+        reduction_map must be a dict with
+        - an 'agg_func' field with value being a 2-element list where
+            - 1st element is a string name of the aggregation function (used in naming the CI report)
+            - 2nd element is the callable aggregation function
+        - Optional: 'score_fields' key with list value containing the string names of fields to apply the aggregation to
+            - if not present, the parent class main_score is used.
+        """
         if not self.grouping_field:
             raise ValueError(
                 "self.grouping_field is None, . "
@@ -458,6 +470,15 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         assert (
             "agg_func" in fields
         ), "fields should have a key 'agg_func' consisting of a 2-element list of a function name and function definition"
+        assert isinstance(
+            fields["agg_func"], list
+        ), "fields['agg_func'] should be a list"
+        assert (
+            len(fields["agg_func"]) == 2
+        ), "fields['agg_func'] should be a two-element list"
+        assert isinstance(
+            fields["agg_func"][0], str
+        ), "first item in fields['agg_func'] should be a string name of a function"
         assert callable(
             fields["agg_func"][1]
         ), "second item in fields['agg_func'] should be a callable function"
@@ -465,18 +486,17 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             assert isinstance(fields["score_fields"], list)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances, global_score = self.compute_instance_scores(stream, stream_name)
+        instances, global_score = self.compute_instance_scores(stream)
 
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
             ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
-            aggregation_func = None
 
+            field_name_full_prefix = ""
             if reduction_type == "mean":
-                aggregation_func = self.aggregate_instance_scores
+                aggregation_func = self.average_instance_scores
                 reduction_fields = list(set(reduction_params))
-                field_name_full_prefix = ""
             elif reduction_type == "group_mean":
                 self._validate_group_mean_reduction()
                 reduction_fields = (
@@ -485,7 +505,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     else list(set(reduction_params["score_fields"]))
                 )
                 aggregation_function_name = str(reduction_params["agg_func"][0])
-                field_name_full_prefix = "group_" + aggregation_function_name
+                field_name_full_prefix = "group_" + aggregation_function_name + "_"
 
                 def aggregation_func(
                     instances, field_name, field=reduction_params["agg_func"][1]
@@ -493,19 +513,14 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     return self.aggregate_instance_scores_by_group(
                         instances, field_name, field
                     )
-
-            if not aggregation_func:
+            else:
                 raise ValueError(
-                    f"No aggregation_func was defined for reduction {reduction_type}. "
-                    f"Please specify a valid reduction method in reduction_map {self.reduction_map}."
+                    f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
                 )
 
             # calculate global scores for each reduction field
             for field_name in reduction_fields:
-                if reduction_type == "group_mean":
-                    field_name_full = field_name_full_prefix + "_" + field_name
-                else:
-                    field_name_full = field_name
+                field_name_full = field_name_full_prefix + field_name
                 global_score[field_name_full] = aggregation_func(instances, field_name)
                 if field_name == self.main_score:
                     global_score["score"] = global_score[field_name_full]
@@ -518,7 +533,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     instances=instances,
                     aggregation_func=aggregation_func,
                     score_names=list(set(self.ci_scores)),
-                    func_name=field_name_full_prefix,
+                    ci_score_prefix=field_name_full_prefix,
                 )
                 global_score.update(confidence_interval)
 
