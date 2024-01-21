@@ -1,3 +1,4 @@
+import sys
 from ast import literal_eval
 from typing import List
 
@@ -24,7 +25,7 @@ def evaluate(dataset: pd.DataFrame, metric_names: List[str]):
 
 if __name__ == "__main__":
     df = pd.read_csv(
-        "/Users/matanorbach/Documents/matan/src/fm_eval_workspace/rag_metrics/datasets/RAG/rag_dataset.csv",
+        filepath_or_buffer=sys.argv[1],
         converters={
             "ground_truths": literal_eval,
             "ground_truths_context_ids": literal_eval,
@@ -33,4 +34,14 @@ if __name__ == "__main__":
         },
     )
 
-    evaluate(df, metric_names=["metrics.rag.mrr", "metrics.rag.context_relevancy"])
+    evaluate(
+        df,
+        metric_names=[
+            "metrics.rag.mrr",
+            "metrics.rag.map",
+            "metrics.rag.answer_correctness",
+            "metrics.rag.context_relevance",
+            "metrics.rag.faithfulness",
+            "metrics.rag.answer_relevance",
+        ],
+    ).round(2).to_csv("dataset_out.csv")
