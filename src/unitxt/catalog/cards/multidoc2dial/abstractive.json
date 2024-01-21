@@ -20,12 +20,9 @@
             "to_field": "answer"
         },
         {
-            "type": "apply",
-            "function": "__main__.extract_question",
-            "to_field": "question",
-            "_argv": [
-                "question"
-            ]
+            "type": "execute_query",
+            "query": "question.split('[SEP]')[0]",
+            "to_field": "question"
         }
     ],
     "task": "tasks.qa.contextual.abstractive",

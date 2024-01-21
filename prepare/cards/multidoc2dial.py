@@ -1,12 +1,7 @@
 from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import Apply, ListFieldValues, RenameFields
+from src.unitxt.operators import ExecuteQuery, ListFieldValues, RenameFields
 from src.unitxt.test_utils.card import test_card
-
-
-def extract_question(text):
-    return text.split("[SEP]")[0]
-
 
 card_abstractive = TaskCard(
     loader=LoadHF(path="multidoc2dial"),
@@ -16,7 +11,7 @@ card_abstractive = TaskCard(
             use_query=True,
         ),
         ListFieldValues(fields=["utterance"], to_field="answer"),
-        Apply("question", function=extract_question, to_field="question"),
+        ExecuteQuery(query="question.split('[SEP]')[0]", to_field="question"),
     ],
     task="tasks.qa.contextual.abstractive",
     templates="templates.qa.contextual.all",
@@ -30,7 +25,7 @@ card_extractive = TaskCard(
             use_query=True,
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answer"),
-        Apply("question", function=extract_question, to_field="question"),
+        ExecuteQuery(query="question.split('[SEP]')[0]", to_field="question"),
     ],
     task="tasks.qa.contextual.extractive",
     templates="templates.qa.contextual.all",
