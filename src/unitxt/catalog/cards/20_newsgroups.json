@@ -7,7 +7,7 @@
     "preprocess_steps": [
         {
             "type": "filter_by_condition",
-            "required_values": {
+            "values": {
                 "text": ""
             },
             "condition": "ne"
