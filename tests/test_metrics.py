@@ -727,6 +727,8 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_high=-0.3333333333333333,
         )
 
+        # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
+        # hence this test may fail on a PC
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHStringContainment(),
             expected_ci_low=-0.743586957620825,
