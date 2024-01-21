@@ -1,12 +1,12 @@
-from unitxt import add_to_catalog
-from unitxt.blocks import (
+from src.unitxt import add_to_catalog
+from src.unitxt.blocks import (
     AddFields,
     InputOutputTemplate,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from unitxt.test_utils.card import test_card
+from src.unitxt.test_utils.card import test_card
 
 """
 TaskCard generated from HELM Enterprise Scenario:

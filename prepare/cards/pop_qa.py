@@ -1,15 +1,15 @@
 import json
 
-from unitxt import add_to_catalog
-from unitxt.blocks import (
+from src.unitxt import add_to_catalog
+from src.unitxt.blocks import (
     FormTask,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import Apply, Shuffle
-from unitxt.templates import MultiReferenceTemplate
-from unitxt.test_utils.card import test_card
+from src.unitxt.operators import Apply, Shuffle
+from src.unitxt.templates import MultiReferenceTemplate
+from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="akariasai/PopQA", name="popqa"),
