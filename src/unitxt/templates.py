@@ -312,9 +312,10 @@ class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
         quantized_outputs = {
-            key: round(input_float / self.quantum) * self.quantum
-            for key, input_float in outputs.items()
+            key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
+            for key, value in outputs.items()
         }
         return super().outputs_to_target_and_references(quantized_outputs)
 
