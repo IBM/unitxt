@@ -1,7 +1,10 @@
 import re
+import zipfile
 from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
+
+import requests
 
 from .artifact import Artifact
 from .dataclass import NonPositionalField
@@ -10,6 +13,43 @@ from .stream import MultiStream, Stream
 
 class Operator(Artifact):
     pass
+
+
+class DownloadError(Exception):
+    def __init__(
+        self,
+        message,
+    ):
+        self.__super__(message)
+
+
+class UnexpectedHttpCodeError(Exception):
+    def __init__(self, http_code):
+        self.__super__(f"unexpected http code {http_code}")
+
+
+class DownloadOperator(Operator):
+    source: str
+    target: str
+
+    def __call__(self):
+        try:
+            response = requests.get(self.source, allow_redirects=True)
+        except Exception as e:
+            raise DownloadError(f"Unabled to download {self.source}") from e
+        if response.status_code != 200:
+            raise UnexpectedHttpCodeError(response.status_code)
+        with open(self.target, "wb") as f:
+            f.write(response.content)
+
+
+class ZipExtractorOperator(Operator):
+    zip_file: str
+    target_dir: str
+
+    def __call__(self):
+        with zipfile.ZipFile(self.zip_file) as zf:
+            zf.extractall(self.target_dir)
 
 
 class OperatorError(Exception):
