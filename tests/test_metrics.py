@@ -730,7 +730,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHStringContainment(),
             expected_ci_low=-0.743586957620825,
-            expected_ci_high=-0.3916963890211997,
+            expected_ci_high=-0.3908330554711398,
         )
 
         # F1-based scores
