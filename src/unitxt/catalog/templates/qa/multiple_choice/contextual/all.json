@@ -1,0 +1,6 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.qa.multiple_choice.contextual.lm_eval_harness"
+    ]
+}
