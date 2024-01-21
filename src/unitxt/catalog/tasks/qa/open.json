@@ -7,6 +7,6 @@
         "answer"
     ],
     "metrics": [
-        "metrics.squad"
+        "metrics.rouge"
     ]
 }
