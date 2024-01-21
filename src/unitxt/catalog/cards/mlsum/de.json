@@ -19,19 +19,7 @@
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "document",
-            "document_type"
-        ],
-        "outputs": [
-            "summary"
-        ],
-        "metrics": [
-            "metrics.rouge"
-        ]
-    },
+    "task": "tasks.summarization.abstractive",
     "templates": {
         "type": "templates_list",
         "items": [
