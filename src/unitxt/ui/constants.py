@@ -30,3 +30,16 @@ scores = metric.compute(predictions=predictions,references=dataset)
 
 [print(item) for item in scores[0]['score']['global'].items()]
 """
+
+INTRO_TXT = """
+### Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively.
+
+
+### Unitxt is a python library for getting data fired up and set for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. We aspire to be simple, adaptable and transparent.
+"""
+
+DATASET_CARD = "Dataset Card"
+TEMPLATE = "Template"
+FORMAT = "Format"
+AUGMENTOR = "Augmentor"
+INSTRUCTION = "Instruction"
