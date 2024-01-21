@@ -189,11 +189,11 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 self.template = self.card.templates[self.template_card_index]
             except Exception as e:
                 if isinstance(self.card.templates, dict):
-                    options = self.card.templates.keys()
+                    options = list(self.card.templates.keys())
                 else:
                     options = list(range(0, len(self.card.templates)))
                 raise ValueError(
-                    f"card_template_index '{self.template_card_index}' is not in card. Available options: {options}"
+                    f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
                 ) from e
         assert (
             self.instruction_card_index is None or self.instruction is None
