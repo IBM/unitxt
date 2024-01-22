@@ -144,9 +144,9 @@ def build_command(prompt_data, with_prediction):
 
 
 def update_choices_per_task(task_choice):
-    datasets_choices = gr.update(choices=[], value=None)
-    template_choices = gr.update(choices=[], value=None)
-    augmentors_choices = gr.update(choices=[], value=None)
+    datasets_choices = None
+    template_choices = None
+    augmentors_choices = None
     if isinstance(task_choice, str):
         if task_choice in data:
             datasets_choices = gr.update(choices=get_datasets(task_choice))
@@ -168,7 +168,7 @@ def get_augmentors(task_choice):
 
 def get_templates(task_choice, dataset_choice):
     if not isinstance(dataset_choice, str):
-        return gr.update(choices=[], value=None)
+        return None
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
