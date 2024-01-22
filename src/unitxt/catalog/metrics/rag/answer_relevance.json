@@ -21,6 +21,13 @@
                 ]
             ],
             "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "references"
+            ],
+            "to_field": "references"
         }
     ],
     "metric": "metrics.reward.deberta_v3_large_v2"
