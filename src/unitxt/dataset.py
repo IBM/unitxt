@@ -2,6 +2,7 @@ import os
 
 import datasets
 
+from .api import __file__ as _
 from .artifact import Artifact, UnitxtArtifactNotFoundError, fetch_artifact
 from .artifact import __file__ as _
 from .blocks import __file__ as _
@@ -16,7 +17,6 @@ from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .hf_utils import __file__ as _
 from .instructions import __file__ as _
-from .load import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import get_logger
 from .metric import __file__ as _

@@ -3,6 +3,7 @@ from typing import Dict, Iterable, List
 import evaluate
 from datasets import Features, Value
 
+from .api import __file__ as _
 from .artifact import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
@@ -16,7 +17,6 @@ from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .hf_utils import __file__ as _
 from .instructions import __file__ as _
-from .load import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import __file__ as _
 from .metrics import __file__ as _
