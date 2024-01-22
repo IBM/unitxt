@@ -3,7 +3,7 @@ from src.unitxt.metrics import Perplexity
 from src.unitxt.test_utils.metrics import test_metric
 
 
-def test(metric, instance_scores, global_scores):
+def run_test(metric_to_test, instance_scores, global_scores):
     references = []
     predictions = []
     instance_targets = []
@@ -12,7 +12,12 @@ def test(metric, instance_scores, global_scores):
         references.append([r])
         predictions.append(p)
         instance_targets.append(
-            {"perplexity": pr, "score": pr, "score_name": "perplexity"}
+            {
+                "perplexity": pr,
+                "score": pr,
+                "score_name": "perplexity",
+                "reference_scores": [pr],
+            }
         )
 
     global_target = {
@@ -26,7 +31,7 @@ def test(metric, instance_scores, global_scores):
     }
 
     test_metric(
-        metric=metric,
+        metric=metric_to_test,
         predictions=predictions,
         references=references,
         instance_targets=instance_targets,
@@ -197,11 +202,11 @@ chat_global_bloom = {
     "ci_low": 4.02,
 }
 
-test(perplexity, gen_instances, gen_global)
-test(perplexity_question, q_instances, q_global)
-test(perplexity_answer, a_instances, a_global)
-test(perplexity_chat, chat_instances, chat_global)
-test(perplexity_chat_bloom, chat_instances_bloom, chat_global_bloom)
+run_test(perplexity, gen_instances, gen_global)
+run_test(perplexity_question, q_instances, q_global)
+run_test(perplexity_answer, a_instances, a_global)
+run_test(perplexity_chat, chat_instances, chat_global)
+run_test(perplexity_chat_bloom, chat_instances_bloom, chat_global_bloom)
 
 add_to_catalog(perplexity, "metrics.perplexity.flan_t5_small", overwrite=True)
 add_to_catalog(
