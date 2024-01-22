@@ -10,6 +10,7 @@ from .collections import __file__ as _
 from .dataclass import __file__ as _
 from .dataset_utils import get_dataset_artifact
 from .dict_utils import __file__ as _
+from .eval_utils import __file__ as _
 from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
