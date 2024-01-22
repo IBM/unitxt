@@ -1356,11 +1356,12 @@ class Perplexity(BulkInstanceMetric):
         for instance_references in references:
             instance_scores = {}
             instance_scores_list = []
-            for context_i in range(len(instance_references)):
-                reference_score_i = scores[index]
-                instance_scores[f"reference_score_{context_i}"] = reference_score_i
-                instance_scores_list.append(reference_score_i)
+            for _ in range(len(instance_references)):
+                instance_scores_list.append(scores[index])
                 index += 1
+            instance_scores["reference_scores"] = "test"  # instance_scores_list
+            instance_scores[self.main_score] = mean(instance_scores_list)
+
             instance_scores[self.main_score] = mean(instance_scores_list)
             all_instances_scores.append(instance_scores)
 
