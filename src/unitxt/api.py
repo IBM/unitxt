@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 from datasets import DatasetDict
 
 from .artifact import fetch_artifact
-from .dataset import get_dataset_artifact
+from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
 from .metric_utils import _compute
 from .operator import StreamSource
