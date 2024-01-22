@@ -288,6 +288,7 @@ answer_relevance = MetricPipeline(
             field_to_field=[("answer", "prediction")],
             use_query=True,
         ),
+        ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric="metrics.reward.deberta_v3_large_v2",
 )
