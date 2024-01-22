@@ -12,6 +12,18 @@ metric = evaluate.load(cons.UNITEXT_METRIC_STR)
 data, jsons = load_cards_data()
 
 
+def increase_num(current_num):
+    if current_num == (cons.PROMPT_SAMPLE_SIZE - 1):
+        return 0
+    return current_num + 1
+
+
+def decrease_num(current_num):
+    if current_num == 0:
+        return cons.PROMPT_SAMPLE_SIZE - 1
+    return current_num - 1
+
+
 def safe_add(parameter, key, args):
     if isinstance(parameter, str):
         args[key] = parameter

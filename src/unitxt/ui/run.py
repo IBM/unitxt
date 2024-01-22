@@ -8,11 +8,13 @@ from unitxt.ui.ui_utils import (
     build_command,
     create_dataframe,
     data,
+    decrease_num,
     get_catalog_items,
     get_predictions_and_scores,
     get_prompts,
     get_templates,
     hash_dict,
+    increase_num,
     jsons,
     update_choices_per_task,
 )
@@ -250,23 +252,22 @@ with demo:
                 with gr.TabItem("Intro", id="intro"):
                     main_intro = gr.Markdown(cons.MAIN_INTRO_TXT)
                 with gr.TabItem("Demo", id="demo"):
-                    with gr.Group() as prompt_group:
-                        prompts_title = gr.Markdown("## Prompts:")
-                        with gr.Row():
-                            sample_choice = gr.Radio(
-                                label="Browse between samples:",
-                                choices=list(range(1, cons.PROMPT_SAMPLE_SIZE + 1)),
-                                value=1,
-                                scale=1,
-                            )
-                        selected_prompt = gr.Textbox(
-                            lines=5,
-                            show_copy_button=True,
-                            label="Prompt",
-                            autoscroll=False,
+                    with gr.Row():
+                        previous_sample = gr.Button(
+                            "Previous sample", interactive=False
                         )
+                        next_sample = gr.Button("Next Sample", interactive=False)
+                    with gr.Accordion():
+                        with gr.Group() as prompt_group:
+                            prompts_title = gr.Markdown("## Prompts:")
+                            selected_prompt = gr.Textbox(
+                                lines=5,
+                                show_copy_button=True,
+                                label="Prompt",
+                                autoscroll=False,
+                            )
 
-                        target = gr.Textbox(lines=1, label="Target", scale=3)
+                            target = gr.Textbox(lines=1, label="Target", scale=3)
 
                     with gr.Group(visible=False) as infer_group:
                         infer_title = gr.Markdown("## Inference:")
@@ -281,14 +282,13 @@ with demo:
                                 label="Instance scores",
                                 value=cons.EMPTY_SCORES_FRAME,
                                 headers=cons.SCORE_FRAME_HEADERS,
-                                height=150,
+                                height=200,
                             )
                             global_scores = gr.DataFrame(
                                 label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
                                 value=cons.EMPTY_SCORES_FRAME,
                                 headers=cons.SCORE_FRAME_HEADERS,
-                                height=150,
-                                wrap=True,
+                                height=200,
                             )
                 with gr.TabItem("Code", id="code"):
                     code_intro = gr.Markdown(value=cons.CODE_INTRO_TXT)
@@ -298,7 +298,9 @@ with demo:
                     element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
 
+    # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)
+    sample_choice = gr.Number(value=0, visible=False)
 
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(update_choices_per_task, inputs=tasks, outputs=[cards, augmentors])
@@ -359,29 +361,36 @@ with demo:
         run_unitxt_entry, parameters, outputs=outputs
     ).then(make_mrk_down_visible, outputs=code_intro).then(
         go_to_intro_tab, outputs=tabs
-    ).then(make_group_invisible, outputs=infer_group)
+    ).then(make_group_invisible, outputs=infer_group).then(
+        deactivate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=infer_button).then(
+        deactivate_button, outputs=previous_sample
+    ).then(deactivate_button, outputs=next_sample)
 
     # GENERATE PROMPT BUTTON LOGIC
-    generate_prompts_button.click(make_group_invisible, outputs=infer_group).then(
+    generate_prompts_button.click(
+        deactivate_button, outputs=generate_prompts_button
+    ).then(make_group_invisible, outputs=infer_group).then(
         go_to_main_tab, outputs=tabs
     ).then(make_mrk_down_invisible, outputs=code_intro).then(
         run_unitxt_entry, parameters, outputs=outputs
     ).then(activate_button, outputs=infer_button).then(
-        deactivate_button, outputs=generate_prompts_button
-    )
+        activate_button, outputs=previous_sample
+    ).then(activate_button, outputs=next_sample)
 
     # INFER BUTTON LOGIC
     infer_button.click(make_group_visible, outputs=infer_group).then(
-        go_to_main_tab, outputs=tabs
-    ).then(make_mrk_down_invisible, outputs=code_intro).then(
-        select_checkbox, outputs=run_model
-    ).then(run_unitxt_entry, parameters, outputs=outputs).then(
         deactivate_button, outputs=infer_button
+    ).then(go_to_main_tab, outputs=tabs).then(
+        make_mrk_down_invisible, outputs=code_intro
+    ).then(select_checkbox, outputs=run_model).then(
+        run_unitxt_entry, parameters, outputs=outputs
     )
 
     # SAMPLE CHOICE LOGIC
+    next_sample.click(increase_num, sample_choice, sample_choice)
+    previous_sample.click(decrease_num, sample_choice, sample_choice)
     sample_choice.change(run_unitxt_entry, parameters, outputs=outputs)
-
 
 if __name__ == "__main__":
     demo.launch(debug=True)
