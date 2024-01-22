@@ -3,7 +3,20 @@ from functools import lru_cache
 import gradio as gr
 
 from unitxt.ui import constants as cons
-from unitxt.ui.ui_tiny_utils import *
+from unitxt.ui.ui_tiny_utils import (
+    activate_button,
+    deactivate_button,
+    go_to_intro_tab,
+    go_to_json_tab,
+    go_to_main_tab,
+    make_group_invisible,
+    make_group_visible,
+    make_json_visible,
+    make_mrk_down_invisible,
+    make_mrk_down_visible,
+    make_txt_visible,
+    select_checkbox,
+)
 from unitxt.ui.ui_utils import (
     build_command,
     create_dataframe,
@@ -137,8 +150,7 @@ def display_json_button(element):
             make_json_visible(json_el),
         )
 
-    else:
-        return tabs, f"Error: {element}'s json not found", None, None
+    return tabs, f"Error: {element}'s json not found", None, None
 
 
 ######################
@@ -230,38 +242,40 @@ with demo:
                             "Previous Sample", interactive=False
                         )
                         next_sample = gr.Button("Next Sample", interactive=False)
-                    with gr.Accordion():
-                        with gr.Group() as prompt_group:
-                            prompts_title = gr.Markdown("## Prompt:")
-                            selected_prompt = gr.Textbox(
-                                lines=5,
-                                show_copy_button=True,
-                                label="Prompt",
-                                autoscroll=False,
-                            )
+                    with gr.Group() as prompt_group:
+                        prompts_title = gr.Markdown("    ## Prompt:")
+                        selected_prompt = gr.Textbox(
+                            lines=5,
+                            show_copy_button=True,
+                            label="Prompt",
+                            autoscroll=False,
+                        )
 
-                            target = gr.Textbox(lines=1, label="Target", scale=3)
+                        target = gr.Textbox(lines=1, label="Target", scale=3)
 
                     with gr.Group(visible=False) as infer_group:
-                        infer_title = gr.Markdown("## Inference:")
+                        infer_title = gr.Markdown("    ## Inference:")
+
                         prediction = gr.Textbox(
-                            lines=1,
+                            lines=5,
                             label="Model prediction",
                             value=" ",
                             autoscroll=False,
                         )
-                        with gr.Row():
-                            instance_scores = gr.DataFrame(
-                                label="Instance scores",
-                                value=cons.EMPTY_SCORES_FRAME,
-                                headers=cons.SCORE_FRAME_HEADERS,
-                                height=200,
-                            )
+
+                        instance_scores = gr.DataFrame(
+                            label="Instance scores",
+                            value=cons.EMPTY_SCORES_FRAME,
+                            headers=cons.SCORE_FRAME_HEADERS,
+                        )
+                        with gr.Accordion(
+                            label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
+                            open=False,
+                        ):
                             global_scores = gr.DataFrame(
-                                label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
                                 value=cons.EMPTY_SCORES_FRAME,
                                 headers=cons.SCORE_FRAME_HEADERS,
-                                height=200,
+                                visible=True,
                             )
                 with gr.TabItem("Code", id="code"):
                     code_intro = gr.Markdown(value=cons.CODE_INTRO_TXT)

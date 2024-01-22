@@ -50,7 +50,7 @@ def load_cards_data():
         return True
 
     cards_data = {}
-    json_data = dict()
+    json_data = {}
     catalog_dirs = get_catalog_dirs()
     for dir in catalog_dirs:
         cards, card_jsons = get_catalog_items_from_dir("cards", dir)
@@ -96,7 +96,7 @@ def get_file_from_item_name(item_name, dir):
 
 def get_catalog_items_from_dir(items_type, dir):
     items = []
-    jsons = dict()
+    jsons = {}
     items_dir = os.path.join(dir, items_type)
     files = get_all_files_in_dir(items_dir, recursive=True)
     for file in files:
@@ -113,7 +113,7 @@ def get_catalog_items_from_dir(items_type, dir):
 
 def get_catalog_items(items_type):
     items = []
-    jsons = dict()
+    jsons = {}
     for dir in get_catalog_dirs():
         dir_items, dir_jsons = get_catalog_items_from_dir(items_type, dir)
         items.extend(dir_items)
