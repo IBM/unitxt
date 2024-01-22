@@ -73,9 +73,9 @@ perplexity_chat_bloom = Perplexity(
 
 gen_instances = flatten(
     {
-        "together we are": [
-            ("ok", 3.18),
-            ("stronger", 5.14),
+        "together we are": [  # prediction 1
+            ("ok", 3.18),  # reference 1
+            ("stronger", 5.14),  # reference 2
             ("weaker", 4.51),
         ],
         "The future belongs to ": [
@@ -95,10 +95,10 @@ gen_global = {
 
 q_instances = flatten(
     {
-        "who are we?": [
-            ("we are the world", 2.82),
-            ("we are the children", 2.7),
-            ("we are the people", 2.56),
+        "who are we?": [  # reference 1
+            ("we are the world", 2.82),  # prediction 1
+            ("we are the children", 2.7),  # prediction 2
+            ("we are the people", 2.56),  # prediction 3
         ],
         "what are we saving?": [
             ("we make a brighter day", 2.68),
