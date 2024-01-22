@@ -227,12 +227,12 @@ with demo:
                 with gr.TabItem("Demo", id="demo"):
                     with gr.Row():
                         previous_sample = gr.Button(
-                            "Previous sample", interactive=False
+                            "Previous Sample", interactive=False
                         )
                         next_sample = gr.Button("Next Sample", interactive=False)
                     with gr.Accordion():
                         with gr.Group() as prompt_group:
-                            prompts_title = gr.Markdown("## Prompts:")
+                            prompts_title = gr.Markdown("## Prompt:")
                             selected_prompt = gr.Textbox(
                                 lines=5,
                                 show_copy_button=True,
@@ -276,7 +276,9 @@ with demo:
     sample_choice = gr.Number(value=0, visible=False)
 
     # DROPDOWNS AND JSON BUTTONS LOGIC
-    tasks.select(update_choices_per_task, inputs=tasks, outputs=[cards, augmentors])
+    tasks.select(
+        update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmentors]
+    )
     cards.select(get_templates, inputs=[tasks, cards], outputs=templates).then(
         activate_button, outputs=cards_js_button
     )

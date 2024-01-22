@@ -32,9 +32,9 @@ scores = metric.compute(predictions=predictions,references=dataset)
 """
 
 INTRO_TXT = """
-### Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively.
+# Data Preparation and Evaluation for Generative AI
 
-Unitxt is a python library for getting data fired up and set for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. We aspire to be simple, adaptable and transparent.
+## Flexible, Shareable and Reusable
 
 [![unitxt](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/IBM/unitxt)
 """
@@ -47,7 +47,7 @@ CODE_INTRO_TXT = """
 """
 
 MAIN_INTRO_TXT = """
-# Select Dataset Card and a Template,
+# Select Task, Dataset Card and a Template,
 # then click the Generate Prompts button
 """
-JSON_BUTTON_TXT = "view"
+JSON_BUTTON_TXT = "View"

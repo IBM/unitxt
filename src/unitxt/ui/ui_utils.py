@@ -86,7 +86,7 @@ def unhash_dict(input_frozenset):
 
 def create_dataframe(scores):
     try:
-        for val in ["score_name", "score"]:
+        for val in ["score_name", "score", "groups_mean_score"]:
             if val in scores:
                 scores.pop(val)
         rounded_scores = {key: round(value, 3) for key, value in scores.items()}
@@ -144,13 +144,14 @@ def build_command(prompt_data, with_prediction):
 
 
 def update_choices_per_task(task_choice):
-    datasets_choices = gr.update(choices=[])
-    augmentors_choices = gr.update(choices=[])
+    datasets_choices = gr.update(choices=[], value=None)
+    template_choices = gr.update(choices=[], value=None)
+    augmentors_choices = gr.update(choices=[], value=None)
     if isinstance(task_choice, str):
         if task_choice in data:
             datasets_choices = gr.update(choices=get_datasets(task_choice))
             augmentors_choices = gr.update(choices=get_augmentors(task_choice))
-    return datasets_choices, augmentors_choices
+    return datasets_choices, template_choices, augmentors_choices
 
 
 def get_datasets(task_choice):
