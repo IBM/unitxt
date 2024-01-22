@@ -924,12 +924,15 @@ class Perturbate(FieldOperator):
             return value + perturb
 
         if isinstance(value, str):
-            if len(value) < 2:
+            if len(value) < 4:
                 # give up perturbation
                 return value
-            # throw one char out
-            prefix_len = self.random_generator.randint(1, len(value) - 1)
-            return value[:prefix_len] + value[prefix_len + 1 :]
+            # throw one char out, other than first or last
+            prefix_len = self.random_generator.randint(1, len(value) - 2)
+            value = value[:prefix_len] + value[prefix_len + 1 :]
+            # and replace one char by space, other than first or last char
+            prefix_len = self.random_generator.randint(1, len(value) - 2)
+            return value[:prefix_len] + " " + value[prefix_len + 1 :]
 
         # and in any other case:
         return value
@@ -1133,7 +1136,106 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
         return operator.process_instance(instance)
 
 
-class GlobalClassificationMetricOnly(MultiStreamOperator, ArtifactFetcherMixin):
+class GlobalRougeOnly(MultiStreamOperator):
+    pred_field_name: str = "prediction"
+    refs_field_name: str = "references"
+    rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+    def prepare(self):
+        from .metrics import Rouge
+
+        self.unitxt_rouge = Rouge()  # from metrics.py
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        import numpy as np
+        from scipy.stats import poisson
+
+        from .metrics import RougeAccumulator
+        # from rouge_score import rouge_scorer, scoring
+        # from scoring import Score
+        # import nltk
+
+        # nltk.download("punkt")
+        # self.sent_tokenize = nltk.sent_tokenize
+        # use_stemmer = False
+        # tokenizer = None
+        # scorer = rouge_scorer.RougeScorer(rouge_types=self.rouge_types, use_stemmer=use_stemmer, tokenizer=tokenizer)
+        _num_of_bootstrap_resamples_for_ci = 1000
+        ms_to_return = {}
+        for stream_name, stream in multi_stream.items():
+            accumulator = RougeAccumulator(rouge_types=self.rouge_types)
+            # aggregator = scoring.BootstrapAggregator()
+            boot_strap_accumulators = []
+            whole_stream_predictions = []
+            whole_stream_references = []
+            for _ in range(_num_of_bootstrap_resamples_for_ci):
+                boot_strap_accumulators.append(
+                    RougeAccumulator(rouge_types=self.rouge_types)
+                )
+            for instance in stream:
+                unitxt_rouge_score = self.unitxt_rouge.compute(
+                    references=[instance[self.refs_field_name]],
+                    predictions=[instance[self.pred_field_name]],
+                    additional_inputs=[],
+                )
+                # pred = "\n".join(self.sent_tokenize(instance[self.pred_field_name].strip()))
+                # ref = ["\n".join(self.sent_tokenize(r.strip())) for r in instance[self.refs_field_name]]
+                # hf_score = scorer.score_multi(ref, pred)
+                # print(f"our unitxt instance_score: {unitxt_rouge_score} and hf score: {hf_score}")
+                # for rouge_type in self.rouge_types:
+                #     assert math.isclose(unitxt_rouge_score[rouge_type], hf_score[rouge_type].fmeasure)
+                accumulator.update(unitxt_rouge_score)
+                # aggregator.add_scores(hf_score)
+                whole_stream_references.append(instance["references"])
+                whole_stream_predictions.append(instance["prediction"])
+                num_of_counter_activations = poisson.rvs(
+                    mu=1, size=_num_of_bootstrap_resamples_for_ci
+                )
+                for boot_strap_accumulator, num_of_counter_activation in zip(
+                    boot_strap_accumulators, num_of_counter_activations
+                ):
+                    for _ in range(num_of_counter_activation):
+                        boot_strap_accumulator.update(unitxt_rouge_score)
+
+            # now produce the overall, global rouge for the stream,
+            fields = {}
+            # hf_global_rouge_score = aggregator.aggregate()  # accumulator.mean()
+            # print(f"aggregate() result: {hf_global_rouge_score}")
+            # for key in global_rouge_score:
+            #     global_rouge_score[key] = global_rouge_score[key].mid
+            # unitxt_global_rouge_score = self.unitxt_rouge.compute(references = whole_stream_references, predictions = whole_stream_predictions, additional_inputs=[])
+            # print (f"unitxt whole stream rouge score: {unitxt_global_rouge_score}")
+            # print(f"accumulated mean of scores: {accumulator.mean()}")
+
+            # for rouge_type in self.rouge_types:
+            #     assert math.isclose(hf_global_rouge_score[rouge_type].mid.fmeasure, unitxt_global_rouge_score[rouge_type]), f"not a good implementation of {rouge_type}"
+
+            bootstrap_scores = collections.defaultdict(list)
+            for i in range(_num_of_bootstrap_resamples_for_ci):
+                for rouge_type in self.rouge_types:
+                    bootstrap_scores[rouge_type].append(
+                        boot_strap_accumulators[i].mean()[rouge_type]
+                    )
+            ci = {
+                rouge_type: np.percentile(bootstrap_scores[rouge_type], [2.5, 97.5])
+                for rouge_type in self.rouge_types
+            }
+            fields[
+                "global_metrics_scores_computed_per_stream/"
+                + stream_name
+                + "/global_rouge_score"
+            ] = {"score": accumulator.mean(), "ci": ci}
+
+            # now spread the new score in all instances of the stream
+            updatemetrics = AddFields(fields=fields, use_query=True)
+            ms_to_return[stream_name] = updatemetrics._process_single_stream(
+                stream, stream_name
+            )
+
+        return MultiStream.from_iterables(ms_to_return)
+
+
+class GlobalClassificationMetricOnly(MultiStreamOperator):  ##, ArtifactFetcherMixin):
     """computes a metric for classification results along (all) instances of each stream in the nultistream.
 
     Input arg 'refs_field_name' specifies the field that contains references: list of potential classes for every instance.

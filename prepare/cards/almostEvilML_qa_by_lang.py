@@ -1,20 +1,26 @@
 import json
 
 from src.unitxt.blocks import FormTask, LoadHF, RenameFields, SplitRandomMix, TaskCard
-from src.unitxt.catalog import add_to_catalog
+from src.unitxt.logging_utils import get_logger
 from src.unitxt.operators import (
     Apply,
     CopyFields,
     FilterByCondition,
+    GlobalRougeOnly,
     ListFieldValues,
+    Perturbate,
     RemoveFields,
+    StreamRefiner,
 )
-from src.unitxt.test_utils.card import test_card
+from src.unitxt.standard import NaiveRecipe
+from src.unitxt.text_utils import print_dict
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
 # Counter({'en': 1995, 'de': 2302, 'it': 2210, 'fr': 2156, 'es': 2090, 'ru': 2058, 'nl': 2017, 'pt': 1994})
 
-for lang in langs:
+logger = get_logger()
+
+for lang in ["en"]:
     card = TaskCard(
         loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
         preprocess_steps=[
@@ -25,20 +31,43 @@ for lang in langs:
             ),
             FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),
+            StreamRefiner(max_instances=10),
             SplitRandomMix(
                 {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
             ),
             RenameFields(field_to_field={"INSTRUCTION": "question"}),
             ListFieldValues(fields=["RESPONSE"], to_field="answers"),
+            FormTask(
+                inputs=["question"],
+                outputs=["answers"],
+                metrics=["metrics.rouge"],
+            ),
+            "templates.qa.open.simple2",
+            Perturbate(
+                field="target",
+                to_field="prediction",
+                percentage_to_perturbate=30,
+            ),
+            # increase the noise
+            Perturbate(
+                field="prediction",
+                percentage_to_perturbate=30,
+            ),
+            GlobalRougeOnly(
+                pred_field_name="prediction",
+                refs_field_name="references",
+            ),
         ],
-        task=FormTask(
-            inputs=["question"],
-            outputs=["answers"],
-            metrics=["metrics.rouge"],
-        ),
-        templates="templates.qa.open.all",
     )
+    naive_recipe = NaiveRecipe(card=card)
 
-    if lang == langs[0]:
-        test_card(card, debug=False)
-    add_to_catalog(card, f"cards.almostEvilML_qa_by_lang.{lang}", overwrite=True)
+    multi_stream = naive_recipe()
+
+    for stream_name, stream in multi_stream.items():
+        logger.info(f"Stream: {stream_name}")
+        for instance in stream:
+            print_dict(instance)
+
+    # if lang == "en":
+    #     test_card(card, debug=False)
+    # add_to_catalog(card, f"cards.almostEvilML_qa_by_lang.{lang}", overwrite=True)

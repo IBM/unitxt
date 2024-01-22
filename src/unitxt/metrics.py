@@ -1,3 +1,4 @@
+import math
 import re
 import string
 import uuid
@@ -1735,3 +1736,76 @@ class KPA(CustomF1):
 
     def should_ignore_element(self, element, additional_input):
         return element == "none"
+
+
+class Accumulator:
+    def __init__(self):
+        self.num_accumulated_items = 0
+        self.sum_accumulated_x = 0
+        self.sum_accumulated_x_squared = 0
+        self.sum_accumulated_y = 0
+        self.sum_accumulated_y_squared = 0
+        self.sum_accumulated_xy = 0
+
+    def update(self, x, y):
+        self.num_accumulated_items += 1
+        self.sum_accumulated_x += x
+        self.sum_accumulated_y += y
+        self.sum_accumulated_x_squared += x * x
+        self.sum_accumulated_y_squared += y * y
+        self.sum_accumulated_xy += x * y
+
+    def mean_x(self) -> float:
+        return self.sum_accumulated_x / self.num_accumulated_items
+
+    def mean_y(self) -> float:
+        return self.sum_accumulated_y / self.num_accumulated_items
+
+    def mean_x_squared(self) -> float:
+        return self.sum_accumulated_x_squared / self.num_accumulated_items
+
+    def mean_y_squared(self) -> float:
+        return self.sum_accumulated_y_squared / self.num_accumulated_items
+
+    def pearson(self) -> float:
+        denominator = math.sqrt(
+            self.sum_accumulated_x_squared
+            - self.num_accumulated_items * self.mean_x() * self.mean_x()
+        ) * math.sqrt(
+            self.sum_accumulated_y_squared
+            - self.num_accumulated_items * self.mean_y() * self.mean_y()
+        )
+        if math.isclose(denominator, 0.0):
+            return 0.0
+        nominator = (
+            self.sum_accumulated_xy
+            - self.num_accumulated_items * self.mean_x() * self.mean_y()
+        )
+        return nominator / denominator
+
+
+class RougeAccumulator:
+    rouge_types: List[str] = field(
+        default_factory=lambda: ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    )
+
+    def __init__(self):
+        self.num_accumulated_items = 0
+        self.sum_accumulated = {key: 0.0 for key in self.rouge_types}
+        self.sum_accumulated_squared = {key: 0.0 for key in self.rouge_types}
+
+    def update(self, instance_rouge_score: dict):
+        self.num_accumulated_items += 1
+        for rouge_type in self.rouge_types:
+            self.sum_accumulated[rouge_type] += instance_rouge_score[rouge_type]
+            self.sum_accumulated_squared[rouge_type] += (
+                instance_rouge_score[rouge_type] ** 2
+            )
+
+    def mean(self) -> Dict[str, float]:
+        if self.num_accumulated_items == 0:
+            return {rouge_type: 0.0 for rouge_type in self.rouge_types}
+        return {
+            rouge_type: self.sum_accumulated[rouge_type] / self.num_accumulated_items
+            for rouge_type in self.rouge_types
+        }

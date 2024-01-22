@@ -1,8 +1,10 @@
+import math
 import unittest
 from math import isnan
 
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
+    Accumulator,
     Accuracy,
     F1Macro,
     F1MacroMultiLabel,
@@ -10,6 +12,7 @@ from src.unitxt.metrics import (
     F1MicroMultiLabel,
     F1Weighted,
     Rouge,
+    RougeAccumulator,
     Squad,
     TokenOverlap,
 )
@@ -478,3 +481,32 @@ class TestConfidenceIntervals(unittest.TestCase):
                     or score_name not in metric.ci_scores,
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )
+
+    def test_accumulators(self):
+        import numpy
+        import scipy
+
+        from src.unitxt.random_utils import new_random_generator
+
+        accumulator = Accumulator()
+        rouge_accumulator = RougeAccumulator(rouge_types=["rouge1", "rouge2"])
+        random_generator = new_random_generator(sub_seed="test_accumulators")
+        x_vec = [random_generator.random() for _ in range(100)]
+        y_vec = [random_generator.random() for _ in range(100)]
+
+        for x, y in zip(x_vec, y_vec):
+            accumulator.update(x, y)
+            rouge_accumulator.update({"rouge1": x, "rouge2": y})
+
+        our_pearson = accumulator.pearson()
+        scipy_pearson = scipy.stats.pearsonr(x_vec, y_vec)[0]
+        assert math.isclose(
+            our_pearson, scipy_pearson
+        ), "not a good pearson accumulated implementation"
+        our_rouge = rouge_accumulator.mean()
+        assert math.isclose(
+            our_rouge["rouge1"], numpy.mean(x_vec)
+        ), "not a good accumulated implementation of rouge1"
+        assert math.isclose(
+            our_rouge["rouge2"], numpy.mean(y_vec)
+        ), "not a good accumulated implementation of rouge2"
