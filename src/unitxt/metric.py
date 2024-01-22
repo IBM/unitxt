@@ -2,7 +2,6 @@ from typing import Dict, Iterable, List
 
 import evaluate
 
-from .api import __file__ as _
 from .artifact import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
