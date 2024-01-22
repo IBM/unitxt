@@ -4,8 +4,8 @@ from typing import List
 
 import pandas as pd
 
-from unitxt.operator import SequentialOperator
-from unitxt.stream import MultiStream
+from .operator import SequentialOperator
+from .stream import MultiStream
 
 
 def evaluate(dataset: pd.DataFrame, metric_names: List[str]):
