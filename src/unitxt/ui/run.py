@@ -304,7 +304,7 @@ with demo:
     ).then(deactivate_button, outputs=cards_js_button)
     templates.select(activate_button, outputs=templates_js_button).then(
         activate_button, outputs=generat_prompts
-    )
+    ).then(deactivate_button, outputs=model_button)
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
     ).then(deactivate_button, outputs=templates_js_button)
@@ -348,22 +348,22 @@ with demo:
     )
 
     # GENERATE PROMPT BUTTON LOGIC
-    generat_prompts.click(go_to_main_tab, outputs=tabs).then(
-        make_group_visible, outputs=prompt_group
-    ).then(make_group_invisible, outputs=infer_group).then(
-        make_mrk_down_invisible, outputs=main_intro
-    ).then(run_unitxt_entry, parameters, outputs=outputs).then(
-        activate_button, outputs=model_button
-    ).then(deactivate_button, outputs=generat_prompts).then(
+    generat_prompts.click(make_mrk_down_invisible, outputs=main_intro).then(
         make_mrk_down_invisible, outputs=code_intro
+    ).then(make_group_visible, outputs=prompt_group).then(
+        go_to_main_tab, outputs=tabs
+    ).then(make_group_invisible, outputs=infer_group).then(
+        run_unitxt_entry, parameters, outputs=outputs
+    ).then(activate_button, outputs=model_button).then(
+        deactivate_button, outputs=generat_prompts
     )
 
     # INFER BUTTON LOGIC
     model_button.click(make_group_visible, outputs=infer_group).then(
-        select_checkbox, outputs=run_model
-    ).then(run_unitxt_entry, parameters, outputs=outputs).then(
-        deactivate_button, outputs=model_button
-    ).then(make_mrk_down_invisible, outputs=code_intro)
+        make_mrk_down_invisible, outputs=code_intro
+    ).then(select_checkbox, outputs=run_model).then(
+        run_unitxt_entry, parameters, outputs=outputs
+    ).then(deactivate_button, outputs=model_button)
 
     # SAMPLE CHOICE LOGIC
     sample_choice.change(run_unitxt_entry, parameters, outputs=outputs)
