@@ -243,7 +243,7 @@ with demo:
                         )
                         next_sample = gr.Button("Next Sample", interactive=False)
                     with gr.Group() as prompt_group:
-                        prompts_title = gr.Markdown("    ## Prompt:")
+                        prompts_title = gr.Markdown(" ## &ensp; Prompt:")
                         selected_prompt = gr.Textbox(
                             lines=5,
                             show_copy_button=True,
@@ -254,7 +254,7 @@ with demo:
                         target = gr.Textbox(lines=1, label="Target", scale=3)
 
                     with gr.Group(visible=False) as infer_group:
-                        infer_title = gr.Markdown("    ## Inference:")
+                        infer_title = gr.Markdown("## &ensp; Inference:")
 
                         prediction = gr.Textbox(
                             lines=5,
