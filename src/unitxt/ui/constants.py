@@ -34,12 +34,19 @@ scores = metric.compute(predictions=predictions,references=dataset)
 INTRO_TXT = """
 ### Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively.
 
+Unitxt is a python library for getting data fired up and set for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. We aspire to be simple, adaptable and transparent.
 
-### Unitxt is a python library for getting data fired up and set for utilization. In one line of code, it preps a dataset or mixtures-of-datasets into an input-output format for training and evaluation. We aspire to be simple, adaptable and transparent.
+[![unitxt](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/IBM/unitxt)
+"""
+JSON_INTRO_TXT = """
+# Click on the button to the right of the selected item to see its json
+"""
+CODE_INTRO_TXT = """
+# When you generate prompts / infer with model, code to reproduce will show here
 """
 
-DATASET_CARD = "Dataset Card"
-TEMPLATE = "Template"
-FORMAT = "Format"
-AUGMENTOR = "Augmentor"
-INSTRUCTION = "Instruction"
+MAIN_INTRO_TXT = """
+# Please select Task, Dataset Card and a Template
+
+### After making your selections, click the Generate Prompts button
+"""
