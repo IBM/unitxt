@@ -1,8 +1,9 @@
-
-import gradio as gr
-import evaluate
-from transformers import pipeline
 from functools import lru_cache
+
+import evaluate
+import gradio as gr
+from transformers import pipeline
+
 from unitxt.standard import StandardRecipe
 from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
@@ -10,9 +11,11 @@ from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 metric = evaluate.load(cons.UNITEXT_METRIC_STR)
 data, jsons = load_cards_data()
 
+
 def safe_add(parameter, key, args):
     if isinstance(parameter, str):
         args[key] = parameter
+
 
 @lru_cache
 def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
@@ -28,6 +31,7 @@ def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
     prompts_list = build_prompt(prompt_args)
     return prompts_list, prompt_args
 
+
 @lru_cache
 def get_predictions_and_scores(prompts_hashable):
     prompts_list = [unhash_dict(prompt) for prompt in prompts_hashable]
@@ -41,6 +45,7 @@ def get_predictions_and_scores(prompts_hashable):
         references=prompts_list,
     )
     return predictions, results
+
 
 def hash_dict(input_dict):
     return frozenset(
@@ -125,6 +130,7 @@ def build_command(prompt_data, with_prediction):
         """
     return code
 
+
 def update_choices_per_task(task_choice):
     datasets_choices = gr.update(choices=[])
     augmentors_choices = gr.update(choices=[])
@@ -159,4 +165,3 @@ def generate(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
         output["generated_text"]
         for output in model(prompts, max_new_tokens=max_new_tokens)
     ]
-    
