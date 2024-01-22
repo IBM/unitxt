@@ -1334,8 +1334,8 @@ class Perplexity(BulkInstanceMetric):
         targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
-                sources.append(f"{self.perplexity_prompt} {instance_reference}")
-                targets.append(prediction)
+                sources.append(f"{self.perplexity_prompt} {prediction}")
+                targets.append(instance_reference)
 
         from transformers import AutoConfig
 
