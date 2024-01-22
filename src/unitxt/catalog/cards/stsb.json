@@ -19,18 +19,18 @@
             "field_to_field": {
                 "sentence1": "text1",
                 "sentence2": "text2",
-                "label": "value"
+                "label": "attribute_value"
             }
         },
         {
             "type": "add_fields",
             "fields": {
-                "type_of_value": "similarity",
+                "attribute_name": "similarity",
                 "min_value": "1",
                 "max_value": "5"
             }
         }
     ],
-    "task": "tasks.regression.bounded.pair",
-    "templates": "templates.regression.bounded.pair.all"
+    "task": "tasks.regression.two_texts",
+    "templates": "templates.regression.two_texts.all"
 }

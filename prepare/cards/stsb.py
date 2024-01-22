@@ -18,15 +18,15 @@ card = TaskCard(
             field_to_field={
                 "sentence1": "text1",
                 "sentence2": "text2",
-                "label": "value",
+                "label": "attribute_value",
             }
         ),
         AddFields(
-            fields={"type_of_value": "similarity", "min_value": "1", "max_value": "5"}
+            fields={"attribute_name": "similarity", "min_value": "1", "max_value": "5"}
         ),
     ],
-    task="tasks.regression.bounded.pair",
-    templates="templates.regression.bounded.pair.all",
+    task="tasks.regression.two_texts",
+    templates="templates.regression.two_texts.all",
 )
 
 test_card(card, strict=False)

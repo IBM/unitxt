@@ -1,0 +1,18 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "text",
+        "attribute_name",
+        "min_value",
+        "max_value"
+    ],
+    "outputs": [
+        "attribute_value"
+    ],
+    "metrics": [
+        "metrics.spearman"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
+}
