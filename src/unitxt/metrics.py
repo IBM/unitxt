@@ -1785,11 +1785,18 @@ class Accumulator:
 
 
 class RougeAccumulator:
-    rouge_types: List[str] = field(
-        default_factory=lambda: ["rouge1", "rouge2", "rougeL", "rougeLsum"]
-    )
+    # rouge_types: List[str] = field(
+    #     default_factory=lambda: ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    # )
 
-    def __init__(self):
+    def __init__(
+        self,
+        rouge_types=None,
+    ):
+        if rouge_types is None:
+            self.rouge_types = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+        else:
+            self.rouge_types = rouge_types
         self.num_accumulated_items = 0
         self.sum_accumulated = {key: 0.0 for key in self.rouge_types}
         self.sum_accumulated_squared = {key: 0.0 for key in self.rouge_types}
