@@ -244,7 +244,7 @@ for new_catalog_name, base_catalog_name in [
         postpreprocess_steps=[
             CopyFields(
                 field_to_field=[
-                    ("score/global/precision", "score/global/score"),
+                    ("score/instance/precision", "score/instance/score"),
                 ],
                 use_query=True,
             )
@@ -272,7 +272,7 @@ for new_catalog_name, base_catalog_name in [
         postpreprocess_steps=[
             CopyFields(
                 field_to_field=[
-                    ("score/global/recall", "score/global/score"),
+                    ("score/instance/recall", "score/instance/score"),
                 ],
                 use_query=True,
             )

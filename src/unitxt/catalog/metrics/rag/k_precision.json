@@ -29,8 +29,8 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "score/global/precision",
-                    "score/global/score"
+                    "score/instance/precision",
+                    "score/instance/score"
                 ]
             ],
             "use_query": true

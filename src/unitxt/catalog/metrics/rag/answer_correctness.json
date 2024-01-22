@@ -29,8 +29,8 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "score/global/recall",
-                    "score/global/score"
+                    "score/instance/recall",
+                    "score/instance/score"
                 ]
             ],
             "use_query": true
