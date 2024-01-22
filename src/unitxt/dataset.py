@@ -20,6 +20,7 @@ from .instructions import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import get_logger
 from .metric import __file__ as _
+from .metric_utils import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import __file__ as _
