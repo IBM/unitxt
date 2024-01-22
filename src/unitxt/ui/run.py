@@ -124,33 +124,6 @@ def run_unitxt(
     )
 
 
-def display_json(element, cards, templates, instructions, formats):
-    def get_json(element_key, value):
-        if isinstance(value, str):
-            if value in jsons:
-                to_print = jsons[value]
-                if "loader" in to_print:
-                    if "path" in to_print["loader"]:
-                        to_print["loader"][" path"] = to_print["loader"].pop("path")
-                return to_print
-
-            else:
-                return {"": f"Error: {value}'s json not found"}
-        else:
-            return {"": f"Select {element_key} to view json"}
-
-    if element == cons.DATASET_CARD:
-        element_name = cards
-    elif element == cons.TEMPLATE:
-        element_name = templates
-    elif element == cons.FORMAT:
-        element_name = formats
-    elif element == cons.INSTRUCTION:
-        element_name = instructions
-    message = get_json(element, element_name)
-    return element_name, message
-
-
 def display_json_button(element):
     if element in jsons:
         json_el = jsons[element]
