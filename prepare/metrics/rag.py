@@ -181,6 +181,7 @@ for metric_id, metric in metrics.items():
 # reference-less:
 #   context-relevance:
 #       metrics.rag.context_relevance
+#       metrics.rag.context_perplexity
 #   faithfulness:
 #       metrics.rag.faithfulness
 #       metrics.rag.k_precision
@@ -225,6 +226,20 @@ context_relevance = MetricPipeline(
     metric="metrics.perplexity_q.flan_t5_small",
 )
 add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
+
+context_perplexity = MetricPipeline(
+    main_score="score",
+    metric="metrics.rag.context_relevance",
+    postpreprocess_steps=[
+        CopyFields(
+            field_to_field=[
+                ("score/instance/reference_scores", "score/instance/score"),
+            ],
+            use_query=True,
+        )
+    ],
+)
+add_to_catalog(context_relevance, "metrics.rag.context_perplexity", overwrite=True)
 
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
