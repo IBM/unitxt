@@ -67,13 +67,13 @@ class Metric(evaluate.Metric):
         split_name: str = "all",
     ):
         try:
+            from unitxt.metric_utils import _compute as _compute_installed
+
             unitxt_installed = True
         except ImportError:
             unitxt_installed = False
 
         if unitxt_installed:
-            from unitxt.metric_utils import _compute as _compute_installed
-
             return _compute_installed(
                 predictions=predictions,
                 references=references,
