@@ -39,14 +39,15 @@ Unitxt is a python library for getting data fired up and set for utilization. In
 [![unitxt](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/IBM/unitxt)
 """
 JSON_INTRO_TXT = """
-# Click on the button to the right of the selected item to see its json
+# Click the view button of a catalog item to see it
 """
 CODE_INTRO_TXT = """
-# When you generate prompts / infer with model, code to reproduce will show here
+# When you generate prompts / infer with model,
+# code to reproduce will show here
 """
 
 MAIN_INTRO_TXT = """
-# Please select Task, Dataset Card and a Template
-
-### After making your selections, click the Generate Prompts button
+# Select Dataset Card and a Template,
+# then click the Generate Prompts button
 """
+JSON_BUTTON_TXT = "view"

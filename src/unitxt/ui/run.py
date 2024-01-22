@@ -186,63 +186,71 @@ with demo:
 
     with gr.Row():
         with gr.Column(scale=1):
-            tasks = gr.Dropdown(choices=sorted(data.keys()), label="Task", scale=3)
-
-            with gr.Group():
-                cards = gr.Dropdown(choices=[], label="Dataset Card", scale=7)
+            with gr.Group() as buttons_group:
+                tasks = gr.Dropdown(choices=sorted(data.keys()), label="Task", scale=3)
+                cards = gr.Dropdown(choices=[], label="Dataset Card", scale=9)
                 cards_js_button = gr.Button(
-                    "See json",
+                    cons.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
-                    min_width=1,
+                    min_width=0.1,
                     interactive=False,
                     variant="secondary",
                 )
-            with gr.Group():
-                templates = gr.Dropdown(choices=[], label="Template", scale=5)
+
+                templates = gr.Dropdown(choices=[], label="Template", scale=9)
                 templates_js_button = gr.Button(
-                    "See json", scale=1, size="sm", min_width=1, interactive=False
+                    cons.JSON_BUTTON_TXT,
+                    scale=1,
+                    size="sm",
+                    min_width=0.1,
+                    interactive=False,
+                    variant="secondary",
                 )
 
-            with gr.Group():
                 instructions = gr.Dropdown(
                     choices=[None, *get_catalog_items("instructions")[0]],
                     label="Instruction",
                     scale=5,
                 )
-                instructiosn_js_button = gr.Button(
-                    "See json",
+                instructions_js_button = gr.Button(
+                    cons.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
                     min_width=1,
                     interactive=False,
                 )
-            with gr.Group():
                 formats = gr.Dropdown(
                     choices=[None, *get_catalog_items("formats")[0]],
                     label="Format",
                     scale=5,
                 )
                 formats_js_button = gr.Button(
-                    "See json", scale=1, size="sm", min_width=1, interactive=False
+                    cons.JSON_BUTTON_TXT,
+                    scale=1,
+                    size="sm",
+                    min_width=1,
+                    interactive=False,
                 )
 
-            num_shots = gr.Slider(label="Num Shots", maximum=5, step=1, value=0)
-            with gr.Accordion(label="Additional Parameters", open=False):
-                augmentors = gr.Dropdown(choices=[], label="Augmentor")
+                num_shots = gr.Slider(label="Num Shots", maximum=5, step=1, value=0)
+                with gr.Accordion(label="Additional Parameters", open=False):
+                    augmentors = gr.Dropdown(choices=[], label="Augmentor")
 
-            generat_prompts = gr.Button(value="Generate Prompts", interactive=False)
-            model_button = gr.Button(
+            generate_prompts_button = gr.Button(
+                value="Generate Prompts", interactive=False
+            )
+            infer_button = gr.Button(
                 value=f"Infer with {cons.FLAN_T5_BASE}", interactive=False
             )
             clear_fields = gr.ClearButton()
 
         with gr.Column(scale=3):
             with gr.Tabs() as tabs:
-                with gr.TabItem("Unitxt Demo", id=0):
+                with gr.TabItem("Intro", id="intro"):
                     main_intro = gr.Markdown(cons.MAIN_INTRO_TXT)
-
-                    with gr.Group(visible=False) as prompt_group:
+                with gr.TabItem("Demo", id="demo"):
+                    with gr.Group() as prompt_group:
                         prompts_title = gr.Markdown("## Prompts:")
                         with gr.Row():
                             sample_choice = gr.Radio(
@@ -282,14 +290,12 @@ with demo:
                                 height=150,
                                 wrap=True,
                             )
-                with gr.TabItem("Code", id=2):
+                with gr.TabItem("Code", id="code"):
                     code_intro = gr.Markdown(value=cons.CODE_INTRO_TXT)
                     code = gr.Code(language="python", lines=1)
-                with gr.TabItem("Selected Item Json", id=1):
+                with gr.TabItem("View Catalog", id="json"):
                     json_intro = gr.Markdown(value=cons.JSON_INTRO_TXT)
-                    element_name = gr.Text(
-                        label="Showing Json for Item:", visible=False
-                    )
+                    element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
 
     run_model = gr.Checkbox(value=False, visible=False)
@@ -303,19 +309,29 @@ with demo:
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
     ).then(deactivate_button, outputs=cards_js_button)
     templates.select(activate_button, outputs=templates_js_button).then(
-        activate_button, outputs=generat_prompts
-    ).then(deactivate_button, outputs=model_button)
+        activate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=infer_button)
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
     ).then(deactivate_button, outputs=templates_js_button)
-    instructions.select(activate_button, outputs=instructiosn_js_button)
-    instructiosn_js_button.click(
+    instructions.select(activate_button, outputs=instructions_js_button).then(
+        activate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=infer_button)
+    instructions_js_button.click(
         display_json_button, instructions, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=instructiosn_js_button)
-    formats.select(activate_button, outputs=formats_js_button)
+    ).then(deactivate_button, outputs=instructions_js_button)
+    formats.select(activate_button, outputs=formats_js_button).then(
+        activate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=infer_button)
     formats_js_button.click(
         display_json_button, formats, [tabs, json_intro, element_name, json_viewer]
     ).then(deactivate_button, outputs=formats_js_button)
+    num_shots.change(activate_button, outputs=generate_prompts_button).then(
+        deactivate_button, outputs=infer_button
+    )
+    augmentors.select(activate_button, outputs=generate_prompts_button).then(
+        deactivate_button, outputs=infer_button
+    )
 
     parameters = [
         tasks,
@@ -342,28 +358,26 @@ with demo:
     clear_fields.click(lambda: [None] * len(parameters), outputs=parameters).then(
         run_unitxt_entry, parameters, outputs=outputs
     ).then(make_mrk_down_visible, outputs=code_intro).then(
-        make_mrk_down_visible, outputs=main_intro
-    ).then(make_group_invisible, outputs=prompt_group).then(
-        make_group_invisible, outputs=infer_group
-    )
+        go_to_intro_tab, outputs=tabs
+    ).then(make_group_invisible, outputs=infer_group)
 
     # GENERATE PROMPT BUTTON LOGIC
-    generat_prompts.click(make_mrk_down_invisible, outputs=main_intro).then(
-        make_mrk_down_invisible, outputs=code_intro
-    ).then(make_group_visible, outputs=prompt_group).then(
+    generate_prompts_button.click(make_group_invisible, outputs=infer_group).then(
         go_to_main_tab, outputs=tabs
-    ).then(make_group_invisible, outputs=infer_group).then(
+    ).then(make_mrk_down_invisible, outputs=code_intro).then(
         run_unitxt_entry, parameters, outputs=outputs
-    ).then(activate_button, outputs=model_button).then(
-        deactivate_button, outputs=generat_prompts
+    ).then(activate_button, outputs=infer_button).then(
+        deactivate_button, outputs=generate_prompts_button
     )
 
     # INFER BUTTON LOGIC
-    model_button.click(make_group_visible, outputs=infer_group).then(
-        make_mrk_down_invisible, outputs=code_intro
-    ).then(select_checkbox, outputs=run_model).then(
-        run_unitxt_entry, parameters, outputs=outputs
-    ).then(deactivate_button, outputs=model_button)
+    infer_button.click(make_group_visible, outputs=infer_group).then(
+        go_to_main_tab, outputs=tabs
+    ).then(make_mrk_down_invisible, outputs=code_intro).then(
+        select_checkbox, outputs=run_model
+    ).then(run_unitxt_entry, parameters, outputs=outputs).then(
+        deactivate_button, outputs=infer_button
+    )
 
     # SAMPLE CHOICE LOGIC
     sample_choice.change(run_unitxt_entry, parameters, outputs=outputs)

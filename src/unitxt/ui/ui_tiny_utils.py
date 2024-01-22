@@ -2,11 +2,15 @@ import gradio as gr
 
 
 def go_to_json_tab():
-    return gr.Tabs(selected=1)
+    return gr.Tabs(selected="json")
 
 
 def go_to_main_tab():
-    return gr.Tabs(selected=0)
+    return gr.Tabs(selected="demo")
+
+
+def go_to_intro_tab():
+    return gr.Tabs(selected="intro")
 
 
 def activate_button():
