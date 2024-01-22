@@ -1,6 +1,6 @@
 {
     "type": "templates_list",
     "items": [
-        "templates.regression.bounded.single.simple"
+        "templates.regression.two_texts.simple"
     ]
 }

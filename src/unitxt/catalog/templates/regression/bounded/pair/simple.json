@@ -1,6 +1,0 @@
-{
-    "type": "output_quantizing_template",
-    "input_format": "Given this text: '{text1}' and this text: '{text2}', on a scale of {min_value} to {max_value}, what is the {type_of_value} of this texts?",
-    "output_format": "{value}",
-    "quantum": 0.2
-}

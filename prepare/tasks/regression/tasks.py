@@ -3,22 +3,22 @@ from src.unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "value", "type_of_value", "min_value", "max_value"],
-        outputs=["value"],
+        inputs=["text", "attribute_name", "min_value", "max_value"],
+        outputs=["attribute_value"],
         metrics=["metrics.spearman"],
         augmentable_inputs=["text"],
     ),
-    "tasks.regression.bounded.single",
+    "tasks.regression",
     overwrite=True,
 )
 
 add_to_catalog(
     FormTask(
-        inputs=["text1", "text2", "type_of_value", "min_value", "max_value"],
-        outputs=["value"],
+        inputs=["text1", "text2", "attribute_name", "min_value", "max_value"],
+        outputs=["attribute_value"],
         metrics=["metrics.spearman"],
         augmentable_inputs=["text1", "text2"],
     ),
-    "tasks.regression.bounded.pair",
+    "tasks.regression.two_texts",
     overwrite=True,
 )

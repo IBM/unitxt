@@ -1,6 +1,6 @@
 {
     "type": "templates_list",
     "items": [
-        "templates.regression.bounded.pair.simple"
+        "templates.regression.simple"
     ]
 }
