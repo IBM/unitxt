@@ -229,17 +229,25 @@ add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=Tru
 
 context_perplexity = MetricPipeline(
     main_score="score",
-    metric="metrics.rag.context_relevance",
+    preprocess_steps=[
+        CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+        CopyFields(
+            field_to_field=[("question", "prediction")],
+            use_query=True,
+        ),
+    ],
+    metric="metrics.perplexity_q.flan_t5_small",
     postpreprocess_steps=[
         CopyFields(
             field_to_field=[
-                ("score/instance/reference_scores", "score/instance/score"),
+                ("score/instance/reference_scores", "score/instance/score")
             ],
             use_query=True,
         )
     ],
 )
-add_to_catalog(context_relevance, "metrics.rag.context_perplexity", overwrite=True)
+add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
+
 
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
