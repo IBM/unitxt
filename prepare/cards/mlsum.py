@@ -2,7 +2,6 @@ from datasets import get_dataset_config_names
 
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     RenameFields,
@@ -22,11 +21,7 @@ for lang in langs:
             RenameFields(field_to_field={"text": "document"}),
             AddFields(fields={"document_type": "document"}),
         ],
-        task=FormTask(
-            inputs=["document", "document_type"],
-            outputs=["summary"],
-            metrics=["metrics.rouge"],
-        ),
+        task="tasks.summarization.abstractive",
         templates=TemplatesList(
             [
                 InputOutputTemplate(

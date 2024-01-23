@@ -30,3 +30,24 @@ scores = metric.compute(predictions=predictions,references=dataset)
 
 [print(item) for item in scores[0]['score']['global'].items()]
 """
+
+INTRO_TXT = """
+# Data Preparation and Evaluation for Generative AI
+
+## Flexible, Shareable and Reusable
+
+[![unitxt](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/IBM/unitxt)
+"""
+JSON_INTRO_TXT = """
+# Click the view button of a catalog item to see it
+"""
+CODE_INTRO_TXT = """
+# When you generate prompts / infer with model,
+# code to reproduce will show here
+"""
+
+MAIN_INTRO_TXT = """
+# Select Task, Dataset Card and a Template,
+# then click the Generate Prompts button
+"""
+JSON_BUTTON_TXT = "View"
