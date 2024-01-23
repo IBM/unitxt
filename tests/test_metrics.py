@@ -31,14 +31,14 @@ GROUPED_INSTANCE_PREDICTIONS = [
     "C",
     "123",
     "BCD",
-    10,
+    "10",
     "  BD",
     "AB",
     "I am a dog",
     "AB C",
     "AB 1",
     "GMA",
-    0.123,
+    "0.123",
     "BD",
     "abc",
 ]
@@ -47,54 +47,18 @@ GROUPED_INSTANCE_REFERENCES = [
     ["B", "AB", "A"],
     ["A", "BC D", "BC DF"],
     ["c", " C"],
-    [13, 23, 234],
+    ["13", "23", "234"],
     ["  ", " BD", " BDA"],
-    [1, 10, 100],
+    ["1", "10", "100"],
     ["A", "B", "BD"],
     ["ABC", "ab", "BC"],
     ["I am a person", "I AM A DOG", "ABC"],
     ["AB CD", "AB", "ab"],
     ["AB 1", "AB1"],
     [" GMA 123", "GMA"],
-    ["123", 0.12],
+    ["123", "0.12"],
     ["BDE", "BCE", "bdefs"],
     [" abcdefg", "AB", "abcd"],
-]
-
-GROUPED_INSTANCE_PREDICTIONS_SHORT = [
-    "A",
-    "B",
-    "B",
-    "A",
-    "B",
-    "B",
-    "A",
-    "A",
-    "B",
-    "B",
-    "A",
-    "B",
-    "A",
-    "A",
-    "B",
-]
-
-GROUPED_INSTANCE_REFERENCES_SHORT = [
-    ["A", "B"],
-    ["A", "C"],
-    ["B", "C", "A"],
-    ["A"],
-    ["B", "A"],
-    ["C", "B"],
-    ["A"],
-    ["B", "C"],
-    ["A", "B", "C"],
-    ["A", "B"],
-    ["B", "C"],
-    ["C"],
-    ["C", "B"],
-    ["B", "A"],
-    ["B"],
 ]
 
 # possibly multi-column group identifier
@@ -488,6 +452,7 @@ class TestMetrics(unittest.TestCase):
             GroupPDRStringContainment(),
             GroupNormCohensHAccuracy(),
             GroupNormCohensHStringContainment(),
+            GroupMeanTokenOverlap(),
         ]
         global_targets = [
             0.225,
@@ -496,6 +461,7 @@ class TestMetrics(unittest.TestCase):
             0.4444444444444445,
             -0.4249467048786864,
             -0.4639421840102023,
+            0.5083333333333333,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
@@ -507,22 +473,7 @@ class TestMetrics(unittest.TestCase):
             self.assertAlmostEqual(
                 target,
                 outputs[0]["score"]["global"]["score"],
-                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
-            )
-
-        f1_metrics = [GroupMeanTokenOverlap()]
-        global_targets = [0.5]
-        for metric, target in zip(f1_metrics, global_targets):
-            outputs = apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS_SHORT,
-                references=GROUPED_INSTANCE_REFERENCES_SHORT,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-            self.assertAlmostEqual(
-                target,
-                outputs[0]["score"]["global"]["score"],
-                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value",
+                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
             )
 
     def test_grouped_instance_metric_errors(self):
@@ -735,26 +686,10 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_high=-0.3908330554711398,
         )
 
-        # F1-based scores
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanTokenOverlap(),
-            references=GROUPED_INSTANCE_REFERENCES_SHORT,
-            predictions=GROUPED_INSTANCE_PREDICTIONS_SHORT,
-            expected_global_result={
-                "group_mean_f1": 0.5,
-                "score": 0.5,
-                "score_name": "group_mean_f1",
-                "group_mean_f1_ci_low": 0.32222222222222224,
-                "group_mean_f1_ci_high": 0.7900160821100434,
-                "score_ci_low": 0.32222222222222224,
-                "score_ci_high": 0.7900160821100434,
-                "group_mean_precision": 0.5,
-                "group_mean_precision_ci_low": 0.32222222222222224,
-                "group_mean_precision_ci_high": 0.7900160821100434,
-                "group_mean_recall": 0.5,
-                "group_mean_recall_ci_low": 0.32222222222222224,
-                "group_mean_recall_ci_high": 0.7900160821100434,
-            },
+            expected_ci_low=0.22302503471948287,
+            expected_ci_high=0.6805555555555555,
         )
 
     def _test_grouped_instance_confidence_interval(
@@ -767,8 +702,6 @@ class TestConfidenceIntervals(unittest.TestCase):
         expected_global_result=None,
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
-        import numpy as np
-
         outputs = apply_metric(
             metric=metric,
             predictions=predictions,
@@ -796,22 +729,12 @@ class TestConfidenceIntervals(unittest.TestCase):
         logger.info(global_result)
         for score_name, score_value in global_result.items():
             if score_name in expected_global_result:
-                # Test that the output value is the same as the expected value
-                # allow for cases where value is NaN
-                if not isinstance(score_value, str):
-                    if np.isnan(expected_global_result[score_name]):
-                        assert np.isnan(score_value)
-                    elif np.isnan(score_value):
-                        assert np.isnan(expected_global_result[score_name])
-                    else:
-                        self.assertAlmostEqual(
-                            score_value,
-                            expected_global_result[score_name],
-                            places=5,
-                            msg=f"score mismatch for {group_score_name}",
-                        )
-                else:
-                    self.assertEqual(score_value, expected_global_result[score_name])
+                self.assertAlmostEqual(
+                    score_value,
+                    expected_global_result[score_name],
+                    places=5,
+                    msg=f"score mismatch for {group_score_name}, got {expected_global_result[score_name]} but expected {score_value}",
+                )
             else:
                 # An output score that is not expected
                 # This is ok if the score_name is not related to confidence intervals
