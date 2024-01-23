@@ -52,8 +52,8 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format="Produce a succinct summary for the following text, extracting the fundamental concepts and "
-        "crucial information.\n Text: {text}",
-        output_format="{target}",
+        "crucial information.\n Text: {document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.formal",
     overwrite=True,
@@ -62,8 +62,8 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format="Produce a succinct summary for the following text, extracting the fundamental concepts and "
-        "crucial information.\n{text}",
-        output_format="{target}",
+        "crucial information.\n{document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.formal_without_label",
     overwrite=True,
@@ -72,8 +72,8 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format="Sum up the text with a quick overview, pulling out the main ideas and important details.\n"
-        "Text: {text}",
-        output_format="{target}",
+        "Text: {document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.casual",
     overwrite=True,
@@ -82,8 +82,8 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format="Craft a brief summary for the supplied text, distilling the essential concepts and vital "
-        "information.\nText: {text}",
-        output_format="{target}",
+        "information.\nText: {document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.professional",
     overwrite=True,
@@ -92,8 +92,8 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format="Guide the creation of a concise summary for the provided text, carefully "
-        "extracting the central ideas and imperative information.\nText: {text}",
-        output_format="{target}",
+        "extracting the central ideas and imperative information.\nText: {document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.instructive",
     overwrite=True,
