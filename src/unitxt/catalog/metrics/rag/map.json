@@ -1,0 +1,27 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "context_ids",
+                    "prediction"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "ground_truths_context_ids",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
+    "metric": "metrics.map"
+}

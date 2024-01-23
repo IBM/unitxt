@@ -1,3 +1,4 @@
+from src.unitxt import load
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -9,7 +10,6 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.formats import SystemFormat
-from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
 
 recipe = SequentialRecipe(
@@ -50,6 +50,6 @@ recipe = SequentialRecipe(
 
 add_to_catalog(recipe, "recipes.wnli_fixed", overwrite=True)
 
-dataset = load_dataset("recipes.wnli_fixed")
+dataset = load("recipes.wnli_fixed")
 
 print_dict(dataset["train"][0])

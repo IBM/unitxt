@@ -15,13 +15,21 @@ class HFTests(unittest.TestCase):
 
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(
-            unitxt.dataset_file, exclude=["dataset", "__init__"]
+            unitxt.dataset_file, exclude=["dataset", "__init__", "api"]
         )
         self.assertEqual(missing_imports, [])
 
     def test_metric_imports(self):
         missing_imports = get_missing_imports(
-            unitxt.metric_file, exclude=["metric", "__init__", "dataset"]
+            unitxt.metric_file,
+            exclude=[
+                "metric",
+                "metric_utils",
+                "__init__",
+                "dataset",
+                "dataset_utils",
+                "api",
+            ],
         )
         self.assertEqual(missing_imports, [])
 

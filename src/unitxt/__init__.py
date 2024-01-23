@@ -2,8 +2,8 @@ import os
 import random
 
 from . import logging_utils
+from .api import evaluate, load, load_dataset
 from .catalog import add_to_catalog
-from .load import load_dataset
 from .register import register_all_artifacts, register_local_catalog
 from .version import version
 

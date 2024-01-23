@@ -1,5 +1,5 @@
+from src.unitxt import load
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.load import load_dataset
 from src.unitxt.standard import StandardRecipe
 from src.unitxt.text_utils import print_dict
 
@@ -12,6 +12,6 @@ recipe = StandardRecipe(
 
 add_to_catalog(recipe, "recipes.wnli_3_shot", overwrite=True)
 
-dataset = load_dataset("recipes.wnli_3_shot")
+dataset = load("recipes.wnli_3_shot")
 
 print_dict(dataset["train"][0])

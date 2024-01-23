@@ -1,0 +1,39 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "contexts",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "answer",
+                    "prediction"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
+    "metric": "metrics.token_overlap",
+    "postpreprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "score/instance/precision",
+                    "score/instance/score"
+                ]
+            ],
+            "use_query": true
+        }
+    ]
+}
