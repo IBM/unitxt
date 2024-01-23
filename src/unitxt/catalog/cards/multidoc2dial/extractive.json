@@ -1,0 +1,30 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "multidoc2dial"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "answers/text/0": "relevant_context"
+            },
+            "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "relevant_context"
+            ],
+            "to_field": "answer"
+        },
+        {
+            "type": "execute_query",
+            "query": "question.split('[SEP]')[0]",
+            "to_field": "question"
+        }
+    ],
+    "task": "tasks.qa.contextual.extractive",
+    "templates": "templates.qa.contextual.all"
+}

@@ -1,6 +1,6 @@
 import unittest
 
-from src.unitxt.dataset import parse
+from src.unitxt.dataset_utils import parse
 
 
 class TestQuery(unittest.TestCase):
