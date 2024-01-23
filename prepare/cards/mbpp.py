@@ -1,15 +1,15 @@
 import os
 
-from unitxt import add_to_catalog
-from unitxt.blocks import (
+from src.unitxt import add_to_catalog
+from src.unitxt.blocks import (
     FormTask,
     InputOutputTemplate,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import JoinStr
-from unitxt.test_utils.card import test_card
+from src.unitxt.operators import JoinStr
+from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="mbpp", name="full", split="test"),
