@@ -112,7 +112,7 @@ class MetricWithConfidenceInterval(Metric):
             score_names: List of instance score field names to compute a confidence interval for.
             aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include additional_inputs
                 field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
-                instances after resampling, if aggregation_func=None.
+                instances after resampling, if argument is None.
             ci_score_prefix: An optional string prefix to the score_name in the CI.  Useful in cases where the
                 aggregation_func is something other than the mean
 
@@ -125,7 +125,6 @@ class MetricWithConfidenceInterval(Metric):
             return result
         ci_score_prefix = str(ci_score_prefix)
         if aggregation_func is None:
-            # by default mean aggregation
             aggregation_func = self.average_instance_scores
 
         for score_name in score_names:
@@ -160,7 +159,11 @@ class MetricWithConfidenceInterval(Metric):
         return result
 
     def resample_from_non_nan(self, values):
-        """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones."""
+        """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones.
+
+        This makes it so that the bca confidence interval returned by bootstrap will not be NaN, since
+        bootstrap does not ignore NaNs.
+        """
         if values.size > 1:
             error_indices = numpy.isnan(values)
             n_errors = sum(error_indices)
@@ -203,30 +206,10 @@ class MetricWithConfidenceInterval(Metric):
                 arr=arr,
             )
 
-            # when running with bca interval (default), the statistic is called twice: with the
-            # original data and with the resamples. here we want to focus only on the latter.
-            if scores.size > 1:
-                # here we deal with samples on which the metric could not be computed. These are
-                # edge cases - for example, when the sample contains only empty strings.
-                # CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
-                # cases in which the metric is not computable. Therefore, we ignore these edge cases
-                # as part of the computation of CI. The question is how to implement this policy.
-                # Options:
-                # 1. skip the errors and return a shorter array => this fails because Scipy demans
-                # this callback (i.e. the statistic() callback) to return an array of the same size
-                # as the number of resamples
-                # 2. Put np.nan for the errors => this fails because in such case the ci itself
-                # becomes np.nan. So one edge case can fail the whole CI computation.
-                # 3. Replace the errors with a sampling from the successful cases => this is what
-                # is implemented.
-                error_indices = numpy.isnan(scores)
-                n_errors = sum(error_indices)
-                if n_errors > 0:
-                    new_scores = random_gen.choice(scores, n_errors, replace=True)
-                    scores = scores[~error_indices]
-                    scores = np.concatenate([scores, new_scores])
-
-            return scores
+            # in some resamplings of instances, the global score may be NaN; in these cases
+            # the bca confidence interval will be NaN because it does not ignore these values,
+            # so we replace any NaN values with those resampled from the non-NaN ones.
+            return self.resample_from_non_nan(scores)
 
         result = {}
         num_predictions = len(predictions)
@@ -508,10 +491,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 field_name_full_prefix = "group_" + aggregation_function_name + "_"
 
                 def aggregation_func(
-                    instances, field_name, field=reduction_params["agg_func"][1]
+                    instances,
+                    field_name,
+                    group_aggregation_func=reduction_params["agg_func"][1],
                 ):
                     return self.aggregate_instance_scores_by_group(
-                        instances, field_name, field
+                        instances, field_name, group_aggregation_func
                     )
             else:
                 raise ValueError(
@@ -568,7 +553,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         return instances, global_score
 
     def aggregate_instance_scores_by_group(
-        self, instances, field_name, aggregation_func
+        self, instances, field_name, group_aggregation_func
     ):
         from collections import defaultdict
 
@@ -588,7 +573,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             )
 
         group_total_scores = [
-            aggregation_func(scores) for scores in group_to_instance_scores.values()
+            group_aggregation_func(scores)
+            for scores in group_to_instance_scores.values()
         ]
         import warnings
 
