@@ -1,5 +1,6 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.logging_utils import get_logger
+from src.unitxt.operator import SequentialOperator
 from src.unitxt.processors import (
     ConvertToBoolean,
     FirstCharacter,
@@ -14,51 +15,142 @@ from src.unitxt.processors import (
 )
 
 logger = get_logger()
-operator = TakeFirstNonEmptyLine(field="TBD")
 
-add_to_catalog(operator, "processors.take_first_non_empty_line", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            TakeFirstNonEmptyLine(field="prediction", process_every_value=False),
+            TakeFirstNonEmptyLine(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.take_first_non_empty_line",
+    overwrite=True,
+)
 
-operator2 = LowerCaseTillPunc(field="TBD")
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            LowerCaseTillPunc(field="prediction", process_every_value=False),
+            LowerCaseTillPunc(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.lower_case_till_punc",
+    overwrite=True,
+)
 
-add_to_catalog(operator2, "processors.lower_case_till_punc", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            StringOrNotString(
+                string="hate speech", field="prediction", process_every_value=False
+            ),
+            StringOrNotString(
+                string="hate speech", field="references", process_every_value=True
+            ),
+        ]
+    ),
+    "processors.hate_speech_or_not_hate_speech",
+    overwrite=True,
+)
 
-operator3 = StringOrNotString(string="hate speech", field="TBD")
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            LowerCase(field="prediction", process_every_value=False),
+            LowerCase(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.lower_case",
+    overwrite=True,
+)
 
-add_to_catalog(operator3, "processors.hate_speech_or_not_hate_speech", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            StringOrNotString(
+                string="toxic", field="prediction", process_every_value=False
+            ),
+            StringOrNotString(
+                string="toxic", field="references", process_every_value=True
+            ),
+        ]
+    ),
+    "processors.toxic_or_not_toxic",
+    overwrite=True,
+)
 
-operator4 = LowerCase(field="TBD")
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ConvertToBoolean(field="prediction", process_every_value=False),
+            ConvertToBoolean(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.convert_to_boolean",
+    overwrite=True,
+)
 
-add_to_catalog(operator4, "processors.lower_case", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            TakeFirstWord(field="prediction", process_every_value=False),
+            TakeFirstWord(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.take_first_word",
+    overwrite=True,
+)
 
-operator5 = StringOrNotString(string="toxic", field="TBD")
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            YesNoToInt(field="prediction", process_every_value=False),
+            YesNoToInt(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.yes_no_to_int",
+    overwrite=True,
+)
 
-add_to_catalog(operator5, "processors.toxic_or_not_toxic", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ToYesOrNone(field="prediction", process_every_value=False),
+            ToYesOrNone(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.to_yes_or_none",
+    overwrite=True,
+)
 
-operator6 = ConvertToBoolean(field="TBD")
-add_to_catalog(operator6, "processors.convert_to_boolean", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            StanceToProCon(field="prediction", process_every_value=False),
+            StanceToProCon(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.stance_to_pro_con",
+    overwrite=True,
+)
 
-operator7 = TakeFirstWord(field="TBD")
-add_to_catalog(operator7, "processors.take_first_word", overwrite=True)
-
-operator8 = YesNoToInt(field="TBD")
-add_to_catalog(operator8, "processors.yes_no_to_int", overwrite=True)
-
-operator9 = ToYesOrNone(field="TBD")
-add_to_catalog(operator9, "processors.to_yes_or_none", overwrite=True)
-
-operator10 = StanceToProCon(field="TBD")
-add_to_catalog(operator10, "processors.stance_to_pro_con", overwrite=True)
 
 parser = FirstCharacter(field="TBD")
-
 example = " A. This is the answer."
-
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == "A"
 
 example = "   "
-
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == ""
 
-add_to_catalog(parser, "processors.first_character", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            FirstCharacter(field="prediction", process_every_value=False),
+            FirstCharacter(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.first_character",
+    overwrite=True,
+)

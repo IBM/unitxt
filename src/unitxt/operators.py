@@ -61,6 +61,7 @@ from .operator import (
     MultiStream,
     MultiStreamOperator,
     PagedStreamOperator,
+    SequentialOperator,
     SingleStreamOperator,
     SingleStreamReducer,
     StreamingOperator,
@@ -1091,24 +1092,23 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
-        inputs_fields (List[str]): list of field names, the values in which are to be processed
-        fields_to_treat_as_list (List[str]): sublist of input_fields, each member of this sublist is supposed to contain
-            a list of values, each of which is to be processed.
-        operators_field (str): name of the field that contains the list of names of the operators to be applied,
-            one after the other, for the processing. Operators are all (extensions of) FieldOperator
+        operators_field (str): name of the field that contains a single name, or a list of names, of the operators to be applied,
+            one after the other, for the processing of the instance. Each operator is equipped with 'process_instance()'
+            method.
+
         default_operators (List[str]): A list of default operators to be used if no operators are found in the instance.
 
     Example:
-        when instance {"a": 111, "b": 2, "c": ["processors.to_string", "processors.first_character"]} is processed by operator:
-        operator = ApplyOperatorsField(inputs_fields=["a"], operators_field="c", default_operators=["add"]),
-        the resulting instance is: {"a": "1", "b": 2, "c": ["processors.to_string", "processors.first_character"]}
+        when instance {"prediction": 111, "references": [222, 333] , "c": ["processors.to_string", "processors.first_character"]}
+        is processed by operator (please look up the catalog that these operators, they are tuned to process fields "prediction" and
+        "references"):
+        operator = ApplyOperatorsField(operators_field="c"),
+        the resulting instance is: {"prediction": "1", "references": ["2", "3"], "c": ["processors.to_string", "processors.first_character"]}
 
     """
 
-    inputs_fields: List[str]
     operators_field: str
     default_operators: List[str] = None
-    fields_to_treat_as_list: List[str] = NonPositionalField(default_factory=list)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -1122,17 +1122,11 @@ class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
 
         if isinstance(operator_names, str):
             operator_names = [operator_names]
+        # otherwise , operator_names is already a list
 
-        for name in operator_names:
-            operator = self.get_artifact(name)
-            for field_name in self.inputs_fields:
-                value = instance[field_name]
-                if field_name in self.fields_to_treat_as_list:
-                    instance[field_name] = [operator.process_value(v) for v in value]
-                else:
-                    instance[field_name] = operator.process_value(value)
-
-        return instance
+        # we now have a list of nanes of operators, each is equipped with process_instance method.
+        operator = SequentialOperator(steps=operator_names)
+        return operator.process_instance(instance)
 
 
 class FilterByCondition(SingleStreamOperator):
@@ -1762,14 +1756,18 @@ class LengthBalancer(DeterministicBalancer):
 
     Args:
         segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
-           into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
-           beyond, namely, the length of segments_boudaries)
+        into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
+        beyond, namely, the length of segments_boudaries)
 
         fields (Optional, List[str])
 
     Example:
         when input [{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}] is fed into
-        LengthBalancer(fields=["a"], segments_boundaries=[1])
+
+        .. code-block::
+
+            LengthBalancer(fields=["a"], segments_boundaries=[1])
+
         input instances will be counted and balanced against two categories: empty total length (less than 1), and non-empty.
     """
 

@@ -6,5 +6,9 @@
         "templates.summarization.abstractive.casual",
         "templates.summarization.abstractive.professional",
         "templates.summarization.abstractive.instructive"
+        "templates.summarization.abstractive.full",
+        "templates.summarization.abstractive.one_sentence",
+        "templates.summarization.abstractive.passive",
+        "templates.summarization.abstractive.write_succinct"
     ]
 }

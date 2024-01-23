@@ -1,0 +1,5 @@
+{
+    "type": "key_val_template",
+    "pairs_seperator": "\n",
+    "use_keys_for_outputs": true
+}

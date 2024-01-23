@@ -21,11 +21,12 @@ def get_templates(template_data, dir):
         return {template_str}
 
     if isinstance(template_data, str):
-        return get_from_str(template_data)
-
-    templates = set()
-    for item in template_data:
-        templates.update(get_from_str(item))
+        templates = get_from_str(template_data)
+    else:
+        templates = set()
+        for item in template_data:
+            templates.update(get_from_str(item))
+    templates.add("templates.key_val_with_new_lines")
     return templates
 
 
@@ -78,6 +79,8 @@ def get_catalog_items_from_dir(items_type, dir):
     items_dir = os.path.join(dir, items_type)
     files = get_all_files_in_dir(items_dir, recursive=True)
     for file in files:
+        if "DS_Store" in file:
+            continue
         key = file.split(os.sep)
         start_index = key.index(items_type)
         key = key[start_index:]
@@ -90,8 +93,11 @@ def get_catalog_items(items_type):
     items = []
     for dir in get_catalog_dirs():
         items.extend(get_catalog_items_from_dir(items_type, dir))
-    return items
+    return sorted(items)
 
 
 if __name__ == "__main__":
-    load_cards_data()
+    my_dictionary = load_cards_data()
+    with open("cards_data.csv", "w") as file:
+        for key, value in my_dictionary.items():
+            file.write(f"{key}: {value}\n")

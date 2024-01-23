@@ -48,12 +48,11 @@ pip install -e ".[dev]"
 pre-commit install
 ```
 
-### Run Unitxt UI
+### Run Unitxt Exploration Dashboard
 
-To launch unitxt ui run:
+To launch unitxt graphical user interface run:
 ```
-from unitxt import ui
-ui.launch()
+unitxt-explore
 ```
 
 ### Ensuring a Linear Git History

@@ -45,6 +45,7 @@ setuptools.setup(
     url="https://github.com/ibm/unitxt",
     packages=setuptools.find_packages("src"),
     package_dir={"": "src"},
+    include_package_data=True,
     package_data={"unitxt": ["catalog/*.json", "ui/banner.png"]},
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -53,4 +54,9 @@ setuptools.setup(
     python_requires=">=3.8",
     install_requires=extras_require["base"],
     extras_require=extras_require,
+    entry_points={
+        "console_scripts": [
+            "unitxt-explore=unitxt.ui:launch",
+        ],
+    },
 )

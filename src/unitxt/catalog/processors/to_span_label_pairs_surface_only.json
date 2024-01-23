@@ -1,6 +1,19 @@
 {
-    "type": "regex_parser",
-    "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
-    "termination_regex": "^\\s*None\\s*$",
-    "field": "TBD"
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "regex_parser",
+            "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
+            "termination_regex": "^\\s*None\\s*$",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "regex_parser",
+            "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
+            "termination_regex": "^\\s*None\\s*$",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
 }

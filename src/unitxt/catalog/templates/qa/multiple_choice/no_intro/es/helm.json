@@ -1,8 +1,9 @@
 {
     "type": "multiple_choice_template",
-    "input_format": "Question: {question}\nChoose from {numerals}\nAnswers: \n{choices}\nAnswer:",
+    "input_format": "Pregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
     "target_field": "answer",
     "choices_seperator": "\n",
+    "target_choice_format": "{choice_numeral}",
     "postprocessors": [
         "processors.first_character"
     ]

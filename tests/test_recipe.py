@@ -1,4 +1,5 @@
 import collections
+import copy
 import re
 import unittest
 
@@ -408,7 +409,7 @@ class TestRecipes(unittest.TestCase):
 
     def test_standard_recipe_with_a_missing_sampler(self):
         """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
-        task_card, _ = fetch_artifact("cards.sst2")
+        task_card, _ = copy.deepcopy(fetch_artifact("cards.sst2"))
         task_card.sampler = None
         with self.assertRaises(ValueError) as e:
             StandardRecipeWithIndexes(

@@ -150,6 +150,11 @@ class MultiStreamOperator(StreamingOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         pass
 
+    def process_instance(self, instance, stream_name="tmp"):
+        multi_stream = {stream_name: [instance]}
+        processed_multi_stream = self(multi_stream)
+        return next(iter(processed_multi_stream[stream_name]))
+
 
 class SingleStreamOperator(MultiStreamOperator):
     """A class representing a single-stream operator in the streaming system.
@@ -216,6 +221,10 @@ class SingleStreamOperator(MultiStreamOperator):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         pass
 
+    def process_instance(self, instance, stream_name="tmp"):
+        processed_stream = self._process_single_stream([instance], stream_name)
+        return next(iter(processed_stream))
+
 
 class PagedStreamOperator(SingleStreamOperator):
     """A class representing a paged-stream operator in the streaming system.
@@ -240,11 +249,20 @@ class PagedStreamOperator(SingleStreamOperator):
             if len(page) >= self.page_size:
                 yield from self.process(page, stream_name)
                 page = []
+        yield from self._process_page(page, stream_name)
+
+    def _process_page(
+        self, page: List[Dict], stream_name: Optional[str] = None
+    ) -> Generator:
         yield from self.process(page, stream_name)
 
     @abstractmethod
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
         pass
+
+    def process_instance(self, instance, stream_name="tmp"):
+        processed_stream = self._process_page([instance], stream_name)
+        return next(iter(processed_stream))
 
 
 class SingleStreamReducer(StreamingOperator):
@@ -297,6 +315,9 @@ class StreamInstanceOperator(SingleStreamOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         pass
+
+    def process_instance(self, instance, stream_name="tmp"):
+        return self._process_instance(instance, stream_name)
 
 
 class StreamInstanceOperatorValidator(StreamInstanceOperator):
