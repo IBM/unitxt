@@ -185,7 +185,7 @@ for metric_id, metric in metrics.items():
 #   faithfulness:
 #       metrics.rag.faithfulness
 #       metrics.rag.k_precision
-#       metrics.rag.bert_k_precision
+#       metrics.rag.bert_k_precision        k_precision stands for "knowledge precision"
 #   answer-relevance:
 #       metrics.rag.answer_relevance
 
@@ -303,6 +303,9 @@ answer_relevance = MetricPipeline(
             field_to_field=[("answer", "prediction")],
             use_query=True,
         ),
+        # This metric compares the answer (as the prediction) to the question (as the reference).
+        # We have to wrap the question by a list (otherwise it will be a string),
+        # because references are expected to be lists
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric="metrics.reward.deberta_v3_large_v2",
