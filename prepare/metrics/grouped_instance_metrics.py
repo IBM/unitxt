@@ -226,7 +226,7 @@ outputs = test_metric(
 
 add_to_catalog(metric, "metrics.group_pdr_string_containment", overwrite=True)
 
-# Try Cohen's h instead of PDR since is symmetric and defined when baseline is 0
+
 metric = GroupNormCohensHAccuracy()
 global_target = {
     "group_norm_cohens_h_accuracy": -0.42,
@@ -274,77 +274,38 @@ outputs = test_metric(
 
 add_to_catalog(metric, "metrics.group_norm_cohens_h_string_containment", overwrite=True)
 
-
-# create references and predictions with only 3 unique values
-short_predictions = [
-    "A",
-    "B",
-    "B",
-    "A",
-    "B",
-    "B",
-    "A",
-    "A",
-    "B",
-    "B",
-    "A",
-    "B",
-    "A",
-    "A",
-    "B",
-]
-
-short_references = [
-    ["A", "B"],
-    ["A", "C"],
-    ["B", "C", "A"],
-    ["A"],
-    ["B", "A"],
-    ["C", "B"],
-    ["A"],
-    ["B", "C"],
-    ["A", "B", "C"],
-    ["A", "B"],
-    ["B", "C"],
-    ["C"],
-    ["C", "B"],
-    ["B", "A"],
-    ["B"],
-]
-
-
 global_target = {
-    "group_mean_f1": 0.5,
-    "score": 0.5,
+    "group_mean_f1": 0.51,
+    "score": 0.51,
     "score_name": "group_mean_f1",
-    "group_mean_f1_ci_low": 0.32,
-    "group_mean_f1_ci_high": 0.79,
-    "score_ci_low": 0.32,
-    "score_ci_high": 0.79,
+    "group_mean_f1_ci_low": 0.22,
+    "group_mean_f1_ci_high": 0.68,
+    "score_ci_low": 0.22,
+    "score_ci_high": 0.68,
     "group_mean_precision": 0.5,
-    "group_mean_precision_ci_low": 0.32,
-    "group_mean_precision_ci_high": 0.79,
-    "group_mean_recall": 0.5,
-    "group_mean_recall_ci_low": 0.32,
-    "group_mean_recall_ci_high": 0.79,
+    "group_mean_precision_ci_low": 0.21,
+    "group_mean_precision_ci_high": 0.67,
+    "group_mean_recall": 0.52,
+    "group_mean_recall_ci_low": 0.25,
+    "group_mean_recall_ci_high": 0.71,
 }
 
 instance_targets_token_overlap = [
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
     {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
     {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
-    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
     {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 0.5, "recall": 1.0, "f1": 0.67, "score": 0.67, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 1.0, "recall": 1.0, "f1": 1.0, "score": 1.0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
+    {"precision": 0, "recall": 0, "f1": 0, "score": 0, "score_name": "f1"},
 ]
 
 
@@ -352,8 +313,8 @@ metric = GroupMeanTokenOverlap()
 
 outputs = test_metric(
     metric=metric,
-    predictions=short_predictions,
-    references=short_references,
+    predictions=[str(vv) for vv in predictions],
+    references=[[str(vvv) for vvv in vv] for vv in references],
     instance_targets=instance_targets_token_overlap,
     global_target=global_target,
     additional_inputs=additional_inputs,
