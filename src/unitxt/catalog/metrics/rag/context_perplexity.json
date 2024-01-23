@@ -23,5 +23,17 @@
             "use_query": true
         }
     ],
-    "metric": "metrics.perplexity_q.flan_t5_small"
+    "metric": "metrics.perplexity_q.flan_t5_small",
+    "postpreprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "score/instance/reference_scores",
+                    "score/instance/score"
+                ]
+            ],
+            "use_query": true
+        }
+    ]
 }
