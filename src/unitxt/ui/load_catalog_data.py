@@ -5,6 +5,14 @@ from unitxt.ui.constants import AUGMENTABLE_STR, CATALOG_DIR
 from unitxt.utils import load_json
 
 
+def safe_load_json(file):
+    try:
+        json = load_json(file)
+    except:
+        json = {"Error in loading json"}
+    return json
+
+
 def get_catalog_dirs():
     dirs = [CATALOG_DIR]
     if "UNITXT_ARTIFACTORIES" in os.environ:
@@ -26,8 +34,12 @@ def get_templates(template_data, dir):
         templates = set()
         for item in template_data:
             templates.update(get_from_str(item))
-    templates.add("templates.key_val_with_new_lines")
-    return templates
+    # templates.add("templates.key_val_with_new_lines")
+    templates_jsons = {
+        template: safe_load_json(get_file_from_item_name(template, dir))
+        for template in templates
+    }
+    return templates, templates_jsons
 
 
 def load_cards_data():
@@ -38,11 +50,14 @@ def load_cards_data():
         return True
 
     cards_data = {}
+    json_data = {}
     catalog_dirs = get_catalog_dirs()
     for dir in catalog_dirs:
-        cards = get_catalog_items_from_dir("cards", dir)
+        cards, card_jsons = get_catalog_items_from_dir("cards", dir)
+        json_data.update(card_jsons)
         for card in cards:
-            data = load_json(get_file_from_item_name(card, dir))
+            card_file = get_file_from_item_name(card, dir)
+            data = load_json(card_file)
             if not is_valid_data(data):
                 continue
             task = data["task"]
@@ -50,11 +65,16 @@ def load_cards_data():
                 is_augmentable = check_augmentable(task, dir)
             else:
                 is_augmentable = cards_data[task][AUGMENTABLE_STR]
-            templates = get_templates(data["templates"], dir)
+            templates, templates_jsons = get_templates(data["templates"], dir)
+            json_data.update(templates_jsons)
             cards_data.setdefault(task, {}).update(
                 {card: templates, AUGMENTABLE_STR: is_augmentable}
             )
-    return cards_data
+    formats, formats_jsons = get_catalog_items("formats")
+    json_data.update(formats_jsons)
+    instructions, instructiosn_jsons = get_catalog_items("instructions")
+    json_data.update(instructiosn_jsons)
+    return cards_data, json_data
 
 
 def check_augmentable(task_name, dir):
@@ -76,6 +96,7 @@ def get_file_from_item_name(item_name, dir):
 
 def get_catalog_items_from_dir(items_type, dir):
     items = []
+    jsons = {}
     items_dir = os.path.join(dir, items_type)
     files = get_all_files_in_dir(items_dir, recursive=True)
     for file in files:
@@ -86,18 +107,25 @@ def get_catalog_items_from_dir(items_type, dir):
         key = key[start_index:]
         key = ".".join(key).replace(".json", "")
         items.append(key)
-    return items
+        jsons[key] = safe_load_json(file)
+    return items, jsons
 
 
 def get_catalog_items(items_type):
     items = []
+    jsons = {}
     for dir in get_catalog_dirs():
-        items.extend(get_catalog_items_from_dir(items_type, dir))
-    return sorted(items)
+        dir_items, dir_jsons = get_catalog_items_from_dir(items_type, dir)
+        items.extend(dir_items)
+        jsons.update(dir_jsons)
+    return sorted(items), jsons
 
 
 if __name__ == "__main__":
-    my_dictionary = load_cards_data()
-    with open("cards_data.csv", "w") as file:
-        for key, value in my_dictionary.items():
+    data, jsons = load_cards_data()
+    with open("cards_data.txt", "w") as file:
+        for key, value in data.items():
+            file.write(f"{key}: {value}\n")
+    with open("jsons.txt", "w") as file:
+        for key, value in jsons.items():
             file.write(f"{key}: {value}\n")
