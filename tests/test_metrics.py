@@ -686,10 +686,24 @@ class TestConfidenceIntervals(unittest.TestCase):
             expected_ci_high=-0.3908330554711398,
         )
 
+        # pass global dict because there are additional fields other than the main score
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanTokenOverlap(),
-            expected_ci_low=0.22302503471948287,
-            expected_ci_high=0.6805555555555555,
+            expected_global_result={
+                "group_mean_recall": 0.525,
+                "group_mean_f1": 0.5083333333333333,
+                "score": 0.5083333333333333,
+                "score_name": "group_mean_f1",
+                "group_mean_precision": 0.5,
+                "group_mean_recall_ci_low": 0.25,
+                "group_mean_recall_ci_high": 0.7083333333333334,
+                "group_mean_f1_ci_low": 0.22302503471948287,
+                "group_mean_f1_ci_high": 0.6805555555555555,
+                "score_ci_low": 0.22302503471948287,
+                "score_ci_high": 0.6805555555555555,
+                "group_mean_precision_ci_low": 0.20949399775845196,
+                "group_mean_precision_ci_high": 0.6666666666666666,
+            },
         )
 
     def _test_grouped_instance_confidence_interval(
