@@ -161,9 +161,24 @@ class MetricWithConfidenceInterval(Metric):
     def resample_from_non_nan(self, values):
         """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones.
 
-        This makes it so that, if possible, the bca confidence interval returned by bootstrap will not be NaN, since
+        here we deal with samples on which the metric could not be computed. These are
+        edge cases - for example, when the sample contains only empty strings.
+        CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
+        cases in which the metric is not computable. Therefore, we ignore these edge cases
+        as part of the computation of CI.
+
+        In theory there would be several ways to deal with this:
+        1. skip the errors and return a shorter array => this fails because Scipy requires
+        this callback (i.e. the statistic() callback) to return an array of the same size
+        as the number of resamples
+        2. Put np.nan for the errors => this fails because in such case the ci itself
+        becomes np.nan. So one edge case can fail the whole CI computation.
+        3. Replace the errors with a sampling from the successful cases => this is what is implemented.
+
+        This resampling makes it so that, if possible, the bca confidence interval returned by bootstrap will not be NaN, since
         bootstrap does not ignore NaNs.  However, if there are 0 or 1 non-NaN values, or all non-NaN values are equal,
-        the resulting distribution will be degenerate (only one unique value) so the CI will still be NaN
+        the resulting distribution will be degenerate (only one unique value) so the CI will still be NaN since there is
+        no variability.  In this case, the CI is essentially an interval of length 0 equaling the mean itself.
         """
         if values.size > 1:
             error_indices = numpy.isnan(values)
@@ -197,6 +212,7 @@ class MetricWithConfidenceInterval(Metric):
                     logger.info(f"Warning in {self.__class__.__name__}", e)
                     return np.nan
 
+            # resample the instance scores, and then return the global score each time
             scores = numpy.apply_along_axis(
                 lambda x: metric(
                     sample_refs=[references[i] for i in x],
@@ -207,8 +223,8 @@ class MetricWithConfidenceInterval(Metric):
                 arr=arr,
             )
 
-            # in some resamplings of instances, the global score may be NaN; in these cases
-            # the bca confidence interval will be NaN because it does not ignore these values,
+            # in some resamplings of instances, the global score may be NaN since it cannot be computed;
+            # in these cases, the bca confidence interval will be NaN because it does not ignore these values,
             # so we replace any NaN values with those resampled from the non-NaN ones.
             return self.resample_from_non_nan(scores)
 
@@ -1914,7 +1930,7 @@ def performance_drop_rate(instance_scores: List):
 def normalized_cohens_h(instance_scores: List):
     """Cohen's h between two proportions.
 
-    Allows for change-type metric when the baseline is 0 (percentage change is undefined)
+    Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
     https://en.wikipedia.org/wiki/Cohen%27s_h
 
     Cohen's h effect size metric between two proportions p2 and p1 is 2 * (arcsin(sqrt(p2)) - arcsin(sqrt(p1))).
