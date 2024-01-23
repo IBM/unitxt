@@ -175,7 +175,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(True)
 
     def test_example8(self):
-        dataset = unitxt.load_dataset("recipes.wnli_3_shot")
+        dataset = unitxt.load("recipes.wnli_3_shot")
         metric = evaluate.load(unitxt.metric_file)
 
         metric.compute(
@@ -186,10 +186,10 @@ class TestExamples(unittest.TestCase):
         import evaluate
 
         from src import unitxt
-        from src.unitxt.load import load_dataset
+        from src.unitxt import load
         from src.unitxt.text_utils import print_dict
 
-        dataset = load_dataset("recipes.wnli_3_shot")
+        dataset = load("recipes.wnli_3_shot")
 
         metric = evaluate.load(unitxt.metric_file)
         results = metric.compute(
