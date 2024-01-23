@@ -161,8 +161,9 @@ class MetricWithConfidenceInterval(Metric):
     def resample_from_non_nan(self, values):
         """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones.
 
-        This makes it so that the bca confidence interval returned by bootstrap will not be NaN, since
-        bootstrap does not ignore NaNs.
+        This makes it so that, if possible, the bca confidence interval returned by bootstrap will not be NaN, since
+        bootstrap does not ignore NaNs.  However, if there are 0 or 1 non-NaN values, or all non-NaN values are equal,
+        the resulting distribution will be degenerate (only one unique value) so the CI will still be NaN
         """
         if values.size > 1:
             error_indices = numpy.isnan(values)
