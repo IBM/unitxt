@@ -1942,23 +1942,30 @@ def performance_drop_rate(instance_scores: List):
     )
 
 
-def normalized_cohens_h(instance_scores: List):
-    """Cohen's h between two proportions.
+def normalized_cohens_h(instance_scores: List, interpret=False):
+    """Cohen's h between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
     https://en.wikipedia.org/wiki/Cohen%27s_h
 
     Cohen's h effect size metric between two proportions p2 and p1 is 2 * (arcsin(sqrt(p2)) - arcsin(sqrt(p1))).
-    h in -pi, pi, with +/- representing the largest increase/decrease (p1=0, p2=1), or (p1=1, p2=0).
-    h=0 is no change. Unlike percentage change, h is defined if the baseline (p1) is 0.
+    h in -pi, pi, with +/-pi representing the largest increase/decrease (p1=0, p2=1), or (p1=1, p2=0).
+    h=0 is no change. Unlike percentage change, h is defined even if the baseline (p1) is 0.
     Assumes the scores are in [0,1], either continuous or binary.
     For scores in a list, the first element is treated as the baseline p1, and the mean of the others
     as p2, and evaluates p2 change relative to p1.  It is thus undefined if the list is of length < 2.
     We rescale this to [-1,1] from [-pi,pi] for clarity, where +- 1 are the most extreme changes, and 0 is no change
 
+    Interpretation: the original unscaled Cohen's h can be interepreted as
+        - an insignificant difference if 0 < |h| < 0.2
+        - small difference if 0.2 <= |h| < 0.5
+        - a medium difference if 0.5 <= |h| < 0.8
+        - a large difference if 0.8 <= |h|
+    Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
+
     Args:
         instance_scores: a list of scores on instances.  Assume the first element is the original, the others are test set
-
+        interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1
     """
@@ -1974,7 +1981,19 @@ def normalized_cohens_h(instance_scores: List):
     baseline_p = instance_scores[0]
     new_p = np.nanmean(instance_scores[1:])
     h = 2 * (np.arcsin(np.sqrt(new_p)) - np.arcsin(np.sqrt(baseline_p)))
-    return np.clip(a=h / np.pi, a_min=-1, a_max=1)
+    norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
+    if not interpret:
+        return norm_h
+
+    import pandas as pd
+
+    how_signif = pd.cut(
+        x=[np.abs(h)],
+        right=False,
+        bins=[-1, 0.2, 0.5, 0.8, np.Inf],
+        labels=["not significant", "small", "medium", "large"],
+    )
+    return norm_h, how_signif[0]
 
 
 class GroupMeanAccuracy(Accuracy):
