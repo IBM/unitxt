@@ -9,7 +9,7 @@ from src.unitxt.blocks import (
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operators import (
     ApplyOperatorsField,
-    GlobalClassificationMetricOnly,
+    GlobalClassificationMetric,
     Perturbate,
     StreamRefiner,
 )
@@ -55,7 +55,7 @@ card = TaskCard(
             operators_field="postprocessors",
             default_operators=["processors.to_string_stripped"],
         ),
-        GlobalClassificationMetricOnly(
+        GlobalClassificationMetric(
             pred_field_name="prediction",
             refs_field_name="references",
             global_metric_names=[

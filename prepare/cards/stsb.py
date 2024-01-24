@@ -8,7 +8,7 @@ from src.unitxt.blocks import (
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operators import (
     ExecuteQuery,
-    GlobalClassificationMetricOnly,
+    GlobalClassificationMetric,
     Perturbate,
     StreamRefiner,
 )
@@ -47,7 +47,7 @@ card = TaskCard(
             percentage_to_perturbate=30,
         ),
         ExecuteQuery(query="round(float(prediction), 2)", to_field="prediction"),
-        GlobalClassificationMetricOnly(
+        GlobalClassificationMetric(
             pred_field_name="prediction",
             refs_field_name="references",
             global_metric_names=["metrics.pearson", "metrics.spearman"],

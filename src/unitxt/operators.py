@@ -1235,25 +1235,39 @@ class GlobalRougeOnly(MultiStreamOperator):
         return MultiStream.from_iterables(ms_to_return)
 
 
-class GlobalClassificationMetricOnly(MultiStreamOperator):  ##, ArtifactFetcherMixin):
-    """computes a metric for classification results along (all) instances of each stream in the nultistream.
+class GlobalClassificationMetric(MultiStreamOperator):
+    """computes a global metric for classification results along (all) instances of each stream in the nultistream.
 
-    Input arg 'refs_field_name' specifies the field that contains references: list of potential classes for every instance.
-    Input arg 'refs_field_name' specifies the field that contains the prediction (made by the evaluated classifier) which is a single class.
+    Input arg 'refs_field_name' specifies the field that contains references: a list of potential classes for every instance,
+    or a list of potential correct answers (typically numbered, like: A. word word..,  B. word word..)
+    Input arg 'pred_field_name' specifies the field that contains the prediction (made by the evaluated model/classifier)
+    which is a single class, or a numbered answer.
+    The assumption is that the number of unique, distinct pairs (ref, pred) encountered over each stream is bounded,
+    dramatically smaller than the number of instances. With a classifier, it is an order of num_of_classes**2
+    (adding new classes that the model 'made up', and subtracting unseen classes), and with closed QA, we are talking
+    num_of_answers**2 (pairs of (A, A), (A, B), etc. without the full texts of the answers)
 
-    The operator first gathers the confusion matrix from the input stream, and then feed it to a
-    compute_classification_score_from_confusion_matrix that is implemented by the various extensions of this class.
+    This operator first gathers the confusion matrix (a Counter of these distinct pairs) from the input stream, and then
+    feed it to one or more of the score calculating methods of the class, according to the metrics specified, methods
+    which emit a specified score from a given confusion matrix.
 
-    finally, this operator spreads the computed score over every instances of the stream, named by the metric name
-    specified by arg 'global_metric_name'
+    Confidence Intervals (ci) are computed as well, for each metrics. The resamples are not selected offline, as random
+    choices from the whole stream lying full length in main memory, as done before.
+    Rather, a confusion matrix is developed for each
+    resample, updated online by each instance processed. The pair of (ref, pred) read from the processed instance updates
+    each such ci-confusion-matrix p times, where p is an integer >= 0, generated randomly according to the Poisson distribution
+    with mu=1. For the long length of the streams, this makes an effect that the total number of times that of each
+    ci-confusion-matrix is updated by a pair, is very close to the length of the stream. Which is the desired size of
+    each resample, by the bootstrapping method.
+
+    Finally, this operator spreads the computed score, along with its ci, over every instance of the stream, properly documented
+    by the (nested) field name.
 
     """
 
     pred_field_name: str = "prediction"
     refs_field_name: str = "references"
-    global_metric_names: List[
-        str
-    ] = None  # or a lambda expression that receives a vector of either singles or pairs, that comparator generates for it
+    global_metric_names: List[str] = None
 
     def verify(self):
         assert (
@@ -1267,10 +1281,10 @@ class GlobalClassificationMetricOnly(MultiStreamOperator):  ##, ArtifactFetcherM
             "metrics.matthews_correlation": self.compute_matthews_correlation_coefficient_from_confusion_matrix,
             "metrics.f1_micro": self.compute_f1_micro_from_confusion_matrix,
             "metrics.f1_macro": self.compute_f1_macro_from_confusion_matrix,
-            "metrics.accuracy": self.compute_f1_micro_from_confusion_matrix,
+            "metrics.accuracy": self.compute_f1_micro_from_confusion_matrix,  # accuracy is same as f1_micro
             "metrics.pearson": self.compute_pearson_from_confusion_matrix,
             "metrics.spearman": self.compute_spearman_from_confusion_matrix,
-        }  # accuracy is same as f1_micro
+        }
         self.logger = get_logger()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -1281,22 +1295,20 @@ class GlobalClassificationMetricOnly(MultiStreamOperator):  ##, ArtifactFetcherM
 
         ms_to_return = {}
         for stream_name, stream in multi_stream.items():
-            # for (an approximation of) bootstrapping, first count the number of instances in the stream:
-            # numof_instances = 0
-            # for _ in stream:
-            #     numof_instances += 1
-            # p_binom = 1.0 / float(numof_instances)
+            # currently, bootstrapping for ci is done offline, from the whole stream lying in main memory.
+            # in unitxt implementations, and also, e.g., in rouge by hf: see Class BootstrapAggregator in file
+            # virtualForUnitxt/lib/python3.10/site-packages/rouge_score/scoring.py
+            # and as taught in university: https://library.virginia.edu/data/articles/bootstrap-estimates-of-confidence-intervals#:~:text=Bootstrapping%20is%20a%20statistical%20procedure,small%20sample%20of%20that%20population.
+            # Denoting the number of instances in the stream by n, each resample is an
+            # np.random.choice(the stream, n, with replacements)
+            # All instances have equal chance, 1/n, to be selected for each position in the resample.
+            # This repeats n times, as the number of positions in the resample.
+            # We thus have that the number of times a given instance is
+            # included in a given resample is binomially distributed, with p = 1/n, and n = num of instances in the stream.
+            # For large n-s, and accordingly small p-s, a poisson distribution with mu = n*p is a very
+            # good approximation, for which no need to count the number of instances in the stream.
 
-            # prepare an array of _NUM_OF_BOOTSTRAP_RESAMPLES confusion matrices, to count each over a resample.
-            # the chance of a given instance to be included in one given resample is 1/num_of_instances,
-            # that repeats numjof_instances. We thus have that the number of times a given instance is
-            # included in a given resample is binomially distributed, with p = 1/numof_instances, and n = numof_instances.
-            # for such n and p,  poisson is a very good estimation. if runs faster - can use poisson.
-            # bootstrapping by resampling, for ci  computation:
-            # https://library.virginia.edu/data/articles/bootstrap-estimates-of-confidence-intervals#:~:text=Bootstrapping%20is%20a%20statistical%20procedure,small%20sample%20of%20that%20population.
-            # now, because we are talking a very small p and a very large n, with average expected of success = 1,
-            # we can very well approximate with poisson, mu=1, no need to count the number of instances
-
+            # prepare the main confusion matrix, and an array of _NUM_OF_BOOTSTRAP_RESAMPLES confusion matrices, to count each over one resample.
             conf_mat_counter = Counter()
             boot_strap_conf_mats = []
             for _ in range(_num_of_bootstrap_resamples):
@@ -1321,9 +1333,6 @@ class GlobalClassificationMetricOnly(MultiStreamOperator):  ##, ArtifactFetcherM
                     ]
                 )
                 # number of times to count this instance against each of the bootstrap counters:
-                # num_of_counter_activations = binom.rvs(
-                #     n=numof_instances, p=p_binom, size=_num_of_bootstrap_resamples
-                # )
                 num_of_counter_activations = poisson.rvs(
                     mu=1, size=_num_of_bootstrap_resamples
                 )
