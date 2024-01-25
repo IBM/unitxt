@@ -284,7 +284,7 @@ with demo:
                     json_intro = gr.Markdown(value=cons.JSON_INTRO_TXT)
                     element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
-
+    acknowledgement = gr.Markdown(cons.ACK_TEXT)
     # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)
     sample_choice = gr.Number(value=0, visible=False)
