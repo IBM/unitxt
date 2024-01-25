@@ -88,7 +88,7 @@ class CatalogEntry:
             dirname = dirname.replace(os.path.sep, ".") + "."
         result = os.path.join(
             destination_directory,
-            dirname + Path(self.rel_path).stem,
+            "catalog." + dirname + Path(self.rel_path).stem,
         )
 
         if with_extension:
