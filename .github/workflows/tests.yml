@@ -26,7 +26,7 @@ jobs:
 
     - name: Generate Report
       env:
-        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
       run:  coverage run -m unittest
 
     - name: Upload Coverage to Codecov
