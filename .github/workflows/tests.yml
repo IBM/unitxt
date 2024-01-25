@@ -25,6 +25,8 @@ jobs:
     - run: pip install coverage
 
     - name: Generate Report
+      env:
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
       run:  coverage run -m unittest
 
     - name: Upload Coverage to Codecov
