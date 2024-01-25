@@ -82,11 +82,20 @@ class CatalogEntry:
     def get_title(self):
         return Path(self.rel_path).stem
 
-    def get_artifact_doc_path(self, destination_directory):
-        return os.path.join(
+    def get_artifact_doc_path(self, destination_directory, with_extension=True):
+        result = os.path.join(
             destination_directory,
-            os.path.dirname(self.rel_path),
-            Path(self.rel_path).stem + ".rst",
+            os.path.dirname(self.rel_path).replace("/", ".")
+            + "."
+            + Path(self.rel_path).stem,
+        )
+        if with_extension:
+            result += ".rst"
+        return result
+
+    def get_dir_doc_path(self, destination_directory, with_extension=True):
+        return self.get_artifact_doc_path(
+            destination_directory, with_extension=with_extension
         )
 
     def write_dir_contents_to_rst(self, destination_directory, start_directory):
@@ -95,6 +104,7 @@ class CatalogEntry:
             title = f"{title[0].upper()}{title[1:]}"
         label = self.get_label()
         dir_doc_content = write_title(title, label)
+        dir_doc_content += ".. toctree::\n   :maxdepth: 1\n\n"
 
         sub_catalog_entries = [
             CatalogEntry.from_dir_entry(
@@ -106,21 +116,20 @@ class CatalogEntry:
         sub_dir_entries = [entry for entry in sub_catalog_entries if entry.is_dir]
         sub_dir_entries.sort(key=lambda entry: entry.path)
         for sub_dir_entry in sub_dir_entries:
-            sub_label = sub_dir_entry.get_label()
-            sub_name = os.path.basename(sub_dir_entry.path)
-            dir_doc_content += f":ref:`📁 {sub_name}/ <{sub_label}>`\n\n"
+            sub_name = sub_dir_entry.get_dir_doc_path(
+                destination_directory="", with_extension=False
+            )
+            dir_doc_content += f"   {sub_name}\n"
 
         sub_file_entries = [entry for entry in sub_catalog_entries if not entry.is_dir]
         sub_file_entries.sort(key=lambda entry: entry.path)
         for sub_file_entry in sub_file_entries:
-            sub_label = sub_file_entry.get_label()
-            sub_name = os.path.basename(sub_file_entry.path)
-            dir_doc_content += f":ref:`{sub_name} <{sub_label}>`\n\n"
+            sub_name = sub_file_entry.get_artifact_doc_path(
+                destination_directory="", with_extension=False
+            )
+            dir_doc_content += f"   {sub_name}\n"
 
-        dir_doc_path = os.path.join(
-            destination_directory,
-            self.rel_path + ".rst",
-        )
+        dir_doc_path = self.get_dir_doc_path(destination_directory)
         Path(dir_doc_path).parent.mkdir(exist_ok=True, parents=True)
         with open(dir_doc_path, "w+") as f:
             f.write(dir_doc_content)
