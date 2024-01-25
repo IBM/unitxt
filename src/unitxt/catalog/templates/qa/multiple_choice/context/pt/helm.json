@@ -1,0 +1,10 @@
+{
+    "type": "multiple_choice_template",
+    "input_format": "A seguir estão perguntas de múltipla escolha (com respostas) sobre {topic}.\n\nContexto: {context}\nPergunta: {question}.\nRespostas: \n{choices}.\nResposta:",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "target_choice_format": "{choice_numeral}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}

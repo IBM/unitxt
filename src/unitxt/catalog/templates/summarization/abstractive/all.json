@@ -1,0 +1,9 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.summarization.abstractive.full",
+        "templates.summarization.abstractive.one_sentence",
+        "templates.summarization.abstractive.passive",
+        "templates.summarization.abstractive.write_succinct"
+    ]
+}

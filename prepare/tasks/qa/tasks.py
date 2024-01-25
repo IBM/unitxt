@@ -7,7 +7,18 @@ add_to_catalog(
         outputs=["answer"],
         metrics=["metrics.squad"],
     ),
-    "tasks.qa.contextual",
+    "tasks.qa.contextual.extractive",
+    overwrite=True,
+)
+
+add_to_catalog(
+    FormTask(
+        inputs=["context", "question"],
+        outputs=["answer"],
+        metrics=["metrics.rouge"],
+        augmentable_inputs=["context", "question"],
+    ),
+    "tasks.qa.contextual.abstractive",
     overwrite=True,
 )
 
@@ -15,7 +26,7 @@ add_to_catalog(
     FormTask(
         inputs=["question"],
         outputs=["answer"],
-        metrics=["metrics.squad"],
+        metrics=["metrics.rouge"],
     ),
     "tasks.qa.open",
     overwrite=True,

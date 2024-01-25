@@ -1,5 +1,6 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.logging_utils import get_logger
+from src.unitxt.operator import SequentialOperator
 from src.unitxt.processors import (
     DictOfListsToPairs,
     ListToEmptyEntitiesTuples,
@@ -20,8 +21,16 @@ example = "h \\:r:hello, t7 ?t : world"
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == [("h \\:r", "hello"), ("t7 ?t", "world")]
 
-add_to_catalog(parser, "processors.to_span_label_pairs", overwrite=True)
-
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            RegexParser(regex=regex, field="prediction", process_every_value=False),
+            RegexParser(regex=regex, field="references", process_every_value=True),
+        ]
+    ),
+    "processors.to_span_label_pairs",
+    overwrite=True,
+)
 
 regex = r"\s*((?:\\.|[^,])+?)\s*(?:,|$)()"
 termination_regex = r"^\s*None\s*$"
@@ -37,7 +46,26 @@ example = "None"
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == []
 
-add_to_catalog(parser, "processors.to_span_label_pairs_surface_only", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            RegexParser(
+                regex=regex,
+                termination_regex=termination_regex,
+                field="prediction",
+                process_every_value=False,
+            ),
+            RegexParser(
+                regex=regex,
+                termination_regex=termination_regex,
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.to_span_label_pairs_surface_only",
+    overwrite=True,
+)
 
 parser = LoadJson(field="TBD")
 operator = DictOfListsToPairs(position_key_before_value=False, field="TBD")
@@ -48,8 +76,42 @@ logger.info(parsed)
 converted = operator.process_value(parsed)
 logger.info(converted)
 assert converted == [("david", "PER"), ("james", "PER")]
-add_to_catalog(parser, "processors.load_json", overwrite=True)
-add_to_catalog(operator, "processors.dict_of_lists_to_value_key_pairs", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            LoadJson(field="prediction", process_every_value=False),
+            LoadJson(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.load_json",
+    overwrite=True,
+)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            DictOfListsToPairs(
+                position_key_before_value=False,
+                field="prediction",
+                process_every_value=False,
+            ),
+            DictOfListsToPairs(
+                position_key_before_value=False,
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.dict_of_lists_to_value_key_pairs",
+    overwrite=True,
+)
 
-operator = ListToEmptyEntitiesTuples(field="TBD")
-add_to_catalog(operator, "processors.list_to_empty_entity_tuples", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ListToEmptyEntitiesTuples(field="prediction", process_every_value=False),
+            ListToEmptyEntitiesTuples(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.list_to_empty_entity_tuples",
+    overwrite=True,
+)

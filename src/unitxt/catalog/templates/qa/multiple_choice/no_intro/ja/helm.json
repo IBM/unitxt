@@ -1,0 +1,10 @@
+{
+    "type": "multiple_choice_template",
+    "input_format": "質問: {question}.\n選択肢: \n{choices}.\n答え:",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "target_choice_format": "{choice_numeral}",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}

@@ -1,7 +1,7 @@
 from src.unitxt.blocks import (
-    FormTask,
-    InputOutputTemplate,
+    AddFields,
     LoadHF,
+    RenameFields,
     TaskCard,
     TemplatesList,
 )
@@ -11,17 +11,14 @@ from src.unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="cnn_dailymail", name="3.0.0"),
     preprocess_steps=[
-        # SplitRandomMix({"train": "train[95%]", "validation": "train[5%]", "test": "validation"}),
-        # CopyFields(field_to_field=[["answers/text", "answer"]], use_query=True),
+        RenameFields(field_to_field={"article": "document", "highlights": "summary"}),
+        AddFields(fields={"document_type": "article"}),
     ],
-    task=FormTask(
-        inputs=["article"],
-        outputs=["highlights"],
-        metrics=["metrics.rouge"],
-    ),
+    task="tasks.summarization.abstractive",
     templates=TemplatesList(
         [
-            InputOutputTemplate(input_format="{article}", output_format="{highlights}"),
+            "templates.summarization.abstractive.full",
+            "templates.summarization.abstractive.write_succinct",
         ]
     ),
 )

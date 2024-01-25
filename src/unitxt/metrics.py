@@ -4,6 +4,7 @@ import uuid
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
+from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
@@ -1324,20 +1325,18 @@ class Perplexity(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         """Computes the likelihood of generating text Y after text X - P(Y|X).
 
-        :param references: ignored
-        :param predictions: ignored
-        :param additional_inputs: a list of dicts, where entry i's key 'x' is for text X_i,
-        and 'y' is for text Y_i.
+        :param references: the list of Y texts as a list of singletons.
+        :param predictions: the list of X texts as a plain list of strings
 
         :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
         """
-        xs = [entry["x"] for entry in additional_inputs]
-        ys = [entry["y"] for entry in additional_inputs]
+        sources = []
+        targets = []
+        for prediction, instance_references in zip(predictions, references):
+            for instance_reference in instance_references:
+                sources.append(f"{self.perplexity_prompt} {prediction}")
+                targets.append(instance_reference)
 
-        # add the instruction as prefix
-        xs = [f"{self.perplexity_prompt} {x}" for x in xs]
-
-        # check if the model is enc-dec or dec-only to use the right perplexity computation
         from transformers import AutoConfig
 
         config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
@@ -1348,9 +1347,25 @@ class Perplexity(BulkInstanceMetric):
         )
 
         # compute P(Q|P) and store in queue
-        scores = lm.compute_lm(source=xs, target=ys, batch_size=self.batch_size)
+        scores = lm.compute_lm(
+            source=sources, target=targets, batch_size=self.batch_size
+        )
 
-        return [{self.main_score: score} for score in scores]
+        index = 0
+        all_instances_scores = []
+        for instance_references in references:
+            instance_scores = {}
+            instance_scores_list = []
+            for _ in range(len(instance_references)):
+                instance_scores_list.append(scores[index])
+                index += 1
+            instance_scores["reference_scores"] = instance_scores_list
+            instance_scores[self.main_score] = mean(instance_scores_list)
+
+            instance_scores[self.main_score] = mean(instance_scores_list)
+            all_instances_scores.append(instance_scores)
+
+        return all_instances_scores
 
     class AbstractLM(ABC):
         def __init__(self, model_name):
@@ -1362,7 +1377,9 @@ class Perplexity(BulkInstanceMetric):
             self.model = self.model_class().from_pretrained(self.model_name)
             self.is_cuda = torch.cuda.is_available()
 
-        def compute_lm(self, source, target, batch_size: int) -> List[float]:
+        def compute_lm(
+            self, source: List[str], target: List[str], batch_size: int
+        ) -> List[float]:
             import torch
 
             scores = []
