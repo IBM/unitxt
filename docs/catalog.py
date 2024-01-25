@@ -83,20 +83,17 @@ class CatalogEntry:
         return Path(self.rel_path).stem
 
     def get_artifact_doc_path(self, destination_directory, with_extension=True):
+        dirname = os.path.dirname(self.rel_path)
+        if dirname:
+            dirname = dirname.replace(os.path.sep, ".") + "."
         result = os.path.join(
             destination_directory,
-            os.path.dirname(self.rel_path).replace("/", ".")
-            + "."
-            + Path(self.rel_path).stem,
+            dirname + Path(self.rel_path).stem,
         )
+
         if with_extension:
             result += ".rst"
         return result
-
-    def get_dir_doc_path(self, destination_directory, with_extension=True):
-        return self.get_artifact_doc_path(
-            destination_directory, with_extension=with_extension
-        )
 
     def write_dir_contents_to_rst(self, destination_directory, start_directory):
         title = self.get_title()
@@ -116,7 +113,7 @@ class CatalogEntry:
         sub_dir_entries = [entry for entry in sub_catalog_entries if entry.is_dir]
         sub_dir_entries.sort(key=lambda entry: entry.path)
         for sub_dir_entry in sub_dir_entries:
-            sub_name = sub_dir_entry.get_dir_doc_path(
+            sub_name = sub_dir_entry.get_artifact_doc_path(
                 destination_directory="", with_extension=False
             )
             dir_doc_content += f"   {sub_name}\n"
@@ -129,7 +126,7 @@ class CatalogEntry:
             )
             dir_doc_content += f"   {sub_name}\n"
 
-        dir_doc_path = self.get_dir_doc_path(destination_directory)
+        dir_doc_path = self.get_artifact_doc_path(destination_directory)
         Path(dir_doc_path).parent.mkdir(exist_ok=True, parents=True)
         with open(dir_doc_path, "w+") as f:
             f.write(dir_doc_content)
