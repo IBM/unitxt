@@ -84,12 +84,16 @@ class CatalogEntry:
         return Path(self.rel_path).stem
 
     def get_artifact_doc_path(self, destination_directory, with_extension=True):
+        """Return the path to an RST file which describes this object."""
         dirname = os.path.dirname(self.rel_path)
         if dirname:
             dirname = dirname.replace(os.path.sep, ".") + "."
+        if not self.rel_path.startswith("catalog"):
+            # add prefix to the rst file path, if not the main catalog file
+            dirname = "catalog." + dirname
         result = os.path.join(
             destination_directory,
-            "catalog." + dirname + Path(self.rel_path).stem,
+            dirname + Path(self.rel_path).stem,
         )
 
         if with_extension:
