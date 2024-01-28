@@ -60,6 +60,11 @@ class Template(StreamInstanceOperator):
 
 
 class InputOutputTemplate(Template):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
     input_format: str = None
     output_format: str = None
 
@@ -264,6 +269,11 @@ class YesNoTemplate(Template):
 
 
 class KeyValTemplate(Template):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify with what separators to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
     pairs_seperator: str = ", "
     key_val_seperator: str = ": "
     use_keys_for_inputs: bool = True
