@@ -29,6 +29,14 @@ In the dynamic landscape of generative NLP, traditional text processing pipeline
 
 https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919fdf
 
+### 🦄 Currently on Unitxt Catalog
+
+![NLP Tasks](https://img.shields.io/badge/NLP_tasks-21-blue)
+![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-377-blue)
+![Templates](https://img.shields.io/badge/Templates-143-blue)
+![Formats](https://img.shields.io/badge/Formats-7-blue)
+![Metrics](https://img.shields.io/badge/Metrics-47-blue)
+
 ### 🦄 Run Unitxt Exploration Dashboard
 
 To launch unitxt graphical user interface run:
