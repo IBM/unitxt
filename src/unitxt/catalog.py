@@ -1,12 +1,14 @@
 import os
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Optional
 
 import requests
 
-from .artifact import Artifact, Artifactory, reset_artifacts_cache
+from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cache
 from .logging_utils import get_logger
+from .text_utils import print_dict
 from .version import version
 
 logger = get_logger()
@@ -35,6 +37,7 @@ default_catalog_path = os.path.join(lib_dir, "catalog")
 class LocalCatalog(Catalog):
     name: str = "local"
     location: str = default_catalog_path
+    is_local: bool = True
 
     def path(self, artifact_identifier: str):
         assert (
@@ -92,6 +95,7 @@ class GithubCatalog(LocalCatalog):
     repo = "unitxt"
     repo_dir = "src/unitxt/catalog"
     user = "IBM"
+    is_local: bool = False
 
     def prepare(self):
         tag = version
@@ -133,3 +137,37 @@ def add_to_catalog(
         artifact, name, overwrite=overwrite, verbose=verbose
     )  # remove collection (its actually the dir).
     # verify name
+
+
+def get_local_catalogs_paths():
+    result = []
+    for artifactory in Artifactories():
+        if isinstance(artifactory, LocalCatalog):
+            if artifactory.is_local:
+                result.append(artifactory.location)
+    return result
+
+
+def count_files_recursively(folder):
+    file_count = 0
+    for _, _, files in os.walk(folder):
+        file_count += len(files)
+    return file_count
+
+
+def local_catalog_summary(catalog_path):
+    result = {}
+
+    for dir in os.listdir(catalog_path):
+        if os.path.isdir(os.path.join(catalog_path, dir)):
+            result[dir] = count_files_recursively(os.path.join(catalog_path, dir))
+
+    return result
+
+
+def summary():
+    result = Counter()
+    for local_catalog_path in get_local_catalogs_paths():
+        result += Counter(local_catalog_summary(local_catalog_path))
+    print_dict(result)
+    return result

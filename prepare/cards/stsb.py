@@ -1,10 +1,9 @@
 from src.unitxt.blocks import (
-    FormTask,
+    AddFields,
     LoadHF,
-    OutputQuantizingTemplate,
+    RenameFields,
     SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -15,23 +14,19 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
         ),
+        RenameFields(
+            field_to_field={
+                "sentence1": "text1",
+                "sentence2": "text2",
+                "label": "attribute_value",
+            }
+        ),
+        AddFields(
+            fields={"attribute_name": "similarity", "min_value": "1", "max_value": "5"}
+        ),
     ],
-    task=FormTask(
-        inputs=["sentence1", "sentence2"],
-        outputs=["label"],
-        metrics=["metrics.spearman"],
-    ),
-    templates=TemplatesList(
-        [
-            OutputQuantizingTemplate(
-                input_format="""
-                   Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?
-                """.strip(),
-                output_format="{label}",
-                quantum=0.2,
-            ),
-        ]
-    ),
+    task="tasks.regression.two_texts",
+    templates="templates.regression.two_texts.all",
 )
 
 test_card(card, strict=False)
