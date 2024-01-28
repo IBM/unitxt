@@ -550,6 +550,8 @@ class Augmentor(StreamInstanceOperator):
 
 
 class NullAugmentor(Augmentor):
+    """Does not change the input string."""
+
     def verify(self):
         pass
 
