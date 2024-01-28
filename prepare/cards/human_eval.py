@@ -1,6 +1,3 @@
-import json
-import re
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     FormTask,
@@ -9,26 +6,26 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import Apply
+from unitxt.operators import ExecuteQuery
 from unitxt.test_utils.card import test_card
 
-_ASSERT_REGEX = r"assert.*?(?=\n\s*assert|$)"
+get_asserts = """
+import re
+import json
 
-
-def extract_asserts(test, entry_point):
-    return json.dumps(
-        [
-            t.replace("candidate", entry_point)
-            for t in re.findall(_ASSERT_REGEX, test, re.DOTALL)
-        ]
-    )
+_ASSERT_REGEX = r"assert.*?(?=\\n\\s*assert|$)"
+json.dumps(
+    [
+        t.replace("candidate", entry_point)
+        for t in re.findall(_ASSERT_REGEX, test, re.DOTALL)
+    ]
+)
+"""
 
 
 card = TaskCard(
     loader=LoadHF(path="openai_humaneval", split="test"),
-    preprocess_steps=[
-        Apply("test", "entry_point", function=extract_asserts, to_field="test_list")
-    ],
+    preprocess_steps=[ExecuteQuery(query=get_asserts, to_field="test_list")],
     task=FormTask(
         inputs=["prompt"],
         outputs=["prompt", "canonical_solution", "test_list"],
