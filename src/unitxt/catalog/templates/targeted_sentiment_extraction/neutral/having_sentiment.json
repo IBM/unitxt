@@ -1,0 +1,11 @@
+{
+    "type": "span_labeling_template",
+    "input_format": "From the following {text_type}, extract entities having a sentiment: {sentiment_class}. If there  none, output None. \n{text_type}: {text}\n",
+    "labels_support": [
+        "neutral"
+    ],
+    "span_label_format": "{span}",
+    "postprocessors": [
+        "processors.to_span_label_pairs_surface_only"
+    ]
+}

@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Sum up the text with a quick overview, pulling out the main ideas and important details.\nText: {text}",
+    "output_format": "{target}"
+}
