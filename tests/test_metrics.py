@@ -1,4 +1,5 @@
 import unittest
+from copy import deepcopy
 from math import isnan
 
 from src.unitxt.logging_utils import get_logger
@@ -63,15 +64,31 @@ GROUPED_INSTANCE_REFERENCES = [
 
 # possibly multi-column group identifier
 GROUPED_INSTANCE_ADDL_INPUTS = (
-    [{"group": "grp1", "id": 0}] * 5
-    + [{"group": "grp1", "id": 1}] * 5
-    + [{"group": "grp2", "id": 0}] * 4
-    + [{"group": "grp2", "id": 1}] * 1
+    [deepcopy({"group": "grp1", "id": 0, "ignore": 1}) for _ in range(5)]
+    + [deepcopy({"group": "grp1", "id": 1, "ignore": 1}) for _ in range(5)]
+    + [deepcopy({"group": "grp2", "id": 0, "ignore": 1}) for _ in range(4)]
+    + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
 )
-group_by_fields = ["group", "id"]
+
+# for group_mean_subgroup_comparison metrics, add a subgroup indicator (by default called 'variant_type')
+# these groupings correspond in length to the group identifiers above
+VARIANT_TYPE = (
+    (["original"] + ["paraphrase"] * 4)
+    + (["original"] + ["paraphrase"] * 4)
+    + (["original"] + ["paraphrase"] * 3)
+    + ["original"]
+)
+
 # construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
-for ai in GROUPED_INSTANCE_ADDL_INPUTS:
-    ai.update({"group_id": "_".join([str(ai[ff]) for ff in group_by_fields])})
+group_by_fields = ["group", "id"]
+
+for ai, vt in zip(GROUPED_INSTANCE_ADDL_INPUTS, VARIANT_TYPE):
+    ai.update(
+        {
+            "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
+            "variant_type": vt,
+        }
+    )
 
 
 class TestMetrics(unittest.TestCase):
@@ -662,28 +679,32 @@ class TestConfidenceIntervals(unittest.TestCase):
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupPDRAccuracy(),
-            expected_ci_low=0.375,
+            expected_ci_low=0.0,
             expected_ci_high=1.0,
+            reduction_name="group_mean_subgroup_comparison",
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupPDRStringContainment(),
-            expected_ci_low=0.14285714285714288,
+            expected_ci_low=0.0,
             expected_ci_high=1.0,
+            reduction_name="group_mean_subgroup_comparison",
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHAccuracy(),
-            expected_ci_low=-0.9232678869571689,
-            expected_ci_high=-0.3333333333333333,
+            expected_ci_low=-1.0,
+            expected_ci_high=0.5000000000000001,
+            reduction_name="group_mean_subgroup_comparison",
         )
 
         # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
         # hence this test may fail on a PC
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHStringContainment(),
-            expected_ci_low=-0.743586957620825,
-            expected_ci_high=-0.3908330554711398,
+            expected_ci_low=-1.0,
+            expected_ci_high=0.0,
+            reduction_name="group_mean_subgroup_comparison",
         )
 
         # pass global dict because there are additional fields other than the main score
@@ -714,6 +735,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         references=GROUPED_INSTANCE_REFERENCES,
         predictions=GROUPED_INSTANCE_PREDICTIONS,
         expected_global_result=None,
+        reduction_name="group_mean",
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
         outputs = apply_metric(
@@ -726,7 +748,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         group_score_name = "_".join(
             [
                 "group",
-                metric.reduction_map["group_mean"]["agg_func"][0],
+                metric.reduction_map[reduction_name]["agg_func"][0],
                 metric.main_score,
             ]
         )

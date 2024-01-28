@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
     GroupMeanAccuracy,
@@ -46,62 +48,51 @@ references = [
     [" abcdefg", "AB", "abcd"],
 ]
 
-# possibly multi-column group identifier
+# possibly multi-column group identifier; 'ignore' is unused
+# use deepcopy so that dicts in list are independent and can be updated separately
 additional_inputs = (
-    [{"group": "grp1", "id": 0, "ignore": 1}] * 5
-    + [{"group": "grp1", "id": 1, "ignore": 1}] * 5
-    + [{"group": "grp2", "id": 0, "ignore": 1}] * 4
-    + [{"group": "grp2", "id": 1, "ignore": 0}] * 1
+    [deepcopy({"group": "grp1", "id": 0, "ignore": 1}) for _ in range(5)]
+    + [deepcopy({"group": "grp1", "id": 1, "ignore": 1}) for _ in range(5)]
+    + [deepcopy({"group": "grp2", "id": 0, "ignore": 1}) for _ in range(4)]
+    + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
+)
+# for group_mean_subgroup_comparison metrics, add a subgroup indicator (by default called 'variant_type')
+# these groupings correspond in length to the group identifiers above
+variant_type = (
+    (["original"] + ["paraphrase"] * 4)
+    + (["original"] + ["paraphrase"] * 4)
+    + (["original"] + ["paraphrase"] * 3)
+    + ["original"]
 )
 
-group_by_fields = ["group", "id"]
 # construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
-for ai in additional_inputs:
-    ai.update({"group_id": "_".join([str(ai[ff]) for ff in group_by_fields])})
+group_by_fields = ["group", "id"]
+
+for ai, vt in zip(additional_inputs, variant_type):
+    ai.update(
+        {
+            "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
+            "variant_type": vt,
+        }
+    )
 
 
 instance_targets_string_containment = [
     {"score": 1.0},
     {"score": 1.0},
-    {
-        "score": 0.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 0.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 0.0,
-    },
-    {
-        "score": 0.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 1.0,
-    },
-    {
-        "score": 0.0,
-    },
-    {
-        "score": 0.0,
-    },
+    {"score": 0.0},
+    {"score": 1.0},
+    {"score": 0.0},
+    {"score": 1.0},
+    {"score": 1.0},
+    {"score": 0.0},
+    {"score": 0.0},
+    {"score": 1.0},
+    {"score": 1.0},
+    {"score": 1.0},
+    {"score": 1.0},
+    {"score": 0.0},
+    {"score": 0.0},
 ]
 
 for instance in instance_targets_string_containment:
@@ -126,7 +117,6 @@ instance_targets_accuracy = [
     {"score": 0.0},
     {"score": 0.0},
 ]
-
 for instance in instance_targets_accuracy:
     instance.update({"accuracy": instance["score"], "score_name": "accuracy"})
 
@@ -184,9 +174,9 @@ global_target = {
     "group_pdr_accuracy": 0.83,
     "score": 0.83,
     "score_name": "group_pdr_accuracy",
-    "score_ci_low": 0.38,
+    "score_ci_low": 0.0,
     "score_ci_high": 1.0,
-    "group_pdr_accuracy_ci_low": 0.38,
+    "group_pdr_accuracy_ci_low": 0.0,
     "group_pdr_accuracy_ci_high": 1.0,
 }
 
@@ -208,9 +198,9 @@ global_target = {
     "group_pdr_string_containment": 0.44,
     "score": 0.44,
     "score_name": "group_pdr_string_containment",
-    "score_ci_low": 0.14,
+    "score_ci_low": 0.0,
     "score_ci_high": 1.0,
-    "group_pdr_string_containment_ci_low": 0.14,
+    "group_pdr_string_containment_ci_low": 0.0,
     "group_pdr_string_containment_ci_high": 1.0,
 }
 
@@ -232,10 +222,10 @@ global_target = {
     "group_norm_cohens_h_accuracy": -0.42,
     "score": -0.42,
     "score_name": "group_norm_cohens_h_accuracy",
-    "score_ci_low": -0.92,
-    "score_ci_high": -0.33,
-    "group_norm_cohens_h_accuracy_ci_low": -0.92,
-    "group_norm_cohens_h_accuracy_ci_high": -0.33,
+    "score_ci_low": -1.0,
+    "score_ci_high": 0.5,
+    "group_norm_cohens_h_accuracy_ci_low": -1.0,
+    "group_norm_cohens_h_accuracy_ci_high": 0.5,
 }
 
 
@@ -256,10 +246,10 @@ global_target = {
     "group_norm_cohens_h_string_containment": -0.46,
     "score": -0.46,
     "score_name": "group_norm_cohens_h_string_containment",
-    "score_ci_low": -0.74,
-    "score_ci_high": -0.39,
-    "group_norm_cohens_h_string_containment_ci_low": -0.74,
-    "group_norm_cohens_h_string_containment_ci_high": -0.39,
+    "score_ci_low": -1.0,
+    "score_ci_high": 0.0,
+    "group_norm_cohens_h_string_containment_ci_low": -1.0,
+    "group_norm_cohens_h_string_containment_ci_high": 0.0,
 }
 
 
