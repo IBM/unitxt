@@ -1,14 +1,15 @@
 import os
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Optional
-from collections import Counter
+
 import requests
 
-from .artifact import Artifact, Artifactory, reset_artifacts_cache, Artifactories
+from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cache
 from .logging_utils import get_logger
-from .version import version
 from .text_utils import print_dict
+from .version import version
 
 logger = get_logger()
 COLLECTION_SEPARATOR = "."
@@ -146,11 +147,13 @@ def get_local_catalogs_paths():
                 result.append(artifactory.location)
     return result
 
+
 def count_files_recursively(folder):
     file_count = 0
     for _, _, files in os.walk(folder):
         file_count += len(files)
     return file_count
+
 
 def local_catalog_summary(catalog_path):
     result = {}
@@ -161,9 +164,10 @@ def local_catalog_summary(catalog_path):
 
     return result
 
+
 def summary():
     result = Counter()
     for local_catalog_path in get_local_catalogs_paths():
-        result +=  Counter(local_catalog_summary(local_catalog_path))
+        result += Counter(local_catalog_summary(local_catalog_path))
     print_dict(result)
     return result
