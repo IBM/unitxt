@@ -1,0 +1,6 @@
+{
+    "type": "output_quantizing_template",
+    "input_format": "Given this text: '{text}', on a scale of {min_value} to {max_value}, what is the {attribute_name} of this text?",
+    "output_format": "{attribute_value}",
+    "quantum": 0.2
+}
