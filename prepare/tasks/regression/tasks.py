@@ -8,7 +8,7 @@ add_to_catalog(
         metrics=["metrics.spearman"],
         augmentable_inputs=["text"],
     ),
-    "tasks.regression",
+    "tasks.regression.single_text",
     overwrite=True,
 )
 

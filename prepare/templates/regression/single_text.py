@@ -9,16 +9,16 @@ add_to_catalog(
         output_format="{attribute_value}",
         quantum=0.2,
     ),
-    "templates.regression.simple",
+    "templates.regression.single_text.simple",
     overwrite=True,
 )
 
 add_to_catalog(
     TemplatesList(
         [
-            "templates.regression.simple",
+            "templates.regression.single_text.simple",
         ]
     ),
-    "templates.regression.simple",
+    "templates.regression.single_text.all",
     overwrite=True,
 )
