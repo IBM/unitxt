@@ -36,12 +36,12 @@ jobs:
 
     - name: Push dataset to HuggingFace Hub
       env:
-        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_HUGGINGFACE_WRITE_TOKEN }}
       run: >-
         python ./utils/hf/prepare_dataset.py
 
     - name: Push metric to HuggingFace Hub
       env:
-        HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_HUGGINGFACE_WRITE_TOKEN }}
       run: >-
         python ./utils/hf/prepare_metric.py

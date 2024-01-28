@@ -23,8 +23,13 @@ jobs:
     - run: pip install -r requirements/base.rqr
     - run: pip install -r requirements/tests.rqr
     - run: pip install coverage
+    - run: pip install "huggingface_hub[cli]"
+    - run: git config --global credential.helper store
+    - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} --add-to-git-credential
 
     - name: Generate Report
+      env:
+        HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
       run:  coverage run -m unittest
 
     - name: Upload Coverage to Codecov
