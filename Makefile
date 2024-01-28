@@ -16,6 +16,7 @@ clear-docs:
 	rm $(DIR)/docs/modules.rst
 	rm $(DIR)/docs/unitxt.rst
 	rm $(DIR)/docs/unitxt.*.rst
+	rm $(DIR)/docs/catalog.*.rst
 
 docs: docs-html
 
