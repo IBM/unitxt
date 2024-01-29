@@ -36,8 +36,8 @@ target-version = "py38"
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
 "src/unitxt/blocks.py" = ["F811", "F401"]
-"tests/test_loaders.py" = ["N802", "N803"]
-"tests/test_dataclass.py" = ["F811"]
+"tests/library/test_loaders.py" = ["N802", "N803"]
+"tests/library/test_dataclass.py" = ["F811"]
 "src/unitxt/validate.py" = ["B024"]
 "src/unitxt/type_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
@@ -91,7 +91,9 @@ line-ending = "auto"
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+
 [tool.coverage.run]
 omit = [
-    "*/test_preparation.py"
+    "preperation/*",
+    "docs/*"
 ]

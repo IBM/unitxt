@@ -1,4 +1,4 @@
-name: Test Catalog
+name: Test Catalog Code
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  run-all-preperation-snnipets:
+  run-catalog-artifacts-tests:
 
     runs-on: ubuntu-latest
     env:
@@ -30,5 +30,5 @@ jobs:
     - name: Generate Report
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-      run:  unittest-parallel -t . -s tests -p *test_preperation.py -j 10 --level test
+      run:  coverage run --omit=*/src -m unittest discover -s tests/catalog -p "test_*.py"
 

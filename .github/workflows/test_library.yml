@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  run-full-unit-tests-suit:
+  run-full-unit-tests-suite:
 
     runs-on: ubuntu-latest
     env:
@@ -30,7 +30,7 @@ jobs:
     - name: Generate Report
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-      run:  coverage run --omit=*/test_preparation.py -m unittest
+      run:  coverage run --omit=*/preperation -m unittest discover -s tests/library -p "test_*.py"
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
