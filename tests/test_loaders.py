@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -12,8 +13,15 @@ from src.unitxt.logging_utils import get_logger
 logger = get_logger()
 
 
+CONTENT = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
+
+
 class DummyBody:
-    pass
+    def iter_lines():
+        for line in CONTENT:
+            line_as_str = json.dumps(line)
+            line_as_bytes = line_as_str.encode()
+            yield line_as_bytes
 
 
 class DummyObject:
@@ -25,8 +33,8 @@ class DummyBucket:
     def download_file(self, item_name, local_file, Callback):
         with open(local_file, "w") as f:
             logger.info(local_file)
-            f.write("a,b\n")
-            f.write("1,2\n")
+            for line in CONTENT:
+                f.write(json.dumps(line) + "\n")
 
 
 class DummyS3:
@@ -65,21 +73,28 @@ class TestLoaders(unittest.TestCase):
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
         os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
         for data_files in [
-            ["train.csv", "test.csv"],
-            {"train": "train.csv", "test": "test.csv"},
-            {"train": ["train.csv"], "test": ["test.csv"]},
+            ["train.jsonl", "test.jsonl"],
+            {"train": "train.jsonl", "test": "test.jsonl"},
+            {"train": ["train.jsonl"], "test": ["test.jsonl"]},
         ]:
-            loader = LoadFromIBMCloud(
-                endpoint_url_env="DUMMY_URL_ENV",
-                aws_access_key_id_env="DUMMY_KEY_ENV",
-                aws_secret_access_key_env="DUMMY_SECRET_ENV",
-                bucket_name="DUMMY_BUCKET",
-                data_dir="DUMMY_DATA_DIR",
-                data_files=data_files,
-            )
-            with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
-                ms = loader()
-                self.assertEqual(ms.to_dataset()["test"][0], {"a": 1, "b": 2})
+            for loader_limit in [1, 2, None]:
+                loader = LoadFromIBMCloud(
+                    endpoint_url_env="DUMMY_URL_ENV",
+                    aws_access_key_id_env="DUMMY_KEY_ENV",
+                    aws_secret_access_key_env="DUMMY_SECRET_ENV",
+                    bucket_name="DUMMY_BUCKET",
+                    data_dir="DUMMY_DATA_DIR",
+                    data_files=data_files,
+                    loader_limit=loader_limit,
+                )
+                with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
+                    ms = loader()
+                    ds = ms.to_dataset()
+                    if loader_limit is None:
+                        self.assertEqual(len(ds["test"]), 2)
+                    else:
+                        self.assertEqual(len(ds["test"]), loader_limit)
+                    self.assertEqual(ds["test"][0], {"a": 1, "b": 2})
 
     def test_load_from_HF_compressed(self):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
