@@ -93,6 +93,8 @@ class InputOutputTemplate(Template):
 
 
 class MultipleChoiceTemplate(Template):
+    """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
+
     input_format: str
     target_prefix: str = ""
     choices_field: str = "choices"
