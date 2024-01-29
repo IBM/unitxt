@@ -1,4 +1,4 @@
-from unitxt.logging_utils import get_logger
+from src.unitxt.logging_utils import get_logger
 
 """TaskCard generated from HELM Enterprise Scenario:
 
