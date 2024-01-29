@@ -1,21 +1,16 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
-    AddFields,
-    InputOutputTemplate,
-    LoadHF,
-    TaskCard,
-    TemplatesList,
-)
-from src.unitxt.test_utils.card import test_card
+exit(0)
 
-"""
-TaskCard generated from HELM Enterprise Scenario:
+"""TaskCard generated from HELM Enterprise Scenario:
 
 - earningscall_scenario.py
 
 https://github.ibm.com/ai-models-evaluation/crfm-helm-enterprise
 
 """
+
+
+""" Card is bugged. Disabled until a fix is issued.
+ PR at https://huggingface.co/datasets/jlh-ibm/earnings_call/discussions/2
 card = TaskCard(
     loader=LoadHF(path="jlh-ibm/earnings_call"),
     preprocess_steps=[
@@ -41,3 +36,4 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.earnings_call", overwrite=True)
+"""
