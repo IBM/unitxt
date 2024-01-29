@@ -78,7 +78,13 @@ class CatalogEntry:
 
     def get_label(self):
         label = self.rel_path.replace(".json", "")
-        return label.replace("/", ".")
+        label = label.replace("/", ".")
+        if not self.is_main_catalog_entry():
+            label = "catalog." + label
+        return label
+
+    def is_main_catalog_entry(self):
+        return self.rel_path.startswith("catalog")
 
     def get_title(self):
         return Path(self.rel_path).stem
@@ -88,7 +94,7 @@ class CatalogEntry:
         dirname = os.path.dirname(self.rel_path)
         if dirname:
             dirname = dirname.replace(os.path.sep, ".") + "."
-        if not self.rel_path.startswith("catalog"):
+        if not self.is_main_catalog_entry():
             # add prefix to the rst file path, if not the main catalog file
             dirname = "catalog." + dirname
         result = os.path.join(

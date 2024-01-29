@@ -7,11 +7,18 @@
 Introduction
 ===================
 
-Unitxt is a Python library for getting data ready for utilization in training, evaluation and inference of language models.
-It provides a set of reusable building blocks and methodology for defining datasets and metrics.
+In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations.
+The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.
 
-In one line of code, it prepares a dataset or mixtures-of-datasets into a sequence to sequence input-output format for training and evaluation. Our aspiration is to be simple, adaptable, and transparent.
+Addressing this need is `Unitxt`_, an innovative library for customizable textual data preparation and evaluation tailored to generative language models.
+Unitxt natively integrates with common libraries like `HuggingFace`_ and `LM-eval-harness`_ and deconstructs processing flows into modular components, enabling easy customization and sharing between practitioners.
+These components encompass model-specific formats, task prompts, and many other comprehensive dataset processing definitions.
+These components are centralized in the Unitxt-Catalog, thus fostering collaboration and exploration in modern textual data workflows.
 
-Unitxt builds on the principle of modularity. Modularity allows adding a dataset without knowing anything about the models using it. It allows for training without worrying about preprocessing, switching models without the need to load the data differently, and changing formats (instruction, in-context learning, etc.) without changing anything else.
+Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively.
 
-Unitxt comes with a library of prefined task definitions, datasets, templates and metrics that cover most NLP tasks, including classification, extraction, summarization, question answering, and more.
+Join the Unitxt community at https://github.com/IBM/unitxt!
+
+.. _Unitxt: https://github.com/IBM/unitxt
+.. _HuggingFace: https://huggingface.co/
+.. _LM-eval-harness: https://github.com/EleutherAI/lm-evaluation-harness
