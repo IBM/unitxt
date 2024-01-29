@@ -7,8 +7,17 @@ Each operator is of a specific `ingredients`_ type.
 Operators may be are defined and shared within the :ref:`Unitxt Catalog <unitxt_catalog>`.
 The operators compose larger unitxt `Building Blocks`_.
 
+Here is a diagram of the unitxt flow.
+The upper section illustrates the :ref:`data-preparation pipeline <data_preparation_pipeline>`,
+encompassing raw dataset loading, standardization according to the :ref:`task <task>` interface,
+verbalization using :ref:`templates <templates>`,
+and application of :ref:`formatting <formats>`.
+The lower section showcases the :ref:`evaluation pipeline <evaluation_pipeline>`,
+involving de-verbalization operations and output standardization before performance evaluation with task-defined metrics.
+All components are described in detail below.
+
 .. image:: ../../assets/unitxt_flow.png
-   :alt: Optional alt text
+   :alt: The unitxt flow
    :width: 100%
    :align: center
 
@@ -24,14 +33,14 @@ Typically, this includes data wrangling actions, e.g. renaming fields,
 filtering data instances, modifying values, train/test/val splitting etc.
 It also describes the resource from which the data is loaded.
 
-The catalog contains predefined data-task cards for various datasets :ref:`here <cards>`.
+The catalog contains predefined data-task cards for various datasets :ref:`here <catalog.cards>`.
 
 Recipe
 ++++++
 A **Recipe** holds a complete specification of a \unitxt pipeline.
 This includes Resources, Task, Template, Format and Extensions.
 
-The catalog contains predefined recipes :ref:`here <recipes>`.
+The catalog contains predefined recipes :ref:`here <catalog.recipes>`.
 
 .. _ingredients:
 Ingredients
@@ -45,18 +54,20 @@ Unitxt implements several APIs for accessing external resources such as datasets
 - Local files
 - Cloud storage
 
+.. _tasks:
 Tasks
 +++++
 A Unitxt **task** follows the formal definition of an NLP task, such as multi-label classification, named entity extraction, abstractive summarization or translation.
 A task is defined by its standard interface -- namely, input and output fields -- and by its evaluation metrics.
 Given a dataset, its contents are standardized into the fields defined by an appropriate task by a Data-Task Card.
 
-The catalog contains predefined tasks :ref:`here <tasks>`.
+The catalog contains predefined tasks :ref:`here <catalog.tasks>`.
 
-As an example of a defined task, consider :ref:`translation <tasks.translation.directed>`:
+As an example of a defined task, consider :ref:`translation <catalog.tasks.translation.directed>`:
 it has two three input fields (named *text*, *source_language*and, *target_language*), one output field
-(named *translation*) and the metric :ref:`normalized Sacrebleu <metrics.normalized_sacrebleu>`.
+(named *translation*) and the metric :ref:`normalized Sacrebleu <catalog.metrics.normalized_sacrebleu>`.
 
+.. _templates:
 Templates
 +++++++++
 
@@ -77,8 +88,9 @@ Having the de-verbalization steps defined within the template enables templates 
 The templates, datasets and tasks in Unitxt are not exclusively tied.
 Each task can harness multiple templates and a template can be used for different datasets.
 
-The catalog contains predefined templates :ref:`here <templates>`.
+The catalog contains predefined templates :ref:`here <catalog.templates>`.
 
+.. _formats:
 Formats
 +++++++
 A Unitxt **Format** defines a set of extra formatting requirements, unrelated to the underlying data or task, including
@@ -88,7 +100,7 @@ Continuing the example from \figureRef{fig:verbalization}, the Unitxt format rec
 "**classify the sentence: ``I like toast''**", and adds the system prompt "**<SYS>You are a helpful agent</SYS>}**",
 the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
-The catalog contains predefined formats :ref:`here <formats>`.
+The catalog contains predefined formats :ref:`here <catalog.formats>`.
 
 Extensions
 ++++++++++
@@ -105,6 +117,7 @@ Each extension is an independent unit, reusable across different datasets and ta
 Pipelines
 =========
 
+.. _data_preparation_pipeline:
 Data Preparation Pipeline
 +++++++++++++++++++++++++
 The data preparation pipeline begins with standardizing the raw data into the task interface,
@@ -113,6 +126,7 @@ The examples are then verbalized by the template, and the format operator applie
 special tokens and in-context learning examples.
 To maintain compatibility, the output of this pipeline is a HuggingFace dataset, that can be saved or pushed to the hub.
 
+.. _evaluation_pipeline:
 Evaluation Pipeline
 +++++++++++++++++++
 
