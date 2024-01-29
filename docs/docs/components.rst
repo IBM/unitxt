@@ -16,6 +16,7 @@ The lower section showcases the :ref:`evaluation pipeline <evaluation_pipeline>`
 involving de-verbalization operations and output standardization before performance evaluation with task-defined metrics.
 All components are described in detail below.
 
+.. _unitxt_flow_diagram:
 .. image:: ../../assets/unitxt_flow.png
    :alt: The unitxt flow
    :width: 100%
@@ -76,7 +77,13 @@ Templates
 
 A Unitxt **Template** defines the verbalizations to be applied to the inputs and targets,
 as well as the de-verbalization operations over the model predictions.
-For example, applying the template to "**I like toast**" verbalizes it into "**classify the sentence: ``I like toast''**".
+For example, applying the template to "**I like toast**" verbalizes it into "**classify the sentence: ``I like toast''**":
+
+.. _prompt_structure:
+.. image:: ../../assets/prompt_structure.png
+   :alt: The unitxt prompt structure
+   :width: 75%
+   :align: center
 
 In the other direction, template de-verbalization involves two steps.
 First, a general standardization of the output texts: taking only the first non-empty line of a model's predictions, lowercasing, stripping whitespaces, etc.
@@ -99,7 +106,7 @@ Formats
 A Unitxt **Format** defines a set of extra formatting requirements, unrelated to the underlying data or task, including
 those pertaining to system prompts, special tokens or user/agent prefixes, and in-context demonstrations.
 
-Continuing the example from \figureRef{fig:verbalization}, the Unitxt format receives the text produced by the template
+Continuing the example from the above :ref:`figure <prompt_structure>`, the Unitxt format receives the text produced by the template
 "**classify the sentence: ``I like toast''**", and adds the system prompt "**<SYS>You are a helpful agent</SYS>}**",
 the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
@@ -112,7 +119,7 @@ Unitxt supports **Extensions** such as "**input-augmentation**"
 (for example, adding random whitespace, introducing spelling mistakes, or replacing words with their synonyms) or
 label-noising (replaces the labels in the demonstrations randomly from a list of options).
 Such extensions can be added anywhere in the data-preparation pipeline between any two operators, depending on the
-desired logic (see Fig.~\ref{fig:unitxt-flow}).
+desired logic (see :ref:`the unitxt flow diagram <unitxt_flow_diagram`}).
 
 Unitxt supports the addition of custom extensions to the Unitxt Catalog.
 Each extension is an independent unit, reusable across different datasets and tasks, templates and formats.
