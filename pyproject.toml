@@ -88,7 +88,10 @@ skip-magic-trailing-comma = false
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
-
-
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.coverage.run]
+omit = [
+    "*/test_preparation.py"
+]
