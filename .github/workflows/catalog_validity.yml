@@ -1,4 +1,4 @@
-name: Test Catalog Code
+name: Test Catalog Validity and Freshness
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
 
     - name: Delete Catalog
       run: rm -rf src/unitxt/catalog/*
-      
+
     - name: Run Preperation
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
