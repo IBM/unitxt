@@ -83,8 +83,9 @@ def make_content(artifact, label, all_labels):
 
     references = []
     for label in all_labels:
-        if f'"{label}"' in result:
-            references.append(f":ref:`{label} <{label}>`")
+        label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
+        if f'"{label_no_catalog}"' in result:
+            references.append(f":ref:`{label_no_catalog} <{label}>`")
     if len(references) > 0:
         result += "\nReferences: " + ", ".join(references)
     return result
