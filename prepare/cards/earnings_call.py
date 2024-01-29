@@ -1,4 +1,4 @@
-exit(0)
+exit(1)
 
 """TaskCard generated from HELM Enterprise Scenario:
 
