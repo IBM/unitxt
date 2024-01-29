@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Guide the creation of a concise summary for the provided text, carefully extracting the central ideas and imperative information.\nText: {document}",
+    "output_format": "{summary}"
+}

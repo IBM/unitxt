@@ -1,0 +1,4 @@
+{
+    "type": "span_labeling_json_template",
+    "input_format": "Convert the following text into JSON format in a single line, with the following keys:[\"positive\", \"negative\", \"neutral\"]. \nText: {text}"
+}
