@@ -1,0 +1,11 @@
+{
+    "type": "span_labeling_template",
+    "input_format": "{text}",
+    "labels_support": [
+        "negative"
+    ],
+    "span_label_format": "{span}",
+    "postprocessors": [
+        "processors.to_span_label_pairs_surface_only"
+    ]
+}

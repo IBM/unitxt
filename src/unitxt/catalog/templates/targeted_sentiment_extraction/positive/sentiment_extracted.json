@@ -1,0 +1,11 @@
+{
+    "type": "span_labeling_template",
+    "input_format": "From the following {text_type}, extract the objects for which the sentiment extracted is {sentiment_class}. If there are none, output None. \n{text_type}: {text}\n",
+    "labels_support": [
+        "positive"
+    ],
+    "span_label_format": "{span}",
+    "postprocessors": [
+        "processors.to_span_label_pairs_surface_only"
+    ]
+}

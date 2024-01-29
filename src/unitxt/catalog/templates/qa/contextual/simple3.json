@@ -1,0 +1,5 @@
+{
+    "type": "multi_reference_template",
+    "input_format": "Given the context provided in the passage, answer the following question: {question} \nContext: {context}",
+    "references_field": "answers"
+}

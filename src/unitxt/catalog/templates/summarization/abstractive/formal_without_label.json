@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Produce a succinct summary for the following text, extracting the fundamental concepts and crucial information.\n{document}",
+    "output_format": "{summary}"
+}
