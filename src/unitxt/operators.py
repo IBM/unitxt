@@ -36,6 +36,7 @@ import importlib
 import operator
 import os
 import uuid
+import zipfile
 from abc import abstractmethod
 from collections import Counter
 from copy import deepcopy
@@ -54,6 +55,8 @@ from typing import (
     Union,
 )
 
+import requests
+
 from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
@@ -62,12 +65,13 @@ from .operator import (
     MultiStreamOperator,
     PagedStreamOperator,
     SequentialOperator,
+    SideEffectOperator,
     SingleStreamOperator,
     SingleStreamReducer,
+    SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
     StreamInstanceOperator,
-    StreamSource,
 )
 from .random_utils import new_random_generator
 from .stream import Stream
@@ -89,7 +93,7 @@ class FromIterables(StreamInitializerOperator):
         return MultiStream.from_iterables(iterables)
 
 
-class IterableSource(StreamSource):
+class IterableSource(SourceOperator):
     """Creates a MultiStream from a dict of named iterables.
 
     It is a callable.
@@ -105,7 +109,7 @@ class IterableSource(StreamSource):
 
     iterables: Dict[str, Iterable]
 
-    def __call__(self) -> MultiStream:
+    def process(self) -> MultiStream:
         return MultiStream.from_iterables(self.iterables)
 
 
@@ -1784,3 +1788,54 @@ class LengthBalancer(DeterministicBalancer):
             if total_len < val:
                 return i
         return i + 1
+
+
+class DownloadError(Exception):
+    def __init__(
+        self,
+        message,
+    ):
+        self.__super__(message)
+
+
+class UnexpectedHttpCodeError(Exception):
+    def __init__(self, http_code):
+        self.__super__(f"unexpected http code {http_code}")
+
+
+class DownloadOperator(SideEffectOperator):
+    """Operator for downloading a file from a given URL to a specified local path.
+
+    Attributes:
+        source (str): URL of the file to be downloaded.
+        target (str): Local path where the downloaded file should be saved.
+    """
+
+    source: str
+    target: str
+
+    def process(self):
+        try:
+            response = requests.get(self.source, allow_redirects=True)
+        except Exception as e:
+            raise DownloadError(f"Unabled to download {self.source}") from e
+        if response.status_code != 200:
+            raise UnexpectedHttpCodeError(response.status_code)
+        with open(self.target, "wb") as f:
+            f.write(response.content)
+
+
+class ExtractZipFile(SideEffectOperator):
+    """Operator for extracting files from a zip archive.
+
+    Attributes:
+        zip_file (str): Path of the zip file to be extracted.
+        target_dir (str): Directory where the contents of the zip file will be extracted.
+    """
+
+    zip_file: str
+    target_dir: str
+
+    def process(self):
+        with zipfile.ZipFile(self.zip_file) as zf:
+            zf.extractall(self.target_dir)
