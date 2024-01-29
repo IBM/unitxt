@@ -6,15 +6,15 @@ from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
 from .metric_utils import _compute
-from .operator import StreamSource
+from .operator import SourceOperator
 
 logger = get_logger()
 
 
-def load(source: Union[StreamSource, str]) -> DatasetDict:
+def load(source: Union[SourceOperator, str]) -> DatasetDict:
     assert isinstance(
-        source, (StreamSource, str)
-    ), "source must be a StreamSource or a string"
+        source, (SourceOperator, str)
+    ), "source must be a SourceOperator or a string"
     if isinstance(source, str):
         source, _ = fetch_artifact(source)
     return source().to_dataset()
