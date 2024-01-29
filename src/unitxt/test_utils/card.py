@@ -43,6 +43,13 @@ def test_loading_from_catalog(card):
 
 
 def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
+    disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
+    if disable is not None:
+        logger.info(
+            "load_examples_from_standard_recipe() functionality is disabled because UNITXT_TEST_CARD_DISABLE environment variable is set"
+        )
+        return None
+
     logger.info("*" * 80)
     logger.info(f"Using template card index: {template_card_index}")
 
