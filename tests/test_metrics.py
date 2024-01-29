@@ -10,6 +10,7 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FixedGroupMeanAccuracy,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -463,6 +464,7 @@ class TestMetrics(unittest.TestCase):
 
     def test_grouped_instance_metrics(self):
         accuracy_metrics = [
+            FixedGroupMeanAccuracy(),
             GroupMeanAccuracy(),
             GroupMeanStringContainment(),
             GroupPDRAccuracy(),
@@ -472,6 +474,7 @@ class TestMetrics(unittest.TestCase):
             GroupMeanTokenOverlap(),
         ]
         global_targets = [
+            0.225,
             0.225,
             0.4875,
             0.8333333333333334,
@@ -498,7 +501,7 @@ class TestMetrics(unittest.TestCase):
         from statistics import mean
 
         class NoGroupField(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean, True]}}
 
         with self.assertRaises(ValueError):
             # should raise error because no grouping_field
@@ -518,7 +521,7 @@ class TestMetrics(unittest.TestCase):
                 default_factory=lambda: ["mean", "group_mean", "some_other_func"]
             )
             grouping_field = "group_id"
-            reduction_map = {"some_other_func": {"agg_func": ["mean", mean]}}
+            reduction_map = {"some_other_func": {"agg_func": ["mean", mean, False]}}
 
         with self.assertRaises(ValueError):
             # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
@@ -546,7 +549,7 @@ class TestMetrics(unittest.TestCase):
 
         class NoCallableAggFunc(Accuracy):
             grouping_field = "group_id"
-            reduction_map = {"group_mean": {"agg_func": ["mean", "some string"]}}
+            reduction_map = {"group_mean": {"agg_func": ["mean", "some string", False]}}
 
         with self.assertRaises(AssertionError):
             # should raise error because second field of agg_func should be callable
@@ -560,11 +563,25 @@ class TestMetrics(unittest.TestCase):
 
         class WrongGroupID(Accuracy):
             grouping_field = "random_id_name"
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean]}}
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean, False]}}
 
         with self.assertRaises(ValueError):
             # should raise error because grouping_field is not found in the additional inputs
             metric = WrongGroupID()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoBooleanGrouping(Accuracy):
+            grouping_field = "group_id"
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean, 1]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because third field in agg_func is not boolean
+            metric = NoBooleanGrouping()
             apply_metric(
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
@@ -666,6 +683,12 @@ class TestConfidenceIntervals(unittest.TestCase):
     def test_grouped_instance_metric_confidence_interval(self):
         """Test the calculation of confidence intervals for grouped instance metrics (sub-types of InstanceMetric with group_mean reduction)."""
         self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanAccuracy(),
+            expected_ci_low=0.1,
+            expected_ci_high=0.48178555627359004,
+        )
+
+        self._test_grouped_instance_confidence_interval(
             metric=GroupMeanAccuracy(),
             expected_ci_low=0.025,
             expected_ci_high=0.44105968464125495,
@@ -679,22 +702,22 @@ class TestConfidenceIntervals(unittest.TestCase):
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupPDRAccuracy(),
-            expected_ci_low=0.0,
+            expected_ci_low=0.6666666666666666,
             expected_ci_high=1.0,
             reduction_name="group_mean_subgroup_comparison",
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupPDRStringContainment(),
-            expected_ci_low=0.0,
-            expected_ci_high=1.0,
+            expected_ci_low=0.3333333333333333,
+            expected_ci_high=0.5,
             reduction_name="group_mean_subgroup_comparison",
         )
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHAccuracy(),
             expected_ci_low=-1.0,
-            expected_ci_high=0.5000000000000001,
+            expected_ci_high=0.33333333333333337,
             reduction_name="group_mean_subgroup_comparison",
         )
 
@@ -702,8 +725,8 @@ class TestConfidenceIntervals(unittest.TestCase):
         # hence this test may fail on a PC
         self._test_grouped_instance_confidence_interval(
             metric=GroupNormCohensHStringContainment(),
-            expected_ci_low=-1.0,
-            expected_ci_high=0.0,
+            expected_ci_low=-0.49999999999999994,
+            expected_ci_high=-0.39182655203060723,
             reduction_name="group_mean_subgroup_comparison",
         )
 
@@ -732,16 +755,14 @@ class TestConfidenceIntervals(unittest.TestCase):
         metric,
         expected_ci_low=0.0,
         expected_ci_high=1.0,
-        references=GROUPED_INSTANCE_REFERENCES,
-        predictions=GROUPED_INSTANCE_PREDICTIONS,
         expected_global_result=None,
         reduction_name="group_mean",
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
         outputs = apply_metric(
             metric=metric,
-            predictions=predictions,
-            references=references,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
             additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
 
