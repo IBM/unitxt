@@ -12,7 +12,7 @@ from src.unitxt.templates import MultiReferenceTemplate
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="akariasai/PopQA", name="popqa"),
+    loader=LoadHF(path="akariasai/PopQA"),
     preprocess_steps=[
         Shuffle(page_size=14267),
         Apply("possible_answers", function=json.loads, to_field="possible_answers"),

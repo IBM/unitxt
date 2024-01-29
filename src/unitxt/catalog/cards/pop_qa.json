@@ -2,8 +2,7 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "akariasai/PopQA",
-        "name": "popqa"
+        "path": "akariasai/PopQA"
     },
     "preprocess_steps": [
         {

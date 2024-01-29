@@ -2,8 +2,7 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "AlexaAI/bold",
-        "name": "bold"
+        "path": "AlexaAI/bold"
     },
     "preprocess_steps": [
         {
