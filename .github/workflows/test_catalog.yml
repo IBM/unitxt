@@ -22,7 +22,7 @@ jobs:
         cache: 'pip' # caching pip dependencies
     - run: pip install -r requirements/base.rqr
     - run: pip install -r requirements/tests.rqr
-    - run: pip install unittest
+    - run: pip install unittest-parallel
     - run: pip install "huggingface_hub[cli]"
     - run: git config --global credential.helper store
     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} --add-to-git-credential
@@ -30,5 +30,5 @@ jobs:
     - name: Generate Report
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-      run:  python -m unittest tests.test_preparation
+      run:  unittest-parallel -t . -s tests.test_preparation -j 10 --level test
 
