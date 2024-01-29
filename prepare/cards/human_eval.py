@@ -29,7 +29,7 @@ card = TaskCard(
     task=FormTask(
         inputs=["prompt"],
         outputs=["prompt", "canonical_solution", "test_list"],
-        metrics=["metrics.code_acc"],
+        metrics=["metrics.bleu"],
     ),
     templates=TemplatesList(
         [
