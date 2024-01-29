@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  run-catalog-artifacts-tests:
+  run-catalog-prepration:
 
     runs-on: ubuntu-latest
     env:
@@ -27,8 +27,17 @@ jobs:
     - run: git config --global credential.helper store
     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} --add-to-git-credential
 
-    - name: Run Tests
+    - name: Delete Catalog
+      run: rm -rf src/unitxt/catalog/*
+      
+    - name: Run Preperation
       env:
         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
+        UNITXT_TEST_CARD_DISABLE: True
+        UNITXT_TEST_METRIC_DISABLE: True
+
       run: python -m unittest discover -s tests/catalog -p "test_*.py"
 
+    - name: Check for Uncommitted Changes
+      run: |
+        git diff --exit-code
