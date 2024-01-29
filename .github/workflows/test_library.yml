@@ -1,4 +1,4 @@
-name: Unit Test Python Code
+name: Test Library Code
 
 on:
   push:

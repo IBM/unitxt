@@ -8,7 +8,9 @@ from src.unitxt.logging_utils import get_logger
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 logger = get_logger()
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 
