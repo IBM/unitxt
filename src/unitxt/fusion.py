@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Generator, List, Optional
 
 from .dataclass import NonPositionalField
-from .operator import SourceOperator, StreamSource
+from .operator import SourceOperator
 from .random_utils import new_random_generator
 from .stream import MultiStream, Stream
 
@@ -15,7 +15,7 @@ class BaseFusion(SourceOperator):
         include_splits: List of splits to include. If None, all splits are included.
     """
 
-    origins: List[StreamSource]
+    origins: List[SourceOperator]
     include_splits: Optional[List[str]] = NonPositionalField(default=None)
 
     @abstractmethod
@@ -73,7 +73,7 @@ class WeightedFusion(BaseFusion):
         max_total_examples: Total number of examples to return. If None, all examples are returned.
     """
 
-    origins: List[StreamSource] = None
+    origins: List[SourceOperator] = None
     weights: List[float] = None
     max_total_examples: int = None
 

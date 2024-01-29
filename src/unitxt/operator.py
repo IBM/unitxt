@@ -1,10 +1,7 @@
 import re
-import zipfile
 from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
-
-import requests
 
 from .artifact import Artifact
 from .dataclass import NonPositionalField
@@ -13,43 +10,6 @@ from .stream import MultiStream, Stream
 
 class Operator(Artifact):
     pass
-
-
-class DownloadError(Exception):
-    def __init__(
-        self,
-        message,
-    ):
-        self.__super__(message)
-
-
-class UnexpectedHttpCodeError(Exception):
-    def __init__(self, http_code):
-        self.__super__(f"unexpected http code {http_code}")
-
-
-class DownloadOperator(Operator):
-    source: str
-    target: str
-
-    def __call__(self):
-        try:
-            response = requests.get(self.source, allow_redirects=True)
-        except Exception as e:
-            raise DownloadError(f"Unabled to download {self.source}") from e
-        if response.status_code != 200:
-            raise UnexpectedHttpCodeError(response.status_code)
-        with open(self.target, "wb") as f:
-            f.write(response.content)
-
-
-class ZipExtractorOperator(Operator):
-    zip_file: str
-    target_dir: str
-
-    def __call__(self):
-        with zipfile.ZipFile(self.zip_file) as zf:
-            zf.extractall(self.target_dir)
 
 
 class OperatorError(Exception):
@@ -97,21 +57,19 @@ class StreamingOperator(Artifact):
         """
 
 
-class StreamSource(StreamingOperator):
-    """A class representing a stream source operator in the streaming system.
+class SideEffectOperator(StreamingOperator):
+    """Base class for operators that does not affect the stream."""
 
-    A stream source operator is a special type of `StreamingOperator` that generates a data stream without taking any input streams. It serves as the starting point in a stream processing pipeline, providing the initial data that other operators in the pipeline can process.
-
-    When called, a `StreamSource` should generate a `MultiStream`. This behavior must be implemented by any classes that inherit from `StreamSource`.
-
-    """
+    def __call__(self, streams: Optional[MultiStream] = None) -> MultiStream:
+        self.process()
+        return streams
 
     @abstractmethod
-    def __call__(self) -> MultiStream:
+    def process() -> None:
         pass
 
 
-class SourceOperator(StreamSource):
+class SourceOperator(StreamingOperator):
     """A class representing a source operator in the streaming system.
 
     A source operator is responsible for generating the data stream from some source, such as a database or a file.
@@ -126,7 +84,7 @@ class SourceOperator(StreamSource):
 
     caching: bool = NonPositionalField(default=None)
 
-    def __call__(self) -> MultiStream:
+    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         multi_stream = self.process()
         if self.caching is not None:
             multi_stream.set_caching(self.caching)
@@ -137,7 +95,7 @@ class SourceOperator(StreamSource):
         pass
 
 
-class StreamInitializerOperator(StreamSource):
+class StreamInitializerOperator(SourceOperator):
     """A class representing a stream initializer operator in the streaming system.
 
     A stream initializer operator is a special type of `StreamSource` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
