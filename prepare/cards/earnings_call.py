@@ -1,4 +1,4 @@
-exit(1)
+from unitxt.logging_utils import get_logger
 
 """TaskCard generated from HELM Enterprise Scenario:
 
@@ -7,9 +7,7 @@ exit(1)
 https://github.ibm.com/ai-models-evaluation/crfm-helm-enterprise
 
 """
-
-
-""" Card is bugged. Disabled until a fix is issued.
+"""
  PR at https://huggingface.co/datasets/jlh-ibm/earnings_call/discussions/2
 card = TaskCard(
     loader=LoadHF(path="jlh-ibm/earnings_call"),
@@ -37,3 +35,5 @@ card = TaskCard(
 test_card(card)
 add_to_catalog(card, "cards.earnings_call", overwrite=True)
 """
+
+get_logger().info("earning_call.py card is bugged. Disabled until a fix is issued.")
