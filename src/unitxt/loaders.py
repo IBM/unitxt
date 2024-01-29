@@ -25,7 +25,6 @@ LoadFromIBMCloud: loads a dataset from the IBM cloud.
 import importlib
 import itertools
 import os
-import shutil
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -250,10 +249,8 @@ class LoadFromIBMCloud(Loader):
             self.data_dir,
             f"loader_limit_{self.loader_limit}",
         )
-        if os.path.exists(local_dir):
-            shutil.rmtree(local_dir)
-        Path(local_dir).mkdir(parents=True, exist_ok=True)
-
+        if not os.path.exists(local_dir):
+            Path(local_dir).mkdir(parents=True, exist_ok=True)
         if isinstance(self.data_files, Mapping):
             data_files_names = list(self.data_files.values())
             if not isinstance(data_files_names[0], str):
