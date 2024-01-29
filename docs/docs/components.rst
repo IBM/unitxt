@@ -2,9 +2,15 @@
 Components
 ==============
 
-Unitxt processes data in **pipelines**, by applying a modular sequence of **operators**.
-Each operator is of a specific `ingredient`_ type.
-Operators may be are defined an shared within the **Unitxt Catalog**.
+Unitxt processes data in `pipelines`_, by applying a modular sequence of **operators**.
+Each operator is of a specific `ingredients`_ type.
+Operators may be are defined and shared within the :ref:`Unitxt Catalog <unitxt_catalog>`.
+The operators compose larger unitxt `Building Blocks`_.
+
+.. image:: ../../assets/unitxt_flow.png
+   :alt: Optional alt text
+   :width: 100%
+   :align: center
 
 Building Blocks
 ===============
@@ -18,10 +24,14 @@ Typically, this includes data wrangling actions, e.g. renaming fields,
 filtering data instances, modifying values, train/test/val splitting etc.
 It also describes the resource from which the data is loaded.
 
+The catalog contains predefined data-task cards for various datasets :ref:`here <cards>`.
+
 Recipe
 ++++++
 A **Recipe** holds a complete specification of a \unitxt pipeline.
 This includes Resources, Task, Template, Format and Extensions.
+
+The catalog contains predefined recipes :ref:`here <recipes>`.
 
 .. _ingredients:
 Ingredients
@@ -41,9 +51,11 @@ A Unitxt **task** follows the formal definition of an NLP task, such as multi-la
 A task is defined by its standard interface -- namely, input and output fields -- and by its evaluation metrics.
 Given a dataset, its contents are standardized into the fields defined by an appropriate task by a Data-Task Card.
 
-As an example of a defined task, consider sentence similarity:
-it has two input fields (named *sentence1* and, *sentence2*), one output field (named *label*) and the conventional
-metric is Spearman correlation.
+The catalog contains predefined tasks :ref:`here <tasks>`.
+
+As an example of a defined task, consider :ref:`translation <tasks.translation.directed>`:
+it has two three input fields (named *text*, *source_language*and, *target_language*), one output field
+(named *translation*) and the metric :ref:`normalized Sacrebleu <metrics.normalized_sacrebleu>`.
 
 Templates
 +++++++++
@@ -65,6 +77,8 @@ Having the de-verbalization steps defined within the template enables templates 
 The templates, datasets and tasks in Unitxt are not exclusively tied.
 Each task can harness multiple templates and a template can be used for different datasets.
 
+The catalog contains predefined templates :ref:`here <templates>`.
+
 Formats
 +++++++
 A Unitxt **Format** defines a set of extra formatting requirements, unrelated to the underlying data or task, including
@@ -73,6 +87,8 @@ those pertaining to system prompts, special tokens or user/agent prefixes, and i
 Continuing the example from \figureRef{fig:verbalization}, the Unitxt format receives the text produced by the template
 "**classify the sentence: ``I like toast''**", and adds the system prompt "**<SYS>You are a helpful agent</SYS>}**",
 the Instruction-User-Agent schema cues, and the two presented demonstrations.
+
+The catalog contains predefined formats :ref:`here <formats>`.
 
 Extensions
 ++++++++++
@@ -85,6 +101,7 @@ desired logic (see Fig.~\ref{fig:unitxt-flow}).
 Unitxt supports the addition of custom extensions to the Unitxt Catalog.
 Each extension is an independent unit, reusable across different datasets and tasks, templates and formats.
 
+.. _pipelines:
 Pipelines
 =========
 
@@ -108,6 +125,7 @@ allows the use of any metric that accept such fields as input.
 In addition to the computed evaluation scores, Unitxtx metrics supports a built in mechanism for confidence interval
 reporting, using statistical bootstrap.
 
+.. _unitxt_catalog:
 The Unitxt Catalog
 ==================
 All Unitxt artifacts -- recipes, data-task cards, templates, pre-processing operators, formats and metrics --
