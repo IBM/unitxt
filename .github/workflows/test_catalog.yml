@@ -1,4 +1,4 @@
-name: Test Python Code
+name: Test Catalog
 
 on:
   push:
