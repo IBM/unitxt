@@ -7,12 +7,12 @@ Each operator is of a specific `ingredients`_ type.
 Operators may be are defined and shared within the :ref:`Unitxt Catalog <unitxt_catalog>`.
 The operators compose larger unitxt `Building Blocks`_.
 
-Here is a diagram of the unitxt flow.
-The upper section illustrates the :ref:`data-preparation pipeline <data_preparation_pipeline>`,
+Here is a diagram of the unitxt flow depicting how the above components are used.
+The upper section illustrates the :ref:`data-preparation pipeline <data_preparation_pipeline>` (**unitxt.load_dataset()**),
 encompassing raw dataset loading, standardization according to the :ref:`task <task>` interface,
 verbalization using :ref:`templates <templates>`,
 and application of :ref:`formatting <formats>`.
-The lower section showcases the :ref:`evaluation pipeline <evaluation_pipeline>`,
+The lower section showcases the :ref:`evaluation pipeline <evaluation_pipeline>` (**unitxt.evaluate()**),
 involving de-verbalization operations and output standardization before performance evaluation with task-defined metrics.
 All components are described in detail below.
 
@@ -26,6 +26,7 @@ Building Blocks
 When loading a dataset the Unitxt ingredients are retrieved based on a
 Data-Task Card and a Recipe.
 
+.. _data_task_card:
 Data-Task Card
 ++++++++++++++
 Defines how raw data (inputs and targets) are standardized for a certain task.
@@ -38,7 +39,8 @@ The catalog contains predefined data-task cards for various datasets :ref:`here 
 Recipe
 ++++++
 A **Recipe** holds a complete specification of a \unitxt pipeline.
-This includes Resources, Task, Template, Format and Extensions.
+This includes :ref:`Resources <resources>`, :ref:`Task <tasks>`, :ref:`Template <templates>`,
+:ref:`Format <formats>` and :ref:`Extensions <extensions>`.
 
 The catalog contains predefined recipes :ref:`here <catalog.recipes>`.
 
@@ -46,6 +48,7 @@ The catalog contains predefined recipes :ref:`here <catalog.recipes>`.
 Ingredients
 ===============================
 
+.. _resources:
 Resources
 +++++++++
 Unitxt implements several APIs for accessing external resources such as datasets and metrics:
@@ -59,12 +62,12 @@ Tasks
 +++++
 A Unitxt **task** follows the formal definition of an NLP task, such as multi-label classification, named entity extraction, abstractive summarization or translation.
 A task is defined by its standard interface -- namely, input and output fields -- and by its evaluation metrics.
-Given a dataset, its contents are standardized into the fields defined by an appropriate task by a Data-Task Card.
+Given a dataset, its contents are standardized into the fields defined by an appropriate task by a :ref:`Data-Task Card <data_task_card>`.
 
 The catalog contains predefined tasks :ref:`here <catalog.tasks>`.
 
 As an example of a defined task, consider :ref:`translation <catalog.tasks.translation.directed>`:
-it has two three input fields (named *text*, *source_language*and, *target_language*), one output field
+it has three input fields (named *text*, *source_language* and *target_language*), one output field
 (named *translation*) and the metric :ref:`normalized Sacrebleu <catalog.metrics.normalized_sacrebleu>`.
 
 .. _templates:
@@ -102,6 +105,7 @@ the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
 The catalog contains predefined formats :ref:`here <catalog.formats>`.
 
+.. _extensions:
 Extensions
 ++++++++++
 Unitxt supports **Extensions** such as "**input-augmentation**"
