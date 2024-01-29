@@ -8,7 +8,6 @@ https://github.ibm.com/ai-models-evaluation/crfm-helm-enterprise
 
 """
 """
- PR at https://huggingface.co/datasets/jlh-ibm/earnings_call/discussions/2
 card = TaskCard(
     loader=LoadHF(path="jlh-ibm/earnings_call"),
     preprocess_steps=[
@@ -36,4 +35,8 @@ test_card(card)
 add_to_catalog(card, "cards.earnings_call", overwrite=True)
 """
 
-get_logger().info("earning_call.py card is bugged. Disabled until a fix is issued.")
+get_logger().info(
+    "earning_call.py card is disabled due to a bug in the Hugginface dataset."
+    "Waiting for a fix to be issue. "
+    "PR at https://huggingface.co/datasets/jlh-ibm/earnings_call/discussions/2"
+)
