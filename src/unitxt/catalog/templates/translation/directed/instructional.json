@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Execute a precise translation of the text from {source_language} to {target_language}. Please ensure accuracy and clarity, adhering to grammatical conventions and idiomatic expressions in the target language.\n Text: {text}",
+    "output_format": "{translation}"
+}

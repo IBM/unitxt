@@ -1,0 +1,7 @@
+{
+    "type": "span_labeling_template",
+    "input_format": "From the following {text_type}, extract the objects for which the sentiment expressed is positive, and the objects for which the expressed sentiment is negative, and the objects for which the expressed sentiment is neutral.\n{text_type}: {text}\n",
+    "postprocessors": [
+        "processors.to_span_label_pairs"
+    ]
+}

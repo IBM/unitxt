@@ -1,0 +1,10 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.summarization.general.formal",
+        "templates.summarization.general.formal_without_label",
+        "templates.summarization.general.casual",
+        "templates.summarization.general.professional",
+        "templates.summarization.general.instructive"
+    ]
+}

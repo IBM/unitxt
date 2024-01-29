@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, List, Optional, Union
 
 import requests
@@ -92,6 +93,13 @@ def test_metric(
     global_target: dict,
     additional_inputs: Optional[List[dict]] = None,
 ):
+    disable = os.getenv("UNITXT_TEST_METRIC_DISABLE", None)
+    if disable is not None:
+        logger.info(
+            "test_metric() functionality is disabled because UNITXT_TEST_METRIC_DISABLE environment variable is set"
+        )
+        return None
+
     assert isoftype(metric, Union[Metric, RemoteMetric]), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"

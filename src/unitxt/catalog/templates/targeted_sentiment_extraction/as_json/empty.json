@@ -1,0 +1,4 @@
+{
+    "type": "span_labeling_json_template",
+    "input_format": "{text}"
+}

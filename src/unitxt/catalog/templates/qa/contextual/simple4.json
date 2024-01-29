@@ -1,0 +1,5 @@
+{
+    "type": "multi_reference_template",
+    "input_format": "Provide a concise and accurate response to the question: {question}, based on the information available in the passage: {context}",
+    "references_field": "answers"
+}
