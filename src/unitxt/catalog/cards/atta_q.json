@@ -2,8 +2,7 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "ibm/AttaQ",
-        "name": "AttaQ"
+        "path": "ibm/AttaQ"
     },
     "preprocess_steps": [
         {

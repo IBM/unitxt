@@ -13,7 +13,7 @@ from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="ibm/AttaQ", name="AttaQ"),
+    loader=LoadHF(path="ibm/AttaQ"),
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         Shuffle(page_size=2800),
