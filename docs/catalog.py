@@ -22,6 +22,31 @@ def custom_walk(top):
             yield entry
 
 
+def all_subtypes_of_artifact(artifact):
+    if (
+        artifact is None
+        or isinstance(artifact, str)
+        or isinstance(artifact, bool)
+        or isinstance(artifact, int)
+        or isinstance(artifact, float)
+    ):
+        return []
+    if isinstance(artifact, list):
+        to_return = []
+        for art in artifact:
+            to_return.extend(all_subtypes_of_artifact(art))
+        return to_return
+    # artifact is a dict
+    to_return = []
+    for key, value in artifact.items():
+        if isinstance(value, str):
+            if key == "type":
+                to_return.append(value)
+        else:
+            to_return.extend(all_subtypes_of_artifact(value))
+    return to_return
+
+
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
@@ -43,6 +68,18 @@ def make_content(artifact, label, all_labels):
         result += f"\n{explanation_str}\n"
         result += "+" * len(explanation_str) + "\n\n"
         result += artifact_class.__doc__ + "\n"
+
+    subtypes = all_subtypes_of_artifact(artifact)
+    subtypes = list(set(subtypes))
+    subtypes.remove(artifact_type)  # this was already documented
+    for subtype in subtypes:
+        subtype_class = Artifact._class_register.get(subtype)
+        subtype_class_name = subtype_class.__name__
+        if subtype_class.__doc__:
+            explanation_str = f"Explanation about `{subtype_class_name}`"
+            result += f"\n{explanation_str}\n"
+            result += "+" * len(explanation_str) + "\n\n"
+            result += subtype_class.__doc__ + "\n"
 
     references = []
     for label in all_labels:
