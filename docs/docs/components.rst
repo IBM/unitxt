@@ -131,9 +131,9 @@ Pipelines
 .. _data_preparation_pipeline:
 Data Preparation Pipeline
 +++++++++++++++++++++++++
-The data preparation pipeline begins with standardizing the raw data into the task interface,
-as defined in the data-task card.
-The examples are then verbalized by the template, and the format operator applies system prompts,
+The data preparation pipeline begins with standardizing the raw data into the :ref:`task <tasks>` interface,
+as defined in the :ref:`data-task card <data_task_card>`.
+The examples are then verbalized by the :ref:`template <templates>`, and the :ref:`format <formats>` operator applies system prompts,
 special tokens and in-context learning examples.
 To maintain compatibility, the output of this pipeline is a HuggingFace dataset, that can be saved or pushed to the hub.
 
@@ -142,10 +142,10 @@ Evaluation Pipeline
 +++++++++++++++++++
 
 The evaluation pipeline is responsible for producing a list of evaluation scores that reflect model performance.
-It includes a de-verbalization of the model outputs (as defined in the template), and a computation of performance
+It includes a de-verbalization of the model outputs (as defined in the :ref:`template <templates>`), and a computation of performance
 by the metrics defined in the task.
 
-The standardization of the task interface, namely, having fixed names and types for its input and output fields,
+The standardization of the :ref:`task <tasks>` interface, namely, having fixed names and types for its input and output fields,
 allows the use of any metric that accept such fields as input.
 In addition to the computed evaluation scores, Unitxtx metrics supports a built in mechanism for confidence interval
 reporting, using statistical bootstrap.
@@ -154,7 +154,7 @@ reporting, using statistical bootstrap.
 The Unitxt Catalog
 ==================
 All Unitxt artifacts -- recipes, data-task cards, templates, pre-processing operators, formats and metrics --
-are stored in the Unitxt Catalog.
+are stored in the :ref:`Unitxt Catalog <catalog>`.
 
 In addition to the open-source catalog, that can be found in the documentation, users can choose to define a private catalog.
 This enables teams and organizations to harness the open Unitxt Catalog while upholding organizational requirements for additional proprietary artifacts.
