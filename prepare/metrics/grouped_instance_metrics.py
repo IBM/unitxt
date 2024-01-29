@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
+    FixedGroupMeanAccuracy,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -120,6 +121,30 @@ instance_targets_accuracy = [
 for instance in instance_targets_accuracy:
     instance.update({"accuracy": instance["score"], "score_name": "accuracy"})
 
+metric = FixedGroupMeanAccuracy()
+global_target = {
+    "group_fixed_group_mean_accuracy": 0.22,
+    "score": 0.22,
+    "score_name": "group_fixed_group_mean_accuracy",
+    "score_ci_low": 0.1,
+    "score_ci_high": 0.48,
+    "group_fixed_group_mean_accuracy_ci_low": 0.1,
+    "group_fixed_group_mean_accuracy_ci_high": 0.48,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(metric, "metrics.group_fixed_group_mean_accuracy", overwrite=True)
+
+
 metric = GroupMeanAccuracy()
 global_target = {
     "group_mean_accuracy": 0.22,
@@ -174,9 +199,9 @@ global_target = {
     "group_pdr_accuracy": 0.83,
     "score": 0.83,
     "score_name": "group_pdr_accuracy",
-    "score_ci_low": 0.0,
+    "score_ci_low": 0.67,
     "score_ci_high": 1.0,
-    "group_pdr_accuracy_ci_low": 0.0,
+    "group_pdr_accuracy_ci_low": 0.67,
     "group_pdr_accuracy_ci_high": 1.0,
 }
 
@@ -198,10 +223,10 @@ global_target = {
     "group_pdr_string_containment": 0.44,
     "score": 0.44,
     "score_name": "group_pdr_string_containment",
-    "score_ci_low": 0.0,
-    "score_ci_high": 1.0,
-    "group_pdr_string_containment_ci_low": 0.0,
-    "group_pdr_string_containment_ci_high": 1.0,
+    "score_ci_low": 0.33,
+    "score_ci_high": 0.5,
+    "group_pdr_string_containment_ci_low": 0.33,
+    "group_pdr_string_containment_ci_high": 0.5,
 }
 
 
@@ -216,16 +241,16 @@ outputs = test_metric(
 
 add_to_catalog(metric, "metrics.group_pdr_string_containment", overwrite=True)
 
-
+# Cohen's H
 metric = GroupNormCohensHAccuracy()
 global_target = {
     "group_norm_cohens_h_accuracy": -0.42,
     "score": -0.42,
     "score_name": "group_norm_cohens_h_accuracy",
     "score_ci_low": -1.0,
-    "score_ci_high": 0.5,
+    "score_ci_high": 0.33,
     "group_norm_cohens_h_accuracy_ci_low": -1.0,
-    "group_norm_cohens_h_accuracy_ci_high": 0.5,
+    "group_norm_cohens_h_accuracy_ci_high": 0.33,
 }
 
 
@@ -246,10 +271,10 @@ global_target = {
     "group_norm_cohens_h_string_containment": -0.46,
     "score": -0.46,
     "score_name": "group_norm_cohens_h_string_containment",
-    "score_ci_low": -1.0,
-    "score_ci_high": 0.0,
-    "group_norm_cohens_h_string_containment_ci_low": -1.0,
-    "group_norm_cohens_h_string_containment_ci_high": 0.0,
+    "score_ci_low": -0.5,
+    "score_ci_high": -0.39,
+    "group_norm_cohens_h_string_containment_ci_low": -0.5,
+    "group_norm_cohens_h_string_containment_ci_high": -0.39,
 }
 
 
