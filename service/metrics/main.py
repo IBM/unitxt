@@ -53,13 +53,19 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
 
         # prepare the input stream
         multi_stream: MultiStream = MultiStream.from_iterables(
-            {"test": request.model_dump()}, copying=True
+            {"test": request.model_dump()["instance_inputs"]}, copying=True
         )
 
         # apply the metric and obtain the results
-        output_instances = list(metric_artifact(multi_stream)["test"])
+        metric_results = list(metric_artifact(multi_stream)["test"])
 
-        return MetricResponse.model_validate(output_instances)
+        metric_response = {
+            "instances_scores": [
+                metric_result["score"]["instance"] for metric_result in metric_results
+            ],
+            "global_score": metric_results[0]["score"]["global"],
+        }
+        return MetricResponse.model_validate(metric_response)
     finally:
         t1 = time.perf_counter()
         logging.debug(f"Request handled in [{t1 - t0:.2f}] secs.")

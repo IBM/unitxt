@@ -1785,6 +1785,6 @@ class RemoteMetric(GlobalMetric):
         response.raise_for_status()
         response_json = response.json()
         metric_response = MetricResponse.model_validate(response_json)
-        instance_outputs = metric_response.instance_outputs
+        instances_scores = metric_response.instances_scores
         global_score = metric_response.global_score
-        return instance_outputs, global_score  # temp, to avoid ruff errors
+        return instances_scores, global_score  # temp, to avoid ruff errors
