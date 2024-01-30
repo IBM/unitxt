@@ -2226,7 +2226,7 @@ def performance_drop_rate(baseline_scores: List, other_scores: List):
 
 
 def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=False):
-    """Cohen's h between two proportions, normalized to interval [-1,1].
+    """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
     https://en.wikipedia.org/wiki/Cohen%27s_h
@@ -2238,12 +2238,17 @@ def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=Fal
     Calculates the change in the average of the other_scores relative to the average of the baseline_scores.    We rescale this to [-1,1] from [-pi,pi] for clarity, where +- 1 are the most extreme changes, and 0 is no change
 
     Interpretation: the original unscaled Cohen's h can be interpreted as
+        - no difference if |h| = 0
         - an insignificant difference if 0 < |h| < 0.2
         - small difference if 0.2 <= |h| < 0.5
         - a medium difference if 0.5 <= |h| < 0.8
         - a large difference if 0.8 <= |h|
     Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
-
+        - no difference if |norm h| = 0
+        - an insignificant difference if 0 < |norm h| < 0.06366198
+        - small difference if 0.06366198 <= |norm h| < 0.15915494
+        - a medium difference if 0.15915494 <= |norm h| < 0.25464791
+        - a large difference if 0.25464791 <= |norm h|
     Args:
         baseline_scores: a list of scores on baseline instances.
         other_scores: a list of scores on instances that will be compared to the baseline.
