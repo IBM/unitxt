@@ -1,0 +1,42 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "mbpp",
+        "name": "full",
+        "split": "test"
+    },
+    "preprocess_steps": [
+        {
+            "type": "join_str",
+            "field_to_field": {
+                "test_list": "test_list_str"
+            },
+            "separator": "\n"
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "text",
+            "test_list_str"
+        ],
+        "outputs": [
+            "test_list",
+            "code"
+        ],
+        "metrics": [
+            "metrics.bleu"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "\"\"\"{text}\n\n{test_list_str}\"\"\"",
+                "output_format": "{code}"
+            }
+        ]
+    }
+}
