@@ -25,6 +25,7 @@ if __name__ == "__main__":
             "metrics.rag.context_relevance",
             "metrics.rag.faithfulness",
             "metrics.rag.answer_relevance",
+            "metrics.rag.context_correctness",
             "metrics.rag.context_perplexity",
         ],
     ).round(2).to_csv("dataset_out.csv")
