@@ -1,0 +1,4 @@
+{
+    "type": "span_labeling_json_template",
+    "input_format": "From the following {text_type}, extract entities having a sentiment: positive, negative, neutral. Output JSON format in a single line, with the sentiment types as keys \n{text_type}: {text}"
+}

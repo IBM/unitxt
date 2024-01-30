@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Translate the provided text from {source_language} to {target_language}, ensuring precision and maintaining formal language standards: {text}",
+    "output_format": "{translation}"
+}

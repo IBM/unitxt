@@ -26,7 +26,7 @@ Our aspiration is to be simple, adaptable, and transparent.
    docs/installation
    docs/adding_dataset
    docs/adding_operators_and_metrics
-   docs/concepts
+   docs/components
    docs/backend
    docs/operators
    docs/contributors_guide
