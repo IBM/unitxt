@@ -1,13 +1,13 @@
-from unitxt import add_to_catalog
-from unitxt.blocks import (
+from src.unitxt import add_to_catalog
+from src.unitxt.blocks import (
     FormTask,
     InputOutputTemplate,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import ExecuteQuery
-from unitxt.test_utils.card import test_card
+from src.unitxt.operators import ExecuteQuery
+from src.unitxt.test_utils.card import test_card
 
 get_asserts = """
 import re
