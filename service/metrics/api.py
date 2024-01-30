@@ -1,24 +1,22 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, RootModel
-from typing_extensions import TypedDict
+from pydantic import BaseModel
 
 
-class MetricInput(BaseModel):
+class InstanceInput(BaseModel):
     prediction: Any
     references: List[Any]
     additional_inputs: Optional[Dict] = None
 
 
-class MetricOutput(MetricInput):
-    score: TypedDict(
-        "MetricScores", {"instance": Dict[str, Any], "global": Dict[str, Any]}
-    )
+class InstanceOutput(InstanceInput):
+    instance_scores: Dict[str, Any]
 
 
-class MetricRequest(RootModel):
-    root: List[MetricInput]
+class MetricRequest(BaseModel):
+    instance_inputs: List[InstanceInput]
 
 
-class MetricResponse(RootModel):
-    root: List[MetricOutput]
+class MetricResponse(BaseModel):
+    instance_outputs: List[InstanceOutput]
+    global_score: Dict[str, Any]

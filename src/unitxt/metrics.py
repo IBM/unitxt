@@ -12,6 +12,8 @@ import numpy
 import numpy as np
 from scipy.stats import bootstrap
 
+from service.metrics.api import InstanceInput, MetricRequest, MetricResponse
+
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
 from .logging_utils import get_logger
@@ -277,6 +279,16 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         predictions: List[Any],
         additional_inputs: List[Any],
     ) -> dict:
+        """Computes a scores dictionary on a list of references, predictions and input.
+
+        This function is called once per instance, and then another time
+        over all data instances.
+
+        Returns:
+            a dictionary of scores that is set as:
+              the instance scores when called on a single data instance
+              the global score when called on the all data instances
+        """
         pass
 
 
@@ -1735,3 +1747,44 @@ class KPA(CustomF1):
 
     def should_ignore_element(self, element, additional_input):
         return element == "none"
+
+
+class RemoteMetric(GlobalMetric):
+    main_score: str = None
+    endpoint: str
+    metric_name: str
+    api_key: str = None
+
+    def get_metric_url(self) -> str:
+        return f"{self.endpoint}/{self.metric_name}"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Any],
+    ) -> dict:
+        import requests
+
+        instance_inputs = [
+            InstanceInput(
+                prediction=prediction,
+                references=reference,
+                additional_inputs=additional_input,
+            )
+            for prediction, reference, additional_input in zip(
+                predictions, references, additional_inputs
+            )
+        ]
+        metric_request = MetricRequest(instance_inputs=instance_inputs)
+        response = requests.post(
+            url=self.get_metric_url(),
+            json=metric_request.model_dump(),
+            headers={"Authorization": f"Bearer {self.api_key}"},
+        )
+        response.raise_for_status()
+        response_json = response.json()
+        metric_response = MetricResponse.model_validate(response_json)
+        instance_outputs = metric_response.instance_outputs
+        global_score = metric_response.global_score
+        return instance_outputs, global_score  # temp, to avoid ruff errors

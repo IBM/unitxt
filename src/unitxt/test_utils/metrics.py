@@ -1,8 +1,6 @@
 import json
 import os
-from typing import Any, List, Optional, Union
-
-import requests
+from typing import Any, List, Optional
 
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
@@ -10,19 +8,6 @@ from ..stream import MultiStream
 from ..type_utils import isoftype
 
 logger = get_logger()
-
-
-class RemoteMetric(Metric):
-    endpoint: str
-    metric_name: str
-    api_key: str = None
-
-    @property
-    def main_score(self):
-        return None
-
-    def get_metric_url(self) -> str:
-        return f"{self.endpoint}/{self.metric_name}"
 
 
 def round_floats(obj, precision=2, recursive=True):
@@ -42,12 +27,12 @@ def dict_equal(dict1, dict2):
 
 
 def apply_metric(
-    metric: Metric | RemoteMetric,
+    metric: Metric,
     predictions: List[Any],
     references: List[List[Any]],
     additional_inputs: Optional[List[dict]] = None,
 ):
-    assert isoftype(metric, Union[Metric, RemoteMetric]), "metric must be a Metric"
+    assert isoftype(metric, Metric), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
     assert additional_inputs is None or isoftype(
@@ -70,23 +55,14 @@ def apply_metric(
             for prediction, reference in zip(predictions, references)
         ]
     multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
-    if isinstance(metric, RemoteMetric):
-        response = requests.post(
-            url=metric.get_metric_url(),
-            json=test_iterable,
-            headers={"Authorization": f"Bearer {metric.api_key}"},
-        )
-        response.raise_for_status()
-        result = response.json()
-    else:
-        output_multi_stream = metric(multi_stream)
-        output_stream = output_multi_stream["test"]
-        result = list(output_stream)
-    return result
+
+    output_multi_stream = metric(multi_stream)
+    output_stream = output_multi_stream["test"]
+    return list(output_stream)
 
 
 def test_metric(
-    metric: Metric | RemoteMetric,
+    metric: Metric,
     predictions: List[Any],
     references: List[List[Any]],
     instance_targets: List[dict],
@@ -100,7 +76,7 @@ def test_metric(
         )
         return None
 
-    assert isoftype(metric, Union[Metric, RemoteMetric]), "operator must be an Operator"
+    assert isoftype(metric, Metric), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 
