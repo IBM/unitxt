@@ -5,7 +5,6 @@ import unittest
 
 from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
 os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
@@ -56,10 +55,6 @@ def import_module_from_file(file_path):
 
 
 class TestExamples(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        register_local_catalog_for_tests()
-
     def test_prepration(self):
         dirs = [
             "metrics",
