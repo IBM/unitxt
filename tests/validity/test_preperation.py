@@ -1,11 +1,8 @@
 import glob
 import importlib.util
 import os
-import shutil
-import tempfile
 import unittest
 
-from src.unitxt import register_local_catalog
 from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
@@ -17,9 +14,29 @@ logger = get_logger()
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
+prepration_dir = os.path.join(project_dir, "prepare")
 catalog_dir = os.path.join(project_dir, "src", "unitxt", "catalog")
-glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
-all_preparation_files = glob.glob(glob_query, recursive=True)
+
+
+def test_all_python_modules_in_dir(dir, tester):
+    glob_query = os.path.join(dir, "**", "*.py")
+    all_preparation_files = glob.glob(glob_query, recursive=True)
+
+    logger.info(glob_query)
+    logger.info(f"Testing preparation files: {all_preparation_files}")
+    # Make sure the order in which the tests are run is deterministic
+    # Having a different order for local testing and github testing may cause diffs in results.
+    all_preparation_files.sort()
+    for file in all_preparation_files:
+        with tester.subTest(file=file):
+            logger.info(f"Testing preparation file: {file}.")
+            try:
+                import_module_from_file(file)
+            except MissingKaggleCredentialsError as e:
+                logger.info(f"Skipping file {file} due to ignored error {e}")
+                continue
+            logger.info(f"Testing preparation file: {file} passed")
+            tester.assertTrue(True)
 
 
 def import_module_from_file(file_path):
@@ -38,43 +55,22 @@ def import_module_from_file(file_path):
     return module
 
 
-def move_all(src_dir, dst_dir):
-    # Create the destination directory if it does not exist
-    if not os.path.exists(dst_dir):
-        os.makedirs(dst_dir)
-
-    for item in os.listdir(src_dir):
-        src_path = os.path.join(src_dir, item)
-        dst_path = os.path.join(dst_dir, item)
-
-        # Move each item in the source directory to the destination directory
-        shutil.move(src_path, dst_path)
-
-
 class TestExamples(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         register_local_catalog_for_tests()
 
-    def test_preprations(self):
-        with tempfile.TemporaryDirectory() as tmp_directory:
-            move_all(catalog_dir, tmp_directory)
-
-            register_local_catalog(tmp_directory)
-            register_local_catalog(catalog_dir)
-
-            logger.info(glob_query)
-            logger.info(f"Testing preparation files: {all_preparation_files}")
-            # Make sure the order in which the tests are run is deterministic
-            # Having a different order for local testing and github testing may cause diffs in results.
-            all_preparation_files.sort()
-            for file in all_preparation_files:
-                with self.subTest(file=file):
-                    logger.info(f"Testing preparation file: {file}.")
-                    try:
-                        import_module_from_file(file)
-                    except MissingKaggleCredentialsError as e:
-                        logger.info(f"Skipping file {file} due to ignored error {e}")
-                        continue
-                    logger.info(f"Testing preparation file: {file} passed")
-                    self.assertTrue(True)
+    def test_prepration(self):
+        dirs = [
+            "metrics",
+            "processors",
+            "splitters",
+            "instructions",
+            "augmentors",
+            "tasks",
+            "templates",
+            "formats",
+            "cards",
+        ]
+        for dir in dirs:
+            test_all_python_modules_in_dir(os.path.join(prepration_dir, dir), self)
