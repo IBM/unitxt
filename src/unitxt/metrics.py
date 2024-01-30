@@ -4,7 +4,6 @@ import uuid
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
-from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
@@ -1360,9 +1359,12 @@ class Perplexity(BulkInstanceMetric):
                 instance_scores_list.append(scores[index])
                 index += 1
             instance_scores["reference_scores"] = instance_scores_list
-            instance_scores[self.main_score] = mean(instance_scores_list)
 
-            instance_scores[self.main_score] = mean(instance_scores_list)
+            # max seems more useful than mean for common use cases like
+            # context relevance, where what we want to know is if there
+            # is at least one good result in the context. Using mean will
+            # bring the score down due to bad contexts at the tail.
+            instance_scores[self.main_score] = max(instance_scores_list)
             all_instances_scores.append(instance_scores)
 
         return all_instances_scores
@@ -1405,11 +1407,18 @@ class Perplexity(BulkInstanceMetric):
                             tokens_source, tokens_target
                         )
 
+                        # logits is a tensor of size: batch_size * len(target) * vocab_size
+                        # because for each example in the batch, the model predicted the
+                        # logit at every position in the target, for every vocab item.
+
                         # the model returns mean over all batch. We run the CE again without reduction
-                        # and extarct the mean for each document
+                        # and extract the mean for each document
                         loss_fct = torch.nn.CrossEntropyLoss(
                             ignore_index=-100, reduction="none"
                         )
+
+                        # logits.size(-1) = the dimension of the vocabulary
+                        # labels.view(-1) = flattens the labels tensor to 1d
                         loss = loss_fct(
                             logits.view(-1, logits.size(-1)), labels.view(-1)
                         )
@@ -1420,8 +1429,29 @@ class Perplexity(BulkInstanceMetric):
                             labels > 0, dim=1
                         )
 
+                        # e^-average(cross-entropy-loss(logits) == geometric mean of the probabilities
+                        # proof:
+                        # * CE-loss of logits is computed by transforming the logits to
+                        #   probabilities by softmax, and then -log(p) is returned, where
+                        #   p is the probability of the gold label.
+                        # * Averaging the CE loss is computed by summing over -log(p) and
+                        #   then dividing by the length of the gold labels.
+                        # * Thus, pr_score = (-log(p_1) +  ... + -log(p_n)) / n
+                        #                  = -log(p_1 * ... * p_n) * 1/n
+                        # * Therefore,
+                        #   e^(-pr_score) = e^(log(p_1 * ... * p_n) * 1/n)
+                        #                 = (e^(log(p_1 * ... * p_n))) ^ 1/n
+                        #                 = p_1 * ... * p_n) ^ 1/n
+                        #                 = geometric mean of [p_1, ..., p_n]
+                        #
+                        # in principle we could have computed the geometric mean directly over the
+                        # probabilities instead of e^(average cross entropy loss of the logits),
+                        # but the current approach is more stable numerically.  See for example:
+                        # https://stackoverflow.com/questions/59722983/how-to-calculate-geometric-mean-in-a-differentiable-way
+                        geometric_mean = (-batch_loss).exp()
+
                         # append the batch scores to the list of all scores
-                        scores.append(batch_loss)
+                        scores.append(geometric_mean)
 
             return torch.cat(scores, dim=0).tolist()
 
