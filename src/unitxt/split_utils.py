@@ -31,7 +31,8 @@ def parse_random_mix_string(input_str):
             {'dale': 0.9, 'oren': 0.7, 'mike': 1.0}
     """
     if not re.fullmatch(
-        r"((\w+\[\d*\.?\d*%?\]|\w+)\+)*(\w+\[\d*\.?\d*%?\]|\w+)", input_str,
+        r"((\w+\[\d*\.?\d*%?\]|\w+)\+)*(\w+\[\d*\.?\d*%?\]|\w+)",
+        input_str,
     ):
         raise ValueError(f"Invalid input format for split '{input_str}'")
 
