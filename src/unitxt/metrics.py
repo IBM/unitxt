@@ -60,6 +60,34 @@ class Metric(Artifact):
     def main_score(self):
         pass
 
+    def consume_stream(self, stream: Stream):
+        references = []
+        predictions = []
+        additional_inputs = []
+        instances = []
+        for instance in stream:
+            references.append(instance["references"])
+            predictions.append(instance["prediction"])
+            additional_inputs.append(
+                instance["additional_inputs"] if "additional_inputs" in instance else {}
+            )
+            instances.append(instance)
+        return predictions, references, additional_inputs, instances
+
+    @staticmethod
+    def set_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
+        for instance, instance_score in zip(instances, instances_scores):
+            if "score" not in instance:
+                instance["score"] = {}
+            instance["score"]["instance"] = instance_score
+
+    @staticmethod
+    def set_global_score(instances, global_score: Dict[str, Any]):
+        for instance in instances:
+            if "score" not in instance:
+                instance["score"] = {}
+            instance["score"]["global"] = global_score
+
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
@@ -1749,7 +1777,7 @@ class KPA(CustomF1):
         return element == "none"
 
 
-class RemoteMetric(GlobalMetric):
+class RemoteMetric(SingleStreamOperator, Metric):
     main_score: str = None
     endpoint: str
     metric_name: str
@@ -1758,14 +1786,22 @@ class RemoteMetric(GlobalMetric):
     def get_metric_url(self) -> str:
         return f"{self.endpoint}/{self.metric_name}"
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        additional_inputs: List[Any],
-    ) -> dict:
-        import requests
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        predictions, references, additional_inputs, instances = self.consume_stream(
+            stream
+        )
+        metric_request = self.create_metric_request(
+            predictions, references, additional_inputs
+        )
+        metric_response = self.get_metric_response(metric_request)
+        instances_scores = metric_response.instances_scores
+        global_score = metric_response.global_score
+        self.set_instance_scores(instances, instances_scores)
+        self.set_global_score(instances, global_score)
+        yield from instances
 
+    @staticmethod
+    def create_metric_request(predictions, references, additional_inputs):
         instance_inputs = [
             InstanceInput(
                 prediction=prediction,
@@ -1776,7 +1812,11 @@ class RemoteMetric(GlobalMetric):
                 predictions, references, additional_inputs
             )
         ]
-        metric_request = MetricRequest(instance_inputs=instance_inputs)
+        return MetricRequest(instance_inputs=instance_inputs)
+
+    def get_metric_response(self, metric_request: MetricRequest) -> MetricResponse:
+        import requests
+
         response = requests.post(
             url=self.get_metric_url(),
             json=metric_request.model_dump(),
@@ -1784,7 +1824,4 @@ class RemoteMetric(GlobalMetric):
         )
         response.raise_for_status()
         response_json = response.json()
-        metric_response = MetricResponse.model_validate(response_json)
-        instances_scores = metric_response.instances_scores
-        global_score = metric_response.global_score
-        return instances_scores, global_score  # temp, to avoid ruff errors
+        return MetricResponse.model_validate(response_json)
