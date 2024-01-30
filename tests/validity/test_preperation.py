@@ -64,6 +64,7 @@ class TestExamples(unittest.TestCase):
             "augmentors",
             "tasks",
             "templates",
+            "operators",
             "formats",
             "cards",
         ]
