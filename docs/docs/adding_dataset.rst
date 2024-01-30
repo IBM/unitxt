@@ -47,7 +47,7 @@ To ensure compatibility and processing into textual training examples, define yo
         metrics=["metrics.bleu"],
     ),
 
-We have predefined several tasks in :ref:`catalog.tasks <.tasks>`.
+We have predefined several tasks in the catalog's :ref:`Tasks section <catalog.tasks>`.
 
 If a cataloged task fits your use case, call it by name:
 
@@ -93,7 +93,7 @@ The Template
 ----------------
 
 Templates convert data points into a model-friendly textual form.
-If using a predefined task, choose from the corresponding templates available in :ref:`catalog.templates <.templates>`.
+If using a predefined task, choose from the corresponding templates available in the catalog's :ref:`Templates section <catalog.templates>`.
 
 Alternively define your custom templates:
 
