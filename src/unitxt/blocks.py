@@ -18,6 +18,7 @@ from .operators import (
     DivideAllFieldsBy,
     MapInstanceValues,
     RenameFields,
+    SerializeTable,
 )
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
