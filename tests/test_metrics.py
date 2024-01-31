@@ -512,7 +512,7 @@ class TestMetrics(unittest.TestCase):
             self.assertAlmostEqual(
                 target,
                 outputs[0]["score"]["global"]["score"],
-                msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
+                msg=f"metric {metric} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
             )
 
     def test_grouped_instance_metric_errors(self):
@@ -804,7 +804,7 @@ class TestConfidenceIntervals(unittest.TestCase):
                     score_value,
                     expected_global_result[score_name],
                     places=5,
-                    msg=f"{group_score_name} score mismatch for {metric.__class__.__name__}, got {expected_global_result[score_name]} but expected {score_value}",
+                    msg=f"{group_score_name} score mismatch for {metric}, got {expected_global_result[score_name]} but expected {score_value}",
                 )
             else:
                 # An output score that is not expected
