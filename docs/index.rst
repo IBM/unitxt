@@ -11,6 +11,11 @@
 Unitxt: streamlining data processing
 =====================================
 
+.. raw:: html
+
+   <video controls src="../_static/video.mov" width="100%">
+   </video>
+
 Unitxt is a Python library for getting data prepared and ready for utilization in training, evaluation and inference of language models.
 It provides a set of reusable building blocks and methodology for defining datasets and metrics.
 
@@ -18,7 +23,7 @@ In one line of code, it prepares a dataset or mixtures-of-datasets into an input
 Our aspiration is to be simple, adaptable, and transparent.
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: Contents:
 
    docs/introduction
