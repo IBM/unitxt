@@ -138,7 +138,6 @@ def run_unitxt(
 
 
 def display_json_button(element: str):
-    """Returns gr.Tabs(), gr.Markdown(), str, gr.json()"""
     if isinstance(element, str):
         if element in jsons:
             json_el = jsons[element]
@@ -301,25 +300,25 @@ with demo:
     )
     cards_js_button.click(
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
-    ) 
+    )
     templates.select(activate_button, outputs=templates_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
-    ) 
+    )
     instructions.select(activate_button, outputs=instructions_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     instructions_js_button.click(
         display_json_button, instructions, [tabs, json_intro, element_name, json_viewer]
-    )  
+    )
     formats.select(activate_button, outputs=formats_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     formats_js_button.click(
         display_json_button, formats, [tabs, json_intro, element_name, json_viewer]
-    )  
+    )
     num_shots.change(activate_button, outputs=generate_prompts_button).then(
         deactivate_button, outputs=infer_button
     )
