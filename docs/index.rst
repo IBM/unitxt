@@ -2,19 +2,68 @@
    sphinx-quickstart on Mon Jul 10 03:44:36 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
-.. image:: ../assets/banner.png
-   :alt: Optional alt text
-   :width: 100%
-   :align: center
+.. raw:: html
 
+   <html>
+   <head>
+      <style>
+         .rounded-image {
+               width: 100%;
+               height: auto;
+               border-top-left-radius: 0.5em;
+               border-top-right-radius: 0.5em;
+               border-bottom-right-radius: 0.5em;
+               border-bottom-left-radius: 0.5em;
+         }
+      </style>
+   </head>
+   <body>
+      <img src="_static/banner.png" alt="Descriptive Image Text" class="rounded-image">
+   </body>
+   </html>
+   <html>
+   <head>
+      <style>
+         body {
+               font-family: Arial, sans-serif;
+         }
+         .custom-button {
+               display: inline-block;
+               padding: 0.75em 1em;
+               margin: 0.1em;
+               border-radius: 0.3em;
+               background-color: #fce2ff;
+               color: #141216;
+               text-align: center;
+               text-decoration: none;
+               font-weight: bold;
+               box-sizing: border-box;
+               text-transform: uppercase;
+               transition: background-color 0.3s;
+         }
 
-Unitxt: streamlining data processing
-=====================================
+         .custom-button:hover {
+               background-color: #d1b3d1; /
+         }
+      </style>
+   </head>
+   <body>
+      <a href="https://unitxt.readthedocs.io/" class="custom-button">Video</a>
+      <a href="https://huggingface.co/spaces/unitxt/explore" class="custom-button">Demo</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/catalog.html" class="custom-button">Catalog</a>
+      <a href="https://unitxt.readthedocs.io/" class="custom-button">Contributers</a>
+      <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
+   </body>
+   </html>
 
 .. raw:: html
 
    <video controls src="_static/video.mov" width="100%">
    </video>
+
 
 Unitxt is a Python library for getting data prepared and ready for utilization in training, evaluation and inference of language models.
 It provides a set of reusable building blocks and methodology for defining datasets and metrics.
@@ -24,7 +73,7 @@ Our aspiration is to be simple, adaptable, and transparent.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: Read More:
 
    docs/introduction
    docs/no_installation_usage
@@ -38,11 +87,6 @@ Our aspiration is to be simple, adaptable, and transparent.
 
    modules
    catalog
-
-
-
-Indices and tables
-==================
 
 * :ref:`genindex`
 * :ref:`modindex`
