@@ -97,11 +97,11 @@ class MetricWithConfidenceInterval(Metric):
         )
 
     @staticmethod
-    def average_instance_scores(instances: List, field_name: str):
+    def average_item_scores(instances: List[dict], field_name: str):
         """Calculate mean of a set of instance scores (given by field_name), omitting NaN values.
 
         Args:
-            instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
+            instances: list of dicts of each instance's instance scores.
             field_name: score field names to compute mean for.
         """
         return nan_mean(
@@ -139,7 +139,7 @@ class MetricWithConfidenceInterval(Metric):
 
         ci_score_prefix = str(ci_score_prefix)
         if aggregation_func is None:
-            aggregation_func = self.average_instance_scores
+            aggregation_func = self.average_item_scores
         for score_name in score_names:
             # need to redefine the statistic function within the loop because score_name is a loop variable, to avoid ruff errors
             def statistic(arr, axis, score_name=score_name):
@@ -439,36 +439,39 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
-    InstanceMetric currently allows three reductions:
+    InstanceMetric currently allows two reductions:
     1. 'mean', which calculates the mean of instance scores,'
     2. 'group_mean', which first applies an aggregation function specified in the reduction_map
         to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
         of the group scores; if grouping_field is None, grouping is disabled.
         See _validate_group_mean_reduction for formatting instructions.
-    3. 'group_mean_subgroup_comparison': compare sub-groups (e.g. a baseline and others) within
-        groups, then return the mean of this function value.
-        See _validate_group_mean_subgroup_comparison_reduction for formatting instructions.
     """
 
     n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
 
     implemented_reductions: List[str] = field(
-        default_factory=lambda: ["mean", "group_mean", "group_mean_subgroup_comparison"]
+        default_factory=lambda: ["mean", "group_mean"]
     )
-    grouping_field: str = None
 
     @property
     @abstractmethod
     def reduction_map(self) -> dict:
         pass
 
-    def _validate_group_mean_reduction(self, reduction_name="group_mean"):
+    @staticmethod
+    def _function_does_comparison(aggregation_func):
+        import inspect
+
+        func_args = list(inspect.signature(aggregation_func).parameters.keys())
+        # if function has both these arguments, assume it does comparison (i.e. it expects both arguments)
+        return all(fa in func_args for fa in ["baseline_scores", "other_scores"])
+
+    def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
 
         Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
 
         class GroupVarianceAccuracy(Accuracy):
-            grouping_field = 'group_id'
             reduction_map = {'group_mean': {'agg_func': ['variance', np.var, True]}}
 
         reduction_map must be a dict with
@@ -481,29 +484,58 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 If False, the instances are resampled individually, and the groups determined
                 (meaning the groups may be of slightly different size or composition from the original
                 depending on the resampling of the instances).
-                For group_mean_subgroup_comparison reduction (see _validate_group_mean_subgroup_comparison_reduction), it's
-                recommended to set it as 'True' to prevent the group score from being NaN too often.
         - Optional: 'score_fields' key with list value containing the string names of fields to apply the aggregation to
             - If not present, the parent class main_score is used.
 
-        Verify that instances do not contain a field _index, which is used to sort to make
-        sure that resampling preserves the
-        """
-        if not self.grouping_field:
-            raise ValueError(
-                "self.grouping_field is None, . "
-                "This field is required for group based metric computation."
-            )
+        The aggregation function (2nd element of agg_func) can be one of two types:
+        1. simple: calculate a summary statistic from a single group of values (e.g. mean, median, etc.).
+            This is best suited for cases where the instances are independent of each other, other than belonging to the same group
+        2. comparison: requires additional_inputs to have a boolean key 'is_baseline'.  This function conducts
+            a comparison between baseline instances (is_baseline=True) and other (is_baseline=False).
+            An example is where the baseline instance is a question, and the others are various paraphrases
+            or perturbations of this question.  Here, the function would return, say, a comparison of the instance accuracies
+            rather than, say, the average instance accuracy.  It requires arguments 'baseline_scores' and 'other_scores'
+            In these cases, we recommend setting the 3rd parameter to be True so that the groups are resampled together.
 
+        Example:
+            class GroupVsBaselineDiffAccuracy(Accuracy):
+                reduction_map = {'group_mean': {'agg_func': ['accuracy_diff', accuracy_diff, True],}}
+
+            # where the function is defined as
+            def accuracy_diff(baseline_scores, other_scores):
+                from statistics import mean
+                return mean(other_scores) - mean(baseline_scores)
+
+            The input dataset should look like:
+
+            'group_id'  'question'                                  'is_baseline'
+            1           'How do you fix a car engine?'               True
+            1           'What is the best way to fix an engine?'     False
+            1           'How do you repair a car engine?'            False
+            1           'How do I repair my engine?'                 False
+            2           'Why are ants eating my food?'               True
+        """
+        # instances need to all have additional_inputs field with field group_id
+        assert all(
+            "additional_inputs" in instance for instance in instances
+        ), "each instance must have an additional_inputs field"
+        assert all(
+            isinstance(instance["additional_inputs"], dict) for instance in instances
+        ), "each instance must have an additional_inputs field that is a dict"
+        assert all(
+            "group_id" in instance["additional_inputs"] for instance in instances
+        ), "each instance additional_inputs dict must have a key group_id"
+
+        # validate the reduction_map
         assert (
-            reduction_name in self.reduction_map
-        ), f"reduction_map must have a `{reduction_name}' key"
-        fields = self.reduction_map[reduction_name]
+            "group_mean" in self.reduction_map
+        ), "reduction_map must have a 'group_mean' key"
+        fields = self.reduction_map["group_mean"]
         # for group_mean, expects a dict
         assert isinstance(fields, dict)
         assert (
             "agg_func" in fields
-        ), "fields should have a key 'agg_func' whose value is a 3-element list of a function name and function definition"
+        ), "fields should have a key 'agg_func' whose value is a 3-element list of a function name, function definition, and a boolean indicator"
         assert isinstance(
             fields["agg_func"], list
         ), "fields['agg_func'] should be a list"
@@ -522,74 +554,20 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-    def _validate_group_mean_subgroup_comparison_reduction(self):
-        """Ensure that group_mean_subgroup_comparison reduction_map is properly formatted.
-
-        Example: given a set of Accuracy instance scores, where the instances are grouped by grouping_field.
-        Assume that the instances in each group belong to two sub-groups, 'baseline' and 'others'.
-        An example is that we have an original dataset consisting of questions to be answered.  A second dataset,
-        which we are evaluating, consists of the original question and multiple paraphrases or perturbations of it.
-        Thus, a group is defined by the original question (the 'baseline') plus the paraphrases ('others').
-        An aggregation function here does not simply receive as inputs the set of all the group's instance score (e.g.,
-        the average of all of them) but rather wants to make a comparison between the 'other' and 'baseline' scores.
-        For instance, return the difference between the baseline score and the average of the 'others' score.
-
-        This reduction must have the same format as group_mean reduction map (see _validate_group_mean_reduction) in
-        terms of the 'agg_func' field; as noted in _validate_group_mean_reduction, the 3rd Boolean
-        element is recommended to be set as True to enforce group-level resampling in bootstrapping.
-
-        The reduction must also have an additional field called 'baseline'.  This field value is a list of two strings,
-        1. the first a name of a column in the input dataset (fed into additional_inputs)
-        2. the second the cell value in that column that indicates the baseline items.
-        The callable function must accept parameters baseline_scores and other_scores.  An example is
-
-        class GroupVsBaselineDiffAccuracy(Accuracy):
-            grouping_field = 'group_id'
-            reduction_map = {'group_mean_subgroup_comparison': {'agg_func': ['accuracy_diff', accuracy_diff, True],
-                                                                'subgroups': ['variant_type', 'original']}
-                                                                }
-        # where the function is defined as
-        def accuracy_diff(baseline_scores, other_scores):
-            from statistics import mean
-            return mean(other_scores) - mean(baseline_scores)
-
-        The input dataset should look like:
-
-        'group_id'  'question'                                  'variant_type'
-        1           'How do you fix a car engine?'               original
-        1           'What is the best way to fix an engine?'     paraphrase
-        1           'How do you repair a car engine?'            paraphrase
-        1           'How do I repair my engine?'                 paraphrase
-        2           'Why are ants eating my food?'               original
-        ...
-
-        """
-        reduction_name = "group_mean_subgroup_comparison"
-        self._validate_group_mean_reduction(reduction_name=reduction_name)
-        # make sure aggregation function contains appropriate arguments
-        import inspect
-
-        agg_func = self.reduction_map[reduction_name]["agg_func"][1]
-        func_args = list(inspect.signature(agg_func).parameters.keys())
-        required_args = ["baseline_scores", "other_scores"]
-        assert all(
-            kk in func_args for kk in required_args
-        ), f"aggregation function {agg_func.__name} must accept parameters {required_args}"
-
-        # validate baseline arguments
-        fields = self.reduction_map[reduction_name]
-        assert (
-            "subgroups" in fields
-        ), "fields should have a key 'subgroups' whose value is a 2-element list of strings, a data column name and value identifier"
-        assert isinstance(
-            fields["subgroups"], list
-        ), "fields['subgroups'] should be a list"
-        assert (
-            len(fields["subgroups"]) == 2
-        ), "fields['subgroups'] should be a two-element list"
-        assert all(
-            isinstance(vv, str) for vv in fields["subgroups"]
-        ), "both elements in fields['subgroups'] should be a strings"
+        # for aggregations that conduct a comparison, expects a boolean is_baseline field
+        if self._function_does_comparison(fields["agg_func"][1]):
+            assert all(
+                "is_baseline" in instance["additional_inputs"] for instance in instances
+            ), f"since group_mean aggregation function {fields['agg_func'][1]} performs a comparison, each instance's additional_inputs dict must have a key is_baseline"
+            assert all(
+                (
+                    isinstance(instance["additional_inputs"]["is_baseline"], bool)
+                    or isinstance(
+                        instance["additional_inputs"]["is_baseline"], np.bool_
+                    )
+                )
+                for instance in instances
+            ), "is_baseline field must be boolean"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
@@ -602,12 +580,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             field_name_full_prefix = ""
             # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = self.average_instance_scores
+            aggregation_function = self.average_item_scores
             if reduction_type == "mean":
                 reduction_fields = list(set(reduction_params))
-                instances_to_resample = deepcopy(instances)
+                # extract only the dict of instance scores
+                scores_to_resample = deepcopy(instances)
             elif reduction_type == "group_mean":
-                self._validate_group_mean_reduction()
+                self._validate_group_mean_reduction(instances=instances)
                 reduction_fields = (
                     [self.main_score]
                     if "score_fields" not in reduction_params
@@ -615,27 +594,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 )
                 aggregation_function_name = str(reduction_params["agg_func"][0])
                 field_name_full_prefix = "group_" + aggregation_function_name + "_"
+                if reduction_params["agg_func"][2]:
+                    field_name_full_prefix = "fixed_" + field_name_full_prefix
                 (
-                    instances_to_resample,
+                    scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances, reduction_params, reduction_fields
-                )
-            elif reduction_type == "group_mean_subgroup_comparison":
-                self._validate_group_mean_subgroup_comparison_reduction()
-                # same initial setup as group_mean reduction
-                reduction_fields = (
-                    [self.main_score]
-                    if "score_fields" not in reduction_params
-                    else list(set(reduction_params["score_fields"]))
-                )
-                aggregation_function_name = str(reduction_params["agg_func"][0])
-                field_name_full_prefix = "group_" + aggregation_function_name + "_"
-                # set up the aggregation function and the input to the confidence intervals
-                (
-                    instances_to_resample,
-                    aggregation_function,
-                ) = self._set_up_group_mean_subgroup_comparison_aggregation(
                     instances, reduction_params, reduction_fields
                 )
             else:
@@ -647,14 +611,14 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             for field_name in reduction_fields:
                 field_name_full = field_name_full_prefix + field_name
                 # if group resampling (3rd element of agg_func parameter) is True, then
-                #   1. instances_to_resample are the group scores, and
+                #   1. scores_to_resample are the group scores, and
                 #   2. aggregation_function is to take the raw mean
                 # if no group resampling (3rd element of agg_func parameter) is False, then
-                #   1. instances_to_resample are the original instance scores, and
+                #   1. scores_to_resample are the original instance scores, and
                 #   2. aggregation_function is to apply the group aggregation from the instance scores
-                # either way, the application of aggregation_function to instances_to_resample yields the global score
+                # either way, the application of aggregation_function to scores_to_resample yields the global score
                 global_score[field_name_full] = aggregation_function(
-                    instances_to_resample, field_name
+                    scores_to_resample, field_name
                 )
                 if field_name == self.main_score:
                     global_score["score"] = global_score[field_name_full]
@@ -664,7 +628,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             # (will not automatically calculate CIs for fields in reduction map)
             if self.ci_scores is not None:
                 confidence_interval = self.score_based_confidence_interval(
-                    instances_to_resample,
+                    instances=scores_to_resample,
                     score_names=list(set(self.ci_scores)),
                     ci_score_prefix=field_name_full_prefix,
                     aggregation_func=aggregation_function,
@@ -701,7 +665,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         return instances, global_score
 
-    def get_group_aggregated_instance_scores(
+    def get_group_scores(
         self, instances: List[dict], field_names: List[str], group_aggregation_func
     ):
         """Return a list of group aggregation function value for group_mean reduction.
@@ -717,87 +681,52 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         from collections import defaultdict
 
         # two-level defaultdict: first is the grouping, second is the field name
-        group_to_instance_scores = defaultdict(lambda: defaultdict(list))
-        for instance in instances:
-            additional_inputs = instance["additional_inputs"]
-            if self.grouping_field not in additional_inputs:
-                raise ValueError(
-                    f"Missing '{self.grouping_field}' from instance {instance}. "
-                    f"This field is required for group based metric computation."
-                )
-            group_key = additional_inputs[self.grouping_field]
-            for field_name in field_names:
-                group_to_instance_scores[group_key][field_name].append(
-                    instance["score"]["instance"][field_name]
-                )
-
-        # a list where each element is a group (not an instance), and the dict corresponds to
-        # the aggregate scores of each field within that group
-        return [
-            {
-                "score": {
-                    "instance": {
-                        field_name: group_aggregation_func(scores[field_name])
-                        for field_name in field_names
-                    }
-                }
-            }
-            for scores in group_to_instance_scores.values()
-        ]
-
-    def get_group_aggregated_instance_scores_by_subgroups(
-        self,
-        instances: List[dict],
-        field_names: List[str],
-        group_aggregation_func,
-        subgroup_field: str,
-        baseline_name,
-    ):
-        """Return a list of group aggregation function value for group_mean_subgroup_comparison reduction.
-
-        Args:
-            instances: List of observation instances with instance-level scores (fields) computed.
-            field_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function with arguments baseline_scores and other_scores.
-            subgroup_field: name of field in instance additional_inputs that contains the subgroup identifier
-            baseline_name: value of subgroup_field that indicates a score belongs in baseline_scores.
-
-        Returns:
-            List of dicts, each corresponding to a group of instances (defined by grouping_field)
-        """
-        from collections import defaultdict
-
-        # two-level defaultdict: first is the grouping, second is the field name
-        # first list is instance scores for baseline group, second is for comparison group
+        # first list is instance scores for baseline group, second is for comparison group (if applicable)
         group_to_instance_scores = defaultdict(lambda: defaultdict(lambda: [[], []]))
 
+        # check if function has fields for baseline and others
+        func_does_comparison = self._function_does_comparison(group_aggregation_func)
+        if func_does_comparison:
+            assert (
+                "is_baseline" in instance["additional_inputs"] for instance in instances
+            ), "all instances must have field is_baseline in additional_inputs"
+
         for instance in instances:
             additional_inputs = instance["additional_inputs"]
-            for cc in [self.grouping_field, subgroup_field]:
-                if cc not in additional_inputs:
-                    raise ValueError(
-                        f"Missing '{cc}' from instance {instance}. "
-                        f"This field is required for group based metric computation."
-                    )
-            group_key = additional_inputs[self.grouping_field]
-            # indicator if is in the baseline group or not
-            is_baseline = str(additional_inputs[subgroup_field]) == baseline_name
-            # convert True (baseline) to 0, and False (others) to 1, store in respective groups
+            if "group_id" not in additional_inputs:
+                raise ValueError(
+                    f"Missing 'group_id' from instance {instance}. "
+                    f"This field is required for group based metric computation."
+                )
+            group_key = additional_inputs["group_id"]
+            # for functions that do baseline vs others group comparison
+            is_baseline = (
+                additional_inputs["is_baseline"] if func_does_comparison else True
+            )
+            # convert is_baseline=True (baseline) to 0, and False (others) to 1, store in respective groups
             idx = int(not is_baseline)
-
             for field_name in field_names:
                 group_to_instance_scores[group_key][field_name][idx].append(
                     instance["score"]["instance"][field_name]
                 )
 
-        # now for each group, take the aggregation function, comparing others to baseline
+        def agg_func(first, second):
+            if func_does_comparison:
+                # if is a comparison function, pass both lists
+                return group_aggregation_func(
+                    baseline_scores=first, other_scores=second
+                )
+            # otherwise pass the first list to the default argument
+            return group_aggregation_func(first)
+
+        # now apply this function to each group
         return [
             {
                 "score": {
                     "instance": {
-                        field_name: group_aggregation_func(
-                            baseline_scores=scores[field_name][0],
-                            other_scores=scores[field_name][1],
+                        field_name: agg_func(
+                            first=scores[field_name][0],
+                            second=scores[field_name][1],
                         )
                         for field_name in field_names
                     }
@@ -812,67 +741,27 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         # if treat groups as units
         if reduction_params["agg_func"][2]:
             # pass the group aggregate---not instance---scores to resample as usual
-            aggregation_function = self.average_instance_scores
-            instances_to_resample = self.get_group_aggregated_instance_scores(
+            aggregation_function = self.average_item_scores
+            scores_to_resample = self.get_group_scores(
                 instances, reduction_fields, reduction_params["agg_func"][1]
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
-            instances_to_resample = deepcopy(instances)
+            scores_to_resample = deepcopy(instances)
 
             def aggregation_function(
                 instances,
                 field_name,
                 group_aggregation_func=reduction_params["agg_func"][1],
             ):
-                group_scores = self.get_group_aggregated_instance_scores(
+                group_scores = self.get_group_scores(
                     instances, [field_name], group_aggregation_func
                 )
                 return nan_mean(
                     [group["score"]["instance"][field_name] for group in group_scores]
                 )
 
-        return instances_to_resample, aggregation_function
-
-    def _set_up_group_mean_subgroup_comparison_aggregation(
-        self, instances, reduction_params, reduction_fields
-    ):
-        # if treat groups as units
-        if reduction_params["agg_func"][2]:
-            # pass the group aggregate---not instance---scores to resample as usual
-            aggregation_function = self.average_instance_scores
-            instances_to_resample = (
-                self.get_group_aggregated_instance_scores_by_subgroups(
-                    instances,
-                    reduction_fields,
-                    group_aggregation_func=reduction_params["agg_func"][1],
-                    subgroup_field=reduction_params["subgroups"][0],
-                    baseline_name=reduction_params["subgroups"][1],
-                )
-            )
-        else:
-            # pass the instance scores to resample, and calculate the group aggregation on the resamplings
-            instances_to_resample = deepcopy(instances)
-
-            def aggregation_function(
-                instances,
-                field_name,
-                group_aggregation_func=reduction_params["agg_func"][1],
-                subgroup_field=reduction_params["subgroups"][0],
-                baseline_name=reduction_params["subgroups"][1],
-            ):
-                group_scores = self.get_group_aggregated_instance_scores_by_subgroups(
-                    instances,
-                    [field_name],
-                    group_aggregation_func,
-                    subgroup_field=subgroup_field,
-                    baseline_name=baseline_name,
-                )
-                return nan_mean(
-                    [group["score"]["instance"][field_name] for group in group_scores]
-                )
-
-        return instances_to_resample, aggregation_function
+        return scores_to_resample, aggregation_function
 
     @abstractmethod
     def compute(
@@ -2284,44 +2173,120 @@ def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=Fal
     return norm_h, how_signif[0]
 
 
+def mean_baseline_score(baseline_scores: List, other_scores: List):
+    """Return average score on the baseline only.
+
+    Args:
+        baseline_scores: a list of scores on baseline instances.
+        other_scores: a list of scores on instances that will be compared to the baseline.
+
+    Returns:
+        float value
+    """
+    baseline_scores, other_scores = validate_baseline_other_aggregation(
+        baseline_scores, other_scores
+    )
+    if len(baseline_scores) == 0:
+        # no scores to use
+        return np.nan
+    assert all(
+        0 <= score <= 1 for score in baseline_scores
+    ), "all scores must be in [0,1]"
+    return mean(baseline_scores)
+
+
+def mean_others_score(baseline_scores: List, other_scores: List):
+    """Return average score on the others only.
+
+    Args:
+        baseline_scores: a list of scores on baseline instances.
+        other_scores: a list of scores on instances that will be compared to the baseline.
+
+    Returns:
+        float value
+    """
+    baseline_scores, other_scores = validate_baseline_other_aggregation(
+        baseline_scores, other_scores
+    )
+    if len(other_scores) == 0:
+        # no scores to use
+        return np.nan
+    assert all(0 <= score <= 1 for score in other_scores), "all scores must be in [0,1]"
+    return mean(other_scores)
+
+
+# metrics using mean reduction
 class GroupMeanAccuracy(Accuracy):
-    grouping_field = "group_id"
-    reduction_map = {"group_mean": {"agg_func": ["mean", mean, False]}}
+    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
 
 
 class FixedGroupMeanAccuracy(Accuracy):
     # the same as GroupMeanAccuracy, except the groups are fixed and are resampled together
-    grouping_field = "group_id"
-    reduction_map = {"group_mean": {"agg_func": ["fixed_group_mean", mean, True]}}
+    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
 
 
-class GroupPDRAccuracy(Accuracy):
-    grouping_field = "group_id"
+# same as above, now using StringContainment
+class GroupMeanStringContainment(StringContainment):
+    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
+
+
+class FixedGroupMeanStringContainment(StringContainment):
+    # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
+    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
+
+
+# take only the (fixed) group mean of baseline or other (paraphrases) scores
+class FixedGroupMeanBaselineAccuracy(Accuracy):
     reduction_map = {
-        "group_mean_subgroup_comparison": {
-            "agg_func": ["pdr", performance_drop_rate, True],
-            "subgroups": ["variant_type", "original"],
+        "group_mean": {
+            "agg_func": ["mean_baseline", mean_baseline_score, True],
         }
     }
 
 
-class GroupMeanStringContainment(StringContainment):
-    grouping_field = "group_id"
-    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
-
-
-class GroupPDRStringContainment(StringContainment):
-    grouping_field = "group_id"
+class FixedGroupMeanOthersAccuracy(Accuracy):
     reduction_map = {
-        "group_mean_subgroup_comparison": {
+        "group_mean": {
+            "agg_func": ["mean_others", mean_others_score, True],
+        }
+    }
+
+
+# same as above but using StringContainment
+class FixedGroupMeanBaselineStringContainment(StringContainment):
+    reduction_map = {
+        "group_mean": {
+            "agg_func": ["mean_baseline", mean_baseline_score, True],
+        }
+    }
+
+
+class FixedGroupMeanOthersStringContainment(StringContainment):
+    reduction_map = {
+        "group_mean": {
+            "agg_func": ["mean_others", mean_others_score, True],
+        }
+    }
+
+
+# using PDR
+class FixedGroupPDRAccuracy(Accuracy):
+    reduction_map = {
+        "group_mean": {
             "agg_func": ["pdr", performance_drop_rate, True],
-            "subgroups": ["variant_type", "original"],
+        }
+    }
+
+
+class FixedGroupPDRStringContainment(StringContainment):
+    reduction_map = {
+        "group_mean": {
+            "agg_func": ["pdr", performance_drop_rate, True],
         }
     }
 
 
 class GroupMeanTokenOverlap(TokenOverlap):
-    grouping_field = "group_id"
     reduction_map = {
         "group_mean": {
             "agg_func": ["mean", nan_mean, False],
@@ -2330,21 +2295,18 @@ class GroupMeanTokenOverlap(TokenOverlap):
     }
 
 
-class GroupNormCohensHAccuracy(Accuracy):
-    grouping_field = "group_id"
+# using Cohens's h
+class FixedGroupNormCohensHAccuracy(Accuracy):
     reduction_map = {
-        "group_mean_subgroup_comparison": {
+        "group_mean": {
             "agg_func": ["norm_cohens_h", normalized_cohens_h, True],
-            "subgroups": ["variant_type", "original"],
         }
     }
 
 
-class GroupNormCohensHStringContainment(StringContainment):
-    grouping_field = "group_id"
+class FixedGroupNormCohensHStringContainment(StringContainment):
     reduction_map = {
-        "group_mean_subgroup_comparison": {
+        "group_mean": {
             "agg_func": ["norm_cohens_h", normalized_cohens_h, True],
-            "subgroups": ["variant_type", "original"],
         }
     }

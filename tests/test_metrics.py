@@ -2,6 +2,8 @@ import unittest
 from copy import deepcopy
 from math import isnan
 
+import numpy as np
+
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
     Accuracy,
@@ -11,13 +13,18 @@ from src.unitxt.metrics import (
     F1MicroMultiLabel,
     F1Weighted,
     FixedGroupMeanAccuracy,
+    FixedGroupMeanBaselineAccuracy,
+    FixedGroupMeanBaselineStringContainment,
+    FixedGroupMeanOthersAccuracy,
+    FixedGroupMeanOthersStringContainment,
+    FixedGroupMeanStringContainment,
+    FixedGroupNormCohensHAccuracy,
+    FixedGroupNormCohensHStringContainment,
+    FixedGroupPDRAccuracy,
+    FixedGroupPDRStringContainment,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
-    GroupNormCohensHAccuracy,
-    GroupNormCohensHStringContainment,
-    GroupPDRAccuracy,
-    GroupPDRStringContainment,
     Rouge,
     Squad,
     TokenOverlap,
@@ -71,23 +78,25 @@ GROUPED_INSTANCE_ADDL_INPUTS = (
     + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
 )
 
-# for group_mean_subgroup_comparison metrics, add a subgroup indicator (by default called 'variant_type')
+# for group_mean aggregations with a subgroup_comparison, add a baseline indicator
 # these groupings correspond in length to the group identifiers above
-VARIANT_TYPE = (
-    (["original"] + ["paraphrase"] * 4)
-    + (["original"] + ["paraphrase"] * 4)
-    + (["original"] + ["paraphrase"] * 3)
-    + ["original"]
-)
+IS_BASELINE = np.concatenate(
+    (
+        np.repeat(a=[True, False], repeats=[1, 4]),
+        np.repeat(a=[True, False], repeats=[1, 4]),
+        np.repeat(a=[True, False], repeats=[1, 3]),
+        np.repeat(a=[True, False], repeats=[1, 0]),
+    )
+).tolist()
 
 # construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
 group_by_fields = ["group", "id"]
 
-for ai, vt in zip(GROUPED_INSTANCE_ADDL_INPUTS, VARIANT_TYPE):
+for ai, ib in zip(GROUPED_INSTANCE_ADDL_INPUTS, IS_BASELINE):
     ai.update(
         {
             "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
-            "variant_type": vt,
+            "is_baseline": ib,
         }
     )
 
@@ -466,22 +475,32 @@ class TestMetrics(unittest.TestCase):
         accuracy_metrics = [
             FixedGroupMeanAccuracy(),
             GroupMeanAccuracy(),
+            FixedGroupMeanStringContainment(),
             GroupMeanStringContainment(),
-            GroupPDRAccuracy(),
-            GroupPDRStringContainment(),
-            GroupNormCohensHAccuracy(),
-            GroupNormCohensHStringContainment(),
+            FixedGroupMeanBaselineAccuracy(),
+            FixedGroupMeanOthersAccuracy(),
+            FixedGroupMeanBaselineStringContainment(),
+            FixedGroupMeanOthersStringContainment(),
             GroupMeanTokenOverlap(),
+            FixedGroupNormCohensHAccuracy(),
+            FixedGroupNormCohensHStringContainment(),
+            FixedGroupPDRAccuracy(),
+            FixedGroupPDRStringContainment(),
         ]
         global_targets = [
             0.225,
             0.225,
             0.4875,
-            0.8333333333333334,
-            0.4444444444444445,
+            0.4875,
+            0.5,
+            0.19444444444444442,
+            0.75,
+            0.5555555555555555,
+            0.5083333333333333,
             -0.4249467048786864,
             -0.4639421840102023,
-            0.5083333333333333,
+            0.8333333333333334,
+            0.4444444444444445,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
@@ -493,34 +512,19 @@ class TestMetrics(unittest.TestCase):
             self.assertAlmostEqual(
                 target,
                 outputs[0]["score"]["global"]["score"],
-                msg=f"{outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
+                msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
             )
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
-        from statistics import mean
-
-        class NoGroupField(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean, True]}}
-
-        with self.assertRaises(ValueError):
-            # should raise error because no grouping_field
-            metric = NoGroupField()
-            apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS,
-                references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-
         from dataclasses import field
+        from statistics import mean
         from typing import List
 
         class NoAggFuncReduction(Accuracy):
             implemented_reductions: List[str] = field(
                 default_factory=lambda: ["mean", "group_mean", "some_other_func"]
             )
-            grouping_field = "group_id"
             reduction_map = {"some_other_func": {"agg_func": ["mean", mean, False]}}
 
         with self.assertRaises(ValueError):
@@ -534,7 +538,6 @@ class TestMetrics(unittest.TestCase):
             )
 
         class NoAggFunc(Accuracy):
-            grouping_field = "group_id"
             reduction_map = {"group_mean": {"func": ["mean", mean]}}
 
         with self.assertRaises(AssertionError):
@@ -548,7 +551,6 @@ class TestMetrics(unittest.TestCase):
             )
 
         class NoCallableAggFunc(Accuracy):
-            grouping_field = "group_id"
             reduction_map = {"group_mean": {"agg_func": ["mean", "some string", False]}}
 
         with self.assertRaises(AssertionError):
@@ -561,22 +563,7 @@ class TestMetrics(unittest.TestCase):
                 additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
-        class WrongGroupID(Accuracy):
-            grouping_field = "random_id_name"
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean, False]}}
-
-        with self.assertRaises(ValueError):
-            # should raise error because grouping_field is not found in the additional inputs
-            metric = WrongGroupID()
-            apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS,
-                references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-
         class NoBooleanGrouping(Accuracy):
-            grouping_field = "group_id"
             reduction_map = {"group_mean": {"agg_func": ["mean", mean, 1]}}
 
         with self.assertRaises(AssertionError):
@@ -695,39 +682,65 @@ class TestConfidenceIntervals(unittest.TestCase):
         )
 
         self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanStringContainment(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.675,
+        )
+
+        self._test_grouped_instance_confidence_interval(
             metric=GroupMeanStringContainment(),
             expected_ci_low=0.15556138609239942,
             expected_ci_high=0.707936507936508,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=GroupPDRAccuracy(),
-            expected_ci_low=0.6666666666666666,
+            metric=FixedGroupMeanBaselineAccuracy(),
+            expected_ci_low=0.0,
             expected_ci_high=1.0,
-            reduction_name="group_mean_subgroup_comparison",
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=GroupPDRStringContainment(),
-            expected_ci_low=0.3333333333333333,
-            expected_ci_high=0.5,
-            reduction_name="group_mean_subgroup_comparison",
+            metric=FixedGroupMeanOthersAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.3333333333333333,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=GroupNormCohensHAccuracy(),
+            metric=FixedGroupMeanBaselineStringContainment(),
+            expected_ci_low=0.25,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanOthersStringContainment(),
+            expected_ci_low=0.5,
+            expected_ci_high=0.6666666666666666,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormCohensHAccuracy(),
             expected_ci_low=-1.0,
             expected_ci_high=0.33333333333333337,
-            reduction_name="group_mean_subgroup_comparison",
         )
 
         # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
         # hence this test may fail on a PC
         self._test_grouped_instance_confidence_interval(
-            metric=GroupNormCohensHStringContainment(),
+            metric=FixedGroupNormCohensHStringContainment(),
             expected_ci_low=-0.49999999999999994,
             expected_ci_high=-0.39182655203060723,
-            reduction_name="group_mean_subgroup_comparison",
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRAccuracy(),
+            expected_ci_low=0.6666666666666666,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRStringContainment(),
+            expected_ci_low=0.3333333333333333,
+            expected_ci_high=0.5,
         )
 
         # pass global dict because there are additional fields other than the main score
@@ -756,7 +769,6 @@ class TestConfidenceIntervals(unittest.TestCase):
         expected_ci_low=0.0,
         expected_ci_high=1.0,
         expected_global_result=None,
-        reduction_name="group_mean",
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
         outputs = apply_metric(
@@ -765,11 +777,13 @@ class TestConfidenceIntervals(unittest.TestCase):
             references=GROUPED_INSTANCE_REFERENCES,
             additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
         )
-
+        # get first element of reduction_map values
+        reduction_params = next(iter(metric.reduction_map.values()))
+        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
         group_score_name = "_".join(
             [
-                "group",
-                metric.reduction_map[reduction_name]["agg_func"][0],
+                prefix,
+                metric.reduction_map["group_mean"]["agg_func"][0],
                 metric.main_score,
             ]
         )
@@ -790,7 +804,7 @@ class TestConfidenceIntervals(unittest.TestCase):
                     score_value,
                     expected_global_result[score_name],
                     places=5,
-                    msg=f"score mismatch for {group_score_name}, got {expected_global_result[score_name]} but expected {score_value}",
+                    msg=f"{group_score_name} score mismatch for {metric.__class__.__name__}, got {expected_global_result[score_name]} but expected {score_value}",
                 )
             else:
                 # An output score that is not expected
