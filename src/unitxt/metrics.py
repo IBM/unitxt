@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
+from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import evaluate
@@ -1053,8 +1054,6 @@ class F1(GlobalMetric):
             average=self.average,
         )
         if isinstance(result["f1"], numpy.ndarray):
-            from statistics import mean
-
             final_result = {self.main_score: mean(result["f1"])}
             for i, label in enumerate(labels):
                 final_result["f1_" + self.id_to_str[label]] = result["f1"][i]
@@ -1148,8 +1147,6 @@ class F1MultiLabel(GlobalMetric):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            from statistics import mean
-
             assert (
                 len(result[self.metric]) == len(labels)
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
@@ -1911,7 +1908,6 @@ class NDCG(GlobalMetric):
         additional_inputs: List[Any],
     ) -> dict:
         from collections import defaultdict
-        from statistics import mean
 
         query_to_predictions_and_references = defaultdict(lambda: [[], []])
         for reference, pred, inputs_dict in zip(
