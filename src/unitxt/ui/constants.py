@@ -52,4 +52,7 @@ MAIN_INTRO_TXT = """
 """
 JSON_BUTTON_TXT = "View"
 
-ACK_TEXT = "Unitxt emoji designed by [OpenMoji](http://openmoji.org]) - the open-source emoji and icon project. License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/#)"
+ACK_TEXT = """
+Unitxt emoji designed by [OpenMoji](https://openmoji.org/#) - the open-source emoji and icon project.
+ License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/#)
+"""
