@@ -44,7 +44,7 @@ To launch unitxt graphical user interface run:
 unitxt-explore
 ```
 
-# 🦄 Contributers
+# 🦄 Contributors
 
 Please install Unitxt from source by:
 ```
