@@ -73,9 +73,10 @@ Our aspiration is to be simple, adaptable, and transparent.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Read More:
+   :caption: Contents:
 
    docs/introduction
+   docs/demo
    docs/no_installation_usage
    docs/installation
    docs/adding_dataset
