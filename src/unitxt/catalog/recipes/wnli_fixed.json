@@ -47,12 +47,13 @@
             ]
         },
         {
-            "type": "render_format_template",
-            "template": {
-                "type": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
-            }
+            "type": "input_output_template",
+            "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
+            "output_format": "{label}"
+        },
+        {
+            "type": "system_format",
+            "model_input_format": "User: {source}\nAgent: "
         }
     ]
 }

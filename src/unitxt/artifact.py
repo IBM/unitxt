@@ -134,8 +134,8 @@ class Artifact(Dataclass):
 
         if cls.is_registered_type(snake_case_key):
             assert (
-                cls._class_register[snake_case_key] == artifact_class
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for '{cls._class_register[snake_case_key]}'"
+                str(cls._class_register[snake_case_key]) == str(artifact_class)
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overriden by {artifact_class}."
 
             return snake_case_key
 
