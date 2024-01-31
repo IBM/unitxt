@@ -49,7 +49,7 @@
    </head>
    <body>
       <a href="https://unitxt.readthedocs.io/" class="custom-button">Video</a>
-      <a href="https://huggingface.co/spaces/unitxt/explore" class="custom-button">Demo</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/demo.html" class="custom-button">Demo</a>
       <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
       <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
       <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
