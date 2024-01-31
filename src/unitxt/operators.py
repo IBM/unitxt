@@ -41,6 +41,7 @@ from abc import abstractmethod
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
+from importlib import import_module
 from itertools import zip_longest
 from random import Random
 from typing import (
@@ -1222,6 +1223,7 @@ class FilterByQuery(SingleStreamOperator):
 
     Args:
        query (str): a condition over fields of the instance, to be processed by python's eval()
+       imports_list (List(str)): names of imports needed for the eval of the query (e.g. 're', 'json')
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
@@ -1233,12 +1235,17 @@ class FilterByQuery(SingleStreamOperator):
     """
 
     query: str
+    imports_list: List[str] = []
     error_on_filtered_all: bool = True
+
+    def prepare(self):
+        self.globals = {name: import_module(name) for name in self.imports_list}
+        super().prepare()
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
         for instance in stream:
-            if eval(self.query, None, instance):
+            if eval(self.query, self.globals, instance):
                 yielded = True
                 yield instance
 
@@ -1256,6 +1263,7 @@ class ExecuteQuery(StreamInstanceOperator):
     Args:
        query (str): an expression to be evaluated over the fields of the instance
        to_field (str): the field where the result is to be stored into
+       imports_list (List(str)): names of imports needed for the eval of the query (e.g. 're', 'json')
 
     Examples:
        When instance {"a": 2, "b": 3} is process-ed by operator
@@ -1270,11 +1278,16 @@ class ExecuteQuery(StreamInstanceOperator):
 
     query: str
     to_field: str
+    imports_list: List[str] = []
+
+    def prepare(self):
+        self.globals = {name: import_module(name) for name in self.imports_list}
+        super().prepare()
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = eval(self.query, None, instance)
+        instance[self.to_field] = eval(self.query, self.globals, instance)
         return instance
 
 
