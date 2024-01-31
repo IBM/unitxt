@@ -24,7 +24,7 @@ if __name__ == "__main__":
             "metrics.rag.answer_correctness",
             "metrics.rag.context_relevance",
             "metrics.rag.faithfulness",
-            "metrics.rag.answer_relevance",
+            "metrics.rag.answer_reward",
             "metrics.rag.context_correctness",
             "metrics.rag.context_perplexity",
         ],
