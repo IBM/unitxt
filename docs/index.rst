@@ -13,7 +13,7 @@ Unitxt: streamlining data processing
 
 .. raw:: html
 
-   <video controls src="../_static/video.mov" width="100%">
+   <video controls src="_static/video.mov" width="100%">
    </video>
 
 Unitxt is a Python library for getting data prepared and ready for utilization in training, evaluation and inference of language models.
