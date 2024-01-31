@@ -8,6 +8,15 @@ class Tasker:
 
 
 class FormTask(Tasker, StreamInstanceOperator):
+    """FormTask packs the different instance fields into dictionaries by their roles in the task.
+
+    The output instance contains three fields:
+        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
+        "outputs" -- for the fields listed in Arg "outputs".
+        "metrics" -- to contain the value of Arg 'metrics'
+
+    """
+
     inputs: List[str]
     outputs: List[str]
     metrics: List[str]

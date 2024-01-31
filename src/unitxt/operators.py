@@ -484,7 +484,7 @@ class AddConstant(FieldOperator):
 
 
 class Augmentor(StreamInstanceOperator):
-    """A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
+    """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
 
     Args:
         augment_model_input: Whether to augment the input to the model.
@@ -564,9 +564,9 @@ class NullAugmentor(Augmentor):
 
 
 class AugmentWhitespace(Augmentor):
-    """Augments the inputs by replace existing whitespace with other whitespace.
+    """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
-    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
+    Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
     """
 
     def process_value(self, value: Any) -> Any:
