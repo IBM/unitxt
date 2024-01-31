@@ -85,11 +85,18 @@ def unhash_dict(input_frozenset):
 
 
 def create_dataframe(scores):
+    def try_round(value):
+        try:
+            return round(value, 3)
+        except:
+            return value
+
     try:
         for val in ["score_name", "score", "groups_mean_score"]:
             if val in scores:
                 scores.pop(val)
-        rounded_scores = {key: round(value, 3) for key, value in scores.items()}
+
+        rounded_scores = {key: try_round(value) for key, value in scores.items()}
         return list(rounded_scores.items())
     except Exception:
         return cons.EMPTY_SCORES_FRAME
