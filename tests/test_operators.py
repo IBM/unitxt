@@ -498,6 +498,23 @@ class TestOperators(unittest.TestCase):
             str(ve.exception),
         )
 
+        inputs = [{"json_string": '{"A":"a_value", "B":"b_value"}'}]
+        operator = ExecuteQuery(
+            query='json.loads(json_string)["A"]', imports_list=["json"], to_field="c"
+        )
+        self.assertEqual("a_value", operator.process(inputs[0])["c"])
+
+        pattern = "[0-9]+"
+        string = "Account Number - 12345, Amount - 586.32"
+        repl = "NN"
+        inputs = [{"pattern": pattern, "string": string, "repl": repl}]
+        operator = ExecuteQuery(
+            query="re.sub(pattern, repl, string)", imports_list=["re"], to_field="c"
+        )
+        self.assertEqual(
+            "Account Number - NN, Amount - NN.NN", operator.process(inputs[0])["c"]
+        )
+
     def test_intersect(self):
         inputs = [
             {"label": ["a", "b"]},
