@@ -268,9 +268,18 @@ class LoadFromIBMCloud(Loader):
                     if self.data_dir is not None
                     else data_file
                 )
-                self._download_from_cos(
-                    cos, self.bucket_name, object_key, local_dir + "/" + data_file
-                )
+                with tempfile.NamedTemporaryFile() as temp_file:
+                    # Download to  a temporary file in same file partition, and then do an atomic move
+                    self._download_from_cos(
+                        cos,
+                        self.bucket_name,
+                        object_key,
+                        local_dir + "/" + os.path.basename(temp_file.name),
+                    )
+                    os.rename(
+                        local_dir + "/" + os.path.basename(temp_file.name),
+                        local_dir + "/" + data_file,
+                    )
 
         if isinstance(self.data_files, list):
             dataset = hf_load_dataset(local_dir, streaming=False)

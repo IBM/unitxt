@@ -31,12 +31,12 @@ def parse_random_mix_string(input_str):
             {'dale': 0.9, 'oren': 0.7, 'mike': 1.0}
     """
     if not re.fullmatch(
-        r"(([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)\+)*([a-zA-Z]+\[\d*\.?\d*%?\]|[a-zA-Z]+)",
+        r"((\w+\[\d*\.?\d*%?\]|\w+)\+)*(\w+\[\d*\.?\d*%?\]|\w+)",
         input_str,
     ):
         raise ValueError(f"Invalid input format for split '{input_str}'")
 
-    pattern = re.compile(r"([a-zA-Z]+)(\[\d*\.?\d*%?\])?")
+    pattern = re.compile(r"(\w+)(\[\d*\.?\d*%?\])?")
     matches = pattern.findall(input_str)
 
     return {
