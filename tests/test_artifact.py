@@ -10,12 +10,6 @@ logger = get_logger()
 
 
 class TestArtifact(unittest.TestCase):
-    def test_set_artifact_identifier(self):
-        artifact = Artifact()
-        artifact_identifier = "artifact.id.dummy"
-        artifact.set_artifact_identifier(value=artifact_identifier)
-        self.assertEqual(artifact_identifier, artifact.artifact_identifier)
-
     def test_artifact_identifier_setter(self):
         artifact = Artifact()
         artifact_identifier = "artifact.id.dummy"
