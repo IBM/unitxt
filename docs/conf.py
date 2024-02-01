@@ -45,13 +45,13 @@ html_logo = "./static/logo.png"
 html_theme_options = {
     "show_theme_credit": False,
     "source_url": "https://github.com/IBM/unitxt/",
-    "theme_color": "pink",
 }
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["custom.js"]
 html_show_sphinx = False
 html_favicon = "./static/favicon.ico"
+html_title = "Unitxt"
 
 autodoc_default_flags = [
     "members",
