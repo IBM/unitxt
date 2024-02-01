@@ -52,7 +52,7 @@ class LocalCatalog(Catalog):
             artifact_identifier in self
         ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
-        return Artifact.load(path)
+        return Artifact.load(path, artifact_identifier)
 
     def __getitem__(self, name) -> Artifact:
         return self.load(name)

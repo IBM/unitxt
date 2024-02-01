@@ -8,7 +8,7 @@ from copy import deepcopy
 from functools import lru_cache
 from typing import Dict, List, Union, final
 
-from .dataclass import Dataclass, Field, fields
+from .dataclass import Dataclass, Field, InternalField, fields
 from .logging_utils import get_logger
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
@@ -102,6 +102,11 @@ class Artifact(Dataclass):
 
     _class_register = {}
 
+    artifact_identifier: str = InternalField(default=None, required=False)
+
+    def set_artifact_identifier(self, value):
+        self.artifact_identifier = value
+
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -191,9 +196,11 @@ class Artifact(Dataclass):
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, artifact_identifier=None):
         d = load_json(path)
-        return cls.from_dict(d)
+        new_artifact = cls.from_dict(d)
+        new_artifact.set_artifact_identifier(artifact_identifier)
+        return new_artifact
 
     def prepare(self):
         pass
