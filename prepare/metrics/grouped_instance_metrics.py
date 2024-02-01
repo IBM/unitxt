@@ -152,7 +152,7 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_mean_accuracy", overwrite=True)
+add_to_catalog(metric, "metrics.robustness.fixed_group_mean_accuracy", overwrite=True)
 
 
 metric = GroupMeanAccuracy()
@@ -176,7 +176,7 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.group_mean_accuracy", overwrite=True)
+add_to_catalog(metric, "metrics.robustness.group_mean_accuracy", overwrite=True)
 
 # group mean string containment, fixed and not
 
@@ -201,7 +201,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_mean_string_containment", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_mean_string_containment", overwrite=True
+)
 
 
 metric = GroupMeanStringContainment()
@@ -225,7 +227,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.group_mean_string_containment", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.group_mean_string_containment", overwrite=True
+)
 
 
 # Group mean of baseline or other scores
@@ -249,7 +253,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_mean_baseline_accuracy", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_mean_baseline_accuracy", overwrite=True
+)
 
 metric = FixedGroupMeanOthersAccuracy()
 global_target = {
@@ -271,7 +277,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_mean_others_accuracy", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_mean_others_accuracy", overwrite=True
+)
 
 
 metric = FixedGroupMeanBaselineStringContainment()
@@ -295,7 +303,9 @@ outputs = test_metric(
 )
 
 add_to_catalog(
-    metric, "metrics.fixed_group_mean_baseline_string_containment", overwrite=True
+    metric,
+    "metrics.robustness.fixed_group_mean_baseline_string_containment",
+    overwrite=True,
 )
 
 metric = FixedGroupMeanOthersStringContainment()
@@ -319,7 +329,9 @@ outputs = test_metric(
 )
 
 add_to_catalog(
-    metric, "metrics.fixed_group_mean_others_string_containment", overwrite=True
+    metric,
+    "metrics.robustness.fixed_group_mean_others_string_containment",
+    overwrite=True,
 )
 
 
@@ -345,7 +357,7 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_pdr_accuracy", overwrite=True)
+add_to_catalog(metric, "metrics.robustness.fixed_group_pdr_accuracy", overwrite=True)
 
 metric = FixedGroupPDRStringContainment()
 global_target = {
@@ -368,7 +380,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_pdr_string_containment", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_pdr_string_containment", overwrite=True
+)
 
 # Cohen's H will always use fixed groups
 metric = FixedGroupNormCohensHAccuracy()
@@ -392,7 +406,9 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.fixed_group_norm_cohens_h_accuracy", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_norm_cohens_h_accuracy", overwrite=True
+)
 
 
 metric = FixedGroupNormCohensHStringContainment()
@@ -417,7 +433,9 @@ outputs = test_metric(
 )
 
 add_to_catalog(
-    metric, "metrics.fixed_group_norm_cohens_h_string_containment", overwrite=True
+    metric,
+    "metrics.robustness.fixed_group_norm_cohens_h_string_containment",
+    overwrite=True,
 )
 
 # TokenOverlap: example of a metric that has more than one score
@@ -468,4 +486,4 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.group_mean_token_overlap", overwrite=True)
+add_to_catalog(metric, "metrics.robustness.group_mean_token_overlap", overwrite=True)
