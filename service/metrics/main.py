@@ -44,6 +44,10 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
     t0 = time.perf_counter()
     try:
         logging.debug(f"Request from [{token['sub']}]")
+        logging.info(f"Computing metric '{metric}'.")
+        logging.info(
+            f"MetricRequest contains {len(request.instance_inputs)} input instances"
+        )
 
         # obtain the metric to compute
         metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric)
@@ -57,7 +61,9 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
         )
 
         # apply the metric and obtain the results
+        logging.info("Starting computation .. ")
         metric_results = list(metric_artifact(multi_stream)["test"])
+        logging.info(f"Computed {len(metric_results)} metric results.")
 
         metric_response = {
             "instances_scores": [
