@@ -307,7 +307,7 @@ for new_catalog_name, base_catalog_name in [
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
-answer_relevance = MetricPipeline(
+answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         CopyFields(field_to_field=[("question", "references")], use_query=True),
@@ -322,4 +322,4 @@ answer_relevance = MetricPipeline(
     ],
     metric="metrics.reward.deberta_v3_large_v2",
 )
-add_to_catalog(answer_relevance, "metrics.rag.answer_relevance", overwrite=True)
+add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)

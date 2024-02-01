@@ -1,0 +1,31 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "wikitablequestions"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "answers",
+                    "answer"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "indexed_row_major_table_serializer",
+            "field_to_field": [
+                [
+                    "table",
+                    "context"
+                ]
+            ]
+        }
+    ],
+    "task": "tasks.qa.contextual.extractive",
+    "templates": "templates.qa.contextual.all"
+}
