@@ -19,8 +19,6 @@ from .operators import (
     MapInstanceValues,
     RenameFields,
 )
-
-# SerializeTable,
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
 from .serializers import (
