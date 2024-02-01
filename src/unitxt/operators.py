@@ -59,7 +59,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField
+from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -1225,7 +1225,7 @@ class ComputeExpressionMixin(Artifact):
     """
 
     expression: str
-    imports_list: List[str] = []
+    imports_list: List[str] = OptionalField(default_factory=list)
 
     def prepare(self):
         self.globals = {name: import_module(name) for name in self.imports_list}
