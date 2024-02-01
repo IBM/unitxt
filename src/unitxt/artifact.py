@@ -196,7 +196,7 @@ class Artifact(Dataclass):
     def load(cls, path, artifact_identifier=None):
         d = load_json(path)
         new_artifact = cls.from_dict(d)
-        new_artifact.artifact_identifier(artifact_identifier)
+        new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
 
     def prepare(self):
