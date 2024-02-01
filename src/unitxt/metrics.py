@@ -76,18 +76,24 @@ class Metric(Artifact):
         return predictions, references, additional_inputs, instances
 
     @staticmethod
-    def set_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
-        for instance, instance_score in zip(instances, instances_scores):
+    def update_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
+        for instance, new_scores in zip(instances, instances_scores):
             if "score" not in instance:
                 instance["score"] = {}
-            instance["score"]["instance"] = instance_score
+            scores = instance["score"]
+            if "instance" not in scores:
+                scores["instance"] = {}
+            scores["instance"].update(new_scores)
 
     @staticmethod
     def set_global_score(instances, global_score: Dict[str, Any]):
         for instance in instances:
             if "score" not in instance:
                 instance["score"] = {}
-            instance["score"]["global"] = global_score
+            scores = instance["score"]
+            if "global" not in scores:
+                scores["global"] = {}
+            scores["global"] = global_score
 
 
 class MetricWithConfidenceInterval(Metric):
@@ -1816,7 +1822,7 @@ class RemoteMetric(SingleStreamOperator, Metric):
         metric_response = self.get_metric_response(metric_request)
         instances_scores = metric_response.instances_scores
         global_score = metric_response.global_score
-        self.set_instance_scores(instances, instances_scores)
+        self.update_instance_scores(instances, instances_scores)
         self.set_global_score(instances, global_score)
         yield from instances
 
