@@ -3,6 +3,7 @@ import string
 import uuid
 from abc import ABC, abstractmethod
 from collections import Counter
+from copy import deepcopy
 from dataclasses import field
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -1782,6 +1783,25 @@ class RemoteMetric(SingleStreamOperator, Metric):
     endpoint: str
     metric_name: str
     api_key: str = None
+
+    @staticmethod
+    def wrap_inner_metric_pipeline_metric(
+        metric_pipeline: MetricPipeline, remote_metrics_endpoint: str
+    ) -> MetricPipeline:
+        """Wrap the inner metric in a MetricPipeline with a RemoteMetric.
+
+        When executing the returned MetricPipeline, the inner metric will be computed
+        remotely (pre and post processing steps in the MetricPipeline will be computed locally).
+        """
+        local_inner_metric = metric_pipeline.metric
+        metric_pipeline = deepcopy(
+            metric_pipeline
+        )  # To avoid unintentional changes to the catalog contents
+        metric_pipeline.metric = RemoteMetric(
+            main_score=local_inner_metric.main_score,
+            metric_name=local_inner_metric.artifact_identifier,
+            endpoint=remote_metrics_endpoint,
+        )
 
     def get_metric_url(self) -> str:
         return f"{self.endpoint}/{self.metric_name}"
