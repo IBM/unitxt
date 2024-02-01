@@ -381,6 +381,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
+            if isinstance(pred, float) and np.isnan(pred):
+                pred = ""
             additional_inputs = (
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
@@ -961,16 +963,10 @@ class KendallTauMetric(GlobalMetric):
 
     def compute(
         self,
-        references: List[List[float]],
+        references: List[float],
         predictions: List[float],
         additional_inputs: List[Dict],
     ) -> dict:
-        if isinstance(references[0], list):
-            assert all(
-                len(reference) == 1 for reference in references
-            ), "Only a single reference per prediction is allowed in kendalltau metric"
-            references = [r[0] for r in references]
-
         kendall_results = kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
