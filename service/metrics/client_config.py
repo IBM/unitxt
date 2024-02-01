@@ -31,7 +31,8 @@ def get_metrics_client_config():
             remote_metrics_endpoint: str - The remote endpoint on which the remote metrics are available.
     """
     remote_metrics = get_env_variable(UNITXT_REMOTE_METRICS, default_value=[])
-    remote_metrics = json.loads(remote_metrics)
+    if remote_metrics:
+        remote_metrics = json.loads(remote_metrics)
     if not isinstance(remote_metrics, list):
         raise RuntimeError(
             f"Unexpected value {remote_metrics} for the '{UNITXT_REMOTE_METRICS}' environment variable. "
@@ -55,4 +56,6 @@ def get_metrics_client_config():
                 f"Running metrics {remote_metrics} as remote metrics requires defining an "
                 f"endpoint in the environment variable '{UNITXT_REMOTE_METRICS_ENDPOINT}'."
             )
+    else:
+        remote_metrics_endpoint = None
     return remote_metrics, remote_metrics_endpoint
