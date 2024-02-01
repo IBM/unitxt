@@ -28,12 +28,14 @@ class TestSerializers(unittest.TestCase):
                     "header": ["name", "age"],
                     "rows": [["Alex", "26"], ["Raj", "34"], ["Donald", "39"]],
                 },
-                "context": serialized_str,
+                "serialized_table": serialized_str,
             }
         ]
 
         check_operator(
-            operator=MarkdownTableSerializer(field_to_field={"table": "context"}),
+            operator=MarkdownTableSerializer(
+                field_to_field={"table": "serialized_table"}
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -59,13 +61,13 @@ class TestSerializers(unittest.TestCase):
                     "header": ["name", "age"],
                     "rows": [["Alex", "26"], ["Raj", "34"], ["Donald", "39"]],
                 },
-                "context": serialized_str,
+                "serialized_table": serialized_str,
             }
         ]
 
         check_operator(
             operator=IndexedRowMajorTableSerializer(
-                field_to_field={"table": "context"}
+                field_to_field={"table": "serialized_table"}
             ),
             inputs=inputs,
             targets=targets,
