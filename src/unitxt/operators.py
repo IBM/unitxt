@@ -75,7 +75,8 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .stream import Stream
-from .table_serializer import select_serializer
+
+# from .serializers import select_serializer
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -1444,20 +1445,20 @@ class RemoveValues(FieldOperator):
         return [e for e in value if e not in self.unallowed_values]
 
 
-class SerializeTable(FieldOperator):
-    """Serializes input table.
+# class SerializeTable(FieldOperator):
+#     """Serializes input table.
 
-    Args:
-        serializer (str): Supported table serializer type.
-    """
+#     Args:
+#         serializer (str): Supported table serializer type.
+#     """
 
-    serializer: Optional[str] = None
+#     serializer: Optional[str] = None
 
-    def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        serializer_obj = select_serializer(serializer_type=self.serializer)
+#     def process_value(self, table: Any) -> Any:
+#         table_input = deepcopy(table)
+#         serializer_obj = select_serializer(serializer_type=self.serializer)
 
-        return serializer_obj.serialize_table(table_content=table_input)
+#         return serializer_obj.serialize_table(table_content=table_input)
 
 
 class Unique(SingleStreamReducer):

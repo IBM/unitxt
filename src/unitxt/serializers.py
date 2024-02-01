@@ -1,5 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from copy import deepcopy
+from typing import (
+    Any,
+    Dict,
+    List,
+)
+
+from .operators import FieldOperator
 
 """
 TableSerializer converts a given table into a flat sequence with special symbols.
@@ -9,7 +16,7 @@ Output format varies depending on the chosen serializer. Abstract class at the t
 """
 
 
-class TableSerializer(ABC):
+class TableSerializer(ABC, FieldOperator):
     # main method to serialize a table
     @abstractmethod
     def serialize_table(self, table_content: Dict) -> str:
@@ -35,6 +42,10 @@ Format:  col : col1 | col2 | col 3 row 1 : val1 | val2 | val3 | val4 row 2 : val
 
 
 class IndexedRowMajorTableSerializer(TableSerializer):
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.serialize_table(table_content=table_input)
+
     # main method that processes a table
     # table_content must be in the presribed input format
     def serialize_table(self, table_content: Dict) -> str:
@@ -83,6 +94,10 @@ Format:
 
 
 class MarkdownTableSerializer(TableSerializer):
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.serialize_table(table_content=table_input)
+
     # main method that serializes a table.
     # table_content must be in the presribed input format.
     def serialize_table(self, table_content: Dict) -> str:
@@ -113,37 +128,3 @@ class MarkdownTableSerializer(TableSerializer):
         row_str = ""
         row_str += "|{}|\n".format("|".join(str(cell) for cell in row))
         return row_str
-
-
-def select_serializer(serializer_type: str) -> TableSerializer:
-    if serializer_type == "IndexedRowMajor" or None:
-        return IndexedRowMajorTableSerializer()
-
-    if serializer_type == "Markdown":
-        return MarkdownTableSerializer()
-
-    raise ValueError(f"Unknown serializer_type: {serializer_type}")
-
-
-# if __name__ == "__main__":
-#     # table_serializer = IndexedRowMajor_TableSerializer()
-#     table_serializer = MarkdownTableSerializer()
-
-#     table_dict = {
-#         "header": ["name", "age"],
-#         "rows": [["Alex", "26"], ["Raj", "34"], ["Donald", "39"]],
-#     }
-
-#     table_dict2 = {
-#         "header": ["name", "age", "sex"],
-#         "rows": [
-#             ["Alex", "26", "male"],
-#             ["Raj", "34", "male"],
-#             ["Diana", "39", "female"],
-#         ],
-#     }
-
-#     serialized_str = table_serializer.serialize_table(table_content=table_dict)
-
-#     print("Table: ", end="\n")
-#     print(serialized_str)
