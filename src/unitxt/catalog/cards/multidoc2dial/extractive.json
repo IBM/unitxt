@@ -20,8 +20,8 @@
             "to_field": "answer"
         },
         {
-            "type": "execute_query",
-            "query": "question.split('[SEP]')[0]",
+            "type": "assign_expression",
+            "expression": "question.split('[SEP]')[0]",
             "to_field": "question"
         }
     ],
