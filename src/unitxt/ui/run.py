@@ -137,20 +137,22 @@ def run_unitxt(
     )
 
 
-def display_json_button(element):
-    if element in jsons:
-        json_el = jsons[element]
-        if "loader" in json_el:
-            if "path" in json_el["loader"]:
-                json_el["loader"][" path"] = json_el["loader"].pop("path")
-        return (
-            go_to_json_tab(),
-            make_mrk_down_invisible(),
-            make_txt_visible(element),
-            make_json_visible(json_el),
-        )
+def display_json_button(element: str):
+    if isinstance(element, str):
+        if element in jsons:
+            json_el = jsons[element]
+            if "loader" in json_el:
+                if "path" in json_el["loader"]:
+                    json_el["loader"][" path"] = json_el["loader"].pop("path")
+            return (
+                go_to_json_tab(),
+                make_mrk_down_invisible(),
+                make_txt_visible(element),
+                make_json_visible(json_el),
+            )
 
-    return tabs, f"Error: {element}'s json not found", None, None
+        return tabs, f"Error: {element}'s json not found", None, None
+    return tabs, None, None, None
 
 
 ######################
@@ -298,25 +300,25 @@ with demo:
     )
     cards_js_button.click(
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=cards_js_button)
+    )
     templates.select(activate_button, outputs=templates_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=templates_js_button)
+    )
     instructions.select(activate_button, outputs=instructions_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     instructions_js_button.click(
         display_json_button, instructions, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=instructions_js_button)
+    )
     formats.select(activate_button, outputs=formats_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     formats_js_button.click(
         display_json_button, formats, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=formats_js_button)
+    )
     num_shots.change(activate_button, outputs=generate_prompts_button).then(
         deactivate_button, outputs=infer_button
     )
@@ -354,11 +356,17 @@ with demo:
         deactivate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button).then(
         deactivate_button, outputs=previous_sample
-    ).then(deactivate_button, outputs=next_sample)
+    ).then(deactivate_button, outputs=next_sample).then(
+        deactivate_button, outputs=cards_js_button
+    ).then(deactivate_button, outputs=templates_js_button).then(
+        deactivate_button, outputs=formats_js_button
+    ).then(deactivate_button, outputs=instructions_js_button)
 
     # GENERATE PROMPT BUTTON LOGIC
     generate_prompts_button.click(
         deactivate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=previous_sample).then(
+        deactivate_button, outputs=next_sample
     ).then(make_group_invisible, outputs=infer_group).then(
         go_to_main_tab, outputs=tabs
     ).then(make_mrk_down_invisible, outputs=code_intro).then(
