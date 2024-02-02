@@ -3,7 +3,6 @@ import unittest
 from collections import Counter
 from typing import Any, Dict
 
-from src.unitxt import add_to_catalog
 from src.unitxt.formats import SystemFormat
 from src.unitxt.operators import (
     AddConstant,
@@ -792,14 +791,15 @@ class TestOperators(unittest.TestCase):
         self.assertSetEqual(set(outputs), targets)
 
     def test_apply_stream_operators_field(self):
-        operator = AddConstant(field="a", add=10)
-        add_to_catalog(operator, "operators.add_constant_for_testing", overwrite=True)
         inputs = [
-            {"a": 1, "operator": "operators.add_constant_for_testing"},
-            {"a": 2},
-            {"a": 3},
-            {"a": 4},
-            {"a": 5},
+            {
+                "prediction": "IMAGINE  ",
+                "references": ["IMAGINE  ", "IMAGINE  ", "IMAGINE  "],
+                "operator": "processors.lower_case",
+            },
+            {"prediction": "ALL  ", "references": ["ALL  ", "ALL  "]},
+            {"prediction": "  The  ", "references": ["  The  ", "  The  "]},
+            {"prediction": " peOple  ", "references": [" peOple  ", " peOple  "]},
         ]
         operator = ApplyStreamOperatorsField(field="operator", reversed=True)
         outputs = list(
@@ -807,11 +807,14 @@ class TestOperators(unittest.TestCase):
         )
         self.assertListEqual(
             [
-                {"a": 11, "operator": "operators.add_constant_for_testing"},
-                {"a": 12},
-                {"a": 13},
-                {"a": 14},
-                {"a": 15},
+                {
+                    "operator": "processors.lower_case",
+                    "prediction": "imagine  ",
+                    "references": ["imagine  ", "imagine  ", "imagine  "],
+                },
+                {"prediction": "all  ", "references": ["all  ", "all  "]},
+                {"prediction": "  the  ", "references": ["  the  ", "  the  "]},
+                {"prediction": " people  ", "references": [" people  ", " people  "]},
             ],
             outputs,
         )
