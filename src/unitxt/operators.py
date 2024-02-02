@@ -1228,10 +1228,17 @@ class ComputeExpressionMixin(Artifact):
     imports_list: List[str] = OptionalField(default_factory=list)
 
     def prepare(self):
-        self.globals = {name: import_module(name) for name in self.imports_list}
+        # can not do the imports here, because object does not pickle with imports
+        self.globs = {}
+        self.to_import = True
 
     def compute_expression(self, instance: dict) -> Any:
-        return eval(self.expression, self.globals, instance)
+        if self.to_import:
+            for module_name in self.imports_list:
+                self.globs[module_name] = import_module(module_name)
+            self.to_import = False
+
+        return eval(self.expression, self.globs, instance)
 
 
 class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
