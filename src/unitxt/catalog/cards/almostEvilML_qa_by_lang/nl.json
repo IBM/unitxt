@@ -25,7 +25,7 @@
         },
         {
             "type": "filter_by_condition",
-            "required_values": {
+            "values": {
                 "extracted_language": "nl"
             },
             "condition": "eq"
