@@ -1808,6 +1808,7 @@ class RemoteMetric(SingleStreamOperator, Metric):
             metric_name=local_inner_metric.artifact_identifier,
             endpoint=remote_metrics_endpoint,
         )
+        return metric_pipeline
 
     def get_metric_url(self) -> str:
         return f"{self.endpoint}/{self.metric_name}"
