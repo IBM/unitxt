@@ -82,7 +82,7 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
         return MetricResponse.model_validate(metric_response)
     finally:
         t1 = time.perf_counter()
-        logging.debug(f"Request handled in [{t1 - t0:.2f}] secs.")
+        logging.info(f"Request handled in [{t1 - t0:.2f}] secs.")
 
 
 # wrapper for HTTP exceptions that we throw
