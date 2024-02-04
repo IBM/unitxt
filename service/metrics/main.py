@@ -3,16 +3,15 @@ import time
 from typing import cast
 
 import uvicorn
+from api import MetricRequest, MetricResponse
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
+from tokens import verify_token
 from unitxt.artifact import Artifact
 from unitxt.operator import MultiStreamOperator
 from unitxt.operators import ArtifactFetcherMixin
 from unitxt.stream import MultiStream
-
-from service.metrics.api import MetricRequest, MetricResponse
-from service.metrics.tokens import verify_token
 
 # init the FastAPI app object
 app = FastAPI(version="0.0.1", title="Unitxt Metrics Service")
