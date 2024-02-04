@@ -1274,7 +1274,7 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
             )
 
 
-class AssignExpression(StreamInstanceOperator, ComputeExpressionMixin):
+class ExecuteExpression(StreamInstanceOperator, ComputeExpressionMixin):
     """Compute an expression, specified as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
@@ -1286,11 +1286,11 @@ class AssignExpression(StreamInstanceOperator, ComputeExpressionMixin):
 
     Examples:
        When instance {"a": 2, "b": 3} is process-ed by operator
-       AssignExpression(expression="a+b", to_field = "c")
+       ExecuteExpression(expression="a+b", to_field = "c")
        the result is {"a": 2, "b": 3, "c": 5}
 
        When instance {"a": "hello", "b": "world"} is process-ed by operator
-       AssignExpression(expression = "a+' '+b", to_field = "c")
+       ExecuteExpression(expression = "a+' '+b", to_field = "c")
        the result is {"a": "hello", "b": "world", "c": "hello world"}
 
     """
