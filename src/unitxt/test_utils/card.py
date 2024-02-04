@@ -62,12 +62,6 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 200
 
-    # restore the operators on the card, so that they are fresh for second invocation of
-    # StandardRecipe as they are for the first one
-    if card.preprocess_steps is not None:
-        for step in card.preprocess_steps:
-            step.prepare()
-
     recipe = StandardRecipe(
         card=card, template_card_index=template_card_index, **kwargs
     )
@@ -146,6 +140,7 @@ def print_recipe_output(
     return examples
 
 
+# flake8: noqa: C901
 def test_with_eval(
     card,
     debug=False,
@@ -156,12 +151,22 @@ def test_with_eval(
 ):
     if type(card.templates) is TemplatesDict:
         for template_card_index in card.templates.keys():
+            # restore the operators on the card, so that they are fresh for second invocation of
+            # StandardRecipe as they are for the first one
+            if card.preprocess_steps is not None:
+                for step in card.preprocess_steps:
+                    step.prepare()
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
     else:
         num_templates = len(card.templates)
         for template_card_index in range(0, num_templates):
+            # restore the operators on the card, so that they are fresh for second invocation of
+            # StandardRecipe as they are for the first one
+            if card.preprocess_steps is not None:
+                for step in card.preprocess_steps:
+                    step.prepare()
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
