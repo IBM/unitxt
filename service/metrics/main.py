@@ -1,5 +1,6 @@
 import logging
 import time
+from logging import Formatter, StreamHandler, getLevelName, getLogger
 from typing import cast
 
 import uvicorn
@@ -17,12 +18,20 @@ from unitxt.stream import MultiStream
 app = FastAPI(version="0.0.1", title="Unitxt Metrics Service")
 
 
-# init the logger
-logging.basicConfig(
-    format="{asctime} - {name:16} - {levelname:7} - {message}",
-    style="{",
-    level=logging.DEBUG,
-)
+def init_logger():
+    log = getLogger()
+    log.setLevel(getLevelName("INFO"))
+    log_formatter = Formatter(
+        "%(asctime)s [%(levelname)s] %(filename)s %(lineno)d: %(message)s [%(threadName)s]"
+    )
+
+    console_handler = StreamHandler()
+    console_handler.setFormatter(log_formatter)
+    log.handlers = []
+    log.addHandler(console_handler)
+
+
+init_logger()
 
 
 # for sanity check
