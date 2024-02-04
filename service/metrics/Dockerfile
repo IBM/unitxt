@@ -40,13 +40,14 @@ WORKDIR /app
 ENV PYTHONPATH=/app
 
 ## install requirements
-COPY service/metrics/requirements.txt service/metrics/requirements.txt
+COPY requirements.txt service/metrics/requirements.txt
 RUN pip install --no-cache-dir -r service/metrics/requirements.txt
+RUN pip freeze | tee pip_freeze.log
 
 RUN python -m nltk.downloader punkt
 
 ## copy the code bases
-COPY service/metrics/. service/metrics/.
+COPY . service/metrics/.
 
 # clean ups and patches for security reasons
 RUN pip install -U setuptools
