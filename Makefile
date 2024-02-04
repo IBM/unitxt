@@ -58,3 +58,12 @@ metric:
 build:
 	format
 	pypi
+
+metric-service-build:
+	cd $(DIR)/service/metrics && docker buildx build --tag unitxt-service-metric:b1v1.5.3 .
+
+metric-service-run-bash:
+	docker run -it unitxt-service-metric:b1v1.5.3 /bin/bash
+
+metric-service-run:
+	docker run -p 8000:8000 --memory=20g unitxt-service-metric:b1v1.5.3
