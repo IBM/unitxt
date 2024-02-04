@@ -59,11 +59,17 @@ build:
 	format
 	pypi
 
+# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-build
+# example: make build_number=1 release_version=0.1 metric-service-build
 metric-service-build:
-	cd $(DIR)/service/metrics && docker buildx build --tag unitxt-service-metric:b1v1.5.3 .
+	cd $(DIR)/service/metrics && docker buildx build --tag unitxt-service-metric:b$(build_number)v$(release_version) .
 
+# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-run-bash
+# example: make build_number=1 release_version=0.1 metric-service-run-bash
 metric-service-run-bash:
-	docker run -it unitxt-service-metric:b1v1.5.3 /bin/bash
+	docker run -it unitxt-service-metric:b$(build_number)v$(release_version) /bin/bash
 
+# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-run
+# example: make build_number=1 release_version=0.1 metric-service-run
 metric-service-run:
-	docker run -p 8000:8000 --memory=20g unitxt-service-metric:b1v1.5.3
+	docker run -p 8000:8000 --memory=20g unitxt-service-metric:b$(build_number)v$(release_version)
