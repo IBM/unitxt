@@ -59,17 +59,17 @@ build:
 	format
 	pypi
 
-# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-build
-# example: make build_number=1 release_version=0.1 metric-service-build
+# command: make tag_name=${TAG_NAME} metric-service-build
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-build
 metric-service-build:
-	cd $(DIR)/service/metrics && docker buildx build --tag unitxt-service-metric:b$(build_number)v$(release_version) .
+	cd $(DIR)/service/metrics && docker buildx build --tag $(tag_name) .
 
-# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-run-bash
-# example: make build_number=1 release_version=0.1 metric-service-run-bash
+# command: make tag_name=${TAG_NAME} metric-service-run-bash
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-run-bash
 metric-service-run-bash:
-	docker run -it unitxt-service-metric:b$(build_number)v$(release_version) /bin/bash
+	docker run -it $(tag_name) /bin/bash
 
-# command: make build_number=${BUILD_NUMBER} release_version=${RELEASE_VERSION} metric-service-run
-# example: make build_number=1 release_version=0.1 metric-service-run
+# command: make tag_name=${TAG_NAME} metric-service-run
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-run
 metric-service-run:
-	docker run -p 8000:8000 --memory=20g unitxt-service-metric:b$(build_number)v$(release_version)
+	docker run -p 8000:8000 --memory=20g $(tag_name)
