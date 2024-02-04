@@ -62,6 +62,12 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 200
 
+    # restore the operators on the card, so that they are fresh for second invocation of
+    # StandardRecipe as they are for the first one
+    if card.preprocess_steps is not None:
+        for step in card.preprocess_steps:
+            step.prepare()
+
     recipe = StandardRecipe(
         card=card, template_card_index=template_card_index, **kwargs
     )
