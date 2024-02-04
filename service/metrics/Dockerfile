@@ -61,9 +61,9 @@ RUN chgrp -R ${NONROOT_USER} .
 
 # prepare for run
 WORKDIR /app/service/metrics
-ENV HF_HOME=\my_drive\hf\misc
-ENV HF_DATASETS_CACHE=\my_drive\hf\datasets
-ENV TRANSFORMERS_CACHE=\my_drive\hf\models
+ENV HF_HOME=/app/hf/misc
+ENV HF_DATASETS_CACHE=/app/hf/datasets
+ENV TRANSFORMERS_CACHE=/app/hf/models
 USER ${NONROOT_USER}
 EXPOSE 8000
 
