@@ -1,6 +1,6 @@
 from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import AssignExpression, ListFieldValues, RenameFields
+from src.unitxt.operators import ExecuteExpression, ListFieldValues, RenameFields
 from src.unitxt.test_utils.card import test_card
 
 card_abstractive = TaskCard(
@@ -11,7 +11,7 @@ card_abstractive = TaskCard(
             use_query=True,
         ),
         ListFieldValues(fields=["utterance"], to_field="answer"),
-        AssignExpression(expression="question.split('[SEP]')[0]", to_field="question"),
+        ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
     ],
     task="tasks.qa.contextual.abstractive",
     templates="templates.qa.contextual.all",
@@ -25,7 +25,7 @@ card_extractive = TaskCard(
             use_query=True,
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answer"),
-        AssignExpression(expression="question.split('[SEP]')[0]", to_field="question"),
+        ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
     ],
     task="tasks.qa.contextual.extractive",
     templates="templates.qa.contextual.all",

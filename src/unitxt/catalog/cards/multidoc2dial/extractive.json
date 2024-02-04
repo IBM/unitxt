@@ -20,7 +20,7 @@
             "to_field": "answer"
         },
         {
-            "type": "assign_expression",
+            "type": "execute_expression",
             "expression": "question.split('[SEP]')[0]",
             "to_field": "question"
         }

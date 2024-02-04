@@ -11,7 +11,6 @@ from src.unitxt.operators import (
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
-    AssignExpression,
     Augmentor,
     AugmentPrefixSuffix,
     AugmentWhitespace,
@@ -20,6 +19,7 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
+    ExecuteExpression,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
@@ -477,14 +477,14 @@ class TestOperators(unittest.TestCase):
 
     def test_execute_expression(self):
         inputs = [{"a": 2, "b": 3}]
-        operator = AssignExpression(to_field="c", expression="a+b")
+        operator = ExecuteExpression(to_field="c", expression="a+b")
         targets = [{"a": 2, "b": 3, "c": 5}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         inputs = [{"a": "hello", "b": "world"}]
-        operator = AssignExpression(expression="a+' '+b", to_field="c")
+        operator = ExecuteExpression(expression="a+' '+b", to_field="c")
         targets = [{"a": "hello", "b": "world", "c": "hello world"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
-        operator = AssignExpression(expression="f'{a} {b}'", to_field="c")
+        operator = ExecuteExpression(expression="f'{a} {b}'", to_field="c")
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         with self.assertRaises(ValueError) as ve:
             check_operator(
@@ -494,12 +494,12 @@ class TestOperators(unittest.TestCase):
                 tester=self,
             )
         self.assertEqual(
-            "Error processing instance '0' from stream 'test' in AssignExpression due to: name 'a' is not defined",
+            "Error processing instance '0' from stream 'test' in ExecuteExpression due to: name 'a' is not defined",
             str(ve.exception),
         )
 
         inputs = [{"json_string": '{"A":"a_value", "B":"b_value"}'}]
-        operator = AssignExpression(
+        operator = ExecuteExpression(
             expression='json.loads(json_string)["A"]',
             imports_list=["json"],
             to_field="c",
@@ -510,7 +510,7 @@ class TestOperators(unittest.TestCase):
         string = "Account Number - 12345, Amount - 586.32"
         repl = "NN"
         inputs = [{"pattern": pattern, "string": string, "repl": repl}]
-        operator = AssignExpression(
+        operator = ExecuteExpression(
             expression="re.sub(pattern, repl, string)",
             imports_list=["re"],
             to_field="c",
