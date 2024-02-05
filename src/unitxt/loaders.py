@@ -36,9 +36,12 @@ from tqdm import tqdm
 
 from .logging_utils import get_logger
 from .operator import SourceOperator
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 
 logger = get_logger()
+settings = get_settings()
+
 try:
     import ibm_boto3
 
@@ -88,16 +91,23 @@ class LoadHF(Loader):
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    streaming=False,
-                    keep_in_memory=True,
-                    cache_dir=dir_to_be_deleted,
-                    split=self.split,
-                )
+                try:
+                    dataset = hf_load_dataset(
+                        self.path,
+                        name=self.name,
+                        data_dir=self.data_dir,
+                        data_files=self.data_files,
+                        streaming=False,
+                        keep_in_memory=True,
+                        cache_dir=dir_to_be_deleted,
+                        split=self.split,
+                        truse_remote_code=settings.allow_unverified_code,
+                    )
+                except ValueError as e:
+                    if "trust_remote_code" in str(e):
+                        raise ValueError(
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                        ) from e
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()

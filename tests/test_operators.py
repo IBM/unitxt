@@ -48,6 +48,7 @@ from src.unitxt.operators import (
     Unique,
     ZipFieldValues,
 )
+from src.unitxt.settings_utils import get_settings
 from src.unitxt.stream import MultiStream
 from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from src.unitxt.test_utils.operators import (
@@ -55,6 +56,8 @@ from src.unitxt.test_utils.operators import (
     check_operator,
     check_operator_exception,
 )
+
+settings = get_settings()
 
 
 class TestOperators(unittest.TestCase):
@@ -264,6 +267,7 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_filter_by_values_with_required_values(self):
+        settings.allow_unverified_code = True
         inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
 
         targets = [
@@ -296,6 +300,7 @@ class TestOperators(unittest.TestCase):
             exception_text="name 'c' is not defined",
             tester=self,
         )
+        settings.allow_unverified_code = False
 
     def test_filter_by_condition_ne(self):
         inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
@@ -476,6 +481,7 @@ class TestOperators(unittest.TestCase):
         )
 
     def test_execute_expression(self):
+        settings.allow_unverified_code = True
         inputs = [{"a": 2, "b": 3}]
         operator = ExecuteExpression(to_field="c", expression="a+b")
         targets = [{"a": 2, "b": 3, "c": 5}]
@@ -518,6 +524,7 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(
             "Account Number - NN, Amount - NN.NN", operator.process(inputs[0])["c"]
         )
+        settings.allow_unverified_code = False
 
     def test_intersect(self):
         inputs = [

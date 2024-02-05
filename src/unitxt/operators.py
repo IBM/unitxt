@@ -75,10 +75,13 @@ from .operator import (
     StreamInstanceOperator,
 )
 from .random_utils import new_random_generator
+from .settings_utils import get_settings
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
+
+settings = get_settings()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -1238,7 +1241,12 @@ class ComputeExpressionMixin(Artifact):
                 self.globs[module_name] = import_module(module_name)
             self.to_import = False
 
-        return eval(self.expression, self.globs, instance)
+        if settings.allow_unverified_code:
+            return eval(self.expression, self.globs, instance)
+
+        raise ValueError(
+            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+        )
 
 
 class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
