@@ -67,5 +67,4 @@ ENV TRANSFORMERS_CACHE=/app/hf/models
 USER ${NONROOT_USER}
 EXPOSE 8000
 
-# If running behind a proxy like Nginx or Traefik add --proxy-headers
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+CMD python3 main.py
