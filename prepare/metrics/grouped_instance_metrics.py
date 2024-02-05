@@ -7,8 +7,8 @@ from src.unitxt.metrics import (
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
-    FixedGroupMeanOthersAccuracy,
-    FixedGroupMeanOthersStringContainment,
+    FixedGroupMeanParaphraseAccuracy,
+    FixedGroupMeanParaphraseStringContainment,
     FixedGroupMeanStringContainment,
     FixedGroupNormCohensHAccuracy,
     FixedGroupNormCohensHStringContainment,
@@ -64,24 +64,23 @@ additional_inputs = (
     + [deepcopy({"group": "grp2", "id": 0, "ignore": 1}) for _ in range(4)]
     + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
 )
-# for group_mean aggregations with a subgroup_comparison, add a baseline indicator
+# for group_mean aggregations with a subgroup_comparison, add a variant_type label
 # these groupings correspond in length to the group identifiers above
-is_baseline = np.concatenate(
-    (
-        np.repeat(a=[True, False], repeats=[1, 4]),
-        np.repeat(a=[True, False], repeats=[1, 4]),
-        np.repeat(a=[True, False], repeats=[1, 3]),
-        np.repeat(a=[True, False], repeats=[1, 0]),
-    )
+variant_type = np.concatenate(
+    [
+        np.repeat(a=["original", "paraphrase"], repeats=reps)
+        for reps in [[1, 4], [1, 4], [1, 3], [1, 0]]
+    ]
 ).tolist()
+
 # construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
 group_by_fields = ["group", "id"]
 
-for ai, ib in zip(additional_inputs, is_baseline):
+for ai, vt in zip(additional_inputs, variant_type):
     ai.update(
         {
             "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
-            "is_baseline": ib,
+            "variant_type": vt,
         }
     )
 
@@ -257,15 +256,15 @@ add_to_catalog(
     metric, "metrics.robustness.fixed_group_mean_baseline_accuracy", overwrite=True
 )
 
-metric = FixedGroupMeanOthersAccuracy()
+metric = FixedGroupMeanParaphraseAccuracy()
 global_target = {
-    "fixed_group_mean_others_accuracy": 0.19,
+    "fixed_group_mean_paraphrase_accuracy": 0.19,
     "score": 0.19,
-    "score_name": "fixed_group_mean_others_accuracy",
+    "score_name": "fixed_group_mean_paraphrase_accuracy",
     "score_ci_low": 0.0,
     "score_ci_high": 0.33,
-    "fixed_group_mean_others_accuracy_ci_low": 0.0,
-    "fixed_group_mean_others_accuracy_ci_high": 0.33,
+    "fixed_group_mean_paraphrase_accuracy_ci_low": 0.0,
+    "fixed_group_mean_paraphrase_accuracy_ci_high": 0.33,
 }
 
 outputs = test_metric(
@@ -278,7 +277,7 @@ outputs = test_metric(
 )
 
 add_to_catalog(
-    metric, "metrics.robustness.fixed_group_mean_others_accuracy", overwrite=True
+    metric, "metrics.robustness.fixed_group_mean_paraphrase_accuracy", overwrite=True
 )
 
 
@@ -308,15 +307,15 @@ add_to_catalog(
     overwrite=True,
 )
 
-metric = FixedGroupMeanOthersStringContainment()
+metric = FixedGroupMeanParaphraseStringContainment()
 global_target = {
-    "fixed_group_mean_others_string_containment": 0.56,
+    "fixed_group_mean_paraphrase_string_containment": 0.56,
     "score": 0.56,
-    "score_name": "fixed_group_mean_others_string_containment",
+    "score_name": "fixed_group_mean_paraphrase_string_containment",
     "score_ci_low": 0.5,
     "score_ci_high": 0.67,
-    "fixed_group_mean_others_string_containment_ci_low": 0.5,
-    "fixed_group_mean_others_string_containment_ci_high": 0.67,
+    "fixed_group_mean_paraphrase_string_containment_ci_low": 0.5,
+    "fixed_group_mean_paraphrase_string_containment_ci_high": 0.67,
 }
 
 outputs = test_metric(
@@ -330,7 +329,7 @@ outputs = test_metric(
 
 add_to_catalog(
     metric,
-    "metrics.robustness.fixed_group_mean_others_string_containment",
+    "metrics.robustness.fixed_group_mean_paraphrase_string_containment",
     overwrite=True,
 )
 

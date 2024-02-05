@@ -15,8 +15,8 @@ from src.unitxt.metrics import (
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
-    FixedGroupMeanOthersAccuracy,
-    FixedGroupMeanOthersStringContainment,
+    FixedGroupMeanParaphraseAccuracy,
+    FixedGroupMeanParaphraseStringContainment,
     FixedGroupMeanStringContainment,
     FixedGroupNormCohensHAccuracy,
     FixedGroupNormCohensHStringContainment,
@@ -78,25 +78,23 @@ GROUPED_INSTANCE_ADDL_INPUTS = (
     + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
 )
 
-# for group_mean aggregations with a subgroup_comparison, add a baseline indicator
+# for group_mean aggregations with a subgroup_comparison, add a variant_type label
 # these groupings correspond in length to the group identifiers above
-IS_BASELINE = np.concatenate(
-    (
-        np.repeat(a=[True, False], repeats=[1, 4]),
-        np.repeat(a=[True, False], repeats=[1, 4]),
-        np.repeat(a=[True, False], repeats=[1, 3]),
-        np.repeat(a=[True, False], repeats=[1, 0]),
-    )
+VARIANT_TYPE = np.concatenate(
+    [
+        np.repeat(a=["original", "paraphrase"], repeats=reps)
+        for reps in [[1, 4], [1, 4], [1, 3], [1, 0]]
+    ]
 ).tolist()
 
 # construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
 group_by_fields = ["group", "id"]
 
-for ai, ib in zip(GROUPED_INSTANCE_ADDL_INPUTS, IS_BASELINE):
+for ai, vt in zip(GROUPED_INSTANCE_ADDL_INPUTS, VARIANT_TYPE):
     ai.update(
         {
             "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
-            "is_baseline": ib,
+            "variant_type": vt,
         }
     )
 
@@ -478,9 +476,9 @@ class TestMetrics(unittest.TestCase):
             FixedGroupMeanStringContainment(),
             GroupMeanStringContainment(),
             FixedGroupMeanBaselineAccuracy(),
-            FixedGroupMeanOthersAccuracy(),
+            FixedGroupMeanParaphraseAccuracy(),
             FixedGroupMeanBaselineStringContainment(),
-            FixedGroupMeanOthersStringContainment(),
+            FixedGroupMeanParaphraseStringContainment(),
             GroupMeanTokenOverlap(),
             FixedGroupNormCohensHAccuracy(),
             FixedGroupNormCohensHStringContainment(),
@@ -700,7 +698,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanOthersAccuracy(),
+            metric=FixedGroupMeanParaphraseAccuracy(),
             expected_ci_low=0.0,
             expected_ci_high=0.3333333333333333,
         )
@@ -712,7 +710,7 @@ class TestConfidenceIntervals(unittest.TestCase):
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupMeanOthersStringContainment(),
+            metric=FixedGroupMeanParaphraseStringContainment(),
             expected_ci_low=0.5,
             expected_ci_high=0.6666666666666666,
         )

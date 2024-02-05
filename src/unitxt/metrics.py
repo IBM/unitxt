@@ -459,12 +459,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
     @staticmethod
-    def _function_does_comparison(aggregation_func):
+    def _function_uses_variant_types(aggregation_func):
         import inspect
 
         func_args = list(inspect.signature(aggregation_func).parameters.keys())
-        # if function has both these arguments, assume it does comparison (i.e. it expects both arguments)
-        return all(fa in func_args for fa in ["baseline_scores", "other_scores"])
+        # if function has this argument, assume it does comparison
+        return "variant_scores_dict" in func_args
 
     def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
@@ -490,11 +490,11 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         The aggregation function (2nd element of agg_func) can be one of two types:
         1. simple: calculate a summary statistic from a single group of values (e.g. mean, median, etc.).
             This is best suited for cases where the instances are independent of each other, other than belonging to the same group
-        2. comparison: requires additional_inputs to have a boolean key 'is_baseline'.  This function conducts
-            a comparison between baseline instances (is_baseline=True) and other (is_baseline=False).
+        2. comparison: requires additional_inputs to have a boolean key 'variant_type'.  This function conducts
+            a comparison between scores for differing variant_types (e.g., 'original' vs 'paraphrase').
             An example is where the baseline instance is a question, and the others are various paraphrases
             or perturbations of this question.  Here, the function would return, say, a comparison of the instance accuracies
-            rather than, say, the average instance accuracy.  It requires arguments 'baseline_scores' and 'other_scores'
+            rather than, say, the average instance accuracy.  It requires an argument variant_scores_dict.
             In these cases, we recommend setting the 3rd parameter to be True so that the groups are resampled together.
 
         Example:
@@ -502,18 +502,18 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 reduction_map = {'group_mean': {'agg_func': ['accuracy_diff', accuracy_diff, True],}}
 
             # where the function is defined as
-            def accuracy_diff(baseline_scores, other_scores):
+            def accuracy_diff(variant_scores_dict, expected_variant_types=['original', 'paraphrase']):
+                validate_variant_types(variant_scores_dict, expected_variant_types)
                 from statistics import mean
-                return mean(other_scores) - mean(baseline_scores)
-
+                return mean(variant_scores_dict['paraphrase']) - mean(variant_scores_dict['original'])
             The input dataset should look like:
 
-            'group_id'  'question'                                  'is_baseline'
-            1           'How do you fix a car engine?'               True
-            1           'What is the best way to fix an engine?'     False
-            1           'How do you repair a car engine?'            False
-            1           'How do I repair my engine?'                 False
-            2           'Why are ants eating my food?'               True
+            'group_id'  'question'                                   'variant_type'
+            1           'How do you fix a car engine?'               'original'
+            1           'What is the best way to fix an engine?'     'paraphrase'
+            1           'How do you repair a car engine?'            'paraphrase'
+            1           'How do I repair my engine?'                 'paraphrase'
+            2           'Why are ants eating my food?'               'original'
         """
         # instances need to all have additional_inputs field with field group_id
         assert all(
@@ -554,20 +554,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-        # for aggregations that conduct a comparison, expects a boolean is_baseline field
-        if self._function_does_comparison(fields["agg_func"][1]):
+        # for aggregations that conduct a comparison, expects a 'variant_type' field
+        if self._function_uses_variant_types(fields["agg_func"][1]):
             assert all(
-                "is_baseline" in instance["additional_inputs"] for instance in instances
-            ), f"since group_mean aggregation function {fields['agg_func'][1]} performs a comparison, each instance's additional_inputs dict must have a key is_baseline"
-            assert all(
-                (
-                    isinstance(instance["additional_inputs"]["is_baseline"], bool)
-                    or isinstance(
-                        instance["additional_inputs"]["is_baseline"], np.bool_
-                    )
-                )
+                "variant_type" in instance["additional_inputs"]
                 for instance in instances
-            ), "is_baseline field must be boolean"
+            ), f"since group_mean aggregation function {fields['agg_func'][1]} performs a comparison, each instance's additional_inputs dict must have a key variant_type"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
@@ -673,24 +665,40 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         Args:
             instances: List of observation instances with instance-level scores (fields) computed.
             field_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores and returning a single score .
+            group_aggregation_func: Callable aggregation function accepting a list of numeric scores, or a dict of variant types scores,
+                and returning a single score.
 
         Returns:
-            List of dicts, each corresponding to a group of instances (defined by grouping_field)
+            List of dicts, each corresponding to a group of instances (defined by grouping_field),
+                with a group score for each field_name
         """
         from collections import defaultdict
 
-        # two-level defaultdict: first is the grouping, second is the field name
-        # first list is instance scores for baseline group, second is for comparison group (if applicable)
-        group_to_instance_scores = defaultdict(lambda: defaultdict(lambda: [[], []]))
+        # three-level defaultdict:
+        # first is the grouping, second is the field name, the third is the variant_type (by default 'original')
+        group_to_instance_scores = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(list))
+        )
 
-        # check if function has fields for baseline and others
-        func_does_comparison = self._function_does_comparison(group_aggregation_func)
-        if func_does_comparison:
-            assert (
-                "is_baseline" in instance["additional_inputs"] for instance in instances
-            ), "all instances must have field is_baseline in additional_inputs"
+        # check if function has fields for variant_type
+        uses_variant_type = self._function_uses_variant_types(group_aggregation_func)
+        if uses_variant_type:
+            assert all(
+                "variant_type" in instance["additional_inputs"]
+                for instance in instances
+            ), "all instances must have field 'variant_type' in additional_inputs"
 
+            # define the aggregation function
+            def agg_func(variant_scores_dict):
+                # if function a uses the variant types, pass the full dict
+                return group_aggregation_func(variant_scores_dict=variant_scores_dict)
+        else:
+
+            def agg_func(variant_scores_dict):
+                # otherwise pass the default 'original' scores to the default argument
+                return group_aggregation_func(variant_scores_dict["original"])
+
+        # loop through the instances and group the scores
         for instance in instances:
             additional_inputs = instance["additional_inputs"]
             if "group_id" not in additional_inputs:
@@ -699,36 +707,22 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     f"This field is required for group based metric computation."
                 )
             group_key = additional_inputs["group_id"]
-            # for functions that do baseline vs others group comparison
-            is_baseline = (
-                additional_inputs["is_baseline"] if func_does_comparison else True
+            # for functions that do comparisons between variant_type gorups
+            variant_type = (
+                additional_inputs["variant_type"] if uses_variant_type else "original"
             )
-            # convert is_baseline=True (baseline) to 0, and False (others) to 1, store in respective groups
-            idx = int(not is_baseline)
             for field_name in field_names:
-                group_to_instance_scores[group_key][field_name][idx].append(
+                group_to_instance_scores[group_key][field_name][variant_type].append(
                     instance["score"]["instance"][field_name]
                 )
 
-        def agg_func(first, second):
-            if func_does_comparison:
-                # if is a comparison function, pass both lists
-                return group_aggregation_func(
-                    baseline_scores=first, other_scores=second
-                )
-            # otherwise pass the first list to the default argument
-            return group_aggregation_func(first)
-
-        # now apply this function to each group
+        # now apply the appropriate aggregation function to each group
         return [
             {
                 "score": {
                     "instance": {
-                        field_name: agg_func(
-                            first=scores[field_name][0],
-                            second=scores[field_name][1],
-                        )
-                        for field_name in field_names
+                        field_name: agg_func(score_dict)
+                        for field_name, score_dict in scores.items()
                     }
                 }
             }
@@ -2106,22 +2100,43 @@ class KPA(CustomF1):
 
 
 # define metrics that return means of an aggregation function applied across levels of a grouping variable
-def validate_baseline_other_aggregation(baseline_scores, other_scores):
-    assert isinstance(baseline_scores, list)
-    assert isinstance(other_scores, list)
-    baseline_scores = [vv for vv in baseline_scores if not np.isnan(vv)]
-    other_scores = [vv for vv in other_scores if not np.isnan(vv)]
-    return baseline_scores, other_scores
+def validate_variant_types(
+    variant_scores_dict: dict[List], expected_variant_types: None
+):
+    """Validate a dict of variant type instance score lists.
+
+    Args:
+        variant_scores_dict: dict where keys are variant types and values are lists of instance scores.
+        expected_variant_types: list of the variant types which should exist in variant_scores_dict, so
+            that another function that receives it as input will valid.
+
+    Returns:
+        dict with all NaN scores removed; any expected keys that are missing have an empty list inserted
+    """
+    # remove any NaNs
+    variant_scores_dict.update(
+        {
+            kk: [vvv for vvv in vv if not np.isnan(vvv)]
+            for kk, vv in variant_scores_dict.items()
+        }
+    )
+    # make sure the expected types appear
+    variant_scores_dict.update(
+        {kk: [] for kk in expected_variant_types if kk not in variant_scores_dict}
+    )
+    return variant_scores_dict
 
 
-def performance_drop_rate(baseline_scores: List, other_scores: List):
+def performance_drop_rate(variant_scores_dict: dict, expected_variant_types=None):
     """Percentage decrease of mean performance on test elements relative to that on a baseline.
 
     from https://arxiv.org/pdf/2306.04528.pdf.
 
     Args:
-        baseline_scores: a list of scores on baseline instances.
-        other_scores: a list of scores on instances that will be compared to the baseline.
+        variant_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
+            of instance scores corresponding to variant_types with that key
+        expected_variant_types: tuple of the expected labels in variant_scores_dict (the first should be the
+            baseline type, the second the other).
 
     Returns:
         numeric PDR metric.
@@ -2129,18 +2144,24 @@ def performance_drop_rate(baseline_scores: List, other_scores: List):
         otherwise, calculate PDR
 
     """
-    baseline_scores, other_scores = validate_baseline_other_aggregation(
-        baseline_scores, other_scores
+    if expected_variant_types is None:
+        expected_variant_types = ["original", "paraphrase"]
+    assert len(expected_variant_types) == 2
+    variant_scores_dict = validate_variant_types(
+        variant_scores_dict, expected_variant_types
     )
-    if len(baseline_scores) == 0 or len(other_scores) == 0:
+    if any(len(variant_scores_dict[kk]) == 0 for kk in expected_variant_types):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    baseline_mean = mean(baseline_scores)
-    other_mean = mean(other_scores)
+    # first key should be the baseline category
+    baseline_mean = mean(variant_scores_dict[expected_variant_types[0]])
+    other_mean = mean(variant_scores_dict[expected_variant_types[1]])
     return np.nan if baseline_mean == 0 else 1 - other_mean / baseline_mean
 
 
-def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=False):
+def normalized_cohens_h(
+    variant_scores_dict: dict, expected_variant_types=None, interpret=False
+):
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
@@ -2165,24 +2186,30 @@ def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=Fal
         - a medium difference if 0.15915494 <= |norm h| < 0.25464791
         - a large difference if 0.25464791 <= |norm h|
     Args:
-        baseline_scores: a list of scores on baseline instances.
-        other_scores: a list of scores on instances that will be compared to the baseline.
+        variant_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
+            of instance scores corresponding to variant_types with that key
+        expected_variant_types: tuple of the expected labels in variant_scores_dict (the first should be the
+            baseline type, the second the other).
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
-    baseline_scores, other_scores = validate_baseline_other_aggregation(
-        baseline_scores, other_scores
+    if expected_variant_types is None:
+        expected_variant_types = ["original", "paraphrase"]
+    assert len(expected_variant_types) == 2
+    variant_scores_dict = validate_variant_types(
+        variant_scores_dict, expected_variant_types
     )
-    if len(baseline_scores) == 0 or len(other_scores) == 0:
+    if any(len(variant_scores_dict[kk]) == 0 for kk in expected_variant_types):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    for score_list in zip(baseline_scores, other_scores):
+    # requires scores to be in [0,1]
+    for kk, score_list in variant_scores_dict.items():
         assert all(
             0 <= score <= 1 for score in score_list
-        ), "all scores must be in [0,1]"
-    baseline_mean = mean(baseline_scores)
-    other_mean = mean(other_scores)
+        ), f"all {kk} scores must be in [0,1]"
+    baseline_mean = mean(variant_scores_dict[expected_variant_types[0]])
+    other_mean = mean(variant_scores_dict[expected_variant_types[1]])
     h = 2 * (np.arcsin(np.sqrt(other_mean)) - np.arcsin(np.sqrt(baseline_mean)))
     norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
     if not interpret:
@@ -2199,46 +2226,46 @@ def normalized_cohens_h(baseline_scores: List, other_scores: List, interpret=Fal
     return norm_h, how_signif[0]
 
 
-def mean_baseline_score(baseline_scores: List, other_scores: List):
+def mean_variant_score(
+    variant_scores_dict: dict, expected_variant_type: str = "original"
+):
+    """Return the mean instance score for a single type of variant (not a comparison).
+
+    Args:
+        variant_scores_dict: dict where keys are variant types and values are lists of instance scores.
+        expected_variant_type: the key (variant type) for which the average will be computed
+
+    Returns:
+        float score
+    """
+    variant_scores_dict = validate_variant_types(
+        variant_scores_dict, [expected_variant_type]
+    )
+    score_list = variant_scores_dict[expected_variant_type]
+    if len(score_list) == 0:
+        # no scores to use
+        return np.nan
+    return mean(score_list)
+
+
+def mean_original_score(variant_scores_dict: dict):
     """Return average score on the baseline only.
 
     Args:
-        baseline_scores: a list of scores on baseline instances.
-        other_scores: a list of scores on instances that will be compared to the baseline.
-
-    Returns:
-        float value
+        variant_scores_dict: dict where one key should be 'original' and the values a list of
+            original instance scores
     """
-    baseline_scores, other_scores = validate_baseline_other_aggregation(
-        baseline_scores, other_scores
-    )
-    if len(baseline_scores) == 0:
-        # no scores to use
-        return np.nan
-    assert all(
-        0 <= score <= 1 for score in baseline_scores
-    ), "all scores must be in [0,1]"
-    return mean(baseline_scores)
+    return mean_variant_score(variant_scores_dict, "original")
 
 
-def mean_others_score(baseline_scores: List, other_scores: List):
-    """Return average score on the others only.
+def mean_paraphrase_score(variant_scores_dict: dict):
+    """Return average score on the paraphrases only.
 
     Args:
-        baseline_scores: a list of scores on baseline instances.
-        other_scores: a list of scores on instances that will be compared to the baseline.
-
-    Returns:
-        float value
+        variant_scores_dict: dict where one key should be 'paraphrase' and the values a list of
+            original instance scores
     """
-    baseline_scores, other_scores = validate_baseline_other_aggregation(
-        baseline_scores, other_scores
-    )
-    if len(other_scores) == 0:
-        # no scores to use
-        return np.nan
-    assert all(0 <= score <= 1 for score in other_scores), "all scores must be in [0,1]"
-    return mean(other_scores)
+    return mean_variant_score(variant_scores_dict, "paraphrase")
 
 
 # metrics using mean reduction
@@ -2265,15 +2292,15 @@ class FixedGroupMeanStringContainment(StringContainment):
 class FixedGroupMeanBaselineAccuracy(Accuracy):
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_baseline", mean_baseline_score, True],
+            "agg_func": ["mean_baseline", mean_original_score, True],
         }
     }
 
 
-class FixedGroupMeanOthersAccuracy(Accuracy):
+class FixedGroupMeanParaphraseAccuracy(Accuracy):
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_others", mean_others_score, True],
+            "agg_func": ["mean_paraphrase", mean_paraphrase_score, True],
         }
     }
 
@@ -2282,15 +2309,15 @@ class FixedGroupMeanOthersAccuracy(Accuracy):
 class FixedGroupMeanBaselineStringContainment(StringContainment):
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_baseline", mean_baseline_score, True],
+            "agg_func": ["mean_baseline", mean_original_score, True],
         }
     }
 
 
-class FixedGroupMeanOthersStringContainment(StringContainment):
+class FixedGroupMeanParaphraseStringContainment(StringContainment):
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_others", mean_others_score, True],
+            "agg_func": ["mean_paraphrase", mean_paraphrase_score, True],
         }
     }
 
