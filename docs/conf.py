@@ -32,6 +32,7 @@ html_short_title = "Unitxt"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinxext.opengraph",
 ]
 
 templates_path = ["_templates"]
@@ -52,6 +53,8 @@ html_js_files = ["custom.js"]
 html_show_sphinx = False
 html_favicon = "./static/favicon.ico"
 html_title = "Unitxt"
+
+ogp_image = "./static/opg_image.png"
 
 autodoc_default_flags = [
     "members",
