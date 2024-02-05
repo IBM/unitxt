@@ -84,6 +84,7 @@ class LoadHF(Loader):
                     streaming=self.streaming,
                     cache_dir=None if self.streaming else dir_to_be_deleted,
                     split=self.split,
+                    trust_remote_code=settings.allow_unverified_code,
                 )
             if self.split is not None:
                 dataset = {self.split: dataset}
