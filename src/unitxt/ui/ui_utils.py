@@ -9,7 +9,7 @@ from unitxt.ui import constants as cons
 from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
 
 metric = evaluate.load(cons.UNITEXT_METRIC_STR)
-data, jsons = load_cards_data()
+data, jsons, formats_items, instructions_items = load_cards_data()
 
 
 def increase_num(current_num):

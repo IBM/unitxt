@@ -22,12 +22,13 @@ from unitxt.ui.ui_utils import (
     create_dataframe,
     data,
     decrease_num,
-    get_catalog_items,
+    formats_items,
     get_predictions_and_scores,
     get_prompts,
     get_templates,
     hash_dict,
     increase_num,
+    instructions_items,
     jsons,
     update_choices_per_task,
 )
@@ -198,7 +199,7 @@ with demo:
                 )
 
                 instructions = gr.Dropdown(
-                    choices=[None, *get_catalog_items("instructions")[0]],
+                    choices=[None, *instructions_items],
                     label="Instruction",
                     scale=5,
                 )
@@ -210,7 +211,7 @@ with demo:
                     interactive=False,
                 )
                 formats = gr.Dropdown(
-                    choices=[None, *get_catalog_items("formats")[0]],
+                    choices=[None, *formats_items],
                     label="Format",
                     scale=5,
                 )

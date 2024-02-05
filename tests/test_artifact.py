@@ -2,6 +2,7 @@ import unittest
 
 from src.unitxt.artifact import (
     Artifact,
+    fetch_artifact,
 )
 from src.unitxt.dataclass import UnexpectedArgumentError
 from src.unitxt.logging_utils import get_logger
@@ -10,12 +11,6 @@ logger = get_logger()
 
 
 class TestArtifact(unittest.TestCase):
-    def test_set_artifact_identifier(self):
-        artifact = Artifact()
-        artifact_identifier = "artifact.id.dummy"
-        artifact.set_artifact_identifier(value=artifact_identifier)
-        self.assertEqual(artifact_identifier, artifact.artifact_identifier)
-
     def test_artifact_identifier_setter(self):
         artifact = Artifact()
         artifact_identifier = "artifact.id.dummy"
@@ -30,3 +25,8 @@ class TestArtifact(unittest.TestCase):
         """
         with self.assertRaises(UnexpectedArgumentError):
             Artifact(artifact_identifier="artifact.id.dummy")
+
+    def test_artifact_identifier_available_for_loaded_artifacts(self):
+        artifact_identifier = "tasks.classification.binary"
+        artifact, _ = fetch_artifact(artifact_identifier)
+        self.assertEqual(artifact_identifier, artifact.artifact_identifier)

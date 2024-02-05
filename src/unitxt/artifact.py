@@ -104,9 +104,6 @@ class Artifact(Dataclass):
 
     artifact_identifier: str = InternalField(default=None, required=False)
 
-    def set_artifact_identifier(self, value):
-        self.artifact_identifier = value
-
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -199,7 +196,7 @@ class Artifact(Dataclass):
     def load(cls, path, artifact_identifier=None):
         d = load_json(path)
         new_artifact = cls.from_dict(d)
-        new_artifact.set_artifact_identifier(artifact_identifier)
+        new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
 
     def prepare(self):
