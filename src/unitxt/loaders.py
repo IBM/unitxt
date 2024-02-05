@@ -101,7 +101,7 @@ class LoadHF(Loader):
                         keep_in_memory=True,
                         cache_dir=dir_to_be_deleted,
                         split=self.split,
-                        truse_remote_code=settings.allow_unverified_code,
+                        trust_remote_code=settings.allow_unverified_code,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
