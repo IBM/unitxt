@@ -1,18 +1,12 @@
 FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu20.04
 
-RUN apt update
-RUN apt upgrade -y
-
-# Ubuntu 22.04 needs the additional ppa for finding python 3.11 that is not RC.
-RUN apt install software-properties-common -y
-RUN add-apt-repository ppa:deadsnakes/ppa
-
-RUN DEBIAN_FRONTEND="noninteractive" TZ="America/New_York" \
+RUN apt update && \
+    DEBIAN_FRONTEND="noninteractive" TZ="America/New_York" \
     apt install -y git tini\
     openjdk-11-jdk \
-    python3.11 \
+    python3 \
     python3-pip \
-    python3-venv \
+    python3.8-venv \
     ca-certificates && \
     rm -rf /var/lib/apt/lists
 
