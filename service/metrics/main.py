@@ -1,8 +1,11 @@
+import datetime
 import logging
+import threading
 import time
 from logging import Formatter, StreamHandler, getLevelName, getLogger
 from typing import cast
 
+import torch
 import uvicorn
 from api import MetricRequest, MetricResponse
 from fastapi import Depends, FastAPI, Request
@@ -46,6 +49,10 @@ def health():
     return "OK"
 
 
+# A lock to make sure single use of the GPU
+compute_lock = threading.Lock()
+
+
 # for computing a metric
 @app.post("/compute/{metric}", response_model=MetricResponse)
 def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_token)):
@@ -68,10 +75,18 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
             {"test": request.model_dump()["instance_inputs"]}, copying=True
         )
 
-        # apply the metric and obtain the results
-        logging.info("Starting computation .. ")
-        metric_results = list(metric_artifact(multi_stream)["test"])
-        logging.info(f"Computed {len(metric_results)} metric results.")
+        start_time = datetime.datetime.now()
+        with compute_lock:
+            start_infer_time = datetime.datetime.now()
+            logging.info("Starting computation .. ")
+            # apply the metric and obtain the results
+            metric_results = list(metric_artifact(multi_stream)["test"])
+        infer_time = datetime.datetime.now() - start_infer_time
+        wait_time = start_infer_time - start_time
+        logging.info(
+            f"Computed {len(metric_results)} metric results, "
+            f"took: {infer_time!s}, waited: {wait_time!s}')"
+        )
 
         metric_response = {
             "instances_scores": [
@@ -106,5 +121,16 @@ async def unicorn_exception_handler(_request: Request, exc: Exception):
     )
 
 
+def print_gpus_status():
+    if torch.cuda.is_available():
+        gpu_id = torch.cuda.current_device()
+        logging.info(
+            f"There are {torch.cuda.device_count()} GPUs available, using GPU {gpu_id}, name: {torch.cuda.get_device_name(gpu_id)}"
+        )
+    else:
+        logging.info("There are NO GPUs available.")
+
+
 if __name__ == "__main__":
+    print_gpus_status()
     uvicorn.run(app, log_config=None)
