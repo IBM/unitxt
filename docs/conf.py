@@ -54,7 +54,9 @@ html_show_sphinx = False
 html_favicon = "./static/favicon.ico"
 html_title = "Unitxt"
 
-ogp_image = "./static/opg_image.png"
+ogp_image = (
+    "https://raw.githubusercontent.com/IBM/unitxt/main/docs/static/opg_image.png"
+)
 
 autodoc_default_flags = [
     "members",
