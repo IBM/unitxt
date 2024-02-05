@@ -381,8 +381,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
-            if isinstance(pred, float) and np.isnan(pred):
-                pred = ""
             additional_inputs = (
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
