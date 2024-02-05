@@ -6,26 +6,25 @@ from src.unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from src.unitxt.operators import ExecuteQuery
+from src.unitxt.operators import ExecuteExpression
+from src.unitxt.settings_utils import get_settings
 from src.unitxt.test_utils.card import test_card
 
-get_asserts = """
-import re
-import json
+settings = get_settings()
+orig_settings = settings.allow_unverified_code
+settings.allow_unverified_code = True
 
-_ASSERT_REGEX = r"assert.*?(?=\\n\\s*assert|$)"
-json.dumps(
-    [
-        t.replace("candidate", entry_point)
-        for t in re.findall(_ASSERT_REGEX, test, re.DOTALL)
-    ]
-)
-"""
+
+get_asserts = '[t for t in re.findall(r"assert.*?(?=\\n\\s*assert|$)", test.replace("candidate", entry_point), re.DOTALL)]'
 
 
 card = TaskCard(
     loader=LoadHF(path="openai_humaneval", split="test"),
-    preprocess_steps=[ExecuteQuery(query=get_asserts, to_field="test_list")],
+    preprocess_steps=[
+        ExecuteExpression(
+            expression=get_asserts, imports_list=["re"], to_field="test_list"
+        )
+    ],
     task=FormTask(
         inputs=["prompt"],
         outputs=["prompt", "canonical_solution", "test_list"],
@@ -51,3 +50,5 @@ test_card(
     debug=False,
 )
 add_to_catalog(card, "cards.human_eval", overwrite=True)
+
+settings.allow_unverified_code = orig_settings
