@@ -2101,7 +2101,7 @@ class KPA(CustomF1):
 
 # define metrics that return means of an aggregation function applied across levels of a grouping variable
 def validate_variant_types(
-    variant_scores_dict: Dict[List], expected_variant_types: None
+    variant_scores_dict: Dict[str, List], expected_variant_types: List[str]
 ):
     """Validate a dict of variant type instance score lists.
 
@@ -2120,6 +2120,8 @@ def validate_variant_types(
             for kk, vv in variant_scores_dict.items()
         }
     )
+    if expected_variant_types is None:
+        expected_variant_types = [""]
     # make sure the expected types appear
     variant_scores_dict.update(
         {kk: [] for kk in expected_variant_types if kk not in variant_scores_dict}
