@@ -40,5 +40,9 @@ class Settings:
         ]
 
 
+settings = Settings()
+settings.allow_unverified_code = False
+
+
 def get_settings():
     return Settings()

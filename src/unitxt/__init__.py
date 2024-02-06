@@ -20,4 +20,3 @@ dataset_url = "unitxt/data"
 metric_url = "unitxt/metric"
 
 settings = Settings()
-settings.allow_unverified_code = False
