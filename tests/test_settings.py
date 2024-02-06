@@ -14,25 +14,25 @@ class TestSettings(unittest.TestCase):
     def test_singleton_assignment(self):
         settings1 = Settings()
         settings2 = Settings()
-        settings1.test = "test"
+        settings1.test1 = "test1"
 
-        self.assertEqual(settings2.test, "test")
+        self.assertEqual(settings2.test1, "test1")
 
     def test_singleton_assignment_with_get_settings(self):
         settings1 = Settings()
         settings2 = get_settings()
-        settings1.test = "test"
+        settings1.test2 = "test2"
 
-        self.assertEqual(settings2.test, "test")
+        self.assertEqual(settings2.test2, "test2")
 
     def test_key_creation(self):
         settings = Settings()
-        settings.test = "text"
+        settings.test3 = "text3"
 
-        self.assertEqual(settings.test_key, "UNITXT_TEST")
+        self.assertEqual(settings.test3_key, "UNITXT_TEST3")
 
     def test_env_var_override(self):
         settings = Settings()
-        settings.test = "text"
-        os.environ[settings.test_key] = "not_text"
-        self.assertEqual(settings.test, "not_text")
+        settings.test_env = "text_env"
+        os.environ[settings.test_env_key] = "not_text_env"
+        self.assertEqual(settings.test_env, "not_text_env")
