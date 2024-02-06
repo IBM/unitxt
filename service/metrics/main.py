@@ -12,10 +12,6 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
 from tokens import verify_token
-from unitxt.artifact import Artifact
-from unitxt.operator import MultiStreamOperator
-from unitxt.operators import ArtifactFetcherMixin
-from unitxt.stream import MultiStream
 
 # init the FastAPI app object
 app = FastAPI(version="0.0.1", title="Unitxt Metrics Service")
@@ -56,6 +52,12 @@ compute_lock = threading.Lock()
 # for computing a metric
 @app.post("/compute/{metric}", response_model=MetricResponse)
 def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_token)):
+    # imports are here, so the service could start even if unitxt is not installed
+    from unitxt.artifact import Artifact
+    from unitxt.operator import MultiStreamOperator
+    from unitxt.operators import ArtifactFetcherMixin
+    from unitxt.stream import MultiStream
+
     t0 = time.perf_counter()
     try:
         logging.debug(f"Request from [{token['sub']}]")
@@ -123,9 +125,14 @@ async def unicorn_exception_handler(_request: Request, exc: Exception):
 
 def print_gpus_status():
     if torch.cuda.is_available():
+        logging.info("Using CUDA")
+        logging.info(f"CUDNN VERSION: {torch.backends.cudnn.version()}")
         gpu_id = torch.cuda.current_device()
         logging.info(
             f"There are {torch.cuda.device_count()} GPUs available, using GPU {gpu_id}, name: {torch.cuda.get_device_name(gpu_id)}"
+        )
+        logging.info(
+            f"CUDA Device Total Memory [GB]: {torch.cuda.get_device_properties(0).total_memory / 1e9}"
         )
     else:
         logging.info("There are NO GPUs available.")
