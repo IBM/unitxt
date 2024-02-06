@@ -19,6 +19,7 @@ from unitxt.ui.ui_tiny_utils import (
 )
 from unitxt.ui.ui_utils import (
     build_command,
+    conditionally_activate_button,
     create_dataframe,
     data,
     decrease_num,
@@ -295,10 +296,17 @@ with demo:
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(
         update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmentors]
+    ).then(deactivate_button, outputs=generate_prompts_button).then(
+        deactivate_button, outputs=infer_button
     )
     cards.select(get_templates, inputs=[tasks, cards], outputs=templates).then(
         activate_button, outputs=cards_js_button
+    ).then(
+        conditionally_activate_button,
+        inputs=[templates, generate_prompts_button],
+        outputs=generate_prompts_button,
     )
+
     cards_js_button.click(
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
     )

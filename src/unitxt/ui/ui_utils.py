@@ -12,6 +12,12 @@ metric = evaluate.load(cons.UNITEXT_METRIC_STR)
 data, jsons, formats_items, instructions_items = load_cards_data()
 
 
+def conditionally_activate_button(conditional_element, button):
+    if isinstance(conditional_element, str):
+        return gr.Button(interactive=True)
+    return button
+
+
 def increase_num(current_num):
     if current_num == (cons.PROMPT_SAMPLE_SIZE - 1):
         return 0
