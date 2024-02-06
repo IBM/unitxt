@@ -1232,17 +1232,13 @@ class ComputeExpressionMixin(Artifact):
 
     def prepare(self):
         # can not do the imports here, because object does not pickle with imports
-        self.globs = {}
-        self.to_import = True
+        self.globals = {
+            module_name: import_module(module_name) for module_name in self.imports_list
+        }
 
     def compute_expression(self, instance: dict) -> Any:
-        if self.to_import:
-            for module_name in self.imports_list:
-                self.globs[module_name] = import_module(module_name)
-            self.to_import = False
-
         if settings.allow_unverified_code:
-            return eval(self.expression, self.globs, instance)
+            return eval(self.expression, self.globals, instance)
 
         raise ValueError(
             f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
