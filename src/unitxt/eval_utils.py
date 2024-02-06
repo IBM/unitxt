@@ -6,11 +6,10 @@ import pandas as pd
 from .operator import SequentialOperator
 from .stream import MultiStream
 
-# use singledispatch to overload the function evaluate(), supporting both dataframe input and list input
-
 
 @singledispatch
 def evaluate(dataset, metric_names: List[str]):
+    """Placeholder for overloading the function, supporting both dataframe input and list input."""
     pass
 
 
