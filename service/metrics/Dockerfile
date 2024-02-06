@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu20.04
 
 RUN apt update && \
     DEBIAN_FRONTEND="noninteractive" TZ="America/New_York" \
@@ -12,6 +12,7 @@ RUN apt update && \
 
 # Install Java, python and other depedencies
 RUN python3 -m pip install --no-cache-dir --upgrade pip
+RUN pip freeze | tee pip_freeze.log
 
 # Setup and activate virtual environment
 ENV VIRTUAL_ENV=/opt/venv
@@ -19,14 +20,14 @@ RUN python3 -m venv $VIRTUAL_ENV
 ## This automatically enables virtualenv for both, Docker RUN and CMD commands
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# add a non-root user to be used in run time
-ENV NONROOT_USER=user \
-    NONROOT_UID=1000 \
-    NONROOT_GID=1000
-RUN groupadd -g ${NONROOT_GID} ${NONROOT_USER}
-RUN useradd -u ${NONROOT_UID} -g ${NONROOT_GID} -G users -m -c "" -e "" -l -s /bin/bash ${NONROOT_USER}
+RUN pip install --upgrade pip
 
-ENV PIP_ROOT_USER_ACTION=ignore
+# Install Torch [GPU]
+#RUN pip install 'torch~=1.11.0' --extra-index-url https://download.pytorch.org/whl/cu113
+
+RUN pip install torch transformers nltk
+
+RUN python -m nltk.downloader punkt
 
 WORKDIR /app
 
@@ -35,30 +36,23 @@ ENV PYTHONPATH=/app
 
 ## install requirements
 COPY requirements.txt service/metrics/requirements.txt
-RUN pip install --no-cache-dir -r service/metrics/requirements.txt
-RUN pip freeze | tee pip_freeze.log
-
-RUN python -m nltk.downloader punkt
+# RUN pip install --no-cache-dir -r service/metrics/requirements.txt
+RUN pip freeze | tee pip_freeze_after_metrics_requirements.log
 
 ## copy the code bases
 COPY . service/metrics/.
 
 # clean ups and patches for security reasons
-RUN pip install -U setuptools
-RUN python -m pip uninstall -y pip
-RUN apt-get -y remove git
+# RUN pip install -U setuptools
+# RUN python -m pip uninstall -y pip
+# RUN apt-get -y remove git
 # RUN dpkg --remove libcurl3-gnutls
-
-# make sure we have access as non-root user
-RUN chown -R ${NONROOT_USER} .
-RUN chgrp -R ${NONROOT_USER} .
 
 # prepare for run
 WORKDIR /app/service/metrics
 ENV HF_HOME=/app/hf/misc
 ENV HF_DATASETS_CACHE=/app/hf/datasets
 ENV TRANSFORMERS_CACHE=/app/hf/models
-USER ${NONROOT_USER}
 EXPOSE 8000
 
 CMD python3 main.py
