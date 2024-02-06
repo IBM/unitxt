@@ -1310,6 +1310,7 @@ class Perplexity(BulkInstanceMetric):
 
     main_score = "perplexity"
     reduction_map = {"mean": ["perplexity"]}
+    k_list: List[int]
 
     perplexity_prompt: str
 
@@ -1329,6 +1330,8 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
         """
+        from statistics import mean
+
         sources = []
         targets = []
         for prediction, instance_references in zip(predictions, references):
@@ -1358,8 +1361,9 @@ class Perplexity(BulkInstanceMetric):
             for _ in range(len(instance_references)):
                 instance_scores_list.append(scores[index])
                 index += 1
-            instance_scores["reference_scores"] = instance_scores_list
-
+            instance_scores["scores"] = instance_scores_list
+            for k in self.k_list:
+                instance_scores[f"mean_at_{k}"] = mean(instance_scores_list[:k])
             # max seems more useful than mean for common use cases like
             # context relevance, where what we want to know is if there
             # is at least one good result in the context. Using mean will

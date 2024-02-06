@@ -51,29 +51,35 @@ def flatten(instances: dict, flip: bool):
 
 
 perplexity = Perplexity(
-    model_name="google/flan-t5-small", perplexity_prompt="Complete the given content:"
+    model_name="google/flan-t5-small",
+    perplexity_prompt="Complete the given content:",
+    k_list=[1, 3, 5, 10],
 )
 
 perplexity_question = Perplexity(
     model_name="google/flan-t5-small",
     perplexity_prompt="Generate a question based on the given content:",
+    k_list=[1, 3, 5, 10],
 )
 
 perplexity_answer = Perplexity(
     model_name="google/flan-t5-small",
     perplexity_prompt="Generate an answer based on the given content:",
+    k_list=[1, 3, 5, 10],
 )
 
 perplexity_chat = Perplexity(
     model_name="google/flan-t5-small",
     perplexity_prompt="Generate a conversation between a user and an agent "
     "based on the given content:",
+    k_list=[1, 3, 5, 10],
 )
 
 perplexity_chat_bloom = Perplexity(
     model_name="bigscience/bloom-560M",
     perplexity_prompt="Generate a conversation between a user and an agent "
     "based on the given content:",
+    k_list=[1, 3, 5, 10],
 )
 
 gen_instances = flatten(

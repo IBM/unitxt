@@ -203,6 +203,7 @@ for metric_name, catalog_name in [
     ("map", "metrics.rag.map"),
     ("mrr", "metrics.rag.mrr"),
     ("mrr", "metrics.rag.context_correctness"),
+    ("retrieval_at_k", ""),
 ]:
     metric = MetricPipeline(
         main_score="score",
@@ -230,28 +231,6 @@ context_relevance = MetricPipeline(
     metric="metrics.perplexity_q.flan_t5_small",
 )
 add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
-
-context_perplexity = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        CopyFields(field_to_field=[("contexts", "references")], use_query=True),
-        CopyFields(
-            field_to_field=[("question", "prediction")],
-            use_query=True,
-        ),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-    postpreprocess_steps=[
-        CopyFields(
-            field_to_field=[
-                ("score/instance/reference_scores", "score/instance/score")
-            ],
-            use_query=True,
-        )
-    ],
-)
-add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
-
 
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
@@ -323,3 +302,6 @@ answer_reward = MetricPipeline(
     metric="metrics.reward.deberta_v3_large_v2",
 )
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
+
+
+retrieval_at_k = MetricPipeline()
