@@ -38,8 +38,8 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.2-Linux-x86_64.
 RUN conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/current/
 ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64/:/opt/conda/lib/
 # RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ cudatoolkit~=11.2.2
-RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ pytorch~=1.10.2
-RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ transformers~=4.19.2
+#RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ pytorch~=1.10.2
+#RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ transformers~=4.19.2
 
 # Non-root user
 ENV NONROOT_USER=gpuuser \
@@ -64,6 +64,7 @@ USER ${NONROOT_USER}
 COPY --chown=${NONROOT_USER}:${NONROOT_GID} requirements.txt .
 RUN cat requirements.txt
 RUN pip3 install -r requirements.txt
+RUN pip3 freeze | tee pip_freeze_after_requirements.log
 
 # install problematic packages
 RUN yes | pip3 install -U pyyaml joblib
@@ -80,10 +81,10 @@ ENV PYTHONPATH=/app
 ENV PYTHONHASHSEED 0
 
 #code obfuscation
-RUN python3 -m compileall .
-RUN echo $(python3 ./prepare_pyc_files_to_replace_py_files.py)
-RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
-RUN ls -R
+#RUN python3 -m compileall .
+#RUN echo $(python3 ./prepare_pyc_files_to_replace_py_files.py)
+#RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
+#RUN ls -R
 
 RUN env
 RUN pip3 list
