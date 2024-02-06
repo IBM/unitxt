@@ -117,6 +117,9 @@ def build_prompt(prompt_args):
     try:
         prompt_list = collect_prompts("train")
     except (RuntimeError, KeyError):
+        prompt_args["demos_taken_from"] = "test"
+        recipe = StandardRecipe(**prompt_args)
+        dataset = recipe()
         prompt_list = collect_prompts("test")
     return prompt_list
 
