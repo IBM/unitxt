@@ -87,6 +87,8 @@ ENV PYTHONHASHSEED 0
 #RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
 #RUN ls -R
 
+RUN pip3 install cffi --upgrade
+
 RUN env
 RUN pip3 list
 RUN conda list
