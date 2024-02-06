@@ -64,11 +64,12 @@ USER ${NONROOT_USER}
 COPY --chown=${NONROOT_USER}:${NONROOT_GID} requirements.txt .
 RUN cat requirements.txt
 RUN pip3 install -r requirements.txt
-RUN pip3 freeze | tee pip_freeze_after_requirements.log
+#RUN pip3 freeze | tee ./pip_freeze_after_requirements.log
 
 # install problematic packages
 RUN yes | pip3 install -U pyyaml joblib
 
+WORKDIR /app
 COPY --chown=${NONROOT_USER}:${NONROOT_GID} . service/metrics/.
 
 WORKDIR /app/service/metrics
