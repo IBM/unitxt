@@ -36,7 +36,7 @@ ENV PYTHONPATH=/app
 
 ## install requirements
 COPY requirements.txt service/metrics/requirements.txt
-# RUN pip install --no-cache-dir -r service/metrics/requirements.txt
+RUN pip install --no-cache-dir -r service/metrics/requirements.txt
 RUN pip freeze | tee pip_freeze_after_metrics_requirements.log
 
 ## copy the code bases
