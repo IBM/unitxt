@@ -14,9 +14,10 @@ for subset in ["all", "high", "middle"]:
             RenameFields(
                 field_to_field={"options": "choices", "article": "context"},
             ),
+            AddFields({"context_type": "article"}),
         ],
-        task="tasks.qa.multiple_choice.contextual",
-        templates="templates.qa.multiple_choice.contextual.all",
+        task="tasks.qa.multiple_choice.with_context",
+        templates="templates.qa.multiple_choice.with_context.all",
     )
     if subset == "middle":
         test_card(card)

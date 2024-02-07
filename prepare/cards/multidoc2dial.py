@@ -1,6 +1,11 @@
 from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ExecuteExpression, ListFieldValues, RenameFields
+from src.unitxt.operators import (
+    AddFields,
+    ExecuteExpression,
+    ListFieldValues,
+    RenameFields,
+)
 from src.unitxt.settings_utils import get_settings
 from src.unitxt.test_utils.card import test_card
 
@@ -17,9 +22,10 @@ card_abstractive = TaskCard(
         ),
         ListFieldValues(fields=["utterance"], to_field="answer"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
+        AddFields({"context_type": "document"}),
     ],
-    task="tasks.qa.contextual.abstractive",
-    templates="templates.qa.contextual.all",
+    task="tasks.qa.with_context.abstractive",
+    templates="templates.qa.with_context.all",
 )
 
 card_extractive = TaskCard(
@@ -31,9 +37,10 @@ card_extractive = TaskCard(
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answer"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
+        AddFields({"context_type": "document"}),
     ],
-    task="tasks.qa.contextual.extractive",
-    templates="templates.qa.contextual.all",
+    task="tasks.qa.with_context.extractive",
+    templates="templates.qa.with_context.all",
 )
 
 for name, card in zip(

@@ -1,26 +1,35 @@
+import traceback
 from functools import lru_cache
 
-import evaluate
 import gradio as gr
 from transformers import pipeline
 
-from unitxt.standard import StandardRecipe
-from unitxt.ui import constants as cons
-from unitxt.ui.load_catalog_data import get_catalog_items, load_cards_data
+from ..api import evaluate
+from ..logging_utils import get_logger
+from ..standard import StandardRecipe
+from ..text_utils import print_dict
+from . import settings as config
+from .load_catalog_data import get_catalog_items, load_cards_data
 
-metric = evaluate.load(cons.UNITEXT_METRIC_STR)
+logger = get_logger()
 data, jsons, formats_items, instructions_items = load_cards_data()
 
 
+def conditionally_activate_button(conditional_element, button):
+    if isinstance(conditional_element, str):
+        return gr.Button(interactive=True)
+    return button
+
+
 def increase_num(current_num):
-    if current_num == (cons.PROMPT_SAMPLE_SIZE - 1):
+    if current_num == (config.PROMPT_SAMPLE_SIZE - 1):
         return 0
     return current_num + 1
 
 
 def decrease_num(current_num):
     if current_num == 0:
-        return cons.PROMPT_SAMPLE_SIZE - 1
+        return config.PROMPT_SAMPLE_SIZE - 1
     return current_num - 1
 
 
@@ -31,10 +40,10 @@ def safe_add(parameter, key, args):
 
 @lru_cache
 def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
-    prompt_args = {"card": dataset, "template": template, cons.LOADER_LIMIT_STR: 100}
+    prompt_args = {"card": dataset, "template": template, config.LOADER_LIMIT_STR: 100}
     if num_demos != 0:
         prompt_args.update(
-            {"num_demos": num_demos, "demos_pool_size": cons.DEMOS_POOL_SIZE}
+            {"num_demos": num_demos, "demos_pool_size": config.DEMOS_POOL_SIZE}
         )
     safe_add(instruction, "instruction", prompt_args)
     safe_add(format, "format", prompt_args)
@@ -47,12 +56,12 @@ def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
 @lru_cache
 def get_predictions_and_scores(prompts_hashable):
     prompts_list = [unhash_dict(prompt) for prompt in prompts_hashable]
-    prompts_sources = [prompt[cons.PROMPT_SOURCE_STR] for prompt in prompts_list]
+    prompts_sources = [prompt[config.PROMPT_SOURCE_STR] for prompt in prompts_list]
     predictions = generate(
-        model_name=cons.FLAN_T5_BASE,
+        model_name=config.FLAN_T5_BASE,
         prompts=prompts_sources,
     )
-    results = metric.compute(
+    results = evaluate(
         predictions=predictions,
         references=prompts_list,
     )
@@ -99,25 +108,35 @@ def create_dataframe(scores):
         rounded_scores = {key: try_round(value) for key, value in scores.items()}
         return list(rounded_scores.items())
     except Exception:
-        return cons.EMPTY_SCORES_FRAME
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
+        return config.EMPTY_SCORES_FRAME
+
+
+def collect(dataset, split, n):
+    results = []
+    for i, instance in enumerate(dataset[split]):
+        if i > n:
+            break
+        results.append(instance)
+    return results
 
 
 def build_prompt(prompt_args):
-    def collect_prompts(split_name):
-        prompt_list = []
-        for instance in dataset[split_name]:
-            if len(prompt_list) == cons.PROMPT_SAMPLE_SIZE:
-                return prompt_list
-            prompt_list.append(instance)
-        return None
-
     recipe = StandardRecipe(**prompt_args)
+    logger.info("loading args:")
+    print_dict(prompt_args)
     dataset = recipe()
     prompt_list = []
     try:
-        prompt_list = collect_prompts("train")
-    except (RuntimeError, KeyError):
-        prompt_list = collect_prompts("test")
+        prompt_list = collect(dataset, "train", config.PROMPT_SAMPLE_SIZE)
+    except (KeyError, RuntimeError, ValueError):
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
+        prompt_args["demos_taken_from"] = "test"
+        logger.info("trying againg with loading args:")
+        print_dict(prompt_args)
+        recipe = StandardRecipe(**prompt_args)
+        dataset = recipe()
+        prompt_list = collect(dataset, "test", config.PROMPT_SAMPLE_SIZE)
     return prompt_list
 
 
@@ -125,27 +144,27 @@ def build_command(prompt_data, with_prediction):
     parameters_str = [
         f"{key}='{prompt_data[key]}'"
         for key in prompt_data
-        if key != cons.LOADER_LIMIT_STR
+        if key != config.LOADER_LIMIT_STR
     ]
     parameters_str = ",".join(parameters_str).replace("'", "")
     load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str},max_train_instances=5', split='train')"
 
     code = f"""
-{cons.DATASET_IMPORT_STR}
+{config.DATASET_IMPORT_STR}
 
 {load_dataset_code}
     """
     if with_prediction:
         imports_code = f"""
-{cons.PREDICTIONS_IMPORTS_STR}
-{cons.DATASET_IMPORT_STR}
+{config.PREDICTIONS_IMPORTS_STR}
+{config.DATASET_IMPORT_STR}
         """
 
         code = f"""
 {imports_code}
 
 {load_dataset_code}
-{cons.PREDICTION_CODE_STR}
+{config.PREDICTION_CODE_STR}
         """
     return code
 
@@ -163,12 +182,12 @@ def update_choices_per_task(task_choice):
 
 def get_datasets(task_choice):
     datasets_list = list(data[task_choice].keys())
-    datasets_list.remove(cons.AUGMENTABLE_STR)
+    datasets_list.remove(config.AUGMENTABLE_STR)
     return sorted(datasets_list)
 
 
 def get_augmentors(task_choice):
-    if data[task_choice][cons.AUGMENTABLE_STR]:
+    if data[task_choice][config.AUGMENTABLE_STR]:
         return [None, *get_catalog_items("augmentors")[0]]
     return []
 
@@ -179,7 +198,7 @@ def get_templates(task_choice, dataset_choice):
     return gr.update(choices=sorted(data[task_choice][dataset_choice]))
 
 
-def generate(model_name, prompts, max_new_tokens=cons.MAX_NEW_TOKENS):
+def generate(model_name, prompts, max_new_tokens=config.MAX_NEW_TOKENS):
     model = pipeline(model=f"google/{model_name}")
     return [
         output["generated_text"]

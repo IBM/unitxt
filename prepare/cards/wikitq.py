@@ -1,4 +1,5 @@
 from src.unitxt.blocks import (
+    AddFields,
     CopyFields,
     IndexedRowMajorTableSerializer,
     LoadHF,
@@ -13,9 +14,10 @@ card = TaskCard(
         "splitters.small_no_test",
         CopyFields(field_to_field=[["answers", "answer"]], use_query=True),
         IndexedRowMajorTableSerializer(field_to_field=[["table", "context"]]),
+        AddFields({"context_type": "table"}),
     ],
-    task="tasks.qa.contextual.extractive",
-    templates="templates.qa.contextual.all",
+    task="tasks.qa.with_context.extractive",
+    templates="templates.qa.with_context.all",
 )
 
 test_card(card)

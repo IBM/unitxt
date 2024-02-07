@@ -1,0 +1,5 @@
+{
+    "type": "multi_reference_template",
+    "input_format": "{question} Anser based on this {context_type}:\n {context}",
+    "references_field": "answer"
+}

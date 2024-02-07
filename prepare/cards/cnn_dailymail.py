@@ -3,7 +3,6 @@ from src.unitxt.blocks import (
     LoadHF,
     RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -15,12 +14,7 @@ card = TaskCard(
         AddFields(fields={"document_type": "article"}),
     ],
     task="tasks.summarization.abstractive",
-    templates=TemplatesList(
-        [
-            "templates.summarization.abstractive.full",
-            "templates.summarization.abstractive.write_succinct",
-        ]
-    ),
+    templates="templates.summarization.abstractive.all",
 )
 
 test_card(card)

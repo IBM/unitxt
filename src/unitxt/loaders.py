@@ -76,16 +76,22 @@ class LoadHF(Loader):
     def process(self):
         try:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    streaming=self.streaming,
-                    cache_dir=None if self.streaming else dir_to_be_deleted,
-                    split=self.split,
-                    trust_remote_code=settings.allow_unverified_code,
-                )
+                try:
+                    dataset = hf_load_dataset(
+                        self.path,
+                        name=self.name,
+                        data_dir=self.data_dir,
+                        data_files=self.data_files,
+                        streaming=self.streaming,
+                        cache_dir=None if self.streaming else dir_to_be_deleted,
+                        split=self.split,
+                        trust_remote_code=settings.allow_unverified_code,
+                    )
+                except ValueError as e:
+                    if "trust_remote_code" in str(e):
+                        raise ValueError(
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                        ) from e
             if self.split is not None:
                 dataset = {self.split: dataset}
         except (

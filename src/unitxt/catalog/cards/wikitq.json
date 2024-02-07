@@ -24,8 +24,14 @@
                     "context"
                 ]
             ]
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "table"
+            }
         }
     ],
-    "task": "tasks.qa.contextual.extractive",
-    "templates": "templates.qa.contextual.all"
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
 }
