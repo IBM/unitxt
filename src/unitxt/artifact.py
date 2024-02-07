@@ -237,7 +237,7 @@ def get_raw(obj):
         return obj._to_raw_dict()
 
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
-        return type(obj)([get_raw(v) for v in obj])
+        return type(obj)(*[get_raw(v) for v in obj])
 
     if isinstance(obj, (list, tuple)):
         return type(obj)([get_raw(v) for v in obj])
