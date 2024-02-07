@@ -21,7 +21,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="Based on this {context_type}: {context}\n answer the question: {question}",
+        input_format="Based on this {context_type}:\n {context}\n answer the question: {question}",
         references_field="answer",
     ),
     "templates.qa.with_context.with_type",
@@ -30,7 +30,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="{question} Anser based on this {context_type}:\n {context}",
+        input_format="{question}\nAnswer based on this {context_type}:\n {context}",
         references_field="answer",
     ),
     "templates.qa.with_context.question_first",
