@@ -60,7 +60,7 @@ class Loader(SourceOperator):
     # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
     # stream, after load is complete.
     loader_limit: int = None
-    pass
+    streaming: bool = False
 
 
 class LoadHF(Loader):
@@ -71,7 +71,7 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
-    streaming: bool = True
+    streaming: bool = False
 
     def process(self):
         try:
@@ -128,15 +128,23 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
 
-    def load_csv(self, file):
+    def stream_csv(self, file):
         for chunk in pd.read_csv(file, chunksize=self.chunksize):
             for _index, row in chunk.iterrows():
                 yield row.to_dict()
 
     def process(self):
+        if self.streaming:
+            return MultiStream(
+                {
+                    name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
+                    for name, file in self.files.items()
+                }
+            )
+
         return MultiStream(
             {
-                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                name: pd.read_csv(file).to_dict("records")
                 for name, file in self.files.items()
             }
         )
@@ -160,6 +168,9 @@ class LoadFromKaggle(Loader):
             raise MissingKaggleCredentialsError(
                 "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
             )
+
+        if self.streaming:
+            raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def prepare(self):
         super().prepare()
@@ -252,6 +263,8 @@ class LoadFromIBMCloud(Loader):
         assert (
             self.aws_secret_access_key is not None
         ), f"Please set {self.aws_secret_access_key_env} environmental variable"
+        if self.streaming:
+            raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def process(self):
         cos = ibm_boto3.resource(
