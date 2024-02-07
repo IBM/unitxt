@@ -40,6 +40,7 @@ ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64/:/opt/conda/lib/
 # RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ cudatoolkit~=11.2.2
 #RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ pytorch~=1.10.2
 #RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ transformers~=4.19.2
+RUN conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
 
 # Non-root user
 ENV NONROOT_USER=gpuuser \
@@ -88,7 +89,6 @@ ENV PYTHONHASHSEED 0
 #RUN ls -R
 
 RUN pip3 install cffi --upgrade
-RUN conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
 
 RUN env
 RUN pip3 list
