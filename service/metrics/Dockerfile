@@ -37,9 +37,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.2-Linux-x86_64.
 # Install pkgs from OPEN-CE and conda-forge
 RUN conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/current/
 ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64/:/opt/conda/lib/
-# RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ cudatoolkit~=11.2.2
-#RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ pytorch~=1.10.2
-#RUN conda install -c http://ausgsa.ibm.com/gsa/ausgsa/projects/o/open-ce/conda/Open-CE-r1.7/1.7.0/opence-cuda-11.2/ transformers~=4.19.2
+# Fix versions for deployment on early access cluster
 RUN conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
 
 # Non-root user
@@ -82,11 +80,11 @@ EXPOSE 8000
 ENV PYTHONPATH=/app
 ENV PYTHONHASHSEED 0
 
-#code obfuscation
-#RUN python3 -m compileall .
-#RUN echo $(python3 ./prepare_pyc_files_to_replace_py_files.py)
-#RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
-#RUN ls -R
+# code obfuscation
+# RUN python3 -m compileall .
+# RUN echo $(python3 ./prepare_pyc_files_to_replace_py_files.py)
+# RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
+# RUN ls -R
 
 RUN pip3 install cffi --upgrade
 
