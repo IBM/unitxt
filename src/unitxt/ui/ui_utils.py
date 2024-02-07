@@ -1,3 +1,4 @@
+import traceback
 from functools import lru_cache
 
 import gradio as gr
@@ -107,6 +108,7 @@ def create_dataframe(scores):
         rounded_scores = {key: try_round(value) for key, value in scores.items()}
         return list(rounded_scores.items())
     except Exception:
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
         return config.EMPTY_SCORES_FRAME
 
 
@@ -127,10 +129,10 @@ def build_prompt(prompt_args):
     prompt_list = []
     try:
         prompt_list = collect(dataset, "train", config.PROMPT_SAMPLE_SIZE)
-    except (KeyError, RuntimeError) as e:
-        logger.info(f"raised {e.__class__.__name__}: {e}")
+    except (KeyError, RuntimeError, ValueError):
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
         prompt_args["demos_taken_from"] = "test"
-        logger.info("loading args:")
+        logger.info("trying againg with loading args:")
         print_dict(prompt_args)
         recipe = StandardRecipe(**prompt_args)
         dataset = recipe()

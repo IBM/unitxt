@@ -1,3 +1,4 @@
+import traceback
 from functools import lru_cache
 
 import gradio as gr
@@ -106,7 +107,7 @@ def run_unitxt(
         prompt_target = selected_prompt[config.PROPT_TARGET_STR]
         command = build_command(prompt_args, with_prediction=run_model)
     except Exception as e:
-        logger.info(f"raised: {e}")
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
         prompt_text = f"""
     Oops... this combination didnt work! Try something else.
 
