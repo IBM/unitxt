@@ -46,7 +46,7 @@ def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
     safe_add(format, "format", prompt_args)
     safe_add(augmentor, "augmentor", prompt_args)
 
-    prompts_list = build_prompt(prompt_args)
+    prompts_list, prompt_args = build_prompt(prompt_args)
     return prompts_list, prompt_args
 
 
@@ -122,12 +122,14 @@ def build_prompt(prompt_args):
     prompt_list = []
     try:
         prompt_list = collect_prompts("train")
+        prompt_args["max_train_instances"] = cons.PROMPT_SAMPLE_SIZE
     except (RuntimeError, KeyError):
         prompt_args["demos_taken_from"] = "test"
         recipe = StandardRecipe(**prompt_args)
         dataset = recipe()
         prompt_list = collect_prompts("test")
-    return prompt_list
+        prompt_args["max_test_instances"] = cons.PROMPT_SAMPLE_SIZE
+    return prompt_list, prompt_args
 
 
 def build_command(prompt_data, with_prediction):
@@ -137,7 +139,10 @@ def build_command(prompt_data, with_prediction):
         if key != cons.LOADER_LIMIT_STR
     ]
     parameters_str = ",".join(parameters_str).replace("'", "")
-    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str},max_train_instances=5', split='train')"
+    split = "train" if "max_train_instances" in prompt_data else "test"
+    load_dataset_code = (
+        f"dataset = load_dataset('unitxt/data', '{parameters_str}', split='{split}')"
+    )
 
     code = f"""
 {cons.DATASET_IMPORT_STR}
