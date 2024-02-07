@@ -127,8 +127,8 @@ def build_prompt(prompt_args):
     prompt_list = []
     try:
         prompt_list = collect(dataset, "train", config.PROMPT_SAMPLE_SIZE)
-    except RuntimeError as e:
-        logger.info(f"raised: {e}")
+    except (KeyError, RuntimeError) as e:
+        logger.info(f"raised {e.__class__.__name__}: {e}")
         prompt_args["demos_taken_from"] = "test"
         logger.info("loading args:")
         print_dict(prompt_args)

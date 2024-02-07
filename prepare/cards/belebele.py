@@ -153,7 +153,7 @@ for lang in language_codes:
             ),
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
-            AddFields({"context_type": "text"}),
+            AddFields({"context_type": "passage"}),
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates="templates.qa.multiple_choice.with_context.no_intro.all",

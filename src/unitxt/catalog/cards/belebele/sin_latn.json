@@ -44,7 +44,7 @@
         {
             "type": "add_fields",
             "fields": {
-                "context_type": "text"
+                "context_type": "passage"
             }
         }
     ],
