@@ -1,7 +1,7 @@
 import os
 
 from unitxt.file_utils import get_all_files_in_dir
-from unitxt.ui.constants import AUGMENTABLE_STR, CATALOG_DIR
+from unitxt.ui.settings import AUGMENTABLE_STR, CATALOG_DIR
 from unitxt.utils import load_json
 
 

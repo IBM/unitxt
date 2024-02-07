@@ -1,10 +1,11 @@
 import pandas as pd
 
+from src.unitxt.artifact import fetch_artifact
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 templates = {
-    "original": {
+    "with_topic": {
         "mmlu": {
             "en": "The following are multiple choice questions (with answers) about {topic}.\n{question}.\nAnswers: \n{choices}.\nAnswer:",
             "ja": "次は {topic}に関する選択式の問題です。\n{question}.\n選択肢: {choices}.\n答え:",
@@ -30,7 +31,7 @@ templates = {
             "de": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n\n{question}.\n{choices}.\nAatwort:",
         },
     },
-    "no_intro": {
+    "open": {
         "helm": {
             "en": "Question: {question}.\nAnswers: \n{choices}.\nAnswer:",
             "ja": "質問: {question}.\n選択肢: \n{choices}.\n答え:",
@@ -56,7 +57,7 @@ templates = {
             "de": "{question}.\nAatworten: {choices}.\nAatwort:",
         },
     },
-    "context_no_intro": {
+    "with_context.no_intro": {
         "helm": {
             "en": "Context: {context}\nQuestion: {question}.\nAnswers: \n{choices}.\nAnswer:",
             "ja": "テキスト: {context}\n質問: {question}.\n選択肢: \n{choices}.\n答え:",
@@ -82,7 +83,7 @@ templates = {
             "de": "{context}\n{question}.\n{choices}\nAatwort:",
         },
     },
-    "context": {
+    "with_context.with_topic": {
         "mmlu": {
             "en": "The following are multiple choice questions (with answers) about {topic}.\n{context}\n{question}.\nAnswers: \n{choices}.\nAnswer:",
             "ja": "次は {topic}に関する選択式の問題です。\n{context}\n{question}.\n答え: {choices}.\n答え:",
@@ -182,7 +183,7 @@ add_to_catalog(
         choices_seperator="\n",
         postprocessors=["processors.first_character"],
     ),
-    "templates.qa.multiple_choice.contextual_with_topic.mmlu",
+    "templates.qa.multiple_choice.with_context.with_topic.mmlu",
     overwrite=True,
 )
 
@@ -208,7 +209,7 @@ add_to_catalog(
         choices_seperator="\n",
         postprocessors=["processors.first_character"],
     ),
-    "templates.qa.multiple_choice.contextual_with_topic.helm",
+    "templates.qa.multiple_choice.with_context.with_topic.helm",
     overwrite=True,
 )
 
@@ -234,7 +235,7 @@ add_to_catalog(
         choices_seperator="\n",
         postprocessors=["processors.first_character"],
     ),
-    "templates.qa.multiple_choice.contextual.lm_eval_harness",
+    "templates.qa.multiple_choice.with_context.lm_eval_harness",
     overwrite=True,
 )
 
@@ -262,40 +263,75 @@ add_to_catalog(
         add_numerals_as_field="numerals",
         postprocessors=["processors.first_character"],
     ),
-    "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
+    "templates.qa.multiple_choice.with_context.with_topic.fm_eval",
     overwrite=True,
 )
 
+
+def remove_duplicates(input_list):
+    seen = set()
+    result = []
+    for item in input_list:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
 add_to_catalog(
     TemplatesList(
-        [
-            "templates.qa.multiple_choice.contextual.lm_eval_harness",
-        ]
+        remove_duplicates(
+            [
+                "templates.qa.multiple_choice.with_context.lm_eval_harness",
+                *[
+                    i.artifact_identifier
+                    for i in fetch_artifact(
+                        "templates.qa.multiple_choice.with_context.no_intro.all"
+                    )[0].items
+                ],
+            ]
+        )
     ),
-    "templates.qa.multiple_choice.contextual.all",
+    "templates.qa.multiple_choice.with_context.all",
     overwrite=True,
 )
 
 add_to_catalog(
     TemplatesList(
-        [
-            "templates.qa.multiple_choice.contextual_with_topic.fm_eval",
-            "templates.qa.multiple_choice.contextual_with_topic.mmlu",
-            "templates.qa.multiple_choice.contextual_with_topic.helm",
-        ]
+        remove_duplicates(
+            [
+                "templates.qa.multiple_choice.with_context.with_topic.fm_eval",
+                "templates.qa.multiple_choice.with_context.with_topic.mmlu",
+                "templates.qa.multiple_choice.with_context.with_topic.helm",
+                *[
+                    i.artifact_identifier
+                    for i in fetch_artifact(
+                        "templates.qa.multiple_choice.with_context.with_topic.all"
+                    )[0].items
+                ],
+            ]
+        )
     ),
-    "templates.qa.multiple_choice.contextual_with_topic.all",
+    "templates.qa.multiple_choice.with_context.with_topic.all",
     overwrite=True,
 )
 
 
 add_to_catalog(
     TemplatesList(
-        [
-            "templates.qa.multiple_choice.with_topic.fm_eval",
-            "templates.qa.multiple_choice.with_topic.mmlu",
-            "templates.qa.multiple_choice.with_topic.helm",
-        ]
+        remove_duplicates(
+            [
+                "templates.qa.multiple_choice.with_topic.fm_eval",
+                "templates.qa.multiple_choice.with_topic.mmlu",
+                "templates.qa.multiple_choice.with_topic.helm",
+                *[
+                    i.artifact_identifier
+                    for i in fetch_artifact(
+                        "templates.qa.multiple_choice.with_topic.all"
+                    )[0].items
+                ],
+            ]
+        )
     ),
     "templates.qa.multiple_choice.with_topic.all",
     overwrite=True,

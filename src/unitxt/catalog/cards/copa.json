@@ -30,8 +30,14 @@
                     "effect": "What happened as a result?"
                 }
             }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "sentence"
+            }
         }
     ],
-    "task": "tasks.qa.multiple_choice.contextual",
-    "templates": "templates.qa.multiple_choice.context.all"
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all"
 }
