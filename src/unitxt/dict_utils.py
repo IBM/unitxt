@@ -7,13 +7,9 @@ from dpath.segments import extend
 
 
 def is_subpath(subpath, fullpath):
-    # Normalize the paths to handle different formats and separators
-    subpath = os.path.normpath(subpath)
-    fullpath = os.path.normpath(fullpath)
-
-    # Split the paths into individual components
-    subpath_components = subpath.split(os.path.sep)
-    fullpath_components = fullpath.split(os.path.sep)
+    # Split the paths into individual components, using the default separator of dpath
+    subpath_components = subpath.split("/")
+    fullpath_components = fullpath.split("/")
 
     # Check if the full path starts with the subpath
     return fullpath_components[: len(subpath_components)] == subpath_components

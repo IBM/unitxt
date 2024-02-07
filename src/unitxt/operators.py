@@ -460,14 +460,12 @@ class RenameFields(FieldOperator):
             ):
                 dict_delete(res, from_field)
                 if self.use_query:
-                    from_field_components = list(
-                        os.path.normpath(from_field).split(os.path.sep)
-                    )
+                    from_field_components = from_field.split("/")
                     while len(from_field_components) > 1:
                         from_field_components.pop()
-                        parent = dict_get(res, os.path.sep.join(from_field_components))
+                        parent = dict_get(res, "/".join(from_field_components))
                         if isinstance(parent, dict) and not parent:
-                            dict_delete(res, os.path.sep.join(from_field_components))
+                            dict_delete(res, "/".join(from_field_components))
                         else:
                             break
 
