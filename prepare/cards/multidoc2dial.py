@@ -6,7 +6,12 @@ from src.unitxt.operators import (
     ListFieldValues,
     RenameFields,
 )
+from src.unitxt.settings_utils import get_settings
 from src.unitxt.test_utils.card import test_card
+
+settings = get_settings()
+orig_settings = settings.allow_unverified_code
+settings.allow_unverified_code = True
 
 card_abstractive = TaskCard(
     loader=LoadHF(path="multidoc2dial"),
@@ -43,3 +48,5 @@ for name, card in zip(
 ):
     test_card(card)
     add_to_catalog(card, f"cards.multidoc2dial.{name}", overwrite=True)
+
+settings.allow_unverified_code = orig_settings

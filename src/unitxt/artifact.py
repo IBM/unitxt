@@ -207,7 +207,7 @@ class Artifact(Dataclass):
 
     @final
     def __pre_init__(self, **kwargs):
-        self._init_dict = deepcopy(get_raw(kwargs))
+        self._init_dict = get_raw(kwargs)
 
     @final
     def __post_init__(self):
@@ -232,14 +232,20 @@ class Artifact(Dataclass):
         save_json(path, data)
 
 
-def get_raw(element):
-    if isinstance(element, Artifact):
-        return element._to_raw_dict()
-    if isinstance(element, (list, tuple)):
-        return [get_raw(sub_element) for sub_element in element]
-    if isinstance(element, dict):
-        return {key: get_raw(value) for key, value in element.items()}
-    return element
+def get_raw(obj):
+    if isinstance(obj, Artifact):
+        return obj._to_raw_dict()
+
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
+        return type(obj)(*[get_raw(v) for v in obj])
+
+    if isinstance(obj, (list, tuple)):
+        return type(obj)([get_raw(v) for v in obj])
+
+    if isinstance(obj, dict):
+        return type(obj)({get_raw(k): get_raw(v) for k, v in obj.items()})
+
+    return deepcopy(obj)
 
 
 class ArtifactList(list, Artifact):
