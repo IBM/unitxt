@@ -1,3 +1,4 @@
+import logging
 import re
 import string
 import uuid
@@ -683,7 +684,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        logging.info(f"Loading metric '{self.hf_metric_name}'..")
         self.metric = evaluate.load(self.hf_metric_name)
+        logging.info(f"Load completed for '{self.hf_metric_name}'.")
 
     def compute(
         self,
@@ -1271,7 +1274,7 @@ class BertScore(HuggingfaceBulkMetric):
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name}
+        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 16}
 
 
 class SentenceBert(BulkInstanceMetric):
