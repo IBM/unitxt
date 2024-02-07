@@ -52,7 +52,7 @@ class TestFunctionOperators(unittest.TestCase):
                 "type": "apply",
                 "function": "str.upper",
                 "to_field": "b",
-                "_argv": ("a",),
+                "_argv": ["a"],
             },
             dic,
         )
