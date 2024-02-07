@@ -236,7 +236,7 @@ def get_raw(element):
     if isinstance(element, Artifact):
         return element._to_raw_dict()
     if isinstance(element, (list, tuple)):
-        return [get_raw(sub_element) for sub_element in element]
+        return type(element)([get_raw(sub_element) for sub_element in element])
     if isinstance(element, dict):
         return {key: get_raw(value) for key, value in element.items()}
     return element
