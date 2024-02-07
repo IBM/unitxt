@@ -1420,9 +1420,11 @@ class Perplexity(BulkInstanceMetric):
             from transformers import AutoTokenizer
 
             self.model_name = model_name
+            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            self.model = (
+                self.model_class().from_pretrained(self.model_name).to(self.device)
+            )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = self.model_class().from_pretrained(self.model_name)
-            self.is_cuda = torch.cuda.is_available()
 
         def compute_lm(
             self, source: List[str], target: List[str], batch_size: int
@@ -1487,16 +1489,9 @@ class Perplexity(BulkInstanceMetric):
             return AutoModelForSeq2SeqLM
 
         def compute_batch(self, tokens_source, tokens_target):
-            tokens_docs_ids = tokens_source["input_ids"]
-            attention = tokens_source["attention_mask"]
-            labels = tokens_target["input_ids"]
-
-            if self.is_cuda:
-                tokens_docs_ids, attention, labels = (
-                    tokens_docs_ids.cuda(),
-                    attention.cuda(),
-                    labels.cuda(),
-                )
+            tokens_docs_ids = tokens_source["input_ids"].to(self.device)
+            attention = tokens_source["attention_mask"].to(self.device)
+            labels = tokens_target["input_ids"].to(self.device)
 
             logits = self.model(
                 input_ids=tokens_docs_ids.long(),
@@ -1536,12 +1531,9 @@ class Perplexity(BulkInstanceMetric):
             # replace the padding token in the labels by -100
             labels[labels == self.tokenizer.pad_token_id] = -100
 
-            if self.is_cuda:
-                tokens, attention, labels = (
-                    tokens.cuda(),
-                    attention.cuda(),
-                    labels.cuda(),
-                )
+            tokens = tokens.to(self.device)
+            attention = attention.to(self.device)
+            labels = labels.to(self.device)
 
             # no need to pass labels as we calculate the loss below per document
             model_output = self.model(
