@@ -60,24 +60,29 @@ ARG IMAGE_TAG=undefined
 RUN mkdir -p /usr/local/bin/
 
 USER ${NONROOT_USER}
-COPY --chown=${NONROOT_USER}:${NONROOT_GID} requirements.txt .
-RUN cat requirements.txt
-RUN pip3 install -r requirements.txt
+
+# Copy unitxt into the image
+COPY --chown=${NONROOT_USER}:${NONROOT_GID} . /app/unitxt/.
+
+# Install the metrics service requirements
+RUN cat /app/unitxt/service/metrics/requirements.txt
+RUN pip3 install -r /app/unitxt/service/metrics/requirements.txt
 #RUN pip3 freeze | tee ./pip_freeze_after_requirements.log
 
 # install problematic packages
 RUN yes | pip3 install -U pyyaml joblib
 
-WORKDIR /app
-COPY --chown=${NONROOT_USER}:${NONROOT_GID} . service/metrics/.
+# pip install unitxt
+WORKDIR /app/unitxt
+RUN pip install -e ".[all]"
 
-WORKDIR /app/service/metrics
+WORKDIR /app/unitxt/service/metrics
 ENV HF_HOME=/app/hf/misc
 ENV HF_DATASETS_CACHE=/app/hf/datasets
 ENV TRANSFORMERS_CACHE=/app/hf/models
 EXPOSE 8000
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/unitxt
 ENV PYTHONHASHSEED 0
 
 # code obfuscation
