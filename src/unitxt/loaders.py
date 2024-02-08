@@ -34,6 +34,7 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
+from .dataclass import InternalField
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
@@ -127,11 +128,17 @@ class LoadHF(Loader):
 class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
+    _cache = InternalField(default_factory=dict)
 
     def stream_csv(self, file):
         for chunk in pd.read_csv(file, chunksize=self.chunksize):
             for _index, row in chunk.iterrows():
                 yield row.to_dict()
+
+    def load_csv(self, file):
+        if file not in self._cache:
+            self._cache[file] = pd.read_csv(file).to_dict("records")
+        yield self._cache[file]
 
     def process(self):
         if self.streaming:
@@ -144,7 +151,7 @@ class LoadCSV(Loader):
 
         return MultiStream(
             {
-                name: pd.read_csv(file).to_dict("records")
+                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
                 for name, file in self.files.items()
             }
         )
