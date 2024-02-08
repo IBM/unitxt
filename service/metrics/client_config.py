@@ -22,13 +22,11 @@ def get_env_variable(variable_name: str, default_value: str) -> str:
     return os.environ[variable_name]
 
 
-def get_metrics_client_config():
-    """Load the remote metrics configuration from environment variables.
+def get_remote_metrics_names():
+    """Load the remote metrics names from an environment variable.
 
     Returns:
-        A tuple (remote_metrics, remote_metrics_endpoint) containing
-            remote_metrics: List[str] - names of metrics to be executed remotely.
-            remote_metrics_endpoint: str - The remote endpoint on which the remote metrics are available.
+        List[str] - names of metrics to be executed remotely.
     """
     remote_metrics = get_env_variable(UNITXT_REMOTE_METRICS, default_value=[])
     if remote_metrics:
@@ -44,18 +42,22 @@ def get_metrics_client_config():
                 f"Unexpected value {remote_metric} within the '{UNITXT_REMOTE_METRICS}' environment variable. "
                 f"The value is expected to be a string but its type is {type(remote_metric)}."
             )
-    # if remote_metrics is not an empty list, this feature is enabled,
-    # and an endpoint should be defined in the environment variables.
-    if remote_metrics:
-        remote_metrics_endpoint = get_env_variable(
-            UNITXT_REMOTE_METRICS_ENDPOINT, default_value=None
+    return remote_metrics
+
+
+def get_remote_metrics_endpoint():
+    """Load the remote metrics endpoint from an environment variable.
+
+    Returns:
+        str - The remote endpoint on which the remote metrics are available.
+    """
+    remote_metrics_endpoint = get_env_variable(
+        UNITXT_REMOTE_METRICS_ENDPOINT, default_value=None
+    )
+    if not remote_metrics_endpoint:
+        raise RuntimeError(
+            f"Unexpected None value for '{UNITXT_REMOTE_METRICS_ENDPOINT}'. "
+            f"Running remote metrics requires defining an "
+            f"endpoint in the environment variable '{UNITXT_REMOTE_METRICS_ENDPOINT}'."
         )
-        if not remote_metrics_endpoint:
-            raise RuntimeError(
-                f"Unexpected None value for '{UNITXT_REMOTE_METRICS_ENDPOINT}'. "
-                f"Running metrics {remote_metrics} as remote metrics requires defining an "
-                f"endpoint in the environment variable '{UNITXT_REMOTE_METRICS_ENDPOINT}'."
-            )
-    else:
-        remote_metrics_endpoint = None
-    return remote_metrics, remote_metrics_endpoint
+    return remote_metrics_endpoint
