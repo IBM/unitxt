@@ -46,8 +46,6 @@ settings = get_settings()
 try:
     import ibm_boto3
 
-    # from ibm_botocore.client import ClientError
-
     ibm_boto3_available = True
 except ImportError:
     ibm_boto3_available = False
@@ -63,6 +61,18 @@ class Loader(SourceOperator):
     loader_limit: int = None
     streaming: bool = False
 
+    def get_limit(self):
+        if settings.global_loader_limit is not None and self.loader_limit is not None:
+            return min(int(settings.global_loader_limit), self.loader_limit)
+        if settings.global_loader_limit is not None:
+            return int(settings.global_loader_limit)
+        return self.loader_limit
+
+    def log_limited_loading(self):
+        logger.info(
+            f"\nLoading limited to {self.get_limit()} instances. It was either set by {self.__class__.__name__}.loader_limit or unitxt.settings.global_loader_limit."
+        )
+
 
 class LoadHF(Loader):
     path: str
@@ -72,10 +82,11 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
-    streaming: bool = False
+    streaming: bool = True
+    _cache: dict = InternalField(default=None)
 
-    def process(self):
-        try:
+    def stream_dataset(self):
+        if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
                 try:
                     dataset = hf_load_dataset(
@@ -93,11 +104,18 @@ class LoadHF(Loader):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+
             if self.split is not None:
                 dataset = {self.split: dataset}
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
+
+            self._cache = dataset
+        else:
+            dataset = self._cache
+
+        return dataset
+
+    def load_dataset(self):
+        if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
                 try:
                     dataset = hf_load_dataset(
@@ -122,6 +140,37 @@ class LoadHF(Loader):
             else:
                 dataset = {self.split: dataset}
 
+            self._cache = dataset
+        else:
+            dataset = self._cache
+
+        return dataset
+
+    def split_limited_load(self, split_name):
+        yield from itertools.islice(self._cache[split_name], self.get_limit())
+
+    def limited_load(self):
+        self.log_limited_loading()
+        return MultiStream(
+            {
+                name: Stream(
+                    generator=self.split_limited_load, gen_kwargs={"split_name": name}
+                )
+                for name in self._cache.keys()
+            }
+        )
+
+    def process(self):
+        try:
+            dataset = self.stream_dataset()
+        except (
+            NotImplementedError
+        ):  # streaming is not supported for zipped files so we load without streaming
+            dataset = self.load_dataset()
+
+        if self.get_limit() is not None:
+            return self.limited_load()
+
         return MultiStream.from_iterables(dataset)
 
 
@@ -129,16 +178,35 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
     _cache = InternalField(default_factory=dict)
+    loader_limit: int = None
+    streaming: bool = True
 
     def stream_csv(self, file):
-        for chunk in pd.read_csv(file, chunksize=self.chunksize):
-            for _index, row in chunk.iterrows():
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+            chunksize = min(self.get_limit(), self.chunksize)
+        else:
+            chunksize = self.chunksize
+
+        row_count = 0
+        for chunk in pd.read_csv(file, chunksize=chunksize):
+            for _, row in chunk.iterrows():
+                if self.get_limit() is not None and row_count >= self.get_limit():
+                    return
                 yield row.to_dict()
+                row_count += 1
 
     def load_csv(self, file):
         if file not in self._cache:
-            self._cache[file] = pd.read_csv(file).to_dict("records")
-        yield self._cache[file]
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+                self._cache[file] = pd.read_csv(file, nrows=self.get_limit()).to_dict(
+                    "records"
+                )
+            else:
+                self._cache[file] = pd.read_csv(file).to_dict("records")
+
+        yield from self._cache[file]
 
     def process(self):
         if self.streaming:
@@ -218,17 +286,17 @@ class LoadFromIBMCloud(Loader):
                 f"Unabled to access {item_name} in {bucket_name} in COS", e
             ) from e
 
-        if self.loader_limit is not None:
+        if self.get_limit() is not None:
             if item_name.endswith(".jsonl"):
                 first_lines = list(
-                    itertools.islice(body.iter_lines(), self.loader_limit)
+                    itertools.islice(body.iter_lines(), self.get_limit())
                 )
                 with open(local_file, "wb") as downloaded_file:
                     for line in first_lines:
                         downloaded_file.write(line)
                         downloaded_file.write(b"\n")
                 logger.info(
-                    f"\nDownload successful limited to {self.loader_limit} lines"
+                    f"\nDownload successful limited to {self.get_limit()} lines"
                 )
                 return
 
@@ -284,7 +352,7 @@ class LoadFromIBMCloud(Loader):
             self.cache_dir,
             self.bucket_name,
             self.data_dir,
-            f"loader_limit_{self.loader_limit}",
+            f"loader_limit_{self.get_limit()}",
         )
         if not os.path.exists(local_dir):
             Path(local_dir).mkdir(parents=True, exist_ok=True)
