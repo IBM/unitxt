@@ -4,7 +4,7 @@ import unittest
 
 import httpretty
 
-from service.metrics.client_config import (
+from src.unitxt.metric_utils import (
     UNITXT_REMOTE_METRICS,
     UNITXT_REMOTE_METRICS_ENDPOINT,
     get_remote_metrics_endpoint,

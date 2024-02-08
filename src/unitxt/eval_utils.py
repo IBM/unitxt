@@ -2,12 +2,8 @@ from typing import List
 
 import pandas as pd
 
-from service.metrics.client_config import (
-    get_remote_metrics_endpoint,
-    get_remote_metrics_names,
-)
-
 from .artifact import verbosed_fetch_artifact
+from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
 
