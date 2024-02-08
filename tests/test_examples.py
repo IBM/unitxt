@@ -182,7 +182,7 @@ class TestExamples(UnitxtTestCase):
         from src import unitxt
         from src.unitxt.text_utils import print_dict
 
-        dataset = load_dataset("card=cards.wnli,template_card_index=0")
+        dataset = unitxt.load_dataset("card=cards.wnli,template_card_index=0")
 
         metric = evaluate.load(unitxt.metric_file)
         results = metric.compute(
