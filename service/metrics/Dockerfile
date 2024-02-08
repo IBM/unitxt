@@ -67,7 +67,6 @@ COPY --chown=${NONROOT_USER}:${NONROOT_GID} . /app/unitxt/.
 # Install the metrics service requirements
 RUN cat /app/unitxt/service/metrics/requirements.txt
 RUN pip3 install -r /app/unitxt/service/metrics/requirements.txt
-#RUN pip3 freeze | tee ./pip_freeze_after_requirements.log
 
 # install problematic packages
 RUN yes | pip3 install -U pyyaml joblib
@@ -84,12 +83,6 @@ EXPOSE 8000
 
 ENV PYTHONPATH=/app/unitxt
 ENV PYTHONHASHSEED 0
-
-# code obfuscation
-# RUN python3 -m compileall .
-# RUN echo $(python3 ./prepare_pyc_files_to_replace_py_files.py)
-# RUN find . -type f -not -name "*.pyc" -not -path "./models/*" -delete
-# RUN ls -R
 
 RUN pip3 install cffi --upgrade
 
