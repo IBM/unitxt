@@ -40,7 +40,7 @@ def safe_add(parameter, key, args):
 
 @lru_cache
 def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
-    prompt_args = {"card": dataset, "template": template, config.LOADER_LIMIT_STR: 100}
+    prompt_args = {"card": dataset, "template": template, config.LOADER_LIMIT_STR: 300}
     if num_demos != 0:
         prompt_args.update(
             {"num_demos": num_demos, "demos_pool_size": config.DEMOS_POOL_SIZE}
@@ -63,7 +63,7 @@ def get_predictions_and_scores(prompts_hashable):
     )
     results = evaluate(
         predictions=predictions,
-        references=prompts_list,
+        data=prompts_list,
     )
     return predictions, results
 
