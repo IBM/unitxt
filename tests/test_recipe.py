@@ -359,7 +359,7 @@ class TestRecipes(UnitxtTestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=3,
             max_train_instances=10,
             max_test_instances=5,
             num_demos=3,
@@ -367,7 +367,7 @@ class TestRecipes(UnitxtTestCase):
 
         stream = recipe()
 
-        self.assertEqual(len(list(stream["train"])), 10)
+        self.assertEqual(len(list(stream["train"])), 6)
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
