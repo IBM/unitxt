@@ -82,71 +82,71 @@ perplexity_chat_bloom = Perplexity(
 gen_instances = flatten(
     {
         "together we are": [  # prediction 1
-            ("ok", 3.18),  # reference 1
-            ("stronger", 5.14),  # reference 2
-            ("weaker", 4.51),
+            ("ok", 0.04),  # reference 1
+            ("stronger", 0.01),  # reference 2
+            ("weaker", 0.01),
         ],
         "The future belongs to ": [
-            ("those who prepare for it today", 3.88),
-            ("our youth", 4.34),
-            ("those who believe in the beauty of their dreams", 2.77),
+            ("those who prepare for it today", 0.02),
+            ("our youth", 0.01),
+            ("those who believe in the beauty of their dreams", 0.06),
         ],
     },
     flip=True,
 )
 
 gen_global = {
-    "mean": 3.97,
-    "ci_high": 4.68,
-    "ci_low": 3.31,
+    "mean": 0.03,
+    "ci_high": 0.05,
+    "ci_low": 0.01,
 }
 
 q_instances = flatten(
     {
         "who are we?": [  # reference 1
-            ("we are the world", 2.82),  # prediction 1
-            ("we are the children", 2.7),  # prediction 2
-            ("we are the people", 2.56),  # prediction 3
+            ("we are the world", 0.06),  # prediction 1
+            ("we are the children", 0.07),  # prediction 2
+            ("we are the people", 0.08),  # prediction 3
         ],
         "what are we saving?": [
-            ("we make a brighter day", 2.68),
-            ("we are making a choice", 2.76),
-            ("we are saving our own lives", 1.34),
+            ("we make a brighter day", 0.07),
+            ("we are making a choice", 0.06),
+            ("we are saving our own lives", 0.26),
         ],
         "Which city is the capital of Italy?": [
-            ("Milan", 1.54),
-            ("Rome", 1.5),
-            ("Naples", 1.6),
+            ("Milan", 0.21),
+            ("Rome", 0.22),
+            ("Naples", 0.2),
         ],
     },
     flip=False,
 )
 q_global = {
-    "mean": 2.17,
-    "ci_high": 2.57,
-    "ci_low": 1.75,
+    "mean": 0.14,
+    "ci_high": 0.19,
+    "ci_low": 0.08,
 }
 
 a_instances = flatten(
     {
         "Which city is the capital of Italy?": [
-            ("The capital of Italy is Milan", 2.59),
-            ("The capital of Italy is Rome", 2.52),
-            ("The capital of Italy is Naples", 2.97),
+            ("The capital of Italy is Milan", 0.08),
+            ("The capital of Italy is Rome", 0.08),
+            ("The capital of Italy is Naples", 0.05),
         ],
         "Where Albert Einstein was born?": [
-            ("Einstein was born in Ulm, Germany", 2.71),
-            ("Einstein was born in Ulm, Poland", 3.26),
-            ("Ulm", 5.93),
-            ("Germany", 2.12),
+            ("Einstein was born in Ulm, Germany", 0.07),
+            ("Einstein was born in Ulm, Poland", 0.04),
+            ("Ulm", 0.0),
+            ("Germany", 0.12),
         ],
     },
     flip=True,
 )
 a_global = {
-    "mean": 3.16,
-    "ci_high": 4.73,
-    "ci_low": 2.57,
+    "mean": 0.06,
+    "ci_high": 0.09,
+    "ci_low": 0.04,
 }
 
 chat_pension_policy = (
@@ -176,33 +176,33 @@ chat_construction_policy = (
 chat_instances = flatten(
     {
         "user: hello\nagent:I have a question about my retirement policy.": [
-            (chat_pension_policy, 4.16),
-            (chat_retirement_policy, 3.6),
-            (chat_construction_policy, 4.76),
+            (chat_pension_policy, 0.02),
+            (chat_retirement_policy, 0.03),
+            (chat_construction_policy, 0.01),
         ],
     },
     flip=False,
 )
 chat_global = {
-    "mean": 4.17,
-    "ci_high": 4.76,
-    "ci_low": 3.6,
+    "mean": 0.02,
+    "ci_high": 0.03,
+    "ci_low": 0.01,
 }
 
 chat_instances_bloom = flatten(
     {
         "user: hello\nagent:I have a question about my retirement policy.": [
-            (chat_pension_policy, 4.58),
-            (chat_retirement_policy, 4.02),
-            (chat_construction_policy, 4.84),
+            (chat_pension_policy, 0.01),
+            (chat_retirement_policy, 0.02),
+            (chat_construction_policy, 0.01),
         ],
     },
     flip=False,
 )
 chat_global_bloom = {
-    "mean": 4.48,
-    "ci_high": 4.75,
-    "ci_low": 4.02,
+    "mean": 0.01,
+    "ci_high": 0.02,
+    "ci_low": 0.01,
 }
 
 run_test(perplexity, gen_instances, gen_global)

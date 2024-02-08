@@ -5,6 +5,7 @@ from . import logging_utils
 from .api import evaluate, load, load_dataset
 from .catalog import add_to_catalog
 from .register import register_all_artifacts, register_local_catalog
+from .settings_utils import Settings
 from .version import version
 
 __version__ = version
@@ -17,3 +18,5 @@ local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
 
 dataset_url = "unitxt/data"
 metric_url = "unitxt/metric"
+
+settings = Settings()

@@ -199,7 +199,11 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
 
-for metric_name in ["map", "mrr"]:
+for metric_name, catalog_name in [
+    ("map", "metrics.rag.map"),
+    ("mrr", "metrics.rag.mrr"),
+    ("mrr", "metrics.rag.context_correctness"),
+]:
     metric = MetricPipeline(
         main_score="score",
         preprocess_steps=[
@@ -211,7 +215,7 @@ for metric_name in ["map", "mrr"]:
         ],
         metric=f"metrics.{metric_name}",
     )
-    add_to_catalog(metric, f"metrics.rag.{metric_name}", overwrite=True)
+    add_to_catalog(metric, catalog_name, overwrite=True)
 
 
 context_relevance = MetricPipeline(
@@ -303,7 +307,7 @@ for new_catalog_name, base_catalog_name in [
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
-answer_relevance = MetricPipeline(
+answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         CopyFields(field_to_field=[("question", "references")], use_query=True),
@@ -318,4 +322,4 @@ answer_relevance = MetricPipeline(
     ],
     metric="metrics.reward.deberta_v3_large_v2",
 )
-add_to_catalog(answer_relevance, "metrics.rag.answer_relevance", overwrite=True)
+add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)

@@ -1,0 +1,68 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "ibm/AttaQ"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "shuffle",
+            "page_size": 2800
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "input_label": {}
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "input": "input_label/input",
+                "label": "input_label/label"
+            },
+            "use_query": true
+        },
+        {
+            "type": "apply",
+            "function": "json.dumps",
+            "to_field": "input_label",
+            "_argv": [
+                "input_label"
+            ]
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "input"
+        ],
+        "outputs": [
+            "input_label"
+        ],
+        "metrics": [
+            "metrics.safety"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{input}\n",
+                "output_format": "{input_label}"
+            },
+            {
+                "type": "input_output_template",
+                "input_format": "{input}",
+                "output_format": "{input_label}"
+            }
+        ]
+    }
+}

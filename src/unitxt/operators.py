@@ -36,10 +36,12 @@ import importlib
 import operator
 import os
 import uuid
+import zipfile
 from abc import abstractmethod
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
+from importlib import import_module
 from itertools import zip_longest
 from random import Random
 from typing import (
@@ -54,26 +56,32 @@ from typing import (
     Union,
 )
 
+import requests
+
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField
+from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
     MultiStreamOperator,
     PagedStreamOperator,
     SequentialOperator,
+    SideEffectOperator,
     SingleStreamOperator,
     SingleStreamReducer,
+    SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
     StreamInstanceOperator,
-    StreamSource,
 )
 from .random_utils import new_random_generator
+from .settings_utils import get_settings
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
+
+settings = get_settings()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -89,7 +97,7 @@ class FromIterables(StreamInitializerOperator):
         return MultiStream.from_iterables(iterables)
 
 
-class IterableSource(StreamSource):
+class IterableSource(SourceOperator):
     """Creates a MultiStream from a dict of named iterables.
 
     It is a callable.
@@ -105,7 +113,7 @@ class IterableSource(StreamSource):
 
     iterables: Dict[str, Iterable]
 
-    def __call__(self) -> MultiStream:
+    def process(self) -> MultiStream:
         return MultiStream.from_iterables(self.iterables)
 
 
@@ -480,7 +488,7 @@ class AddConstant(FieldOperator):
 
 
 class Augmentor(StreamInstanceOperator):
-    """A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
+    """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
 
     Args:
         augment_model_input: Whether to augment the input to the model.
@@ -560,9 +568,9 @@ class NullAugmentor(Augmentor):
 
 
 class AugmentWhitespace(Augmentor):
-    """Augments the inputs by replace existing whitespace with other whitespace.
+    """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
-    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
+    Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
     """
 
     def process_value(self, value: Any) -> Any:
@@ -1090,7 +1098,7 @@ class ArtifactFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
+class ApplyOperatorsField(StreamInstanceOperator):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
@@ -1211,30 +1219,56 @@ class FilterByCondition(SingleStreamOperator):
         return True
 
 
-class FilterByQuery(SingleStreamOperator):
+class ComputeExpressionMixin(Artifact):
+    """Computes an expression expressed over fields of an instance.
+
+    Args:
+        expression (str): the expression, in terms of names of fields of an instance
+        imports_list (List[str]): list of names of imports needed for the evaluation of the expression
+    """
+
+    expression: str
+    imports_list: List[str] = OptionalField(default_factory=list)
+
+    def prepare(self):
+        # can not do the imports here, because object does not pickle with imports
+        self.globals = {
+            module_name: import_module(module_name) for module_name in self.imports_list
+        }
+
+    def compute_expression(self, instance: dict) -> Any:
+        if settings.allow_unverified_code:
+            return eval(self.expression, self.globals, instance)
+
+        raise ValueError(
+            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+        )
+
+
+class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
     """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
 
     Raises an error if a field participating in the specified condition is missing from the instance
 
     Args:
-       query (str): a condition over fields of the instance, to be processed by python's eval()
+       expression (str): a condition over fields of the instance, to be processed by python's eval()
+       imports_list (List[str]): names of imports needed for the eval of the query (e.g. 're', 'json')
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByQuery(query = "a > 4") will yield only instances where "a">4
-       FilterByQuery(query = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
-       FilterByQuery(query = "a in [4, 8]") will yield only instances where "a" is 4 or 8
-       FilterByQuery(query = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
+       FilterByExpression(expression = "a > 4") will yield only instances where "a">4
+       FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
+       FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
+       FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
 
     """
 
-    query: str
     error_on_filtered_all: bool = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
         for instance in stream:
-            if eval(self.query, None, instance):
+            if self.compute_expression(instance):
                 yielded = True
                 yield instance
 
@@ -1244,33 +1278,33 @@ class FilterByQuery(SingleStreamOperator):
             )
 
 
-class ExecuteQuery(StreamInstanceOperator):
-    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
+class ExecuteExpression(StreamInstanceOperator, ComputeExpressionMixin):
+    """Compute an expression, specified as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
 
     Args:
-       query (str): an expression to be evaluated over the fields of the instance
+       expression (str): an expression to be evaluated over the fields of the instance
        to_field (str): the field where the result is to be stored into
+       imports_list (List[str]): names of imports needed for the eval of the query (e.g. 're', 'json')
 
     Examples:
        When instance {"a": 2, "b": 3} is process-ed by operator
-       ExecuteQuery(query="a+b", to_field = "c")
+       ExecuteExpression(expression="a+b", to_field = "c")
        the result is {"a": 2, "b": 3, "c": 5}
 
        When instance {"a": "hello", "b": "world"} is process-ed by operator
-       ExecuteQuery(query = "a+' '+b", to_field = "c")
+       ExecuteExpression(expression = "a+' '+b", to_field = "c")
        the result is {"a": "hello", "b": "world", "c": "hello world"}
 
     """
 
-    query: str
     to_field: str
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = eval(self.query, None, instance)
+        instance[self.to_field] = self.compute_expression(instance)
         return instance
 
 
@@ -1784,3 +1818,54 @@ class LengthBalancer(DeterministicBalancer):
             if total_len < val:
                 return i
         return i + 1
+
+
+class DownloadError(Exception):
+    def __init__(
+        self,
+        message,
+    ):
+        self.__super__(message)
+
+
+class UnexpectedHttpCodeError(Exception):
+    def __init__(self, http_code):
+        self.__super__(f"unexpected http code {http_code}")
+
+
+class DownloadOperator(SideEffectOperator):
+    """Operator for downloading a file from a given URL to a specified local path.
+
+    Attributes:
+        source (str): URL of the file to be downloaded.
+        target (str): Local path where the downloaded file should be saved.
+    """
+
+    source: str
+    target: str
+
+    def process(self):
+        try:
+            response = requests.get(self.source, allow_redirects=True)
+        except Exception as e:
+            raise DownloadError(f"Unabled to download {self.source}") from e
+        if response.status_code != 200:
+            raise UnexpectedHttpCodeError(response.status_code)
+        with open(self.target, "wb") as f:
+            f.write(response.content)
+
+
+class ExtractZipFile(SideEffectOperator):
+    """Operator for extracting files from a zip archive.
+
+    Attributes:
+        zip_file (str): Path of the zip file to be extracted.
+        target_dir (str): Directory where the contents of the zip file will be extracted.
+    """
+
+    zip_file: str
+    target_dir: str
+
+    def process(self):
+        with zipfile.ZipFile(self.zip_file) as zf:
+            zf.extractall(self.target_dir)

@@ -11,8 +11,8 @@ card = TaskCard(
             field_to_field={"goal": "question", "label": "answer"},
         ),
     ],
-    task="tasks.qa.multiple_choice.original",
-    templates="templates.qa.multiple_choice.no_intro.all",
+    task="tasks.qa.multiple_choice.open",
+    templates="templates.qa.multiple_choice.open.all",
 )
 test_card(card)
 add_to_catalog(card, "cards.piqa", overwrite=True)

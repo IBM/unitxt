@@ -1,9 +1,11 @@
+import traceback
 from functools import lru_cache
 
 import gradio as gr
 
-from unitxt.ui import constants as cons
-from unitxt.ui.ui_tiny_utils import (
+from ..logging_utils import get_logger
+from . import settings as config
+from .gradio_utils import (
     activate_button,
     deactivate_button,
     go_to_intro_tab,
@@ -17,20 +19,24 @@ from unitxt.ui.ui_tiny_utils import (
     make_txt_visible,
     select_checkbox,
 )
-from unitxt.ui.ui_utils import (
+from .ui_utils import (
     build_command,
+    conditionally_activate_button,
     create_dataframe,
     data,
     decrease_num,
-    get_catalog_items,
+    formats_items,
     get_predictions_and_scores,
     get_prompts,
     get_templates,
     hash_dict,
     increase_num,
+    instructions_items,
     jsons,
     update_choices_per_task,
 )
+
+logger = get_logger()
 
 
 def run_unitxt_entry(
@@ -52,7 +58,7 @@ def run_unitxt_entry(
         else:
             msg = "Please select Dataset Card and a template"
 
-        return msg, "", "", cons.EMPTY_SCORES_FRAME, cons.EMPTY_SCORES_FRAME, ""
+        return msg, "", "", config.EMPTY_SCORES_FRAME, config.EMPTY_SCORES_FRAME, ""
 
     if not isinstance(instruction, str):
         instruction = None
@@ -97,10 +103,11 @@ def run_unitxt(
             dataset, template, num_demos, instruction, format, augmentor
         )
         selected_prompt = prompts_list[index]
-        prompt_text = selected_prompt[cons.PROMPT_SOURCE_STR]
-        prompt_target = selected_prompt[cons.PROPT_TARGET_STR]
+        prompt_text = selected_prompt[config.PROMPT_SOURCE_STR]
+        prompt_target = selected_prompt[config.PROPT_TARGET_STR]
         command = build_command(prompt_args, with_prediction=run_model)
     except Exception as e:
+        logger.info("An exception occurred:\n%s", traceback.format_exc())
         prompt_text = f"""
     Oops... this combination didnt work! Try something else.
 
@@ -109,8 +116,8 @@ def run_unitxt(
         prompt_target = ""
         command = ""
     selected_prediction = ""
-    instance_result = cons.EMPTY_SCORES_FRAME
-    agg_result = cons.EMPTY_SCORES_FRAME
+    instance_result = config.EMPTY_SCORES_FRAME
+    agg_result = config.EMPTY_SCORES_FRAME
     if run_model:
         try:
             predictions, results = get_predictions_and_scores(
@@ -137,39 +144,41 @@ def run_unitxt(
     )
 
 
-def display_json_button(element):
-    if element in jsons:
-        json_el = jsons[element]
-        if "loader" in json_el:
-            if "path" in json_el["loader"]:
-                json_el["loader"][" path"] = json_el["loader"].pop("path")
-        return (
-            go_to_json_tab(),
-            make_mrk_down_invisible(),
-            make_txt_visible(element),
-            make_json_visible(json_el),
-        )
+def display_json_button(element: str):
+    if isinstance(element, str):
+        if element in jsons:
+            json_el = jsons[element]
+            if "loader" in json_el:
+                if "path" in json_el["loader"]:
+                    json_el["loader"][" path"] = json_el["loader"].pop("path")
+            return (
+                go_to_json_tab(),
+                make_mrk_down_invisible(),
+                make_txt_visible(element),
+                make_json_visible(json_el),
+            )
 
-    return tabs, f"Error: {element}'s json not found", None, None
+        return tabs, f"Error: {element}'s json not found", None, None
+    return tabs, None, None, None
 
 
 ######################
 ### UI STARTS HERE ###
 ######################
-
 demo = gr.Blocks()
 
 with demo:
-    with gr.Row():
-        # LOGO
-        logo = gr.Image(
-            cons.BANNER_PATH,
-            show_label=False,
-            show_download_button=False,
-            show_share_button=False,
-            scale=0.3333,
-        )
-        links = gr.Markdown(value=cons.INTRO_TXT)
+    if config.HEADER_VISBLE:
+        with gr.Row():
+            # LOGO
+            logo = gr.Image(
+                config.BANNER_PATH,
+                show_label=False,
+                show_download_button=False,
+                show_share_button=False,
+                scale=0.3333,
+            )
+            links = gr.Markdown(value=config.INTRO_TXT)
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -177,7 +186,7 @@ with demo:
                 tasks = gr.Dropdown(choices=sorted(data.keys()), label="Task", scale=3)
                 cards = gr.Dropdown(choices=[], label="Dataset Card", scale=9)
                 cards_js_button = gr.Button(
-                    cons.JSON_BUTTON_TXT,
+                    config.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
                     min_width=0.1,
@@ -187,7 +196,7 @@ with demo:
 
                 templates = gr.Dropdown(choices=[], label="Template", scale=9)
                 templates_js_button = gr.Button(
-                    cons.JSON_BUTTON_TXT,
+                    config.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
                     min_width=0.1,
@@ -196,24 +205,24 @@ with demo:
                 )
 
                 instructions = gr.Dropdown(
-                    choices=[None, *get_catalog_items("instructions")[0]],
+                    choices=[None, *instructions_items],
                     label="Instruction",
                     scale=5,
                 )
                 instructions_js_button = gr.Button(
-                    cons.JSON_BUTTON_TXT,
+                    config.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
                     min_width=1,
                     interactive=False,
                 )
                 formats = gr.Dropdown(
-                    choices=[None, *get_catalog_items("formats")[0]],
+                    choices=[None, *formats_items],
                     label="Format",
                     scale=5,
                 )
                 formats_js_button = gr.Button(
-                    cons.JSON_BUTTON_TXT,
+                    config.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
                     min_width=1,
@@ -228,14 +237,14 @@ with demo:
                 value="Generate Prompts", interactive=False
             )
             infer_button = gr.Button(
-                value=f"Infer with {cons.FLAN_T5_BASE}", interactive=False
+                value=f"Infer with {config.FLAN_T5_BASE}", interactive=False
             )
             clear_fields = gr.ClearButton()
 
         with gr.Column(scale=3):
             with gr.Tabs() as tabs:
                 with gr.TabItem("Intro", id="intro"):
-                    main_intro = gr.Markdown(cons.MAIN_INTRO_TXT)
+                    main_intro = gr.Markdown(config.MAIN_INTRO_TXT)
                 with gr.TabItem("Demo", id="demo"):
                     with gr.Row():
                         previous_sample = gr.Button(
@@ -265,26 +274,26 @@ with demo:
 
                         instance_scores = gr.DataFrame(
                             label="Instance scores",
-                            value=cons.EMPTY_SCORES_FRAME,
-                            headers=cons.SCORE_FRAME_HEADERS,
+                            value=config.EMPTY_SCORES_FRAME,
+                            headers=config.SCORE_FRAME_HEADERS,
                         )
                         with gr.Accordion(
-                            label=f"Aggregated scores for {cons.PROMPT_SAMPLE_SIZE} predictions",
+                            label=f"Aggregated scores for {config.PROMPT_SAMPLE_SIZE} predictions",
                             open=False,
                         ):
                             global_scores = gr.DataFrame(
-                                value=cons.EMPTY_SCORES_FRAME,
-                                headers=cons.SCORE_FRAME_HEADERS,
+                                value=config.EMPTY_SCORES_FRAME,
+                                headers=config.SCORE_FRAME_HEADERS,
                                 visible=True,
                             )
                 with gr.TabItem("Code", id="code"):
-                    code_intro = gr.Markdown(value=cons.CODE_INTRO_TXT)
+                    code_intro = gr.Markdown(value=config.CODE_INTRO_TXT)
                     code = gr.Code(language="python", lines=1)
                 with gr.TabItem("View Catalog", id="json"):
-                    json_intro = gr.Markdown(value=cons.JSON_INTRO_TXT)
+                    json_intro = gr.Markdown(value=config.JSON_INTRO_TXT)
                     element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
-    acknowledgement = gr.Markdown(cons.ACK_TEXT)
+    acknowledgement = gr.Markdown(config.ACK_TEXT)
     # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)
     sample_choice = gr.Number(value=0, visible=False)
@@ -292,31 +301,38 @@ with demo:
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(
         update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmentors]
+    ).then(deactivate_button, outputs=generate_prompts_button).then(
+        deactivate_button, outputs=infer_button
     )
     cards.select(get_templates, inputs=[tasks, cards], outputs=templates).then(
         activate_button, outputs=cards_js_button
+    ).then(
+        conditionally_activate_button,
+        inputs=[templates, generate_prompts_button],
+        outputs=generate_prompts_button,
     )
+
     cards_js_button.click(
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=cards_js_button)
+    )
     templates.select(activate_button, outputs=templates_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=templates_js_button)
+    )
     instructions.select(activate_button, outputs=instructions_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     instructions_js_button.click(
         display_json_button, instructions, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=instructions_js_button)
+    )
     formats.select(activate_button, outputs=formats_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
     formats_js_button.click(
         display_json_button, formats, [tabs, json_intro, element_name, json_viewer]
-    ).then(deactivate_button, outputs=formats_js_button)
+    )
     num_shots.change(activate_button, outputs=generate_prompts_button).then(
         deactivate_button, outputs=infer_button
     )
@@ -354,11 +370,17 @@ with demo:
         deactivate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button).then(
         deactivate_button, outputs=previous_sample
-    ).then(deactivate_button, outputs=next_sample)
+    ).then(deactivate_button, outputs=next_sample).then(
+        deactivate_button, outputs=cards_js_button
+    ).then(deactivate_button, outputs=templates_js_button).then(
+        deactivate_button, outputs=formats_js_button
+    ).then(deactivate_button, outputs=instructions_js_button)
 
     # GENERATE PROMPT BUTTON LOGIC
     generate_prompts_button.click(
         deactivate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=previous_sample).then(
+        deactivate_button, outputs=next_sample
     ).then(make_group_invisible, outputs=infer_group).then(
         go_to_main_tab, outputs=tabs
     ).then(make_mrk_down_invisible, outputs=code_intro).then(

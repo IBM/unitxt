@@ -18,7 +18,7 @@ for subtask in subtasks:
             IndexOf(search_in="labels", index_of="label", to_field="answer"),
         ],
         task="tasks.qa.multiple_choice.with_topic",
-        templates="templates.qa.multiple_choice.original.all",
+        templates="templates.qa.multiple_choice.with_topic.all",
     )
     test_card(card)
     add_to_catalog(

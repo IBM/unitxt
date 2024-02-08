@@ -36,9 +36,12 @@ from tqdm import tqdm
 
 from .logging_utils import get_logger
 from .operator import SourceOperator
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 
 logger = get_logger()
+settings = get_settings()
+
 try:
     import ibm_boto3
 
@@ -57,7 +60,7 @@ class Loader(SourceOperator):
     # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
     # stream, after load is complete.
     loader_limit: int = None
-    pass
+    streaming: bool = False
 
 
 class LoadHF(Loader):
@@ -68,36 +71,50 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
-    streaming: bool = True
+    streaming: bool = False
 
     def process(self):
         try:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    streaming=self.streaming,
-                    cache_dir=None if self.streaming else dir_to_be_deleted,
-                    split=self.split,
-                )
+                try:
+                    dataset = hf_load_dataset(
+                        self.path,
+                        name=self.name,
+                        data_dir=self.data_dir,
+                        data_files=self.data_files,
+                        streaming=self.streaming,
+                        cache_dir=None if self.streaming else dir_to_be_deleted,
+                        split=self.split,
+                        trust_remote_code=settings.allow_unverified_code,
+                    )
+                except ValueError as e:
+                    if "trust_remote_code" in str(e):
+                        raise ValueError(
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                        ) from e
             if self.split is not None:
                 dataset = {self.split: dataset}
         except (
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    streaming=False,
-                    keep_in_memory=True,
-                    cache_dir=dir_to_be_deleted,
-                    split=self.split,
-                )
+                try:
+                    dataset = hf_load_dataset(
+                        self.path,
+                        name=self.name,
+                        data_dir=self.data_dir,
+                        data_files=self.data_files,
+                        streaming=False,
+                        keep_in_memory=True,
+                        cache_dir=dir_to_be_deleted,
+                        split=self.split,
+                        trust_remote_code=settings.allow_unverified_code,
+                    )
+                except ValueError as e:
+                    if "trust_remote_code" in str(e):
+                        raise ValueError(
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                        ) from e
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
@@ -111,15 +128,23 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
 
-    def load_csv(self, file):
+    def stream_csv(self, file):
         for chunk in pd.read_csv(file, chunksize=self.chunksize):
             for _index, row in chunk.iterrows():
                 yield row.to_dict()
 
     def process(self):
+        if self.streaming:
+            return MultiStream(
+                {
+                    name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
+                    for name, file in self.files.items()
+                }
+            )
+
         return MultiStream(
             {
-                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                name: pd.read_csv(file).to_dict("records")
                 for name, file in self.files.items()
             }
         )
@@ -143,6 +168,9 @@ class LoadFromKaggle(Loader):
             raise MissingKaggleCredentialsError(
                 "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
             )
+
+        if self.streaming:
+            raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def prepare(self):
         super().prepare()
@@ -235,6 +263,8 @@ class LoadFromIBMCloud(Loader):
         assert (
             self.aws_secret_access_key is not None
         ), f"Please set {self.aws_secret_access_key_env} environmental variable"
+        if self.streaming:
+            raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def process(self):
         cos = ibm_boto3.resource(
@@ -268,9 +298,18 @@ class LoadFromIBMCloud(Loader):
                     if self.data_dir is not None
                     else data_file
                 )
-                self._download_from_cos(
-                    cos, self.bucket_name, object_key, local_dir + "/" + data_file
-                )
+                with tempfile.NamedTemporaryFile() as temp_file:
+                    # Download to  a temporary file in same file partition, and then do an atomic move
+                    self._download_from_cos(
+                        cos,
+                        self.bucket_name,
+                        object_key,
+                        local_dir + "/" + os.path.basename(temp_file.name),
+                    )
+                    os.rename(
+                        local_dir + "/" + os.path.basename(temp_file.name),
+                        local_dir + "/" + data_file,
+                    )
 
         if isinstance(self.data_files, list):
             dataset = hf_load_dataset(local_dir, streaming=False)

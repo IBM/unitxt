@@ -104,9 +104,6 @@ class Artifact(Dataclass):
 
     artifact_identifier: str = InternalField(default=None, required=False)
 
-    def set_artifact_identifier(self, value):
-        self.artifact_identifier = value
-
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -139,8 +136,8 @@ class Artifact(Dataclass):
 
         if cls.is_registered_type(snake_case_key):
             assert (
-                cls._class_register[snake_case_key] == artifact_class
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for '{cls._class_register[snake_case_key]}'"
+                str(cls._class_register[snake_case_key]) == str(artifact_class)
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overriden by {artifact_class}."
 
             return snake_case_key
 
@@ -199,7 +196,7 @@ class Artifact(Dataclass):
     def load(cls, path, artifact_identifier=None):
         d = load_json(path)
         new_artifact = cls.from_dict(d)
-        new_artifact.set_artifact_identifier(artifact_identifier)
+        new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
 
     def prepare(self):
@@ -210,7 +207,7 @@ class Artifact(Dataclass):
 
     @final
     def __pre_init__(self, **kwargs):
-        self._init_dict = deepcopy(kwargs)
+        self._init_dict = get_raw(kwargs)
 
     @final
     def __post_init__(self):
@@ -233,6 +230,22 @@ class Artifact(Dataclass):
     def save(self, path):
         data = self.to_dict()
         save_json(path, data)
+
+
+def get_raw(obj):
+    if isinstance(obj, Artifact):
+        return obj._to_raw_dict()
+
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
+        return type(obj)(*[get_raw(v) for v in obj])
+
+    if isinstance(obj, (list, tuple)):
+        return type(obj)([get_raw(v) for v in obj])
+
+    if isinstance(obj, dict):
+        return type(obj)({get_raw(k): get_raw(v) for k, v in obj.items()})
+
+    return deepcopy(obj)
 
 
 class ArtifactList(list, Artifact):

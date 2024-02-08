@@ -15,8 +15,8 @@ for subtask in ["debiased", "l", "m", "s", "xl", "xs"]:
                 field_to_field={"sentence": "question"},
             ),
         ],
-        task="tasks.qa.multiple_choice.original",
-        templates="templates.qa.multiple_choice.no_intro.all",
+        task="tasks.qa.multiple_choice.open",
+        templates="templates.qa.multiple_choice.open.all",
     )
     if subtask == "debiased":
         test_card(card, demos_taken_from="test")
