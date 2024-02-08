@@ -1,11 +1,10 @@
 import glob
 import importlib.util
 import os
-import unittest
 
 from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,11 +28,7 @@ def import_module_from_file(file_path):
     return module
 
 
-class TestExamples(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        register_local_catalog_for_tests()
-
+class TestExamples(UnitxtTestCase):
     def test_preprations(self):
         logger.info(glob_query)
         logger.info(f"Testing preparation files: {all_preparation_files}")

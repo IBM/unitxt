@@ -1,10 +1,10 @@
 import random as python_random
-import unittest
 
 from src.unitxt.random_utils import (
     __default_seed__,
     new_random_generator,
 )
+from tests.utils import UnitxtTestCase
 
 
 def randomize(sub_seed: str):
@@ -14,7 +14,7 @@ def randomize(sub_seed: str):
     )
 
 
-class TestRandomUtils(unittest.TestCase):
+class TestRandomUtils(UnitxtTestCase):
     def test_default_seed(self):
         a = randomize(sub_seed="42")
         b = randomize(sub_seed="43")

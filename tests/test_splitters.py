@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.splitters import DiverseLabelsSampler
+from tests.utils import UnitxtTestCase
 
 
-class TestDiverseLabelsSampler(unittest.TestCase):
+class TestDiverseLabelsSampler(UnitxtTestCase):
     """Tests for the DiverseLabelsSampler object."""
 
     @staticmethod

@@ -1,5 +1,4 @@
 import json
-import unittest
 from collections import Counter
 from typing import Any, Dict
 
@@ -55,9 +54,10 @@ from src.unitxt.test_utils.operators import (
     check_operator,
     check_operator_exception,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestOperators(unittest.TestCase):
+class TestOperators(UnitxtTestCase):
     def compare_streams(self, all, expected_all):
         self.assertEqual(len(all), len(expected_all))
         for input_dict, output_dict in zip(all, expected_all):
@@ -2383,7 +2383,7 @@ class TestOperators(unittest.TestCase):
             )
 
 
-class TestApplyMetric(unittest.TestCase):
+class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
         self,
         metrics,

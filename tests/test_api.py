@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.api import evaluate, load_dataset
+from tests.utils import UnitxtTestCase
 
 
-class TestAPI(unittest.TestCase):
+class TestAPI(UnitxtTestCase):
     def test_load_dataset(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"

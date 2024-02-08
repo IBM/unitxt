@@ -1,11 +1,10 @@
-import unittest
-
 from src.unitxt.fusion import FixedFusion, WeightedFusion
 from src.unitxt.operators import IterableSource
 from src.unitxt.test_utils.operators import check_operator
+from tests.utils import UnitxtTestCase
 
 
-class TestFusion(unittest.TestCase):
+class TestFusion(UnitxtTestCase):
     def test_unbounded_fixed_fusion(self):
         operator = FixedFusion(
             origins=[

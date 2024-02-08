@@ -1,13 +1,13 @@
 import copy
 import time
-import unittest
 
 from src.unitxt.operators import Apply
 from src.unitxt.stream import Stream
 from src.unitxt.test_utils.operators import apply_operator
+from tests.utils import UnitxtTestCase
 
 
-class TestStreamCaching(unittest.TestCase):
+class TestStreamCaching(UnitxtTestCase):
     def test_non_caching_stream(self):
         def generator():
             yield {"x": str(time.time())}

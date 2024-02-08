@@ -4,16 +4,12 @@ from datasets import load_dataset
 
 from src import unitxt
 from src.unitxt.logging_utils import get_logger
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 
 
-class TestExamples(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        register_local_catalog_for_tests()
-
+class TestExamples(UnitxtTestCase):
     def test_dataset_is_deterministic_after_loading_other_dataset(self):
         logger.info("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
