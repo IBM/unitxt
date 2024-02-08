@@ -1,5 +1,9 @@
 import os
 
+from .logging_utils import get_logger
+
+logger = get_logger()
+
 
 class Settings:
     _instance = None
@@ -13,7 +17,10 @@ class Settings:
     def __setattr__(self, key, value):
         if key.endswith("_key") or key in {"_instance", "_settings"}:
             raise AttributeError(f"Modifying '{key}' is not allowed.")
-
+        if key in self._settings:
+            logger.info(
+                f"unitxt.settings.{key} changed: {self._settings[key]} -> {value}"
+            )
         self._settings[key] = value
 
     def __getattr__(self, key):
@@ -43,6 +50,7 @@ class Settings:
 settings = Settings()
 settings.allow_unverified_code = False
 settings.use_only_local_catalogs = False
+settings.global_loader_limit = None
 
 
 def get_settings():

@@ -100,18 +100,15 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
         self.train_refiner.apply_to_streams = ["train"]
-        if self.max_train_instances is not None:
-            self.steps.append(self.train_refiner)
+        self.steps.append(self.train_refiner)
 
         self.validation_refiner.max_instances = self.max_validation_instances
         self.validation_refiner.apply_to_streams = ["validation"]
-        if self.max_validation_instances is not None:
-            self.steps.append(self.validation_refiner)
+        self.steps.append(self.validation_refiner)
 
         self.test_refiner.max_instances = self.max_test_instances
         self.test_refiner.apply_to_streams = ["test"]
-        if self.max_test_instances is not None:
-            self.steps.append(self.test_refiner)
+        self.steps.append(self.test_refiner)
 
     def prepare(self):
         self.steps = [
