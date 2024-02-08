@@ -9,7 +9,6 @@ from service.metrics.client_config import (
 
 from .artifact import verbosed_fetch_artifact
 from .operator import SequentialOperator
-from .operators import ApplyMetric
 from .stream import MultiStream
 
 
@@ -23,7 +22,7 @@ def evaluate(dataset: pd.DataFrame, metric_names: List[str]):
         )
         if metric_name in remote_metrics:
             metric = verbosed_fetch_artifact(metric_name)
-            metric = ApplyMetric.as_remote_metric(metric)
+            metric = as_remote_metric(metric)
             metric_step = metric
         else:
             # The SequentialOperator below will handle the load of the metric fromm its name
