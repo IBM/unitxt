@@ -1286,10 +1286,12 @@ class SentenceBert(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import torch
         from sentence_transformers import SentenceTransformer
         from sentence_transformers import util as sbert_util
 
-        self.model = SentenceTransformer(self.model_name)
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.model = SentenceTransformer(self.model_name, device=self.device)
         self.util = sbert_util
 
     def compute(
@@ -1311,9 +1313,9 @@ class SentenceBert(BulkInstanceMetric):
             count += len(ref_group)
 
         # compute s-bert embeddings
-        preds_emb = self.model.encode(predictions)
+        preds_emb = self.model.encode(predictions, device=self.device)
         refs_emb = self.model.encode(
-            [ref for ref_group in references for ref in ref_group]
+            [ref for ref_group in references for ref in ref_group], device=self.device
         )
 
         # for each candidate, pick the reference with the highest score
