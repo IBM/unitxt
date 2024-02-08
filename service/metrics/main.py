@@ -60,26 +60,26 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
 
     t0 = time.perf_counter()
     try:
-        logging.debug(f"Request from [{token['sub']}]")
+        logging.info(f"Request from [{token['sub']}]")
         logging.info(f"Computing metric '{metric}'.")
         logging.info(
             f"MetricRequest contains {len(request.instance_inputs)} input instances"
         )
 
-        # obtain the metric to compute
-        metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric)
-        metric_artifact: MultiStreamOperator = cast(
-            MultiStreamOperator, metric_artifact
-        )
-
-        # prepare the input stream
-        multi_stream: MultiStream = MultiStream.from_iterables(
-            {"test": request.model_dump()["instance_inputs"]}, copying=True
-        )
-
         start_time = datetime.datetime.now()
         with compute_lock:
             start_infer_time = datetime.datetime.now()
+            # obtain the metric to compute
+            metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric)
+            metric_artifact: MultiStreamOperator = cast(
+                MultiStreamOperator, metric_artifact
+            )
+
+            # prepare the input stream
+            multi_stream: MultiStream = MultiStream.from_iterables(
+                {"test": request.model_dump()["instance_inputs"]}, copying=True
+            )
+
             logging.info("Starting computation .. ")
             # apply the metric and obtain the results
             metric_results = list(metric_artifact(multi_stream)["test"])
@@ -99,7 +99,7 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
         return MetricResponse.model_validate(metric_response)
     finally:
         t1 = time.perf_counter()
-        logging.info(f"Request handled in [{t1 - t0:.2f}] secs.")
+        logging.info(f"Request for metric '{metric}' handled in [{t1 - t0:.2f}] secs.")
 
 
 # wrapper for HTTP exceptions that we throw
