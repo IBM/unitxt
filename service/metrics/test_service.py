@@ -1,5 +1,6 @@
-from unitxt.metrics import RemoteMetric
 from unitxt.test_utils.metrics import test_metric
+
+from src.unitxt.metrics import RemoteMetric
 
 host = "127.0.0.1:8000"
 endpoint = "http" + "://" + f"{host}/compute"
