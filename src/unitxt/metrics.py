@@ -1813,7 +1813,7 @@ class KPA(CustomF1):
 
 
 class RemoteMetric(SingleStreamOperator, Metric):
-    main_score: str = None
+    main_score: str
     endpoint: str
     metric_name: str
     api_key: str = None
