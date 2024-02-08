@@ -7,11 +7,12 @@ from typing import cast
 
 import torch
 import uvicorn
-from api import MetricRequest, MetricResponse
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
 from tokens import verify_token
+
+from src.unitxt.metric_utils import MetricRequest, MetricResponse
 
 """
 This module defines an http server that wraps unitxt metrics.

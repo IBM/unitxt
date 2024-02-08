@@ -12,11 +12,10 @@ import numpy
 import numpy as np
 from scipy.stats import bootstrap
 
-from service.metrics.api import InstanceInput, MetricRequest, MetricResponse
-
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
 from .logging_utils import get_logger
+from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
