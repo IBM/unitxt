@@ -148,6 +148,10 @@ def print_gpus_status():
         logging.info("There are NO GPUs available.")
 
 
-if __name__ == "__main__":
+def start_metrics_http_service():
     print_gpus_status()
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False, log_config=None)
+
+
+if __name__ == "__main__":
+    start_metrics_http_service()
