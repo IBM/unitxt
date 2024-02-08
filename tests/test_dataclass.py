@@ -1,4 +1,3 @@
-import unittest
 from dataclasses import field
 
 from src.unitxt.dataclass import (
@@ -14,9 +13,10 @@ from src.unitxt.dataclass import (
     fields,
     fields_names,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestDataclass(unittest.TestCase):
+class TestDataclass(UnitxtTestCase):
     def test_dataclass(self):
         class GrandParent(Dataclass):
             a: int

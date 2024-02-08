@@ -3,9 +3,10 @@ import unittest
 
 from src.unitxt.stream import MultiStream, Stream
 from src.unitxt.test_utils.storage import get_directory_size
+from tests.utils import UnitxtTestCase
 
 
-class TestHfCache(unittest.TestCase):
+class TestHfCache(UnitxtTestCase):
     def test_caching_stream(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.assertEqual(get_directory_size(tmp_dir), 0)

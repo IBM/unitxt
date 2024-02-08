@@ -1,18 +1,12 @@
-import unittest
-
 from datasets import load_dataset
 from evaluate import load
 
 from src import unitxt
 from src.unitxt.hf_utils import get_missing_imports
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+from tests.utils import UnitxtTestCase
 
 
-class HFTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        register_local_catalog_for_tests()
-
+class HFTests(UnitxtTestCase):
     def test_dataset_imports(self):
         missing_imports = get_missing_imports(
             unitxt.dataset_file, exclude=["dataset", "__init__", "api"]

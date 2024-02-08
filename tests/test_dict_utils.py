@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.dict_utils import dict_get, dict_set
+from tests.utils import UnitxtTestCase
 
 
-class TestDictUtils(unittest.TestCase):
+class TestDictUtils(UnitxtTestCase):
     def test_simple_get(self):
         dic = {"a": 1, "b": 2}
         self.assertEqual(dict_get(dic, "a"), 1)

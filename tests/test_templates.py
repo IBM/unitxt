@@ -1,4 +1,3 @@
-import unittest
 from typing import Dict, List, Tuple
 
 from src.unitxt.templates import (
@@ -13,17 +12,13 @@ from src.unitxt.templates import (
     TemplatesDict,
     YesNoTemplate,
 )
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestTemplates(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        register_local_catalog_for_tests()
-
+class TestTemplates(UnitxtTestCase):
     def test_span_labeling_template_escaping(self):
         template = SpanLabelingTemplate(input_format="{text}")
 

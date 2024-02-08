@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-import unittest
 from unittest.mock import patch
 
 import ibm_boto3
@@ -9,6 +8,7 @@ import pandas as pd
 
 from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
 from src.unitxt.logging_utils import get_logger
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 
@@ -45,7 +45,7 @@ class DummyS3:
         return DummyBucket()
 
 
-class TestLoaders(unittest.TestCase):
+class TestLoaders(UnitxtTestCase):
     def test_load_csv(self):
         # Using a context for the temporary directory
         with tempfile.TemporaryDirectory() as tmp_dir:

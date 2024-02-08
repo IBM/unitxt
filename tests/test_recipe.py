@@ -1,7 +1,6 @@
 import collections
 import copy
 import re
-import unittest
 
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
@@ -10,9 +9,10 @@ from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
+from tests.utils import UnitxtTestCase
 
 
-class TestRecipes(unittest.TestCase):
+class TestRecipes(UnitxtTestCase):
     def test_standard_recipe(self):
         recipe = StandardRecipe(
             card="cards.wnli",

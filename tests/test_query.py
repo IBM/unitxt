@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.dataset_utils import parse
+from tests.utils import UnitxtTestCase
 
 
-class TestQuery(unittest.TestCase):
+class TestQuery(UnitxtTestCase):
     def test_query_works(self):
         query = (
             "card=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"

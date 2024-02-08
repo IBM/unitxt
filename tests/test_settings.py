@@ -1,10 +1,10 @@
 import os
-import unittest
 
 from src.unitxt.settings_utils import Settings, get_settings
+from tests.utils import UnitxtTestCase
 
 
-class TestSettings(unittest.TestCase):
+class TestSettings(UnitxtTestCase):
     def test_singleton(self):
         settings1 = Settings()
         settings2 = Settings()

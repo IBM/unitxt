@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.collections import DictCollection, ListCollection
+from tests.utils import UnitxtTestCase
 
 
-class TestCollections(unittest.TestCase):
+class TestCollections(UnitxtTestCase):
     def test_dict_collection(self):
         c = DictCollection({0: 1})
         self.assertEqual(c[0], 1)

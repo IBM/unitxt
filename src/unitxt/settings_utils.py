@@ -42,6 +42,7 @@ class Settings:
 
 settings = Settings()
 settings.allow_unverified_code = False
+settings.use_only_local_catalogs = False
 
 
 def get_settings():
