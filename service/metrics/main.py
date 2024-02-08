@@ -68,6 +68,7 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
 
         start_time = datetime.datetime.now()
         with compute_lock:
+            logging.info("Acquired compute_lock, starting computation .. ")
             start_infer_time = datetime.datetime.now()
             # obtain the metric to compute
             metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric)
@@ -80,13 +81,12 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
                 {"test": request.model_dump()["instance_inputs"]}, copying=True
             )
 
-            logging.info("Starting computation .. ")
             # apply the metric and obtain the results
             metric_results = list(metric_artifact(multi_stream)["test"])
         infer_time = datetime.datetime.now() - start_infer_time
         wait_time = start_infer_time - start_time
         logging.info(
-            f"Computed {len(metric_results)} metric results, "
+            f"Computed {len(metric_results)} metric '{metric}' results, "
             f"took: {infer_time!s}, waited: {wait_time!s}')"
         )
 
