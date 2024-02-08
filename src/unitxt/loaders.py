@@ -68,9 +68,18 @@ class Loader(SourceOperator):
             return int(settings.global_loader_limit)
         return self.loader_limit
 
+    def get_limiter(self):
+        if settings.global_loader_limit is not None and self.loader_limit is not None:
+            if int(settings.global_loader_limit) > self.loader_limit:
+                return f"{self.__class__.__name__}.loader_limit"
+            return "unitxt.settings.global_loader_limit"
+        if settings.global_loader_limit is not None:
+            return "unitxt.settings.global_loader_limit"
+        return f"{self.__class__.__name__}.loader_limit"
+
     def log_limited_loading(self):
         logger.info(
-            f"\nLoading limited to {self.get_limit()} instances. It was either set by {self.__class__.__name__}.loader_limit or unitxt.settings.global_loader_limit."
+            f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
         )
 
 
