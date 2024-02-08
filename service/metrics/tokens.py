@@ -7,8 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from starlette import status
 
-# to generate a master key run:
-# openssl rand -hex 32
+# This module handles authorization tokens for a service.
+# To generate a master token key, run "openssl rand -hex 32".
+# Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY.
+# To create tokens that have access for the master key, use create_token(..), as shown in main().
+
 if "UNITXT_METRICS_MASTER_KEY" in os.environ:
     MASTER_KEY = os.environ["UNITXT_METRICS_MASTER_KEY"]
 else:
@@ -16,9 +19,6 @@ else:
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 360
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 
 log = logging.getLogger("tokens")
 
@@ -56,6 +56,12 @@ def verify_jwt_token(jwt_token):
         raise InvalidTokenError from e
 
 
+# This object makes sure that the incoming HTTP request has a header with
+# an authorization token (e.g. passed with 'curl -H "Authorization: Bearer {token}"').
+# It does NOT check that the token has a valid value (that is done by verify_token(..)).
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
 async def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         return verify_jwt_token(token)
@@ -69,9 +75,8 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
 
 
 def main():
-    # for name in ["unitxt-metrics-service-tester", "rag-eval-unitest"]:
-    #     print(f"{name}: {create_token(name)}")
-    pass
+    name = "unitxt-metrics-service-tester"
+    log.info(f"{name}: {create_token(name)}")
 
 
 if __name__ == "__main__":
