@@ -10,3 +10,4 @@ dpath
 jiwer
 editdistance
 ipadic
+pydantic==2.6.0
