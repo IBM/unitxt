@@ -1333,9 +1333,13 @@ class Reward(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import torch
         from transformers import pipeline
 
-        self.pipe = pipeline("text-classification", model=self.model_name)
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.pipe = pipeline(
+            "text-classification", model=self.model_name, device=device
+        )
 
     def compute(
         self,
