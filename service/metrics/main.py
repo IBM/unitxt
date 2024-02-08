@@ -13,6 +13,12 @@ from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
 from tokens import verify_token
 
+"""
+This module defines an http server that wraps unitxt metrics.
+It accepts requests detailing which metric to run, and what is the data to run on.
+The requests are handled by running them one by one locally, potentially on a GPU.
+"""
+
 # init the FastAPI app object
 app = FastAPI(version="0.0.1", title="Unitxt Metrics Service")
 
@@ -52,7 +58,8 @@ compute_lock = threading.Lock()
 # for computing a metric
 @app.post("/compute/{metric}", response_model=MetricResponse)
 def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_token)):
-    # imports are here, so the service could start even if unitxt is not installed
+    # imports are here, so the service could start even if unitxt is not installed.
+    # This is useful for testing, it enabled running health checks and sanity checks, without unitxt.
     from unitxt.artifact import Artifact
     from unitxt.operator import MultiStreamOperator
     from unitxt.operators import ArtifactFetcherMixin
@@ -67,6 +74,8 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
         )
 
         start_time = datetime.datetime.now()
+        # Only allow single use of the GPU, other requests wait on this lock, till
+        # current computation is done.
         with compute_lock:
             logging.info("Acquired compute_lock, starting computation .. ")
             start_infer_time = datetime.datetime.now()
@@ -83,6 +92,7 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
 
             # apply the metric and obtain the results
             metric_results = list(metric_artifact(multi_stream)["test"])
+
         infer_time = datetime.datetime.now() - start_infer_time
         wait_time = start_infer_time - start_time
         logging.info(
