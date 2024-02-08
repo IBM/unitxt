@@ -3,3 +3,4 @@ transformers
 sentence_transformers
 ibm-cos-sdk
 opendatasets
+httpretty~=1.1.4
