@@ -56,7 +56,7 @@ class TestRecipes(UnitxtTestCase):
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
             instruction="instructions.models.llama",
-            template="templates.qa.multiple_choice.original.lm_eval_harness",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
