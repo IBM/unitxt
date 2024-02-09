@@ -19,14 +19,11 @@ class TaskCard(Artifact):
 
         task: specifies the fields (of the already (pre)processed instance) making the inputs, the fields making the outputs, and the metrics to be used for evaluating the model output.
 
-        templates: format strings to be applied on the input fields (specified by the task) and the output fields. The templates also carry with them the list of postprocessing steps, to be applied to the model output.
-
-        instructions: as presented to the executor of the task.
+        templates: format strings to be applied on the input fields (specified by the task) and the output fields. The template also carries the instructions and the list of postprocessing steps, to be applied to the model output.
     """
 
     loader: Loader
     preprocess_steps: List[StreamingOperator] = None
     task: FormTask
     templates: Collection = None
-    instructions: Collection = None
     sampler: Sampler = OptionalField(default_factory=RandomSampler)

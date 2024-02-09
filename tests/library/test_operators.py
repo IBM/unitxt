@@ -2491,6 +2491,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "source": 'This is my sentence: "was so not good"',
                     "target": "negative",
                     "references": ["negative"],
+                    "instruction": "",
+                    "target_prefix": "",
                 },
                 {
                     "inputs": {"text": "was so good"},
@@ -2498,6 +2500,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
+                    "instruction": "",
+                    "target_prefix": "",
                 },
             ]
         }
@@ -2533,6 +2537,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "source": "This is my sentence: who was he?",
                     "target": "Dan",
                     "references": ["Dan", "Yossi"],
+                    "instruction": "",
+                    "target_prefix": "",
                 },
                 {
                     "inputs": {"text": "who was she?"},
@@ -2540,6 +2546,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "source": "This is my sentence: who was she?",
                     "target": "Shira",
                     "references": ["Shira", "Yael"],
+                    "instruction": "",
+                    "target_prefix": "",
                 },
             ]
         }
@@ -2551,6 +2559,7 @@ class TestApplyMetric(UnitxtTestCase):
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
+            "inputs": {},
         }
         demos_instances = [
             {"source": "1+2", "target": "3"},
@@ -2589,6 +2598,7 @@ Agent:"""
         instance = {
             "source": "1+1",
             "target": "2",
+            "inputs": {},
             "instruction": "solve the math exercises",
             "demos": demo_instances,
         }
@@ -2617,6 +2627,7 @@ Agent:"""
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
+            "inputs": {},
         }
 
         target = """Instruction:solve the math exercises
@@ -2634,7 +2645,7 @@ Agent:"""
         self.assertEqual(instance["source"], target)
 
     def test_model_input_formater_without_demonstrations_or_instruction(self):
-        instance = {"source": "1+1", "target": "2"}
+        instance = {"source": "1+1", "target": "2", "inputs": {}}
         target = """User:1+1
 Agent:"""
 
@@ -2647,7 +2658,7 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
 
     def test_system_format_without_demonstrations_and_empty_instruction(self):
-        instance = {"source": "1+1", "target": "2", "instruction": ""}
+        instance = {"source": "1+1", "target": "2", "instruction": "", "inputs": {}}
 
         target = """User:1+1
 Agent:"""

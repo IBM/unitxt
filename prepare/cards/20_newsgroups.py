@@ -8,6 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.operators import FilterByCondition
+from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "20_newsgroups"
@@ -36,7 +37,7 @@ map_labels = {
 }
 
 card = TaskCard(
-    loader=LoadHF(path=f"SetFit/{dataset_name}"),
+    loader=LoadHF(path=f"SetFit/{dataset_name}", streaming=True),
     preprocess_steps=[
         FilterByCondition(values={"text": ""}, condition="ne"),
         SplitRandomMix(
@@ -47,13 +48,25 @@ card = TaskCard(
         AddFields(
             fields={
                 "classes": list(map_labels.values()),
-                "text_type": "sentence",
+                "text_type": "text",
                 "type_of_class": "topic",
             }
         ),
     ],
     task="tasks.classification.multi_class",
-    templates="templates.classification.multi_class.all",
+    templates=[
+        InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
+            input_format="Text: {text}",
+            output_format="{label}",
+            target_prefix="Topic: ",
+            instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.\n",
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+        )
+    ],
 )
+
 test_card(card, debug=False)
 add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)

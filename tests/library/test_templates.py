@@ -57,6 +57,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG",
                 "references": [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG"],
+                "instruction": "",
+                "target_prefix": "",
             },
             {
                 "inputs": {
@@ -71,6 +73,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": "None",
                 "references": ["None"],
+                "instruction": "",
+                "target_prefix": "",
             },
         ]
 
@@ -97,6 +101,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "hello world",
                 "target": "cat, dog",
                 "references": ["cat, dog"],
+                "instruction": "",
+                "target_prefix": "",
             },
             {
                 "inputs": {"text": "hello world"},
@@ -104,6 +110,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "hello world",
                 "target": "man, woman, dog",
                 "references": ["man, woman, dog"],
+                "instruction": "",
+                "target_prefix": "",
             },
         ]
 
@@ -130,6 +138,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my sentence: who was he?",
                 "target": target,
                 "references": ["Dan", "Yossi"],
+                "instruction": "",
+                "target_prefix": "",
             }
         ]
 
@@ -168,46 +178,78 @@ class TestTemplates(UnitxtTestCase):
             expected_exception_message="MultiReferenceTemplate requires references field 'answer' to be List[str]. Got answer<list>: [0, 'dkd']",
         )
 
-    def test_input_output_template(self):
+    def test_input_output_template_and_standard_template(self):
         template = InputOutputTemplate(
-            input_format="This is my text:'{text}'", output_format="{label}"
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
         )
 
         inputs = [
-            {"inputs": {"text": "hello world"}, "outputs": {"label": "positive"}},
             {
-                "inputs": {"text": ["hello world\n", "hell"]},
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
                 "outputs": {"label": "positive"},
             },
             {
-                "inputs": {"text": ["hello world\n", "hell"]},
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
                 "outputs": {"label": ["positive", "1"]},
             },
         ]
 
         targets = [
             {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
                 "source": "This is my text:'hello world'",
                 "target": "positive",
                 "references": ["positive"],
+                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "target_prefix": "Sentiment is: ",
             },
             {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive",
                 "references": ["positive"],
+                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "target_prefix": "Sentiment is: ",
             },
             {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive, 1",
                 "references": ["positive, 1"],
+                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "target_prefix": "Sentiment is: ",
             },
         ]
 
-        targets = [{**target, **input} for target, input in zip(targets, inputs)]
-
         check_operator(template, inputs, targets, tester=self)
 
-        # if "source" and "target" in instance - instance is not modified
+        # if "source" and "target" and "instruction_format" and "target_prefix" in instance - instance is not modified
+        template = InputOutputTemplate(
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+        )
         check_operator(template, targets, targets, tester=self)
 
         err_input_template = InputOutputTemplate(
@@ -216,7 +258,7 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(KeyError) as ke:
             err_input_template.process(inputs[0])
         self.assertEqual(
-            "\"Available inputs are ['text'] but input format requires a different ones: 'This is my text:'{no_text}''\"",
+            "\"Available inputs are ['labels', 'text'] but input format requires a different ones: 'This is my text:'{no_text}''\"",
             str(ke.exception),
         )
 
@@ -420,6 +462,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": r"John\,\: Doe, New York",
                 "references": [r"John\,\: Doe, New York"],
+                "instruction": "",
+                "target_prefix": "",
             },
             {
                 "inputs": {
@@ -434,6 +478,8 @@ class TestTemplates(UnitxtTestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": "None",
                 "references": ["None"],
+                "instruction": "",
+                "target_prefix": "",
             },
         ]
 
@@ -479,6 +525,8 @@ class TestTemplates(UnitxtTestCase):
                 "references": [
                     '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}'
                 ],
+                "instruction": "",
+                "target_prefix": "",
             },
             {
                 "inputs": {
@@ -493,65 +541,81 @@ class TestTemplates(UnitxtTestCase):
                 "source": "John,: Doe is from New York and works at Goo:gle.",
                 "target": "None",
                 "references": ["None"],
+                "instruction": "",
+                "target_prefix": "",
             },
         ]
 
         check_operator(template, inputs, targets, tester=self)
 
     def test_multiple_choice_template(self):
-        template = MultipleChoiceTemplate(
-            input_format="Text: {text}, Choices: {choices}.",
-        )
+        enumerators = ["capitals", "lowercase", "numbers", "roman"]
+        firsts = ["A", "a", "1", "I"]
+        seconds = ["B", "b", "2", "II"]
+        for enumerator, first, second in zip(enumerators, firsts, seconds):
+            template = MultipleChoiceTemplate(
+                input_format="Text: {text}, Choices: {choices}.", enumerator=enumerator
+            )
 
-        choices = ["True", "False"]
-        inputs = [
-            {
-                "inputs": {"choices": choices, "text": "example A"},
-                "outputs": {"choices": choices, "label": 0},
-            },
-            {
-                "inputs": {"choices": choices, "text": "example A"},
-                "outputs": {"choices": choices, "label": "False"},
-            },
-            {
-                "inputs": {"choices": ["True", "small"], "text": "example A"},
-                "outputs": {"choices": ["True", "small"], "label": "small"},
-            },
-        ]
-
-        targets = [
-            {
-                "inputs": {"choices": choices, "text": "example A"},
-                "outputs": {"choices": choices, "label": 0, "options": ["A", "B"]},
-                "source": "Text: example A, Choices: A. True, B. False.",
-                "target": "A",
-                "references": ["A"],
-            },
-            {
-                "inputs": {"choices": choices, "text": "example A"},
-                "outputs": {
-                    "choices": choices,
-                    "label": "False",
-                    "options": ["A", "B"],
+            choices = ["True", "False"]
+            inputs = [
+                {
+                    "inputs": {"choices": choices, "text": "example A"},
+                    "outputs": {"choices": choices, "label": 0},
                 },
-                "source": "Text: example A, Choices: A. True, B. False.",
-                "target": "B",
-                "references": ["B"],
-            },
-            {
-                "inputs": {"choices": ["True", "small"], "text": "example A"},
-                "outputs": {
-                    "choices": ["True", "small"],
-                    "label": "small",
-                    "options": ["A", "B"],
+                {
+                    "inputs": {"choices": choices, "text": "example A"},
+                    "outputs": {"choices": choices, "label": "False"},
                 },
-                "source": "Text: example A, Choices: A. True, B. small.",
-                "target": "B",
-                "references": ["B"],
-            },
-        ]
+                {
+                    "inputs": {"choices": ["True", "small"], "text": "example A"},
+                    "outputs": {"choices": ["True", "small"], "label": "small"},
+                },
+            ]
 
-        check_operator(template, inputs, targets, tester=self)
+            targets = [
+                {
+                    "inputs": {"choices": choices, "text": "example A"},
+                    "outputs": {
+                        "choices": choices,
+                        "label": 0,
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+                {
+                    "inputs": {"choices": choices, "text": "example A"},
+                    "outputs": {
+                        "choices": choices,
+                        "label": "False",
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{second}",
+                    "references": [f"{second}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+                {
+                    "inputs": {"choices": ["True", "small"], "text": "example A"},
+                    "outputs": {
+                        "choices": ["True", "small"],
+                        "label": "small",
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. True, {second}. small.",
+                    "target": f"{second}",
+                    "references": [f"{second}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+            ]
+
+            check_operator(template, inputs, targets, tester=self)
 
         # check error and more options, to code cover additional lines
         template = MultipleChoiceTemplate(
@@ -602,6 +666,8 @@ class TestTemplates(UnitxtTestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
+            "instruction": "",
+            "target_prefix": "",
         }
         self.assertDictEqual(result, target)
 
@@ -621,5 +687,7 @@ class TestTemplates(UnitxtTestCase):
             "source": "This is my sentence: who was he?",
             "target": "Dan",
             "references": ["Dan", "Yossi"],
+            "instruction": "",
+            "target_prefix": "",
         }
         self.assertDictEqual(result, target)

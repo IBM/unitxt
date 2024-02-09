@@ -5,7 +5,6 @@ import re
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.formats import SystemFormat
-from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
@@ -16,10 +15,10 @@ class TestRecipes(UnitxtTestCase):
     def test_standard_recipe(self):
         recipe = StandardRecipe(
             card="cards.wnli",
-            instruction=TextualInstruction(text="classify"),
             template=InputOutputTemplate(
                 input_format="{premise}",
                 output_format="{label}",
+                instruction="classify",
             ),
             format=SystemFormat(
                 demo_format="User:{source}\nAgent:{target}\n\n",
@@ -53,10 +52,14 @@ class TestRecipes(UnitxtTestCase):
             break
 
     def test_standard_recipe_with_catalog(self):
+        template, _ = fetch_artifact(
+            "templates.qa.multiple_choice.with_topic.lm_eval_harness"
+        )
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
-            instruction="instructions.models.llama",
-            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            template=template,
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
@@ -69,10 +72,13 @@ class TestRecipes(UnitxtTestCase):
             break
 
     def test_standard_recipe_with_indexes_with_catalog(self):
+        card, _ = fetch_artifact("cards.wnli")
+        template = card.templates[0]
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template_card_index=0,
+            template=template,
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
@@ -85,10 +91,12 @@ class TestRecipes(UnitxtTestCase):
             break
 
     def test_empty_template(self):
+        template, _ = fetch_artifact("templates.empty")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.empty",
+            template=template,
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
@@ -101,10 +109,12 @@ class TestRecipes(UnitxtTestCase):
             break
 
     def test_key_val_template(self):
+        template, _ = fetch_artifact("templates.key_val")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
+            template=template,
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
@@ -117,10 +127,12 @@ class TestRecipes(UnitxtTestCase):
             break
 
     def test_standard_recipe_with_balancer(self):
+        template, _ = fetch_artifact("templates.key_val")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
+            template=template,
             format="formats.user_agent",
             train_refiner="operators.balancers.classification.by_label",
             demos_pool_size=100,
@@ -135,10 +147,12 @@ class TestRecipes(UnitxtTestCase):
         self.assertEqual(counts["entailment"], counts["not entailment"])
 
     def test_standard_recipe_with_loader_limit(self):
+        template, _ = fetch_artifact("templates.key_val")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
+            template=template,
             format="formats.user_agent",
             demos_pool_size=5,
             num_demos=1,
@@ -283,10 +297,12 @@ class TestRecipes(UnitxtTestCase):
         self.assertTrue("is not in card" in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
+        template, _ = fetch_artifact("templates.key_val")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
+            template=template,
             format="formats.user_agent",
             train_refiner="operators.balancers.classification.by_label",
             demos_pool_size=100,
@@ -354,10 +370,12 @@ class TestRecipes(UnitxtTestCase):
         ), f"{normalized_augmented_source} is not equal to f{normalized_input_source}"
 
     def test_standard_recipe_with_train_size_limit(self):
+        template, _ = fetch_artifact("templates.key_val")
+        instruction, _ = fetch_artifact("instructions.models.llama")
+        template.instruction = instruction.get_instruction()
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
-            instruction="instructions.models.llama",
-            template="templates.key_val",
+            template=template,
             format="formats.user_agent",
             demos_pool_size=3,
             max_train_instances=10,
@@ -375,7 +393,7 @@ class TestRecipes(UnitxtTestCase):
 
         d = load_dataset(
             dataset_file,
-            "type=standard_recipe_with_indexes,card=cards.wnli,template_card_index=0,demos_pool_size=5,num_demos=5,instruction=instructions.models.llama",
+            "type=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.nli.simple_with_instruction_model_llama,demos_pool_size=5,num_demos=5",
             streaming=True,
         )
 
