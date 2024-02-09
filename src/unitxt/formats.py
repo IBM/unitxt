@@ -22,6 +22,7 @@ class SystemFormat(Format):
     2. A field named "instruction" that contains a (non-None) string.
     3. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
+    4. A field named "target_prefx" that contains a string to prefix the target in both each demo, and to end the whole generated prompt
 
     SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
@@ -67,10 +68,8 @@ class SystemFormat(Format):
     """
 
     demos_field: str = "demos"
-    demo_format: str = (
-        "{source}\n{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
-    )
-    model_input_format: str = "{instruction}{demos}{source}\n"
+    demo_format: str = "{source}\n{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
+    model_input_format: str = "{instruction}{demos}{source}\n{target_prefix}"
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -95,7 +94,14 @@ class SystemFormat(Format):
         instruction = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="instruction"
         )
-        # pop "instruction" from instance
+        target_prefix = self._retrieve_field_and_assert_not_none(
+            instance=instance, field_name="target_prefix"
+        )
+
+        # pop "instruction" and "target_prefix" from instance
+        if "target_prefix" in instance:
+            instance.pop("target_prefix")
+
         if "instruction" in instance:
             instance.pop("instruction")
 
@@ -111,10 +117,15 @@ class SystemFormat(Format):
 
         demos_string = ""
         for demo_instance in demo_instances:
-            demo_str = self.demo_format.format(**demo_instance)
+            demo_str = self.demo_format.format(
+                target_prefix=target_prefix,
+                source=demo_instance["source"],
+                target=demo_instance["target"],
+            )
             demos_string += demo_str
 
         output = self.model_input_format.format(
+            target_prefix=target_prefix,
             instruction=instruction,
             demos=demos_string,
             source=source,
