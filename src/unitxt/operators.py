@@ -33,7 +33,6 @@ General Operaotrs List:
 ------------------------
 """
 import collections
-import importlib
 import operator
 import os
 import uuid
@@ -42,7 +41,6 @@ from abc import abstractmethod
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
-from importlib import import_module
 from itertools import zip_longest
 from random import Random
 from typing import (
@@ -65,6 +63,7 @@ from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
     MultiStreamOperator,
+    PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
@@ -783,7 +782,7 @@ class Apply(StreamInstanceOperator):
         elif module_name in globals():
             obj = globals()[module_name]
         else:
-            obj = importlib.import_module(module_name)
+            obj = __import__(module_name)
         for part in function_name.split("."):
             obj = getattr(obj, part)
         return obj
@@ -1231,10 +1230,13 @@ class ComputeExpressionMixin(Artifact):
     expression: str
     imports_list: List[str] = OptionalField(default_factory=list)
 
+    def verify(self):
+        PackageRequirementsMixin.check_missing_requirements(self, self.imports_list)
+
     def prepare(self):
         # can not do the imports here, because object does not pickle with imports
         self.globals = {
-            module_name: import_module(module_name) for module_name in self.imports_list
+            module_name: __import__(module_name) for module_name in self.imports_list
         }
 
     def compute_expression(self, instance: dict) -> Any:
