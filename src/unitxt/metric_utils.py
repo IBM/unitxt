@@ -151,22 +151,28 @@ def _compute(
 
 """
 The API of a metric service:
-- A single input to the service is a MetricRequest.
-- The response is returned in a MetricResponse object.
+- MetricRequest: A single input request to the metrics service.
+- MetricResponse: A response returned from a metrics service.
 """
 
 
 class InstanceInput(BaseModel):
+    """A single instance inputted to a metric service."""
+
     prediction: Any
     references: List[Any]
     additional_inputs: Optional[Dict] = None
 
 
 class MetricRequest(BaseModel):
+    """A request to a metrics service, includes a list of input instances."""
+
     instance_inputs: List[InstanceInput]
 
 
 class MetricResponse(BaseModel):
+    """A response produced by a metrics service, includes the computed scores."""
+
     # A list of instance score dictionaries. Each dictionary contains the
     # score names and score values for a single instance.
     instances_scores: List[Dict[str, Any]]
@@ -177,7 +183,7 @@ class MetricResponse(BaseModel):
 
 
 """
-Functionality for loading the remote metrics from local environment variables
+Functionality for loading the remote metrics configuration from local environment variables.
 """
 
 # A list of metrics to be executed remotely.
@@ -196,7 +202,7 @@ def get_env_variable(variable_name: str, default_value: str) -> str:
     return os.environ[variable_name]
 
 
-def get_remote_metrics_names():
+def get_remote_metrics_names() -> List[str]:
     """Load the remote metrics names from an environment variable.
 
     Returns:
@@ -219,7 +225,7 @@ def get_remote_metrics_names():
     return remote_metrics
 
 
-def get_remote_metrics_endpoint():
+def get_remote_metrics_endpoint() -> str:
     """Load the remote metrics endpoint from an environment variable.
 
     Returns:

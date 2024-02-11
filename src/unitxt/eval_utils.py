@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 
 from .artifact import verbosed_fetch_artifact
+from .metric import Metric
 from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
@@ -22,8 +23,7 @@ def _(dataset: list, metric_names: List[str]):
         multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         if metric_name in remote_metrics:
             metric = verbosed_fetch_artifact(metric_name)
-            metric = as_remote_metric(metric)
-            metric_step = metric
+            metric_step = as_remote_metric(metric)
         else:
             # The SequentialOperator below will handle the load of the metric fromm its name
             metric_step = metric_name
@@ -39,7 +39,7 @@ def _(dataset: pd.DataFrame, metric_names: List[str]):
     return pd.DataFrame(evaluate(dataset.to_dict("records"), metric_names=metric_names))
 
 
-def as_remote_metric(metric):
+def as_remote_metric(metric: Metric) -> Metric:
     """Wrap a metric with a RemoteMetric.
 
     Currently supported is wrapping the inner metric within a MetricPipeline.
