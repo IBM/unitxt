@@ -146,3 +146,4 @@ docs/unitxt.rst
 docs/modules.rst
 docs/unitxt.*.rst
 ibmcosdataset/
+ibmcos_datasets/

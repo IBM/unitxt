@@ -1,12 +1,11 @@
-import unittest
-
 from src.unitxt.formats import SystemFormat
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestOperators(unittest.TestCase):
+class TestOperators(UnitxtTestCase):
     def test_system_format(self):
         demo_instances = [
             {"source": "1+2", "target": "3"},

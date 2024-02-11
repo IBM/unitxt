@@ -1,16 +1,15 @@
-import unittest
-
 from src.unitxt.artifact import (
     Artifact,
     MissingArtifactTypeError,
     UnrecognizedArtifactTypeError,
 )
 from src.unitxt.logging_utils import get_logger
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 
 
-class TestArtifactRecovery(unittest.TestCase):
+class TestArtifactRecovery(UnitxtTestCase):
     def test_correct_artifact_recovery(self):
         args = {
             "type": "standard_recipe",

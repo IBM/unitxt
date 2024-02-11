@@ -1,4 +1,5 @@
 from ..logging_utils import enable_explicit_format
+from ..settings_utils import get_settings
 from . import settings
 
 
@@ -9,6 +10,7 @@ def launch(demo_settings=None):
             setattr(settings, key, value)
     from .run import demo
 
+    get_settings().global_loader_limit = 300
     demo.launch(debug=True)
 
 

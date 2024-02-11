@@ -1,4 +1,4 @@
-datasets
+datasets>=2.16.0
 evaluate
 nltk
 sacrebleu

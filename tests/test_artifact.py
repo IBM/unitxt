@@ -1,16 +1,15 @@
-import unittest
-
 from src.unitxt.artifact import (
     Artifact,
     fetch_artifact,
 )
 from src.unitxt.dataclass import UnexpectedArgumentError
 from src.unitxt.logging_utils import get_logger
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 
 
-class TestArtifact(unittest.TestCase):
+class TestArtifact(UnitxtTestCase):
     def test_artifact_identifier_setter(self):
         artifact = Artifact()
         artifact_identifier = "artifact.id.dummy"

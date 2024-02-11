@@ -3,7 +3,7 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="wmt14", name="fr-en"),
+    loader=LoadHF(path="wmt14", name="fr-en", streaming=True),
     preprocess_steps=[
         CopyFields(
             field_to_field=[

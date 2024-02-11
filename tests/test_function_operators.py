@@ -1,12 +1,12 @@
 import json
-import unittest
 
 from src.unitxt.operator import SequentialOperator
 from src.unitxt.operators import Apply, CopyFields
 from src.unitxt.test_utils.operators import check_operator
+from tests.utils import UnitxtTestCase
 
 
-class TestFunctionOperators(unittest.TestCase):
+class TestFunctionOperators(UnitxtTestCase):
     def test_apply_function_operator(self):
         operator = Apply("a", function=str.upper, to_field="b")
 

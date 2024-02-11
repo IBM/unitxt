@@ -1,19 +1,13 @@
-import unittest
-
 import evaluate
 from datasets import load_dataset
 from datasets import load_dataset as load_dataset_hf
 
 from src import unitxt
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
 from src.unitxt.text_utils import print_dict
+from tests.utils import UnitxtTestCase
 
 
-class TestExamples(unittest.TestCase):
-    @classmethod
-    def setUp(cls):
-        register_local_catalog_for_tests()
-
+class TestExamples(UnitxtTestCase):
     def test_example1(self):
         self.assertTrue(True)
 
@@ -175,7 +169,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(True)
 
     def test_example8(self):
-        dataset = unitxt.load("recipes.wnli_3_shot")
+        dataset = unitxt.load_dataset("card=cards.wnli,template_card_index=0")
         metric = evaluate.load(unitxt.metric_file)
 
         metric.compute(
@@ -186,10 +180,9 @@ class TestExamples(unittest.TestCase):
         import evaluate
 
         from src import unitxt
-        from src.unitxt import load
         from src.unitxt.text_utils import print_dict
 
-        dataset = load("recipes.wnli_3_shot")
+        dataset = unitxt.load_dataset("card=cards.wnli,template_card_index=0")
 
         metric = evaluate.load(unitxt.metric_file)
         results = metric.compute(
