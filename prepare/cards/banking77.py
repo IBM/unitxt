@@ -19,6 +19,7 @@ mappers = {}
 for i in range(len(classlabels.names)):
     mappers[str(i)] = classlabels.names[i]
 
+classes = [label.replace("_", " ") for label in classlabels.names]
 
 card = TaskCard(
     loader=LoadHF(path=f"PolyAI/{dataset_name}"),
@@ -29,8 +30,8 @@ card = TaskCard(
         MapInstanceValues(mappers={"label": mappers}),
         AddFields(
             fields={
-                "classes": classlabels.names,
-                "text_type": "sentence",
+                "classes": classes,
+                "text_type": "utterance",
                 "type_of_class": "intent",
             }
         ),
