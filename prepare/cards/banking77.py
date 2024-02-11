@@ -15,10 +15,9 @@ dataset_name = "banking77"
 ds_builder = load_dataset_builder(dataset_name)
 classlabels = ds_builder.info.features["label"]
 
-mappers = {}
-for i in range(len(classlabels.names)):
-    mappers[str(i)] = classlabels.names[i]
-
+map_label_to_text = {
+    str(i): label.replace("_", " ") for i, label in enumerate(classlabels.names)
+}
 classes = [label.replace("_", " ") for label in classlabels.names]
 
 card = TaskCard(
@@ -27,7 +26,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
         ),
-        MapInstanceValues(mappers={"label": mappers}),
+        MapInstanceValues(mappers={"label": map_label_to_text}),
         AddFields(
             fields={
                 "classes": classes,
