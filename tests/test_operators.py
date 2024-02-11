@@ -1,5 +1,4 @@
 import json
-import unittest
 from collections import Counter
 from typing import Any, Dict
 
@@ -19,12 +18,12 @@ from src.unitxt.operators import (
     DeterministicBalancer,
     DivideAllFieldsBy,
     EncodeLabels,
-    ExecuteQuery,
+    ExecuteExpression,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
     FieldOperator,
     FilterByCondition,
-    FilterByQuery,
+    FilterByExpression,
     FlattenInstances,
     FromIterables,
     IndexOf,
@@ -55,9 +54,10 @@ from src.unitxt.test_utils.operators import (
     check_operator,
     check_operator_exception,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestOperators(unittest.TestCase):
+class TestOperators(UnitxtTestCase):
     def compare_streams(self, all, expected_all):
         self.assertEqual(len(all), len(expected_all))
         for input_dict, output_dict in zip(all, expected_all):
@@ -277,7 +277,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(query="a == 1 and b == 3"),
+            operator=FilterByExpression(expression="a == 1 and b == 3"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -291,7 +291,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByQuery(query="c == 5"),
+            operator=FilterByExpression(expression="c == 5"),
             inputs=inputs,
             exception_text="name 'c' is not defined",
             tester=self,
@@ -311,7 +311,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(query="a != 1 and b != 2"),
+            operator=FilterByExpression(expression="a != 1 and b != 2"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -331,7 +331,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(query="a>1"),
+            operator=FilterByExpression(expression="a>1"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -359,7 +359,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(query="b not in [3, 4]"),
+            operator=FilterByExpression(expression="b not in [3, 4]"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -385,8 +385,8 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(
-                query="b not in [3, 4] and a not in [1]",
+            operator=FilterByExpression(
+                expression="b not in [3, 4] and a not in [1]",
                 error_on_filtered_all=False,
             ),
             inputs=inputs,
@@ -394,12 +394,12 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByQuery(
-                query="b not in [3, 4] and a not in [1]",
+            operator=FilterByExpression(
+                expression="b not in [3, 4] and a not in [1]",
                 error_on_filtered_all=True,
             ),
             inputs=inputs,
-            exception_text="FilterByQuery filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            exception_text="FilterByExpression filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
             tester=self,
         )
 
@@ -422,7 +422,7 @@ class TestOperators(unittest.TestCase):
             tester=self,
         )
         check_operator(
-            operator=FilterByQuery(query="b in [3, 4]"),
+            operator=FilterByExpression(expression="b in [3, 4]"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -452,7 +452,7 @@ class TestOperators(unittest.TestCase):
         )
         with self.assertRaises(Exception) as ne:
             check_operator(
-                operator=FilterByQuery(query="c in ['5']"),
+                operator=FilterByExpression(expression="c in ['5']"),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
@@ -475,16 +475,16 @@ class TestOperators(unittest.TestCase):
             "FilterByCondition filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
         )
 
-    def test_execute_query(self):
+    def test_execute_expression(self):
         inputs = [{"a": 2, "b": 3}]
-        operator = ExecuteQuery(query="a+b", to_field="c")
+        operator = ExecuteExpression(to_field="c", expression="a+b")
         targets = [{"a": 2, "b": 3, "c": 5}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         inputs = [{"a": "hello", "b": "world"}]
-        operator = ExecuteQuery(query="a+' '+b", to_field="c")
+        operator = ExecuteExpression(expression="a+' '+b", to_field="c")
         targets = [{"a": "hello", "b": "world", "c": "hello world"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
-        operator = ExecuteQuery(query="f'{a} {b}'", to_field="c")
+        operator = ExecuteExpression(expression="f'{a} {b}'", to_field="c")
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         with self.assertRaises(ValueError) as ve:
             check_operator(
@@ -494,8 +494,29 @@ class TestOperators(unittest.TestCase):
                 tester=self,
             )
         self.assertEqual(
-            "Error processing instance '0' from stream 'test' in ExecuteQuery due to: name 'a' is not defined",
+            "Error processing instance '0' from stream 'test' in ExecuteExpression due to: name 'a' is not defined",
             str(ve.exception),
+        )
+
+        inputs = [{"json_string": '{"A":"a_value", "B":"b_value"}'}]
+        operator = ExecuteExpression(
+            expression='json.loads(json_string)["A"]',
+            imports_list=["json"],
+            to_field="c",
+        )
+        self.assertEqual("a_value", operator.process(inputs[0])["c"])
+
+        pattern = "[0-9]+"
+        string = "Account Number - 12345, Amount - 586.32"
+        repl = "NN"
+        inputs = [{"pattern": pattern, "string": string, "repl": repl}]
+        operator = ExecuteExpression(
+            expression="re.sub(pattern, repl, string)",
+            imports_list=["re"],
+            to_field="c",
+        )
+        self.assertEqual(
+            "Account Number - NN, Amount - NN.NN", operator.process(inputs[0])["c"]
         )
 
     def test_intersect(self):
@@ -2362,7 +2383,7 @@ class TestOperators(unittest.TestCase):
             )
 
 
-class TestApplyMetric(unittest.TestCase):
+class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
         self,
         metrics,

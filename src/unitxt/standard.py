@@ -97,6 +97,19 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
 
+    def prepare_refiners(self):
+        self.train_refiner.max_instances = self.max_train_instances
+        self.train_refiner.apply_to_streams = ["train"]
+        self.steps.append(self.train_refiner)
+
+        self.validation_refiner.max_instances = self.max_validation_instances
+        self.validation_refiner.apply_to_streams = ["validation"]
+        self.steps.append(self.validation_refiner)
+
+        self.test_refiner.max_instances = self.max_test_instances
+        self.test_refiner.apply_to_streams = ["test"]
+        self.steps.append(self.test_refiner)
+
     def prepare(self):
         self.steps = [
             self.card.loader,
@@ -136,17 +149,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
             self.sampler.set_size(self.num_demos)
 
-        self.train_refiner.max_instances = self.max_train_instances
-        self.train_refiner.apply_to_streams = ["train"]
-        self.steps.append(self.train_refiner)
-
-        self.validation_refiner.max_instances = self.max_validation_instances
-        self.validation_refiner.apply_to_streams = ["validation"]
-        self.steps.append(self.validation_refiner)
-
-        self.test_refiner.max_instances = self.max_test_instances
-        self.test_refiner.apply_to_streams = ["test"]
-        self.steps.append(self.test_refiner)
+        self.prepare_refiners()
 
         self.steps.append(self.template)
         if self.num_demos > 0:

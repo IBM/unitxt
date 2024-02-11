@@ -30,8 +30,14 @@
             "field_to_field": {
                 "support": "context"
             }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "paragraph"
+            }
         }
     ],
-    "task": "tasks.qa.multiple_choice.contextual",
-    "templates": "templates.qa.multiple_choice.contextual.all"
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all"
 }

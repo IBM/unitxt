@@ -1,5 +1,3 @@
-import unittest
-
 from src.unitxt.serializers import (
     IndexedRowMajorTableSerializer,
     MarkdownTableSerializer,
@@ -7,9 +5,10 @@ from src.unitxt.serializers import (
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestSerializers(unittest.TestCase):
+class TestSerializers(UnitxtTestCase):
     def test_markdown_tableserializer(self):
         inputs = [
             {

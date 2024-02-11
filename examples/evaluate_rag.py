@@ -1,3 +1,4 @@
+import json
 import sys
 from ast import literal_eval
 
@@ -15,6 +16,18 @@ if __name__ == "__main__":
             "context_ids": literal_eval,
         },
     )
+
+    # passing list of dicts
+    result = evaluate(
+        df.to_dict("records"),
+        metric_names=[
+            "metrics.rag.mrr",
+            "metrics.rag.map",
+            "metrics.rag.answer_correctness",
+        ],
+    )
+    with open("dataset_out.json", "w") as f:
+        json.dump(result, f, indent=4)
 
     evaluate(
         df,

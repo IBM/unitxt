@@ -1,3 +1,4 @@
+from functools import singledispatch
 from typing import List
 
 import pandas as pd
@@ -6,16 +7,23 @@ from .operator import SequentialOperator
 from .stream import MultiStream
 
 
-def evaluate(dataset: pd.DataFrame, metric_names: List[str]):
-    result = dataset.copy()
-    # prepare the input stream
+@singledispatch
+def evaluate(dataset, metric_names: List[str]):
+    """Placeholder for overloading the function, supporting both dataframe input and list input."""
+    pass
+
+
+@evaluate.register
+def _(dataset: list, metric_names: List[str]):
     for metric_name in metric_names:
-        multi_stream = MultiStream.from_iterables(
-            {"test": dataset.to_dict("records")}, copying=True
-        )
+        multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         metrics_operator = SequentialOperator(steps=[metric_name])
         instances = list(metrics_operator(multi_stream)["test"])
-        result[metric_name] = [
-            instance["score"]["instance"]["score"] for instance in instances
-        ]
-    return result
+        for entry, instance in zip(dataset, instances):
+            entry[metric_name] = instance["score"]["instance"]["score"]
+    return dataset
+
+
+@evaluate.register
+def _(dataset: pd.DataFrame, metric_names: List[str]):
+    return pd.DataFrame(evaluate(dataset.to_dict("records"), metric_names=metric_names))

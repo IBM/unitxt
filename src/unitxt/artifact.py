@@ -8,13 +8,15 @@ from copy import deepcopy
 from functools import lru_cache
 from typing import Dict, List, Union, final
 
-from .dataclass import Dataclass, Field, InternalField, fields
+from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
 from .logging_utils import get_logger
+from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
 from .utils import load_json, save_json
 
 logger = get_logger()
+settings = get_settings()
 
 
 class Artifactories:
@@ -207,7 +209,7 @@ class Artifact(Dataclass):
 
     @final
     def __pre_init__(self, **kwargs):
-        self._init_dict = deepcopy(kwargs)
+        self._init_dict = get_raw(kwargs)
 
     @final
     def __post_init__(self):
@@ -232,6 +234,22 @@ class Artifact(Dataclass):
         save_json(path, data)
 
 
+def get_raw(obj):
+    if isinstance(obj, Artifact):
+        return obj._to_raw_dict()
+
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
+        return type(obj)(*[get_raw(v) for v in obj])
+
+    if isinstance(obj, (list, tuple)):
+        return type(obj)([get_raw(v) for v in obj])
+
+    if isinstance(obj, dict):
+        return type(obj)({get_raw(k): get_raw(v) for k, v in obj.items()})
+
+    return deepcopy(obj)
+
+
 class ArtifactList(list, Artifact):
     def prepare(self):
         for artifact in self:
@@ -239,6 +257,8 @@ class ArtifactList(list, Artifact):
 
 
 class Artifactory(Artifact):
+    is_local: bool = AbstractField()
+
     @abstractmethod
     def __contains__(self, name: str) -> bool:
         pass
@@ -254,6 +274,9 @@ class UnitxtArtifactNotFoundError(Exception):
         self.artifactories = artifactories
 
     def __str__(self):
+        msg = f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}."
+        if settings.use_only_local_catalogs:
+            msg += f" Notice that unitxt.settings.use_only_local_catalogs is set to True, if you want to use remote catalogs set this settings or the environment variable {settings.use_only_local_catalogs_key}."
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
@@ -263,6 +286,9 @@ def fetch_artifact(name):
         return Artifact.load(name), None
 
     for artifactory in Artifactories():
+        if settings.use_only_local_catalogs:
+            if not artifactory.is_local:
+                continue
         if name in artifactory:
             return artifactory[name], artifactory
 

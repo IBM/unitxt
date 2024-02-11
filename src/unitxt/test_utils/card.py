@@ -140,6 +140,7 @@ def print_recipe_output(
     return examples
 
 
+# flake8: noqa: C901
 def test_with_eval(
     card,
     debug=False,

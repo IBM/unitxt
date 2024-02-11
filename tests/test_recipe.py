@@ -1,7 +1,6 @@
 import collections
 import copy
 import re
-import unittest
 
 from src.unitxt import dataset_file
 from src.unitxt.artifact import fetch_artifact
@@ -10,9 +9,10 @@ from src.unitxt.instructions import TextualInstruction
 from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
 from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.text_utils import print_dict
+from tests.utils import UnitxtTestCase
 
 
-class TestRecipes(unittest.TestCase):
+class TestRecipes(UnitxtTestCase):
     def test_standard_recipe(self):
         recipe = StandardRecipe(
             card="cards.wnli",
@@ -56,7 +56,7 @@ class TestRecipes(unittest.TestCase):
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
             instruction="instructions.models.llama",
-            template="templates.qa.multiple_choice.original.lm_eval_harness",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
@@ -359,7 +359,7 @@ class TestRecipes(unittest.TestCase):
             instruction="instructions.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=3,
             max_train_instances=10,
             max_test_instances=5,
             num_demos=3,
@@ -367,7 +367,7 @@ class TestRecipes(unittest.TestCase):
 
         stream = recipe()
 
-        self.assertEqual(len(list(stream["train"])), 10)
+        self.assertEqual(len(list(stream["train"])), 6)
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):

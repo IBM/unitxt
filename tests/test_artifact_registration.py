@@ -1,9 +1,8 @@
-import unittest
-
 from src.unitxt.artifact import Artifact
+from tests.utils import UnitxtTestCase
 
 
-class TestArtifactRegistration(unittest.TestCase):
+class TestArtifactRegistration(UnitxtTestCase):
     def test_subclass_registration(self):
         class DummyShouldBeRegistered(Artifact):
             pass

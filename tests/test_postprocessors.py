@@ -1,15 +1,15 @@
-import unittest
 from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.test_utils.operators import check_operator
+from tests.utils import UnitxtTestCase
 
 
 def list_to_stream_with_prediction_and_references(list: List[Any]) -> List[Any]:
     return [{"prediction": item, "references": [item]} for item in list]
 
 
-class TestPostProcessors(unittest.TestCase):
+class TestPostProcessors(UnitxtTestCase):
     def test_convert_to_boolean(self):
         parser, _ = fetch_artifact("processors.convert_to_boolean")
         inputs = [

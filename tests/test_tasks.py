@@ -1,10 +1,9 @@
-import unittest
-
 from src.unitxt.task import MultipleChoiceTask
 from src.unitxt.test_utils.operators import apply_operator
+from tests.utils import UnitxtTestCase
 
 
-class TestTasks(unittest.TestCase):
+class TestTasks(UnitxtTestCase):
     def test_multiple_choice_task(self):
         operator = MultipleChoiceTask(
             inputs=["choices", "sentence1", "sentence2"],

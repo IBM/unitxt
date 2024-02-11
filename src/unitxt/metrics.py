@@ -11,7 +11,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-from scipy.stats import bootstrap
+from scipy.stats import bootstrap, kendalltau
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -1282,6 +1282,26 @@ class Wer(HuggingfaceMetric):
             predictions=predictions, references=formatted_references
         )
         return {self.main_score: result}
+
+
+class KendallTauMetric(GlobalMetric):
+    main_score = "kendalltau_b"
+    variant = "b"
+
+    def compute(
+        self,
+        references: List[float],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        kendall_results = kendalltau(references, predictions, variant=self.variant)
+        corr = kendall_results.correlation
+        return {
+            "score_name": self.main_score,
+            self.main_score: corr,
+            "score": corr,
+            "p_val": kendall_results.pvalue,
+        }
 
 
 class MatthewsCorrelation(HuggingfaceMetric):

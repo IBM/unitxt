@@ -1,4 +1,3 @@
-import unittest
 from copy import deepcopy
 from math import isnan
 
@@ -32,6 +31,7 @@ from src.unitxt.metrics import (
     TokenOverlap,
 )
 from src.unitxt.test_utils.metrics import apply_metric
+from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 
@@ -101,7 +101,7 @@ for ai, vt in zip(GROUPED_INSTANCE_ADDL_INPUTS, VARIANT_TYPE):
     )
 
 
-class TestMetrics(unittest.TestCase):
+class TestMetrics(UnitxtTestCase):
     def test_accuracy(self):
         metric = Accuracy()
 
@@ -581,7 +581,7 @@ class TestMetrics(unittest.TestCase):
             )
 
 
-class TestConfidenceIntervals(unittest.TestCase):
+class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):
         """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
         # Test one GlobalMetric and one InstanceMetric

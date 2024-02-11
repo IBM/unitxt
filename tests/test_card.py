@@ -1,5 +1,3 @@
-import unittest
-
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -10,6 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
+from tests.utils import UnitxtTestCase
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="wnli"),
@@ -44,7 +43,7 @@ card = TaskCard(
 )
 
 
-class TestCard(unittest.TestCase):
+class TestCard(UnitxtTestCase):
     def test_test_card(self):
         # Avoid loading in main namespace to becuase test_ prefix confuses unitest discovery
         from src.unitxt.test_utils.card import test_card
