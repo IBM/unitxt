@@ -54,7 +54,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     logger.info(f"Using template card index: {template_card_index}")
 
     if "num_demos" not in kwargs:
-        kwargs["num_demos"] = 3
+        kwargs["num_demos"] = 1
 
     if "demos_pool_size" not in kwargs:
         kwargs["demos_pool_size"] = 20
@@ -78,7 +78,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         examples = print_recipe_output(
             recipe,
             max_steps=recipe.num_steps(),
-            num_examples=3,
+            num_examples=10,
             print_header=False,
             print_stream_size=False,
             streams=["test"],
