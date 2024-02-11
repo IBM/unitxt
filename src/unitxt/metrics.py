@@ -1832,6 +1832,14 @@ class KPA(CustomF1):
 
 
 class RemoteMetric(SingleStreamOperator, Metric):
+    """A metric that runs another metric remotely.
+
+    main_score: the score updated by this metric.
+    endpoint: the remote host that supports the remote metric execution.
+    metric_name: the name of the metric that is executed remotely.
+    api_key: optional, passed to the remote metric with the input, allows secure authentication.
+    """
+
     main_score: str = None
     endpoint: str
     metric_name: str
@@ -1868,10 +1876,8 @@ class RemoteMetric(SingleStreamOperator, Metric):
             predictions, references, additional_inputs
         )
         metric_response = self.get_metric_response(metric_request)
-        instances_scores = metric_response.instances_scores
-        global_score = metric_response.global_score
-        self.update_instance_scores(instances, instances_scores)
-        self.set_global_score(instances, global_score)
+        self.update_instance_scores(instances, metric_response.instances_scores)
+        self.set_global_score(instances, metric_response.global_score)
         yield from instances
 
     @staticmethod
