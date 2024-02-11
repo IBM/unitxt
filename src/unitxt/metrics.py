@@ -10,7 +10,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-from scipy.stats import bootstrap, kendalltau
+from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
@@ -888,6 +888,8 @@ class Rouge(HuggingfaceMetric):
 
     sent_split_newline: bool = True
 
+    _requirements_list: List[str] = ["nltk", "rouge"]
+
     def prepare(self):
         super().prepare()
 
@@ -918,6 +920,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
+    _requirements_list: List[str] = ["editdistance"]
+
     def prepare(self):
         super().prepare()
         import editdistance
@@ -944,6 +948,8 @@ class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
 
+    _requirements_list: List[str] = ["jiwer"]
+
     def compute(
         self,
         references: List[List[str]],
@@ -964,13 +970,20 @@ class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
 
+    _requirements_list: List[str] = ["scipy"]
+
+    def prepare(self):
+        from scipy.stats import kendalltau
+
+        self.kendalltau = kendalltau
+
     def compute(
         self,
         references: List[float],
         predictions: List[float],
         additional_inputs: List[Dict],
     ) -> dict:
-        kendall_results = kendalltau(references, predictions, variant=self.variant)
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
             "score_name": self.main_score,
@@ -1246,6 +1259,8 @@ class BertScore(HuggingfaceBulkMetric):
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
 
+    _requirements_list: List[str] = ["bert_score"]
+
     def prepare(self):
         super().prepare()
         self.hf_compute_args = {"model_type": self.model_name}
@@ -1257,6 +1272,8 @@ class SentenceBert(BulkInstanceMetric):
     batch_size: int = 32
 
     model_name: str
+
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1305,6 +1322,8 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    _requirements_list: List[str] = ["transformers"]
+
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -1340,6 +1359,8 @@ class Perplexity(BulkInstanceMetric):
 
     batch_size: int = 32
     model_name: str
+
+    _requirements_list: List[str] = ["transformers"]
 
     def compute(
         self,
@@ -1582,6 +1603,8 @@ class NDCG(GlobalMetric):
     """
 
     main_score = "nDCG"
+
+    _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
         from sklearn.metrics import ndcg_score
