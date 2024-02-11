@@ -2301,8 +2301,8 @@ def cohens_d(
         subgroup_scores_dict, expected_subgroup_types
     )
     group_n = [len(subgroup_scores_dict[st]) for st in expected_subgroup_types]
-    if not any(nn > 1 for nn in group_n):
-        # if at least one sample size is 0 for one type, no comparison can be made at at all
+    if any(nn == 0 for nn in group_n) or all(nn <= 1 for nn in group_n):
+        # if at least one sample size is 0 for one type, no comparison can be made at all
         # if both sample sizes are 1, then the denominator is undefined since divide by n1 + n2 - 2
         # so require at least one sample to have > 1 observation, and both to have >= 1.
         return np.nan
