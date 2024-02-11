@@ -139,16 +139,15 @@ class MetricWithConfidenceInterval(Metric):
 
         ci_score_prefix = str(ci_score_prefix)
         if aggregation_func is None:
+            # if aggregation_func is None, we simply take the mean of the resampled instance scores
+            # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
+            #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
         for score_name in score_names:
             # need to redefine the statistic function within the loop because score_name is a loop variable, to avoid ruff errors
             def statistic(arr, axis, score_name=score_name):
                 # arr is a 2d array where each row is a resampling, so we
                 # iterate over the rows and compute the metric on each resampling
-
-                # if aggregation_func is None, we simply take the mean of the resampled instance scores
-                # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
-                #   that is, re-form the groups, calculate the function, and take the mean of the group scores
                 scores = numpy.apply_along_axis(
                     lambda resampled_instances: aggregation_func(
                         resampled_instances, score_name
@@ -448,7 +447,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     """
 
     n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
-
+    # column required to be in additional_inputs if group_mean aggregation function requires a dict input of labels and their lists of scores
+    subgroup_column = None
     implemented_reductions: List[str] = field(
         default_factory=lambda: ["mean", "group_mean"]
     )
@@ -458,14 +458,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     def reduction_map(self) -> dict:
         pass
 
-    @staticmethod
-    def _function_uses_variant_types(aggregation_func):
-        import inspect
-
-        func_args = list(inspect.signature(aggregation_func).parameters.keys())
-        # if function has this argument, assume it does comparison
-        return "variant_scores_dict" in func_args
-
     def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
 
@@ -474,7 +466,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         class GroupVarianceAccuracy(Accuracy):
             reduction_map = {'group_mean': {'agg_func': ['variance', np.var, True]}}
 
-        reduction_map must be a dict with
+        reduction_map must be a dict with values containing
         - an 'agg_func' field with value being a 3-element list where
             - 1st element is a string name of the aggregation function (used in naming the CI report)
             - 2nd element is the callable aggregation function
@@ -490,22 +482,23 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         The aggregation function (2nd element of agg_func) can be one of two types:
         1. simple: calculate a summary statistic from a single group of values (e.g. mean, median, etc.).
             This is best suited for cases where the instances are independent of each other, other than belonging to the same group
-        2. comparison: requires additional_inputs to have a boolean key 'variant_type'.  This function conducts
-            a comparison between scores for differing variant_types (e.g., 'original' vs 'paraphrase').
-            An example is where the baseline instance is a question, and the others are various paraphrases
+        2. comparison: requires subgroup_column to be specified.  This function conducts
+            a comparison between scores for differing values of subgroup_column (e.g., 'original' vs 'paraphrase').
+            An example is where the original instance is a question, and the others are various paraphrases
             or perturbations of this question.  Here, the function would return, say, a comparison of the instance accuracies
-            rather than, say, the average instance accuracy.  It requires an argument variant_scores_dict.
+            rather than, say, the average instance accuracy.
             In these cases, we recommend setting the 3rd parameter to be True so that the groups are resampled together.
 
         Example:
             class GroupVsBaselineDiffAccuracy(Accuracy):
+                subgroup_column = 'variant_type'
                 reduction_map = {'group_mean': {'agg_func': ['accuracy_diff', accuracy_diff, True],}}
 
             # where the function is defined as
-            def accuracy_diff(variant_scores_dict, expected_variant_types=['original', 'paraphrase']):
-                validate_variant_types(variant_scores_dict, expected_variant_types)
+            def accuracy_diff(subgroup_scores_dict, expected_subgroup_types=['original', 'paraphrase']):
+                validate_subgroup_types(subgroup_scores_dict, expected_subgroup_types)
                 from statistics import mean
-                return mean(variant_scores_dict['paraphrase']) - mean(variant_scores_dict['original'])
+                return mean(subgroup_scores_dict['paraphrase']) - mean(subgroup_scores_dict['original'])
             The input dataset should look like:
 
             'group_id'  'question'                                   'variant_type'
@@ -554,12 +547,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-        # for aggregations that conduct a comparison, expects a 'variant_type' field
-        if self._function_uses_variant_types(fields["agg_func"][1]):
+        # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
+        # this field exists
+        if self.subgroup_column is not None:
             assert all(
-                "variant_type" in instance["additional_inputs"]
+                self.subgroup_column in instance["additional_inputs"]
                 for instance in instances
-            ), f"since group_mean aggregation function {fields['agg_func'][1]} performs a comparison, each instance's additional_inputs dict must have a key variant_type"
+            ), f"each instance additional_inputs dict must have a key {self.subgroup_column}"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
@@ -575,7 +569,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             aggregation_function = self.average_item_scores
             if reduction_type == "mean":
                 reduction_fields = list(set(reduction_params))
-                # extract only the dict of instance scores
+                # no group reduction, so resample instances individually
                 scores_to_resample = deepcopy(instances)
             elif reduction_type == "group_mean":
                 self._validate_group_mean_reduction(instances=instances)
@@ -587,6 +581,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 aggregation_function_name = str(reduction_params["agg_func"][0])
                 field_name_full_prefix = "group_" + aggregation_function_name + "_"
                 if reduction_params["agg_func"][2]:
+                    # append fixed_ to name because resamples the groups as fixed units
                     field_name_full_prefix = "fixed_" + field_name_full_prefix
                 (
                     scores_to_resample,
@@ -665,38 +660,39 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         Args:
             instances: List of observation instances with instance-level scores (fields) computed.
             field_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores, or a dict of variant types scores,
-                and returning a single score.
+            group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
+                or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
+                callable function returns a single score for the group
 
         Returns:
-            List of dicts, each corresponding to a group of instances (defined by grouping_field),
+            List of dicts, each corresponding to a group of instances (defined by 'group_id'),
                 with a group score for each field_name
         """
         from collections import defaultdict
 
         # three-level defaultdict:
-        # first is the grouping, second is the field name, the third is the variant_type (by default 'original')
+        # first is the grouping, second is the field name, the third is the subgroup_type (by default 'default')
         group_to_instance_scores = defaultdict(
             lambda: defaultdict(lambda: defaultdict(list))
         )
 
-        # check if function has fields for variant_type
-        uses_variant_type = self._function_uses_variant_types(group_aggregation_func)
-        if uses_variant_type:
+        # check if function has fields for subgroup_column
+        uses_subgroups = self.subgroup_column is not None
+        if uses_subgroups:
             assert all(
-                "variant_type" in instance["additional_inputs"]
+                self.subgroup_column in instance["additional_inputs"]
                 for instance in instances
-            ), "all instances must have field 'variant_type' in additional_inputs"
+            ), f"all instances must have field {self.subgroup_column}' in additional_inputs"
 
             # define the aggregation function
-            def agg_func(variant_scores_dict):
-                # if function a uses the variant types, pass the full dict
-                return group_aggregation_func(variant_scores_dict=variant_scores_dict)
+            def agg_func(subgroup_scores_dict):
+                # if function a uses the subgroup_column values, pass the full dict
+                return group_aggregation_func(subgroup_scores_dict)
         else:
 
-            def agg_func(variant_scores_dict):
+            def agg_func(subgroup_scores_dict):
                 # otherwise pass the default 'original' scores to the default argument
-                return group_aggregation_func(variant_scores_dict["original"])
+                return group_aggregation_func(subgroup_scores_dict["default"])
 
         # loop through the instances and group the scores
         for instance in instances:
@@ -707,12 +703,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     f"This field is required for group based metric computation."
                 )
             group_key = additional_inputs["group_id"]
-            # for functions that do comparisons between variant_type gorups
-            variant_type = (
-                additional_inputs["variant_type"] if uses_variant_type else "original"
+            # for functions that do comparisons between subgroup_column groups
+            # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
+            subgroup_type = (
+                additional_inputs[self.subgroup_column] if uses_subgroups else "default"
             )
             for field_name in field_names:
-                group_to_instance_scores[group_key][field_name][variant_type].append(
+                group_to_instance_scores[group_key][field_name][subgroup_type].append(
                     instance["score"]["instance"][field_name]
                 )
 
@@ -722,22 +719,23 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 "score": {
                     "instance": {
                         field_name: agg_func(score_dict)
-                        for field_name, score_dict in scores.items()
+                        for field_name, score_dict in group_scores.items()
                     }
                 }
             }
-            for scores in group_to_instance_scores.values()
+            for group_scores in group_to_instance_scores.values()
         ]
 
     def _set_up_group_mean_aggregation(
         self, instances, reduction_params, reduction_fields
     ):
+        group_aggregation_func = reduction_params["agg_func"][1]
         # if treat groups as units
         if reduction_params["agg_func"][2]:
             # pass the group aggregate---not instance---scores to resample as usual
             aggregation_function = self.average_item_scores
             scores_to_resample = self.get_group_scores(
-                instances, reduction_fields, reduction_params["agg_func"][1]
+                instances, reduction_fields, group_aggregation_func
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
@@ -746,7 +744,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             def aggregation_function(
                 instances,
                 field_name,
-                group_aggregation_func=reduction_params["agg_func"][1],
+                group_aggregation_func=group_aggregation_func,
             ):
                 group_scores = self.get_group_scores(
                     instances, [field_name], group_aggregation_func
@@ -2100,44 +2098,46 @@ class KPA(CustomF1):
 
 
 # define metrics that return means of an aggregation function applied across levels of a grouping variable
-def validate_variant_types(
-    variant_scores_dict: Dict[str, List], expected_variant_types: List[str]
+def validate_subgroup_types(
+    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[str]
 ):
-    """Validate a dict of variant type instance score lists.
+    """Validate a dict of subgroup type instance score lists.
 
     Args:
-        variant_scores_dict: dict where keys are variant types and values are lists of instance scores.
-        expected_variant_types: list of the variant types which should exist in variant_scores_dict, so
+        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
+        expected_subgroup_types: list of the subgroup types which should exist in subgroup_scores_dict, so
             that another function that receives it as input will valid.
 
     Returns:
         dict with all NaN scores removed; any expected keys that are missing have an empty list inserted
     """
     # remove any NaNs
-    variant_scores_dict.update(
+    subgroup_scores_dict.update(
         {
             kk: [vvv for vvv in vv if not np.isnan(vvv)]
-            for kk, vv in variant_scores_dict.items()
+            for kk, vv in subgroup_scores_dict.items()
         }
     )
-    if expected_variant_types is None:
-        expected_variant_types = [""]
+    if expected_subgroup_types is None:
+        expected_subgroup_types = []
     # make sure the expected types appear
-    variant_scores_dict.update(
-        {kk: [] for kk in expected_variant_types if kk not in variant_scores_dict}
+    subgroup_scores_dict.update(
+        {kk: [] for kk in expected_subgroup_types if kk not in subgroup_scores_dict}
     )
-    return variant_scores_dict
+    return subgroup_scores_dict
 
 
-def performance_drop_rate(variant_scores_dict: dict, expected_variant_types=None):
+def performance_drop_rate(
+    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[str]
+):
     """Percentage decrease of mean performance on test elements relative to that on a baseline.
 
     from https://arxiv.org/pdf/2306.04528.pdf.
 
     Args:
-        variant_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
-            of instance scores corresponding to variant_types with that key
-        expected_variant_types: tuple of the expected labels in variant_scores_dict (the first should be the
+        subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
+            of instance scores corresponding to subgroup_types with that key
+        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
             baseline type, the second the other).
 
     Returns:
@@ -2146,23 +2146,64 @@ def performance_drop_rate(variant_scores_dict: dict, expected_variant_types=None
         otherwise, calculate PDR
 
     """
-    if expected_variant_types is None:
-        expected_variant_types = ["original", "paraphrase"]
-    assert len(expected_variant_types) == 2
-    variant_scores_dict = validate_variant_types(
-        variant_scores_dict, expected_variant_types
+    assert len(expected_subgroup_types) == 2
+    subgroup_scores_dict = validate_subgroup_types(
+        subgroup_scores_dict, expected_subgroup_types
     )
-    if any(len(variant_scores_dict[kk]) == 0 for kk in expected_variant_types):
+    if any(len(subgroup_scores_dict[kk]) == 0 for kk in expected_subgroup_types):
         # no comparison can be made since there is not at least one score per type
         return np.nan
     # first key should be the baseline category
-    baseline_mean = mean(variant_scores_dict[expected_variant_types[0]])
-    other_mean = mean(variant_scores_dict[expected_variant_types[1]])
+    baseline_mean = mean(subgroup_scores_dict[expected_subgroup_types[0]])
+    other_mean = mean(subgroup_scores_dict[expected_subgroup_types[1]])
     return np.nan if baseline_mean == 0 else 1 - other_mean / baseline_mean
 
 
+def interpret_cohens_effect_size(x: float):
+    """Return a string interpretation of a Cohen effect size value.
+
+    See https://en.wikipedia.org/wiki/Effect_size;
+    Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
+    Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
+
+    Value has interpretation of
+    - essentially 0 if |x| < 0.01
+    - very small if 0.01 <= |x| < 0.2
+    - small difference if 0.2 <= |x| < 0.5
+    - a medium difference if 0.5 <= |x| < 0.8
+    - a large difference if 0.8 <= |x| < 1.2
+    - a very large difference if 1.2 <= |x| < 2.0
+    - a huge difference if 2.0 <= |x|
+
+    Args:
+        x: float effect size value
+
+    Returns:
+        string interpretation
+    """
+    import pandas as pd
+
+    # assign a label according to threshold of the absolute value
+    return pd.cut(
+        x=[np.abs(x)],
+        right=False,
+        bins=[-1, 0.01, 0.2, 0.5, 0.8, 1.2, 2.0, np.Inf],
+        labels=[
+            "essentially zero",
+            "very small",
+            "small",
+            "medium",
+            "large",
+            "very large",
+            "huge",
+        ],
+    )[0]
+
+
 def normalized_cohens_h(
-    variant_scores_dict: dict, expected_variant_types=None, interpret=False
+    subgroup_scores_dict: Dict[str, List],
+    expected_subgroup_types: List[str],
+    interpret=False,
 ):
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
@@ -2175,99 +2216,122 @@ def normalized_cohens_h(
     Assumes the scores are in [0,1], either continuous or binary; hence taking the average of a group of scores yields a proportion..
     Calculates the change in the average of the other_scores relative to the average of the baseline_scores.    We rescale this to [-1,1] from [-pi,pi] for clarity, where +- 1 are the most extreme changes, and 0 is no change
 
-    Interpretation: the original unscaled Cohen's h can be interpreted as
-        - no difference if |h| = 0
-        - an insignificant difference if 0 < |h| < 0.2
-        - small difference if 0.2 <= |h| < 0.5
-        - a medium difference if 0.5 <= |h| < 0.8
-        - a large difference if 0.8 <= |h|
+    Interpretation: the original unscaled Cohen's h can be interpreted according to function interpret_effect_size
+
     Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
-        - no difference if |norm h| = 0
-        - an insignificant difference if 0 < |norm h| < 0.06366198
+        - essentially 0 if |norm h| < 0.0031831
+        - very small if 0.0031831 <= |norm h| < 0.06366198
         - small difference if 0.06366198 <= |norm h| < 0.15915494
         - a medium difference if 0.15915494 <= |norm h| < 0.25464791
-        - a large difference if 0.25464791 <= |norm h|
+        - a large difference if 0.25464791 <= |norm h| < 0.38197186
+        - a very large difference if 0.38197186 <= |norm h| < 0.63661977
+        - a huge difference if 0.63661977 <= |norm h|
     Args:
-        variant_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
-            of instance scores corresponding to variant_types with that key
-        expected_variant_types: tuple of the expected labels in variant_scores_dict (the first should be the
+        subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
+            of instance scores corresponding to subgroup_types with that key
+        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
             baseline type, the second the other).
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
-    if expected_variant_types is None:
-        expected_variant_types = ["original", "paraphrase"]
-    assert len(expected_variant_types) == 2
-    variant_scores_dict = validate_variant_types(
-        variant_scores_dict, expected_variant_types
+    assert len(expected_subgroup_types) == 2
+    subgroup_scores_dict = validate_subgroup_types(
+        subgroup_scores_dict, expected_subgroup_types
     )
-    if any(len(variant_scores_dict[kk]) == 0 for kk in expected_variant_types):
+    if any(len(subgroup_scores_dict[kk]) == 0 for kk in expected_subgroup_types):
         # no comparison can be made since there is not at least one score per type
         return np.nan
     # requires scores to be in [0,1]
-    for kk, score_list in variant_scores_dict.items():
+    for kk, score_list in subgroup_scores_dict.items():
         assert all(
             0 <= score <= 1 for score in score_list
         ), f"all {kk} scores must be in [0,1]"
-    baseline_mean = mean(variant_scores_dict[expected_variant_types[0]])
-    other_mean = mean(variant_scores_dict[expected_variant_types[1]])
+
+    baseline_mean = mean(subgroup_scores_dict[expected_subgroup_types[0]])
+    other_mean = mean(subgroup_scores_dict[expected_subgroup_types[1]])
     h = 2 * (np.arcsin(np.sqrt(other_mean)) - np.arcsin(np.sqrt(baseline_mean)))
     norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
     if not interpret:
         return norm_h
 
-    import pandas as pd
-
-    how_signif = pd.cut(
-        x=[np.abs(h)],
-        right=False,
-        bins=[-1, 0.2, 0.5, 0.8, np.Inf],
-        labels=["not significant", "small", "medium", "large"],
-    )
-    return norm_h, how_signif[0]
+    return norm_h, interpret_cohens_effect_size(h)
 
 
-def mean_variant_score(
-    variant_scores_dict: dict, expected_variant_type: str = "original"
+def cohens_d(
+    subgroup_scores_dict: Dict[str, List],
+    expected_subgroup_types: List[str],
+    interpret=False,
 ):
-    """Return the mean instance score for a single type of variant (not a comparison).
+    """Cohen's d effect size between mean of two samples.
+
+    Takes into account the variances within the samples, not just the means.
 
     Args:
-        variant_scores_dict: dict where keys are variant types and values are lists of instance scores.
-        expected_variant_type: the key (variant type) for which the average will be computed
+        subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
+            of instance scores corresponding to subgroup_types with that key
+        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
+            baseline type, the second the other).
+        interpret: boolean, whether to interpret the significance of the score or not
+    Returns:
+        float score, and a string interpretation if interpret=True
+    """
+    assert len(expected_subgroup_types) == 2
+    subgroup_scores_dict = validate_subgroup_types(
+        subgroup_scores_dict, expected_subgroup_types
+    )
+    group_n = [len(subgroup_scores_dict[st]) for st in expected_subgroup_types]
+    if not any(nn > 1 for nn in group_n):
+        # if at least one sample size is 0 for one type, no comparison can be made at at all
+        # if both sample sizes are 1, then the denominator is undefined since divide by n1 + n2 - 2
+        # so require at least one sample to have > 1 observation, and both to have >= 1.
+        return np.nan
+
+    # otherwise, calculate the variances
+    group_mean = [mean(subgroup_scores_dict[st]) for st in expected_subgroup_types]
+    # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
+    group_var = [
+        0.0 if nn == 1 else np.var(subgroup_scores_dict[st], ddof=1)
+        for st, nn in zip(expected_subgroup_types, group_n)
+    ]
+    var_total = sum([(nn - 1) * vv for vv, nn in zip(group_var, group_n)])
+    pooled_sd = np.sqrt(var_total / (sum(group_n) - 2))
+    d = np.diff(group_mean)[0] / pooled_sd
+    # clip it at a very large value so it doesn't become infinite if the variance (denominator) is 0
+    d = np.clip(a=d, a_min=-1000, a_max=1000)
+
+    if not interpret:
+        return d
+    return d, interpret_cohens_effect_size(d)
+
+
+def mean_subgroup_score(
+    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[str]
+):
+    """Return the mean instance score for a subset (possibly a single type) of variants (not a comparison).
+
+    Args:
+        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
+        expected_subgroup_types: the keys (subgroup types) for which the average will be computed
 
     Returns:
         float score
     """
-    variant_scores_dict = validate_variant_types(
-        variant_scores_dict, [expected_variant_type]
+    subgroup_scores_dict = validate_subgroup_types(
+        subgroup_scores_dict, expected_subgroup_types
     )
-    score_list = variant_scores_dict[expected_variant_type]
+    from itertools import chain
+
+    # combine all desired subgroup scores
+    score_list = list(
+        chain.from_iterable(
+            [subgroup_scores_dict[st] for st in expected_subgroup_types]
+        )
+    )
     if len(score_list) == 0:
         # no scores to use
         return np.nan
     return mean(score_list)
-
-
-def mean_original_score(variant_scores_dict: dict):
-    """Return average score on the baseline only.
-
-    Args:
-        variant_scores_dict: dict where one key should be 'original' and the values a list of
-            original instance scores
-    """
-    return mean_variant_score(variant_scores_dict, "original")
-
-
-def mean_paraphrase_score(variant_scores_dict: dict):
-    """Return average score on the paraphrases only.
-
-    Args:
-        variant_scores_dict: dict where one key should be 'paraphrase' and the values a list of
-            original instance scores
-    """
-    return mean_variant_score(variant_scores_dict, "paraphrase")
 
 
 # metrics using mean reduction
@@ -2292,51 +2356,99 @@ class FixedGroupMeanStringContainment(StringContainment):
 
 # take only the (fixed) group mean of baseline or other (paraphrases) scores
 class FixedGroupMeanBaselineAccuracy(Accuracy):
+    subgroup_column = "variant_type"
+    # take mean of "original" variants only
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_baseline", mean_original_score, True],
+            "agg_func": [
+                "mean_baseline",
+                lambda scd: mean_subgroup_score(
+                    subgroup_scores_dict=scd, expected_subgroup_types=["original"]
+                ),
+                True,
+            ],
         }
     }
 
 
 class FixedGroupMeanParaphraseAccuracy(Accuracy):
+    subgroup_column = "variant_type"
+    # take mean of "paraphrase" variants only
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_paraphrase", mean_paraphrase_score, True],
+            "agg_func": [
+                "mean_paraphrase",
+                lambda scd: mean_subgroup_score(
+                    subgroup_scores_dict=scd, expected_subgroup_types=["paraphrase"]
+                ),
+                True,
+            ],
         }
     }
 
 
 # same as above but using StringContainment
 class FixedGroupMeanBaselineStringContainment(StringContainment):
+    subgroup_column = "variant_type"
+    # take mean of "original" variants only
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_baseline", mean_original_score, True],
+            "agg_func": [
+                "mean_baseline",
+                lambda scd: mean_subgroup_score(
+                    subgroup_scores_dict=scd, expected_subgroup_types=["original"]
+                ),
+                True,
+            ],
         }
     }
 
 
 class FixedGroupMeanParaphraseStringContainment(StringContainment):
+    subgroup_column = "variant_type"
+    # take mean of "paraphrase" variants only
     reduction_map = {
         "group_mean": {
-            "agg_func": ["mean_paraphrase", mean_paraphrase_score, True],
+            "agg_func": [
+                "mean_paraphrase",
+                lambda scd: mean_subgroup_score(
+                    subgroup_scores_dict=scd, expected_subgroup_types=["paraphrase"]
+                ),
+                True,
+            ],
         }
     }
 
 
 # using PDR
 class FixedGroupPDRAccuracy(Accuracy):
+    subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
-            "agg_func": ["pdr", performance_drop_rate, True],
+            "agg_func": [
+                "pdr",
+                lambda scd: performance_drop_rate(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
         }
     }
 
 
 class FixedGroupPDRStringContainment(StringContainment):
+    subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
-            "agg_func": ["pdr", performance_drop_rate, True],
+            "agg_func": [
+                "pdr",
+                lambda scd: performance_drop_rate(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
         }
     }
 
@@ -2350,18 +2462,67 @@ class GroupMeanTokenOverlap(TokenOverlap):
     }
 
 
-# using Cohens's h
+# using Cohens's h for proportions
 class FixedGroupNormCohensHAccuracy(Accuracy):
+    subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
-            "agg_func": ["norm_cohens_h", normalized_cohens_h, True],
+            "agg_func": [
+                "norm_cohens_h",
+                lambda scd: normalized_cohens_h(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
         }
     }
 
 
 class FixedGroupNormCohensHStringContainment(StringContainment):
+    subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
-            "agg_func": ["norm_cohens_h", normalized_cohens_h, True],
+            "agg_func": [
+                "norm_cohens_h",
+                lambda scd: normalized_cohens_h(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
+        }
+    }
+
+
+# using Cohen's d (takes into account internal variation in group scores)
+class FixedGroupCohensDAccuracy(Accuracy):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "cohens_d",
+                lambda scd: cohens_d(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
+        }
+    }
+
+
+class FixedGroupCohensDStringContainment(StringContainment):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "cohens_d",
+                lambda scd: cohens_d(
+                    subgroup_scores_dict=scd,
+                    expected_subgroup_types=["original", "paraphrase"],
+                ),
+                True,
+            ],
         }
     }

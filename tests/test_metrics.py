@@ -12,6 +12,8 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FixedGroupCohensDAccuracy,
+    FixedGroupCohensDStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -484,6 +486,8 @@ class TestMetrics(unittest.TestCase):
             FixedGroupNormCohensHStringContainment(),
             FixedGroupPDRAccuracy(),
             FixedGroupPDRStringContainment(),
+            FixedGroupCohensDAccuracy(),
+            FixedGroupCohensDStringContainment(),
         ]
         global_targets = [
             0.225,
@@ -499,6 +503,8 @@ class TestMetrics(unittest.TestCase):
             -0.4639421840102023,
             0.8333333333333334,
             0.4444444444444445,
+            -333.55156684612643,
+            -0.7698003589195009,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
@@ -739,6 +745,18 @@ class TestConfidenceIntervals(unittest.TestCase):
             metric=FixedGroupPDRStringContainment(),
             expected_ci_low=0.3333333333333333,
             expected_ci_high=0.5,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupCohensDAccuracy(),
+            expected_ci_low=-1000.0,
+            expected_ci_high=0.5,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupCohensDStringContainment(),
+            expected_ci_low=-0.8660254037844387,
+            expected_ci_high=-0.5773502691896257,
         )
 
         # pass global dict because there are additional fields other than the main score

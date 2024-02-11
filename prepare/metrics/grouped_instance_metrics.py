@@ -4,6 +4,8 @@ import numpy as np
 
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
+    FixedGroupCohensDAccuracy,
+    FixedGroupCohensDStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -434,6 +436,61 @@ outputs = test_metric(
 add_to_catalog(
     metric,
     "metrics.robustness.fixed_group_norm_cohens_h_string_containment",
+    overwrite=True,
+)
+
+
+# Cohen's D will always use fixed groups
+metric = FixedGroupCohensDAccuracy()
+global_target = {
+    "fixed_group_cohens_d_accuracy": -333.55,
+    "score": -333.55,
+    "score_name": "fixed_group_cohens_d_accuracy",
+    "score_ci_low": -1000.0,
+    "score_ci_high": 0.5,
+    "fixed_group_cohens_d_accuracy_ci_low": -1000.0,
+    "fixed_group_cohens_d_accuracy_ci_high": 0.5,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_cohens_d_accuracy", overwrite=True
+)
+
+
+metric = FixedGroupCohensDStringContainment()
+global_target = {
+    "fixed_group_cohens_d_string_containment": -0.77,
+    "score": -0.77,
+    "score_name": "fixed_group_cohens_d_string_containment",
+    "score_ci_low": -0.87,
+    "score_ci_high": -0.58,
+    "fixed_group_cohens_d_string_containment_ci_low": -0.87,
+    "fixed_group_cohens_d_string_containment_ci_high": -0.58,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_string_containment,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_cohens_d_string_containment",
     overwrite=True,
 )
 
