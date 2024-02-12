@@ -34,6 +34,9 @@ settings = get_settings()
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
+
 def abstract_factory():
     return {}
 
