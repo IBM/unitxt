@@ -57,10 +57,10 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         kwargs["num_demos"] = 1
 
     if "demos_pool_size" not in kwargs:
-        kwargs["demos_pool_size"] = 20
+        kwargs["demos_pool_size"] = 10
 
     if "loader_limit" not in kwargs:
-        kwargs["loader_limit"] = 200
+        kwargs["loader_limit"] = 30
 
     recipe = StandardRecipe(
         card=card, template_card_index=template_card_index, **kwargs
