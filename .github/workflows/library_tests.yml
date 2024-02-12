@@ -1,4 +1,4 @@
-name: Test Python Code
+name: Test Library Code
 
 on:
   push:
@@ -22,15 +22,10 @@ jobs:
         cache: 'pip' # caching pip dependencies
     - run: pip install -r requirements/base.rqr
     - run: pip install -r requirements/tests.rqr
-    - run: pip install coverage
-    - run: pip install "huggingface_hub[cli]"
-    - run: git config --global credential.helper store
-    - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} --add-to-git-credential
+    - run: pip install coverage[toml]
 
     - name: Generate Report
-      env:
-        HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-      run:  coverage run -m unittest
+      run:  coverage run --omit=*/preperation -m unittest discover -s tests/library -p "test_*.py"
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
