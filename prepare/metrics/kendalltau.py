@@ -21,6 +21,31 @@ metric = MetricPipeline(
     metric=KendallTauMetric(),
 )
 
+
+singleton_instance_target = [
+    {
+        "kendalltau_b": np.nan,
+        "score": np.nan,
+        "score_name": "kendalltau_b",
+        "p_val": np.nan,
+    }
+]
+
+singleton_global_target = {
+    "score_name": "kendalltau_b",
+    "kendalltau_b": np.nan,
+    "score": np.nan,
+    "p_val": np.nan,
+}
+
+outputs = test_metric(
+    metric=metric,
+    predictions=["1"],
+    references=[["1"]],
+    instance_targets=singleton_instance_target,
+    global_target=singleton_global_target,
+)
+
 predictions = ["1.0", " 2.0", "1.0"]
 references = [["-1.0"], ["1.0"], ["0.0"]]
 
