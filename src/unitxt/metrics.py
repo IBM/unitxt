@@ -980,7 +980,11 @@ class Spearmanr(HuggingfaceMetric):
         additional_inputs: List[Dict],
     ) -> dict:
         if len(references) < 2:
-            return {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"}
+            return {
+                self.main_score: np.nan,
+                "score": np.nan,
+                "score_name": self.main_score,
+            }
         return super().compute(references, predictions, additional_inputs)
 
 
