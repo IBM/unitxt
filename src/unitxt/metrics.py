@@ -1,6 +1,7 @@
 import re
 import string
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
@@ -10,6 +11,7 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap, kendalltau
+from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -30,6 +32,9 @@ logger = get_logger()
 # global and instances metrics. Use None to disable confidence interval computation by default.
 _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
 _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+
+
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 def abstract_factory():
