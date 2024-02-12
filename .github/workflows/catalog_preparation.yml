@@ -1,4 +1,4 @@
-name: Test Catalog Code
+name: Test Catalog Preparation
 
 on:
    push:
@@ -7,7 +7,7 @@ on:
      branches: [ main ]
 
 jobs:
-   run-catalog-prepration:
+   run-catalog-preparation:
 
      runs-on: ubuntu-latest
      env:
