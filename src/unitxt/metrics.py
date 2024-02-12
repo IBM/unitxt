@@ -204,7 +204,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples = settings.num_resamples_for_global_metrics
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_global_metrics
+    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -282,7 +284,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = settings.num_resamples_for_instance_metrics
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -368,7 +372,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = settings.num_resamples_for_instance_metrics
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
