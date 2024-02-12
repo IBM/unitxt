@@ -888,7 +888,7 @@ class Rouge(HuggingfaceMetric):
 
     sent_split_newline: bool = True
 
-    _requirements_list: List[str] = ["nltk", "rouge"]
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
 
     def prepare(self):
         super().prepare()

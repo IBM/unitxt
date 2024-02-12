@@ -4,7 +4,7 @@ sentence_transformers
 ibm-cos-sdk
 opendatasets
 editdistance
-rouge_score
+rouge-score
 nltk
 sacrebleu
 scikit-learn
