@@ -2119,7 +2119,7 @@ class KPA(CustomF1):
 
 # define metrics that return means of an aggregation function applied across levels of a grouping variable
 def validate_subgroup_types(
-    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[str]
+    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List
 ):
     """Validate a dict of subgroup type instance score lists.
 
@@ -2140,6 +2140,14 @@ def validate_subgroup_types(
     )
     if expected_subgroup_types is None:
         expected_subgroup_types = []
+    else:
+        # expected_subgroup_types could be a list of lists; now take unique values
+        from itertools import chain
+
+        expected_subgroup_types = list(
+            set(chain.from_iterable(expected_subgroup_types))
+        )
+
     # make sure the expected types appear
     subgroup_scores_dict.update(
         {kk: [] for kk in expected_subgroup_types if kk not in subgroup_scores_dict}
@@ -2148,7 +2156,7 @@ def validate_subgroup_types(
 
 
 def performance_drop_rate(
-    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[str]
+    subgroup_scores_dict: Dict[str, List], expected_subgroup_types: List[List[str]]
 ):
     """Percentage decrease of mean performance on test elements relative to that on a baseline.
 
@@ -2157,8 +2165,9 @@ def performance_drop_rate(
     Args:
         subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
             of instance scores corresponding to subgroup_types with that key
-        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
-            baseline type, the second the other).
+        expected_subgroup_types: 2-element list, each element is a list of strings (typically a single element),
+            Each list is the label subset whose average scores are to be compared.
+            The first group should be the baseline, the second the comparison group.
 
     Returns:
         numeric PDR metric.
@@ -2166,16 +2175,30 @@ def performance_drop_rate(
         otherwise, calculate PDR
 
     """
-    assert len(expected_subgroup_types) == 2
+    assert (
+        len(expected_subgroup_types) == 2
+    ), "expected_subgroup_types must have two elements"
+    assert all(
+        isinstance(vv, list) for vv in expected_subgroup_types
+    ), "each element of expected_subgroup_types must be a list"
+    # make sure each list is unique
+    expected_subgroup_types = [list(set(vv)) for vv in expected_subgroup_types]
+
     subgroup_scores_dict = validate_subgroup_types(
         subgroup_scores_dict, expected_subgroup_types
     )
-    if any(len(subgroup_scores_dict[kk]) == 0 for kk in expected_subgroup_types):
+    # combine all scores from each sub-label (if there are more than 1 in each group) into a list
+    group_scores_list = [
+        np.concatenate([subgroup_scores_dict[vvv] for vvv in vv])
+        for vv in expected_subgroup_types
+    ]
+    if any(len(scores) == 0 for scores in group_scores_list):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    # first key should be the baseline category
-    baseline_mean = mean(subgroup_scores_dict[expected_subgroup_types[0]])
-    other_mean = mean(subgroup_scores_dict[expected_subgroup_types[1]])
+    # first group are baseline scores, second is others
+    baseline_mean = mean(group_scores_list[0])
+    other_mean = mean(group_scores_list[1])
+
     return np.nan if baseline_mean == 0 else 1 - other_mean / baseline_mean
 
 
@@ -2222,7 +2245,7 @@ def interpret_cohens_effect_size(x: float):
 
 def normalized_cohens_h(
     subgroup_scores_dict: Dict[str, List],
-    expected_subgroup_types: List[str],
+    expected_subgroup_types: List[List[str]],
     interpret=False,
 ):
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
@@ -2249,8 +2272,9 @@ def normalized_cohens_h(
     Args:
         subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
             of instance scores corresponding to subgroup_types with that key
-        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
-            baseline type, the second the other).
+        expected_subgroup_types: 2-element list, each element is a list of strings (typically a single element),
+            Each list is the label subset whose average scores are to be compared.
+            The first group should be the baseline, the second the comparison group.
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
@@ -2259,19 +2283,25 @@ def normalized_cohens_h(
     subgroup_scores_dict = validate_subgroup_types(
         subgroup_scores_dict, expected_subgroup_types
     )
-    if any(len(subgroup_scores_dict[kk]) == 0 for kk in expected_subgroup_types):
-        # no comparison can be made since there is not at least one score per type
-        return np.nan
+    # combine all scores from each sub-label (if there are more than 1 in each group) into a list
+    group_scores_list = [
+        np.concatenate([subgroup_scores_dict[vvv] for vvv in vv])
+        for vv in expected_subgroup_types
+    ]
     # requires scores to be in [0,1]
-    for kk, score_list in subgroup_scores_dict.items():
-        assert all(
-            0 <= score <= 1 for score in score_list
-        ), f"all {kk} scores must be in [0,1]"
+    for scores in group_scores_list:
+        assert all(0 <= score <= 1 for score in scores), "all scores must be in [0,1]"
 
-    baseline_mean = mean(subgroup_scores_dict[expected_subgroup_types[0]])
-    other_mean = mean(subgroup_scores_dict[expected_subgroup_types[1]])
-    h = 2 * (np.arcsin(np.sqrt(other_mean)) - np.arcsin(np.sqrt(baseline_mean)))
-    norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
+    if any(len(scores) == 0 for scores in group_scores_list):
+        # no comparison can be made since there is not at least one score per type
+        h = np.nan
+        norm_h = np.nan
+    else:
+        baseline_mean = mean(group_scores_list[0])
+        other_mean = mean(group_scores_list[1])
+        h = 2 * (np.arcsin(np.sqrt(other_mean)) - np.arcsin(np.sqrt(baseline_mean)))
+        norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
+
     if not interpret:
         return norm_h
 
@@ -2280,7 +2310,7 @@ def normalized_cohens_h(
 
 def cohens_d(
     subgroup_scores_dict: Dict[str, List],
-    expected_subgroup_types: List[str],
+    expected_subgroup_types: List[List[str]],
     interpret=False,
 ):
     """Cohen's d effect size between mean of two samples.
@@ -2290,8 +2320,9 @@ def cohens_d(
     Args:
         subgroup_scores_dict: dict where keys are from the set ('original', 'paraphrase') and values are lists
             of instance scores corresponding to subgroup_types with that key
-        expected_subgroup_types: list of the expected labels in subgroup_scores_dict (the first should be the
-            baseline type, the second the other).
+        expected_subgroup_types: 2-element list, each element is a list of strings (typically a single element),
+            Each list is the label subset whose average scores are to be compared.
+            The first group should be the baseline, the second the comparison group.
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score, and a string interpretation if interpret=True
@@ -2300,25 +2331,31 @@ def cohens_d(
     subgroup_scores_dict = validate_subgroup_types(
         subgroup_scores_dict, expected_subgroup_types
     )
-    group_n = [len(subgroup_scores_dict[st]) for st in expected_subgroup_types]
+    # combine all scores from each sub-label (if there are more than 1 in each group) into a list
+    group_scores_list = [
+        np.concatenate([subgroup_scores_dict[vvv] for vvv in vv])
+        for vv in expected_subgroup_types
+    ]
+
+    group_n = [len(scores) for scores in group_scores_list]
     if any(nn == 0 for nn in group_n) or all(nn <= 1 for nn in group_n):
         # if at least one sample size is 0 for one type, no comparison can be made at all
         # if both sample sizes are 1, then the denominator is undefined since divide by n1 + n2 - 2
         # so require at least one sample to have > 1 observation, and both to have >= 1.
-        return np.nan
-
-    # otherwise, calculate the variances
-    group_mean = [mean(subgroup_scores_dict[st]) for st in expected_subgroup_types]
-    # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
-    group_var = [
-        0.0 if nn == 1 else np.var(subgroup_scores_dict[st], ddof=1)
-        for st, nn in zip(expected_subgroup_types, group_n)
-    ]
-    var_total = sum([(nn - 1) * vv for vv, nn in zip(group_var, group_n)])
-    pooled_sd = np.sqrt(var_total / (sum(group_n) - 2))
-    d = np.diff(group_mean)[0] / pooled_sd
-    # clip it at a very large value so it doesn't become infinite if the variance (denominator) is 0
-    d = np.clip(a=d, a_min=-1000, a_max=1000)
+        d = np.nan
+    else:
+        # otherwise, calculate the variances
+        group_mean = [mean(scores) for scores in group_scores_list]
+        # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
+        group_var = [
+            0.0 if nn == 1 else np.var(scores, ddof=1)
+            for scores, nn in zip(group_scores_list, group_n)
+        ]
+        var_total = sum([(nn - 1) * vv for vv, nn in zip(group_var, group_n)])
+        pooled_sd = np.sqrt(var_total / (sum(group_n) - 2))
+        d = np.diff(group_mean)[0] / pooled_sd
+        # clip it at a very large value so it doesn't become infinite if the variance (denominator) is 0
+        d = float(np.clip(a=d, a_min=-5, a_max=5))
 
     if not interpret:
         return d
@@ -2337,16 +2374,14 @@ def mean_subgroup_score(
     Returns:
         float score
     """
+    expected_subgroup_types = list(set(expected_subgroup_types))
     subgroup_scores_dict = validate_subgroup_types(
         subgroup_scores_dict, expected_subgroup_types
     )
-    from itertools import chain
 
     # combine all desired subgroup scores
-    score_list = list(
-        chain.from_iterable(
-            [subgroup_scores_dict[st] for st in expected_subgroup_types]
-        )
+    score_list = np.concatenate(
+        [subgroup_scores_dict[st] for st in expected_subgroup_types]
     )
     if len(score_list) == 0:
         # no scores to use
@@ -2441,15 +2476,15 @@ class FixedGroupMeanParaphraseStringContainment(StringContainment):
 
 
 # using PDR
-class FixedGroupPDRAccuracy(Accuracy):
+class FixedGroupPDRParaphraseAccuracy(Accuracy):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "pdr",
+                "pdr_paraphrase",
                 lambda scd: performance_drop_rate(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],
@@ -2457,15 +2492,15 @@ class FixedGroupPDRAccuracy(Accuracy):
     }
 
 
-class FixedGroupPDRStringContainment(StringContainment):
+class FixedGroupPDRParaphraseStringContainment(StringContainment):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "pdr",
+                "pdr_paraphrase",
                 lambda scd: performance_drop_rate(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],
@@ -2483,15 +2518,15 @@ class GroupMeanTokenOverlap(TokenOverlap):
 
 
 # using Cohens's h for proportions
-class FixedGroupNormCohensHAccuracy(Accuracy):
+class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "norm_cohens_h",
+                "norm_cohens_h_paraphrase",
                 lambda scd: normalized_cohens_h(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],
@@ -2499,15 +2534,15 @@ class FixedGroupNormCohensHAccuracy(Accuracy):
     }
 
 
-class FixedGroupNormCohensHStringContainment(StringContainment):
+class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "norm_cohens_h",
+                "norm_cohens_h_paraphrase",
                 lambda scd: normalized_cohens_h(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],
@@ -2516,15 +2551,15 @@ class FixedGroupNormCohensHStringContainment(StringContainment):
 
 
 # using Cohen's d (takes into account internal variation in group scores)
-class FixedGroupCohensDAccuracy(Accuracy):
+class FixedGroupCohensDParaphraseAccuracy(Accuracy):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "cohens_d",
+                "cohens_d_paraphrase",
                 lambda scd: cohens_d(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],
@@ -2532,15 +2567,15 @@ class FixedGroupCohensDAccuracy(Accuracy):
     }
 
 
-class FixedGroupCohensDStringContainment(StringContainment):
+class FixedGroupCohensDParaphraseStringContainment(StringContainment):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "cohens_d",
+                "cohens_d_paraphrase",
                 lambda scd: cohens_d(
                     subgroup_scores_dict=scd,
-                    expected_subgroup_types=["original", "paraphrase"],
+                    expected_subgroup_types=[["original"], ["paraphrase"]],
                 ),
                 True,
             ],

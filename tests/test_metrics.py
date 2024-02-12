@@ -11,18 +11,18 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
-    FixedGroupCohensDAccuracy,
-    FixedGroupCohensDStringContainment,
+    FixedGroupCohensDParaphraseAccuracy,
+    FixedGroupCohensDParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
     FixedGroupMeanParaphraseAccuracy,
     FixedGroupMeanParaphraseStringContainment,
     FixedGroupMeanStringContainment,
-    FixedGroupNormCohensHAccuracy,
-    FixedGroupNormCohensHStringContainment,
-    FixedGroupPDRAccuracy,
-    FixedGroupPDRStringContainment,
+    FixedGroupNormCohensHParaphraseAccuracy,
+    FixedGroupNormCohensHParaphraseStringContainment,
+    FixedGroupPDRParaphraseAccuracy,
+    FixedGroupPDRParaphraseStringContainment,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -482,12 +482,12 @@ class TestMetrics(UnitxtTestCase):
             FixedGroupMeanBaselineStringContainment(),
             FixedGroupMeanParaphraseStringContainment(),
             GroupMeanTokenOverlap(),
-            FixedGroupNormCohensHAccuracy(),
-            FixedGroupNormCohensHStringContainment(),
-            FixedGroupPDRAccuracy(),
-            FixedGroupPDRStringContainment(),
-            FixedGroupCohensDAccuracy(),
-            FixedGroupCohensDStringContainment(),
+            FixedGroupNormCohensHParaphraseAccuracy(),
+            FixedGroupNormCohensHParaphraseStringContainment(),
+            FixedGroupPDRParaphraseAccuracy(),
+            FixedGroupPDRParaphraseStringContainment(),
+            FixedGroupCohensDParaphraseAccuracy(),
+            FixedGroupCohensDParaphraseStringContainment(),
         ]
         global_targets = [
             0.225,
@@ -503,7 +503,7 @@ class TestMetrics(UnitxtTestCase):
             -0.4639421840102023,
             0.8333333333333334,
             0.4444444444444445,
-            -333.55156684612643,
+            -1.8849001794597504,
             -0.7698003589195009,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
@@ -722,7 +722,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormCohensHAccuracy(),
+            metric=FixedGroupNormCohensHParaphraseAccuracy(),
             expected_ci_low=-1.0,
             expected_ci_high=0.33333333333333337,
         )
@@ -730,31 +730,31 @@ class TestConfidenceIntervals(UnitxtTestCase):
         # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
         # hence this test may fail on a PC
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupNormCohensHStringContainment(),
+            metric=FixedGroupNormCohensHParaphraseStringContainment(),
             expected_ci_low=-0.49999999999999994,
             expected_ci_high=-0.39182655203060723,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupPDRAccuracy(),
+            metric=FixedGroupPDRParaphraseAccuracy(),
             expected_ci_low=0.6666666666666666,
             expected_ci_high=1.0,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupPDRStringContainment(),
+            metric=FixedGroupPDRParaphraseStringContainment(),
             expected_ci_low=0.3333333333333333,
             expected_ci_high=0.5,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupCohensDAccuracy(),
-            expected_ci_low=-1000.0,
+            metric=FixedGroupCohensDParaphraseAccuracy(),
+            expected_ci_low=-5.0,
             expected_ci_high=0.5,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupCohensDStringContainment(),
+            metric=FixedGroupCohensDParaphraseStringContainment(),
             expected_ci_low=-0.8660254037844387,
             expected_ci_high=-0.5773502691896257,
         )

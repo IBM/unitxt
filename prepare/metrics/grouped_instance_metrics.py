@@ -4,18 +4,18 @@ import numpy as np
 
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
-    FixedGroupCohensDAccuracy,
-    FixedGroupCohensDStringContainment,
+    FixedGroupCohensDParaphraseAccuracy,
+    FixedGroupCohensDParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
     FixedGroupMeanParaphraseAccuracy,
     FixedGroupMeanParaphraseStringContainment,
     FixedGroupMeanStringContainment,
-    FixedGroupNormCohensHAccuracy,
-    FixedGroupNormCohensHStringContainment,
-    FixedGroupPDRAccuracy,
-    FixedGroupPDRStringContainment,
+    FixedGroupNormCohensHParaphraseAccuracy,
+    FixedGroupNormCohensHParaphraseStringContainment,
+    FixedGroupPDRParaphraseAccuracy,
+    FixedGroupPDRParaphraseStringContainment,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -337,15 +337,15 @@ add_to_catalog(
 
 
 # PDR: will always use fixed groups
-metric = FixedGroupPDRAccuracy()
+metric = FixedGroupPDRParaphraseAccuracy()
 global_target = {
-    "fixed_group_pdr_accuracy": 0.83,
+    "fixed_group_pdr_paraphrase_accuracy": 0.83,
     "score": 0.83,
-    "score_name": "fixed_group_pdr_accuracy",
+    "score_name": "fixed_group_pdr_paraphrase_accuracy",
     "score_ci_low": 0.67,
     "score_ci_high": 1.0,
-    "fixed_group_pdr_accuracy_ci_low": 0.67,
-    "fixed_group_pdr_accuracy_ci_high": 1.0,
+    "fixed_group_pdr_paraphrase_accuracy_ci_low": 0.67,
+    "fixed_group_pdr_paraphrase_accuracy_ci_high": 1.0,
 }
 
 
@@ -358,69 +358,19 @@ outputs = test_metric(
     additional_inputs=additional_inputs,
 )
 
-add_to_catalog(metric, "metrics.robustness.fixed_group_pdr_accuracy", overwrite=True)
+add_to_catalog(
+    metric, "metrics.robustness.fixed_group_pdr_paraphrase_accuracy", overwrite=True
+)
 
-metric = FixedGroupPDRStringContainment()
+metric = FixedGroupPDRParaphraseStringContainment()
 global_target = {
-    "fixed_group_pdr_string_containment": 0.44,
+    "fixed_group_pdr_paraphrase_string_containment": 0.44,
     "score": 0.44,
-    "score_name": "fixed_group_pdr_string_containment",
+    "score_name": "fixed_group_pdr_paraphrase_string_containment",
     "score_ci_low": 0.33,
     "score_ci_high": 0.5,
-    "fixed_group_pdr_string_containment_ci_low": 0.33,
-    "fixed_group_pdr_string_containment_ci_high": 0.5,
-}
-
-
-outputs = test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets_string_containment,
-    global_target=global_target,
-    additional_inputs=additional_inputs,
-)
-
-add_to_catalog(
-    metric, "metrics.robustness.fixed_group_pdr_string_containment", overwrite=True
-)
-
-# Cohen's H will always use fixed groups
-metric = FixedGroupNormCohensHAccuracy()
-global_target = {
-    "fixed_group_norm_cohens_h_accuracy": -0.42,
-    "score": -0.42,
-    "score_name": "fixed_group_norm_cohens_h_accuracy",
-    "score_ci_low": -1.0,
-    "score_ci_high": 0.33,
-    "fixed_group_norm_cohens_h_accuracy_ci_low": -1.0,
-    "fixed_group_norm_cohens_h_accuracy_ci_high": 0.33,
-}
-
-
-outputs = test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets_accuracy,
-    global_target=global_target,
-    additional_inputs=additional_inputs,
-)
-
-add_to_catalog(
-    metric, "metrics.robustness.fixed_group_norm_cohens_h_accuracy", overwrite=True
-)
-
-
-metric = FixedGroupNormCohensHStringContainment()
-global_target = {
-    "fixed_group_norm_cohens_h_string_containment": -0.46,
-    "score": -0.46,
-    "score_name": "fixed_group_norm_cohens_h_string_containment",
-    "score_ci_low": -0.5,
-    "score_ci_high": -0.39,
-    "fixed_group_norm_cohens_h_string_containment_ci_low": -0.5,
-    "fixed_group_norm_cohens_h_string_containment_ci_high": -0.39,
+    "fixed_group_pdr_paraphrase_string_containment_ci_low": 0.33,
+    "fixed_group_pdr_paraphrase_string_containment_ci_high": 0.5,
 }
 
 
@@ -435,21 +385,77 @@ outputs = test_metric(
 
 add_to_catalog(
     metric,
-    "metrics.robustness.fixed_group_norm_cohens_h_string_containment",
+    "metrics.robustness.fixed_group_pdr_paraphrase_string_containment",
+    overwrite=True,
+)
+
+# Cohen's H will always use fixed groups
+metric = FixedGroupNormCohensHParaphraseAccuracy()
+global_target = {
+    "fixed_group_norm_cohens_h_paraphrase_accuracy": -0.42,
+    "score": -0.42,
+    "score_name": "fixed_group_norm_cohens_h_paraphrase_accuracy",
+    "score_ci_low": -1.0,
+    "score_ci_high": 0.33,
+    "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_low": -1.0,
+    "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_high": 0.33,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_norm_cohens_h_paraphrase_accuracy",
+    overwrite=True,
+)
+
+
+metric = FixedGroupNormCohensHParaphraseStringContainment()
+global_target = {
+    "fixed_group_norm_cohens_h_paraphrase_string_containment": -0.46,
+    "score": -0.46,
+    "score_name": "fixed_group_norm_cohens_h_paraphrase_string_containment",
+    "score_ci_low": -0.5,
+    "score_ci_high": -0.39,
+    "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_low": -0.5,
+    "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_high": -0.39,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_string_containment,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_norm_cohens_h_paraphrase_string_containment",
     overwrite=True,
 )
 
 
 # Cohen's D will always use fixed groups
-metric = FixedGroupCohensDAccuracy()
+metric = FixedGroupCohensDParaphraseAccuracy()
 global_target = {
-    "fixed_group_cohens_d_accuracy": -333.55,
-    "score": -333.55,
-    "score_name": "fixed_group_cohens_d_accuracy",
-    "score_ci_low": -1000.0,
+    "fixed_group_cohens_d_paraphrase_accuracy": -1.88,
+    "score": -1.88,
+    "score_name": "fixed_group_cohens_d_paraphrase_accuracy",
+    "score_ci_low": -5.0,
     "score_ci_high": 0.5,
-    "fixed_group_cohens_d_accuracy_ci_low": -1000.0,
-    "fixed_group_cohens_d_accuracy_ci_high": 0.5,
+    "fixed_group_cohens_d_paraphrase_accuracy_ci_low": -5.0,
+    "fixed_group_cohens_d_paraphrase_accuracy_ci_high": 0.5,
 }
 
 
@@ -463,19 +469,21 @@ outputs = test_metric(
 )
 
 add_to_catalog(
-    metric, "metrics.robustness.fixed_group_cohens_d_accuracy", overwrite=True
+    metric,
+    "metrics.robustness.fixed_group_cohens_d_paraphrase_accuracy",
+    overwrite=True,
 )
 
 
-metric = FixedGroupCohensDStringContainment()
+metric = FixedGroupCohensDParaphraseStringContainment()
 global_target = {
-    "fixed_group_cohens_d_string_containment": -0.77,
+    "fixed_group_cohens_d_paraphrase_string_containment": -0.77,
     "score": -0.77,
-    "score_name": "fixed_group_cohens_d_string_containment",
+    "score_name": "fixed_group_cohens_d_paraphrase_string_containment",
     "score_ci_low": -0.87,
     "score_ci_high": -0.58,
-    "fixed_group_cohens_d_string_containment_ci_low": -0.87,
-    "fixed_group_cohens_d_string_containment_ci_high": -0.58,
+    "fixed_group_cohens_d_paraphrase_string_containment_ci_low": -0.87,
+    "fixed_group_cohens_d_paraphrase_string_containment_ci_high": -0.58,
 }
 
 
@@ -490,7 +498,7 @@ outputs = test_metric(
 
 add_to_catalog(
     metric,
-    "metrics.robustness.fixed_group_cohens_d_string_containment",
+    "metrics.robustness.fixed_group_cohens_d_paraphrase_string_containment",
     overwrite=True,
 )
 
