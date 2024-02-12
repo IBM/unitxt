@@ -54,7 +54,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     logger.info(f"Using template card index: {template_card_index}")
 
     if "num_demos" not in kwargs:
-        kwargs["num_demos"] = 3
+        kwargs["num_demos"] = 1
 
     if "demos_pool_size" not in kwargs:
         kwargs["demos_pool_size"] = 20
@@ -78,7 +78,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         examples = print_recipe_output(
             recipe,
             max_steps=recipe.num_steps(),
-            num_examples=3,
+            num_examples=5,
             print_header=False,
             print_stream_size=False,
             streams=["test"],
@@ -168,6 +168,20 @@ def test_with_eval(
         )
 
     results = _compute(predictions=correct_predictions, references=examples)
+    logger.info("*" * 80)
+    logger.info(
+        "Show the output of the post processing of predictions by the template:"
+    )
+    logger.info("(Uses the references as sample predictions)")
+    for result, correct_prediction in zip(results, correct_predictions):
+        logger.info("*" * 5)
+        logger.info(
+            f"Prediction: ({type(correct_prediction).__name__})     {correct_prediction}"
+        )
+        logger.info(
+            f"Processed prediction: ({type(result['prediction']).__name__}) {result['prediction']}"
+        )
+    logger.info("*" * 80)
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
