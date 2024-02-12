@@ -20,3 +20,18 @@ class UnitxtTestCase(unittest.TestCase):
 
     def setUp(self):
         logger.info(f"\n###  Running {self.__class__.__name__} ###\n")
+
+
+class UnitxtCatalogPreparationTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        enable_explicit_format()
+        unitxt.settings.allow_unverified_code = True
+        unitxt.settings.use_only_local_catalogs = True
+        unitxt.settings.global_loader_limit = 300
+        unitxt.settings.num_resamples_for_instance_metrics = 10
+        unitxt.settings.num_resamples_for_global_metrics = 5
+        register_local_catalog_for_tests()
+
+    def setUp(self):
+        logger.info(f"\n###  Running {self.__class__.__name__} ###\n")

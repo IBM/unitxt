@@ -51,6 +51,8 @@ settings = Settings()
 settings.allow_unverified_code = False
 settings.use_only_local_catalogs = False
 settings.global_loader_limit = None
+settings.num_resamples_for_instance_metrics = 1000
+settings.num_resamples_for_global_metrics = 100
 
 
 def get_settings():
