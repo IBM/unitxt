@@ -20,6 +20,7 @@ Some operators are specielized in specific task such as:
 
 - :class:`loaders<unitxt.loaders>` for loading data.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
+- :class:`table_operators<unitxt.table_operators>` for tabular data operators.
 
 Other specelized operators are used by unitxt internally:
 
