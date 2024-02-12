@@ -7,7 +7,7 @@ from datetime import timedelta
 from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.text_utils import print_dict
-from tests.utils import UnitxtTestCase
+from tests.utils import UnitxtCatalogPreparationTestCase
 
 logger = get_logger()
 project_dir = os.path.dirname(
@@ -33,7 +33,7 @@ def import_module_from_file(file_path):
     return module
 
 
-class TestExamples(UnitxtTestCase):
+class TestExamples(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         logger.info(f"Testing preparation files: {all_preparation_files}")

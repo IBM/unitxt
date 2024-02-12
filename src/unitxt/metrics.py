@@ -24,15 +24,12 @@ from .operator import (
 )
 from .operators import CopyFields
 from .random_utils import get_seed
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import isoftype
 
 logger = get_logger()
-# The default number of resamples used to estimate the confidence intervals
-# global and instances metrics. Use None to disable confidence interval computation by default.
-_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
-_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
-
+settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
@@ -207,7 +204,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
+    n_resamples = settings.num_resamples_for_global_metrics
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -285,7 +282,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples = settings.num_resamples_for_instance_metrics
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -371,7 +368,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples = settings.num_resamples_for_instance_metrics
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
