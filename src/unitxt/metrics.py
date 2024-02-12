@@ -969,6 +969,21 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
+class Spearmanr(HuggingfaceMetric):
+    hf_metric_name = "spearmanr"
+    main_score = "spearmanr"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        if len(references) < 2:
+            return {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"}
+        return super().compute(references, predictions, additional_inputs)
+
+
 class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
@@ -986,6 +1001,14 @@ class KendallTauMetric(GlobalMetric):
         predictions: List[float],
         additional_inputs: List[Dict],
     ) -> dict:
+        if len(references) < 2:
+            return {
+                "score_name": self.main_score,
+                self.main_score: np.nan,
+                "score": np.nan,
+                "p_val": np.nan,
+            }
+
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
