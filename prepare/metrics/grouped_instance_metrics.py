@@ -446,7 +446,7 @@ add_to_catalog(
 )
 
 
-# Cohen's D will always use fixed groups
+# Hedge's g will always use fixed groups
 metric = FixedGroupHedgesGParaphraseAccuracy()
 global_target = {
     "fixed_group_hedges_g_paraphrase_accuracy": -1.73,

@@ -2398,15 +2398,21 @@ def hedges_g(
         ]
         var_total = sum([(nn - 1) * vv for vv, nn in zip(group_var, group_n)])
         pooled_sd = np.sqrt(var_total / (sum(group_n) - 2))
-        g = float(group_mean[1] - group_mean[0]) / pooled_sd
+
+        max_absolute_value = 5
+        try:
+            g = float(group_mean[1] - group_mean[0]) / pooled_sd
+        except ZeroDivisionError:
+            # return a large effect size to avoid explosion if there is zero variance
+            g = np.sign(group_mean[1] - group_mean[0]) * max_absolute_value
+
         n = sum(group_n)
         if 3 < n < 50:
             # small sample adjustment see https://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/hedgeg.htm
             # the multiplier is 0 if n <= 3
             g *= ((n - 3) / (n - 2.25)) * np.sqrt((n - 2) / n)
-
-        # clip it at a very large value so it doesn't become infinite if the variance (denominator) is 0
-        g = float(np.clip(a=g, a_min=-5, a_max=5))
+        # clip it at a very large value so it doesn't become infinite if the variance (denominator) is very small or 0
+        g = float(np.clip(a=g, a_min=-1 * max_absolute_value, a_max=max_absolute_value))
 
     if not interpret:
         return g
