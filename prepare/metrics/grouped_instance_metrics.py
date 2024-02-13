@@ -4,8 +4,8 @@ import numpy as np
 
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
-    FixedGroupCohensDParaphraseAccuracy,
-    FixedGroupCohensDParaphraseStringContainment,
+    FixedGroupHedgesGParaphraseAccuracy,
+    FixedGroupHedgesGParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -447,15 +447,15 @@ add_to_catalog(
 
 
 # Cohen's D will always use fixed groups
-metric = FixedGroupCohensDParaphraseAccuracy()
+metric = FixedGroupHedgesGParaphraseAccuracy()
 global_target = {
-    "fixed_group_cohens_d_paraphrase_accuracy": -1.88,
-    "score": -1.88,
-    "score_name": "fixed_group_cohens_d_paraphrase_accuracy",
+    "fixed_group_hedges_g_paraphrase_accuracy": -1.73,
+    "score": -1.73,
+    "score_name": "fixed_group_hedges_g_paraphrase_accuracy",
     "score_ci_low": -5.0,
-    "score_ci_high": 0.5,
-    "fixed_group_cohens_d_paraphrase_accuracy_ci_low": -5.0,
-    "fixed_group_cohens_d_paraphrase_accuracy_ci_high": 0.5,
+    "score_ci_high": 0.28,
+    "fixed_group_hedges_g_paraphrase_accuracy_ci_low": -5.0,
+    "fixed_group_hedges_g_paraphrase_accuracy_ci_high": 0.28,
 }
 
 
@@ -470,20 +470,20 @@ outputs = test_metric(
 
 add_to_catalog(
     metric,
-    "metrics.robustness.fixed_group_cohens_d_paraphrase_accuracy",
+    "metrics.robustness.fixed_group_hedges_g_paraphrase_accuracy",
     overwrite=True,
 )
 
 
-metric = FixedGroupCohensDParaphraseStringContainment()
+metric = FixedGroupHedgesGParaphraseStringContainment()
 global_target = {
-    "fixed_group_cohens_d_paraphrase_string_containment": -0.77,
-    "score": -0.77,
-    "score_name": "fixed_group_cohens_d_paraphrase_string_containment",
-    "score_ci_low": -0.87,
-    "score_ci_high": -0.58,
-    "fixed_group_cohens_d_paraphrase_string_containment_ci_low": -0.87,
-    "fixed_group_cohens_d_paraphrase_string_containment_ci_high": -0.58,
+    "fixed_group_hedges_g_paraphrase_string_containment": -0.4,
+    "score": -0.4,
+    "score_name": "fixed_group_hedges_g_paraphrase_string_containment",
+    "score_ci_low": -0.49,
+    "score_ci_high": -0.23,
+    "fixed_group_hedges_g_paraphrase_string_containment_ci_low": -0.49,
+    "fixed_group_hedges_g_paraphrase_string_containment_ci_high": -0.23,
 }
 
 
@@ -498,7 +498,7 @@ outputs = test_metric(
 
 add_to_catalog(
     metric,
-    "metrics.robustness.fixed_group_cohens_d_paraphrase_string_containment",
+    "metrics.robustness.fixed_group_hedges_g_paraphrase_string_containment",
     overwrite=True,
 )
 
