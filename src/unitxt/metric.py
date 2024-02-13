@@ -39,7 +39,7 @@ from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
 from .type_utils import __file__ as _
-from .utils import __file__ as _
+from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
 
@@ -69,14 +69,9 @@ class Metric(evaluate.Metric):
         flatten: bool = False,
         split_name: str = "all",
     ):
-        try:
+        if is_package_installed("unitxt"):
             from unitxt.metric_utils import _compute as _compute_installed
 
-            unitxt_installed = True
-        except ImportError:
-            unitxt_installed = False
-
-        if unitxt_installed:
             return _compute_installed(
                 predictions=predictions,
                 references=references,

@@ -22,13 +22,12 @@ LoadFromKaggle: loads datasets from the kaggle.com community site
 LoadFromIBMCloud: loads a dataset from the IBM cloud.
 ------------------------
 """
-import importlib
 import itertools
 import os
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Mapping, Optional, Sequence, Union
+from typing import Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -42,13 +41,6 @@ from .stream import MultiStream, Stream
 
 logger = get_logger()
 settings = get_settings()
-
-try:
-    import ibm_boto3
-
-    ibm_boto3_available = True
-except ImportError:
-    ibm_boto3_available = False
 
 
 class Loader(SourceOperator):
@@ -241,13 +233,10 @@ class MissingKaggleCredentialsError(ValueError):
 # TODO write how to obtain kaggle credentials
 class LoadFromKaggle(Loader):
     url: str
+    _requirements_list: List[str] = ["opendatasets"]
 
     def verify(self):
         super().verify()
-        if importlib.util.find_spec("opendatasets") is None:
-            raise ImportError(
-                "Please install opendatasets in order to use the LoadFromKaggle loader (using `pip install opendatasets`) "
-            )
         if not os.path.isfile("kaggle.json"):
             raise MissingKaggleCredentialsError(
                 "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
@@ -283,6 +272,7 @@ class LoadFromIBMCloud(Loader):
     # 3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
+    _requirements_list: List[str] = ["ibm_boto3"]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
         logger.info(f"Downloading {item_name} from {bucket_name} COS")
@@ -337,7 +327,6 @@ class LoadFromIBMCloud(Loader):
 
     def verify(self):
         super().verify()
-        assert ibm_boto3_available, "Please install ibm_boto3 in order to use the LoadFromIBMCloud loader (using `pip install ibm-cos-sdk`) "
         assert (
             self.endpoint_url is not None
         ), f"Please set the {self.endpoint_url_env} environmental variable"
@@ -351,6 +340,8 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def process(self):
+        import ibm_boto3
+
         cos = ibm_boto3.resource(
             "s3",
             aws_access_key_id=self.aws_access_key_id,

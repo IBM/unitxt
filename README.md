@@ -20,7 +20,7 @@ In the dynamic landscape of generative NLP, traditional text processing pipeline
 [![version](https://img.shields.io/pypi/v/unitxt)](https://pypi.org/project/unitxt/)
 ![license](https://img.shields.io/github/license/ibm/unitxt)
 ![python](https://img.shields.io/badge/python-3.8%20|%203.9-blue)
-![tests](https://img.shields.io/github/actions/workflow/status/ibm/unitxt/tests.yml?branch=main&label=tests)
+![tests](https://img.shields.io/github/actions/workflow/status/ibm/unitxt/library_tests.yml?branch=main&label=tests)
 [![codecov](https://codecov.io/gh/IBM/unitxt/branch/main/graph/badge.svg?token=mlrWq9cwz3)](https://codecov.io/gh/IBM/unitxt)
 ![Read the Docs](https://img.shields.io/readthedocs/unitxt)
 [![downloads](https://static.pepy.tech/personalized-badge/unitxt?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/unitxt)
