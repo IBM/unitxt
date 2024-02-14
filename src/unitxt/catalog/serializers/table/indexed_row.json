@@ -1,0 +1,4 @@
+{
+    "type": "serialize_table_as_indexed_row_major",
+    "field": "table"
+}
