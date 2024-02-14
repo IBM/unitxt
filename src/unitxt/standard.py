@@ -6,11 +6,7 @@ from .formats import Format, SystemFormat
 from .instructions import EmptyInstruction, Instruction
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import (
-    Augmentor,
-    NullAugmentor,
-    StreamRefiner,
-)
+from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -29,6 +25,7 @@ class AddDemosField(SpreadSplit):
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
+    __allow_unexpected_arguments__ = True
     card: TaskCard
     template: Template = None
     instruction: Instruction = Field(default_factory=EmptyInstruction)
@@ -114,6 +111,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.steps = [
             self.card.loader,
         ]
+
+        if hasattr(self, "_kwargs"):
+            if len(self._kwargs) > 0:
+                self.steps.append(AddFields(fields=self._kwargs))
 
         if self.loader_limit:
             self.card.loader.loader_limit = self.loader_limit

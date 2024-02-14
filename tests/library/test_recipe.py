@@ -52,6 +52,46 @@ class TestRecipes(UnitxtTestCase):
             )
             break
 
+    def test_standard_recipe_with_additional_field(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            instruction=TextualInstruction(text="classify"),
+            template=InputOutputTemplate(
+                input_format="{premise}",
+                output_format="{label}",
+            ),
+            format=SystemFormat(
+                demo_format="User:{source}\nAgent:{target}\n\n",
+                model_input_format="{instruction}\n\n{demos}User:{source}\nAgent:",
+            ),
+            additional_field="test",
+        )
+        stream = recipe()
+
+        for instance in stream["train"]:
+            print_dict(instance)
+            self.assertDictEqual(
+                instance,
+                {
+                    "metrics": ["metrics.accuracy"],
+                    "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
+                    "target": "not entailment",
+                    "references": ["not entailment"],
+                    "additional_inputs": {
+                        "key": ["choices", "premise", "hypothesis", "label"],
+                        "value": [
+                            "['entailment', 'not entailment']",
+                            "I stuck a pin through a carrot. When I pulled the pin out, it had a hole.",
+                            "The carrot had a hole.",
+                            "not entailment",
+                        ],
+                    },
+                    "group": "unitxt",
+                    "postprocessors": ["processors.to_string_stripped"],
+                },
+            )
+            break
+
     def test_standard_recipe_with_catalog(self):
         recipe = StandardRecipe(
             card="cards.mmlu.marketing",
