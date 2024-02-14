@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import pandas as pd
 
+from .metrics import MetricPipeline
 from .operator import SequentialOperator
 from .stream import MultiStream
 
@@ -27,7 +28,11 @@ def _(
         metrics_operator = SequentialOperator(steps=[metric_name])
 
         if not compute_conf_intervals:
-            metrics_operator.steps[0].metric.n_resamples = None
+            first_step = metrics_operator.steps[0]
+            if isinstance(first_step, MetricPipeline):
+                first_step.metric.n_resamples = None
+            else:
+                first_step.n_resamples = None
 
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
