@@ -2347,13 +2347,13 @@ def normalized_cohens_h(
     return norm_h, interpret_effect_size(h)
 
 
-def hedges_g(
+def normalized_hedges_g(
     subgroup_scores_dict: Dict[str, List],
     control_subgroup_types: List[str],
     comparison_subgroup_types: List[str],
     interpret=False,
 ):
-    """Hedge's g effect size between mean of two samples.  Better than Cohen's d for small sample sizes.
+    """Hedge's g effect size between mean of two samples, normalized to interval [-1,1].  Better than Cohen's d for small sample sizes.
 
     Takes into account the variances within the samples, not just the means.
 
@@ -2364,7 +2364,7 @@ def hedges_g(
             to be compared to the control group.
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
-        float score, and a string interpretation if interpret=True
+        float score between -1 and 1, and a string interpretation if interpret=True
     """
     (
         subgroup_scores_dict,
@@ -2387,7 +2387,7 @@ def hedges_g(
         # if at least one sample size is 0 for one type, no comparison can be made at all
         # if both sample sizes are 1, then the denominator is undefined since divide by n1 + n2 - 2
         # so require at least one sample to have > 1 observation, and both to have >= 1.
-        g = np.nan
+        g, norm_g = np.nan, np.nan
     else:
         # otherwise, calculate the variances
         group_mean = [mean(scores) for scores in group_scores_list]
@@ -2400,11 +2400,17 @@ def hedges_g(
         pooled_sd = np.sqrt(var_total / (sum(group_n) - 2))
 
         max_absolute_value = 5
-        try:
-            g = float(group_mean[1] - group_mean[0]) / pooled_sd
-        except ZeroDivisionError:
-            # return a large effect size to avoid explosion if there is zero variance
-            g = np.sign(group_mean[1] - group_mean[0]) * max_absolute_value
+        gmd = float(group_mean[1] - group_mean[0])
+
+        if gmd == 0:
+            # if exactly the same, return 0
+            g = 0.0
+        else:
+            try:
+                g = gmd / pooled_sd
+            except ZeroDivisionError:
+                # return a large effect size to avoid explosion if there is zero variance
+                g = np.sign(gmd) * max_absolute_value
 
         n = sum(group_n)
         if 3 < n < 50:
@@ -2413,10 +2419,11 @@ def hedges_g(
             g *= ((n - 3) / (n - 2.25)) * np.sqrt((n - 2) / n)
         # clip it at a very large value so it doesn't become infinite if the variance (denominator) is very small or 0
         g = float(np.clip(a=g, a_min=-1 * max_absolute_value, a_max=max_absolute_value))
+        norm_g = g / max_absolute_value
 
     if not interpret:
-        return g
-    return g, interpret_effect_size(g)
+        return norm_g
+    return norm_g, interpret_effect_size(g)
 
 
 def mean_subgroup_score(
@@ -2611,13 +2618,13 @@ class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
 
 
 # using Cohen's d (takes into account internal variation in group scores)
-class FixedGroupHedgesGParaphraseAccuracy(Accuracy):
+class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "hedges_g_paraphrase",
-                lambda scd: hedges_g(
+                "norm_hedges_g_paraphrase",
+                lambda scd: normalized_hedges_g(
                     subgroup_scores_dict=scd,
                     control_subgroup_types=["original"],
                     comparison_subgroup_types=["paraphrase"],
@@ -2628,13 +2635,13 @@ class FixedGroupHedgesGParaphraseAccuracy(Accuracy):
     }
 
 
-class FixedGroupHedgesGParaphraseStringContainment(StringContainment):
+class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
     subgroup_column = "variant_type"
     reduction_map = {
         "group_mean": {
             "agg_func": [
-                "hedges_g_paraphrase",
-                lambda scd: hedges_g(
+                "norm_hedges_g_paraphrase",
+                lambda scd: normalized_hedges_g(
                     subgroup_scores_dict=scd,
                     control_subgroup_types=["original"],
                     comparison_subgroup_types=["paraphrase"],

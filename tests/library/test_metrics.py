@@ -11,8 +11,6 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
-    FixedGroupHedgesGParaphraseAccuracy,
-    FixedGroupHedgesGParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -21,6 +19,8 @@ from src.unitxt.metrics import (
     FixedGroupMeanStringContainment,
     FixedGroupNormCohensHParaphraseAccuracy,
     FixedGroupNormCohensHParaphraseStringContainment,
+    FixedGroupNormHedgesGParaphraseAccuracy,
+    FixedGroupNormHedgesGParaphraseStringContainment,
     FixedGroupPDRParaphraseAccuracy,
     FixedGroupPDRParaphraseStringContainment,
     GroupMeanAccuracy,
@@ -486,8 +486,8 @@ class TestMetrics(UnitxtTestCase):
             FixedGroupNormCohensHParaphraseStringContainment(),
             FixedGroupPDRParaphraseAccuracy(),
             FixedGroupPDRParaphraseStringContainment(),
-            FixedGroupHedgesGParaphraseAccuracy(),
-            FixedGroupHedgesGParaphraseStringContainment(),
+            FixedGroupNormHedgesGParaphraseAccuracy(),
+            FixedGroupNormHedgesGParaphraseStringContainment(),
         ]
         global_targets = [
             0.225,
@@ -503,8 +503,8 @@ class TestMetrics(UnitxtTestCase):
             -0.4639421840102023,
             0.8333333333333334,
             0.4444444444444445,
-            -1.7282993195760106,
-            -0.4030078304086706,
+            -0.34565986391520215,
+            -0.08060156608173413,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
@@ -748,15 +748,15 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupHedgesGParaphraseAccuracy(),
-            expected_ci_low=-5.0,
-            expected_ci_high=0.28167151608781216,
+            metric=FixedGroupNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=-1.0,
+            expected_ci_high=0.01892225367237965,
         )
 
         self._test_grouped_instance_confidence_interval(
-            metric=FixedGroupHedgesGParaphraseStringContainment(),
-            expected_ci_low=-0.4878693769090451,
-            expected_ci_high=-0.23328473740792172,
+            metric=FixedGroupNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=-0.09757387538180902,
+            expected_ci_high=-0.046656947481584346,
         )
 
         # pass global dict because there are additional fields other than the main score
