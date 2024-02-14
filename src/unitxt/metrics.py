@@ -663,20 +663,20 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         return instances, global_score
 
     def get_group_scores(
-        self, instances: List[dict], field_names: List[str], group_aggregation_func
+        self, instances: List[dict], score_names: List[str], group_aggregation_func
     ):
-        """Return a list of group aggregation function value for group_mean reduction.
+        """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
         Args:
             instances: List of observation instances with instance-level scores (fields) computed.
-            field_names: List of instance score names in each instance to apply the aggregation function.
+            score_names: List of instance score names in each instance to apply the aggregation function.
             group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
                 or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
                 callable function returns a single score for the group
 
         Returns:
             List of dicts, each corresponding to a group of instances (defined by 'group_id'),
-                with a group score for each field_name
+                with an aggregate group score for each score_name
         """
         from collections import defaultdict
 
@@ -688,21 +688,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         # check if function has fields for subgroup_column
         uses_subgroups = self.subgroup_column is not None
+        default_subgroup_name = "default"
         if uses_subgroups:
             assert all(
                 self.subgroup_column in instance["additional_inputs"]
                 for instance in instances
             ), f"all instances must have field {self.subgroup_column}' in additional_inputs"
-
-            # define the aggregation function
-            def agg_func(subgroup_scores_dict):
-                # if function a uses the subgroup_column values, pass the full dict
-                return group_aggregation_func(subgroup_scores_dict)
-        else:
-
-            def agg_func(subgroup_scores_dict):
-                # otherwise pass the default 'original' scores to the default argument
-                return group_aggregation_func(subgroup_scores_dict["default"])
 
         # loop through the instances and group the scores
         for instance in instances:
@@ -716,20 +707,26 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                additional_inputs[self.subgroup_column] if uses_subgroups else "default"
+                additional_inputs[self.subgroup_column]
+                if uses_subgroups
+                else default_subgroup_name
             )
-            for field_name in field_names:
-                group_to_instance_scores[group_key][field_name][subgroup_type].append(
-                    instance["score"]["instance"][field_name]
+            for score_name in score_names:
+                group_to_instance_scores[group_key][score_name][subgroup_type].append(
+                    instance["score"]["instance"][score_name]
                 )
 
-        # now apply the appropriate aggregation function to each group
+        # if group_aggregation_func expects a subgroup-types score dict, pass it; otherwise pass the default type list of scores
         return [
             {
                 "score": {
                     "instance": {
-                        field_name: agg_func(score_dict)
-                        for field_name, score_dict in group_scores.items()
+                        score_name: group_aggregation_func(
+                            score_dict
+                            if uses_subgroups
+                            else score_dict[default_subgroup_name]
+                        )
+                        for score_name, score_dict in group_scores.items()
                     }
                 }
             }
@@ -2151,7 +2148,6 @@ class KPA(CustomF1):
         return element == "none"
 
 
-# define metrics that return means of an aggregation function applied across levels of a grouping variable
 def validate_subgroup_types(
     subgroup_scores_dict: Dict[str, List],
     control_subgroup_types: List[str],
@@ -2353,7 +2349,7 @@ def normalized_cohens_h(
 
 
 def normalized_hedges_g(
-    subgroup_scores_dict: Dict[str, List],
+    subgroup_scores_dict: Dict[str, List[float]],
     control_subgroup_types: List[str],
     comparison_subgroup_types: List[str],
     interpret=False,
