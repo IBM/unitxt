@@ -30,6 +30,7 @@ from src.unitxt.operators import (
     Intersect,
     IterableSource,
     JoinStr,
+    JsonizeInstanceValues,
     LengthBalancer,
     ListFieldValues,
     MapInstanceValues,
@@ -62,6 +63,60 @@ class TestOperators(UnitxtTestCase):
         self.assertEqual(len(all), len(expected_all))
         for input_dict, output_dict in zip(all, expected_all):
             self.assertDictEqual(input_dict, output_dict)
+
+    def test_jsonize_instance_values(self):
+        inputs = [{"a": "abc", "b": "[1,2,3]"}]
+        target_field = "target"
+        targets = [
+            {"a": "abc", "b": "[1,2,3]", "target": '{"a": "abc", "b": [1, 2, 3]}'}
+        ]
+
+        check_operator(
+            operator=JsonizeInstanceValues(
+                target_field_name=target_field, source_fields={"a": False, "b": True}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=JsonizeInstanceValues(
+                    target_field_name=target_field, source_fields={"a": True}
+                ),
+                inputs=inputs,
+                targets=[
+                    {
+                        "a": "abc",
+                        "b": "[1,2,3]",
+                        "target": '{"a": "abc", "b": [1, 2, 3]}',
+                    }
+                ],
+                tester=self,
+            )
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=JsonizeInstanceValues(
+                    source_fields={"c": "5"},
+                    target_field_name=target_field,
+                    strict=True,
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=JsonizeInstanceValues(
+                    source_fields={"a": False}, target_field_name=target_field
+                ),
+                inputs=[{"a": lambda x: x}],
+                targets=targets,
+                tester=self,
+            )
 
     def test_map_instance_values(self):
         mappers = {"a": {"1": "hi", "2": "bye"}}

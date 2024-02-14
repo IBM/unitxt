@@ -33,11 +33,13 @@ General Operaotrs List:
 ------------------------
 """
 import collections
+import json
 import operator
 import os
 import uuid
 import zipfile
 from abc import abstractmethod
+from ast import literal_eval
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
@@ -115,6 +117,70 @@ class IterableSource(SourceOperator):
 
     def process(self) -> MultiStream:
         return MultiStream.from_iterables(self.iterables)
+
+
+class JsonizeInstanceValues(StreamInstanceOperator):
+    """Creates a new field that stores the json dumps of the selected source fields in the instance.
+
+    Attributes:
+    target_field_name (str): the name of the field that stores the results
+    source_field (Dict[str, bool]): keys are the names of the fields to convert, values are whether to perform literal eval on the values or keep them as strings
+    process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
+        is to be applied to their individual elements. If False, mapping is only applied to a field
+        containing a single value.
+
+    Raises an error if the literal eval or json conversion fail.
+
+    Examples:
+        JsonizeInstanceValues(target_field_name="target", source_fields={"a": False, "b":True})
+        with input {"a":"abc", "b":"[1,2,3]"}:
+        will add afield: "target": '{"a": "abc", "b": [1, 2, 3]}'
+
+        JsonizeInstanceValues(target_field_name="target", source_fields={"b":False})
+        with input {"a":"abc", "b":"[1,2,3]"}:
+        will add afield: "target": '{"b": "[1, 2, 3]"}'
+
+        JsonizeInstanceValues(target_field_name="target", source_fields={"a": True})
+        with input {"a":"abc"}:
+        will raise a value error, since literal_eval cannot be performed on a string.
+    """
+
+    target_field_name: str
+    source_fields: Dict[str, bool]
+    strict: Optional[bool] = False
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if self.strict:
+            inst_keys = instance.keys()
+            source_field_names = set(self.source_fields.keys())
+            missing_fields = source_field_names.difference(inst_keys)
+            if missing_fields:
+                raise ValueError(
+                    f"Calling JsonizeInstanceValues on instance without the required source fields {missing_fields}."
+                )
+
+        filtered_instance = {}
+        for source_field, do_literal_eval in self.source_fields.items():
+            if source_field not in instance:
+                # if strict - an error would have been raised before
+                continue
+            v = instance[source_field]
+            if do_literal_eval:
+                try:
+                    v = literal_eval(v)
+                except Exception as e:
+                    raise ValueError(
+                        f"Failed to perform literal_eval over value: {v}, source field {source_field}"
+                    ) from e
+            filtered_instance[source_field] = v
+        try:
+            instance[self.target_field_name] = json.dumps(filtered_instance)
+        except TypeError as e:
+            raise ValueError(f"Can't convert given fields to json: {e}") from e
+
+        return instance
 
 
 class MapInstanceValues(StreamInstanceOperator):
