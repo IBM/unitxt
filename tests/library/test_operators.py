@@ -73,7 +73,8 @@ class TestOperators(UnitxtTestCase):
 
         check_operator(
             operator=JsonizeInstanceValues(
-                target_field_name=target_field, source_fields={"a": False, "b": True}
+                target_field_name=target_field,
+                source_fields={"a": False, "b": True, "c": False},
             ),
             inputs=inputs,
             targets=targets,
