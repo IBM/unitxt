@@ -1,12 +1,12 @@
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.instructions import TextualInstruction
+from src.unitxt.system_prompts import TextualSystemPrompt
 
-instruction = TextualInstruction(
+system_prompt = TextualSystemPrompt(
     "<<SYS>>\nあなたは誠実で優秀な日本人のアシスタントです。\n<</SYS>>\n\n"
 )
 
 add_to_catalog(
-    instruction,
-    "instructions.models.japanese_llama",
+    system_prompt,
+    "system_prompt.models.japanese_llama",
     overwrite=True,
 )

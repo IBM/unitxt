@@ -17,16 +17,17 @@ class SystemFormat(Format):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
     SystemFormat expects the input instance to contain:
-    1. A field named "source" whose value is a string verbalizing the original values in the instance (as read
+    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task independent opening text.
+    2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
-    2. A field named "instruction" that contains a (non-None) string.
-    3. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
+    3. A field named "instruction" that contains a (non-None) string.
+    4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
-    4. A field named "target_prefx" that contains a string to prefix the target in both each demo, and to end the whole generated prompt
+    5. A field named "target_prefx" that contains a string to prefix the target in both each demo, and to end the whole generated prompt
 
     SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
-    SystemFormat also pops field "instruction" and the field containing the demos out from the input instance.
+    SystemFormat also pops fields "system_prompt", "instruction", "target_prefix",  and the field containing the demos out from the input instance.
 
     Args:
         demos_field (str): the name of the field that contains the demos, being a list of dicts, each with "source" and "target" keys
@@ -69,7 +70,9 @@ class SystemFormat(Format):
 
     demos_field: str = "demos"
     demo_format: str = "{source}\n{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
-    model_input_format: str = "{instruction}{demos}{source}\n{target_prefix}"
+    model_input_format: str = (
+        "{system_prompt}{instruction}{demos}{source}\n{target_prefix}"
+    )
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -97,13 +100,17 @@ class SystemFormat(Format):
         target_prefix = self._retrieve_field_and_assert_not_none(
             instance=instance, field_name="target_prefix"
         )
+        system_prompt = self._retrieve_field_and_assert_not_none(
+            instance=instance, field_name="system_prompt"
+        )
 
-        # pop "instruction" and "target_prefix" from instance
+        # pop "system_prompt", "instruction", and "target_prefix" from instance
         if "target_prefix" in instance:
             instance.pop("target_prefix")
-
         if "instruction" in instance:
             instance.pop("instruction")
+        if "system_prompt" in instance:
+            instance.pop("system_prompt")
 
         demo_instances = []
         if self.demos_field is not None and self.demos_field in instance:
@@ -125,10 +132,11 @@ class SystemFormat(Format):
             demos_string += demo_str
 
         output = self.model_input_format.format(
-            target_prefix=target_prefix,
+            system_prompt=system_prompt,
             instruction=instruction,
             demos=demos_string,
             source=source,
+            target_prefix=target_prefix,
         )
         instance["source"] = output
         return instance
