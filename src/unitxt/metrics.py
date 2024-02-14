@@ -982,8 +982,6 @@ class Spearmanr(HuggingfaceMetric):
         if len(references) < 2:
             return {
                 self.main_score: np.nan,
-                "score": np.nan,
-                "score_name": self.main_score,
             }
         return super().compute(references, predictions, additional_inputs)
 
