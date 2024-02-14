@@ -34,6 +34,7 @@ from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
+from .system_prompts import __file__ as _
 from .table_operators import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
