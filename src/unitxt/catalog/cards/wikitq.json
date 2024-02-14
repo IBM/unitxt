@@ -34,13 +34,23 @@
             "rows_to_keep": 50
         },
         {
-            "type": "serialize_table_as_indexed_row_major",
-            "field_to_field": [
-                [
-                    "table",
-                    "context"
+            "type": "plug_in_operator",
+            "field": "table_serializer",
+            "default": {
+                "type": "serialize_table_as_indexed_row_major",
+                "field_to_field": [
+                    [
+                        "table",
+                        "table"
+                    ]
                 ]
-            ]
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "table": "context"
+            }
         }
     ],
     "task": "tasks.qa.with_context.extractive",
