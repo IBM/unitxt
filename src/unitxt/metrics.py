@@ -689,20 +689,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         # check if function has fields for subgroup_column
         uses_subgroups = self.subgroup_column is not None
         default_subgroup_name = "default"
-        if uses_subgroups:
-            assert all(
-                self.subgroup_column in instance["additional_inputs"]
-                for instance in instances
-            ), f"all instances must have field {self.subgroup_column}' in additional_inputs"
-
         # loop through the instances and group the scores
         for instance in instances:
             additional_inputs = instance["additional_inputs"]
-            if "group_id" not in additional_inputs:
-                raise ValueError(
-                    f"Missing 'group_id' from instance {instance}. "
-                    f"This field is required for group based metric computation."
-                )
             group_key = additional_inputs["group_id"]
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
