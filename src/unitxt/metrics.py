@@ -1005,18 +1005,14 @@ class KendallTauMetric(GlobalMetric):
     ) -> dict:
         if len(references) < 2:
             return {
-                "score_name": self.main_score,
                 self.main_score: np.nan,
-                "score": np.nan,
                 "p_val": np.nan,
             }
 
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
-            "score_name": self.main_score,
             self.main_score: corr,
-            "score": corr,
             "p_val": kendall_results.pvalue,
         }
 
