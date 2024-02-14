@@ -2229,8 +2229,13 @@ def performance_drop_rate(
         return np.nan
     control_mean = mean(group_scores_list[0])
     comparison_mean = mean(group_scores_list[1])
-
-    return np.nan if control_mean == 0 else 1 - comparison_mean / control_mean
+    if control_mean == 0:
+        # return 0 if comparison is also 0
+        if comparison_mean == 0:
+            return 0
+        return np.nan
+    # otherwise, take the percentage change (which may also be 0)
+    return 1 - comparison_mean / control_mean
 
 
 def interpret_effect_size(x: float):
