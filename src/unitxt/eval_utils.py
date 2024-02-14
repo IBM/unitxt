@@ -30,8 +30,10 @@ def _(
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
             if isinstance(first_step, MetricPipeline):
+                n_samples_before = first_step.metric.n_resamples
                 first_step.metric.n_resamples = None
             else:
+                n_samples_before = first_step.n_resamples
                 first_step.n_resamples = None
 
         instances = list(metrics_operator(multi_stream)["test"])
@@ -40,6 +42,14 @@ def _(
 
         if len(instances) > 0:
             global_scores[metric_name] = instances[0]["score"].get("global", {})
+
+        if not compute_conf_intervals:
+            first_step = metrics_operator.steps[0]
+            if isinstance(first_step, MetricPipeline):
+                first_step.metric.n_resamples = n_samples_before
+            else:
+                first_step.n_resamples = n_samples_before
+
     return dataset, global_scores
 
 
