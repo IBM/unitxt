@@ -10,7 +10,6 @@ from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cach
 from .logging_utils import get_logger
 from .settings_utils import get_constants
 from .text_utils import print_dict
-from .utils import is_package_installed
 from .version import version
 
 logger = get_logger()
@@ -22,17 +21,9 @@ class Catalog(Artifactory):
     location: str = None
 
 
-if is_package_installed("unitxt"):
-    import unitxt
-
-    default_catalog_path = unitxt.constants.catalog_path
-else:
-    default_catalog_path = constants.catalog_path
-
-
 class LocalCatalog(Catalog):
     name: str = "local"
-    location: str = default_catalog_path
+    location: str = constants.default_catalog_path
     is_local: bool = True
 
     def path(self, artifact_identifier: str):
@@ -128,7 +119,7 @@ def add_to_catalog(
     reset_artifacts_cache()
     if catalog is None:
         if catalog_path is None:
-            catalog_path = default_catalog_path
+            catalog_path = constants.default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(

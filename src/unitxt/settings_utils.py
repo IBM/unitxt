@@ -1,5 +1,7 @@
 import os
 
+import pkg_resources
+
 from .logging_utils import get_logger
 from .version import version
 
@@ -83,6 +85,12 @@ constants = Constants()
 constants.dataset_file = os.path.join(os.path.dirname(__file__), "dataset.py")
 constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
 constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
+try:
+    constants.default_catalog_path = pkg_resources.resource_filename(
+        "unitxt", "catalog"
+    )
+except ModuleNotFoundError:
+    constants.default_catalog_path = constants.local_catalog_path
 constants.catalog_dir = constants.local_catalog_path
 constants.dataset_url = "unitxt/data"
 constants.metric_url = "unitxt/metric"
