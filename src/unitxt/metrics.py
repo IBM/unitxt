@@ -4,7 +4,6 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
-from copy import deepcopy
 from dataclasses import field
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -566,7 +565,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
-        from copy import deepcopy
 
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
@@ -579,7 +577,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             if reduction_type == "mean":
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = deepcopy(instances)
+                scores_to_resample = instances
             elif reduction_type == "group_mean":
                 self._validate_group_mean_reduction(instances=instances)
                 reduction_fields = (
@@ -736,7 +734,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
-            scores_to_resample = deepcopy(instances)
+            scores_to_resample = instances
 
             def aggregation_function(
                 instances,
