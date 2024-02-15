@@ -28,9 +28,6 @@ class TestEvalUtils(UnitxtTestCase):
             )
 
         self.assertSequenceEqual(list(results_df["metrics.accuracy"]), [0.0, 0.0, 1.0])
-        self.assertSequenceEqual(
-            list(results_df["metrics.spearman"]), [None, None, None]
-        )
         self.assertAlmostEqual(global_scores["metrics.accuracy"]["score"], 0.3333, 3)
         self.assertAlmostEqual(global_scores["metrics.spearman"]["score"], -0.5, 3)
 

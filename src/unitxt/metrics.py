@@ -236,6 +236,8 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             )
             additional_inputs.append(instance_additional_inputs)
             instance_score = None
+            # for backward compatibility
+            no_score_value = np.nan
             if self.process_single_instances:
                 try:
                     instance_score = self._compute(
@@ -244,12 +246,15 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         [instance_additional_inputs],
                     )
                 except:
-                    pass
+                    no_score_value = None
             if not instance_score:
-                instance_score = {"score": None, "score_name": self.main_score}
+                instance_score = {
+                    "score": no_score_value,
+                    "score_name": self.main_score,
+                }
 
                 if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = None
+                    instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(instance_score)
 
