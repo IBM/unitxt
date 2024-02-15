@@ -4,6 +4,10 @@ import sys
 import threading
 from typing import Optional
 
+from .settings_utils import get_settings
+
+settings = get_settings()
+
 _lock = threading.Lock()
 _default_handler: Optional[logging.Handler] = None
 
@@ -15,19 +19,14 @@ log_levels = {
     "critical": logging.CRITICAL,
 }
 
-_default_log_level = logging.DEBUG
-
 
 def _get_default_logging_level():
-    env_level_str = os.getenv("UNITXT_VERBOSITY", None)
-    if env_level_str is not None:
-        try:
-            return log_levels[env_level_str]
-        except KeyError as e:
-            raise ValueError(
-                f"UNITXT_VERBOSITY has to be one of: { ', '.join(log_levels.keys()) }. Got {env_level_str}."
-            ) from e
-    return _default_log_level
+    try:
+        return log_levels[settings.default_verbosity]
+    except KeyError as e:
+        raise ValueError(
+            f"unitxt.settings.default_verobsity or env variable UNITXT_DEFAULT_VERBOSITY has to be one of: { ', '.join(log_levels.keys()) }. Got {settings.default_verbosity}."
+        ) from e
 
 
 def _get_library_root_logger() -> logging.Logger:
@@ -59,6 +58,9 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
 
     _configure_library_root_logger()
     return logging.getLogger(name)
+
+
+settings._logger = get_logger("settings")
 
 
 def set_verbosity(level):

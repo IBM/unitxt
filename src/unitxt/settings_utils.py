@@ -2,15 +2,13 @@ import os
 
 import pkg_resources
 
-from .logging_utils import get_logger
 from .version import version
-
-logger = get_logger()
 
 
 class Settings:
     _instance = None
     _settings = {}
+    _logger = None
 
     @classmethod
     def is_uninitilized(cls):
@@ -25,9 +23,10 @@ class Settings:
         if key.endswith("_key") or key in {"_instance", "_settings"}:
             raise AttributeError(f"Modifying '{key}' is not allowed.")
         if key in self._settings:
-            logger.info(
-                f"unitxt.settings.{key} changed: {self._settings[key]} -> {value}"
-            )
+            if self._logger is not None:
+                self._logger.info(
+                    f"unitxt.settings.{key} changed: {self._settings[key]} -> {value}"
+                )
         self._settings[key] = value
 
     def __getattr__(self, key):
@@ -89,6 +88,8 @@ if Settings.is_uninitilized():
     settings.num_resamples_for_instance_metrics = 1000
     settings.num_resamples_for_global_metrics = 100
     settings.artifactories = None
+    settings.default_recipe = "standard_recipe"
+    settings.default_verbosity = "debug"
 
 if Constants.is_uninitilized():
     constants = Constants()
@@ -116,6 +117,8 @@ if Constants.is_uninitilized():
         "dataset.py",
         "blocks.py",
     ]
+    constants.codebase_url = "https://github.com/IBM/unitxt"
+    constants.website_url = "https://www.unitxt.org"
 
 
 def get_settings():
