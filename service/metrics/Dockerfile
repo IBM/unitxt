@@ -9,7 +9,7 @@ RUN sed -i 's/1/0/g' /etc/yum/pluginconf.d/subscription-manager.conf
 ENV CONDA_HOME=/opt/conda \
     PATH=/opt/conda/bin:/usr/local/nvidia/bin:$PATH \
     CONFIG_DIR=/root/config_dir \
-    BUILD_DIR=/tmp/wml_report \
+    BUILD_DIR=/tmp/unitxt_metric_service \
     USE_TF=0 \
     USE_TORCH=1
 
