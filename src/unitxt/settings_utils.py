@@ -1,6 +1,7 @@
 import os
 
 from .logging_utils import get_logger
+from .version import version
 
 logger = get_logger()
 
@@ -47,13 +48,61 @@ class Settings:
         ]
 
 
+class Constants:
+    _instance = None
+    _constants = {}
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __setattr__(self, key, value):
+        if key.endswith("_key") or key in {"_instance", "_constants"}:
+            raise AttributeError(f"Modifying '{key}' is not allowed.")
+        if key in self._constants:
+            raise ValueError("Cannot override constants.")
+        self._constants[key] = value
+
+    def __getattr__(self, key):
+        if key in self._constants:
+            return self._constants[key]
+
+        raise AttributeError(f"'{key}' not found")
+
+
 settings = Settings()
 settings.allow_unverified_code = False
 settings.use_only_local_catalogs = False
 settings.global_loader_limit = None
 settings.num_resamples_for_instance_metrics = 1000
 settings.num_resamples_for_global_metrics = 100
+settings.artifactories = None
+
+constants = Constants()
+constants.dataset_file = os.path.join(os.path.dirname(__file__), "dataset.py")
+constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
+constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
+constants.catalog_dir = constants.local_catalog_path
+constants.dataset_url = "unitxt/data"
+constants.metric_url = "unitxt/metric"
+constants.version = version
+constants.catalog_hirarchy_sep = "."
+constants.env_local_catalogs_paths_sep = ":"
+constants.non_registered_files = [
+    "__init__.py",
+    "artifact.py",
+    "utils.py",
+    "register.py",
+    "metric.py",
+    "dataset.py",
+    "blocks.py",
+]
 
 
 def get_settings():
     return Settings()
+
+
+def get_constants():
+    return Constants()
