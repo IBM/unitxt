@@ -45,7 +45,7 @@ add_to_catalog(
         labels_field="labels",
         postprocessors=[
             "processors.take_first_non_empty_line",
-            "processors.lower_case_till_punc",
+            "processors.lower_case",
             "processors.to_list_by_comma",
         ],
     ),
@@ -60,7 +60,7 @@ add_to_catalog(
         labels_field="labels",
         postprocessors=[
             "processors.take_first_non_empty_line",
-            "processors.lower_case_till_punc",
+            "processors.lower_case",
             "processors.to_list_by_comma",
         ],
     ),

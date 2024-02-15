@@ -30,17 +30,17 @@ from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .schema import __file__ as _
-from .serializers import __file__ as _
 from .settings_utils import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
+from .table_operators import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
 from .type_utils import __file__ as _
-from .utils import __file__ as _
+from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
 from .version import version
@@ -56,16 +56,11 @@ class Dataset(datasets.GeneratorBasedBuilder):
     @property
     def generators(self):
         if not hasattr(self, "_generators") or self._generators is None:
-            try:
+            if is_package_installed("unitxt"):
                 from unitxt.dataset_utils import (
                     get_dataset_artifact as get_dataset_artifact_installed,
                 )
 
-                unitxt_installed = True
-            except ImportError:
-                unitxt_installed = False
-
-            if unitxt_installed:
                 logger.info("Loading with installed unitxt library...")
                 dataset = get_dataset_artifact_installed(self.config.name)
             else:

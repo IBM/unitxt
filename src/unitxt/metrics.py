@@ -1,6 +1,7 @@
 import re
 import string
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
@@ -10,7 +11,8 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-from scipy.stats import bootstrap, kendalltau
+from scipy.stats import bootstrap
+from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -24,14 +26,14 @@ from .operator import (
 )
 from .operators import CopyFields
 from .random_utils import get_seed
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import isoftype
 
 logger = get_logger()
-# The default number of resamples used to estimate the confidence intervals
-# global and instances metrics. Use None to disable confidence interval computation by default.
-_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
-_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+settings = get_settings()
+
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 def abstract_factory():
@@ -238,7 +240,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_global_metrics
+    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -326,7 +330,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -412,7 +418,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
@@ -929,6 +937,8 @@ class Rouge(HuggingfaceMetric):
 
     sent_split_newline: bool = True
 
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
+
     def prepare(self):
         super().prepare()
 
@@ -959,6 +969,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
+    _requirements_list: List[str] = ["editdistance"]
+
     def prepare(self):
         super().prepare()
         import editdistance
@@ -985,6 +997,8 @@ class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
 
+    _requirements_list: List[str] = ["jiwer"]
+
     def compute(
         self,
         references: List[List[str]],
@@ -1005,13 +1019,20 @@ class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
 
+    _requirements_list: List[str] = ["scipy"]
+
+    def prepare(self):
+        from scipy.stats import kendalltau
+
+        self.kendalltau = kendalltau
+
     def compute(
         self,
         references: List[float],
         predictions: List[float],
         additional_inputs: List[Dict],
     ) -> dict:
-        kendall_results = kendalltau(references, predictions, variant=self.variant)
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
             "score_name": self.main_score,
@@ -1287,6 +1308,8 @@ class BertScore(HuggingfaceBulkMetric):
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
 
+    _requirements_list: List[str] = ["bert_score"]
+
     def prepare(self):
         super().prepare()
         self.hf_compute_args = {"model_type": self.model_name, "batch_size": 16}
@@ -1298,6 +1321,8 @@ class SentenceBert(BulkInstanceMetric):
     batch_size: int = 32
 
     model_name: str
+
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1348,6 +1373,8 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    _requirements_list: List[str] = ["transformers"]
+
     def prepare(self):
         super().prepare()
         import torch
@@ -1387,6 +1414,8 @@ class Perplexity(BulkInstanceMetric):
 
     batch_size: int = 32
     model_name: str
+
+    _requirements_list: List[str] = ["transformers"]
 
     def compute(
         self,
@@ -1621,6 +1650,8 @@ class NDCG(GlobalMetric):
     """
 
     main_score = "nDCG"
+
+    _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
         from sklearn.metrics import ndcg_score

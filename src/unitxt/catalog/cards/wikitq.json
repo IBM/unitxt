@@ -17,19 +17,30 @@
             "use_query": true
         },
         {
-            "type": "indexed_row_major_table_serializer",
+            "type": "add_fields",
+            "fields": {
+                "context_type": "table"
+            }
+        },
+        {
+            "type": "truncate_table_cells",
+            "max_length": 15,
+            "table": "table",
+            "text_output": "answer"
+        },
+        {
+            "type": "truncate_table_rows",
+            "field": "table",
+            "rows_to_keep": 50
+        },
+        {
+            "type": "serialize_table_as_indexed_row_major",
             "field_to_field": [
                 [
                     "table",
                     "context"
                 ]
             ]
-        },
-        {
-            "type": "add_fields",
-            "fields": {
-                "context_type": "table"
-            }
         }
     ],
     "task": "tasks.qa.with_context.extractive",
