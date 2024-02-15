@@ -3,21 +3,12 @@ import inspect
 import os
 
 from .artifact import Artifact, Artifactories
-from .catalog import PATHS_SEP, EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
+from .catalog import EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
+from .settings_utils import get_constants, get_settings
 from .utils import Singleton
 
-UNITXT_ARTIFACTORIES_ENV_VAR = "UNITXT_ARTIFACTORIES"
-
-# Usage
-non_registered_files = [
-    "__init__.py",
-    "artifact.py",
-    "utils.py",
-    "register.py",
-    "metric.py",
-    "dataset.py",
-    "blocks.py",
-]
+constants = get_constants()
+settings = get_settings()
 
 
 def _register_catalog(catalog: LocalCatalog):
@@ -50,8 +41,10 @@ def _reset_env_local_catalogs():
     for catalog in _catalogs_list():
         if isinstance(catalog, EnvironmentLocalCatalog):
             _unregister_catalog(catalog)
-    if UNITXT_ARTIFACTORIES_ENV_VAR in os.environ:
-        for path in os.environ[UNITXT_ARTIFACTORIES_ENV_VAR].split(PATHS_SEP):
+    if settings.artifactories:
+        for path in settings.artifactories.split(
+            constants.env_local_catalogs_paths_sep
+        ):
             _register_catalog(EnvironmentLocalCatalog(location=path))
 
 
@@ -62,7 +55,7 @@ def _register_all_artifacts():
     for file in os.listdir(dir):
         if (
             file.endswith(".py")
-            and file not in non_registered_files
+            and file not in constants.non_registered_files
             and file != file_name
         ):
             module_name = file.replace(".py", "")
