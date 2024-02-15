@@ -31,10 +31,10 @@ def _(
             first_step = metrics_operator.steps[0]
             if isinstance(first_step, MetricPipeline):
                 n_samples_before = first_step.metric.n_resamples
-                first_step.metric.n_resamples = None
+                first_step.metric.disable_confidence_interval_calculation()
             else:
                 n_samples_before = first_step.n_resamples
-                first_step.n_resamples = None
+                first_step.disable_confidence_interval_calculation()
 
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
@@ -43,6 +43,10 @@ def _(
         if len(instances) > 0:
             global_scores[metric_name] = instances[0]["score"].get("global", {})
 
+        # To overcome issue #325: the modified metric artifact is cached and
+        # a sequential retrieval of an artifact with the same name will
+        # retrieve the metric with the previous modification.
+        # This reverts the confidence interval change and restores the initial metric.
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
             if isinstance(first_step, MetricPipeline):
