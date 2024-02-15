@@ -1034,6 +1034,28 @@ class MatthewsCorrelation(HuggingfaceMetric):
         )
 
 
+class RocAuc(GlobalMetric):
+    main_score = "roc_auc"
+    process_single_instances = False
+    _requirements_list: List[str] = ["sklearn"]
+
+    def prepare(self):
+        from sklearn import metrics
+
+        self.roc_curve = metrics.roc_curve
+        self.auc = metrics.auc
+
+    def compute(
+        self,
+        references: List[List[float]],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
+        roc_auc = self.auc(fpr, tpr)
+        return {self.main_score: roc_auc}
+
+
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
     groups = None
