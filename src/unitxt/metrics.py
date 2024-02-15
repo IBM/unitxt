@@ -207,6 +207,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_global_metrics
     )
+    process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -234,13 +235,17 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
             additional_inputs.append(instance_additional_inputs)
-            try:
-                instance_score = self._compute(
-                    [instance_references],
-                    [instance_prediction],
-                    [instance_additional_inputs],
-                )
-            except:
+            instance_score = None
+            if self.process_single_instances:
+                try:
+                    instance_score = self._compute(
+                        [instance_references],
+                        [instance_prediction],
+                        [instance_additional_inputs],
+                    )
+                except:
+                    pass
+            if not instance_score:
                 instance_score = {"score": None, "score_name": self.main_score}
 
                 if isinstance(self.main_score, str):
@@ -972,23 +977,13 @@ class Wer(HuggingfaceMetric):
 class Spearmanr(HuggingfaceMetric):
     hf_metric_name = "spearmanr"
     main_score = "spearmanr"
-
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        additional_inputs: List[Dict],
-    ) -> dict:
-        if len(references) < 2:
-            return {
-                self.main_score: np.nan,
-            }
-        return super().compute(references, predictions, additional_inputs)
+    process_single_instances = False
 
 
 class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
+    process_single_instances = False
 
     _requirements_list: List[str] = ["scipy"]
 
@@ -1003,12 +998,6 @@ class KendallTauMetric(GlobalMetric):
         predictions: List[float],
         additional_inputs: List[Dict],
     ) -> dict:
-        if len(references) < 2:
-            return {
-                self.main_score: np.nan,
-                "p_val": np.nan,
-            }
-
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
