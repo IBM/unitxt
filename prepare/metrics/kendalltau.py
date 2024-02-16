@@ -26,8 +26,8 @@ references = [["-1.0"], ["1.0"], ["0.0"]]
 
 instance_targets = [
     {
-        "kendalltau_b": None,
-        "score": None,
+        "kendalltau_b": np.nan,
+        "score": np.nan,
         "score_name": "kendalltau_b",
     }
 ] * 3
