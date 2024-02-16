@@ -7,7 +7,7 @@ from .instructions import (
     InstructionsList,
     TextualInstruction,
 )
-from .loaders import LoadFromIBMCloud, LoadHF
+from .loaders import LoadFromIBMCloud, LoadHF, LoadHFCustomDatasetScript
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
 from .operators import (

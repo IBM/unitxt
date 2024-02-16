@@ -36,11 +36,12 @@ from tqdm import tqdm
 from .dataclass import InternalField
 from .logging_utils import get_logger
 from .operator import SourceOperator
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .stream import MultiStream, Stream
 
 logger = get_logger()
 settings = get_settings()
+constants = get_constants()
 
 
 class Loader(SourceOperator):
@@ -393,4 +394,28 @@ class LoadFromIBMCloud(Loader):
                 local_dir, streaming=False, data_files=self.data_files
             )
 
+        return MultiStream.from_iterables(dataset)
+
+
+class LoadHFCustomDatasetScript(Loader):
+    """Loads a dataset using a custom HF dataset loading script from catalog/loaders path."""
+
+    file: str
+
+    def process(self):
+        catalog_path = constants.__getattr__("local_catalog_path")
+
+        assert (
+            catalog_path is not None
+        ), "Please set the local_catalog_path in constants file"
+
+        script_path = os.path.join(catalog_path, "loaders", self.file)
+
+        assert (
+            os.path.exists(script_path) is True
+        ), "Script file does not exist in the local catalog path"
+
+        loader = LoadHF(path=script_path, streaming=False)
+        ms = loader.process()
+        dataset = ms.to_dataset()
         return MultiStream.from_iterables(dataset)

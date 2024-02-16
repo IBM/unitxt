@@ -1,0 +1,69 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf_custom_dataset_script",
+        "file": "tabfact.py",
+        "streaming": false
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "refuted",
+                    "1": "entailed"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "refuted",
+                    "entailed"
+                ]
+            }
+        },
+        {
+            "type": "serialize_table_as_indexed_row_major",
+            "field_to_field": [
+                [
+                    "table",
+                    "table_serialized"
+                ]
+            ]
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "table_serialized",
+            "statement",
+            "choices"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ],
+        "augmentable_inputs": [
+            "statement"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this table: {table_serialized}, classify if this sentence '{statement}' is {choices}? ",
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc"
+                ]
+            }
+        ]
+    }
+}

@@ -6,7 +6,12 @@ from unittest.mock import patch
 import ibm_boto3
 import pandas as pd
 
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
+from src.unitxt.loaders import (
+    LoadCSV,
+    LoadFromIBMCloud,
+    LoadHF,
+    LoadHFCustomDatasetScript,
+)
 from src.unitxt.logging_utils import get_logger
 from tests.utils import UnitxtTestCase
 
@@ -145,3 +150,17 @@ class TestLoaders(UnitxtTestCase):
             "hide new secretions from the parental units ",
         )
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+
+    def test_load_from_HF_custom_dataset_script(self):
+        loader = LoadHFCustomDatasetScript(file="tabfact.py")
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            dataset["train"][0]["statement"],
+            "haroldo be mention as a brazil scorer for 2 different game",
+        )
+        assert set(dataset.keys()) == {
+            "train",
+            "validation",
+            "test",
+        }, f"Unexpected fold {dataset.keys()}"
