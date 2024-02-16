@@ -21,7 +21,7 @@ metric = MetricPipeline(
 predictions = ["0.2", "0.8", "1.0"]
 references = [["1.0"], ["0.0"], ["1.0"]]
 
-instance_targets = [{"roc_auc": None, "score": None, "score_name": "roc_auc"}] * 3
+instance_targets = [{"roc_auc": np.nan, "score": np.nan, "score_name": "roc_auc"}] * 3
 global_targets = {
     "roc_auc": 0.5,
     "roc_auc_ci_high": np.nan,
