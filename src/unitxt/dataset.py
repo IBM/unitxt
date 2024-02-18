@@ -94,7 +94,9 @@ class Dataset(datasets.GeneratorBasedBuilder):
         generator = self.generators[split_name]
         yield from enumerate(generator)
 
-    def _download_and_prepare(self, dl_manager, verification_mode, **prepare_splits_kwargs):
+    def _download_and_prepare(
+        self, dl_manager, verification_mode, **prepare_splits_kwargs
+    ):
         return super()._download_and_prepare(
             dl_manager, "no_checks", **prepare_splits_kwargs
         )
