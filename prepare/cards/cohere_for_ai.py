@@ -33,7 +33,9 @@ for subset in subsets:
                 FilterByCondition(values={"language": lang}, condition="eq"),
             ],
             task=FormTask(
-                inputs=["inputs"], outputs=["targets"], metrics=["metrics.rouge"]
+                inputs=["inputs"],
+                outputs=["targets"],
+                metrics=["metrics.normalized_sacrebleu"],
             ),
             templates=[
                 InputOutputTemplate(
