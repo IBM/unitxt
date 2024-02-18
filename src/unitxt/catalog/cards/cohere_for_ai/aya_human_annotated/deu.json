@@ -1,0 +1,47 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "CohereForAI/aya_evaluation_suite",
+        "name": "aya_human_annotated",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "test[90%]",
+                "validation": "test[5%]",
+                "test": "test[5%]"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "language": "deu"
+            },
+            "condition": "eq"
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "inputs"
+        ],
+        "outputs": [
+            "targets"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ]
+    },
+    "templates": [
+        {
+            "type": "input_output_template",
+            "input_format": "Question: {inputs}",
+            "output_format": "{targets}",
+            "instruction": "Answer the following question.\n",
+            "target_prefix": "Answer: "
+        }
+    ]
+}
