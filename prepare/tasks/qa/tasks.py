@@ -25,7 +25,7 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs=["question"],
-        outputs=["answer"],
+        outputs=["answers"],
         metrics=["metrics.rouge"],
     ),
     "tasks.qa.open",
