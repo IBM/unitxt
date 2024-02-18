@@ -50,7 +50,6 @@ for subset in subsets:
             )  # 25000 to reach every language
         add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
 
-(settings.allow_unverified_code, settings.allow_unverified_code) = orig_settings
 ########################  to remove once done ############################
 recipe = StandardRecipeWithIndexes(
     template_card_index=1,
@@ -71,3 +70,5 @@ logger.info("+++++++++++3+++++++++++++++")
 logger.info(train_as_list[0]["source"])
 logger.info("+++++++++++done+++++++++++++++")
 logger.info("done")
+############# end of to remove once done ##################
+(settings.allow_unverified_code, settings.allow_unverified_code) = orig_settings
