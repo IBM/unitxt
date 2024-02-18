@@ -1,6 +1,7 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
+from src.unitxt.operators import RemoveValues
 from src.unitxt.processors import (
     ConvertToBoolean,
     FirstCharacter,
@@ -152,5 +153,25 @@ add_to_catalog(
         ]
     ),
     "processors.first_character",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            RemoveValues(
+                field="prediction",
+                unallowed_values=["none"],
+                process_every_value=False,
+            ),
+            RemoveValues(
+                field="references/*",
+                unallowed_values=["none"],
+                use_query=True,
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.remove_none_from_list",
     overwrite=True,
 )
