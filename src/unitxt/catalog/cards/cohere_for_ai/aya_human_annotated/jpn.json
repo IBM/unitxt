@@ -21,27 +21,20 @@
                 "language": "jpn"
             },
             "condition": "eq"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "inputs": "question",
+                "targets": "answers"
+            }
+        },
+        {
+            "type": "execute_expression",
+            "expression": "[answers]",
+            "to_field": "answers"
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "inputs"
-        ],
-        "outputs": [
-            "targets"
-        ],
-        "metrics": [
-            "metrics.normalized_sacrebleu"
-        ]
-    },
-    "templates": [
-        {
-            "type": "input_output_template",
-            "input_format": "Question: {inputs}",
-            "output_format": "{targets}",
-            "instruction": "Answer the following question.\n",
-            "target_prefix": "Answer: "
-        }
-    ]
+    "task": "tasks.qa.open",
+    "templates": "templates.qa.open.all"
 }
