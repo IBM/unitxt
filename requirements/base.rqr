@@ -1,12 +1,6 @@
-datasets
+datasets>=2.16.0
 evaluate
-nltk
-sacrebleu
 mecab-python3
 absl-py
-rouge_score
-scikit-learn
 dpath
-jiwer
-editdistance
 ipadic

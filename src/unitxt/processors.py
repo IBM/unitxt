@@ -121,7 +121,9 @@ class YesNoToInt(FieldOperator):
     def process_value(self, text: Any) -> Any:
         if text == "yes":
             return "1"
-        return "0"
+        if text == "no":
+            return "0"
+        return text
 
 
 class ToYesOrNone(FieldOperator):

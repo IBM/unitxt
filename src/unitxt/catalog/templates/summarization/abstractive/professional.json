@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Craft a brief summary for the supplied text, distilling the essential concepts and vital information.\nText: {document}",
+    "output_format": "{summary}"
+}

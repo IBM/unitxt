@@ -73,7 +73,7 @@ def main():
                 AddFields({"topic": subtask.replace("_", " ")}),
             ],
             task="tasks.qa.multiple_choice.with_topic",
-            templates="templates.qa.multiple_choice.original.all",
+            templates="templates.qa.multiple_choice.with_topic.all",
         )
         if i == 0:
             test_card(card)

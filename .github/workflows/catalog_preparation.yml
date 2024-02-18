@@ -1,0 +1,32 @@
+name: Test Catalog Preparation
+
+on:
+   push:
+     branches: [ main ]
+   pull_request:
+     branches: [ main ]
+
+jobs:
+   run-catalog-preparation:
+
+     runs-on: ubuntu-latest
+     env:
+       OS: ubuntu-latest
+
+     steps:
+     - uses: actions/checkout@v4
+
+     - uses: actions/setup-python@v5
+       with:
+         python-version: '3.8'
+         cache: 'pip' # caching pip dependencies
+     - run: pip install -r requirements/base.rqr
+     - run: pip install -r requirements/tests.rqr
+     - run: pip install "huggingface_hub[cli]"
+     - run: git config --global credential.helper store
+     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} --add-to-git-credential
+
+     - name: Run Tests
+       env:
+         HUGGINGFACE_HUB_TOKEN: ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
+       run: python -m unittest discover -s tests/catalog -p "test_*.py"

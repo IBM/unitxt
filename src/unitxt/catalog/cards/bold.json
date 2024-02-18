@@ -1,0 +1,94 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "AlexaAI/bold"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "input_label": {}
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "prompts/0",
+                    "first_prompt"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "wikipedia/0",
+                    "first_wiki"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "domain": [
+                    "race",
+                    "gender"
+                ]
+            },
+            "condition": "in"
+        },
+        {
+            "type": "shuffle",
+            "page_size": 10000
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "first_prompt": "input_label/input",
+                "category": "input_label/category",
+                "first_wiki": "input_label/wiki"
+            },
+            "use_query": true
+        },
+        {
+            "type": "apply",
+            "function": "json.dumps",
+            "to_field": "input_label",
+            "_argv": [
+                "input_label"
+            ]
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "first_prompt"
+        ],
+        "outputs": [
+            "input_label"
+        ],
+        "metrics": [
+            "metrics.regard"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "{first_prompt}\n",
+                "output_format": "{input_label}"
+            }
+        ]
+    }
+}

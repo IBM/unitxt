@@ -1,6 +1,7 @@
 import re
 import string
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
@@ -10,6 +11,7 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
+from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
@@ -22,14 +24,14 @@ from .operator import (
 )
 from .operators import CopyFields
 from .random_utils import get_seed
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import isoftype
 
 logger = get_logger()
-# The default number of resamples used to estimate the confidence intervals
-# global and instances metrics. Use None to disable confidence interval computation by default.
-_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
-_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+settings = get_settings()
+
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 def abstract_factory():
@@ -202,7 +204,10 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_global_metrics
+    )
+    process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -230,17 +235,26 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
             additional_inputs.append(instance_additional_inputs)
-            try:
-                instance_score = self._compute(
-                    [instance_references],
-                    [instance_prediction],
-                    [instance_additional_inputs],
-                )
-            except:
-                instance_score = {"score": None, "score_name": self.main_score}
+            instance_score = None
+            # for backward compatibility
+            no_score_value = np.nan
+            if self.process_single_instances:
+                try:
+                    instance_score = self._compute(
+                        [instance_references],
+                        [instance_prediction],
+                        [instance_additional_inputs],
+                    )
+                except:
+                    no_score_value = None
+            if not instance_score:
+                instance_score = {
+                    "score": no_score_value,
+                    "score_name": self.main_score,
+                }
 
                 if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = None
+                    instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(instance_score)
 
@@ -280,7 +294,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -366,7 +382,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
@@ -883,6 +901,8 @@ class Rouge(HuggingfaceMetric):
 
     sent_split_newline: bool = True
 
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
+
     def prepare(self):
         super().prepare()
 
@@ -913,6 +933,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
+    _requirements_list: List[str] = ["editdistance"]
+
     def prepare(self):
         super().prepare()
         import editdistance
@@ -939,6 +961,8 @@ class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
 
+    _requirements_list: List[str] = ["jiwer"]
+
     def compute(
         self,
         references: List[List[str]],
@@ -953,6 +977,38 @@ class Wer(HuggingfaceMetric):
             predictions=predictions, references=formatted_references
         )
         return {self.main_score: result}
+
+
+class Spearmanr(HuggingfaceMetric):
+    hf_metric_name = "spearmanr"
+    main_score = "spearmanr"
+    process_single_instances = False
+
+
+class KendallTauMetric(GlobalMetric):
+    main_score = "kendalltau_b"
+    variant = "b"
+    process_single_instances = False
+
+    _requirements_list: List[str] = ["scipy"]
+
+    def prepare(self):
+        from scipy.stats import kendalltau
+
+        self.kendalltau = kendalltau
+
+    def compute(
+        self,
+        references: List[float],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
+        corr = kendall_results.correlation
+        return {
+            self.main_score: corr,
+            "p_val": kendall_results.pvalue,
+        }
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
@@ -981,6 +1037,28 @@ class MatthewsCorrelation(HuggingfaceMetric):
         return self.metric.compute(
             predictions=formatted_predictions, references=formatted_references
         )
+
+
+class RocAuc(GlobalMetric):
+    main_score = "roc_auc"
+    process_single_instances = False
+    _requirements_list: List[str] = ["sklearn"]
+
+    def prepare(self):
+        from sklearn import metrics
+
+        self.roc_curve = metrics.roc_curve
+        self.auc = metrics.auc
+
+    def compute(
+        self,
+        references: List[List[float]],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
+        roc_auc = self.auc(fpr, tpr)
+        return {self.main_score: roc_auc}
 
 
 class CustomF1(GlobalMetric):
@@ -1221,6 +1299,8 @@ class BertScore(HuggingfaceBulkMetric):
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
 
+    _requirements_list: List[str] = ["bert_score"]
+
     def prepare(self):
         super().prepare()
         self.hf_compute_args = {"model_type": self.model_name}
@@ -1232,6 +1312,8 @@ class SentenceBert(BulkInstanceMetric):
     batch_size: int = 32
 
     model_name: str
+
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1280,6 +1362,8 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    _requirements_list: List[str] = ["transformers"]
+
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -1316,6 +1400,8 @@ class Perplexity(BulkInstanceMetric):
     batch_size: int = 32
     model_name: str
 
+    _requirements_list: List[str] = ["transformers"]
+
     def compute(
         self,
         references: List[List[Any]],
@@ -1329,14 +1415,13 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
         """
-        # make sure all references are singletons
-        assert all(len(ref) == 1 for ref in references)
+        sources = []
+        targets = []
+        for prediction, instance_references in zip(predictions, references):
+            for instance_reference in instance_references:
+                sources.append(f"{self.perplexity_prompt} {prediction}")
+                targets.append(instance_reference)
 
-        # add the instruction as prefix
-        predictions = [f"{self.perplexity_prompt} {x}" for x in predictions]
-        references = [y[0] for y in references]
-
-        # check if the model is enc-dec or dec-only to use the right perplexity computation
         from transformers import AutoConfig
 
         config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
@@ -1348,10 +1433,27 @@ class Perplexity(BulkInstanceMetric):
 
         # compute P(Q|P) and store in queue
         scores = lm.compute_lm(
-            source=predictions, target=references, batch_size=self.batch_size
+            source=sources, target=targets, batch_size=self.batch_size
         )
 
-        return [{self.main_score: score} for score in scores]
+        index = 0
+        all_instances_scores = []
+        for instance_references in references:
+            instance_scores = {}
+            instance_scores_list = []
+            for _ in range(len(instance_references)):
+                instance_scores_list.append(scores[index])
+                index += 1
+            instance_scores["reference_scores"] = instance_scores_list
+
+            # max seems more useful than mean for common use cases like
+            # context relevance, where what we want to know is if there
+            # is at least one good result in the context. Using mean will
+            # bring the score down due to bad contexts at the tail.
+            instance_scores[self.main_score] = max(instance_scores_list)
+            all_instances_scores.append(instance_scores)
+
+        return all_instances_scores
 
     class AbstractLM(ABC):
         def __init__(self, model_name):
@@ -1363,7 +1465,9 @@ class Perplexity(BulkInstanceMetric):
             self.model = self.model_class().from_pretrained(self.model_name)
             self.is_cuda = torch.cuda.is_available()
 
-        def compute_lm(self, source, target, batch_size: int) -> List[float]:
+        def compute_lm(
+            self, source: List[str], target: List[str], batch_size: int
+        ) -> List[float]:
             import torch
 
             scores = []
@@ -1389,11 +1493,18 @@ class Perplexity(BulkInstanceMetric):
                             tokens_source, tokens_target
                         )
 
+                        # logits is a tensor of size: batch_size * len(target) * vocab_size
+                        # because for each example in the batch, the model predicted the
+                        # logit at every position in the target, for every vocab item.
+
                         # the model returns mean over all batch. We run the CE again without reduction
-                        # and extarct the mean for each document
+                        # and extract the mean for each document
                         loss_fct = torch.nn.CrossEntropyLoss(
                             ignore_index=-100, reduction="none"
                         )
+
+                        # logits.size(-1) = the dimension of the vocabulary
+                        # labels.view(-1) = flattens the labels tensor to 1d
                         loss = loss_fct(
                             logits.view(-1, logits.size(-1)), labels.view(-1)
                         )
@@ -1404,8 +1515,29 @@ class Perplexity(BulkInstanceMetric):
                             labels > 0, dim=1
                         )
 
+                        # e^-average(cross-entropy-loss(logits) == geometric mean of the probabilities
+                        # proof:
+                        # * CE-loss of logits is computed by transforming the logits to
+                        #   probabilities by softmax, and then -log(p) is returned, where
+                        #   p is the probability of the gold label.
+                        # * Averaging the CE loss is computed by summing over -log(p) and
+                        #   then dividing by the length of the gold labels.
+                        # * Thus, pr_score = (-log(p_1) +  ... + -log(p_n)) / n
+                        #                  = -log(p_1 * ... * p_n) * 1/n
+                        # * Therefore,
+                        #   e^(-pr_score) = e^(log(p_1 * ... * p_n) * 1/n)
+                        #                 = (e^(log(p_1 * ... * p_n))) ^ 1/n
+                        #                 = p_1 * ... * p_n) ^ 1/n
+                        #                 = geometric mean of [p_1, ..., p_n]
+                        #
+                        # in principle we could have computed the geometric mean directly over the
+                        # probabilities instead of e^(average cross entropy loss of the logits),
+                        # but the current approach is more stable numerically.  See for example:
+                        # https://stackoverflow.com/questions/59722983/how-to-calculate-geometric-mean-in-a-differentiable-way
+                        geometric_mean = (-batch_loss).exp()
+
                         # append the batch scores to the list of all scores
-                        scores.append(batch_loss)
+                        scores.append(geometric_mean)
 
             return torch.cat(scores, dim=0).tolist()
 
@@ -1511,6 +1643,8 @@ class NDCG(GlobalMetric):
     """
 
     main_score = "nDCG"
+
+    _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
         from sklearn.metrics import ndcg_score

@@ -1,0 +1,49 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "akariasai/PopQA"
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 14267
+        },
+        {
+            "type": "apply",
+            "function": "json.loads",
+            "to_field": "possible_answers",
+            "_argv": [
+                "possible_answers"
+            ]
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "question",
+            "prop",
+            "subj"
+        ],
+        "outputs": [
+            "possible_answers"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "multi_reference_template",
+                "input_format": "Answer to the following question. There is no need to explain the reasoning at all. Simply state just the answer in few words. No need for full answer. No need to repeat the question or words from the question. The answer text should be partial and contain only {prop}. Do not use full sentence. \nQuestion: {question}\nThe {prop} of {subj} is:",
+                "references_field": "possible_answers",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case"
+                ]
+            }
+        ]
+    }
+}

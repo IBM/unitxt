@@ -1,0 +1,18 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "context",
+        "context_type",
+        "question"
+    ],
+    "outputs": [
+        "answer"
+    ],
+    "metrics": [
+        "metrics.rouge"
+    ],
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ]
+}

@@ -13,30 +13,24 @@
                 "validation": "train[5%]",
                 "test": "validation"
             }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "sentence1": "text1",
+                "sentence2": "text2",
+                "label": "attribute_value"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "attribute_name": "similarity",
+                "min_value": "1",
+                "max_value": "5"
+            }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "sentence1",
-            "sentence2"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.spearman"
-        ]
-    },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "output_quantizing_template",
-                "input_format": "Given this sentence: '{sentence1}', on a scale of 1 to 5, how similar in meaning is it to this sentence: '{sentence2}'?",
-                "output_format": "{label}",
-                "quantum": 0.2
-            }
-        ]
-    }
+    "task": "tasks.regression.two_texts",
+    "templates": "templates.regression.two_texts.all"
 }

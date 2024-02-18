@@ -3,3 +3,9 @@ transformers
 sentence_transformers
 ibm-cos-sdk
 opendatasets
+editdistance
+rouge-score
+nltk
+sacrebleu
+scikit-learn
+jiwer

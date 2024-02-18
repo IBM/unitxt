@@ -43,17 +43,24 @@ def test_loading_from_catalog(card):
 
 
 def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
+    disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
+    if disable is not None:
+        logger.info(
+            "load_examples_from_standard_recipe() functionality is disabled because UNITXT_TEST_CARD_DISABLE environment variable is set"
+        )
+        return None
+
     logger.info("*" * 80)
     logger.info(f"Using template card index: {template_card_index}")
 
     if "num_demos" not in kwargs:
-        kwargs["num_demos"] = 3
+        kwargs["num_demos"] = 1
 
     if "demos_pool_size" not in kwargs:
-        kwargs["demos_pool_size"] = 20
+        kwargs["demos_pool_size"] = 10
 
     if "loader_limit" not in kwargs:
-        kwargs["loader_limit"] = 200
+        kwargs["loader_limit"] = 30
 
     recipe = StandardRecipe(
         card=card, template_card_index=template_card_index, **kwargs
@@ -71,7 +78,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         examples = print_recipe_output(
             recipe,
             max_steps=recipe.num_steps(),
-            num_examples=3,
+            num_examples=5,
             print_header=False,
             print_stream_size=False,
             streams=["test"],
@@ -133,6 +140,7 @@ def print_recipe_output(
     return examples
 
 
+# flake8: noqa: C901
 def test_with_eval(
     card,
     debug=False,
@@ -160,6 +168,20 @@ def test_with_eval(
         )
 
     results = _compute(predictions=correct_predictions, references=examples)
+    logger.info("*" * 80)
+    logger.info(
+        "Show the output of the post processing of predictions by the template:"
+    )
+    logger.info("(Uses the references as sample predictions)")
+    for result, correct_prediction in zip(results, correct_predictions):
+        logger.info("*" * 5)
+        logger.info(
+            f"Prediction: ({type(correct_prediction).__name__})     {correct_prediction}"
+        )
+        logger.info(
+            f"Processed prediction: ({type(result['prediction']).__name__}) {result['prediction']}"
+        )
+    logger.info("*" * 80)
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 

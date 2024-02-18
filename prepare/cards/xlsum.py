@@ -2,12 +2,9 @@ from datasets import get_dataset_config_names
 
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
-    InputOutputTemplate,
     LoadHF,
     RenameFields,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
@@ -25,18 +22,8 @@ for lang in langs:
             RenameFields(field_to_field={"text": "document", "target": "summary"}),
             AddFields(fields={"document_type": "document"}),
         ],
-        task=FormTask(
-            inputs=["document", "document_type"],
-            outputs=["summary"],
-            metrics=["metrics.rouge"],
-        ),
-        templates=TemplatesList(
-            [
-                InputOutputTemplate(
-                    input_format="{document}", output_format="{summary}"
-                ),
-            ]
-        ),
+        task="tasks.summarization.abstractive",
+        templates="templates.summarization.abstractive.all",
     )
     if lang == langs[0]:
         test_card(card, debug=False, strict=False)

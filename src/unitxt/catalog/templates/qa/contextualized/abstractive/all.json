@@ -1,0 +1,10 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.qa.contextualized.abstractive.simple",
+        "templates.qa.contextualized.abstractive.simple_question_first",
+        "templates.qa.contextualized.abstractive.simple2",
+        "templates.qa.contextualized.abstractive.simple3",
+        "templates.qa.contextualized.abstractive.simple4"
+    ]
+}

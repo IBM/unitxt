@@ -1,4 +1,6 @@
 sphinx_rtd_theme
+piccolo_theme
+sphinxext-opengraph
 datasets
 evaluate
 nltk

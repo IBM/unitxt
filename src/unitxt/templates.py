@@ -1,6 +1,5 @@
 import json
 from abc import abstractmethod
-from dataclasses import field
 from typing import Any, Dict, List, Optional, Tuple
 
 from .collections import ListCollection
@@ -14,12 +13,21 @@ class Template(StreamInstanceOperator):
     """The role of template is to take the fields of every instance and verbalize it.
 
     Meaning the template is taking the instance and generating source, target and references.
+
+    Args:
+        skip_rendered_instance (bool): if "source", "target", and "references" are already defined fields in the instance, skip its processing
+        postprocessors: a list of strings being artifact names of text processors, to be applied on the model output
+        instruction: a formatting string that yields an instruction with potential participation of values from the "inputs" part of the instance
+        target_prefix: a string to be used to format the prompt. Not a formatting string.
+
     """
 
     skip_rendered_instance: bool = NonPositionalField(default=True)
     postprocessors: List[str] = NonPositionalField(
         default_factory=lambda: ["processors.to_string_stripped"]
     )
+    instruction: str = NonPositionalField(default_factory=lambda: "")
+    target_prefix: str = NonPositionalField(default_factory=lambda: "")
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -43,6 +51,8 @@ class Template(StreamInstanceOperator):
             "source": source,
             "target": target,
             "references": references,
+            "instruction": self.instruction.format(**inputs),
+            "target_prefix": self.target_prefix,
         }
 
     @abstractmethod
@@ -60,6 +70,11 @@ class Template(StreamInstanceOperator):
 
 
 class InputOutputTemplate(Template):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
     input_format: str = None
     output_format: str = None
 
@@ -88,6 +103,8 @@ class InputOutputTemplate(Template):
 
 
 class MultipleChoiceTemplate(Template):
+    """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
+
     input_format: str
     target_prefix: str = ""
     choices_field: str = "choices"
@@ -214,9 +231,6 @@ class YesNoTemplate(Template):
     label_field: str = None
     yes_answer: str = "Yes"
     no_answer: str = "No"
-    postprocessors: List[str] = field(
-        default_factory=lambda: ["processors.to_string_stripped"]
-    )
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> str:
         try:
@@ -259,20 +273,18 @@ class YesNoTemplate(Template):
             return self.yes_answer, [self.yes_answer]
         return self.no_answer, [self.no_answer]
 
-    def get_postprocessors(self) -> List[str]:
-        return self.postprocessors
-
 
 class KeyValTemplate(Template):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify with what separators to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
     pairs_seperator: str = ", "
     key_val_seperator: str = ": "
     use_keys_for_inputs: bool = True
     outputs_key_val_seperator: str = ": "
     use_keys_for_outputs: bool = False
-
-    postprocessors: List[str] = field(
-        default_factory=lambda: ["processors.to_string_stripped"]
-    )
 
     def process_dict(
         self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys
@@ -304,17 +316,15 @@ class KeyValTemplate(Template):
         )
         return target, [target]
 
-    def get_postprocessors(self) -> List[str]:
-        return self.postprocessors
-
 
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: float = 0.1
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
         quantized_outputs = {
-            key: round(input_float / self.quantum) * self.quantum
-            for key, input_float in outputs.items()
+            key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
+            for key, value in outputs.items()
         }
         return super().outputs_to_target_and_references(quantized_outputs)
 

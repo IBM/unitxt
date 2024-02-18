@@ -4,12 +4,39 @@ from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
 
 from .artifact import Artifact
-from .dataclass import NonPositionalField
+from .dataclass import InternalField, NonPositionalField
 from .stream import MultiStream, Stream
+from .utils import is_module_available
 
 
 class Operator(Artifact):
     pass
+
+
+class PackageRequirementsMixin(Artifact):
+    _requirements_list: List[str] = InternalField(default_factory=list)
+
+    def verify(self):
+        super().verify()
+        self.check_missing_requirements()
+
+    def check_missing_requirements(self, requirements=None):
+        if requirements is None:
+            requirements = self._requirements_list
+        missing_packages = []
+        for package in requirements:
+            if not is_module_available(package):
+                missing_packages.append(package)
+        if missing_packages:
+            raise MissingRequirementsError(self.__class__.__name__, missing_packages)
+
+
+class MissingRequirementsError(Exception):
+    def __init__(self, class_name, missing_packages):
+        self.class_name = class_name
+        self.missing_packages = missing_packages
+        self.message = f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}"
+        super().__init__(self.message)
 
 
 class OperatorError(Exception):
@@ -31,7 +58,7 @@ class OperatorError(Exception):
         return cls(exception, [operator])
 
 
-class StreamingOperator(Artifact):
+class StreamingOperator(Operator, PackageRequirementsMixin):
     """Base class for all stream operators in the streaming model.
 
     Stream operators are a key component of the streaming model and are responsible for processing continuous data streams.
@@ -57,26 +84,24 @@ class StreamingOperator(Artifact):
         """
 
 
-class StreamSource(StreamingOperator):
-    """A class representing a stream source operator in the streaming system.
+class SideEffectOperator(StreamingOperator):
+    """Base class for operators that does not affect the stream."""
 
-    A stream source operator is a special type of `StreamingOperator` that generates a data stream without taking any input streams. It serves as the starting point in a stream processing pipeline, providing the initial data that other operators in the pipeline can process.
-
-    When called, a `StreamSource` should generate a `MultiStream`. This behavior must be implemented by any classes that inherit from `StreamSource`.
-
-    """
+    def __call__(self, streams: Optional[MultiStream] = None) -> MultiStream:
+        self.process()
+        return streams
 
     @abstractmethod
-    def __call__(self) -> MultiStream:
+    def process() -> None:
         pass
 
 
-class SourceOperator(StreamSource):
+class SourceOperator(StreamingOperator):
     """A class representing a source operator in the streaming system.
 
     A source operator is responsible for generating the data stream from some source, such as a database or a file.
     This is the starting point of a stream processing pipeline.
-    The `SourceOperator` class is a type of `StreamSource`, which is a special type of `StreamingOperator`
+    The `SourceOperator` class is a type of `SourceOperator`, which is a special type of `StreamingOperator`
     that generates an output stream but does not take any input streams.
 
     When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses
@@ -86,7 +111,7 @@ class SourceOperator(StreamSource):
 
     caching: bool = NonPositionalField(default=None)
 
-    def __call__(self) -> MultiStream:
+    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         multi_stream = self.process()
         if self.caching is not None:
             multi_stream.set_caching(self.caching)
@@ -97,10 +122,10 @@ class SourceOperator(StreamSource):
         pass
 
 
-class StreamInitializerOperator(StreamSource):
+class StreamInitializerOperator(SourceOperator):
     """A class representing a stream initializer operator in the streaming system.
 
-    A stream initializer operator is a special type of `StreamSource` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
+    A stream initializer operator is a special type of `SourceOperator` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
 
     When called, a `StreamInitializerOperator` invokes its `process` method, passing any supplied arguments and keyword arguments. The `process` method should be implemented by all subclasses to generate the required `MultiStream` based on the given arguments and keyword arguments.
 
@@ -445,7 +470,7 @@ class SourceSequentialOperator(SequentialOperator):
     """A class representing a source sequential operator in the streaming system.
 
     A source sequential operator is a type of `SequentialOperator` that starts with a source operator.
-    The first operator in its list of steps is a `StreamSource`, which generates the initial `MultiStream`
+    The first operator in its list of steps is a `SourceOperator`, which generates the initial `MultiStream`
     that the other operators then process.
     """
 

@@ -7,14 +7,6 @@
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train",
-                "validation": "dev",
-                "test": "test"
-            }
-        },
-        {
             "type": "list_field_values",
             "fields": [
                 "label"

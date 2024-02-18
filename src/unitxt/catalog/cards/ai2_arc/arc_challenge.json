@@ -35,5 +35,5 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.with_topic",
-    "templates": "templates.qa.multiple_choice.original.all"
+    "templates": "templates.qa.multiple_choice.with_topic.all"
 }

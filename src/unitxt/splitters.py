@@ -29,6 +29,29 @@ class RenameSplits(Splitter):
 
 
 class SplitRandomMix(Splitter):
+    """Splits a multistream into new streams (splits), whose names, source input stream, and amount of instances, are specified by arg 'mix'.
+
+    The keys of arg 'mix', are the names of the new streams, the values are of the form: 'name-of-source-stream[percentage-of-source-stream]'
+    Each input instance, of any input stream, is selected exactly once for inclusion in any of the output streams.
+
+    Examples:
+    When processing a multistream made of two streams whose names are 'train' and 'test', by
+    SplitRandomMix(mix =  { "train": "train[99%]",  "validation": "train[1%]",  "test": "test" })
+    the output is a multistream, whose three streams are named 'train', 'validation', and 'test'.
+    Output stream 'train' is made of randomly selected 99% of the instances of input stream 'train',
+    output stream 'validation' is made of the remaining 1% instances of input 'train', and output stream 'test' is made
+    of the whole of input stream 'test'.
+
+    When processing the above input multistream by
+    SplitRandomMix(mix =  { "train": "train[50%]+test[0.1]",  "validation": "train[50%]+test[0.2]",  "test": "test[0.7]" })
+    the output is a multistream, whose three streams are named 'train', 'validation', and 'test'.
+    Output stream 'train' is made of randomly selected 50% of the instances of input stream 'train' + randomly selected
+    0.1 (i.e., 10%) of the instances of input stream 'test'.
+    Output stream 'validation' is made of the remaining 50% instances of input 'train'+ randomly selected 0.2 (i.e.,
+    20%) of the original instances of input 'test', that were not selected for output 'train',
+    and output stream 'test' is made of the remaining instances of input 'test'.
+    """
+
     mix: Dict[str, str]
 
     def process(self, multi_stream: MultiStream) -> MultiStream:

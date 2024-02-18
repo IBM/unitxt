@@ -1,3 +1,4 @@
+from src.unitxt import load
 from src.unitxt.artifact import Artifact
 from src.unitxt.blocks import (
     AddFields,
@@ -10,7 +11,6 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.formats import SystemFormat
-from src.unitxt.load import load_dataset
 from src.unitxt.text_utils import print_dict
 
 recipe = SequentialRecipe(
@@ -52,5 +52,5 @@ recipe = SequentialRecipe(
 
 assert isinstance(recipe, Artifact), "recipe must be an instance of Artifact"
 add_to_catalog(recipe, "recipes.wnli", overwrite=True)
-dataset = load_dataset("recipes.wnli")
+dataset = load("recipes.wnli")
 print_dict(dataset["train"][0])

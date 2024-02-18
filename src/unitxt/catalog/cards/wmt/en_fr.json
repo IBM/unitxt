@@ -3,7 +3,8 @@
     "loader": {
         "type": "load_hf",
         "path": "wmt14",
-        "name": "fr-en"
+        "name": "fr-en",
+        "streaming": true
     },
     "preprocess_steps": [
         {

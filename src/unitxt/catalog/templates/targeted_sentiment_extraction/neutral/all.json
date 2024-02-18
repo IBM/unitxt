@@ -1,0 +1,8 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.targeted_sentiment_extraction.neutral.sentiment_extracted",
+        "templates.targeted_sentiment_extraction.neutral.having_sentiment",
+        "templates.targeted_sentiment_extraction.neutral.empty"
+    ]
+}

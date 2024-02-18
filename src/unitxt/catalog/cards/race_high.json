@@ -51,8 +51,14 @@
                 "options": "choices",
                 "article": "context"
             }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "article"
+            }
         }
     ],
-    "task": "tasks.qa.multiple_choice.contextual",
-    "templates": "templates.qa.multiple_choice.contextual.all"
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all"
 }

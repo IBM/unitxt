@@ -3,7 +3,6 @@ from typing import List
 from .card import TaskCard
 from .dataclass import Field, InternalField, OptionalField
 from .formats import Format, SystemFormat
-from .instructions import EmptyInstruction, Instruction
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
 from .operators import (
@@ -14,6 +13,7 @@ from .operators import (
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
 
 logger = get_logger()
@@ -31,7 +31,7 @@ class AddDemosField(SpreadSplit):
 class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
-    instruction: Instruction = Field(default_factory=EmptyInstruction)
+    system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
 
     loader_limit: int = None
@@ -97,6 +97,19 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
 
+    def prepare_refiners(self):
+        self.train_refiner.max_instances = self.max_train_instances
+        self.train_refiner.apply_to_streams = ["train"]
+        self.steps.append(self.train_refiner)
+
+        self.validation_refiner.max_instances = self.max_validation_instances
+        self.validation_refiner.apply_to_streams = ["validation"]
+        self.steps.append(self.validation_refiner)
+
+        self.test_refiner.max_instances = self.max_test_instances
+        self.test_refiner.apply_to_streams = ["test"]
+        self.steps.append(self.test_refiner)
+
     def prepare(self):
         self.steps = [
             self.card.loader,
@@ -136,17 +149,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
             self.sampler.set_size(self.num_demos)
 
-        self.train_refiner.max_instances = self.max_train_instances
-        self.train_refiner.apply_to_streams = ["train"]
-        self.steps.append(self.train_refiner)
-
-        self.validation_refiner.max_instances = self.max_validation_instances
-        self.validation_refiner.apply_to_streams = ["validation"]
-        self.steps.append(self.validation_refiner)
-
-        self.test_refiner.max_instances = self.max_test_instances
-        self.test_refiner.apply_to_streams = ["test"]
-        self.steps.append(self.test_refiner)
+        self.prepare_refiners()
 
         self.steps.append(self.template)
         if self.num_demos > 0:
@@ -157,7 +160,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     sampler=self.sampler,
                 )
             )
-        self.steps.append(self.instruction)
+        self.steps.append(self.system_prompt)
         self.steps.append(self.format)
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
@@ -174,7 +177,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
-    instruction_card_index: int = None
     template_card_index: int = None
 
     def prepare(self):
@@ -195,11 +197,6 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 raise ValueError(
                     f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
                 ) from e
-        assert (
-            self.instruction_card_index is None or self.instruction is None
-        ), "Specify either instruction or instruction_card_index"
-        if self.instruction_card_index is not None:
-            self.instruction = self.card.instructions[int(self.instruction_card_index)]
 
         super().prepare()
 
@@ -214,7 +211,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
     Attributes:
         card (TaskCard): TaskCard object associated with the recipe.
         template (Template, optional): Template object to be used for the recipe.
-        instruction (Instruction, optional): Instruction object to be used for the recipe.
+        system_prompt (SystemPrompt, optional): SystemPrompt object to be used for the recipe.
         loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
@@ -241,8 +238,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
             by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
-        AssertionError: If both template and template_card_index, or instruction and instruction_card_index
-            are specified at the same time.
+        AssertionError: If both template and template_card_index are specified at the same time.
     """
 
     pass

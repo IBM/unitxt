@@ -1,0 +1,5 @@
+{
+    "type": "multi_reference_template",
+    "input_format": "based on this text: {context}\n answer the question: {question}",
+    "references_field": "answer"
+}

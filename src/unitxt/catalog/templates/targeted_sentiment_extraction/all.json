@@ -1,0 +1,13 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.targeted_sentiment_extraction.extract_sentiment",
+        "templates.targeted_sentiment_extraction.having_sentiment",
+        "templates.targeted_sentiment_extraction.carry_sentiment",
+        "templates.targeted_sentiment_extraction.entities_sentiment",
+        "templates.targeted_sentiment_extraction.empty",
+        "templates.targeted_sentiment_extraction.as_json.convert_with_explicit_keys",
+        "templates.targeted_sentiment_extraction.as_json.convert_with_implicit_keys",
+        "templates.targeted_sentiment_extraction.as_json.empty"
+    ]
+}
