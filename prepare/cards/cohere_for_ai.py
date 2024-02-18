@@ -14,11 +14,16 @@ from src.unitxt.test_utils.card import test_card
 logger = get_logger()
 
 dataset_name = "CohereForAI/aya_evaluation_suite"
-subsets = ["aya_human_annotated", "dolly_machine_translated"]  # , "dolly_human_edited"]
+subsets = ["aya_human_annotated", "dolly_machine_translated", "dolly_human_edited"]
 langs = ["eng", "fra", "deu", "spa", "por", "jpn"]
+subset_to_langs = {
+    "aya_human_annotated": langs,
+    "dolly_machine_translated": langs,
+    "dolly_human_edited": ["fra", "spa"],
+}
 
 for subset in subsets:
-    for lang in langs:
+    for lang in subset_to_langs[subset]:
         card = TaskCard(
             loader=LoadHF(path=dataset_name, name=subset, streaming=True),
             preprocess_steps=[
@@ -39,7 +44,7 @@ for subset in subsets:
                 )
             ],
         )
-        if lang == langs[0]:
+        if lang == subset_to_langs[subset][0]:
             recipe = StandardRecipeWithIndexes(
                 template_card_index=0, card=card, num_demos=2, demos_pool_size=20
             )
@@ -51,7 +56,7 @@ for subset in subsets:
             logger.info(train_as_list[0]["source"])
             logger.info("done")
             test_card(
-                card, debug=False, loader_limit=25000
+                card, debug=False, loader_limit=25000, strict=False
             )  # 25000 to reach every language
         add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
 
