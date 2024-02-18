@@ -12,8 +12,9 @@ from src.unitxt.standard import StandardRecipeWithIndexes
 from src.unitxt.test_utils.card import test_card
 
 settings = get_settings()
-orig_settings = settings.allow_unverified_code
+orig_settings = (settings.allow_unverified_code, settings.allow_unverified_code)
 settings.allow_unverified_code = True
+settings.global_loader_limit = 25000  # to ensure language is encountered
 
 logger = get_logger()
 
@@ -49,6 +50,7 @@ for subset in subsets:
             )  # 25000 to reach every language
         add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
 
+(settings.allow_unverified_code, settings.allow_unverified_code) = orig_settings
 ########################  to remove once done ############################
 recipe = StandardRecipeWithIndexes(
     template_card_index=1,
@@ -69,16 +71,3 @@ logger.info("+++++++++++3+++++++++++++++")
 logger.info(train_as_list[0]["source"])
 logger.info("+++++++++++done+++++++++++++++")
 logger.info("done")
-
-# recipe = StandardRecipeWithIndexes(template_card_index=0, card=card)
-# ms = recipe()
-# print(ms)
-# test_as_list = list(ms["test"])
-# print(len(test_as_list))
-# print(test_as_list[0])
-# print(test_as_list[1])
-# langs = test_as_list[0]['target'].split(", ")
-# print(langs)
-# print(len(langs))
-# print(sorted(langs))
-# print('done')
