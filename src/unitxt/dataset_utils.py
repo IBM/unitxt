@@ -1,12 +1,10 @@
-import os
-
 from .artifact import Artifact, UnitxtArtifactNotFoundError, fetch_artifact
 from .logging_utils import get_logger
 from .register import _reset_env_local_catalogs, register_all_artifacts
+from .settings_utils import get_settings
 
 logger = get_logger()
-
-__default_recipe__ = "standard_recipe"
+settings = get_settings()
 
 
 def fetch(artifact_name):
@@ -53,6 +51,6 @@ def get_dataset_artifact(dataset_str):
     if recipe is None:
         args = parse(dataset_str)
         if "type" not in args:
-            args["type"] = os.environ.get("UNITXT_DEFAULT_RECIPE", __default_recipe__)
+            args["type"] = settings.default_recipe
         recipe = Artifact.from_dict(args)
     return recipe
