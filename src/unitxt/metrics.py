@@ -763,7 +763,6 @@ class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
-    classes_to_ignore = ["none"]
     metric = "f1"
 
     def prepare(self):
@@ -796,13 +795,9 @@ class F1MultiLabel(GlobalMetric):
         self._validate_references_and_prediction(references, predictions)
         references = [reference[0] for reference in references]
 
-        labels = [
-            lbl
-            for lbl in {label for reference in references for label in reference}
-            if lbl not in self.classes_to_ignore
-        ]
+        labels = list({label for reference in references for label in reference})
+
         # if no classes are left then F1 is not defined
-        # (e.g. only "none" in references)
         if len(labels) == 0:
             return {self.main_score: float("nan")}
 
