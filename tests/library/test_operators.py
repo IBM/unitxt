@@ -2562,8 +2562,8 @@ class TestApplyMetric(UnitxtTestCase):
             "inputs": {},
         }
         demos_instances = [
-            {"source": "1+2", "target": "3"},
-            {"source": "4-2", "target": "2"},
+            {"source": "1+2", "target": "3", "instruction": "solve the math exercises"},
+            {"source": "4-2", "target": "2", "instruction": "solve the math exercises"},
         ]
 
         target = """Instruction:solve the math exercises
@@ -2592,8 +2592,8 @@ Agent:"""
         self,
     ):
         demo_instances = [
-            {"source": "1+2", "target": "3"},
-            {"source": "4-2", "target": "2"},
+            {"source": "1+2", "target": "3", "instruction": "solve the math exercises"},
+            {"source": "4-2", "target": "2", "instruction": "solve the math exercises"},
         ]
         instance = {
             "source": "1+1",
