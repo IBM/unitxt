@@ -32,7 +32,7 @@
             "targets"
         ],
         "metrics": [
-            "metrics.rouge"
+            "metrics.normalized_sacrebleu"
         ]
     },
     "templates": [
