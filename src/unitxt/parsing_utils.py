@@ -52,7 +52,7 @@ def parse_key_equals_value_string_to_dict(query: str):
         )
     for kv in kvs:
         kv = kv.strip()
-        key_val = split_within_depth(query, dellimiter="=")
+        key_val = split_within_depth(kv, dellimiter="=")
         if (
             len(key_val) != 2
             or len(key_val[0].strip()) == 0
