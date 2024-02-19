@@ -12,9 +12,9 @@ from unitxt.dataclass import Field
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from catalog import CatalogDocsBuilder
+from catalog import create_catalog_docs
 
-CatalogDocsBuilder().run()
+create_catalog_docs()
 
 
 # -- Project information -----------------------------------------------------
