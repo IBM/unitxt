@@ -26,7 +26,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .type_utils import isoftype
+from .type_utils import isoftype, to_float_or_default
 
 logger = get_logger()
 settings = get_settings()
@@ -1008,10 +1008,15 @@ class KendallTauMetric(GlobalMetric):
 
     def compute(
         self,
-        references: List[float],
-        predictions: List[float],
+        references: List[List[str]],
+        predictions: List[str],
         additional_inputs: List[Dict],
     ) -> dict:
+        if isinstance(references[0], list):
+            references = [reference[0] for reference in references]
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
@@ -1061,10 +1066,15 @@ class RocAuc(GlobalMetric):
 
     def compute(
         self,
-        references: List[List[float]],
-        predictions: List[float],
+        references: List[List[str]],
+        predictions: List[str],
         additional_inputs: List[Dict],
     ) -> dict:
+        if isinstance(references[0], list):
+            references = [reference[0] for reference in references]
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+
         fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
         roc_auc = self.auc(fpr, tpr)
         return {self.main_score: roc_auc}
