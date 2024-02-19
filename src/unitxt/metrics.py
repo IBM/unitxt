@@ -1021,7 +1021,7 @@ class KendallTauMetric(GlobalMetric):
         corr = kendall_results.correlation
         return {
             self.main_score: corr,
-            "p_val": kendall_results.pvalue,
+            "kendalltau_p_val": kendall_results.pvalue,
         }
 
 
