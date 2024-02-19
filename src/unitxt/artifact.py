@@ -6,7 +6,7 @@ import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
 from functools import lru_cache
-from typing import Dict, List, Union, final
+from typing import Dict, List, Optional, Union, final
 
 from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
 from .logging_utils import get_logger
@@ -32,10 +32,19 @@ class Artifactories:
         return cls.instance
 
     def __iter__(self):
-        return iter(self.artifactories)
+        self._index = 0  # Initialize/reset the index for iteration
+        return self
 
     def __next__(self):
-        return next(self.artifactories)
+        while self._index < len(self.artifactories):
+            artifactory = self.artifactories[self._index]
+            self._index += 1
+            if (
+                settings.use_only_local_catalogs and not artifactory.is_local
+            ):  # Corrected typo from 'is_loacl' to 'is_local'
+                continue
+            return artifactory
+        raise StopIteration
 
     def register(self, artifactory):
         assert isinstance(
@@ -295,20 +304,26 @@ def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
 
+    artifactory, name, args = get_artifactory_name_and_args(name=name)
+
+    return artifactory.get_with_overwrite(name, overwrite_args=args), artifactory
+
+
+def get_artifactory_name_and_args(
+    name: str, artifactories: Optional[List[Artifactory]] = None
+):
     name, args = separate_inside_and_outside_square_brackets(name)
     if args is not None:
         args = parse_key_equals_value_string_to_dict(args)
 
-    for artifactory in Artifactories():
-        if settings.use_only_local_catalogs:
-            if not artifactory.is_local:
-                continue
-        if name in artifactory:
-            return artifactory.get_with_overwrite(
-                name, overwrite_args=args
-            ), artifactory
+    if artifactories is None:
+        artifactories = list(Artifactories())
 
-    raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
+    for artifactory in artifactories:
+        if name in artifactory:
+            return artifactory, name, args
+
+    raise UnitxtArtifactNotFoundError(name, artifactories)
 
 
 @lru_cache(maxsize=None)

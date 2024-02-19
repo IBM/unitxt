@@ -2,9 +2,10 @@ from src.unitxt.artifact import (
     Artifact,
     fetch_artifact,
 )
-from src.unitxt.catalog import add_to_catalog
+from src.unitxt.catalog import add_to_catalog, get_from_catalog
 from src.unitxt.dataclass import UnexpectedArgumentError
 from src.unitxt.logging_utils import get_logger
+from src.unitxt.operator import SequentialOperator
 from src.unitxt.processors import StringOrNotString
 from src.unitxt.test_utils.catalog import temp_catalog
 from tests.utils import UnitxtTestCase
@@ -37,8 +38,35 @@ class TestArtifact(UnitxtTestCase):
         with temp_catalog() as catalog_path:
             add_to_catalog(
                 StringOrNotString(string="yes", field="a_field"),
-                "test.test",
+                "test1.test2",
                 catalog_path=catalog_path,
             )
-            artifact, _ = fetch_artifact("temp.test[string=hello]")
+            artifact = get_from_catalog(
+                "test1.test2[string=hello]", catalog_path=catalog_path
+            )
             self.assertEqual(artifact.string, "hello")
+
+    def test_artifact_loading_with_overwrite_args_with_list_of_operators(self):
+        with temp_catalog() as catalog_path:
+            add_to_catalog(
+                StringOrNotString(string="yes", field="a_field"),
+                "test2.processor",
+                catalog_path=catalog_path,
+            )
+            add_to_catalog(
+                SequentialOperator(),
+                "test2.seq",
+                catalog_path=catalog_path,
+            )
+            artifact = get_from_catalog(
+                "test2.seq[steps=[test2.processor[string=no]]]",
+                catalog_path=catalog_path,
+            )
+            self.assertEqual(artifact.steps[0].string, "no")
+
+    def test_artifact_loading_with_overwrite_args_list(self):
+        artifact_identifier = (
+            "tasks.classification.binary[metrics=[metrics.rouge, metrics.accuracy]]"
+        )
+        artifact, _ = fetch_artifact(artifact_identifier)
+        self.assertEqual(artifact.metrics, ["metrics.rouge", "metrics.accuracy"])
