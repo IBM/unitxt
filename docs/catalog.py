@@ -254,5 +254,35 @@ class CatalogDocsBuilder:
         )
 
 
-if __name__ == "__main__":
+def replace_in_file(source_str, target_str, file_path):
+    """Replace all occurrences of source_str with target_str in the file specified by file_path.
+
+    Parameters:
+    - source_str: The string to be replaced.
+    - target_str: The string to replace with.
+    - file_path: The path to the file where the replacement should occur.
+    """
+    with open(file_path) as file:
+        file_contents = file.read()
+    modified_contents = file_contents.replace(source_str, target_str)
+    with open(file_path, "w") as file:
+        file.write(modified_contents)
+
+
+def create_catalog_docs():
     CatalogDocsBuilder().run()
+    current_dir = os.path.dirname(__file__)
+    catalog_rst_file = os.path.join(current_dir, "catalog.rst")
+    source_str = "Catalog\n-------\n"
+    target_str = (
+        "Catalog\n-------\n\n"
+        "The catalog is a place for the Unitxt community to share assets used for processing datasets.\n\n"
+        "You can load directly from the catalog with `fetch_artifact('artifact.id')`.\n"
+        "You can also place anywhere in Unitxt catalog ids instead of realclasses\n"
+        "Finally you can also state an ID with a modification to the asset parameters `asset.id[key=value]`.\n"
+    )
+    replace_in_file(source_str, target_str, catalog_rst_file)
+
+
+if __name__ == "__main__":
+    create_catalog_docs()
