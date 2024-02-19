@@ -398,7 +398,7 @@ class LoadFromIBMCloud(Loader):
 
 
 class LoadHFCustomDatasetScript(Loader):
-    """Loads a dataset using a custom HF dataset loading script from catalog/loaders path.
+    """Loads a dataset using a custom HF dataset loading script from src/unitxt/custom/datasets path.
 
     This advanced way can be used to load datasets that consist of data files in unsupported formats or require more complex data preparation.
 
@@ -408,17 +408,13 @@ class LoadHFCustomDatasetScript(Loader):
     file: str
 
     def process(self):
-        catalog_path = constants.__getattr__("local_catalog_path")
+        custom_dataset_scripts_path = "src/unitxt/custom/datasets"
 
-        assert (
-            catalog_path is not None
-        ), "Please set the local_catalog_path in constants file"
-
-        script_path = os.path.join(catalog_path, "loaders", self.file)
+        script_path = os.path.join(custom_dataset_scripts_path, self.file)
 
         assert (
             os.path.exists(script_path) is True
-        ), "Script file does not exist in the local catalog path"
+        ), "Script file does not exist in the custom dataset scripts directory"
 
         loader = LoadHF(path=script_path, streaming=False)
         ms = loader.process()
