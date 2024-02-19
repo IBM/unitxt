@@ -1441,7 +1441,10 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
             )
 
         return [
-            {"score": result.score / 5, "feedback": result.feedback}
+            {
+                "score": result.score / 5,
+                "feedback": result.feedback,
+            }
             for result in results
         ]
         # output = [{"score": 1.0, "feedback": "this is a great!"}]
