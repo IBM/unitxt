@@ -1422,9 +1422,10 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         query_list = [instance["question"] for instance in additional_inputs]
         contexts_list = [instance["contexts"] for instance in additional_inputs]
         reference_response_list = [
-            instance["reference_answer"] for instance in additional_inputs
+            instance["reference_answers"] for instance in additional_inputs
         ]
 
+        assert len(reference_response_list[0]) == 1, "only supporting single reference"
         assert len(references[0]) == 1, "only supporting single reference"
 
         results = []
