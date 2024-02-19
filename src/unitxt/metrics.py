@@ -1265,6 +1265,10 @@ class TokenOverlap(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
     ) -> dict:
+        import ast
+
+        references = ast.literal_eval(references)
+
         results = [
             self._compute_single_ref(reference, prediction) for reference in references
         ]
@@ -1385,6 +1389,62 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
+
+
+class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    batch_size: int = 32
+    # model_name: str
+
+    _requirements_list: List[str] = []
+
+    def prepare(self):
+        super().prepare()
+
+        from llama_index.core.evaluation import CorrectnessEvaluator
+        from llama_index.llms.openai import OpenAI
+
+        llm = OpenAI("gpt-3.5-turbo")
+        self.evaluator = CorrectnessEvaluator(llm=llm)
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Dict],
+    ) -> List[Dict[str, Any]]:
+        # treat the references as the questions and the predictions as answers
+        # assume a single reference
+
+        response_list = predictions
+
+        query_list = [instance["question"] for instance in additional_inputs]
+        contexts_list = [instance["contexts"] for instance in additional_inputs]
+        reference_response_list = [
+            instance["reference_answer"] for instance in additional_inputs
+        ]
+
+        assert len(references[0]) == 1, "only supporting single reference"
+
+        results = []
+        for query, response, contexts, reference_response in zip(
+            query_list, response_list, contexts_list, reference_response_list
+        ):
+            results.append(
+                self.evaluator.evaluate(
+                    query=query,
+                    response=response,
+                    contexts=contexts,
+                    reference=reference_response,
+                )
+            )
+
+        return [
+            {"score": result.score / 5, "feedback": result.feedback}
+            for result in results
+        ]
+        # output = [{"score": 1.0, "feedback": "this is a great!"}]
 
 
 class Perplexity(BulkInstanceMetric):
