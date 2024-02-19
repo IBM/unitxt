@@ -398,7 +398,12 @@ class LoadFromIBMCloud(Loader):
 
 
 class LoadHFCustomDatasetScript(Loader):
-    """Loads a dataset using a custom HF dataset loading script from catalog/loaders path."""
+    """Loads a dataset using a custom HF dataset loading script from catalog/loaders path.
+
+    This advanced way can be used to load datasets that consist of data files in unsupported formats or require more complex data preparation.
+
+    For more details, refer to https://huggingface.co/docs/datasets/en/dataset_script
+    """
 
     file: str
 
