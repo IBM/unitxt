@@ -10,6 +10,10 @@ from typing import Dict, List, Union, final
 
 from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
 from .logging_utils import get_logger
+from .parsing_utils import (
+    parse_key_equals_value_string_to_dict,
+    separate_inside_and_outside_square_brackets,
+)
 from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
@@ -173,31 +177,33 @@ class Artifact(Dataclass):
         return clz in set(cls._class_register.values())
 
     @classmethod
-    def _recursive_load(cls, d):
-        if isinstance(d, dict):
+    def _recursive_load(cls, obj):
+        if isinstance(obj, dict):
             new_d = {}
-            for key, value in d.items():
+            for key, value in obj.items():
                 new_d[key] = cls._recursive_load(value)
-            d = new_d
-        elif isinstance(d, list):
-            d = [cls._recursive_load(value) for value in d]
+            obj = new_d
+        elif isinstance(obj, list):
+            obj = [cls._recursive_load(value) for value in obj]
         else:
             pass
-        if cls.is_artifact_dict(d):
-            cls.verify_artifact_dict(d)
-            return cls._class_register[d.pop("type")](**d)
+        if cls.is_artifact_dict(obj):
+            cls.verify_artifact_dict(obj)
+            return cls._class_register[obj.pop("type")](**obj)
 
-        return d
+        return obj
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, overwrite_args=None):
+        if overwrite_args is not None:
+            d = {**d, **overwrite_args}
         cls.verify_artifact_dict(d)
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, path, artifact_identifier=None):
+    def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = load_json(path)
-        new_artifact = cls.from_dict(d)
+        new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
 
@@ -267,6 +273,10 @@ class Artifactory(Artifact):
     def __getitem__(self, name) -> Artifact:
         pass
 
+    @abstractmethod
+    def get_with_overwrite(self, name, overwrite_args) -> Artifact:
+        pass
+
 
 class UnitxtArtifactNotFoundError(Exception):
     def __init__(self, name, artifactories):
@@ -285,12 +295,18 @@ def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
 
+    name, args = separate_inside_and_outside_square_brackets(name)
+    if args is not None:
+        args = parse_key_equals_value_string_to_dict(args)
+
     for artifactory in Artifactories():
         if settings.use_only_local_catalogs:
             if not artifactory.is_local:
                 continue
         if name in artifactory:
-            return artifactory[name], artifactory
+            return artifactory.get_with_overwrite(
+                name, overwrite_args=args
+            ), artifactory
 
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
