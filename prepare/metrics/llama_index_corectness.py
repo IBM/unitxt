@@ -1,3 +1,4 @@
+from unitxt import add_to_catalog
 from unitxt.metrics import LlamaIndexCorrectnessMetric
 from unitxt.test_utils.metrics import test_metric
 
@@ -34,7 +35,6 @@ inputs = [
     }
 ]
 
-
 instance_targets = [  # nDCG is undefined at instance level
     {
         "score": 1.0,
@@ -53,3 +53,5 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
+
+add_to_catalog(metric, "metrics.rag.llama_index_correctness", overwrite=True)
