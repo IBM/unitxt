@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "stance_to_pro_con",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "stance_to_pro_con",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

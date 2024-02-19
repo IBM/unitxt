@@ -1,0 +1,7 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.classification.multi_label.default",
+        "templates.classification.multi_label.empty"
+    ]
+}

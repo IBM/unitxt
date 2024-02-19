@@ -1,0 +1,68 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "skg/toxigen-data",
+        "name": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 251000
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[20%]",
+                "test": "train[80%]"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "prompt_label": {
+                    "0": "not toxic",
+                    "1": "toxic"
+                }
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "prompt": "text"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "prompt_label": "label"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "not toxic",
+                    "toxic"
+                ],
+                "text_type": "text",
+                "type_of_class": "toxicity"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
+                "output_format": "{label}",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.toxic_or_not_toxic"
+                ]
+            }
+        ]
+    }
+}

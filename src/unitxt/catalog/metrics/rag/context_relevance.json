@@ -1,0 +1,27 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "contexts",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "question",
+                    "prediction"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
+    "metric": "metrics.perplexity_q.flan_t5_small"
+}

@@ -1,0 +1,69 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "dbpedia_14"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Company",
+                    "1": "Educational Institution",
+                    "2": "Artist",
+                    "3": "Athlete",
+                    "4": "Office Holder",
+                    "5": "Mean Of Transportation",
+                    "6": "Building",
+                    "7": "Natural Place",
+                    "8": "Village",
+                    "9": "Animal",
+                    "10": "Plant",
+                    "11": "Album",
+                    "12": "Film",
+                    "13": "Written Work"
+                }
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "content": "text"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "Company",
+                    "Educational Institution",
+                    "Artist",
+                    "Athlete",
+                    "Office Holder",
+                    "Mean Of Transportation",
+                    "Building",
+                    "Natural Place",
+                    "Village",
+                    "Animal",
+                    "Plant",
+                    "Album",
+                    "Film",
+                    "Written Work"
+                ],
+                "text_type": "paragraph",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

@@ -1,4 +1,17 @@
 {
-    "type": "string_or_not_string",
-    "string": "toxic"
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "string_or_not_string",
+            "string": "toxic",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "string_or_not_string",
+            "string": "toxic",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
 }

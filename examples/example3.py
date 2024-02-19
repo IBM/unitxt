@@ -1,3 +1,4 @@
+from src.unitxt import load
 from src.unitxt.blocks import (
     AddFields,
     FormTask,
@@ -6,16 +7,16 @@ from src.unitxt.blocks import (
     MapInstanceValues,
     NormalizeListFields,
     RandomSampler,
-    RenderTemplatedICL,
     SequentialRecipe,
     SliceSplit,
     SplitRandomMix,
     SpreadSplit,
-    TextualInstruction,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.load import load_dataset
-from src.unitxt.text_utils import print_dict
+from src.unitxt.formats import SystemFormat
+from src.unitxt.logging_utils import get_logger
+
+logger = get_logger()
 
 recipe = SequentialRecipe(
     steps=[
@@ -38,12 +39,10 @@ recipe = SequentialRecipe(
                 "test": "test",
             }
         ),
-        MapInstanceValues(
-            mappers={"label": {"0": "entailment", "1": "not entailment"}}
-        ),
+        MapInstanceValues(mappers={"label": {"0": "entails", "1": "not entails"}}),
         AddFields(
             fields={
-                "choices": ["entailment", "not entailment"],
+                "choices": ["entails", "not entails"],
             }
         ),
         NormalizeListFields(fields=["choices"]),
@@ -52,28 +51,33 @@ recipe = SequentialRecipe(
             outputs=["label"],
             metrics=["metrics.accuracy"],
         ),
+        InputOutputTemplate(
+            input_format="""
+                    Sentence1: {sentence1}\nSentence2: {sentence2}
+                """.strip(),
+            output_format="{label}",
+            instruction="Classify the way Sentence1 relates to Sentence2, into the following two classes: [{choices}].\n",
+            target_prefix="How relates: ",
+        ),
         SpreadSplit(
             source_stream="demos_pool",
             target_field="demos",
             sampler=RandomSampler(sample_size=5),
         ),
-        RenderTemplatedICL(
-            instruction=TextualInstruction(
-                "classify if this sentence is entailment or not entailment."
-            ),
-            template=InputOutputTemplate(
-                input_format="""
-                    Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.
-                """.strip(),
-                output_format="{label}",
-            ),
-            demos_field="demos",
+        SystemFormat(
+            demo_format="{source}\n{target_prefix}{target}\n\n",
+            model_input_format="{instruction}\n{demos}\n{source}\n{target_prefix}",
         ),
     ]
 )
 
 add_to_catalog(recipe, "recipes.wnli_5_shot", overwrite=True)
 
-dataset = load_dataset("recipes.wnli_5_shot")
+dataset = load("recipes.wnli_5_shot")
 
-print_dict(dataset["train"][0])
+logger.info(dataset.keys())
+for i in range(5):
+    logger.info(
+        f"++++{i}++++{i}++++{i}++++{i}++++{i}++++{i}++++{i}++++{i}++++{i}++++{i}"
+    )
+    logger.info(dataset["train"][i]["source"])

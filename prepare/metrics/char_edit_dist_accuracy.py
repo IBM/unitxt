@@ -48,12 +48,7 @@ instance_targets = [
         "char_edit_dist_accuracy": 0.0,
         "score": 0.0,
         "score_name": "char_edit_dist_accuracy",
-    },
-    {
-        "char_edit_dist_accuracy": 0.0,
-        "score": 0.0,
-        "score_name": "char_edit_dist_accuracy",
-    },
+    }
 ]
 
 global_target = {

@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "to_yes_or_none",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "to_yes_or_none",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

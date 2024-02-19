@@ -5,14 +5,18 @@ import os
 import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
+from functools import lru_cache
 from typing import Dict, List, Union, final
 
-from .dataclass import Dataclass, Field, fields
-from .logging import get_logger
+from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
+from .logging_utils import get_logger
+from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
+from .utils import load_json, save_json
 
 logger = get_logger()
+settings = get_settings()
 
 
 class Artifactories:
@@ -100,6 +104,8 @@ class Artifact(Dataclass):
 
     _class_register = {}
 
+    artifact_identifier: str = InternalField(default=None, required=False)
+
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -132,8 +138,8 @@ class Artifact(Dataclass):
 
         if cls.is_registered_type(snake_case_key):
             assert (
-                cls._class_register[snake_case_key] == artifact_class
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for '{cls._class_register[snake_case_key]}'"
+                str(cls._class_register[snake_case_key]) == str(artifact_class)
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overriden by {artifact_class}."
 
             return snake_case_key
 
@@ -156,6 +162,11 @@ class Artifact(Dataclass):
     @classmethod
     def is_registered_type(cls, type: str):
         return type in cls._class_register
+
+    @classmethod
+    def is_registered_class_name(cls, class_name: str):
+        snake_case_key = camel_to_snake_case(class_name)
+        return cls.is_registered_type(snake_case_key)
 
     @classmethod
     def is_registered_class(cls, clz: object):
@@ -184,10 +195,11 @@ class Artifact(Dataclass):
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, path):
-        with open(path) as f:
-            d = json.load(f)
-        return cls.from_dict(d)
+    def load(cls, path, artifact_identifier=None):
+        d = load_json(path)
+        new_artifact = cls.from_dict(d)
+        new_artifact.artifact_identifier = artifact_identifier
+        return new_artifact
 
     def prepare(self):
         pass
@@ -197,7 +209,7 @@ class Artifact(Dataclass):
 
     @final
     def __pre_init__(self, **kwargs):
-        self._init_dict = deepcopy(kwargs)
+        self._init_dict = get_raw(kwargs)
 
     @final
     def __post_init__(self):
@@ -218,11 +230,24 @@ class Artifact(Dataclass):
         return {"type": self.type, **self._init_dict}
 
     def save(self, path):
-        with open(path, "w") as f:
-            init_dict = self.to_dict()
-            dumped = json.dumps(init_dict, indent=4, ensure_ascii=False)
-            f.write(dumped)
-            f.write("\n")
+        data = self.to_dict()
+        save_json(path, data)
+
+
+def get_raw(obj):
+    if isinstance(obj, Artifact):
+        return obj._to_raw_dict()
+
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
+        return type(obj)(*[get_raw(v) for v in obj])
+
+    if isinstance(obj, (list, tuple)):
+        return type(obj)([get_raw(v) for v in obj])
+
+    if isinstance(obj, dict):
+        return type(obj)({get_raw(k): get_raw(v) for k, v in obj.items()})
+
+    return deepcopy(obj)
 
 
 class ArtifactList(list, Artifact):
@@ -232,6 +257,8 @@ class ArtifactList(list, Artifact):
 
 
 class Artifactory(Artifact):
+    is_local: bool = AbstractField()
+
     @abstractmethod
     def __contains__(self, name: str) -> bool:
         pass
@@ -247,24 +274,37 @@ class UnitxtArtifactNotFoundError(Exception):
         self.artifactories = artifactories
 
     def __str__(self):
+        msg = f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}."
+        if settings.use_only_local_catalogs:
+            msg += f" Notice that unitxt.settings.use_only_local_catalogs is set to True, if you want to use remote catalogs set this settings or the environment variable {settings.use_only_local_catalogs_key}."
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
+@lru_cache(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
 
     for artifactory in Artifactories():
+        if settings.use_only_local_catalogs:
+            if not artifactory.is_local:
+                continue
         if name in artifactory:
             return artifactory[name], artifactory
 
     raise UnitxtArtifactNotFoundError(name, Artifactories().artifactories)
 
 
+@lru_cache(maxsize=None)
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
     logger.info(f"Artifact {identifer} is fetched from {artifactory}")
     return artifact
+
+
+def reset_artifacts_cache():
+    fetch_artifact.cache_clear()
+    verbosed_fetch_artifact.cache_clear()
 
 
 def maybe_recover_artifact(artifact):

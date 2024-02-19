@@ -13,9 +13,9 @@ class Stream(Dataclass):
     This class provides methods for generating, caching, and manipulating streaming data.
 
     Attributes:
-        generator (function): A generator function for streaming data.
-        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function.
-        caching (bool): Whether the data is cached or not.
+        generator (function): A generator function for streaming data. :no-index:
+        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. :no-index:
+        caching (bool): Whether the data is cached or not. :no-index:
     """
 
     generator: callable
@@ -48,7 +48,7 @@ class Stream(Dataclass):
     def __iter__(self):
         return iter(self._get_stream())
 
-    def peak(self):
+    def peek(self):
         return next(iter(self))
 
     def take(self, n):

@@ -1,7 +1,8 @@
 import re
 import string
 import uuid
-from abc import abstractmethod
+import warnings
+from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -10,10 +11,11 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
+from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .dataclass import InternalField, OptionalField
-from .logging import get_logger
+from .logging_utils import get_logger
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -22,13 +24,14 @@ from .operator import (
 )
 from .operators import CopyFields
 from .random_utils import get_seed
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
+from .type_utils import isoftype
 
 logger = get_logger()
-# The default number of resamples used to estimate the confidence intervals
-# global and instances metrics. Use None to disable confidence interval computation by default.
-_N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS = 1000
-_N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS = 100
+settings = get_settings()
+
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 def abstract_factory():
@@ -62,6 +65,7 @@ class MetricWithConfidenceInterval(Metric):
     # Use None to disable confidence interval computation.
     n_resamples: int = None
     confidence_level: float = 0.95
+    ci_scores: List[str] = None
 
     @staticmethod
     def new_random_generator():
@@ -80,7 +84,7 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
-    def score_based_confidence_interval(self, score_names: List[str], instances):
+    def score_based_confidence_interval(self, instances):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
 
         score_names: List[str]
@@ -94,6 +98,10 @@ class MetricWithConfidenceInterval(Metric):
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
             return result
+
+        score_names = (
+            self.ci_scores if self.ci_scores is not None else [self.main_score]
+        )
 
         for score_name in score_names:
             scores = [
@@ -196,7 +204,10 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_GLOBAL_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_global_metrics
+    )
+    process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -224,17 +235,26 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
             additional_inputs.append(instance_additional_inputs)
-            try:
-                instance_score = self._compute(
-                    [instance_references],
-                    [instance_prediction],
-                    [instance_additional_inputs],
-                )
-            except:
-                instance_score = {"score": None, "score_name": self.main_score}
+            instance_score = None
+            # for backward compatibility
+            no_score_value = np.nan
+            if self.process_single_instances:
+                try:
+                    instance_score = self._compute(
+                        [instance_references],
+                        [instance_prediction],
+                        [instance_additional_inputs],
+                    )
+                except:
+                    no_score_value = None
+            if not instance_score:
+                instance_score = {
+                    "score": no_score_value,
+                    "score_name": self.main_score,
+                }
 
                 if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = None
+                    instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(instance_score)
 
@@ -274,7 +294,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
     main_score: str
     reduction_map: Dict[str, List[str]]
 
@@ -342,7 +364,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score_name"] = self.main_score
 
                 confidence_interval = self.score_based_confidence_interval(
-                    score_names=[self.main_score], instances=instances
+                    instances=instances
                 )
                 global_score.update(confidence_interval)
 
@@ -355,12 +377,14 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         pass
 
 
 class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples = _N_RESAMPLES_DEFAULT_FOR_INSTANCE_METRICS
+    n_resamples: int = OptionalField(
+        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    )
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
 
@@ -412,7 +436,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                         global_score["score_name"] = self.main_score
 
                 confidence_interval = self.score_based_confidence_interval(
-                    score_names=[self.main_score], instances=instances
+                    instances=instances
                 )
                 global_score.update(confidence_interval)
 
@@ -474,6 +498,23 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class StringContainment(InstanceMetric):
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+
+    def compute(
+        self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
+    ) -> dict:
+        result = {
+            self.main_score: float(
+                any(str(reference) in prediction for reference in references)
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
@@ -513,9 +554,28 @@ class HuggingfaceMetric(GlobalMetric):
 
     scale: float = 1.0  # optional scaling of main results
     scaled_fields: list = None
+    # This are fixed arguments  passed to compute method
     hf_compute_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    # These are additional input fields passed to HF compute method (a list with one value per instance)
     hf_additional_input_fields: List = OptionalField(default_factory=list)
+    # These are additional input fields that are passed as one value
+    hf_additional_input_fields_pass_one_value: List = OptionalField(
+        default_factory=list
+    )
+
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
+
+    def verify(self):
+        assert (
+            self.hf_additional_input_fields is None
+            or isoftype(self.hf_additional_input_fields, List[str])
+        ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
+        assert (
+            self.hf_additional_input_fields_pass_one_value is None
+            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
+
+        return super().verify()
 
     def prepare(self):
         super().prepare()
@@ -538,8 +598,22 @@ class HuggingfaceMetric(GlobalMetric):
                 additional_input[additional_input_field]
                 for additional_input in additional_inputs
             ]
-        # add check that all required fields in self.metrics are in passed_additional_inputs
+        for additional_input_field in self.hf_additional_input_fields_pass_one_value:
+            assert (
+                additional_input_field in additional_inputs[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_inputs[0]}"
 
+            values = {
+                additional_input[additional_input_field]
+                for additional_input in additional_inputs
+            }
+            assert (
+                len(values) == 1
+            ), f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
+
+            passed_additional_inputs[additional_input_field] = next(iter(values))
+
+        # add check that all required fields in self.metrics are in passed_additional_inputs       print(passed_additional_inputs)
         result = self.metric.compute(
             predictions=predictions,
             references=references,
@@ -587,7 +661,6 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         predictions: List[str],
         additional_inputs: List[Any],
     ) -> List[Dict[str, Any]]:
-        passed_additional_inputs = {}
         passed_additional_inputs = {}
         for additional_input_field in self.hf_additional_input_fields:
             assert (
@@ -688,10 +761,11 @@ class F1MultiLabel(GlobalMetric):
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
     classes_to_ignore = ["none"]
+    metric = "f1"
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load("f1", "multilabel")
+        self._metric = evaluate.load(self.metric, "multilabel")
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -715,21 +789,9 @@ class F1MultiLabel(GlobalMetric):
     ) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
-        assert all(
-            len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 multi label metric"
 
+        self._validate_references_and_prediction(references, predictions)
         references = [reference[0] for reference in references]
-
-        for reference in references:
-            assert isinstance(
-                references, list
-            ), f"Each reference is expected to list of strings in F1 multi label metric. Received reference: {reference}"
-
-        for prediction in predictions:
-            assert isinstance(
-                prediction, list
-            ), f"Each prediction is expected to list of strings in F1 multi label metric. Received prediction: {prediction}"
 
         labels = [
             lbl
@@ -764,18 +826,59 @@ class F1MultiLabel(GlobalMetric):
             average=self.average,
             labels=labels_param,
         )
-        if isinstance(result["f1"], numpy.ndarray):
+        if isinstance(result[self.metric], numpy.ndarray):
             from statistics import mean
 
-            assert len(result["f1"]) == len(
-                labels
-            ), f'F1 result ({result["f1"]}) has more entries than labels ({labels})'
-            final_result = {self.main_score: mean(result["f1"])}
+            assert (
+                len(result[self.metric]) == len(labels)
+            ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
+            final_result = {self.main_score: mean(result[self.metric])}
             for i, label in enumerate(labels):
-                final_result["f1_" + label] = result["f1"][i]
+                final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
-            final_result = {self.main_score: result["f1"]}
+            final_result = {self.main_score: result[self.metric]}
         return final_result
+
+    def _validate_references_and_prediction(self, references, predictions):
+        for reference in references:
+            if not len(reference) == 1:
+                raise ValueError(
+                    f"Only a single reference per prediction is allowed in F1 multi label metric. Received reference: {reference}"
+                )
+            if not isoftype(reference[0], List[str]):
+                raise ValueError(
+                    f"Each reference is expected to be a list of strings in F1 multi label metric. Received reference: '{reference[0]}'"
+                )
+
+        for prediction in predictions:
+            if not isoftype(prediction, List[str]):
+                raise ValueError(
+                    f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
+                )
+
+
+class PrecisionMacroMultiLabel(F1MultiLabel):
+    main_score = "precision_macro"
+    metric = "precision"
+    average = "macro"
+
+
+class PrecisionMicroMultiLabel(F1MultiLabel):
+    main_score = "precision_micro"
+    metric = "precision"
+    average = "micro"
+
+
+class RecallMacroMultiLabel(F1MultiLabel):
+    main_score = "recall_macro"
+    metric = "recall"
+    average = "macro"
+
+
+class RecallMicroMultiLabel(F1MultiLabel):
+    main_score = "recall_micro"
+    metric = "recall"
+    average = "micro"
 
 
 class F1MicroMultiLabel(F1MultiLabel):
@@ -797,6 +900,8 @@ class Rouge(HuggingfaceMetric):
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     sent_split_newline: bool = True
+
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
 
     def prepare(self):
         super().prepare()
@@ -828,6 +933,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
 
+    _requirements_list: List[str] = ["editdistance"]
+
     def prepare(self):
         super().prepare()
         import editdistance
@@ -854,6 +961,8 @@ class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
 
+    _requirements_list: List[str] = ["jiwer"]
+
     def compute(
         self,
         references: List[List[str]],
@@ -868,6 +977,38 @@ class Wer(HuggingfaceMetric):
             predictions=predictions, references=formatted_references
         )
         return {self.main_score: result}
+
+
+class Spearmanr(HuggingfaceMetric):
+    hf_metric_name = "spearmanr"
+    main_score = "spearmanr"
+    process_single_instances = False
+
+
+class KendallTauMetric(GlobalMetric):
+    main_score = "kendalltau_b"
+    variant = "b"
+    process_single_instances = False
+
+    _requirements_list: List[str] = ["scipy"]
+
+    def prepare(self):
+        from scipy.stats import kendalltau
+
+        self.kendalltau = kendalltau
+
+    def compute(
+        self,
+        references: List[float],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
+        corr = kendall_results.correlation
+        return {
+            self.main_score: corr,
+            "p_val": kendall_results.pvalue,
+        }
 
 
 class MatthewsCorrelation(HuggingfaceMetric):
@@ -898,29 +1039,60 @@ class MatthewsCorrelation(HuggingfaceMetric):
         )
 
 
+class RocAuc(GlobalMetric):
+    main_score = "roc_auc"
+    process_single_instances = False
+    _requirements_list: List[str] = ["sklearn"]
+
+    def prepare(self):
+        from sklearn import metrics
+
+        self.roc_curve = metrics.roc_curve
+        self.auc = metrics.auc
+
+    def compute(
+        self,
+        references: List[List[float]],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
+        roc_auc = self.auc(fpr, tpr)
+        return {self.main_score: roc_auc}
+
+
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
-    classes = None
+    groups = None
     zero_division = 0.0
 
     @abstractmethod
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         pass
 
     @abstractmethod
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         pass
 
-    def group_elements(self, elements_list):
+    def should_ignore_element(self, element, additional_input):
+        return False
+
+    def group_elements(self, elements_list, additional_input):
+        if not isinstance(elements_list, list):
+            elements_list = [elements_list]
         return {
             k: Counter(
                 [
-                    self.get_element_representation(value)
+                    self.get_element_representation(value, additional_input)
                     for value in elements_list
-                    if self.get_element_group(value) == k
+                    if self.get_element_group(value, additional_input) == k
                 ]
             )
-            for k in {self.get_element_group(e) for e in elements_list}
+            for k in {
+                self.get_element_group(e, additional_input)
+                for e in elements_list
+                if not self.should_ignore_element(e, additional_input)
+            }
         }
 
     def calculate_groups_ratio(self, actual_group, total_group):
@@ -942,30 +1114,46 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
+    def get_groups(self, elements, additional_inputs):
+        groups = set()
+        for sublist, additional_input in zip(elements, additional_inputs):
+            for e in sublist:
+                if self.should_ignore_element(e, additional_input):
+                    continue
+                groups.add(self.get_element_group(e, additional_input))
+        return groups
+
     def compute(
         self,
-        references: List[Any],
+        references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
     ) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
-        if isinstance(references[0], list) and isinstance(references[0][0], list):
+        if (
+            isinstance(references[0], list)
+            and len(references[0]) > 0
+            and isinstance(references[0][0], list)
+        ):
             references = [element[0] for element in references]
 
         assert len(references) == len(predictions), (
             f"references size ({len(references)})"
             f" doesn't mach predictions sise ({len(references)})."
         )
-        if self.classes is None:
-            classes = {
-                self.get_element_group(e) for sublist in references for e in sublist
-            }
+
+        if self.groups is None:
+            groups = self.get_groups(references, additional_inputs)
         else:
-            classes = self.classes
+            groups = self.groups
         groups_statistics = {}
-        for references_batch, predictions_batch in zip(references, predictions):
-            grouped_references = self.group_elements(references_batch)
-            grouped_predictions = self.group_elements(predictions_batch)
+        for references_batch, predictions_batch, additional_input in zip(
+            references, predictions, additional_inputs
+        ):
+            grouped_references = self.group_elements(references_batch, additional_input)
+            grouped_predictions = self.group_elements(
+                predictions_batch, additional_input
+            )
             all_groups = set(grouped_references.keys()).union(
                 grouped_predictions.keys()
             )
@@ -1008,7 +1196,7 @@ class CustomF1(GlobalMetric):
                 rn_total + rn,
                 rd_total + rd,
             )
-            if group in classes:
+            if group in groups:
                 f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
                 recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
                 precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
@@ -1027,7 +1215,7 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             result["f1_macro"] = self.zero_division
             result["recall_macro"] = self.zero_division
-            result["micro_macro"] = self.zero_division
+            result["precision_macro"] = self.zero_division
 
         amount_of_predictions = pd_total
         if amount_of_predictions == 0:
@@ -1045,10 +1233,10 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
-    def get_element_group(self, element):
+    def get_element_group(self, element, additional_input):
         return element[1]
 
-    def get_element_representation(self, element):
+    def get_element_representation(self, element, additional_input):
         return str(element)
 
 
@@ -1074,6 +1262,7 @@ def normalize_answer(s):
 class TokenOverlap(InstanceMetric):
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
+    ci_scores = ["f1", "precision", "recall"]
 
     def compute(
         self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
@@ -1107,7 +1296,10 @@ class BertScore(HuggingfaceBulkMetric):
     main_score = "f1"
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     hf_metric_fields = ["f1", "precision", "recall"]
+    ci_scores = ["f1", "precision", "recall"]
     model_name: str
+
+    _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
         super().prepare()
@@ -1120,6 +1312,8 @@ class SentenceBert(BulkInstanceMetric):
     batch_size: int = 32
 
     model_name: str
+
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1134,7 +1328,7 @@ class SentenceBert(BulkInstanceMetric):
         references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
-    ) -> List[Any]:
+    ) -> List[Dict[str, Any]]:
         scores = []
 
         # we are in a multi-reference case (each prediction may have multiple
@@ -1168,6 +1362,8 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    _requirements_list: List[str] = ["transformers"]
+
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -1179,7 +1375,7 @@ class Reward(BulkInstanceMetric):
         references: List[List[Any]],
         predictions: List[Any],
         additional_inputs: List[Dict],
-    ) -> List[Any]:
+    ) -> List[Dict[str, Any]]:
         # treat the references as the questions and the predictions as answers
         # assume a single reference
         questions = [refs[0] for refs in references]
@@ -1191,6 +1387,244 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
+
+
+class Perplexity(BulkInstanceMetric):
+    """Computes the likelihood of generating text Y after text X - P(Y|X)."""
+
+    main_score = "perplexity"
+    reduction_map = {"mean": ["perplexity"]}
+
+    perplexity_prompt: str
+
+    batch_size: int = 32
+    model_name: str
+
+    _requirements_list: List[str] = ["transformers"]
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Dict],
+    ) -> List[Dict[str, Any]]:
+        """Computes the likelihood of generating text Y after text X - P(Y|X).
+
+        :param references: the list of Y texts as a list of singletons.
+        :param predictions: the list of X texts as a plain list of strings
+
+        :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
+        """
+        sources = []
+        targets = []
+        for prediction, instance_references in zip(predictions, references):
+            for instance_reference in instance_references:
+                sources.append(f"{self.perplexity_prompt} {prediction}")
+                targets.append(instance_reference)
+
+        from transformers import AutoConfig
+
+        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+        lm = (
+            self.EncoderDecoderLM(model_name=self.model_name)
+            if config.is_encoder_decoder is True
+            else self.DecoderOnlyLM(model_name=self.model_name)
+        )
+
+        # compute P(Q|P) and store in queue
+        scores = lm.compute_lm(
+            source=sources, target=targets, batch_size=self.batch_size
+        )
+
+        index = 0
+        all_instances_scores = []
+        for instance_references in references:
+            instance_scores = {}
+            instance_scores_list = []
+            for _ in range(len(instance_references)):
+                instance_scores_list.append(scores[index])
+                index += 1
+            instance_scores["reference_scores"] = instance_scores_list
+
+            # max seems more useful than mean for common use cases like
+            # context relevance, where what we want to know is if there
+            # is at least one good result in the context. Using mean will
+            # bring the score down due to bad contexts at the tail.
+            instance_scores[self.main_score] = max(instance_scores_list)
+            all_instances_scores.append(instance_scores)
+
+        return all_instances_scores
+
+    class AbstractLM(ABC):
+        def __init__(self, model_name):
+            import torch
+            from transformers import AutoTokenizer
+
+            self.model_name = model_name
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.model = self.model_class().from_pretrained(self.model_name)
+            self.is_cuda = torch.cuda.is_available()
+
+        def compute_lm(
+            self, source: List[str], target: List[str], batch_size: int
+        ) -> List[float]:
+            import torch
+
+            scores = []
+
+            with torch.no_grad():
+                # break the documents to batches
+                n_batches = int(len(source) / batch_size)
+                batch_range = range(n_batches + 1)
+                for batch in batch_range:
+                    batch_source = source[batch * batch_size : (batch + 1) * batch_size]
+                    batch_target = target[batch * batch_size : (batch + 1) * batch_size]
+                    if len(batch_source) > 0:
+                        # tokenize the source and target
+                        tokens_source = self.tokenizer(
+                            batch_source, padding=True, return_tensors="pt"
+                        )
+                        tokens_target = self.tokenizer(
+                            batch_target, padding=True, return_tensors="pt"
+                        )
+
+                        # compute the logits
+                        logits, labels = self.compute_batch(
+                            tokens_source, tokens_target
+                        )
+
+                        # logits is a tensor of size: batch_size * len(target) * vocab_size
+                        # because for each example in the batch, the model predicted the
+                        # logit at every position in the target, for every vocab item.
+
+                        # the model returns mean over all batch. We run the CE again without reduction
+                        # and extract the mean for each document
+                        loss_fct = torch.nn.CrossEntropyLoss(
+                            ignore_index=-100, reduction="none"
+                        )
+
+                        # logits.size(-1) = the dimension of the vocabulary
+                        # labels.view(-1) = flattens the labels tensor to 1d
+                        loss = loss_fct(
+                            logits.view(-1, logits.size(-1)), labels.view(-1)
+                        )
+                        loss = loss.view(len(batch_source), -1)
+
+                        # for each document, do mean only over the non zero values (sum(labels>0))
+                        batch_loss = torch.sum(loss, dim=1) / torch.sum(
+                            labels > 0, dim=1
+                        )
+
+                        # e^-average(cross-entropy-loss(logits) == geometric mean of the probabilities
+                        # proof:
+                        # * CE-loss of logits is computed by transforming the logits to
+                        #   probabilities by softmax, and then -log(p) is returned, where
+                        #   p is the probability of the gold label.
+                        # * Averaging the CE loss is computed by summing over -log(p) and
+                        #   then dividing by the length of the gold labels.
+                        # * Thus, pr_score = (-log(p_1) +  ... + -log(p_n)) / n
+                        #                  = -log(p_1 * ... * p_n) * 1/n
+                        # * Therefore,
+                        #   e^(-pr_score) = e^(log(p_1 * ... * p_n) * 1/n)
+                        #                 = (e^(log(p_1 * ... * p_n))) ^ 1/n
+                        #                 = p_1 * ... * p_n) ^ 1/n
+                        #                 = geometric mean of [p_1, ..., p_n]
+                        #
+                        # in principle we could have computed the geometric mean directly over the
+                        # probabilities instead of e^(average cross entropy loss of the logits),
+                        # but the current approach is more stable numerically.  See for example:
+                        # https://stackoverflow.com/questions/59722983/how-to-calculate-geometric-mean-in-a-differentiable-way
+                        geometric_mean = (-batch_loss).exp()
+
+                        # append the batch scores to the list of all scores
+                        scores.append(geometric_mean)
+
+            return torch.cat(scores, dim=0).tolist()
+
+        @abstractmethod
+        def model_class(self):
+            pass
+
+        @abstractmethod
+        def compute_batch(self, tokens_source, tokens_target):
+            pass
+
+    class EncoderDecoderLM(AbstractLM):
+        def model_class(self):
+            from transformers import AutoModelForSeq2SeqLM
+
+            return AutoModelForSeq2SeqLM
+
+        def compute_batch(self, tokens_source, tokens_target):
+            tokens_docs_ids = tokens_source["input_ids"]
+            attention = tokens_source["attention_mask"]
+            labels = tokens_target["input_ids"]
+
+            if self.is_cuda:
+                tokens_docs_ids, attention, labels = (
+                    tokens_docs_ids.cuda(),
+                    attention.cuda(),
+                    labels.cuda(),
+                )
+
+            logits = self.model(
+                input_ids=tokens_docs_ids.long(),
+                attention_mask=attention.long(),
+                labels=labels.long(),
+            ).logits
+
+            # replace the padding token in the labels by -100
+            labels[labels == self.tokenizer.pad_token_id] = -100
+
+            return logits, labels
+
+    class DecoderOnlyLM(AbstractLM):
+        def model_class(self):
+            from transformers import AutoModelForCausalLM
+
+            return AutoModelForCausalLM
+
+        def compute_batch(self, tokens_source, tokens_target):
+            import torch
+
+            tokens = torch.cat(
+                [tokens_source["input_ids"], tokens_target["input_ids"]], dim=1
+            )
+            attention = torch.cat(
+                [tokens_source["attention_mask"], tokens_target["attention_mask"]],
+                dim=1,
+            )
+            labels = torch.cat(
+                [
+                    torch.zeros_like(tokens_source["input_ids"]).fill_(-100),
+                    tokens_target["input_ids"],
+                ],
+                dim=1,
+            )
+
+            # replace the padding token in the labels by -100
+            labels[labels == self.tokenizer.pad_token_id] = -100
+
+            if self.is_cuda:
+                tokens, attention, labels = (
+                    tokens.cuda(),
+                    attention.cuda(),
+                    labels.cuda(),
+                )
+
+            # no need to pass labels as we calculate the loss below per document
+            model_output = self.model(
+                input_ids=tokens.long(), attention_mask=attention.long()
+            )
+            logits = model_output.logits
+
+            # in decoder only, the first token is not being generated, it is taken from the input,
+            # so the model is generating from token 2 to n+1. therefore, we need to skip the last
+            # logit and the first label.
+            shifted_logits = logits[..., :-1, :].contiguous()
+            shifted_labels = labels[..., 1:].contiguous()
+
+            return shifted_logits, shifted_labels
 
 
 class NDCG(GlobalMetric):
@@ -1209,6 +1643,8 @@ class NDCG(GlobalMetric):
     """
 
     main_score = "nDCG"
+
+    _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
         from sklearn.metrics import ndcg_score
@@ -1255,3 +1691,165 @@ class NDCG(GlobalMetric):
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
         return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+
+
+class RetrievalMetric(InstanceMetric):
+    def compute(
+        self, references: List[Any], prediction: Any, additional_inputs: Dict
+    ) -> dict:
+        # digest input
+        pred_ids: List[Any] = prediction
+        ref_ids: List[Any] = list(dict.fromkeys(references))
+
+        # relevance_at_k: 1-based dictionary of indicators (0/1), telling whether
+        # the doc id retrieved at position k (assuming it is 1-based, so k starts
+        # from 1) is in the gold doc ids or not.
+        # For example, assuming that in the retrieved docs we have correct predictions
+        # at positions 2, 4 and 5 (1-based), the dict will look like:
+        # {1: 0, 2: 1, 3: 0, 4: 1, 5: 1, ...}
+        relevance_at_k = {
+            k + 1: 1 if doc_id in ref_ids else 0 for k, doc_id in enumerate(pred_ids)
+        }
+
+        # relevance_sum_at_k: 1-based dictionary of counts, where the value at k determines
+        # how many gold doc ids have been observed up to index k.
+        relevance_sum_at_k = {}
+        for k, value in relevance_at_k.items():
+            relevance_sum_at_k[k] = relevance_sum_at_k.get(k - 1, 0) + value
+
+        # precision_at_k: the precision of the top k retrieved documents. For example,
+        # assuming that only 1 out of the first 4 retrieved documents is correct, the
+        # value at 4 will be 1/4.
+        precision_at_k = {k: value / k for k, value in relevance_sum_at_k.items()}
+
+        # recall_at_k: the recall of the top k retrieved documents. For example,
+        # assuming that only 2 out of the 3 gold documents are in the top 5 results,
+        # the value at 5 will be 2/3.
+        n_refs = len(ref_ids)
+        recall_at_k = {
+            k: value / n_refs if n_refs > 0 else 0
+            for k, value in relevance_sum_at_k.items()
+        }
+
+        # rank - the 1-based index of the first hit of a gold doc id. So 1
+        # means first position.
+        rank = 0
+        for k, relevance in relevance_at_k.items():
+            if relevance == 1:
+                rank = k
+                break
+
+        # match_at_k: whether we have a match at the top k retrieved documents
+        match_at_k = {
+            k: 1.0 if value > 0 else 0.0 for k, value in relevance_sum_at_k.items()
+        }
+
+        return self._compute(
+            relevance_at_k,
+            relevance_sum_at_k,
+            precision_at_k,
+            recall_at_k,
+            match_at_k,
+            rank,
+        )
+
+    @abstractmethod
+    def _compute(
+        self,
+        relevance_at_k,
+        relevance_sum_at_k,
+        precision_at_k,
+        recall_at_k,
+        match_at_k,
+        rank,
+    ) -> dict:
+        pass
+
+
+class MRR(RetrievalMetric):
+    reduction_map = {"mean": ["mrr"]}
+    main_score = "mrr"
+
+    def _compute(
+        self,
+        relevance_at_k,
+        relevance_sum_at_k,
+        precision_at_k,
+        recall_at_k,
+        match_at_k,
+        rank,
+    ) -> dict:
+        return {self.main_score: 1 / rank if rank > 0 else 0}
+
+
+class MAP(RetrievalMetric):
+    reduction_map = {"mean": ["map"]}
+    main_score = "map"
+
+    def _compute(
+        self,
+        relevance_at_k,
+        relevance_sum_at_k,
+        precision_at_k,
+        recall_at_k,
+        match_at_k,
+        rank,
+    ) -> dict:
+        result = 0
+        if len(relevance_at_k) > 0:
+            total = sum(relevance_at_k.values())
+            if total > 0:
+                dot = sum(relevance_at_k[k] * precision_at_k[k] for k in relevance_at_k)
+                result = dot / total
+        return {self.main_score: result}
+
+
+class RetrievalAtK(RetrievalMetric):
+    k_list: List[int]
+    main_score: str = None
+    reduction_map: Dict[str, List[str]] = None
+
+    def prepare(self):
+        super().prepare()
+        self.main_score = self.score_name("match", self.k_list[0])
+        self.ci_scores = [
+            self.score_name(measure, k)
+            for measure in ["precision", "recall", "match"]
+            for k in self.k_list
+        ]
+        self.reduction_map = {"mean": self.ci_scores}
+
+    @staticmethod
+    def score_name(measure: str, k: int):
+        return f"{measure}_at_{k}"
+
+    def _compute(
+        self,
+        relevance_at_k,
+        relevance_sum_at_k,
+        precision_at_k,
+        recall_at_k,
+        match_at_k,
+        rank,
+    ) -> dict:
+        result = {}
+        for measure_array, measure_name in [
+            (precision_at_k, "precision"),
+            (recall_at_k, "recall"),
+            (match_at_k, "match"),
+        ]:
+            max_k = max(measure_array.keys())
+            for k in self.k_list:
+                result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
+        return result
+
+
+class KPA(CustomF1):
+    def get_element_group(self, element, additional_input):
+        return additional_input["keypoint"]
+
+    def get_element_representation(self, element, additional_input):
+        return additional_input["keypoint"]
+
+    def should_ignore_element(self, element, additional_input):
+        return element == "none"

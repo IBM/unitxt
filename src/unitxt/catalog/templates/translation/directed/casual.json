@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "Hey, could you help me translate this cool text from {source_language} to {target_language}?\n{text}",
+    "output_format": "{translation}"
+}

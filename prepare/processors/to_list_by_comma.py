@@ -1,6 +1,14 @@
 from src.unitxt import add_to_catalog
+from src.unitxt.operator import SequentialOperator
 from src.unitxt.processors import ToListByComma
 
-operator = ToListByComma()
-
-add_to_catalog(operator, "processors.to_list_by_comma", overwrite=True)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ToListByComma(field="prediction", process_every_value=False),
+            ToListByComma(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.to_list_by_comma",
+    overwrite=True,
+)

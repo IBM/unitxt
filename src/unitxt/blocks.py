@@ -2,9 +2,6 @@ from .card import TaskCard
 from .catalog import LocalCatalog
 from .collections import ItemPicker, RandomPicker
 from .instructions import (
-    Instruction,
-    InstructionsDict,
-    InstructionsList,
     TextualInstruction,
 )
 from .loaders import LoadFromIBMCloud, LoadHF
@@ -23,6 +20,12 @@ from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
+from .table_operators import (
+    SerializeTableAsIndexedRowMajor,
+    SerializeTableAsMarkdown,
+    TruncateTableCells,
+    TruncateTableRows,
+)
 from .task import FormTask
 from .templates import (
     InputOutputTemplate,

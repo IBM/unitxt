@@ -1,16 +1,15 @@
-from prepare.cards.mmlu import (
-    multiple_choice_inputs_outputs,
-    multiple_choice_preprocess,
-)
-from src.unitxt.blocks import AddFields, FormTask, LoadHF, MapInstanceValues, TaskCard
+from src.unitxt.blocks import LoadHF
+from src.unitxt.card import TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import IndexOf, ListFieldValues
+from src.unitxt.operators import (
+    AddConstant,
+    AddFields,
+    CastFields,
+    ListFieldValues,
+    RenameFields,
+)
 from src.unitxt.splitters import RenameSplits
 from src.unitxt.test_utils.card import test_card
-
-# numbering = tuple(str(x) for x in range(200))
-numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-expected_answer = "number"  # 'number_and_answer' #'number'
 
 language_codes = [
     "acm_Arab",
@@ -141,35 +140,25 @@ for lang in language_codes:
     card = TaskCard(
         loader=LoadHF(path="facebook/belebele", name="default", split=lang),
         preprocess_steps=[
-            # "splitters.test_only",
             RenameSplits(mapper={lang: "test"}),
-            AddFields({"numbering": numbering}),
             ListFieldValues(
                 fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"],
                 to_field="choices",
             ),
-            MapInstanceValues(
-                mappers={"correct_answer_num": {"1": "A", "2": "B", "3": "C", "4": "D"}}
+            RenameFields(
+                field_to_field={
+                    "correct_answer_num": "answer",
+                    "flores_passage": "context",
+                }
             ),
-            IndexOf(
-                search_in="numbering", index_of="correct_answer_num", to_field="index"
-            ),
-            *multiple_choice_preprocess(
-                question="question",
-                context="flores_passage",
-                numbering="numbering",
-                choices="choices",
-                topic="dialect",
-                label_index="index",
-                expected_answer=expected_answer,
-            ),
+            CastFields(fields={"answer": "int"}),
+            AddConstant(field="answer", add=-1),
+            AddFields({"context_type": "passage"}),
         ],
-        task=FormTask(
-            **multiple_choice_inputs_outputs(context=True),
-            metrics=["metrics.accuracy"],
-        ),
-        templates="templates.qa.multiple_choice.context_no_intro.all",
+        task="tasks.qa.multiple_choice.with_context",
+        templates="templates.qa.multiple_choice.with_context.no_intro.all",
     )
+
     if lang == language_codes[0]:
         test_card(card, demos_taken_from="test")
-    add_to_catalog(card, f"cards.belebele.{lang}", overwrite=True)
+    add_to_catalog(card, f"cards.belebele.{lang.lower()}", overwrite=True)

@@ -1,4 +1,17 @@
 {
-    "type": "string_or_not_string",
-    "string": "hate speech"
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "string_or_not_string",
+            "string": "hate speech",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "string_or_not_string",
+            "string": "hate speech",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
 }

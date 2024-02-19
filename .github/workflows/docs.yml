@@ -1,0 +1,36 @@
+name: Test Docs Compilation
+
+on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+
+jobs:
+    compile-docs:
+
+      runs-on: ubuntu-latest
+      env:
+        OS: ubuntu-latest
+        PYTHONPATH: ./docs
+
+      steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+          cache: 'pip' # caching pip dependencies
+      - run: pip install -r requirements/base.rqr
+      - run: pip install -r requirements/docs.rqr
+
+      - name: Install package
+        run: |
+          pip install .
+
+      - name: Print Python Path
+        run: python -c "import sys; print(sys.path)"
+
+      - name: Compile Docs
+        run: make docs
+
+

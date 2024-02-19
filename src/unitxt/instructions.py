@@ -1,33 +1,14 @@
-from abc import abstractmethod
-from typing import Dict
-
 from .artifact import Artifact
-from .collections import ListCollection
 
 
-class Instruction(Artifact):
-    @abstractmethod
-    def __call__(self) -> str:
-        pass
+class TextualInstruction(Artifact):
+    """The role of TextualInstruction is to arrange potential instructions in the catalog, expressed as formatting strings.
 
+    The (formatted) instructions are added to the instances, in field named "instruction" via the Template Operator.
 
-class TextualInstruction(Instruction):
+    """
+
     text: str
 
-    def __call__(self) -> str:
+    def get_instruction(self) -> str:
         return self.text
-
-    def __repr__(self):
-        return self.text
-
-
-class InstructionsList(ListCollection):
-    def verify(self):
-        for instruction in self.items:
-            assert isinstance(instruction, Instruction)
-
-
-class InstructionsDict(Dict):
-    def verify(self):
-        for _key, instruction in self.items():
-            assert isinstance(instruction, Instruction)

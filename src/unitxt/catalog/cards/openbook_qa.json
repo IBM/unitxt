@@ -1,0 +1,32 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "openbookqa"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "choices/text": "choices_text",
+                "choices/label": "labels"
+            },
+            "use_query": true
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "choices_text": "choices",
+                "question_stem": "question"
+            }
+        },
+        {
+            "type": "index_of",
+            "search_in": "labels",
+            "index_of": "answerKey",
+            "to_field": "answer"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.open",
+    "templates": "templates.qa.multiple_choice.open.all"
+}

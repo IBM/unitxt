@@ -1,0 +1,17 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "EdinburghNLP/xsum"
+    },
+    "preprocess_steps": [
+        {
+            "type": "add_fields",
+            "fields": {
+                "document_type": "document"
+            }
+        }
+    ],
+    "task": "tasks.summarization.abstractive",
+    "templates": "templates.summarization.abstractive.all"
+}

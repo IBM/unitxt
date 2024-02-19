@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
-from .random_utils import get_random, get_sub_default_random_generator
+from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -29,6 +29,29 @@ class RenameSplits(Splitter):
 
 
 class SplitRandomMix(Splitter):
+    """Splits a multistream into new streams (splits), whose names, source input stream, and amount of instances, are specified by arg 'mix'.
+
+    The keys of arg 'mix', are the names of the new streams, the values are of the form: 'name-of-source-stream[percentage-of-source-stream]'
+    Each input instance, of any input stream, is selected exactly once for inclusion in any of the output streams.
+
+    Examples:
+    When processing a multistream made of two streams whose names are 'train' and 'test', by
+    SplitRandomMix(mix =  { "train": "train[99%]",  "validation": "train[1%]",  "test": "test" })
+    the output is a multistream, whose three streams are named 'train', 'validation', and 'test'.
+    Output stream 'train' is made of randomly selected 99% of the instances of input stream 'train',
+    output stream 'validation' is made of the remaining 1% instances of input 'train', and output stream 'test' is made
+    of the whole of input stream 'test'.
+
+    When processing the above input multistream by
+    SplitRandomMix(mix =  { "train": "train[50%]+test[0.1]",  "validation": "train[50%]+test[0.2]",  "test": "test[0.7]" })
+    the output is a multistream, whose three streams are named 'train', 'validation', and 'test'.
+    Output stream 'train' is made of randomly selected 50% of the instances of input stream 'train' + randomly selected
+    0.1 (i.e., 10%) of the instances of input stream 'test'.
+    Output stream 'validation' is made of the remaining 50% instances of input 'train'+ randomly selected 0.2 (i.e.,
+    20%) of the original instances of input 'test', that were not selected for output 'train',
+    and output stream 'test' is made of the remaining instances of input 'test'.
+    """
+
     mix: Dict[str, str]
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -83,6 +106,7 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
+    random_generator: Random = new_random_generator(sub_seed="Sampler")
 
     def prepare(self):
         super().prepare()
@@ -96,6 +120,11 @@ class Sampler(Artifact):
             size = int(size)
         self.sample_size = size
 
+    def init_new_random_generator(self):
+        self.random_generator = new_random_generator(
+            sub_seed="init_new_random_generator"
+        )
+
     @abstractmethod
     def sample(
         self, instances_pool: List[Dict[str, object]]
@@ -104,14 +133,6 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
-    random_generator: Random = None
-
-    def prepare(self):
-        super().prepare()
-        self.random_generator = get_sub_default_random_generator(
-            sub_seed="random_sample_seed"
-        )
-
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
@@ -120,18 +141,48 @@ class RandomSampler(Sampler):
 
 
 class DiverseLabelsSampler(Sampler):
+    """Selects a balanced sample of instances based on an output field.
+
+    (used for selecting demonstrations in-context learning)
+
+    The field must contain list of values e.g ['dog'], ['cat'], ['dog','cat','cow'].
+    The balancing is done such that each value or combination of values
+    appears as equals as possible in the samples.
+
+    The `choices` param is required and determines which values should be considered.
+
+    Example:
+        If choices is ['dog,'cat'] , then the following combinations will be considered.
+        ['']
+        ['cat']
+        ['dog']
+        ['dog','cat']
+
+        If the instance contains a value not in the 'choice' param, it is ignored. For example,
+        if choices is ['dog,'cat'] and the instance field is ['dog','cat','cow'], then 'cow' is ignored
+        then the instance is considered as ['dog','cat'].
+
+    Args:
+        sample_size - number of samples to extract
+        choices - name of input field that contains the list of values to balance on
+        labels - name of output field with labels that must be balanced
+
+
+    """
+
     choices: str = "choices"
+    labels: str = "labels"
 
     def prepare(self):
         super().prepare()
-        self.labels = None
+        self.labels_cache = None
 
     def examplar_repr(self, examplar):
         if "inputs" not in examplar:
             raise ValueError(f"'inputs' field is missing from '{examplar}'.")
         inputs = examplar["inputs"]
         if self.choices not in inputs:
-            raise ValueError(f"{self.choices} field is missing from '{inputs}'.")
+            raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
         if not isinstance(choices, list):
             raise ValueError(
@@ -140,7 +191,11 @@ class DiverseLabelsSampler(Sampler):
 
         if "outputs" not in examplar:
             raise ValueError(f"'outputs' field is missing from '{examplar}'.")
-        examplar_outputs = next(iter(examplar["outputs"].values()))
+        outputs = examplar["outputs"]
+        if self.labels not in outputs:
+            raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
+
+        examplar_outputs = examplar["outputs"][self.labels]
         if not isinstance(examplar_outputs, list):
             raise ValueError(
                 f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list."
@@ -160,19 +215,23 @@ class DiverseLabelsSampler(Sampler):
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
-        if self.labels is None:
-            self.labels = self.divide_by_repr(instances_pool)
-        all_labels = list(self.labels.keys())
-        get_random().shuffle(all_labels)
+        if self.labels_cache is None:
+            self.labels_cache = self.divide_by_repr(instances_pool)
+        all_labels = list(self.labels_cache.keys())
+        self.random_generator.shuffle(all_labels)
         from collections import Counter
 
+        if self.sample_size > len(instances_pool):
+            raise ValueError(
+                f"Request sample size {self.sample_size} is greater than number of instances {len(instances_pool)}"
+            )
         total_allocated = 0
         allocations = Counter()
 
         while total_allocated < self.sample_size:
             for label in all_labels:
                 if total_allocated < self.sample_size:
-                    if len(self.labels[label]) - allocations[label] > 0:
+                    if len(self.labels_cache[label]) - allocations[label] > 0:
                         allocations[label] += 1
                         total_allocated += 1
                 else:
@@ -180,10 +239,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = get_random().sample(self.labels[label], allocation)
+            sample = self.random_generator.sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
-        get_random().shuffle(result)
+        self.random_generator.shuffle(result)
         return result
 
 

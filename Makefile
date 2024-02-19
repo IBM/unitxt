@@ -6,11 +6,22 @@ THIS_FILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 # Directory of this file
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-docs:
-	# generate .rst files for sphinx
-	cd $(DIR)/docs && sphinx-apidoc -f -o . ../src/unitxt
-	# create the html documentation
+docs-files:
+	cd $(DIR)/docs && sphinx-apidoc -e -f -o . ../src/unitxt
+
+docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
+
+clear-docs:
+	rm $(DIR)/docs/modules.rst
+	rm $(DIR)/docs/unitxt.rst
+	rm $(DIR)/docs/unitxt.*.rst
+	rm $(DIR)/docs/catalog.*.rst
+	rm -r $(DIR)/docs/_build/
+
+docs: docs-html
+
+test-docs: docs clear-docs
 
 format:
 	bash $(DIR)/utils/format
@@ -19,24 +30,30 @@ format:
 new-version:
 	bash $(DIR)/utils/update_version $(version)
 
-docs-server: docs
+version-tag:
+	bash $(DIR)/utils/create_tag_for_new_version
+
+build-docs-server:
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
+
+docs-server: docs
+	trap 'make clear-docs' EXIT; \
+	make build-docs-server
 
 profile:
 	bash profile/profile.sh
 
 pypi:
-	. $(DIR)/SECRETS.SH
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 
 dataset:
-	bash $(DIR)/make/hf/prepare_dataset_imports.sh
-	python $(DIR)/make/hf/prepare_dataset.py
+	bash $(DIR)/utils/hf/prepare_dataset_imports.sh
+	python $(DIR)/utils/hf/prepare_dataset.py
 
 metric:
-	bash $(DIR)/make/hf/prepare_metric_imports.sh
-	python $(DIR)/make/hf/prepare_metric.py
+	bash $(DIR)/utils/hf/prepare_metric_imports.sh
+	python $(DIR)/utils/hf/prepare_metric.py
 
 build:
 	format

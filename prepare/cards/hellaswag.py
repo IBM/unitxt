@@ -1,42 +1,24 @@
-from prepare.cards.mmlu import (
-    multiple_choice_inputs_outputs,
-    multiple_choice_preprocess,
-)
-from src.unitxt.blocks import (
-    AddFields,
-    FormTask,
-    LoadHF,
-    TaskCard,
-)
+from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
-    IndexOf,
-)
+from src.unitxt.operators import CastFields, RenameFields
 from src.unitxt.test_utils.card import test_card
-
-numbering = tuple(str(x) for x in range(200))
-# numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-expected_answer = "number"  # 'number_and_answer' #'number'
 
 card = TaskCard(
     loader=LoadHF(path="hellaswag"),
     preprocess_steps=[
         "splitters.large_no_test",
-        AddFields({"numbering": numbering}),
-        IndexOf(search_in="numbering", index_of="label", to_field="index"),
-        *multiple_choice_preprocess(
-            question="ctx",
-            numbering="numbering",
-            choices="endings",
-            topic="activity_label",
-            label_index="index",
+        RenameFields(
+            field_to_field={
+                "ctx": "context",
+                "activity_label": "topic",
+                "endings": "choices",
+            }
         ),
+        RenameFields(field_to_field={"label": "answer"}),
+        CastFields(fields={"answer": "int"}),
     ],
-    task=FormTask(
-        **multiple_choice_inputs_outputs(),
-        metrics=["metrics.accuracy"],
-    ),
-    templates="templates.qa.multiple_choice.original.all",
+    task="tasks.completion.multiple_choice.standard",
+    templates="templates.completion.multiple_choice.all",
 )
-test_card(card)
+test_card(card, debug=False)
 add_to_catalog(card, "cards.hellaswag", overwrite=True)

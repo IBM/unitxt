@@ -24,10 +24,11 @@
             "use_query": true
         },
         {
-            "type": "filter_by_values",
-            "required_values": {
+            "type": "filter_by_condition",
+            "values": {
                 "extracted_language": "ru"
-            }
+            },
+            "condition": "eq"
         },
         {
             "type": "remove_fields",

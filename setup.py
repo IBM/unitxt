@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import setuptools
 
@@ -15,7 +16,17 @@ for file in os.listdir(requirements_dir):
     if file.endswith(".rqr"):
         key = file.rsplit(".")[0]  # Remove .rqr extension to get the key
         with open(os.path.join(requirements_dir, file)) as f:
-            extras_require[key] = f.read().splitlines()
+            requirements_list = []
+            for requirement in f.read().splitlines():
+                requirement = requirement.strip()
+                if requirement.startswith("git+"):
+                    warnings.warn(
+                        f"****IMPORTANT****\nThe requirement {requirement} of setup '{key}' can be installed directly with 'pip install {requirement}' or 'pip install -r {file}'",
+                        stacklevel=2,
+                    )
+                else:
+                    requirements_list.append(requirement)
+            extras_require[key] = requirements_list
 
 # Adding the 'all' key
 all_requirements = []
@@ -34,11 +45,18 @@ setuptools.setup(
     url="https://github.com/ibm/unitxt",
     packages=setuptools.find_packages("src"),
     package_dir={"": "src"},
-    package_data={"unitxt": ["catalog/*.json"]},
+    include_package_data=True,
+    package_data={"unitxt": ["catalog/*.json", "ui/banner.png"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
     install_requires=extras_require["base"],
+    extras_require=extras_require,
+    entry_points={
+        "console_scripts": [
+            "unitxt-explore=unitxt.ui:launch",
+        ],
+    },
 )
