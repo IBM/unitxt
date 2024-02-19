@@ -33,6 +33,7 @@ from .task import FormTask
 from .templates import (
     InputOutputTemplate,
     MultiLabelTemplate,
+    MultiReferenceTemplate,
     OutputQuantizingTemplate,
     SpanLabelingTemplate,
     Template,
