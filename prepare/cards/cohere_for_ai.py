@@ -6,14 +6,13 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.logging_utils import get_logger
-from src.unitxt.operators import ExecuteExpression, FilterByCondition
+from src.unitxt.operators import FilterByCondition, ListFieldValues
 from src.unitxt.settings_utils import get_settings
 from src.unitxt.standard import StandardRecipeWithIndexes
 from src.unitxt.test_utils.card import test_card
 
 settings = get_settings()
-orig_settings = (settings.allow_unverified_code, settings.allow_unverified_code)
-settings.allow_unverified_code = True
+orig_settings = settings.global_loader_limit
 settings.global_loader_limit = 25000  # to ensure language is encountered
 
 logger = get_logger()
@@ -39,7 +38,7 @@ for subset in subsets:
                 RenameFields(
                     field_to_field={"inputs": "question", "targets": "answers"}
                 ),
-                ExecuteExpression(expression="[answers]", to_field="answers"),
+                ListFieldValues(fields=["answers"], to_field="answers"),
             ],
             task="tasks.qa.open",
             templates="templates.qa.open.all",
@@ -62,6 +61,7 @@ logger.info(ms)
 train_as_list = list(ms["train"])
 logger.info(len(train_as_list))
 logger.info(train_as_list[0])
+logger.info(train_as_list[1])
 logger.info("+++++++++++1+++++++++++++++")
 logger.info(train_as_list[0]["source"])
 logger.info("+++++++++++2+++++++++++++++")
@@ -71,4 +71,4 @@ logger.info(train_as_list[0]["source"])
 logger.info("+++++++++++done+++++++++++++++")
 logger.info("done")
 ############# end of to remove once done ##################
-(settings.allow_unverified_code, settings.allow_unverified_code) = orig_settings
+settings.global_loader_limit = orig_settings

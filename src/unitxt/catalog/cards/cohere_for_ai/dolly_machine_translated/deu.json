@@ -30,8 +30,10 @@
             }
         },
         {
-            "type": "execute_expression",
-            "expression": "[answers]",
+            "type": "list_field_values",
+            "fields": [
+                "answers"
+            ],
             "to_field": "answers"
         }
     ],
