@@ -1,6 +1,5 @@
 import numpy as np
 from unitxt.metrics import LlamaIndexCorrectnessMetric, MetricPipeline
-from unitxt.operators import CopyFields
 from unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
@@ -15,12 +14,12 @@ metric = MetricPipeline(
     # ],
     metric=LlamaIndexCorrectnessMetric(),
     postpreprocess_steps=[
-        CopyFields(
-            field_to_field=[
-                ("score/instance/score", "score"),
-            ],
-            use_query=True,
-        )
+        # CopyFields(
+        #     field_to_field=[
+        #         ("score/instance/score", "score"),
+        #     ],
+        #     use_query=True,
+        # )
     ],
 )
 
