@@ -7,6 +7,7 @@ import os
 import sys
 from dataclasses import Field as _Field
 
+import unitxt
 from unitxt.artifact import Artifact
 from unitxt.dataclass import Field
 
@@ -23,7 +24,7 @@ create_catalog_docs()
 project = "Unitxt"
 copyright = "2023, IBM Research"
 author = "IBM Research"
-release = "1.0.0"
+release = unitxt.__version__
 html_short_title = "Unitxt"
 
 # -- General configuration ---------------------------------------------------

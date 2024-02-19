@@ -3,7 +3,6 @@ import tempfile
 from contextlib import contextmanager
 
 from ..register import (
-    _reset_env_local_catalogs,
     register_local_catalog,
     unregister_local_catalog,
 )
@@ -15,7 +14,7 @@ settings = get_settings()
 
 def register_local_catalog_for_tests():
     os.environ[settings.artifactories_key] = constants.catalog_dir
-    _reset_env_local_catalogs()
+    # _reset_env_local_catalogs()
 
 
 @contextmanager
