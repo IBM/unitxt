@@ -1,12 +1,19 @@
 import os
 import re
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
 import requests
 
-from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cache
+from .artifact import (
+    Artifact,
+    Artifactories,
+    Artifactory,
+    get_artifactory_name_and_args,
+    reset_artifacts_cache,
+)
 from .logging_utils import get_logger
 from .settings_utils import get_constants
 from .text_utils import print_dict
@@ -131,6 +138,30 @@ def add_to_catalog(
         artifact, name, overwrite=overwrite, verbose=verbose
     )  # remove collection (its actually the dir).
     # verify name
+
+
+@lru_cache(maxsize=None)
+def get_from_catalog(
+    name: str,
+    catalog: Catalog = None,
+    catalog_path: Optional[str] = None,
+):
+    if catalog_path is not None:
+        catalog = LocalCatalog(location=catalog_path)
+
+    if catalog is None:
+        artifactories = None
+    else:
+        artifactories = [catalog]
+
+    catalog, name, args = get_artifactory_name_and_args(
+        name, artifactories=artifactories
+    )
+
+    return catalog.get_with_overwrite(
+        name=name,
+        overwrite_args=args,
+    )
 
 
 def get_local_catalogs_paths():
