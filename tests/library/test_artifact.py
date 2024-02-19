@@ -2,8 +2,11 @@ from src.unitxt.artifact import (
     Artifact,
     fetch_artifact,
 )
+from src.unitxt.catalog import add_to_catalog
 from src.unitxt.dataclass import UnexpectedArgumentError
 from src.unitxt.logging_utils import get_logger
+from src.unitxt.processors import StringOrNotString
+from src.unitxt.test_utils.catalog import temp_catalog
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
@@ -29,3 +32,13 @@ class TestArtifact(UnitxtTestCase):
         artifact_identifier = "tasks.classification.binary"
         artifact, _ = fetch_artifact(artifact_identifier)
         self.assertEqual(artifact_identifier, artifact.artifact_identifier)
+
+    def test_artifact_loading_with_overwrite_args(self):
+        with temp_catalog() as catalog_path:
+            add_to_catalog(
+                StringOrNotString(string="yes", field="a_field"),
+                "test.test",
+                catalog_path=catalog_path,
+            )
+            artifact, _ = fetch_artifact("temp.test[string=hello]")
+            self.assertEqual(artifact.string, "hello")

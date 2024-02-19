@@ -34,15 +34,20 @@ class LocalCatalog(Catalog):
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
-    def load(self, artifact_identifier: str):
+    def load(self, artifact_identifier: str, overwrite_args=None):
         assert (
             artifact_identifier in self
         ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
-        return Artifact.load(path, artifact_identifier)
+        return Artifact.load(
+            path, artifact_identifier=artifact_identifier, overwrite_args=overwrite_args
+        )
 
     def __getitem__(self, name) -> Artifact:
         return self.load(name)
+
+    def get_with_overwrite(self, name, overwrite_args):
+        return self.load(name, overwrite_args=overwrite_args)
 
     def __contains__(self, artifact_identifier: str):
         if not os.path.exists(self.location):
@@ -88,11 +93,11 @@ class GithubCatalog(LocalCatalog):
         tag = version
         self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{tag}/{self.repo_dir}"
 
-    def load(self, artifact_identifier: str):
+    def load(self, artifact_identifier: str, overwrite_args=None):
         url = self.path(artifact_identifier)
         response = requests.get(url)
         data = response.json()
-        new_artifact = Artifact.from_dict(data)
+        new_artifact = Artifact.from_dict(data, overwrite_args=overwrite_args)
         new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
 
