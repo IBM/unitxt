@@ -275,11 +275,11 @@ class TestRecipes(UnitxtTestCase):
             StandardRecipeWithIndexes(
                 card="cards.wnli", template_card_index="illegal_template"
             )
-        self.assertTrue("is not in card" in str(cm.exception))
+        self.assertTrue("not defined in card." in str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
             StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
-        self.assertTrue("is not in card" in str(cm.exception))
+        self.assertTrue("not defined in card." in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
         recipe = StandardRecipeWithIndexes(
