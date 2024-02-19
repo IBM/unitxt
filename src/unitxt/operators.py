@@ -1577,7 +1577,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     calc_confidence_intervals: bool
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
+        from .metrics import Metric
 
         first_instance = stream.peek()
 
@@ -1603,12 +1603,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             ), f"Operator {metric_name} must be a Metric"
 
             if not self.calc_confidence_intervals:
-                if isinstance(metric, MetricWithConfidenceInterval):
-                    metric.disable_confidence_interval_calculation()
-                elif isinstance(metric, MetricPipeline) and isinstance(
-                    metric.metric, MetricWithConfidenceInterval
-                ):
-                    metric.metric.disable_confidence_interval_calculation()
+                metric.disable_confidence_interval_calculation()
 
             stream = metric(MultiStream({"tmp": stream}))["tmp"]
 
