@@ -1585,7 +1585,8 @@ class TokenOverlap(InstanceMetric):
         self, references: List[Any], prediction: Any, additional_inputs: List[Dict]
     ) -> dict:
         results = [
-            self._compute_single_ref(reference, prediction) for reference in references
+            self._compute_single_ref(str(reference), str(prediction))
+            for reference in references
         ]
         return {
             measure: max(r[i] for r in results)
@@ -2643,7 +2644,7 @@ class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
     }
 
 
-# using Cohen's d (takes into account internal variation in group scores)
+# using Hedges' g (takes into account internal variation in group scores)
 class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     subgroup_column = "variant_type"
     reduction_map = {
@@ -2671,6 +2672,83 @@ class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
                     subgroup_scores_dict=scd,
                     control_subgroup_types=["original"],
                     comparison_subgroup_types=["paraphrase"],
+                ),
+                True,
+            ],
+        }
+    }
+
+
+# for above metrics, take absolute value of group score first; this measures variation in either direction
+class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "absval_norm_cohens_h_paraphrase",
+                lambda scd: np.abs(
+                    normalized_cohens_h(
+                        subgroup_scores_dict=scd,
+                        control_subgroup_types=["original"],
+                        comparison_subgroup_types=["paraphrase"],
+                    )
+                ),
+                True,
+            ],
+        }
+    }
+
+
+class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "absval_norm_cohens_h_paraphrase",
+                lambda scd: np.abs(
+                    normalized_cohens_h(
+                        subgroup_scores_dict=scd,
+                        control_subgroup_types=["original"],
+                        comparison_subgroup_types=["paraphrase"],
+                    )
+                ),
+                True,
+            ],
+        }
+    }
+
+
+class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "absval_norm_hedges_g_paraphrase",
+                lambda scd: np.abs(
+                    normalized_hedges_g(
+                        subgroup_scores_dict=scd,
+                        control_subgroup_types=["original"],
+                        comparison_subgroup_types=["paraphrase"],
+                    )
+                ),
+                True,
+            ],
+        }
+    }
+
+
+class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
+    subgroup_column = "variant_type"
+    reduction_map = {
+        "group_mean": {
+            "agg_func": [
+                "absval_norm_hedges_g_paraphrase",
+                lambda scd: np.abs(
+                    normalized_hedges_g(
+                        subgroup_scores_dict=scd,
+                        control_subgroup_types=["original"],
+                        comparison_subgroup_types=["paraphrase"],
+                    )
                 ),
                 True,
             ],
