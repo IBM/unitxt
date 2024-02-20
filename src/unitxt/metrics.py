@@ -1,3 +1,4 @@
+import ast
 import re
 import string
 import uuid
@@ -1392,14 +1393,31 @@ class Reward(BulkInstanceMetric):
 
 
 class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
+    """Custom metric class for evaluating correctness using Llama Index.
+
+    Attributes:
+        reduction_map (dict): A dictionary specifying the reduction method for the metric.
+        main_score (str): The main score used for evaluation.
+        _requirements_list (List[str]): A list specifying any additional requirements for the metric.
+
+    Methods:
+        prepare(self): Initialization method for the metric.
+        compute(self, references, predictions, additional_inputs): Method to compute the metric.
+
+    Usage:
+        metric = LlamaIndexCorrectnessMetric()
+        metric.prepare()
+        scores = metric.compute(references, predictions, additional_inputs)
+    """
+
     reduction_map = {"mean": ["score"]}
     main_score = "score"
-    batch_size: int = 32
     # model_name: str
 
     _requirements_list: List[str] = []
 
     def prepare(self):
+        """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
 
         from llama_index.core.evaluation import CorrectnessEvaluator
@@ -1414,10 +1432,21 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         predictions: List[Any],
         additional_inputs: List[Dict],
     ) -> List[Dict[str, Any]]:
+        """Method to compute the correctness metric.
+
+        Args:
+            references (List[List[Any]]): List of reference instances.
+            predictions (List[Any]): List of predicted instances.
+            additional_inputs (List[Dict]): List of additional input data.
+
+        Returns:
+            List[Dict[str, Any]]: List of computed scores and feedback.
+
+        Raises:
+            AssertionError: If the input does not meet the expected format.
+        """
         # treat the references as the questions and the predictions as answers
         # assume a single reference
-
-        import ast
 
         response_list = predictions
 
@@ -1448,12 +1477,11 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
         return [
             {
-                "score": result.score / 5,
+                self.main_score: result.score / 5,
                 "feedback": result.feedback,
             }
             for result in results
         ]
-        # output = [{"score": 1.0, "feedback": "this is a great!"}]
 
 
 class Perplexity(BulkInstanceMetric):
