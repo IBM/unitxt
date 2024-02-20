@@ -1,16 +1,15 @@
 .. _using_catalog:
 
 =====================================
-Saving and Loading From the Catalog
+Saving and Loading from the Catalog
 =====================================
 
-Unitxt catalog is a place for pepole to share their processing tools with others.
-Templates, formats, operators and more Unitxt assets can be shared thorugh a local catalog in a folder in the local filesystem or through a folder in a github repository.
+The Unitxt catalog serves as a repository for people to share their processing tools. This includes templates, formats, operators, and other Unitxt assets. These can be shared through a local catalog located in a directory on the local filesystem or via a directory in a GitHub repository.
 
-Defining local catalog
-----------------------
+Defining a Local Catalog
+------------------------
 
-In order do define a local private catalog you can:
+To define a local, private catalog, use the following code:
 
 .. code-block:: python
 
@@ -18,35 +17,32 @@ In order do define a local private catalog you can:
 
     register_local_catalog("path/to/catalog/directory")
 
-Adding assets to a catalog
---------------------------
+Adding Assets to the Catalog
+----------------------------
 
-Once your catalog is registered you can save artifacts to the catalog:
+Once your catalog is registered, you can add artifacts to it:
 
 .. code-block:: python
 
     from unitxt.task import FormTask
-    from unitxt import save_to_catalog
+    from unitxt import add_to_catalog
 
     my_task = FormTask(...)
 
     catalog_name = "tasks.my_task"
 
-    save_to_catalog(my_task, catalog_name, catalog_path="path/to/catalog/directory")
+    add_to_catalog(my_task, catalog_name, catalog_path="path/to/catalog/directory")
 
-You can also save artifacts to the library default catalog:
+It's also possible to save artifacts to the library's default catalog:
 
 .. code-block:: python
 
     save_to_catalog(my_task, catalog_name)
 
-
-Using catalog assets
+Using Catalog Assets
 --------------------
 
-In order to use catalog objects you just need to specify their name to the unitxt object that will use them.
-
-For example now `tasks.my_task` can be used by the `StandardRecipe`:
+To use catalog objects, simply specify their name in the Unitxt object that will use them. For example, `tasks.my_task` can now be utilized by the `StandardRecipe`:
 
 .. code-block:: python
 
@@ -57,12 +53,10 @@ For example now `tasks.my_task` can be used by the `StandardRecipe`:
         task="tasks.my_task"
     )
 
-Modifying catalog assets on the fly
-------------------------------------
+Modifying Catalog Assets on the Fly
+-----------------------------------
 
-If we want to get asset from the catalog but to edit his fields we can do it with a simple syntax:
-`asset.name[key_to_modify=new_value]` we can also assign lists by `asset.name[key_to_modify=[new_value_0, new_value_1]]`
-For example if we want to use a task but change its metric list we can:
+To modify a catalog asset's fields dynamically, use the syntax: `asset.name[key_to_modify=new_value]`. To assign lists, use: `asset.name[key_to_modify=[new_value_0, new_value_1]]`. For instance, to change the metric list of a task:
 
 .. code-block:: python
 
@@ -70,13 +64,13 @@ For example if we want to use a task but change its metric list we can:
 
     card = TaskCard(
         ...
-        task="tasks.my_task[metrics=[matrics.accuracy, metrics.f1[reduction=median]]"
+        task="tasks.my_task[metrics=[metrics.accuracy, metrics.f1[reduction=median]]]"
     )
 
-Accessing catalog assets directly
-------------------------------------
+Accessing Catalog Assets Directly
+---------------------------------
 
-In order to access catalog assets directly we can use `get_from_catalog`
+Use `get_from_catalog` to directly access catalog assets:
 
 .. code-block:: python
 
@@ -84,22 +78,18 @@ In order to access catalog assets directly we can use `get_from_catalog`
 
     my_task = get_from_catalog("tasks.my_task")
 
+Using Multiple Catalogs
+-----------------------
 
-Using many catalogs
--------------------
+By default, Unitxt uses several catalogs, such as the local library catalog and online community catalogs hosted on GitHub. Assets are sourced from the last registered catalog containing the asset.
 
-Unitxt use by default many catalog such as the local library catalog and online community catalog hosted on github.
-Assets are always taken from the last catalog registered that have the asset.
+Defining Catalogs Through Environment Variables
+-----------------------------------------------
 
-Defning catalog through environment variable
---------------------------------------------
-
-In cases where unitxt is run by other application you might want to define your custom catalogs
-thorugh an environment variable.
+When Unitxt is executed by another application, you might need to specify custom catalogs through an environment variable:
 
 .. code-block:: bash
 
     export UNITXT_ARTIFACTORIES="path/to/first/catalog:path/to/second/catalog"
 
-
-You can read more about catalogs here: :class:`catalog <unitxt.catalog>`.
+Learn more about catalogs here: :class:`catalog <unitxt.catalog>`.
