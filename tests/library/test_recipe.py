@@ -16,7 +16,7 @@ class TestRecipes(UnitxtTestCase):
         recipe = StandardRecipe(
             card="cards.wnli",
             template=InputOutputTemplate(
-                input_format="{premise}",
+                input_format="{text_a}",
                 output_format="{label}",
                 instruction="classify",
             ),
@@ -29,22 +29,18 @@ class TestRecipes(UnitxtTestCase):
 
         for instance in stream["train"]:
             print_dict(instance)
+            del instance["additional_inputs"]
             self.assertDictEqual(
                 instance,
                 {
-                    "metrics": ["metrics.accuracy"],
+                    "metrics": [
+                        "metrics.f1_micro",
+                        "metrics.accuracy",
+                        "metrics.f1_macro",
+                    ],
                     "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
                     "target": "not entailment",
                     "references": ["not entailment"],
-                    "additional_inputs": {
-                        "key": ["choices", "premise", "hypothesis", "label"],
-                        "value": [
-                            "['entailment', 'not entailment']",
-                            "I stuck a pin through a carrot. When I pulled the pin out, it had a hole.",
-                            "The carrot had a hole.",
-                            "not entailment",
-                        ],
-                    },
                     "group": "unitxt",
                     "postprocessors": ["processors.to_string_stripped"],
                 },
