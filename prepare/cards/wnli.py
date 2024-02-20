@@ -14,8 +14,8 @@ card = TaskCard(
         "splitters.small_no_test",
         RenameFields(
             field_to_field={
-                "sentence1": "premise",
-                "sentence2": "hypothesis",
+                "sentence1": "text_a",
+                "sentence2": "text_b",
             }
         ),
         MapInstanceValues(
@@ -23,12 +23,15 @@ card = TaskCard(
         ),
         AddFields(
             fields={
-                "choices": ["entailment", "not entailment"],
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
             }
         ),
     ],
-    task="tasks.nli",
-    templates="templates.classification.nli.all",
+    task="tasks.classification.multi_class.relation",
+    templates="templates.classification.multi_class.relation.all",
 )
 
 test_card(card)

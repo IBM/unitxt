@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import pandas as pd
 
-from .metrics import MetricPipeline
 from .operator import SequentialOperator
 from .stream import MultiStream
 
@@ -29,12 +28,7 @@ def _(
 
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
-            if isinstance(first_step, MetricPipeline):
-                n_samples_before = first_step.metric.n_resamples
-                first_step.metric.disable_confidence_interval_calculation()
-            else:
-                n_samples_before = first_step.n_resamples
-                first_step.disable_confidence_interval_calculation()
+            n_resamples = first_step.disable_confidence_interval_calculation()
 
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
@@ -48,11 +42,7 @@ def _(
         # retrieve the metric with the previous modification.
         # This reverts the confidence interval change and restores the initial metric.
         if not compute_conf_intervals:
-            first_step = metrics_operator.steps[0]
-            if isinstance(first_step, MetricPipeline):
-                first_step.metric.n_resamples = n_samples_before
-            else:
-                first_step.n_resamples = n_samples_before
+            first_step.set_n_resamples(n_resamples)
 
     return dataset, global_scores
 

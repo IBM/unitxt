@@ -1,6 +1,6 @@
 {
     "type": "input_output_template",
-    "input_format": "Given this sentence: {premise}, classify if this sentence: {hypothesis} is {choices}.",
+    "input_format": "Given this {text_a_type}: {text_a}, classify if this {text_b_type}: {text_b} is {classes}.",
     "output_format": "{label}",
     "postprocessors": [
         "processors.take_first_non_empty_line",

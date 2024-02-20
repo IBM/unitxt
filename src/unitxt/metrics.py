@@ -27,7 +27,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .type_utils import isoftype
+from .type_utils import isoftype, to_float_or_default
 
 logger = get_logger()
 settings = get_settings()
@@ -75,6 +75,14 @@ class Metric(Artifact):
     def main_score(self):
         pass
 
+    @abstractmethod
+    def disable_confidence_interval_calculation(self):
+        pass
+
+    @abstractmethod
+    def set_n_resamples(self, n_resample):
+        pass
+
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
@@ -91,7 +99,12 @@ class MetricWithConfidenceInterval(Metric):
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
     def disable_confidence_interval_calculation(self):
+        n = self.n_resamples
         self.n_resamples = None
+        return n
+
+    def set_n_resamples(self, n_resamples):
+        self.n_resamples = n_resamples
 
     def _can_compute_confidence_intervals(self, num_predictions):
         return (
@@ -848,6 +861,13 @@ class MetricPipeline(MultiStreamOperator, Metric):
     )
     metric: Metric = None
 
+    def disable_confidence_interval_calculation(self):
+        return self.metric.disable_confidence_interval_calculation()
+
+    def set_n_resamples(self, n_resample):
+        if isinstance(self.metric, MetricWithConfidenceInterval):
+            self.metric.set_n_resamples(n_resample)
+
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
 
@@ -1316,15 +1336,20 @@ class KendallTauMetric(GlobalMetric):
 
     def compute(
         self,
-        references: List[float],
-        predictions: List[float],
+        references: List[List[str]],
+        predictions: List[str],
         additional_inputs: List[Dict],
     ) -> dict:
+        if isinstance(references[0], list):
+            references = [reference[0] for reference in references]
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
             self.main_score: corr,
-            "p_val": kendall_results.pvalue,
+            f"{self.main_score}_p_val": kendall_results.pvalue,
         }
 
 
@@ -1369,10 +1394,15 @@ class RocAuc(GlobalMetric):
 
     def compute(
         self,
-        references: List[List[float]],
-        predictions: List[float],
+        references: List[List[str]],
+        predictions: List[str],
         additional_inputs: List[Dict],
     ) -> dict:
+        if isinstance(references[0], list):
+            references = [reference[0] for reference in references]
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+
         fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
         roc_auc = self.auc(fpr, tpr)
         return {self.main_score: roc_auc}
