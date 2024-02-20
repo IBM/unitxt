@@ -7,7 +7,7 @@ from unitxt.utils import load_json
 
 
 def write_title(title, label):
-    title = f"📁 {title}/"
+    title = f"📁 {title}"
     wrap_char = "="
     wrap = wrap_char * len(title)
 
