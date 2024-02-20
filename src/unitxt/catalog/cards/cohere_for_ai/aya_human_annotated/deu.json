@@ -4,7 +4,8 @@
         "type": "load_hf",
         "path": "CohereForAI/aya_evaluation_suite",
         "name": "aya_human_annotated",
-        "streaming": true
+        "streaming": true,
+        "filtering_lambda": "lambda instance: instance[\"language\"]==\"deu\""
     },
     "preprocess_steps": [
         {
@@ -14,13 +15,6 @@
                 "validation": "test[5%]",
                 "test": "test[5%]"
             }
-        },
-        {
-            "type": "filter_by_condition",
-            "values": {
-                "language": "deu"
-            },
-            "condition": "eq"
         },
         {
             "type": "rename_fields",

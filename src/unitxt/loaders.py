@@ -48,7 +48,7 @@ class Loader(SourceOperator):
     # It is usually provided to the loader via the recipe (see standard.py)
     # The loader can use this value to limit the amount of data downloaded from the source
     # to reduce loading time.  However, this may not always be possible, so the
-    # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
+    # loader may ignore this.  In any case, the recipe, will limit the number of instances in the returned
     # stream, after load is complete.
     loader_limit: int = None
     streaming: bool = False
@@ -84,7 +84,17 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
+    filtering_lambda: Optional[str] = None
     _cache: dict = InternalField(default=None)
+
+    def filtered_load(self, dataset):
+        logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
+        return MultiStream(
+            {
+                name: dataset[name].filter(eval(self.filtering_lambda))
+                for name in dataset
+            }
+        )
 
     def stream_dataset(self):
         if self._cache is None:
@@ -105,6 +115,9 @@ class LoadHF(Loader):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+
+            if self.filtering_lambda is not None:
+                dataset = self.filtered_load(dataset)
 
             if self.split is not None:
                 dataset = {self.split: dataset}
@@ -135,6 +148,10 @@ class LoadHF(Loader):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+
+            if self.filtering_lambda is not None:
+                dataset = self.filtered_load(dataset)
+
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
