@@ -85,7 +85,7 @@ class MetricWithConfidenceInterval(Metric):
         self.n_resamples = None
         return n
 
-    def set_n_resmaples(self, n_resamples):
+    def set_n_resamples(self, n_resamples):
         self.n_resamples = n_resamples
 
     def _can_compute_confidence_intervals(self, num_predictions):
@@ -547,7 +547,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def set_n_resamples(self, n_resample):
         if isinstance(self.metric, MetricWithConfidenceInterval):
-            self.metric.set_n_resmaples(n_resample)
+            self.metric.set_n_resamples(n_resample)
 
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
