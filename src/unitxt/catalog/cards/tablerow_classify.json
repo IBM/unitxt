@@ -1,0 +1,82 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_from_kaggle",
+        "url": "https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[70%]",
+                "validation": "train[10%]",
+                "test": "train[20%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "HeartDisease": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Normal",
+                    "1": "Heart Disease"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices": [
+                    "Normal",
+                    "Heart Disease"
+                ]
+            }
+        },
+        {
+            "type": "serialize_table_row_as_text",
+            "fields": [
+                "Age",
+                "Sex",
+                "ChestPainType",
+                "RestingBP",
+                "Cholesterol",
+                "FastingBS",
+                "RestingECG",
+                "MaxHR",
+                "ExerciseAngina",
+                "Oldpeak",
+                "ST_Slope"
+            ],
+            "to_field": "serialized_row",
+            "max_cell_length": 25
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "serialized_row",
+            "choices"
+        ],
+        "outputs": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.accuracy"
+        ]
+    },
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Given the following details of a person {serialized_row} we need to predict the possibility of heart disease for the person. Classify if the person is {choices}",
+                "output_format": "{label}"
+            }
+        ]
+    }
+}

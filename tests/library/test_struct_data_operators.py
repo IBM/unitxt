@@ -1,11 +1,17 @@
 import unittest
 
-from src.unitxt.table_operators import (
+from unitxt.struct_data_operators import (
+    ListToKeyValPairs,
+    SerializeKeyValPairs,
     SerializeTableAsIndexedRowMajor,
     SerializeTableAsMarkdown,
+    SerializeTableRowAsList,
+    SerializeTableRowAsText,
+    SerializeTriples,
     TruncateTableCells,
     TruncateTableRows,
 )
+
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
@@ -137,6 +143,140 @@ class TestTableOperators(unittest.TestCase):
 
         check_operator(
             operator=TruncateTableRows(field="table", rows_to_keep=0),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serializetablerow_as_text(self):
+        inputs = [
+            {
+                "name": "Alex",
+                "age": "26",
+            }
+        ]
+
+        serialized_str = "name is Alex, age is 26, "
+
+        targets = [
+            {
+                "name": "Alex",
+                "age": "26",
+                "serialized_row": serialized_str,
+            },
+        ]
+
+        check_operator(
+            operator=SerializeTableRowAsText(
+                fields=["name", "age"], to_field="serialized_row", max_cell_length=25
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serializetablerow_as_list(self):
+        inputs = [
+            {
+                "name": "Alex",
+                "age": "26",
+            }
+        ]
+
+        serialized_str = "name: Alex, age: 26, "
+
+        targets = [
+            {
+                "name": "Alex",
+                "age": "26",
+                "serialized_row": serialized_str,
+            },
+        ]
+
+        check_operator(
+            operator=SerializeTableRowAsList(
+                fields=["name", "age"], to_field="serialized_row", max_cell_length=25
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serialize_triples(self):
+        inputs = [
+            {
+                "tripleset": [
+                    ["First Clearing", "LOCATION", "On NYS 52 1 Mi. Youngsville"],
+                    [
+                        "On NYS 52 1 Mi. Youngsville",
+                        "CITY_OR_TOWN",
+                        "Callicoon, New York",
+                    ],
+                ]
+            }
+        ]
+
+        serialized_str = "First Clearing : location : On NYS 52 1 Mi. Youngsville | On NYS 52 1 Mi. Youngsville : city_or_town : Callicoon, New York"
+
+        targets = [
+            {
+                "tripleset": [
+                    ["First Clearing", "LOCATION", "On NYS 52 1 Mi. Youngsville"],
+                    [
+                        "On NYS 52 1 Mi. Youngsville",
+                        "CITY_OR_TOWN",
+                        "Callicoon, New York",
+                    ],
+                ],
+                "serialized_triples": serialized_str,
+            },
+        ]
+
+        check_operator(
+            operator=SerializeTriples(
+                field_to_field={"tripleset": "serialized_triples"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serialize_kvpairs(self):
+        inputs = [{"kvpairs": {"name": "Alex", "age": 31, "sex": "M"}}]
+
+        serialized_str = "name is Alex, age is 31, sex is M"
+
+        targets = [
+            {
+                "kvpairs": {"name": "Alex", "age": 31, "sex": "M"},
+                "serialized_kvpairs": serialized_str,
+            },
+        ]
+
+        check_operator(
+            operator=SerializeKeyValPairs(
+                field_to_field={"kvpairs": "serialized_kvpairs"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_list_to_kvpairs(self):
+        inputs = [{"keys": ["name", "age", "sex"], "values": ["Alex", 31, "M"]}]
+
+        targets = [
+            {
+                "keys": ["name", "age", "sex"],
+                "values": ["Alex", 31, "M"],
+                "kvpairs": {"name": "Alex", "age": 31, "sex": "M"},
+            },
+        ]
+
+        check_operator(
+            operator=ListToKeyValPairs(
+                fields=["keys", "values"], to_field="kvpairs", use_query=True
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,
