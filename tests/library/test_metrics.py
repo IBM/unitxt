@@ -8,6 +8,8 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    KendallTauMetric,
+    RocAuc,
     Rouge,
     Squad,
     TokenOverlap,
@@ -387,6 +389,26 @@ class TestMetrics(UnitxtTestCase):
         global_targets = {"f1": 7 / 8, "precision": 7 / 8, "recall": 1}
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
+
+    def test_roc_auc(self):
+        metric = RocAuc()
+        predictions = ["0.2", "0.8", "1.0"]
+        references = [["1.0"], ["0.0"], ["1.0"]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 0.5
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_kendalltau(self):
+        metric = KendallTauMetric()
+        predictions = ["1.0", "2.0", "1.0"]
+        references = [["-1.0"], ["1.0"], ["0.0"]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 0.81649658092772
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
 
 class TestConfidenceIntervals(UnitxtTestCase):
