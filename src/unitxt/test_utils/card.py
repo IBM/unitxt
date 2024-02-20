@@ -198,6 +198,9 @@ def test_predictions(
         logger.info(
             f"Processed prediction: ({type(result['prediction']).__name__}) {result['prediction']}"
         )
+        logger.info(
+            f"Processed references: ({type(result['references']).__name__}) {result['references']}"
+        )
     logger.info("*" * 80)
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
