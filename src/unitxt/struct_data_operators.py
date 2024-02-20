@@ -140,6 +140,23 @@ class SerializeTableAsMarkdown(SerializeTable):
         return row_str
 
 
+# truncate cell value to maximum allowed length
+def truncate_cell(cell_value, max_len):
+    if cell_value is None:
+        return None
+
+    if isinstance(cell_value, int) or isinstance(cell_value, float):
+        return None
+
+    if cell_value.strip() == "":
+        return None
+
+    if len(cell_value) > max_len:
+        return cell_value[:max_len]
+
+    return None
+
+
 class TruncateTableCells(StreamInstanceOperator):
     """Limit the maximum length of cell values in a table to reduce the overall length.
 
@@ -175,13 +192,7 @@ class TruncateTableCells(StreamInstanceOperator):
         # One row at a time
         for row in table_content.get("rows", []):
             for i, cell in enumerate(row):
-                if isinstance(cell, int) or isinstance(cell, float):
-                    continue
-
-                if cell.strip() == "":
-                    continue
-
-                truncated_cell = self.truncate_cell(cell)
+                truncated_cell = truncate_cell(cell, self.max_length)
                 if truncated_cell is not None:
                     cell_mapping[cell] = truncated_cell
                     row[i] = truncated_cell
@@ -190,13 +201,6 @@ class TruncateTableCells(StreamInstanceOperator):
         if answers is not None:
             for i, case in enumerate(answers):
                 answers[i] = cell_mapping.get(case, case)
-
-    # truncate cell value to maximum allowed length
-    def truncate_cell(self, cell_value):
-        if len(cell_value) > self.max_length:
-            return cell_value[: self.max_length]
-
-        return None
 
 
 class TruncateTableRows(FieldOperator):
@@ -233,3 +237,128 @@ class TruncateTableRows(FieldOperator):
         table_content["rows"] = remaining_rows
 
         return table_content
+
+
+class SerializeTableRowAsText(StreamInstanceOperator):
+    """Serializes a table row as text.
+
+    Args:
+        fields (str) - list of fields to be included in serialization.
+        to_field (str) - serialized text field name.
+        max_cell_length (int) - limits cell length to be considered, optional.
+    """
+
+    fields: str
+    to_field: str
+    max_cell_length: Optional[int] = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        linearized_str = ""
+        for field in self.fields:
+            value = dict_get(instance, field, use_dpath=False)
+            if self.max_cell_length is not None:
+                truncated_value = truncate_cell(value, self.max_cell_length)
+                if truncated_value is not None:
+                    value = truncated_value
+
+            linearized_str = linearized_str + field + " is " + str(value) + ", "
+
+        instance[self.to_field] = linearized_str
+        return instance
+
+
+class SerializeTableRowAsList(StreamInstanceOperator):
+    """Serializes a table row as list.
+
+    Args:
+        fields (str) - list of fields to be included in serialization.
+        to_field (str) - serialized text field name.
+        max_cell_length (int) - limits cell length to be considered, optional.
+    """
+
+    fields: str
+    to_field: str
+    max_cell_length: Optional[int] = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        linearized_str = ""
+        for field in self.fields:
+            value = dict_get(instance, field, use_dpath=False)
+            if self.max_cell_length is not None:
+                truncated_value = truncate_cell(value, self.max_cell_length)
+                if truncated_value is not None:
+                    value = truncated_value
+
+            linearized_str = linearized_str + field + ": " + str(value) + ", "
+
+        instance[self.to_field] = linearized_str
+        return instance
+
+
+class SerializeTriples(FieldOperator):
+    """Serializes triples into a flat sequence.
+
+    Sample input in expected format:
+    [[ "First Clearing", "LOCATION", "On NYS 52 1 Mi. Youngsville" ], [ "On NYS 52 1 Mi. Youngsville", "CITY_OR_TOWN", "Callicoon, New York"]]
+
+    Sample output:
+    First Clearing : LOCATION : On NYS 52 1 Mi. Youngsville | On NYS 52 1 Mi. Youngsville : CITY_OR_TOWN : Callicoon, New York
+
+    """
+
+    def process_value(self, tripleset: Any) -> Any:
+        return self.serialize_triples(tripleset)
+
+    def serialize_triples(self, tripleset) -> str:
+        return " | ".join(
+            f"{subj} : {rel.lower()} : {obj}" for subj, rel, obj in tripleset
+        )
+
+
+class SerializeKeyValPairs(FieldOperator):
+    """Serializes key, value pairs into a flat sequence.
+
+    Sample input in expected format: {"name": "Alex", "age": 31, "sex": "M"}
+    Sample output: name is Alex, age is 31, sex is M
+    """
+
+    def process_value(self, kvpairs: Any) -> Any:
+        return self.serialize_kvpairs(kvpairs)
+
+    def serialize_kvpairs(self, kvpairs) -> str:
+        serialized_str = ""
+        for key, value in kvpairs.items():
+            serialized_str += f"{key} is {value}, "
+
+        # Remove the trailing comma and space then return
+        return serialized_str[:-2]
+
+
+class ListToKeyValPairs(StreamInstanceOperator):
+    """Maps list of keys and values into key:value pairs.
+
+    Sample input in expected format: {"keys": ["name", "age", "sex"], "values": ["Alex", 31, "M"]}
+    Sample output: {"name": "Alex", "age": 31, "sex": "M"}
+    """
+
+    fields: List[str]
+    to_field: str
+    use_query: bool = False
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        keylist = dict_get(instance, self.fields[0], use_dpath=self.use_query)
+        valuelist = dict_get(instance, self.fields[1], use_dpath=self.use_query)
+
+        output_dict = {}
+        for key, value in zip(keylist, valuelist):
+            output_dict[key] = value
+
+        instance[self.to_field] = output_dict
+
+        return instance

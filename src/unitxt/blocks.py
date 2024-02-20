@@ -4,7 +4,7 @@ from .collections import ItemPicker, RandomPicker
 from .instructions import (
     TextualInstruction,
 )
-from .loaders import LoadFromIBMCloud, LoadHF
+from .loaders import LoadFromIBMCloud, LoadFromKaggle, LoadHF
 from .metrics import Accuracy
 from .normalizers import NormalizeListFields
 from .operators import (
@@ -20,9 +20,14 @@ from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
-from .table_operators import (
+from .struct_data_operators import (
+    ListToKeyValPairs,
+    SerializeKeyValPairs,
     SerializeTableAsIndexedRowMajor,
     SerializeTableAsMarkdown,
+    SerializeTableRowAsList,
+    SerializeTableRowAsText,
+    SerializeTriples,
     TruncateTableCells,
     TruncateTableRows,
 )
