@@ -1,6 +1,6 @@
 import typing
 
-from src.unitxt.type_utils import isoftype, issubtype
+from src.unitxt.type_utils import isoftype, issubtype, to_float_or_default
 from tests.utils import UnitxtTestCase
 
 
@@ -96,3 +96,9 @@ class TestAssertTyping(UnitxtTestCase):
         self.assertFalse(
             issubtype(typing.Dict[Name, Name2], typing.Dict[BaseName, Name])
         )
+
+    def test_to_float_or_default(self):
+        self.assertEqual(to_float_or_default("1", 0), 1)
+        self.assertEqual(to_float_or_default("a", 0), 0)
+        with self.assertRaises(ValueError):
+            to_float_or_default("a", None)
