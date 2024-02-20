@@ -98,15 +98,15 @@ class MetricWithConfidenceInterval(Metric):
         )
 
     @staticmethod
-    def average_item_scores(instances: List[dict], field_name: str):
-        """Calculate mean of a set of instance scores (given by field_name), omitting NaN values.
+    def average_item_scores(instances: List[dict], score_name: str):
+        """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
 
         Args:
             instances: list of dicts of each instance's instance scores.
-            field_name: score field names to compute mean for.
+            score_name: score field names to compute the mean for.
         """
         return nan_mean(
-            [instance["score"]["instance"][field_name] for instance in instances]
+            [instance["score"]["instance"][score_name] for instance in instances]
         )
 
     def score_based_confidence_interval(
@@ -455,7 +455,10 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
 
-    # column required to be in additional_inputs if group_mean aggregation function requires a dict input of labels and their lists of scores
+    # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
+    # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
+    # require an additional column (e.g., a subgroup identifier) by which the instance scores will be grouped
+    # if subgroup_column is not None, a column by the specified name will be required in additional_inputs
     subgroup_column = None
     implemented_reductions: List[str] = field(
         default_factory=lambda: ["mean", "group_mean"]
@@ -1557,8 +1560,8 @@ class TokenOverlap(InstanceMetric):
     def _compute_single_ref(
         self, reference: Any, prediction: Any
     ) -> Tuple[float, float, float]:
-        prediction_tokens = normalize_answer(prediction).split()
-        reference_tokens = normalize_answer(reference).split()
+        prediction_tokens = normalize_answer(str(prediction)).split()
+        reference_tokens = normalize_answer(str(reference)).split()
         common = Counter(prediction_tokens) & Counter(reference_tokens)
         num_same = sum(common.values())
         if num_same == 0:
