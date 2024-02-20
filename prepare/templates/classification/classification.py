@@ -63,6 +63,7 @@ add_to_catalog(
             "processors.take_first_non_empty_line",
             "processors.lower_case",
             "processors.to_list_by_comma",
+            "processors.remove_none_from_list",
         ],
     ),
     "templates.classification.multi_label.empty",
