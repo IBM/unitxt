@@ -6,7 +6,7 @@
         "question"
     ],
     "outputs": [
-        "answer"
+        "answers"
     ],
     "metrics": [
         "metrics.squad"

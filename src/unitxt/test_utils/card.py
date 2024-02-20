@@ -154,12 +154,29 @@ def test_with_eval(
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
+            test_predictions(
+                examples=examples,
+                strict=strict,
+                exact_match_score=exact_match_score,
+                full_mismatch_score=full_mismatch_score,
+            )
     else:
         num_templates = len(card.templates)
         for template_card_index in range(0, num_templates):
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
+            test_predictions(
+                examples=examples,
+                strict=strict,
+                exact_match_score=exact_match_score,
+                full_mismatch_score=full_mismatch_score,
+            )
+
+
+def test_predictions(
+    examples, strict=True, exact_match_score=1.0, full_mismatch_score=0.0
+):
     # metric = evaluate.load('unitxt/metric')
     correct_predictions = []
     for example in examples:

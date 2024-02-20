@@ -1,6 +1,5 @@
 from src.unitxt.blocks import (
     AddFields,
-    CopyFields,
     LoadHF,
     SerializeTableAsIndexedRowMajor,
     TaskCard,
@@ -14,9 +13,8 @@ card = TaskCard(
     loader=LoadHF(path="wikitablequestions"),
     preprocess_steps=[
         "splitters.small_no_test",
-        CopyFields(field_to_field=[["answers", "answer"]], use_query=True),
         AddFields({"context_type": "table"}),
-        TruncateTableCells(max_length=15, table="table", text_output="answer"),
+        TruncateTableCells(max_length=15, table="table", text_output="answers"),
         TruncateTableRows(field="table", rows_to_keep=50),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
     ],

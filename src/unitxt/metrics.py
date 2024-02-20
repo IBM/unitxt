@@ -35,6 +35,9 @@ settings = get_settings()
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
+warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
+
 def abstract_factory():
     return {}
 
@@ -273,6 +276,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_global_metrics
     )
+    process_single_instances = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -300,17 +304,26 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 instance["additional_inputs"] if "additional_inputs" in instance else {}
             )
             additional_inputs.append(instance_additional_inputs)
-            try:
-                instance_score = self._compute(
-                    [instance_references],
-                    [instance_prediction],
-                    [instance_additional_inputs],
-                )
-            except:
-                instance_score = {"score": None, "score_name": self.main_score}
+            instance_score = None
+            # for backward compatibility
+            no_score_value = np.nan
+            if self.process_single_instances:
+                try:
+                    instance_score = self._compute(
+                        [instance_references],
+                        [instance_prediction],
+                        [instance_additional_inputs],
+                    )
+                except:
+                    no_score_value = None
+            if not instance_score:
+                instance_score = {
+                    "score": no_score_value,
+                    "score_name": self.main_score,
+                }
 
                 if isinstance(self.main_score, str):
-                    instance_score[self.main_score] = None
+                    instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(instance_score)
 
@@ -1070,7 +1083,6 @@ class F1MultiLabel(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
-    classes_to_ignore = ["none"]
     metric = "f1"
 
     def prepare(self):
@@ -1103,13 +1115,9 @@ class F1MultiLabel(GlobalMetric):
         self._validate_references_and_prediction(references, predictions)
         references = [reference[0] for reference in references]
 
-        labels = [
-            lbl
-            for lbl in {label for reference in references for label in reference}
-            if lbl not in self.classes_to_ignore
-        ]
+        labels = list({label for reference in references for label in reference})
+
         # if no classes are left then F1 is not defined
-        # (e.g. only "none" in references)
         if len(labels) == 0:
             return {self.main_score: float("nan")}
 
@@ -1288,9 +1296,16 @@ class Wer(HuggingfaceMetric):
         return {self.main_score: result}
 
 
+class Spearmanr(HuggingfaceMetric):
+    hf_metric_name = "spearmanr"
+    main_score = "spearmanr"
+    process_single_instances = False
+
+
 class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
+    process_single_instances = False
 
     _requirements_list: List[str] = ["scipy"]
 
@@ -1308,9 +1323,7 @@ class KendallTauMetric(GlobalMetric):
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
         return {
-            "score_name": self.main_score,
             self.main_score: corr,
-            "score": corr,
             "p_val": kendall_results.pvalue,
         }
 
@@ -1341,6 +1354,28 @@ class MatthewsCorrelation(HuggingfaceMetric):
         return self.metric.compute(
             predictions=formatted_predictions, references=formatted_references
         )
+
+
+class RocAuc(GlobalMetric):
+    main_score = "roc_auc"
+    process_single_instances = False
+    _requirements_list: List[str] = ["sklearn"]
+
+    def prepare(self):
+        from sklearn import metrics
+
+        self.roc_curve = metrics.roc_curve
+        self.auc = metrics.auc
+
+    def compute(
+        self,
+        references: List[List[float]],
+        predictions: List[float],
+        additional_inputs: List[Dict],
+    ) -> dict:
+        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
+        roc_auc = self.auc(fpr, tpr)
+        return {self.main_score: roc_auc}
 
 
 class CustomF1(GlobalMetric):

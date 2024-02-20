@@ -2,7 +2,7 @@ import numpy as np
 
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import CastFields, CopyFields
-from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.metrics import MetricPipeline, Spearmanr
 from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
@@ -15,10 +15,7 @@ metric = MetricPipeline(
             use_nested_query=True,
         ),
     ],
-    metric=HuggingfaceMetric(
-        hf_metric_name="spearmanr",
-        main_score="spearmanr",
-    ),
+    metric=Spearmanr(),
 )
 
 predictions = ["1.0", " 2.0", "1.0"]

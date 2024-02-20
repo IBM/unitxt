@@ -7,40 +7,41 @@ from tests.utils import UnitxtTestCase
 
 class TestOperators(UnitxtTestCase):
     def test_system_format(self):
-        demo_instances = [
-            {"source": "1+2", "target": "3"},
-            {"source": "4-2", "target": "2"},
-        ]
         instruction = "solve the math exercises"
+
+        demo_instances = [
+            {"source": "1+2", "target": "3", "instruction": instruction, "inputs": {}},
+            {"source": "4-2", "target": "2", "instruction": instruction, "inputs": {}},
+        ]
 
         inputs = [
             {
                 "source": "1+1",
-                "source1": "1+1",
                 "target": "2",
                 "instruction": instruction,
                 "demos": demo_instances,
+                "inputs": {},
             },
             {
                 "source": "3+2",
-                "source1": "3+2",
                 "target": "5",
                 "instruction": instruction,
                 "demos": demo_instances,
+                "inputs": {},
             },
             {
                 "source": "7-4",
-                "source1": "7-4",
                 "target": "3",
                 "instruction": instruction,
                 "demos": demo_instances,
+                "inputs": {},
             },
             {
                 "source": "12-3",
-                "source1": "12-3",
                 "target": "9",
                 "instruction": instruction,
                 "demos": demo_instances,
+                "inputs": {},
             },
         ]
 
@@ -53,23 +54,23 @@ class TestOperators(UnitxtTestCase):
 
         targets = [
             {
-                "source1": "1+1",
                 "target": "2",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
-                "source1": "3+2",
                 "target": "5",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
-                "source1": "7-4",
                 "target": "3",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
-                "source1": "12-3",
                 "target": "9",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
         ]
@@ -90,23 +91,23 @@ class TestOperators(UnitxtTestCase):
 
         targets = [
             {
-                "source1": "1+1",
                 "target": "2",
+                "inputs": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
-                "source1": "3+2",
                 "target": "5",
+                "inputs": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
-                "source1": "7-4",
                 "target": "3",
+                "inputs": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
-                "source1": "12-3",
                 "target": "9",
+                "inputs": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
@@ -121,6 +122,8 @@ class TestOperators(UnitxtTestCase):
         # test with instruction = "":
         for instance in inputs:
             instance.pop("instruction")
+        for demo_instance in inputs[0]["demos"]:
+            demo_instance.pop("instruction")
 
         system_format = SystemFormat(
             demos_field="demos",
@@ -130,23 +133,23 @@ class TestOperators(UnitxtTestCase):
 
         targets_no_instruction = [
             {
-                "source1": "1+1",
                 "target": "2",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
-                "source1": "3+2",
                 "target": "5",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
-                "source1": "7-4",
                 "target": "3",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
-                "source1": "12-3",
                 "target": "9",
+                "inputs": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
         ]
@@ -158,19 +161,21 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        # ICLFormat tests from tests_renderers, migrated here
         instance = {
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {},
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
             "demos": [
                 {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
                     "source": 'This is my sentence: "was so not good"',
                     "target": "negative",
                     "references": ["negative"],
                 },
                 {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
@@ -189,6 +194,7 @@ class TestOperators(UnitxtTestCase):
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so not good"\nAgent:negative\n\nUser:This is my sentence: "was so good"\nAgent:positive\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {},
         }
         self.assertDictEqual(result, target)
 
@@ -197,6 +203,7 @@ class TestOperators(UnitxtTestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {},
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
         }
         system_format = SystemFormat(
@@ -207,6 +214,7 @@ class TestOperators(UnitxtTestCase):
         target = {
             "source": 'Instruction:classify user sentence by its sentiment to either positive, or negative.\n\nUser:This is my sentence: "was so bad"\nAgent:',
             "target": "negative",
+            "inputs": {},
             "references": ["negative"],
         }
         self.assertDictEqual(result, target)
@@ -223,14 +231,17 @@ class TestOperators(UnitxtTestCase):
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {},
             "instruction": "classify user sentence by its sentiment to either positive, or negative.",
             "demos": [
                 {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
                     "source": 'This is my sentence: "was so not good"',
                     "target": "negative",
                     "references": ["negative"],
                 },
                 {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
@@ -243,6 +254,7 @@ class TestOperators(UnitxtTestCase):
             "source": '[INST] <<SYS>>\nclassify user sentence by its sentiment to either positive, or negative.\n\nUser: This is my sentence: "was so not good"\nAgent: negative\n\nUser: This is my sentence: "was so good"\nAgent: positive\n\nUser: This is my sentence: "was so bad"\nAgent: [/INST]',
             "target": "negative",
             "references": ["negative"],
+            "inputs": {},
         }
 
         self.assertDictEqual(result, target)

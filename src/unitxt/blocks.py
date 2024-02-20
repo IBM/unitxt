@@ -2,9 +2,6 @@ from .card import TaskCard
 from .catalog import LocalCatalog
 from .collections import ItemPicker, RandomPicker
 from .instructions import (
-    Instruction,
-    InstructionsDict,
-    InstructionsList,
     TextualInstruction,
 )
 from .loaders import LoadFromIBMCloud, LoadHF
@@ -33,6 +30,7 @@ from .task import FormTask
 from .templates import (
     InputOutputTemplate,
     MultiLabelTemplate,
+    MultiReferenceTemplate,
     OutputQuantizingTemplate,
     SpanLabelingTemplate,
     Template,

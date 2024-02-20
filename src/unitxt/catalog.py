@@ -8,12 +8,12 @@ import requests
 
 from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cache
 from .logging_utils import get_logger
+from .settings_utils import get_constants
 from .text_utils import print_dict
 from .version import version
 
 logger = get_logger()
-COLLECTION_SEPARATOR = "."
-PATHS_SEP = ":"
+constants = get_constants()
 
 
 class Catalog(Artifactory):
@@ -21,29 +21,16 @@ class Catalog(Artifactory):
     location: str = None
 
 
-try:
-    import unitxt
-
-    if unitxt.__file__:
-        lib_dir = os.path.dirname(unitxt.__file__)
-    else:
-        lib_dir = os.path.dirname(__file__)
-except ImportError:
-    lib_dir = os.path.dirname(__file__)
-
-default_catalog_path = os.path.join(lib_dir, "catalog")
-
-
 class LocalCatalog(Catalog):
     name: str = "local"
-    location: str = default_catalog_path
+    location: str = constants.default_catalog_path
     is_local: bool = True
 
     def path(self, artifact_identifier: str):
         assert (
             artifact_identifier.strip()
         ), "artifact_identifier should not be an empty string."
-        parts = artifact_identifier.split(COLLECTION_SEPARATOR)
+        parts = artifact_identifier.split(constants.catalog_hirarchy_sep)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
@@ -117,7 +104,7 @@ class GithubCatalog(LocalCatalog):
 
 def verify_legal_catalog_name(name):
     assert re.match(
-        r"^[\w" + COLLECTION_SEPARATOR + "]+$", name
+        r"^[\w" + constants.catalog_hirarchy_sep + "]+$", name
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
@@ -132,7 +119,7 @@ def add_to_catalog(
     reset_artifacts_cache()
     if catalog is None:
         if catalog_path is None:
-            catalog_path = default_catalog_path
+            catalog_path = constants.default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(

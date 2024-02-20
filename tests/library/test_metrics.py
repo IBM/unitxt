@@ -333,23 +333,23 @@ class TestMetrics(UnitxtTestCase):
     def test_f1_macro_multilabel_with_nones(self):
         metric = F1MacroMultiLabel()
 
-        references = [[["none"]]]
-        predictions = [["none"]]
+        references = [[[]]]
+        predictions = [[]]
         global_target = float("nan")
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
+        references = [[[]]]
         predictions = [["x", "y"]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
-        predictions = [["none", "x", "y"]]
+        references = [[[]]]
+        predictions = [[], "x", "y"]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -365,8 +365,8 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-        references = [[["none"]], [["x"]], [["y"]], [["none"]], [["none"]]]
-        predictions = [["none"], ["x"], ["x"], ["none"], ["none"]]
+        references = [[[]], [["x"]], [["y"]], [[]], [[]]]
+        predictions = [[], ["x"], ["x"], [], []]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -374,7 +374,7 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_micro_multilabel_with_nones(self):
         metric = F1MicroMultiLabel()
-        references = [[["none"]]]
+        references = [[[]]]
         predictions = [["cat", "dog"]]
 
         outputs = apply_metric(
@@ -382,8 +382,8 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
-        predictions = [["none"]]
+        references = [[[]]]
+        predictions = [[]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -403,7 +403,7 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-        references = [[["none"]], [["sad"]]]
+        references = [[[]], [["sad"]]]
         predictions = [["dog", "fustrated"], ["sad"]]
         # precision = TP / (FP + TP) = 1 / 1 = 1
         # recall = TP /( FN + TP) =  1 / 1 = 1
