@@ -41,3 +41,21 @@ add_to_catalog(
     "tasks.classification.multi_class",
     overwrite=True,
 )
+
+add_to_catalog(
+    FormTask(
+        inputs=[
+            "text_a",
+            "text_a_type",
+            "text_b",
+            "text_b_type",
+            "classes",
+            "type_of_relation",
+        ],
+        outputs=["label"],
+        metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        augmentable_inputs=["text_a", "text_b"],
+    ),
+    "tasks.classification.multi_class.relation",
+    overwrite=True,
+)
