@@ -78,6 +78,9 @@ class MetricWithConfidenceInterval(Metric):
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
     def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
+    def disable_confidence_interval_calculation_return_n_resamples(self):
         n = self.n_resamples
         self.n_resamples = None
         return n
@@ -533,10 +536,16 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def disable_confidence_interval_calculation(self):
         if isinstance(self.metric, MetricWithConfidenceInterval):
-            return self.metric.disable_confidence_interval_calculation()
+            self.metric.disable_confidence_interval_calculation()
+
+    def disable_confidence_interval_calculation_return_n_resamples(self):
+        if isinstance(self.metric, MetricWithConfidenceInterval):
+            return (
+                self.metric.disable_confidence_interval_calculation_return_n_resamples()
+            )
         return None
 
-    def set_n_resamples_for_metric(self, n_resample):
+    def set_n_resamples(self, n_resample):
         if isinstance(self.metric, MetricWithConfidenceInterval):
             self.metric.set_n_resmaples(n_resample)
 
