@@ -14,6 +14,13 @@
         },
         "splitters.small_no_test",
         {
+            "type": "rename_fields",
+            "field_to_field": {
+                "premise": "text_a",
+                "hypothesis": "text_b"
+            }
+        },
+        {
             "type": "map_instance_values",
             "mappers": {
                 "label": {
@@ -26,7 +33,10 @@
         {
             "type": "add_fields",
             "fields": {
-                "choices": [
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
+                "classes": [
                     "entailment",
                     "neutral",
                     "contradiction"
@@ -34,6 +44,6 @@
             }
         }
     ],
-    "task": "tasks.nli",
-    "templates": "templates.classification.nli.all"
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all"
 }

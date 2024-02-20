@@ -52,7 +52,7 @@ class Template(StreamInstanceOperator):
             "target": target,
             "references": references,
             "instruction": self.instruction.format(**inputs),
-            "target_prefix": self.target_prefix,
+            "target_prefix": self.target_prefix.format(**inputs),
         }
 
     @abstractmethod
