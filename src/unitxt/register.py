@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import os
+from pathlib import Path
 
 from .artifact import Artifact, Artifactories
 from .catalog import EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
@@ -19,12 +20,32 @@ def _unregister_catalog(catalog: LocalCatalog):
     Artifactories().unregister(catalog)
 
 
+def is_local_catalog_registered(catalog_path: str):
+    if os.path.isdir(catalog_path):
+        for catalog in _catalogs_list():
+            if isinstance(catalog, LocalCatalog):
+                if os.path.isdir(catalog.location):
+                    if Path(catalog.location).resolve() == Path(catalog_path).resolve():
+                        return True
+    return False
+
+
 def register_local_catalog(catalog_path: str):
     assert os.path.exists(catalog_path), f"Catalog path {catalog_path} does not exist."
     assert os.path.isdir(
         catalog_path
     ), f"Catalog path {catalog_path} is not a directory."
-    _register_catalog(LocalCatalog(location=catalog_path))
+    if not is_local_catalog_registered(catalog_path=catalog_path):
+        _register_catalog(LocalCatalog(location=catalog_path))
+
+
+def unregister_local_catalog(catalog_path: str):
+    if is_local_catalog_registered(catalog_path=catalog_path):
+        for catalog in _catalogs_list():
+            if isinstance(catalog, LocalCatalog):
+                if os.path.isdir(catalog.location):
+                    if Path(catalog.location).resolve() == Path(catalog_path).resolve():
+                        _unregister_catalog(catalog)
 
 
 def _catalogs_list():

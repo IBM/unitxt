@@ -95,6 +95,7 @@ Welcome!
    docs/backend
    docs/operators
    docs/contributors_guide
+   docs/saving_and_loading_from_catalog
    modules
    catalog
 

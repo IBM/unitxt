@@ -7,10 +7,11 @@ from unitxt.utils import load_json
 
 
 def write_title(title, label):
-    underline_char = "-"
-    underline = underline_char * len(title)
+    title = f"📁 {title}"
+    wrap_char = "="
+    wrap = wrap_char * len(title)
 
-    return f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n"
+    return f".. _{label}:\n\n{wrap}\n{title}\n{wrap}\n\n"
 
 
 def custom_walk(top):
@@ -88,7 +89,10 @@ def make_content(artifact, label, all_labels):
             references.append(f":ref:`{label_no_catalog} <{label}>`")
     if len(references) > 0:
         result += "\nReferences: " + ", ".join(references)
-    return result
+    return (
+        result
+        + "\n\n\n\n\nRead more about catalog usage :ref:`here <using_catalog>`.\n\n"
+    )
 
 
 class CatalogEntry:
@@ -178,20 +182,24 @@ class CatalogEntry:
         dir_doc_path = self.get_artifact_doc_path(destination_directory)
         Path(dir_doc_path).parent.mkdir(exist_ok=True, parents=True)
         with open(dir_doc_path, "w+") as f:
-            f.write(dir_doc_content)
+            f.write(
+                dir_doc_content
+                + "\n\n\n\n\nRead more about catalog usage :ref:`here <using_catalog>`.\n\n"
+            )
 
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         label = self.get_label()
         content = make_content(artifact, label, all_labels)
 
-        underline_char = "-"
-        underline = underline_char * len(self.get_title())
+        title_char = "="
+        title = "📄 " + self.get_title()
+        title_wrapper = title_char * len(title)
         artifact_doc_contents = (
             f".. _{label}:\n\n"
-            f"----------\n\n"
-            f"{self.get_title()}\n"
-            f"{underline}\n\n"
+            f"{title_wrapper}\n"
+            f"{title}\n"
+            f"{title_wrapper}\n\n"
             f"{content}\n\n"
             f"|\n"
             f"|\n\n"
@@ -254,5 +262,24 @@ class CatalogDocsBuilder:
         )
 
 
-if __name__ == "__main__":
+def replace_in_file(source_str, target_str, file_path):
+    """Replace all occurrences of source_str with target_str in the file specified by file_path.
+
+    Parameters:
+    - source_str: The string to be replaced.
+    - target_str: The string to replace with.
+    - file_path: The path to the file where the replacement should occur.
+    """
+    with open(file_path) as file:
+        file_contents = file.read()
+    modified_contents = file_contents.replace(source_str, target_str)
+    with open(file_path, "w") as file:
+        file.write(modified_contents)
+
+
+def create_catalog_docs():
     CatalogDocsBuilder().run()
+
+
+if __name__ == "__main__":
+    create_catalog_docs()

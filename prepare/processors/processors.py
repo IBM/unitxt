@@ -1,7 +1,7 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import MapInstanceValues, RemoveValues
+from src.unitxt.operators import RemoveValues
 from src.unitxt.processors import (
     ConvertToBoolean,
     FirstCharacter,
@@ -164,9 +164,11 @@ add_to_catalog(
                 unallowed_values=["none"],
                 process_every_value=False,
             ),
-            MapInstanceValues(
-                mappers={"references": {"[['none']]": [[]]}},
-                strict=False,
+            RemoveValues(
+                field="references/*",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
             ),
         ]
     ),

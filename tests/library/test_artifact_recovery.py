@@ -18,7 +18,19 @@ class TestArtifactRecovery(UnitxtTestCase):
             "demos_pool_size": 100,
             "num_demos": 0,
         }
-        Artifact.from_dict(args)
+        a = Artifact.from_dict(args)
+        self.assertEqual(a.num_demos, 0)
+
+    def test_correct_artifact_recovery_with_overwrite(self):
+        args = {
+            "type": "standard_recipe",
+            "card": "cards.sst2",
+            "template_card_index": 0,
+            "demos_pool_size": 100,
+            "num_demos": 0,
+        }
+        a = Artifact.from_dict(args, overwrite_args={"num_demos": 1})
+        self.assertEqual(a.num_demos, 1)
 
     def test_bad_artifact_recovery_missing_type(self):
         args = {
