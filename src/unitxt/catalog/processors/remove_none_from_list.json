@@ -1,0 +1,22 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "remove_values",
+            "field": "prediction",
+            "unallowed_values": [
+                "none"
+            ],
+            "process_every_value": false
+        },
+        {
+            "type": "remove_values",
+            "field": "references/*",
+            "unallowed_values": [
+                "none"
+            ],
+            "use_query": true,
+            "process_every_value": false
+        }
+    ]
+}
