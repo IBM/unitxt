@@ -28,9 +28,7 @@ def _(
 
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
-            n_resamples = (
-                first_step.disable_confidence_interval_calculation_return_n_resamples()
-            )
+            n_resamples = first_step.disable_confidence_interval_calculation()
 
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):

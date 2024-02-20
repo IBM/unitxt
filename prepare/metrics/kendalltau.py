@@ -20,7 +20,7 @@ instance_targets = [
 global_target = {
     "kendalltau_b": 0.82,
     "score": 0.82,
-    "kendalltau_p_val": 0.22,
+    "kendalltau_b_p_val": 0.22,
     "score_name": "kendalltau_b",
     "kendalltau_b_ci_low": np.nan,
     "kendalltau_b_ci_high": np.nan,

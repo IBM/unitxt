@@ -62,6 +62,14 @@ class Metric(Artifact):
     def main_score(self):
         pass
 
+    @abstractmethod
+    def disable_confidence_interval_calculation(self):
+        pass
+
+    @abstractmethod
+    def set_n_resamples(self, n_resample):
+        pass
+
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
@@ -78,9 +86,6 @@ class MetricWithConfidenceInterval(Metric):
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
     def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
-
-    def disable_confidence_interval_calculation_return_n_resamples(self):
         n = self.n_resamples
         self.n_resamples = None
         return n
@@ -535,15 +540,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
-        if isinstance(self.metric, MetricWithConfidenceInterval):
-            self.metric.disable_confidence_interval_calculation()
-
-    def disable_confidence_interval_calculation_return_n_resamples(self):
-        if isinstance(self.metric, MetricWithConfidenceInterval):
-            return (
-                self.metric.disable_confidence_interval_calculation_return_n_resamples()
-            )
-        return None
+        return self.metric.disable_confidence_interval_calculation()
 
     def set_n_resamples(self, n_resample):
         if isinstance(self.metric, MetricWithConfidenceInterval):
@@ -1033,7 +1030,7 @@ class KendallTauMetric(GlobalMetric):
         corr = kendall_results.correlation
         return {
             self.main_score: corr,
-            "kendalltau_p_val": kendall_results.pvalue,
+            f"{self.main_score}_p_val": kendall_results.pvalue,
         }
 
 
