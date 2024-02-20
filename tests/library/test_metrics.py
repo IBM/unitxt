@@ -1,7 +1,4 @@
-from copy import deepcopy
 from math import isnan
-
-import numpy as np
 
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
@@ -11,6 +8,10 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FixedGroupAbsvalNormCohensHParaphraseAccuracy,
+    FixedGroupAbsvalNormCohensHParaphraseStringContainment,
+    FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
+    FixedGroupAbsvalNormHedgesGParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -72,33 +73,26 @@ GROUPED_INSTANCE_REFERENCES = [
     [" abcdefg", "AB", "abcd"],
 ]
 
-# possibly multi-column group identifier
-GROUPED_INSTANCE_ADDL_INPUTS = (
-    [deepcopy({"group": "grp1", "id": 0, "ignore": 1}) for _ in range(5)]
-    + [deepcopy({"group": "grp1", "id": 1, "ignore": 1}) for _ in range(5)]
-    + [deepcopy({"group": "grp2", "id": 0, "ignore": 1}) for _ in range(4)]
-    + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
-)
-
-# for group_mean aggregations with a subgroup_comparison, add a variant_type label
-# these groupings correspond in length to the group identifiers above
-VARIANT_TYPE = np.concatenate(
-    [
-        np.repeat(a=["original", "paraphrase"], repeats=reps)
-        for reps in [[1, 4], [1, 4], [1, 3], [1, 0]]
-    ]
-).tolist()
-
-# construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
-group_by_fields = ["group", "id"]
-
-for ai, vt in zip(GROUPED_INSTANCE_ADDL_INPUTS, VARIANT_TYPE):
-    ai.update(
-        {
-            "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
-            "variant_type": vt,
-        }
-    )
+# additional inputs, consisting of a group_id (group instance scores by this, then apply aggregation function)
+# and variant_type (for metrics that compare, say original vs paraphrase instance score)
+# create 4 groups, of sizes 5,5,4,1
+GROUPED_INSTANCE_ADDL_INPUTS = [
+    {"group_id": "group1", "variant_type": "original"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "original"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "original"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group4", "variant_type": "original"},
+]
 
 
 class TestMetrics(UnitxtTestCase):
@@ -488,6 +482,10 @@ class TestMetrics(UnitxtTestCase):
             FixedGroupPDRParaphraseStringContainment(),
             FixedGroupNormHedgesGParaphraseAccuracy(),
             FixedGroupNormHedgesGParaphraseStringContainment(),
+            FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
+            FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
+            FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
+            FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
         ]
         global_targets = [
             0.225,
@@ -505,6 +503,10 @@ class TestMetrics(UnitxtTestCase):
             0.4444444444444445,
             -0.34565986391520215,
             -0.08060156608173413,
+            0.6471689271009087,
+            0.4639421840102023,
+            0.3832160660602437,
+            0.08060156608173413,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
             outputs = apply_metric(
@@ -757,6 +759,31 @@ class TestConfidenceIntervals(UnitxtTestCase):
             metric=FixedGroupNormHedgesGParaphraseStringContainment(),
             expected_ci_low=-0.09757387538180902,
             expected_ci_high=-0.046656947481584346,
+        )
+
+        # absolute value of Hedges' g and Cohen's h
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
+            expected_ci_low=0.33333333333333337,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
+            expected_ci_low=0.39182655203060723,
+            expected_ci_high=0.49999999999999994,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=0.05633430321756243,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=0.046656947481584346,
+            expected_ci_high=0.09757387538180902,
         )
 
         # pass global dict because there are additional fields other than the main score

@@ -1,9 +1,9 @@
-from copy import deepcopy
-
-import numpy as np
-
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
+    FixedGroupAbsvalNormCohensHParaphraseAccuracy,
+    FixedGroupAbsvalNormCohensHParaphraseStringContainment,
+    FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
+    FixedGroupAbsvalNormHedgesGParaphraseStringContainment,
     FixedGroupMeanAccuracy,
     FixedGroupMeanBaselineAccuracy,
     FixedGroupMeanBaselineStringContainment,
@@ -58,33 +58,26 @@ references = [
     [" abcdefg", "AB", "abcd"],
 ]
 
-# possibly multi-column group identifier; 'ignore' is unused
-# use deepcopy so that dicts in list are independent and can be updated separately
-additional_inputs = (
-    [deepcopy({"group": "grp1", "id": 0, "ignore": 1}) for _ in range(5)]
-    + [deepcopy({"group": "grp1", "id": 1, "ignore": 1}) for _ in range(5)]
-    + [deepcopy({"group": "grp2", "id": 0, "ignore": 1}) for _ in range(4)]
-    + [deepcopy({"group": "grp2", "id": 1, "ignore": 0}) for _ in range(1)]
-)
-# for group_mean aggregations with a subgroup_comparison, add a variant_type label
-# these groupings correspond in length to the group identifiers above
-variant_type = np.concatenate(
-    [
-        np.repeat(a=["original", "paraphrase"], repeats=reps)
-        for reps in [[1, 4], [1, 4], [1, 3], [1, 0]]
-    ]
-).tolist()
-
-# construct grouping_field by combining two other fields (and ignoring one); mimics what you would do in cards
-group_by_fields = ["group", "id"]
-
-for ai, vt in zip(additional_inputs, variant_type):
-    ai.update(
-        {
-            "group_id": "_".join([str(ai[ff]) for ff in group_by_fields]),
-            "variant_type": vt,
-        }
-    )
+# additional inputs, consisting of a group_id (group instance scores by this, then apply aggregation function)
+# and variant_type (for metrics that compare, say original vs paraphrase instance score)
+# create 4 groups, of sizes 5,5,4,1
+additional_inputs = [
+    {"group_id": "group1", "variant_type": "original"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "original"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "original"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group4", "variant_type": "original"},
+]
 
 
 instance_targets_string_containment = [
@@ -499,6 +492,119 @@ outputs = test_metric(
 add_to_catalog(
     metric,
     "metrics.robustness.fixed_group_norm_hedges_g_paraphrase_string_containment",
+    overwrite=True,
+)
+
+# absolute value of above metrics
+
+metric = FixedGroupAbsvalNormCohensHParaphraseAccuracy()
+global_target = {
+    "fixed_group_absval_norm_cohens_h_paraphrase_accuracy": 0.65,
+    "score": 0.65,
+    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_accuracy",
+    "score_ci_low": 0.33,
+    "score_ci_high": 1.0,
+    "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_low": 0.33,
+    "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_high": 1.0,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_absval_norm_cohens_h_paraphrase_accuracy",
+    overwrite=True,
+)
+
+
+metric = FixedGroupAbsvalNormCohensHParaphraseStringContainment()
+global_target = {
+    "fixed_group_absval_norm_cohens_h_paraphrase_string_containment": 0.46,
+    "score": 0.46,
+    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_string_containment",
+    "score_ci_low": 0.39,
+    "score_ci_high": 0.5,
+    "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_low": 0.39,
+    "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_high": 0.5,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_string_containment,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_absval_norm_cohens_h_paraphrase_string_containment",
+    overwrite=True,
+)
+
+
+metric = FixedGroupAbsvalNormHedgesGParaphraseAccuracy()
+global_target = {
+    "fixed_group_absval_norm_hedges_g_paraphrase_accuracy": 0.38,
+    "score": 0.38,
+    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_accuracy",
+    "score_ci_low": 0.06,
+    "score_ci_high": 1.0,
+    "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_low": 0.06,
+    "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_high": 1.0,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_accuracy,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_absval_norm_hedges_g_paraphrase_accuracy",
+    overwrite=True,
+)
+
+
+metric = FixedGroupAbsvalNormHedgesGParaphraseStringContainment()
+global_target = {
+    "fixed_group_absval_norm_hedges_g_paraphrase_string_containment": 0.08,
+    "score": 0.08,
+    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_string_containment",
+    "score_ci_low": 0.05,
+    "score_ci_high": 0.1,
+    "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_low": 0.05,
+    "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_high": 0.1,
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets_string_containment,
+    global_target=global_target,
+    additional_inputs=additional_inputs,
+)
+
+add_to_catalog(
+    metric,
+    "metrics.robustness.fixed_group_absval_norm_hedges_g_paraphrase_string_containment",
     overwrite=True,
 )
 
