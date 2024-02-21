@@ -1,6 +1,5 @@
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
     LoadFromKaggle,
     MapInstanceValues,
     RenameFields,
@@ -9,7 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
+from src.unitxt.operators import ExtractFieldValues
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -24,9 +23,11 @@ card = TaskCard(
         MapInstanceValues(mappers={"label": {"0": "Normal", "1": "Heart Disease"}}),
         AddFields(
             fields={
-                "choices": ["Normal", "Heart Disease"],
+                "text_type": "Person",
+                "type_of_class": "Heart Disease Possibility",
             }
         ),
+        ExtractFieldValues(field="label", to_field="classes", stream_name="train"),
         SerializeTableRowAsText(
             fields=[
                 "Age",
@@ -41,25 +42,12 @@ card = TaskCard(
                 "Oldpeak",
                 "ST_Slope",
             ],
-            to_field="serialized_row",
+            to_field="text",
             max_cell_length=25,
         ),
     ],
-    task=FormTask(
-        inputs=["serialized_row", "choices"],
-        outputs=["label"],
-        metrics=["metrics.accuracy"],
-    ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="""
-                    Given the following details of a person {serialized_row} we need to predict the possibility of heart disease for the person. Classify if the person is {choices}
-                """.strip(),
-                output_format="{label}",
-            ),
-        ]
-    ),
+    task="tasks.classification.multi_class",
+    templates="templates.classification.multi_class.all",
 )
 
 test_card(card, num_demos=3)
