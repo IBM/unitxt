@@ -1414,7 +1414,7 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
     main_score = "score"
     # model_name: str
 
-    _requirements_list: List[str] = []
+    _requirements_list: List[str] = ["llama_index"]
 
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
