@@ -1758,17 +1758,17 @@ class Perplexity(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         """Computes the likelihood of generating text Y after text X - P(Y|X).
 
-        :param references: the list of Y texts as a list of singletons.
-        :param predictions: the list of X texts as a plain list of strings
+        :param predictions: the list of Y texts = the targets of the generation
+        :param references: the list of list of X texts = the sources of the generation
 
-        :return: the likelihood of generating text Y_i after text X_i = P(Y_i|X_i) for every i.
+        :return: the likelihood of generating text Y_i after each text X_i_j = P(Y_i|X_i_1), ..., P(Y_i|X_i_n)  for every i.
         """
         sources = []
         targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
-                sources.append(f"{self.perplexity_prompt} {prediction}")
-                targets.append(instance_reference)
+                sources.append(f"{self.perplexity_prompt} {instance_reference}")
+                targets.append(prediction)
 
         from transformers import AutoConfig
 
