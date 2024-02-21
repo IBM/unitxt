@@ -192,7 +192,34 @@ def local_catalog_summary(catalog_path):
 
 def summary():
     result = Counter()
+    done = set()
     for local_catalog_path in get_local_catalogs_paths():
-        result += Counter(local_catalog_summary(local_catalog_path))
+        if local_catalog_path not in done:
+            result += Counter(local_catalog_summary(local_catalog_path))
+        done.add(local_catalog_path)
     print_dict(result)
+    return result
+
+
+def ls(to_file=None):
+    done = set()
+    result = []
+    for local_catalog_path in get_local_catalogs_paths():
+        if local_catalog_path not in done:
+            for root, _, files in os.walk(local_catalog_path):
+                for file in files:
+                    if ".json" not in file:
+                        continue
+                    file_path = os.path.relpath(
+                        os.path.join(root, file), local_catalog_path
+                    )
+                    file_id = ".".join(
+                        file_path.replace(".json", "").split(os.path.sep)
+                    )
+                    result.append(file_id)
+    if to_file:
+        with open(to_file, "w+") as f:
+            f.write("\n".join(result))
+    else:
+        logger.info("\n".join(result))
     return result
