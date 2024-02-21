@@ -1406,7 +1406,6 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
     Usage:
         metric = LlamaIndexCorrectnessMetric()
-        metric.prepare()
         scores = metric.compute(references, predictions, additional_inputs)
     """
 
