@@ -2,26 +2,6 @@ from unitxt import add_to_catalog
 from unitxt.metrics import LlamaIndexCorrectnessMetric
 from unitxt.test_utils.metrics import test_metric
 
-# metric = MetricPipeline(
-#     main_score="LlamaIndexCorrectness",
-#     # preprocess_steps=[
-#     #     CopyFields(field_to_field=[("references/0", "references")], use_query=True),
-#     #     CastFields(
-#     #         fields={"prediction": "float", "references": "float"},
-#     #         failure_defaults={"prediction": None},
-#     #         use_nested_query=True,
-#     #     ),
-#     # ],
-#     metric=LlamaIndexCorrectnessMetric(),
-#     postpreprocess_steps=[
-#         # CopyFields(
-#         #     field_to_field=[
-#         #         ("score/instance/score", "score"),
-#         #     ],
-#         #     use_query=True,
-#         # )
-#     ],
-# )
 
 metric = LlamaIndexCorrectnessMetric()
 
