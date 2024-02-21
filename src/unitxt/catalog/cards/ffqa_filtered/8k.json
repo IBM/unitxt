@@ -1,0 +1,73 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "abacusai/WikiQA-Free_Form_QA"
+    },
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "conversations/0/value": "inputs",
+                "conversations/0/tok_len": "inputs_len",
+                "conversations/1/value": "answer"
+            },
+            "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "answer"
+            ],
+            "to_field": "answers"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "inputs_len": 8800
+            },
+            "condition": "lt"
+        },
+        {
+            "type": "execute_expression",
+            "expression": "re.search(r\"Document:\\s(.*)(\\n\\n|$)\", inputs, re.DOTALL).group(1)",
+            "imports_list": [
+                "re"
+            ],
+            "to_field": "context"
+        },
+        {
+            "type": "execute_expression",
+            "expression": "re.search(r\"Question:\\s(.*)(\\n\\n|$)\", inputs, re.DOTALL).group(1)",
+            "imports_list": [
+                "re"
+            ],
+            "to_field": "question"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "document"
+            }
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "8k[80%]",
+                "validation": "8k[10%]",
+                "test": "8k[10%]"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive",
+    "templates": {
+        "type": "templates_list",
+        "items": [
+            {
+                "type": "input_output_template",
+                "input_format": "Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words\nDocument: {context}\nQuestion: {question}\nAnswer: ",
+                "output_format": "{answers}"
+            }
+        ]
+    }
+}
