@@ -1,4 +1,5 @@
 from src.unitxt.blocks import (
+    AddFields,
     ListToKeyValPairs,
     LoadHF,
     RenameFields,
@@ -7,7 +8,6 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -21,16 +21,10 @@ card = TaskCard(
         ),
         SerializeKeyValPairs(field_to_field=[["kvpairs", "input"]]),
         RenameFields(field_to_field={"target_text": "output"}),
+        AddFields(fields={"type_of_input": "Key-Value pairs"}),
     ],
     task="tasks.generation",
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="Given the following Key-Value pairs, generate text from this data. Key-Value pairs = {input}. Text = ",
-                output_format="{output}",
-            ),
-        ]
-    ),
+    templates="templates.generation.all",
 )
 
 test_card(card)

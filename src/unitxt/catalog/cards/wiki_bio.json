@@ -36,17 +36,14 @@
             "field_to_field": {
                 "target_text": "output"
             }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "type_of_input": "Key-Value pairs"
+            }
         }
     ],
     "task": "tasks.generation",
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given the following Key-Value pairs, generate text from this data. Key-Value pairs = {input}. Text = ",
-                "output_format": "{output}"
-            }
-        ]
-    }
+    "templates": "templates.generation.all"
 }

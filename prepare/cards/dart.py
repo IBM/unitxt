@@ -1,4 +1,5 @@
 from src.unitxt.blocks import (
+    AddFields,
     CopyFields,
     LoadHF,
     RenameFields,
@@ -6,7 +7,6 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -19,16 +19,10 @@ card = TaskCard(
             field_to_field={"annotations/text/0": "output"},
             use_query=True,
         ),
+        AddFields(fields={"type_of_input": "Triples"}),
     ],
     task="tasks.generation",
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="Given the following triples, generate a text sentence out of them. Triples = {input} ",
-                output_format="{output}",
-            ),
-        ]
-    ),
+    templates="templates.generation.all",
 )
 
 test_card(card)

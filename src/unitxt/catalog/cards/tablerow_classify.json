@@ -31,11 +31,15 @@
         {
             "type": "add_fields",
             "fields": {
-                "choices": [
-                    "Normal",
-                    "Heart Disease"
-                ]
+                "text_type": "Person",
+                "type_of_class": "Heart Disease Possibility"
             }
+        },
+        {
+            "type": "extract_field_values",
+            "field": "label",
+            "to_field": "classes",
+            "stream_name": "train"
         },
         {
             "type": "serialize_table_row_as_text",
@@ -52,31 +56,10 @@
                 "Oldpeak",
                 "ST_Slope"
             ],
-            "to_field": "serialized_row",
+            "to_field": "text",
             "max_cell_length": 25
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "serialized_row",
-            "choices"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given the following details of a person {serialized_row} we need to predict the possibility of heart disease for the person. Classify if the person is {choices}",
-                "output_format": "{label}"
-            }
-        ]
-    }
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
 }
