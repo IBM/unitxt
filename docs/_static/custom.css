@@ -1,3 +1,17 @@
 nav {
     background-color: #cfd0ff !important;
 }
+
+.feed-box {
+    width: 60vw; /* Set width to 60% of the viewport width */
+    min-width: 100%; /* Ensures the box is never smaller than its desired minimum size */
+    margin: 0 auto; /* Center the box horizontally */
+    position: relative; /* Allows for adjustment within its normal document flow */
+    left: 50%; /* Move the center of the box to the center of its parent */
+    transform: translateX(-50%); /* Offset the box back by half its width to center it */
+    background-color: rgb(229, 216, 255);
+    text-align: center;
+    padding: 20px;
+    border-radius: 15px;
+    box-sizing: border-box; /* Include padding and border in the box's size */
+}
