@@ -219,7 +219,7 @@ for metric_name, catalog_name in [
 
 
 context_relevance = MetricPipeline(
-    main_score="score",
+    main_score="perplexity",
     preprocess_steps=[
         CopyFields(field_to_field=[("contexts", "references")], use_query=True),
         CopyFields(
@@ -259,7 +259,7 @@ for new_catalog_name, base_catalog_name in [
     ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_xlarge_mnli"),
 ]:
     metric = MetricPipeline(
-        main_score="score",
+        main_score="precision",
         preprocess_steps=[
             CopyFields(field_to_field=[("contexts", "references")], use_query=True),
             CopyFields(
@@ -268,14 +268,6 @@ for new_catalog_name, base_catalog_name in [
             ),
         ],
         metric=base_catalog_name,
-        postpreprocess_steps=[
-            CopyFields(
-                field_to_field=[
-                    ("score/instance/precision", "score/instance/score"),
-                ],
-                use_query=True,
-            )
-        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
@@ -285,7 +277,7 @@ for new_catalog_name, base_catalog_name in [
     ("metrics.rag.bert_recall", "metrics.bert_score.deberta_xlarge_mnli"),
 ]:
     metric = MetricPipeline(
-        main_score="score",
+        main_score="recall",
         preprocess_steps=[
             CopyFields(
                 field_to_field=[("ground_truths", "references")], use_query=True
@@ -296,14 +288,6 @@ for new_catalog_name, base_catalog_name in [
             ),
         ],
         metric=base_catalog_name,
-        postpreprocess_steps=[
-            CopyFields(
-                field_to_field=[
-                    ("score/instance/recall", "score/instance/score"),
-                ],
-                use_query=True,
-            )
-        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 

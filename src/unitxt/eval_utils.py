@@ -58,7 +58,4 @@ def _(
         metric_names=metric_names,
         compute_conf_intervals=compute_conf_intervals,
     )
-    return pd.DataFrame(results), global_scores
-
-
-#
+    return pd.DataFrame(results), pd.DataFrame(global_scores)
