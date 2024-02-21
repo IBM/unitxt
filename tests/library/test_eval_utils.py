@@ -31,11 +31,12 @@ class TestEvalUtils(UnitxtTestCase):
         self.assertAlmostEqual(global_scores["metrics.accuracy"]["score"], 0.3333, 3)
         self.assertAlmostEqual(global_scores["metrics.spearman"]["score"], -0.5, 3)
 
-        results_df, global_scores = evaluate(
+        results_df, global_scores_df = evaluate(
             self.df, ["metrics.accuracy"], compute_conf_intervals=True
         )
+        global_scores = global_scores_df["metrics.accuracy"].to_dict()
         self.assertDictEqual(
-            global_scores["metrics.accuracy"],
+            global_scores,
             {
                 "accuracy": 0.3333333333333333,
                 "score": 0.3333333333333333,
