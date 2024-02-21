@@ -1,6 +1,6 @@
 {
     "type": "metric_pipeline",
-    "main_score": "score",
+    "main_score": "precision",
     "preprocess_steps": [
         {
             "type": "copy_fields",
@@ -23,17 +23,5 @@
             "use_query": true
         }
     ],
-    "metric": "metrics.bert_score.deberta_xlarge_mnli",
-    "postpreprocess_steps": [
-        {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "score/instance/precision",
-                    "score/instance/score"
-                ]
-            ],
-            "use_query": true
-        }
-    ]
+    "metric": "metrics.bert_score.deberta_xlarge_mnli"
 }
