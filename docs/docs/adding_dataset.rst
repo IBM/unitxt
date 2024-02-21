@@ -136,8 +136,8 @@ Once your card is ready you can test it:
                     }
                 ),
             ],
-            task="tasks.tanslation.directed",
-            templates="tasks.tanslation.directed.all"
+            task="tasks.translation.directed",
+            templates="templates.translation.directed.all"
         )
 
         test_card(card)
