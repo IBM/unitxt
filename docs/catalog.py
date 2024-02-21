@@ -53,8 +53,9 @@ def make_content(artifact, label, all_labels):
     artifact_class = Artifact._class_register.get(artifact_type)
     type_class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
+    catalog_id = label.replace("catalog.", "")
     result = (
-        f".. note:: ID: ``{label}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
+        f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
         f"   .. code-block:: json\n\n      "
     )
     result += (
@@ -120,7 +121,7 @@ class CatalogEntry:
 
     def get_label(self):
         label = self.rel_path.replace(".json", "")
-        label = label.replace("/", ".")
+        label = label.replace(os.path.sep, ".")
         if not self.is_main_catalog_entry():
             label = "catalog." + label
         return label
