@@ -12,11 +12,11 @@ references = [["1.0"], ["0.0"], ["1.0"]]
 instance_targets = [{"roc_auc": np.nan, "score": np.nan, "score_name": "roc_auc"}] * 3
 global_targets = {
     "roc_auc": 0.5,
-    "roc_auc_ci_high": np.nan,
-    "roc_auc_ci_low": np.nan,
+    "roc_auc_ci_high": 0.9,
+    "roc_auc_ci_low": 0.5,
     "score": 0.5,
-    "score_ci_high": np.nan,
-    "score_ci_low": np.nan,
+    "score_ci_high": 0.9,
+    "score_ci_low": 0.5,
     "score_name": "roc_auc",
 }
 
