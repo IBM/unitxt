@@ -1853,8 +1853,8 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         scores = metric.compute(references, predictions, additional_inputs)
     """
 
-    model_name: str = "gpt-3.5-turbo"
-    main_score: str = f"{model_name}_judge"
+    model_name: str = ""
+    main_score: str = ""
 
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
@@ -1871,6 +1871,7 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
+        self.main_score: str = f"{self.model_name}_judge"
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
