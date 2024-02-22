@@ -134,13 +134,13 @@ class MetricWithConfidenceInterval(Metric):
     ):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
 
-        Unlike GlobalMetric, this is simply a function of the instance scores (possibly taking into account additional_inputs field),
+        Unlike GlobalMetric, this is simply a function of the instance scores (possibly taking into account task_data field),
          so they don't need to be recomputed after every bootstrap draw.
 
         Args:
             instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
             score_names: List of instance score field names to compute a confidence interval for.
-            aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include additional_inputs
+            aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include task_data
                 field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
                 instances after resampling, if argument is None.
             ci_score_prefix: An optional string prefix to the score_name in the CI.  Useful in cases where the
@@ -484,7 +484,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
     # require an additional column (e.g., a subgroup identifier) by which the instance scores will be grouped
-    # if subgroup_column is not None, a column by the specified name will be required in additional_inputs
+    # if subgroup_column is not None, a column by the specified name will be required in task_data
     subgroup_column = None
     implemented_reductions: List[str] = field(
         default_factory=lambda: ["mean", "group_mean"]
@@ -545,16 +545,16 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             1           'How do I repair my engine?'                 'paraphrase'
             2           'Why are ants eating my food?'               'original'
         """
-        # instances need to all have additional_inputs field with field group_id
+        # instances need to all have task_data field with field group_id
         assert all(
-            "additional_inputs" in instance for instance in instances
-        ), "each instance must have an additional_inputs field"
+            "task_data" in instance for instance in instances
+        ), "each instance must have an task_data field"
         assert all(
-            isinstance(instance["additional_inputs"], dict) for instance in instances
-        ), "each instance must have an additional_inputs field that is a dict"
+            isinstance(instance["task_data"], dict) for instance in instances
+        ), "each instance must have an task_data field that is a dict"
         assert all(
-            "group_id" in instance["additional_inputs"] for instance in instances
-        ), "each instance additional_inputs dict must have a key group_id"
+            "group_id" in instance["task_data"] for instance in instances
+        ), "each instance task_data dict must have a key group_id"
 
         # validate the reduction_map
         assert (
@@ -588,9 +588,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         # this field exists
         if self.subgroup_column is not None:
             assert all(
-                self.subgroup_column in instance["additional_inputs"]
-                for instance in instances
-            ), f"each instance additional_inputs dict must have a key {self.subgroup_column}"
+                self.subgroup_column in instance["task_data"] for instance in instances
+            ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
@@ -716,12 +715,12 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_subgroup_name = "default"
         # loop through the instances and group the scores
         for instance in instances:
-            additional_inputs = instance["additional_inputs"]
-            group_key = additional_inputs["group_id"]
+            task_data = instance["task_data"]
+            group_key = task_data["group_id"]
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                additional_inputs[self.subgroup_column]
+                task_data[self.subgroup_column]
                 if uses_subgroups
                 else default_subgroup_name
             )

@@ -535,7 +535,7 @@ class TestMetrics(UnitxtTestCase):
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
                 references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
             self.assertAlmostEqual(
                 target,
@@ -562,7 +562,7 @@ class TestMetrics(UnitxtTestCase):
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
                 references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
         class NoAggFunc(Accuracy):
@@ -575,7 +575,7 @@ class TestMetrics(UnitxtTestCase):
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
                 references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
         class NoCallableAggFunc(Accuracy):
@@ -588,7 +588,7 @@ class TestMetrics(UnitxtTestCase):
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
                 references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
         class NoBooleanGrouping(Accuracy):
@@ -601,7 +601,7 @@ class TestMetrics(UnitxtTestCase):
                 metric=metric,
                 predictions=GROUPED_INSTANCE_PREDICTIONS,
                 references=GROUPED_INSTANCE_REFERENCES,
-                additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
 
@@ -840,7 +840,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             metric=metric,
             predictions=GROUPED_INSTANCE_PREDICTIONS,
             references=GROUPED_INSTANCE_REFERENCES,
-            additional_inputs=GROUPED_INSTANCE_ADDL_INPUTS,
+            task_data=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         # get first element of reduction_map values
         reduction_params = next(iter(metric.reduction_map.values()))
