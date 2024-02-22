@@ -106,6 +106,25 @@ class InputOutputTemplate(Template):
         return target, references
 
 
+class InputOutputReferenceTemplate(InputOutputTemplate):
+    reference: str
+
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        output_fields = {}
+        for name, val in [
+            ("target", self.output_format),
+            ("reference", self.reference),
+        ]:
+            try:
+                result = self.process_template(val, outputs)
+                output_fields[name] = result
+            except KeyError as e:
+                raise KeyError(
+                    f"Available outputs are {outputs.keys()} but {name} requires a different one: {val}"
+                ) from e
+        return output_fields["target"], [output_fields["reference"]]
+
+
 class MultipleChoiceTemplate(Template):
     """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
 
