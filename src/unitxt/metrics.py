@@ -1836,7 +1836,7 @@ class Reward(BulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
-class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
+class LlamaIndexCorrectnessMetric(InstanceMetric):
     """Custom metric class for evaluating correctness using Llama Index.
 
     Attributes:
@@ -1850,7 +1850,7 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
     Usage:
         metric = LlamaIndexCorrectnessMetric()
-        scores = metric.compute(references, predictions, additional_inputs)
+        scores = metric.compute(references, prediction, additional_inputs)
     """
 
     model_name: str = ""
@@ -1871,7 +1871,11 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
-        self.main_score: str = f"{self.model_name}_judge"
+
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = (
+            f"correctness_llama_index_by_{self.model_name_normalized}_judge"
+        )
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
@@ -1895,19 +1899,19 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
     def compute(
         self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        additional_inputs: List[Dict],
-    ) -> List[Dict[str, Any]]:
+        references: List[str],
+        prediction: str,
+        task_data: Dict,
+    ) -> Dict[str, Any]:
         """Method to compute the correctness metric.
 
         Args:
-            references (List[List[Any]]): List of reference instances.
-            predictions (List[Any]): List of predicted instances.
-            additional_inputs (List[Dict]): List of additional input data.
+            references (List[str]): List of reference instances.
+            prediction (str): List of predicted instances.
+            task_data (Dict): List of additional input data.
 
         Returns:
-            List[Dict[str, Any]]: List of computed scores and feedback.
+            Dict[str, Any]: List of computed scores and feedback.
 
         Raises:
             AssertionError: If the input does not meet the expected format.
@@ -1915,37 +1919,26 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         # treat the references as the questions and the predictions as answers
         # assume a single reference
 
-        response_list = predictions
+        query = task_data["question"]
+        contexts = task_data["contexts"]
 
-        query_list = [instance["question"] for instance in additional_inputs]
-        contexts_list = [instance["contexts"] for instance in additional_inputs]
-
-        references_responses_list = references
-
-        results = []
-        for query, response, contexts, reference_responses in zip(
-            query_list, response_list, contexts_list, references_responses_list
-        ):
-            per_instance_results = []
-            for reference_response in reference_responses:
-                per_instance_results.append(
-                    self.evaluator.evaluate(
-                        query=query,
-                        response=response,
-                        contexts=contexts,
-                        reference=reference_response,
-                    )
+        per_reference_results = []
+        for reference_response in references:
+            per_reference_results.append(
+                self.evaluator.evaluate(
+                    query=query,
+                    response=prediction,
+                    contexts=contexts,
+                    reference=reference_response,
                 )
-            results.append(max([results.score for results in per_instance_results]))
+            )
+        result = max([results.score for results in per_reference_results])
 
-        return [
-            {
-                self.main_score: result / 5,
-                # "score_name": self.main_score,
-                # "feedback": result.feedback, # removed since this cannot be tested
-            }
-            for result in results
-        ]
+        return {
+            self.main_score: result / 5,
+            # "score_name": self.main_score,
+            # "feedback": result.feedback, # removed since this cannot be tested
+        }
 
 
 class Perplexity(BulkInstanceMetric):
