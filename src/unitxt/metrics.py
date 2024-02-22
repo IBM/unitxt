@@ -1856,6 +1856,7 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
     reduction_map: Dict[str, List[str]] = {"mean": ["score"]}
 
     model_name: str = "gpt-3.5-turbo"
+    main_score: str = f"{model_name}_judge"
 
     openai_models: List[str] = ["gpt-3.5-turbo"]
     anthropic_models: List[
