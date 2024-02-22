@@ -23,7 +23,7 @@ card = TaskCard(
         MapInstanceValues(mappers={"label": {"0": "Normal", "1": "Heart Disease"}}),
         AddFields(
             fields={
-                "text_type": "Person",
+                "text_type": "Person medical record",
                 "type_of_class": "Heart Disease Possibility",
             }
         ),

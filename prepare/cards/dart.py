@@ -19,7 +19,7 @@ card = TaskCard(
             field_to_field={"annotations/text/0": "output"},
             use_query=True,
         ),
-        AddFields(fields={"type_of_input": "Triples"}),
+        AddFields(fields={"type_of_input": "Triples", "type_of_output": "Text"}),
     ],
     task="tasks.generation",
     templates="templates.generation.all",

@@ -1,6 +1,6 @@
 import unittest
 
-from unitxt.struct_data_operators import (
+from src.unitxt.struct_data_operators import (
     ListToKeyValPairs,
     SerializeKeyValPairs,
     SerializeTableAsIndexedRowMajor,
@@ -11,13 +11,12 @@ from unitxt.struct_data_operators import (
     TruncateTableCells,
     TruncateTableRows,
 )
-
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
 
 
-class TestTableOperators(unittest.TestCase):
+class TestStructDataOperators(unittest.TestCase):
     """Tests for tabular data processing operators."""
 
     def test_serializetable_markdown(self):

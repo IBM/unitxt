@@ -5,7 +5,7 @@ from src.unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Given the following {type_of_input}, generate the corresponding text. {type_of_input}: {input}",
+        input_format="Given the following {type_of_input}, generate the corresponding {type_of_output}. {type_of_input}: {input}",
         output_format="{output}",
         postprocessors=[
             "processors.take_first_non_empty_line",
