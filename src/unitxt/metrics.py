@@ -1853,11 +1853,10 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         scores = metric.compute(references, predictions, additional_inputs)
     """
 
-    reduction_map: Dict[str, List[str]] = {"mean": ["score"]}
-
     model_name: str = "gpt-3.5-turbo"
     main_score: str = f"{model_name}_judge"
 
+    reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
     anthropic_models: List[
         str
@@ -1873,11 +1872,14 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
 
+        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
+
         from llama_index.core.evaluation import CorrectnessEvaluator
 
         assert (
-            (not self._model_using_extrnal_api) or (settings.trust_remote_apis)
-        ), f"Cannot run expression by {self} when unitxt.settings.trust_remote_apis=False either set it to True or set UNITXT_TRUST_REMOTE_APIS environment variable."
+            (not self._model_using_extrnal_api)
+            or (settings.allow_passing_data_to_remote_api)
+        ), f"Cannot run expression by {self} when unitxt.settings.allow_passing_data_to_remote_api=False either set it to True or set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable."
 
         if self.model_name in self.openai_models:
             from llama_index.llms.openai import OpenAI
@@ -1919,11 +1921,13 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
         query_list = [instance["question"] for instance in additional_inputs]
         contexts_list = [
-            apply_literal_eval_if_needed(["contexts"]) for instance in additional_inputs
-        ]
-        reference_response_list = [
-            apply_literal_eval_if_needed(instance["reference_answers"])
+            apply_literal_eval_if_needed(instance["contexts"])
             for instance in additional_inputs
+        ]
+
+        references_list = references
+        reference_response_list = [
+            apply_literal_eval_if_needed(references) for references in references_list
         ]
 
         results = []
@@ -1940,11 +1944,12 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
                         reference=reference_response,
                     )
                 )
-            results.append(max(per_instance_results))
+            results.append(max([results.score for results in per_instance_results]))
 
         return [
             {
-                self.main_score: result.score / 5,
+                self.main_score: result / 5,
+                # "score_name": self.main_score,
                 # "feedback": result.feedback, # removed since this cannot be tested
             }
             for result in results
