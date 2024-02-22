@@ -1853,30 +1853,34 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         scores = metric.compute(references, predictions, additional_inputs)
     """
 
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
-    # model_name: str
-    model_name = "gpt-3.5-turbo"
+    reduction_map: Dict[str, List[str]] = {"mean": ["score"]}
 
-    openai_models = ["gpt-3.5-turbo"]
-    anthropic_models = []
+    model_name: str = "gpt-3.5-turbo"
+
+    openai_models: List[str] = ["gpt-3.5-turbo"]
+    anthropic_models: List[
+        str
+    ] = []  # this is here for the sake of documentation for future models
     external_api_models = openai_models + anthropic_models
 
     _requirements_list: List[str] = ["llama_index"]
+
+    def _model_using_extrnal_api(self):
+        return self.model_name not in self.external_api_models
 
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
 
         from llama_index.core.evaluation import CorrectnessEvaluator
-        from llama_index.llms.openai import OpenAI
 
         assert (
-            (self.model_name not in self.external_api_models)
-            or (settings.trust_remote_apis)
+            (not self._model_using_extrnal_api) or (settings.trust_remote_apis)
         ), f"Cannot run expression by {self} when unitxt.settings.trust_remote_apis=False either set it to True or set UNITXT_TRUST_REMOTE_APIS environment variable."
 
         if self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
             llm = OpenAI("gpt-3.5-turbo")
         else:
             raise NotImplementedError(
