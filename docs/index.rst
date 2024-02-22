@@ -88,6 +88,15 @@ Our aspiration is to be simple, adaptable, and transparent.
    <br><br><br><br><br><br>
     <img src="_static/loading_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
    <br><br><br><br><br><br><br>
+   <div class="feed-code-box">
+      <pre>
+         <code class="language-python" text-align="left">
+      from datasets import load_dataset
+
+      dataset = load_dataset("unitxt/data", "card=cards.sst2")
+         </code>
+      </pre>
+   </div>
    </div>
    <div>
    <br><br><br><br><br><br><br>

@@ -8,10 +8,27 @@ nav {
     margin: 0 auto; /* Center the box horizontally */
     position: relative; /* Allows for adjustment within its normal document flow */
     left: 50%; /* Move the center of the box to the center of its parent */
-    transform: translateX(-50%); /* Offset the box back by half its width to center it */
     background-color: rgb(229, 216, 255);
     text-align: center;
     padding: 20px;
     border-radius: 15px;
     box-sizing: border-box; /* Include padding and border in the box's size */
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+    transform: perspective(1000px) rotateX(0.5deg) rotateY(0.5deg) translateX(-50%); /* Subtle 3D tilt */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effect */
 }
+
+/* Optional: Enhance the floating effect on hover */
+
+.feed-box:hover {
+    box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.25); /* Larger shadow for more depth */
+    transform: perspective(1000px) rotateX(1deg) rotateY(1deg) translateX(-50%); /* Increased tilt */
+}
+
+.feed-code-box {
+    width: 80%;
+    background-color: rgb(230, 228, 234);
+    text-align: center;
+    border-radius: 15px;
+}
+

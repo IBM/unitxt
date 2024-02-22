@@ -1,9 +1,34 @@
-let script = document.createElement('script');
-script.type = 'module';
-script.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
-document.head.appendChild(script);
+let element = document.createElement('script');
+element.type = 'module';
+element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
+document.head.appendChild(element);
+
+element = document.createElement('link');
+element.rel = 'stylesheet';
+element.type = 'text/css';
+element.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+document.head.appendChild(element);
+
+function loadScript(src, callback) {
+    var script = document.createElement('script');
+    script.src = src;
+    script.onload = function() {
+        if (callback) callback();
+    };
+    script.onerror = function() {
+        console.error('Failed to load script: ' + src);
+    };
+    document.head.appendChild(script);
+}
+
+loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js', function() {
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js', function() {
+            hljs.highlightAll();
+    })
+})
 
 document.addEventListener('DOMContentLoaded', function() {
+
     var videoElement = document.getElementById('controlled-video');
 
     // Mouseover event to add controls
