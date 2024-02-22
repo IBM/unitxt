@@ -21,7 +21,9 @@ card = TaskCard(
         ),
         SerializeKeyValPairs(field_to_field=[["kvpairs", "input"]]),
         RenameFields(field_to_field={"target_text": "output"}),
-        AddFields(fields={"type_of_input": "Key-Value pairs"}),
+        AddFields(
+            fields={"type_of_input": "Key-Value pairs", "type_of_output": "Text"}
+        ),
     ],
     task="tasks.generation",
     templates="templates.generation.all",

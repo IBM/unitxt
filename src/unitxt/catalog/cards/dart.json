@@ -31,7 +31,8 @@
         {
             "type": "add_fields",
             "fields": {
-                "type_of_input": "Triples"
+                "type_of_input": "Triples",
+                "type_of_output": "Text"
             }
         }
     ],
