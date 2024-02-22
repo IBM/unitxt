@@ -61,7 +61,7 @@ references = [
 # additional inputs, consisting of a group_id (group instance scores by this, then apply aggregation function)
 # and variant_type (for metrics that compare, say original vs paraphrase instance score)
 # create 4 groups, of sizes 5,5,4,1
-additional_inputs = [
+task_data = [
     {"group_id": "group1", "variant_type": "original"},
     {"group_id": "group1", "variant_type": "paraphrase"},
     {"group_id": "group1", "variant_type": "paraphrase"},
@@ -143,7 +143,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(metric, "metrics.robustness.fixed_group_mean_accuracy", overwrite=True)
@@ -167,7 +167,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(metric, "metrics.robustness.group_mean_accuracy", overwrite=True)
@@ -192,7 +192,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -218,7 +218,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -244,7 +244,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -268,7 +268,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -293,7 +293,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -319,7 +319,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -348,7 +348,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -373,7 +373,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -401,7 +401,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -429,7 +429,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -458,7 +458,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -486,7 +486,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -515,7 +515,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -543,7 +543,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -571,7 +571,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_accuracy,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -599,7 +599,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets_string_containment,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(
@@ -653,7 +653,7 @@ outputs = test_metric(
     references=[[str(vvv) for vvv in vv] for vv in references],
     instance_targets=instance_targets_token_overlap,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 add_to_catalog(metric, "metrics.robustness.group_mean_token_overlap", overwrite=True)
