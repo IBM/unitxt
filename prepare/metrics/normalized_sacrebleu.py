@@ -26,15 +26,13 @@ metric = MetricPipeline(
     main_score="sacrebleu",
     preprocess_steps=[
         CopyFields(
-            field_to_field=[
-                ("additional_data/target_language", "additional_data/tokenize")
-            ],
+            field_to_field=[("task_data/target_language", "task_data/tokenize")],
             use_query=True,
             not_exist_ok=True,
             get_default="en",
         ),
         MapInstanceValues(
-            mappers={"additional_data/tokenize": language_to_tokenizer},
+            mappers={"task_data/tokenize": language_to_tokenizer},
             strict=True,
             use_query=True,
         ),
@@ -111,7 +109,7 @@ references = [
         "他の専門家たちと同様に、彼は糖尿病を完治できるかどうかについては懐疑的であり、これらの調査結果はすでにI型糖尿病を患っている人々には何の関連性もないことを指摘しています。"
     ]
 ]
-additional_data = [{"target_language": "ja"}]
+task_data = [{"target_language": "ja"}]
 instance_targets = [
     {
         "bp": 1.0,
@@ -144,7 +142,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
-    additional_data=additional_data,
+    task_data=task_data,
 )
 
 

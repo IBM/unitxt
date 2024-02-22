@@ -75,7 +75,7 @@ GROUPED_INSTANCE_REFERENCES = [
     [" abcdefg", "AB", "abcd"],
 ]
 
-# additional inputs, consisting of a group_id (group instance scores by this, then apply aggregation function)
+# task_data, consisting of a group_id (group instance scores by this, then apply aggregation function)
 # and variant_type (for metrics that compare, say original vs paraphrase instance score)
 # create 4 groups, of sizes 5,5,4,1
 GROUPED_INSTANCE_ADDL_INPUTS = [

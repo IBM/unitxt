@@ -933,7 +933,7 @@ class HuggingfaceMetric(GlobalMetric):
         for additional_input_field in self.hf_additional_input_fields:
             assert (
                 additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
             passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
                 for additional_input in task_data
@@ -941,7 +941,7 @@ class HuggingfaceMetric(GlobalMetric):
         for additional_input_field in self.hf_additional_input_fields_pass_one_value:
             assert (
                 additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
 
             values = {
                 additional_input[additional_input_field]
@@ -1005,7 +1005,7 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         for additional_input_field in self.hf_additional_input_fields:
             assert (
                 additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
             passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
                 for additional_input in task_data
