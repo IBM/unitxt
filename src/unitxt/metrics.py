@@ -223,7 +223,7 @@ class MetricWithConfidenceInterval(Metric):
         return values
 
     def compute_global_confidence_intervals(
-        self, references, predictions, additional_data, score_name
+        self, references, predictions, task_data, score_name
     ):
         """Computed confidence intervals for a set of references and predictions."""
         random_gen = self.new_random_generator()
@@ -231,12 +231,12 @@ class MetricWithConfidenceInterval(Metric):
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
-            def metric(sample_refs, sample_preds, sample_additional_data):
+            def metric(sample_refs, sample_preds, sample_task_data):
                 try:
                     return self._compute(
                         references=sample_refs,
                         predictions=sample_preds,
-                        additional_data=sample_additional_data,
+                        task_data=sample_task_data,
                     )["score"]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
@@ -249,7 +249,7 @@ class MetricWithConfidenceInterval(Metric):
                 lambda x: metric(
                     sample_refs=[references[i] for i in x],
                     sample_preds=[predictions[i] for i in x],
-                    sample_additional_data=[additional_data[i] for i in x],
+                    sample_task_data=[task_data[i] for i in x],
                 ),
                 axis=axis,
                 arr=arr,
@@ -294,7 +294,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
         predictions = []
-        additional_data = []
+        task_data = []
         global_score = {}
 
         instances = []
@@ -313,10 +313,10 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             predictions.append(instance_prediction)
             instances.append(instance)
 
-            instance_additional_data = (
-                instance["additional_data"] if "additional_data" in instance else {}
+            instance_task_data = (
+                instance["task_data"] if "task_data" in instance else {}
             )
-            additional_data.append(instance_additional_data)
+            task_data.append(instance_task_data)
             instance_score = None
             # for backward compatibility
             no_score_value = np.nan
@@ -325,7 +325,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     instance_score = self._compute(
                         [instance_references],
                         [instance_prediction],
-                        [instance_additional_data],
+                        [instance_task_data],
                     )
                 except:
                     no_score_value = None
@@ -340,13 +340,13 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             instance["score"]["instance"].update(instance_score)
 
-        result = self._compute(references, predictions, additional_data)
+        result = self._compute(references, predictions, task_data)
 
         global_score.update(result)
 
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, additional_data, score_name
+            references, predictions, task_data, score_name
         )
         global_score.update(confidence_interval)
 
@@ -358,9 +358,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Any],
+        task_data: List[Any],
     ) -> dict:
-        result = self.compute(references, predictions, additional_data)
+        result = self.compute(references, predictions, task_data)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
@@ -370,7 +370,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Any],
+        task_data: List[Any],
     ) -> dict:
         pass
 
@@ -399,8 +399,8 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             ),
         )
 
-        additional_data = [
-            instance["additional_data"] if "additional_data" in instance else {}
+        task_data = [
+            instance["task_data"] if "task_data" in instance else {}
             for instance in stream
         ]
 
@@ -408,7 +408,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         instance_scores = self.compute(
             references=references,
             predictions=predictions,
-            additional_data=additional_data,
+            task_data=task_data,
         )
 
         # add the score and score_name fields
@@ -461,7 +461,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         pass
 
@@ -669,12 +669,10 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
-            additional_data = (
-                instance["additional_data"] if "additional_data" in instance else {}
-            )
+            task_data = instance["task_data"] if "task_data" in instance else {}
 
             instance_score = self.compute(
-                references=refs, prediction=pred, additional_data=additional_data
+                references=refs, prediction=pred, task_data=task_data
             )
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
@@ -780,9 +778,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         return scores_to_resample, aggregation_function
 
     @abstractmethod
-    def compute(
-        self, references: List[Any], prediction: Any, additional_data: Dict
-    ) -> dict:
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         pass
 
 
@@ -799,7 +795,7 @@ class Squad(GlobalMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         ids = [str(uuid.uuid4()).replace("-", "") for _ in range(len(predictions))]
         formatted_predictions = [
@@ -823,7 +819,7 @@ class Accuracy(InstanceMetric):
     ci_scores = ["accuracy"]
 
     def compute(
-        self, references: List[Any], prediction: Any, additional_data: List[Dict]
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
         result = {
             self.main_score: float(
@@ -841,7 +837,7 @@ class StringContainment(InstanceMetric):
     ci_scores = ["string_containment"]
 
     def compute(
-        self, references: List[Any], prediction: Any, additional_data: List[Dict]
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
         result = {
             self.main_score: float(
@@ -932,37 +928,37 @@ class HuggingfaceMetric(GlobalMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
-        passed_additional_data = {}
+        passed_task_data = {}
         for additional_input_field in self.hf_additional_input_fields:
             assert (
-                additional_input_field in additional_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_data[0]}"
-            passed_additional_data[additional_input_field] = [
+                additional_input_field in task_data[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
+            passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
-                for additional_input in additional_data
+                for additional_input in task_data
             ]
         for additional_input_field in self.hf_additional_input_fields_pass_one_value:
             assert (
-                additional_input_field in additional_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_data[0]}"
+                additional_input_field in task_data[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
 
             values = {
                 additional_input[additional_input_field]
-                for additional_input in additional_data
+                for additional_input in task_data
             }
             assert (
                 len(values) == 1
             ), f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
 
-            passed_additional_data[additional_input_field] = next(iter(values))
+            passed_task_data[additional_input_field] = next(iter(values))
 
-        # add check that all required fields in self.metrics are in passed_additional_data       print(passed_additional_data)
+        # add check that all required fields in self.metrics are in passed_task_data       print(passed_task_data)
         result = self.metric.compute(
             predictions=predictions,
             references=references,
-            **passed_additional_data,
+            **passed_task_data,
             **self.hf_compute_args,
         )
         if self.hf_main_score:
@@ -1004,23 +1000,23 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Any],
+        task_data: List[Any],
     ) -> List[Dict[str, Any]]:
-        passed_additional_data = {}
+        passed_task_data = {}
         for additional_input_field in self.hf_additional_input_fields:
             assert (
-                additional_input_field in additional_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {additional_data[0]}"
-            passed_additional_data[additional_input_field] = [
+                additional_input_field in task_data[0]
+            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in additional inputs: {task_data[0]}"
+            passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
-                for additional_input in additional_data
+                for additional_input in task_data
             ]
-        # add check that all required fields in self.metrics are in passed_additional_data
+        # add check that all required fields in self.metrics are in passed_task_data
 
         scores = self.metric.compute(
             predictions=predictions,
             references=references,
-            **passed_additional_data,
+            **passed_task_data,
             **self.hf_compute_args,
         )
 
@@ -1055,7 +1051,7 @@ class F1(GlobalMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         assert all(
             len(reference) == 1 for reference in references
@@ -1127,7 +1123,7 @@ class F1MultiLabel(GlobalMetric):
         self,
         references: List[List[str]],
         predictions: List[List[str]],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         self.str_to_id = {}
         self.id_to_str = {}
@@ -1251,7 +1247,7 @@ class Rouge(HuggingfaceMetric):
         nltk.download("punkt")
         self.sent_tokenize = nltk.sent_tokenize
 
-    def compute(self, references, predictions, additional_data: List[Dict]):
+    def compute(self, references, predictions, task_data: List[Dict]):
         if self.sent_split_newline:
             predictions = [
                 "\n".join(self.sent_tokenize(prediction.strip()))
@@ -1261,7 +1257,7 @@ class Rouge(HuggingfaceMetric):
                 ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
                 for reference in references
             ]
-        return super().compute(references, predictions, additional_data)
+        return super().compute(references, predictions, task_data)
 
 
 # Computes char edit distance, ignoring whitespace
@@ -1278,7 +1274,7 @@ class CharEditDistanceAccuracy(InstanceMetric):
 
         self.eval = editdistance.eval
 
-    def compute(self, references, prediction: str, additional_data: List[Dict]) -> dict:
+    def compute(self, references, prediction: str, task_data: List[Dict]) -> dict:
         assert (
             len(references) == 1
         ), f"Expected only one reference , but received: {references}"
@@ -1302,7 +1298,7 @@ class Wer(HuggingfaceMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         assert all(
             len(reference) == 1 for reference in references
@@ -1336,7 +1332,7 @@ class KendallTauMetric(GlobalMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         if isinstance(references[0], list):
             references = [reference[0] for reference in references]
@@ -1366,7 +1362,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         formatted_references = [
             self.get_str_id(reference[0]) for reference in references
@@ -1394,7 +1390,7 @@ class RocAuc(GlobalMetric):
         self,
         references: List[List[str]],
         predictions: List[str],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         if isinstance(references[0], list):
             references = [reference[0] for reference in references]
@@ -1459,9 +1455,9 @@ class CustomF1(GlobalMetric):
         except ZeroDivisionError:
             return self.zero_division
 
-    def get_groups(self, elements, additional_data):
+    def get_groups(self, elements, task_data):
         groups = set()
-        for sublist, additional_input in zip(elements, additional_data):
+        for sublist, additional_input in zip(elements, task_data):
             for e in sublist:
                 if self.should_ignore_element(e, additional_input):
                     continue
@@ -1472,7 +1468,7 @@ class CustomF1(GlobalMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> dict:
         # in case reference are List[List[List[Any]]] and predictions are List[List[Any]]:
         if (
@@ -1488,12 +1484,12 @@ class CustomF1(GlobalMetric):
         )
 
         if self.groups is None:
-            groups = self.get_groups(references, additional_data)
+            groups = self.get_groups(references, task_data)
         else:
             groups = self.groups
         groups_statistics = {}
         for references_batch, predictions_batch, additional_input in zip(
-            references, predictions, additional_data
+            references, predictions, task_data
         ):
             grouped_references = self.group_elements(references_batch, additional_input)
             grouped_predictions = self.group_elements(
@@ -1610,7 +1606,7 @@ class TokenOverlap(InstanceMetric):
     ci_scores = ["f1", "precision", "recall"]
 
     def compute(
-        self, references: List[Any], prediction: Any, additional_data: List[Dict]
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
         results = [
             self._compute_single_ref(str(reference), str(prediction))
@@ -1673,7 +1669,7 @@ class SentenceBert(BulkInstanceMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         scores = []
 
@@ -1720,7 +1716,7 @@ class Reward(BulkInstanceMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         # treat the references as the questions and the predictions as answers
         # assume a single reference
@@ -1752,7 +1748,7 @@ class Perplexity(BulkInstanceMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Dict],
+        task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         """Computes the likelihood of generating text Y after text X - P(Y|X).
 
@@ -2002,14 +1998,12 @@ class NDCG(GlobalMetric):
         self,
         references: List[List[Any]],
         predictions: List[Any],
-        additional_data: List[Any],
+        task_data: List[Any],
     ) -> dict:
         from collections import defaultdict
 
         query_to_predictions_and_references = defaultdict(lambda: [[], []])
-        for reference, pred, inputs_dict in zip(
-            references, predictions, additional_data
-        ):
+        for reference, pred, inputs_dict in zip(references, predictions, task_data):
             query = inputs_dict.get("query")
             query_to_predictions_and_references[query][0].append(pred)
             query_to_predictions_and_references[query][1].append(reference)
@@ -2039,9 +2033,7 @@ class NDCG(GlobalMetric):
 
 
 class RetrievalMetric(InstanceMetric):
-    def compute(
-        self, references: List[Any], prediction: Any, additional_data: Dict
-    ) -> dict:
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # digest input
         pred_ids: List[Any] = prediction
         ref_ids: List[Any] = list(dict.fromkeys(references))

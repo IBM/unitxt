@@ -14,7 +14,7 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
-        "additional_data": Value(dtype="string"),
+        "task_data": Value(dtype="string"),
     }
 )
 
@@ -43,8 +43,8 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        additional_data = {**instance["inputs"], **instance["outputs"]}
-        instance["additional_data"] = json.dumps(additional_data)
+        task_data = {**instance["inputs"], **instance["outputs"]}
+        instance["task_data"] = json.dumps(task_data)
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []

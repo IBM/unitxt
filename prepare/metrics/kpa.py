@@ -4,7 +4,7 @@ from src.unitxt.test_utils.metrics import test_metric
 
 predictions = ["yes", "yes", "none", "none", "yes"]
 references = [["yes"], ["none"], ["yes"], ["yes"], ["yes"]]
-additional_data = [{"keypoint": i} for i in ["1", "1", "2", "2", "2"]]
+task_data = [{"keypoint": i} for i in ["1", "1", "2", "2", "2"]]
 kpa_metric = KPA()
 
 global_target = {
@@ -90,7 +90,7 @@ outputs = test_metric(
     metric=kpa_metric,
     predictions=predictions,
     references=references,
-    additional_data=additional_data,
+    task_data=task_data,
     instance_targets=instance_target,
     global_target=global_target,
 )

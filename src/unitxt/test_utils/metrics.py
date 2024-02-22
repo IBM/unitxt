@@ -30,23 +30,23 @@ def apply_metric(
     metric: Metric,
     predictions: List[Any],
     references: List[List[Any]],
-    additional_data: Optional[List[dict]] = None,
+    task_data: Optional[List[dict]] = None,
 ):
     assert isoftype(metric, Metric), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
-    assert additional_data is None or isoftype(
-        additional_data, List[Any]
-    ), "additional_data must be a list"
-    if additional_data is not None:
+    assert task_data is None or isoftype(
+        task_data, List[Any]
+    ), "task_data must be a list"
+    if task_data is not None:
         test_iterable = [
             {
                 "prediction": prediction,
                 "references": reference,
-                "additional_data": additional_input,
+                "task_data": additional_input,
             }
             for prediction, reference, additional_input in zip(
-                predictions, references, additional_data
+                predictions, references, task_data
             )
         ]
     else:
@@ -66,7 +66,7 @@ def test_metric(
     references: List[List[Any]],
     instance_targets: List[dict],
     global_target: dict,
-    additional_data: Optional[List[dict]] = None,
+    task_data: Optional[List[dict]] = None,
 ):
     disable = os.getenv("UNITXT_TEST_METRIC_DISABLE", None)
     if disable is not None:
@@ -81,7 +81,7 @@ def test_metric(
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
-    outputs = apply_metric(metric, predictions, references, additional_data)
+    outputs = apply_metric(metric, predictions, references, task_data)
 
     errors = []
     global_score = round_floats(outputs[0]["score"]["global"])

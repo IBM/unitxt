@@ -29,7 +29,7 @@ class TestRecipes(UnitxtTestCase):
 
         for instance in stream["train"]:
             print_dict(instance)
-            del instance["additional_data"]
+            del instance["task_data"]
             self.assertDictEqual(
                 instance,
                 {

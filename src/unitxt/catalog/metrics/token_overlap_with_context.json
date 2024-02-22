@@ -6,7 +6,7 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "additional_data/context",
+                    "task_data/context",
                     "references"
                 ]
             ],

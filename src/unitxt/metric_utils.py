@@ -83,7 +83,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
         )
 
 
-# The additional_data field in the schema is defined as
+# The task_data field in the schema is defined as
 # Sequence({"key": Value(dtype="string"), "value": Value("string")})
 # When receiving instances from this scheme, the keys and values are returned as two separate
 # lists, and are converted to a dictionary.
@@ -97,9 +97,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             Apply(
-                "additional_data",
+                "task_data",
                 function="json.loads",
-                to_field="additional_data",
+                to_field="task_data",
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
