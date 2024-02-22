@@ -1449,17 +1449,19 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
         response_list = predictions
 
+        def apply_literal_eval_if_needed(x):
+            return ast.literal_eval(x) if not isinstance(x, list) else x
+
         query_list = [instance["question"] for instance in additional_inputs]
         contexts_list = [
-            ast.literal_eval(instance["contexts"]) for instance in additional_inputs
+            apply_literal_eval_if_needed(["contexts"]) for instance in additional_inputs
         ]
         reference_response_list = [
-            ast.literal_eval(instance["reference_answers"])
+            apply_literal_eval_if_needed(instance["reference_answers"])
             for instance in additional_inputs
         ]
 
         assert len(reference_response_list[0]) == 1, "only supporting single reference"
-        assert len(references[0]) == 1, "only supporting single reference"
 
         results = []
         for query, response, contexts, reference_response in zip(
@@ -1477,7 +1479,7 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         return [
             {
                 self.main_score: result.score / 5,
-                "feedback": result.feedback,
+                # "feedback": result.feedback,
             }
             for result in results
         ]
