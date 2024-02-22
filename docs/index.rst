@@ -76,6 +76,32 @@ It provides a set of reusable building blocks and methodology for defining datas
 In one line of code, it prepares a dataset or mixtures-of-datasets into an input-output format for training and evaluation.
 Our aspiration is to be simple, adaptable, and transparent.
 
+
+.. raw:: html
+
+   <div>
+   <br><br><br><br><br><br><br>
+   </div>
+   <div class="feed-box">
+   <br><br><br><br><br><br><br>
+        <h1> Loading datasets is easier then ever! </h1>
+   <br><br><br><br><br><br>
+    <img src="_static/loading_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
+   <br><br><br><br><br><br><br>
+   </div>
+   <div>
+   <br><br><br><br><br><br><br>
+   <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
+   <br><br><br><br><br><br><br>
+   </div>
+   <div class="feed-box">
+   <br><br><br><br><br><br><br>
+        <h1> Full evaluation in one line of code! </h1>
+   <br><br><br><br><br><br>
+    <img src="_static/evaluating_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
+   <br><br><br><br><br><br><br>
+   </div>
+
 --------
 Welcome!
 --------
