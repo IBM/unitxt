@@ -1856,6 +1856,11 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     # model_name: str
+    model_name = "gpt-3.5-turbo"
+
+    openai_models = ["gpt-3.5-turbo"]
+    anthropic_models = []
+    external_api_models = openai_models + anthropic_models
 
     _requirements_list: List[str] = ["llama_index"]
 
@@ -1866,7 +1871,18 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
         from llama_index.core.evaluation import CorrectnessEvaluator
         from llama_index.llms.openai import OpenAI
 
-        llm = OpenAI("gpt-3.5-turbo")
+        assert (
+            (self.model_name not in self.external_api_models)
+            or (settings.trust_remote_apis)
+        ), f"Cannot run expression by {self} when unitxt.settings.trust_remote_apis=False either set it to True or set UNITXT_TRUST_REMOTE_APIS environment variable."
+
+        if self.model_name in self.openai_models:
+            llm = OpenAI("gpt-3.5-turbo")
+        else:
+            raise NotImplementedError(
+                f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+            )
+
         self.evaluator = CorrectnessEvaluator(llm=llm)
 
     def compute(
@@ -1905,25 +1921,26 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
             for instance in additional_inputs
         ]
 
-        assert len(reference_response_list[0]) == 1, "only supporting single reference"
-
         results = []
-        for query, response, contexts, reference_response in zip(
+        for query, response, contexts, reference_responses in zip(
             query_list, response_list, contexts_list, reference_response_list
         ):
-            results.append(
-                self.evaluator.evaluate(
-                    query=query,
-                    response=response,
-                    contexts=contexts,
-                    reference=reference_response,
+            per_instance_results = []
+            for reference_response in reference_responses:
+                per_instance_results.append(
+                    self.evaluator.evaluate(
+                        query=query,
+                        response=response,
+                        contexts=contexts,
+                        reference=reference_response,
+                    )
                 )
-            )
+            results.append(max(per_instance_results))
 
         return [
             {
                 self.main_score: result.score / 5,
-                # "feedback": result.feedback,
+                # "feedback": result.feedback, # removed since this cannot be tested
             }
             for result in results
         ]
