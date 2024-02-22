@@ -84,7 +84,7 @@ Our aspiration is to be simple, adaptable, and transparent.
    </div>
    <div class="feed-box">
    <br><br><br><br><br><br><br>
-        <h1> Loading datasets is easier then ever! </h1>
+        <h1> Loading datasets is easier than ever! </h1>
    <br><br><br><br><br><br>
     <img src="_static/loading_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
    <br><br><br><br><br><br><br>
