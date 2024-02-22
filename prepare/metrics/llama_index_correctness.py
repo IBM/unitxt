@@ -7,13 +7,13 @@ from src.unitxt.test_utils.metrics import test_metric
 metric = LlamaIndexCorrectnessMetric()
 
 predictions = ["The right answer"]
-references = [["The right answer"]]
+references = [["The right answer", "The wrong answer"]]
 inputs = [
     {
         "question": "question number 1",
         "contexts": ["context number 1"],
-        "reference_answers": ["The right answer"],
-    }
+        "reference_answers": ["The right answer", "The wrong answer"],
+    },
 ]
 
 instance_targets = [  # nDCG is undefined at instance level
