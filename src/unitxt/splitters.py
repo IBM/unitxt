@@ -246,6 +246,18 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
+class DiverseLabelsSamplerFromClasses(DiverseLabelsSampler):
+    valid_classes: List[str] = ["yes", "no"]
+
+    def sample(
+        self, instances_pool: List[Dict[str, object]]
+    ) -> List[Dict[str, object]]:
+        instance_pool = list(
+            filter(lambda x: x["target"] in self.valid_classes, instances_pool)
+        )
+        return super().sample(instance_pool)
+
+
 class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     source_stream: str = None
     target_field: str = None
