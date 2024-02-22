@@ -24,7 +24,7 @@ metrics = {
 
 predictions = ["apple", "boy", "cat"]
 references = [["apple2"], ["boys"], ["dogs"]]
-additional_data = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
+task_data = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
 instance_targets = [
     {"f1": 0.67, "precision": 1.0, "recall": 0.5, "score": 0.67, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
@@ -58,7 +58,7 @@ metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         CopyFields(
-            field_to_field=[("additional_data/context", "references")], use_query=True
+            field_to_field=[("task_data/context", "references")], use_query=True
         ),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
@@ -86,7 +86,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
-    additional_data=additional_data,
+    task_data=task_data,
 )
 
 metric = metrics["metrics.bert_score.deberta_xlarge_mnli"]

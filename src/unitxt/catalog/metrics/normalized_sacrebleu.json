@@ -6,8 +6,8 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "additional_data/target_language",
-                    "additional_data/tokenize"
+                    "task_data/target_language",
+                    "task_data/tokenize"
                 ]
             ],
             "use_query": true,
@@ -17,7 +17,7 @@
         {
             "type": "map_instance_values",
             "mappers": {
-                "additional_data/tokenize": {
+                "task_data/tokenize": {
                     "deutch": null,
                     "french": null,
                     "romanian": null,
