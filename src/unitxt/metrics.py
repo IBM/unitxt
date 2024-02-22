@@ -1,3 +1,4 @@
+import ast
 import itertools
 import re
 import string
@@ -1833,6 +1834,99 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
+
+
+class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
+    """Custom metric class for evaluating correctness using Llama Index.
+
+    Attributes:
+        reduction_map (dict): A dictionary specifying the reduction method for the metric.
+        main_score (str): The main score used for evaluation.
+        _requirements_list (List[str]): A list specifying any additional requirements for the metric.
+
+    Methods:
+        prepare(self): Initialization method for the metric.
+        compute(self, references, predictions, additional_inputs): Method to compute the metric.
+
+    Usage:
+        metric = LlamaIndexCorrectnessMetric()
+        scores = metric.compute(references, predictions, additional_inputs)
+    """
+
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    # model_name: str
+
+    _requirements_list: List[str] = ["llama_index"]
+
+    def prepare(self):
+        """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
+        super().prepare()
+
+        from llama_index.core.evaluation import CorrectnessEvaluator
+        from llama_index.llms.openai import OpenAI
+
+        llm = OpenAI("gpt-3.5-turbo")
+        self.evaluator = CorrectnessEvaluator(llm=llm)
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        additional_inputs: List[Dict],
+    ) -> List[Dict[str, Any]]:
+        """Method to compute the correctness metric.
+
+        Args:
+            references (List[List[Any]]): List of reference instances.
+            predictions (List[Any]): List of predicted instances.
+            additional_inputs (List[Dict]): List of additional input data.
+
+        Returns:
+            List[Dict[str, Any]]: List of computed scores and feedback.
+
+        Raises:
+            AssertionError: If the input does not meet the expected format.
+        """
+        # treat the references as the questions and the predictions as answers
+        # assume a single reference
+
+        response_list = predictions
+
+        def apply_literal_eval_if_needed(x):
+            return ast.literal_eval(x) if not isinstance(x, list) else x
+
+        query_list = [instance["question"] for instance in additional_inputs]
+        contexts_list = [
+            apply_literal_eval_if_needed(["contexts"]) for instance in additional_inputs
+        ]
+        reference_response_list = [
+            apply_literal_eval_if_needed(instance["reference_answers"])
+            for instance in additional_inputs
+        ]
+
+        assert len(reference_response_list[0]) == 1, "only supporting single reference"
+
+        results = []
+        for query, response, contexts, reference_response in zip(
+            query_list, response_list, contexts_list, reference_response_list
+        ):
+            results.append(
+                self.evaluator.evaluate(
+                    query=query,
+                    response=response,
+                    contexts=contexts,
+                    reference=reference_response,
+                )
+            )
+
+        return [
+            {
+                self.main_score: result.score / 5,
+                # "feedback": result.feedback,
+            }
+            for result in results
+        ]
 
 
 class Perplexity(BulkInstanceMetric):
