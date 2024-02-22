@@ -1,3 +1,4 @@
+import json
 from dataclasses import field
 from typing import Any, Dict, List, Optional
 
@@ -13,9 +14,7 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
-        "additional_inputs": Sequence(
-            {"key": Value(dtype="string"), "value": Value("string")}
-        ),
+        "additional_data": Value(dtype="string"),
     }
 )
 
@@ -44,10 +43,8 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        additional_inputs = {**instance["inputs"], **instance["outputs"]}
-        instance["additional_inputs"] = self._to_lists_of_keys_and_values(
-            additional_inputs
-        )
+        additional_data = {**instance["inputs"], **instance["outputs"]}
+        instance["additional_data"] = json.dumps(additional_data)
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []

@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List
+from typing import Iterable, List
 
 from datasets import Features, Value
 
@@ -83,14 +83,10 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
         )
 
 
-# The additional_inputs field in the schema is defined as
+# The additional_data field in the schema is defined as
 # Sequence({"key": Value(dtype="string"), "value": Value("string")})
 # When receiving instances from this scheme, the keys and values are returned as two separate
 # lists, and are converted to a dictionary.
-
-
-def _from_key_value_pairs(key_value_list: Dict[str, list]) -> Dict[str, str]:
-    return dict(zip(key_value_list["key"], key_value_list["value"]))
 
 
 class MetricRecipe(SequentialOperatorInitilizer):
@@ -101,9 +97,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             Apply(
-                "additional_inputs",
-                function=_from_key_value_pairs,
-                to_field="additional_inputs",
+                "additional_data",
+                function="json.loads",
+                to_field="additional_data",
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
