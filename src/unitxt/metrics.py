@@ -1916,23 +1916,14 @@ class LlamaIndexCorrectnessMetric(BulkInstanceMetric):
 
         response_list = predictions
 
-        def apply_literal_eval_if_needed(x):
-            return ast.literal_eval(x) if not isinstance(x, list) else x
-
         query_list = [instance["question"] for instance in additional_inputs]
-        contexts_list = [
-            apply_literal_eval_if_needed(instance["contexts"])
-            for instance in additional_inputs
-        ]
+        contexts_list = [instance["contexts"] for instance in additional_inputs]
 
-        references_list = references
-        reference_response_list = [
-            apply_literal_eval_if_needed(references) for references in references_list
-        ]
+        references_responses_list = references
 
         results = []
         for query, response, contexts, reference_responses in zip(
-            query_list, response_list, contexts_list, reference_response_list
+            query_list, response_list, contexts_list, references_responses_list
         ):
             per_instance_results = []
             for reference_response in reference_responses:

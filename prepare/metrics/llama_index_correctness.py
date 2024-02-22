@@ -12,7 +12,7 @@ references = [["The right answer", "The wrong answer"]]
 additional_inputs = [
     {
         "question": "question number 1",
-        "contexts": ["context number 1"],
+        "contexts": "['context number 1']",
         # "reference_answers": ["The right answer", "The wrong answer"],
     },
 ]
