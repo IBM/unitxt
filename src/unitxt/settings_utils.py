@@ -92,7 +92,7 @@ if Settings.is_uninitilized():
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "debug"
     settings.remote_metrics = []
-    settings.trust_remote_apis = False
+    settings.allow_passing_data_to_remote_api = False
 
 if Constants.is_uninitilized():
     constants = Constants()
