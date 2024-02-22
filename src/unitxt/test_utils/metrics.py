@@ -30,23 +30,23 @@ def apply_metric(
     metric: Metric,
     predictions: List[Any],
     references: List[List[Any]],
-    additional_inputs: Optional[List[dict]] = None,
+    additional_data: Optional[List[dict]] = None,
 ):
     assert isoftype(metric, Metric), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
-    assert additional_inputs is None or isoftype(
-        additional_inputs, List[Any]
-    ), "additional_inputs must be a list"
-    if additional_inputs is not None:
+    assert additional_data is None or isoftype(
+        additional_data, List[Any]
+    ), "additional_data must be a list"
+    if additional_data is not None:
         test_iterable = [
             {
                 "prediction": prediction,
                 "references": reference,
-                "additional_inputs": additional_input,
+                "additional_data": additional_input,
             }
             for prediction, reference, additional_input in zip(
-                predictions, references, additional_inputs
+                predictions, references, additional_data
             )
         ]
     else:
@@ -66,7 +66,7 @@ def test_metric(
     references: List[List[Any]],
     instance_targets: List[dict],
     global_target: dict,
-    additional_inputs: Optional[List[dict]] = None,
+    additional_data: Optional[List[dict]] = None,
 ):
     disable = os.getenv("UNITXT_TEST_METRIC_DISABLE", None)
     if disable is not None:
@@ -81,7 +81,7 @@ def test_metric(
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
-    outputs = apply_metric(metric, predictions, references, additional_inputs)
+    outputs = apply_metric(metric, predictions, references, additional_data)
 
     errors = []
     global_score = round_floats(outputs[0]["score"]["global"])

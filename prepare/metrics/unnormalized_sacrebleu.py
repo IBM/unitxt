@@ -8,14 +8,14 @@ metric = MetricPipeline(
     preprocess_steps=[
         CopyFields(
             field_to_field=[
-                ("additional_inputs/target_language", "additional_inputs/tokenize")
+                ("additional_data/target_language", "additional_data/tokenize")
             ],
             use_query=True,
             not_exist_ok=True,
             get_default="en",
         ),
         MapInstanceValues(
-            mappers={"additional_inputs/tokenize": {"en": "", "ja": "ja-mecab"}},
+            mappers={"additional_data/tokenize": {"en": "", "ja": "ja-mecab"}},
             strict=True,
             use_query=True,
         ),

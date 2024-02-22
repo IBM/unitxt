@@ -12,7 +12,7 @@ class TestAPI(UnitxtTestCase):
             "source": "Given this sentence: 'A plane is taking off.', on a scale of 1 to 5, what is the similarity to this text An air plane is taking off.?\n",
             "target": "5.0",
             "references": ["5.0"],
-            "additional_inputs": {
+            "additional_data": {
                 "key": [
                     "text1",
                     "text2",

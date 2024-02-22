@@ -56,7 +56,7 @@ outputs = test_metric(
     metric=metric,
     predictions=predictions,
     references=references,
-    additional_inputs=inputs,
+    additional_data=inputs,
     instance_targets=instance_targets,
     global_target=global_target,
 )
