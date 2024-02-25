@@ -143,7 +143,7 @@
                <br>
                <br>
                <br>
-               <span>dataset = load("unitxt/metric")(predictions_list, dataset)</span>
+               <span>results = load("unitxt/metric")(predictions_list, dataset)</span>
             </div>
          </div>
          <br>
