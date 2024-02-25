@@ -10,13 +10,12 @@ import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
-from tokens import verify_token
 
 from ...artifact import Artifact
-from ...metric_utils import MetricRequest, MetricResponse
 from ...operator import MultiStreamOperator
 from ...operators import ArtifactFetcherMixin
 from ...stream import MultiStream
+from .tokens import verify_token
 
 """
 This module defines an http server that wraps unitxt metrics.
@@ -61,14 +60,14 @@ compute_lock = threading.Lock()
 
 
 # for computing a metric
-@app.post("/compute/{metric}", response_model=MetricResponse)
-def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_token)):
+@app.post("/compute/{metric}")
+def compute(metric: str, request: dict, token: dict = Depends(verify_token)) -> dict:
     t0 = time.perf_counter()
     try:
         logging.info(f"Request from [{token['sub']}]")
         logging.info(f"Computing metric '{metric}'.")
         logging.info(
-            f"MetricRequest contains {len(request.instance_inputs)} input instances"
+            f"MetricRequest contains {len(request['instance_inputs'])} input instances"
         )
 
         start_time = datetime.datetime.now()
@@ -85,7 +84,7 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
 
             # prepare the input stream
             multi_stream: MultiStream = MultiStream.from_iterables(
-                {"test": request.model_dump()["instance_inputs"]}, copying=True
+                {"test": request["instance_inputs"]}, copying=True
             )
 
             # apply the metric and obtain the results
@@ -98,13 +97,12 @@ def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_to
             f"took: {infer_time!s}, waited: {wait_time!s}')"
         )
 
-        metric_response = {
+        return {
             "instances_scores": [
                 metric_result["score"]["instance"] for metric_result in metric_results
             ],
             "global_score": metric_results[0]["score"]["global"],
         }
-        return MetricResponse.model_validate(metric_response)
     finally:
         t1 = time.perf_counter()
         logging.info(f"Request for metric '{metric}' handled in [{t1 - t0:.2f}] secs.")
@@ -148,7 +146,13 @@ def print_gpus_status():
 
 def start_metrics_http_service():
     print_gpus_status()
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False, log_config=None)
+    uvicorn.run(
+        "src.unitxt.service.metrics.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False,
+        log_config=None,
+    )
 
 
 if __name__ == "__main__":
