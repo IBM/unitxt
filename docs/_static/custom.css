@@ -9,19 +9,18 @@ div.document div.documentwrapper {
 .feed-box-container {
     display: flex;
     justify-content: center; /* Center .feed-box horizontally */
-    width: 100%; /* Ensure it takes the full width of its parent */
 }
 
 .feed-box {
-    width: 150%;
     min-height: 40vh;
+    min-width: 60vw;
     max-width: 90vw;
     margin: 0 auto; /* This centers the box in its container */
     background-color: rgb(229, 216, 255);
     text-align: center;
-    padding: 20px;
+    padding: 10%;
     border-radius: 15px;
-    box-sizing: border-box; /* Include padding and border in the box's size */
+    box-sizing: border-box; /*  Include padding and border in the box's size */
     box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2); /* Shadow for depth */
     transform: perspective(1000px) rotateX(0.5deg) rotateY(0.5deg); /* Subtle 3D tilt */
     transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effect */
@@ -40,8 +39,7 @@ div.document div.documentwrapper {
 
 
 .feed-code-box {
-    max-width: 80%;
-    width: 1000px;
+    width: 80%;
     text-align: left;
     border-radius: 15px;
     margin: 10% ;
