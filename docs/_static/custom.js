@@ -1,48 +1,40 @@
 let element = document.createElement('script');
 element.type = 'module';
 element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
+element.onload = function() {
+    console.log('Succesfuly loaded: ' + element.src);
+    function handleLoadComplete() {
+        console.log("Embedded space has finished rendering");
+        const loadingElement = document.querySelector(".gradio-loading");
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+    }
+
+    const gradioApp = document.querySelector("gradio-app");
+    gradioApp.addEventListener("render", handleLoadComplete);
+};
+element.onerror = function() {
+    console.error('Failed to load script: ' + element.src);
+};
 document.head.appendChild(element);
-
-element = document.createElement('link');
-element.rel = 'stylesheet';
-element.type = 'text/css';
-element.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night.min.css";
-document.head.appendChild(element);
-
-function loadScript(src, callback) {
-    var script = document.createElement('script');
-    script.src = src;
-    script.onload = function() {
-        if (callback) callback();
-    };
-    script.onerror = function() {
-        console.error('Failed to load script: ' + src);
-    };
-    document.head.appendChild(script);
-}
-
-loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js', function() {
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js', function() {
-            hljs.highlightAll();
-    })
-})
-
 
 
 document.addEventListener('DOMContentLoaded', function() {
-
     var videoElement = document.getElementById('controlled-video');
 
-    // Mouseover event to add controls
-    videoElement.addEventListener('mouseover', function() {
-        this.setAttribute('controls', 'controls');
-    });
+    // Check if the video element exists
+    if (videoElement) {
+        // Mouseover event to add controls
+        videoElement.addEventListener('mouseover', function() {
+            this.setAttribute('controls', 'controls');
+        });
 
-    // Mouseout event to remove controls
-    videoElement.addEventListener('mouseout', function() {
-        this.removeAttribute('controls');
-    });
-
+        // Mouseout event to remove controls
+        videoElement.addEventListener('mouseout', function() {
+            this.removeAttribute('controls');
+        });
+    }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -70,3 +62,5 @@ function setActiveCodeSnippets(type) {
       snippet.style.display = snippet.getAttribute("data-code") === type ? 'block' : 'none';
     });
 }
+
+

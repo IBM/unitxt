@@ -9,7 +9,7 @@ from unitxt.utils import load_json
 def write_title(title, label):
     title = f"📁 {title}"
     wrap_char = "="
-    wrap = wrap_char * len(title)
+    wrap = wrap_char * (len(title) + 1)
 
     return f".. _{label}:\n\n{wrap}\n{title}\n{wrap}\n\n"
 
@@ -195,7 +195,7 @@ class CatalogEntry:
 
         title_char = "="
         title = "📄 " + self.get_title()
-        title_wrapper = title_char * len(title)
+        title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
             f".. _{label}:\n\n"
             f"{title_wrapper}\n"

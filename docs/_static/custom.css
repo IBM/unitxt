@@ -6,6 +6,17 @@ div.document div.documentwrapper {
     max-width: 50rem;
 }
 
+.wide-box-container {
+    display: flex;
+    justify-content: center; /* Center .feed-box horizontally */
+}
+
+.wide-box {
+    min-width: 60vw;
+    max-width: 90vw;
+    margin: 0 auto; /* This centers the box in its container */
+}
+
 .feed-box-container {
     display: flex;
     justify-content: center; /* Center .feed-box horizontally */
@@ -86,6 +97,21 @@ div.document div.documentwrapper {
 .minimize-button { background-color: #ffbd44; }
 .expand-button { background-color: #00ca4e; }
 
+.gradio-loading {
+    position: fixed; /* or `absolute` if you want it to scroll with the page */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Optional, depending on your needs */
+    height: 100%; /* Optional, depending on your needs */
+}
+
+.centered {
+    text-align: center;
+}
 /* The switch - the box around the slider */
 .switch {
     position: relative;
@@ -147,4 +173,23 @@ div.document div.documentwrapper {
 
   .slider.round:before {
     border-radius: 50%;
+  }
+
+  .spinner {
+    border: 4px solid rgba(135, 134, 134, 0.775);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border-left-color: rgb(150, 3, 147);
+
+    animation: spin 1s ease infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
