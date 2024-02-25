@@ -6,7 +6,7 @@ document.head.appendChild(element);
 element = document.createElement('link');
 element.rel = 'stylesheet';
 element.type = 'text/css';
-element.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+element.href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night.min.css";
 document.head.appendChild(element);
 
 function loadScript(src, callback) {
@@ -27,6 +27,8 @@ loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight
     })
 })
 
+
+
 document.addEventListener('DOMContentLoaded', function() {
 
     var videoElement = document.getElementById('controlled-video');
@@ -40,4 +42,31 @@ document.addEventListener('DOMContentLoaded', function() {
     videoElement.addEventListener('mouseout', function() {
         this.removeAttribute('controls');
     });
+
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const switches = document.querySelectorAll(".switch input[type='checkbox']"); // Select all switches
+    switches.forEach(switchElement => {
+      switchElement.addEventListener("change", function() {
+        const isChecked = this.checked;
+        // Determine which type of code snippets to show based on the checkbox state
+        const typeToShow = isChecked ? "noInstallation" : "withInstallation";
+
+        // Update all switches to reflect this switch's state
+        switches.forEach(switchEl => {
+          switchEl.checked = isChecked; // Synchronize switch states
+        });
+
+        // Update code snippets visibility
+        setActiveCodeSnippets(typeToShow);
+      });
+    });
+});
+
+function setActiveCodeSnippets(type) {
+    const allSnippets = document.querySelectorAll(".code-snippet");
+    allSnippets.forEach(snippet => {
+      snippet.style.display = snippet.getAttribute("data-code") === type ? 'block' : 'none';
+    });
+}
