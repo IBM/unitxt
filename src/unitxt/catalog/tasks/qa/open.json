@@ -4,7 +4,7 @@
         "question"
     ],
     "outputs": [
-        "answer"
+        "answers"
     ],
     "metrics": [
         "metrics.rouge"

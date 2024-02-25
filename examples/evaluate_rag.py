@@ -18,7 +18,7 @@ if __name__ == "__main__":
     )
 
     # passing list of dicts
-    result = evaluate(
+    result, _ = evaluate(
         df.to_dict("records"),
         metric_names=[
             "metrics.rag.mrr",
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     with open("dataset_out.json", "w") as f:
         json.dump(result, f, indent=4)
 
-    evaluate(
+    result, _ = evaluate(
         df,
         metric_names=[
             "metrics.rag.mrr",
@@ -41,4 +41,5 @@ if __name__ == "__main__":
             "metrics.rag.context_correctness",
             "metrics.rag.context_perplexity",
         ],
-    ).round(2).to_csv("dataset_out.csv")
+    )
+    result.round(2).to_csv("dataset_out.csv")

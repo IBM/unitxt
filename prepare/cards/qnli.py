@@ -2,17 +2,11 @@ from src.unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
-    SplitRandomMix,
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import RenameFields
 from src.unitxt.test_utils.card import test_card
-
-default_splitter = SplitRandomMix(
-    {"train": "train", "validation": "validation", "test": "test"}
-)
-add_to_catalog(default_splitter, "splitters.default", overwrite=True)
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="qnli"),
@@ -23,18 +17,21 @@ card = TaskCard(
         ),
         AddFields(
             fields={
-                "choices": ["entailment", "not entailment"],
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "question",
+                "text_b_type": "sentence",
             }
         ),
         RenameFields(
             field_to_field={
-                "question": "premise",
-                "sentence": "hypothesis",
+                "question": "text_a",
+                "sentence": "text_b",
             }
         ),
     ],
-    task="tasks.nli",
-    templates="templates.classification.nli.all",
+    task="tasks.classification.multi_class.relation",
+    templates="templates.classification.multi_class.relation.all",
 )
 
 test_card(card)

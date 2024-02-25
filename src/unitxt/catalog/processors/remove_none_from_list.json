@@ -1,0 +1,24 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "remove_values",
+            "field": "prediction",
+            "unallowed_values": [
+                "none"
+            ],
+            "process_every_value": false
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "references": {
+                    "[['none']]": [
+                        []
+                    ]
+                }
+            },
+            "strict": false
+        }
+    ]
+}

@@ -2,6 +2,7 @@ from src.unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
+    RenameFields,
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
@@ -13,17 +14,21 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits({"validation_matched": "validation"}),
         "splitters.small_no_test",
+        RenameFields(field_to_field={"premise": "text_a", "hypothesis": "text_b"}),
         MapInstanceValues(
             mappers={"label": {"0": "entailment", "1": "neutral", "2": "contradiction"}}
         ),
         AddFields(
             fields={
-                "choices": ["entailment", "neutral", "contradiction"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
+                "classes": ["entailment", "neutral", "contradiction"],
             }
         ),
     ],
-    task="tasks.nli",
-    templates="templates.classification.nli.all",
+    task="tasks.classification.multi_class.relation",
+    templates="templates.classification.multi_class.relation.all",
 )
 
 test_card(card)

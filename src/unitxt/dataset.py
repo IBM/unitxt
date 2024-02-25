@@ -25,16 +25,18 @@ from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import __file__ as _
 from .operators import __file__ as _
+from .parsing_utils import __file__ as _
 from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .schema import __file__ as _
-from .settings_utils import __file__ as _
+from .settings_utils import get_constants
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
+from .system_prompts import __file__ as _
 from .table_operators import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
@@ -46,17 +48,27 @@ from .version import __file__ as _
 from .version import version
 
 logger = get_logger()
+constants = get_constants()
 
 
 class Dataset(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
-    VERSION = datasets.Version(version)
+    VERSION = constants.version
 
     @property
     def generators(self):
         if not hasattr(self, "_generators") or self._generators is None:
             if is_package_installed("unitxt"):
+                from unitxt.settings_utils import (
+                    get_constants as installed_get_constants,
+                )
+
+                installed_package_constants = installed_get_constants()
+                if installed_package_constants.version != self.VERSION:
+                    raise ValueError(
+                        f"Located installed unitxt version {installed_get_constants.version} that is different then unitxt dataset version {self.VERSION}. Please make sure the installed version is identical to the dataset version."
+                    )
                 from unitxt.dataset_utils import (
                     get_dataset_artifact as get_dataset_artifact_installed,
                 )

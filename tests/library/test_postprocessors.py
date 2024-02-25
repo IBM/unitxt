@@ -81,7 +81,7 @@ class TestPostProcessors(UnitxtTestCase):
     def test_yes_no_to_int(self):
         parser, _ = fetch_artifact("processors.yes_no_to_int")
         inputs = ["yes", "no", "yaa"]
-        targets = ["1", "0", "0"]
+        targets = ["1", "0", "yaa"]
 
         check_operator(
             operator=parser,

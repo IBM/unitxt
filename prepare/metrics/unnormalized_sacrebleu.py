@@ -7,15 +7,13 @@ metric = MetricPipeline(
     main_score="sacrebleu",
     preprocess_steps=[
         CopyFields(
-            field_to_field=[
-                ("additional_inputs/target_language", "additional_inputs/tokenize")
-            ],
+            field_to_field=[("task_data/target_language", "task_data/tokenize")],
             use_query=True,
             not_exist_ok=True,
             get_default="en",
         ),
         MapInstanceValues(
-            mappers={"additional_inputs/tokenize": {"en": "", "ja": "ja-mecab"}},
+            mappers={"task_data/tokenize": {"en": "", "ja": "ja-mecab"}},
             strict=True,
             use_query=True,
         ),

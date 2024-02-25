@@ -8,6 +8,27 @@ from src.unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FixedGroupAbsvalNormCohensHParaphraseAccuracy,
+    FixedGroupAbsvalNormCohensHParaphraseStringContainment,
+    FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
+    FixedGroupAbsvalNormHedgesGParaphraseStringContainment,
+    FixedGroupMeanAccuracy,
+    FixedGroupMeanBaselineAccuracy,
+    FixedGroupMeanBaselineStringContainment,
+    FixedGroupMeanParaphraseAccuracy,
+    FixedGroupMeanParaphraseStringContainment,
+    FixedGroupMeanStringContainment,
+    FixedGroupNormCohensHParaphraseAccuracy,
+    FixedGroupNormCohensHParaphraseStringContainment,
+    FixedGroupNormHedgesGParaphraseAccuracy,
+    FixedGroupNormHedgesGParaphraseStringContainment,
+    FixedGroupPDRParaphraseAccuracy,
+    FixedGroupPDRParaphraseStringContainment,
+    GroupMeanAccuracy,
+    GroupMeanStringContainment,
+    GroupMeanTokenOverlap,
+    KendallTauMetric,
+    RocAuc,
     Rouge,
     Squad,
     TokenOverlap,
@@ -16,6 +37,64 @@ from src.unitxt.test_utils.metrics import apply_metric
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
+
+# values of inputs that are common to grouped_mean type InstanceMetric
+GROUPED_INSTANCE_PREDICTIONS = [
+    "A B",
+    "BC D",
+    "C",
+    "123",
+    "BCD",
+    "10",
+    "  BD",
+    "AB",
+    "I am a dog",
+    "AB C",
+    "AB 1",
+    "GMA",
+    "0.123",
+    "BD",
+    "abc",
+]
+
+GROUPED_INSTANCE_REFERENCES = [
+    ["B", "AB", "A"],
+    ["A", "BC D", "BC DF"],
+    ["c", " C"],
+    ["13", "23", "234"],
+    ["  ", " BD", " BDA"],
+    ["1", "10", "100"],
+    ["A", "B", "BD"],
+    ["ABC", "ab", "BC"],
+    ["I am a person", "I AM A DOG", "ABC"],
+    ["AB CD", "AB", "ab"],
+    ["AB 1", "AB1"],
+    [" GMA 123", "GMA"],
+    ["123", "0.12"],
+    ["BDE", "BCE", "bdefs"],
+    [" abcdefg", "AB", "abcd"],
+]
+
+# task_data, consisting of a group_id (group instance scores by this, then apply aggregation function)
+# and variant_type (for metrics that compare, say original vs paraphrase instance score)
+# create 4 groups, of sizes 5,5,4,1
+GROUPED_INSTANCE_ADDL_INPUTS = [
+    {"group_id": "group1", "variant_type": "original"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group1", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "original"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group2", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "original"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group3", "variant_type": "paraphrase"},
+    {"group_id": "group4", "variant_type": "original"},
+]
 
 
 class TestMetrics(UnitxtTestCase):
@@ -250,23 +329,23 @@ class TestMetrics(UnitxtTestCase):
     def test_f1_macro_multilabel_with_nones(self):
         metric = F1MacroMultiLabel()
 
-        references = [[["none"]]]
-        predictions = [["none"]]
+        references = [[[]]]
+        predictions = [[]]
         global_target = float("nan")
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
+        references = [[[]]]
         predictions = [["x", "y"]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
-        predictions = [["none", "x", "y"]]
+        references = [[[]]]
+        predictions = [[], "x", "y"]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -282,8 +361,8 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-        references = [[["none"]], [["x"]], [["y"]], [["none"]], [["none"]]]
-        predictions = [["none"], ["x"], ["x"], ["none"], ["none"]]
+        references = [[[]], [["x"]], [["y"]], [[]], [[]]]
+        predictions = [[], ["x"], ["x"], [], []]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -291,7 +370,7 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_micro_multilabel_with_nones(self):
         metric = F1MicroMultiLabel()
-        references = [[["none"]]]
+        references = [[[]]]
         predictions = [["cat", "dog"]]
 
         outputs = apply_metric(
@@ -299,8 +378,8 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
-        references = [[["none"]]]
-        predictions = [["none"]]
+        references = [[[]]]
+        predictions = [[]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -320,7 +399,7 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-        references = [[["none"]], [["sad"]]]
+        references = [[[]], [["sad"]]]
         predictions = [["dog", "fustrated"], ["sad"]]
         # precision = TP / (FP + TP) = 1 / 1 = 1
         # recall = TP /( FN + TP) =  1 / 1 = 1
@@ -387,6 +466,143 @@ class TestMetrics(UnitxtTestCase):
         global_targets = {"f1": 7 / 8, "precision": 7 / 8, "recall": 1}
         for target, value in global_targets.items():
             self.assertAlmostEqual(value, outputs[0]["score"]["global"][target])
+
+    def test_roc_auc(self):
+        metric = RocAuc()
+        predictions = ["0.2", "0.8", "1.0"]
+        references = [["1.0"], ["0.0"], ["1.0"]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 0.5
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_kendalltau(self):
+        metric = KendallTauMetric()
+        predictions = ["1.0", "2.0", "1.0"]
+        references = [["-1.0"], ["1.0"], ["0.0"]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 0.81649658092772
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_grouped_instance_metrics(self):
+        accuracy_metrics = [
+            FixedGroupMeanAccuracy(),
+            GroupMeanAccuracy(),
+            FixedGroupMeanStringContainment(),
+            GroupMeanStringContainment(),
+            FixedGroupMeanBaselineAccuracy(),
+            FixedGroupMeanParaphraseAccuracy(),
+            FixedGroupMeanBaselineStringContainment(),
+            FixedGroupMeanParaphraseStringContainment(),
+            GroupMeanTokenOverlap(),
+            FixedGroupNormCohensHParaphraseAccuracy(),
+            FixedGroupNormCohensHParaphraseStringContainment(),
+            FixedGroupPDRParaphraseAccuracy(),
+            FixedGroupPDRParaphraseStringContainment(),
+            FixedGroupNormHedgesGParaphraseAccuracy(),
+            FixedGroupNormHedgesGParaphraseStringContainment(),
+            FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
+            FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
+            FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
+            FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
+        ]
+        global_targets = [
+            0.225,
+            0.225,
+            0.4875,
+            0.4875,
+            0.5,
+            0.19444444444444442,
+            0.75,
+            0.5555555555555555,
+            0.5083333333333333,
+            -0.4249467048786864,
+            -0.4639421840102023,
+            0.8333333333333334,
+            0.4444444444444445,
+            -0.34565986391520215,
+            -0.08060156608173413,
+            0.6471689271009087,
+            0.4639421840102023,
+            0.3832160660602437,
+            0.08060156608173413,
+        ]
+        for metric, target in zip(accuracy_metrics, global_targets):
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            self.assertAlmostEqual(
+                target,
+                outputs[0]["score"]["global"]["score"],
+                msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
+            )
+
+    def test_grouped_instance_metric_errors(self):
+        """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
+        from dataclasses import field
+        from statistics import mean
+        from typing import List
+
+        class NoAggFuncReduction(Accuracy):
+            implemented_reductions: List[str] = field(
+                default_factory=lambda: ["mean", "group_mean", "some_other_func"]
+            )
+            reduction_map = {"some_other_func": {"agg_func": ["mean", mean, False]}}
+
+        with self.assertRaises(ValueError):
+            # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
+            metric = NoAggFuncReduction()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoAggFunc(Accuracy):
+            reduction_map = {"group_mean": {"func": ["mean", mean]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because no "agg_func" field in group_mean
+            metric = NoAggFunc()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoCallableAggFunc(Accuracy):
+            reduction_map = {"group_mean": {"agg_func": ["mean", "some string", False]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because second field of agg_func should be callable
+            metric = NoCallableAggFunc()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+
+        class NoBooleanGrouping(Accuracy):
+            reduction_map = {"group_mean": {"agg_func": ["mean", mean, 1]}}
+
+        with self.assertRaises(AssertionError):
+            # should raise error because third field in agg_func is not boolean
+            metric = NoBooleanGrouping()
+            apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):
@@ -476,5 +692,190 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 self.assertTrue(
                     ("ci_low" not in score_name and "ci_high" not in score_name)
                     or score_name not in metric.ci_scores,
+                    msg=f"Unexpected confidence interval score '{score_name}'.",
+                )
+
+    def test_grouped_instance_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for grouped instance metrics (sub-types of InstanceMetric with group_mean reduction)."""
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanAccuracy(),
+            expected_ci_low=0.1,
+            expected_ci_high=0.48178555627359004,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupMeanAccuracy(),
+            expected_ci_low=0.025,
+            expected_ci_high=0.44105968464125495,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanStringContainment(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.675,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupMeanStringContainment(),
+            expected_ci_low=0.15556138609239942,
+            expected_ci_high=0.707936507936508,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanBaselineAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanParaphraseAccuracy(),
+            expected_ci_low=0.0,
+            expected_ci_high=0.3333333333333333,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanBaselineStringContainment(),
+            expected_ci_low=0.25,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupMeanParaphraseStringContainment(),
+            expected_ci_low=0.5,
+            expected_ci_high=0.6666666666666666,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormCohensHParaphraseAccuracy(),
+            expected_ci_low=-1.0,
+            expected_ci_high=0.33333333333333337,
+        )
+
+        # note, this metric has an issue where the ci_high on PCs on Travis slightly diverges from the local results
+        # hence this test may fail on a PC
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormCohensHParaphraseStringContainment(),
+            expected_ci_low=-0.49999999999999994,
+            expected_ci_high=-0.39182655203060723,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRParaphraseAccuracy(),
+            expected_ci_low=0.6666666666666666,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupPDRParaphraseStringContainment(),
+            expected_ci_low=0.3333333333333333,
+            expected_ci_high=0.5,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=-1.0,
+            expected_ci_high=0.01892225367237965,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=-0.09757387538180902,
+            expected_ci_high=-0.046656947481584346,
+        )
+
+        # absolute value of Hedges' g and Cohen's h
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseAccuracy(),
+            expected_ci_low=0.33333333333333337,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormCohensHParaphraseStringContainment(),
+            expected_ci_low=0.39182655203060723,
+            expected_ci_high=0.49999999999999994,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseAccuracy(),
+            expected_ci_low=0.05633430321756243,
+            expected_ci_high=1.0,
+        )
+
+        self._test_grouped_instance_confidence_interval(
+            metric=FixedGroupAbsvalNormHedgesGParaphraseStringContainment(),
+            expected_ci_low=0.046656947481584346,
+            expected_ci_high=0.09757387538180902,
+        )
+
+        # pass global dict because there are additional fields other than the main score
+        self._test_grouped_instance_confidence_interval(
+            metric=GroupMeanTokenOverlap(),
+            expected_global_result={
+                "group_mean_recall": 0.525,
+                "group_mean_f1": 0.5083333333333333,
+                "score": 0.5083333333333333,
+                "score_name": "group_mean_f1",
+                "group_mean_precision": 0.5,
+                "group_mean_recall_ci_low": 0.25,
+                "group_mean_recall_ci_high": 0.7083333333333334,
+                "group_mean_f1_ci_low": 0.22302503471948287,
+                "group_mean_f1_ci_high": 0.6805555555555555,
+                "score_ci_low": 0.22302503471948287,
+                "score_ci_high": 0.6805555555555555,
+                "group_mean_precision_ci_low": 0.20949399775845196,
+                "group_mean_precision_ci_high": 0.6666666666666666,
+            },
+        )
+
+    def _test_grouped_instance_confidence_interval(
+        self,
+        metric,
+        expected_ci_low=0.0,
+        expected_ci_high=1.0,
+        expected_global_result=None,
+    ):
+        """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
+        outputs = apply_metric(
+            metric=metric,
+            predictions=GROUPED_INSTANCE_PREDICTIONS,
+            references=GROUPED_INSTANCE_REFERENCES,
+            task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+        )
+        # get first element of reduction_map values
+        reduction_params = next(iter(metric.reduction_map.values()))
+        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
+        group_score_name = "_".join(
+            [
+                prefix,
+                metric.reduction_map["group_mean"]["agg_func"][0],
+                metric.main_score,
+            ]
+        )
+
+        if expected_global_result is None:
+            expected_global_result = {
+                f"{group_score_name}_ci_low": expected_ci_low,
+                f"{group_score_name}_ci_high": expected_ci_high,
+                "score_ci_low": expected_ci_low,
+                "score_ci_high": expected_ci_high,
+            }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        logger.info(global_result)
+        for score_name, score_value in global_result.items():
+            if score_name in expected_global_result:
+                self.assertAlmostEqual(
+                    score_value,
+                    expected_global_result[score_name],
+                    places=5,
+                    msg=f"{group_score_name} score mismatch for {metric.__class__.__name__}, got {expected_global_result[score_name]} but expected {score_value}",
+                )
+            else:
+                # An output score that is not expected
+                # This is ok if the score_name is not related to confidence intervals
+                # Otherwise, there was some confidence interval calculation that was not supposed to occur.
+                self.assertTrue(
+                    "ci_low" not in score_name and "ci_high" not in score_name,
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )

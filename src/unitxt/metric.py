@@ -24,16 +24,18 @@ from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import __file__ as _
 from .operators import __file__ as _
+from .parsing_utils import __file__ as _
 from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .schema import __file__ as _
-from .settings_utils import __file__ as _
+from .settings_utils import get_constants
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
+from .system_prompts import __file__ as _
 from .table_operators import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
@@ -43,23 +45,21 @@ from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
 
+constants = get_constants()
 
-# TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
-# @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
+
 class Metric(evaluate.Metric):
     calc_confidence_intervals: bool = True
+
+    VERSION = constants.version
 
     def _info(self):
         return evaluate.MetricInfo(
             description="_DESCRIPTION",
             citation="_CITATION",
-            # inputs_description=_KWARGS_DESCRIPTION,
             features=UNITXT_METRIC_SCHEMA,
-            codebase_urls=["https://"],
-            reference_urls=[
-                "https://",
-                "https://",
-            ],
+            codebase_urls=[constants.codebase_url],
+            reference_urls=[constants.website_url],
         )
 
     def _compute(
@@ -70,6 +70,14 @@ class Metric(evaluate.Metric):
         split_name: str = "all",
     ):
         if is_package_installed("unitxt"):
+            from unitxt.settings_utils import get_constants as installed_get_constants
+
+            installed_package_constants = installed_get_constants()
+            if installed_package_constants.version != self.VERSION:
+                raise ValueError(
+                    f"Located installed unitxt version {installed_get_constants.version} that is different then unitxt metric version {self.VERSION}. Please make sure the installed version is identical to the dataset version."
+                )
+
             from unitxt.metric_utils import _compute as _compute_installed
 
             return _compute_installed(
