@@ -87,18 +87,18 @@
                <span class="code-window-button expand-button"></span>
             </div>
             <div class="code-snippet" data-code="withInstallation" style="display: block;">
-               <span>from unitxt import load_dataset</span>
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> load_dataset</span>
                <br>
                <br>
                <br>
-               <span>dataset = load_dataset("card=cards.sst2")</span>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
             </div>
             <div class="code-snippet" data-code="noInstallation" style="display: none;">
-               <span>from datasets import load_dataset</span>
+               <span><span style="color: #f321e2;">from</span> datasets <span style="color: #f321e2;">import</span> load_dataset</span>
                <br>
                <br>
                <br>
-               <span>dataset = load_dataset("unitxt/data", "card=cards.sst2")</span>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/data"</span>, <span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
             </div>
          </div>
           <div style="text-align: center;">
@@ -132,18 +132,18 @@
                <span class="code-window-button expand-button"></span>
             </div>
             <div class="code-snippet" data-code="withInstallation" style="display: block;">
-               <span>from unitxt import evaluate</span>
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> evaluate</span>
                <br>
                <br>
                <br>
-               <span>results = evaluate(predictions_list, dataset)</span>
+               <span>results <span style="color: #868bff;">=</span>  evaluate<span style="color: #f321e2;">(</span>predictions_list, dataset)</span>
             </div>
             <div class="code-snippet" data-code="noInstallation" style="display: none;">
-               <span>from evaluate import load</span>
+               <span><span style="color: #f321e2;">from</span> evaluate <span style="color: #f321e2;">import</span> load</span>
                <br>
                <br>
                <br>
-               <span>results = load("unitxt/metric")(predictions_list, dataset)</span>
+               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
             </div>
          </div>
          <br>
