@@ -65,7 +65,7 @@ build:
 # can be copied into the image. This way the latest code changes are intergrated into
 # the image, without requiring a formal unitxt release.
 metric-service-build:
-	cd $(DIR) && docker buildx build --tag $(tag_name) --file $(DIR)/service/metrics/Dockerfile .
+	cd $(DIR) && docker buildx build --tag $(tag_name) --file $(DIR)/src/unitxt/service/metrics/Dockerfile .
 
 # command: make tag_name=${TAG_NAME} metric-service-run-bash
 # example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-run-bash

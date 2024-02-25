@@ -12,7 +12,11 @@ from fastapi.exceptions import HTTPException
 from starlette.responses import JSONResponse
 from tokens import verify_token
 
-from src.unitxt.metric_utils import MetricRequest, MetricResponse
+from ...artifact import Artifact
+from ...metric_utils import MetricRequest, MetricResponse
+from ...operator import MultiStreamOperator
+from ...operators import ArtifactFetcherMixin
+from ...stream import MultiStream
 
 """
 This module defines an http server that wraps unitxt metrics.
@@ -59,13 +63,6 @@ compute_lock = threading.Lock()
 # for computing a metric
 @app.post("/compute/{metric}", response_model=MetricResponse)
 def compute(metric: str, request: MetricRequest, token: dict = Depends(verify_token)):
-    # imports are here, so the service could start even if unitxt is not installed.
-    # This is useful for testing, it enabled running health checks and sanity checks, without unitxt.
-    from unitxt.artifact import Artifact
-    from unitxt.operator import MultiStreamOperator
-    from unitxt.operators import ArtifactFetcherMixin
-    from unitxt.stream import MultiStream
-
     t0 = time.perf_counter()
     try:
         logging.info(f"Request from [{token['sub']}]")
