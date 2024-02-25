@@ -69,46 +69,93 @@
    </video>
 
 
-
-Unitxt is a Python library for getting data prepared and ready for utilization in training, evaluation and inference of language models.
-It provides a set of reusable building blocks and methodology for defining datasets and metrics.
-
-In one line of code, it prepares a dataset or mixtures-of-datasets into an input-output format for training and evaluation.
-Our aspiration is to be simple, adaptable, and transparent.
-
-
 .. raw:: html
 
    <div>
-   <br><br><br><br><br><br><br>
+      <br><br><br><br><br><br><br>
    </div>
-   <div class="feed-box">
-   <br><br><br><br><br><br><br>
-        <h1> Loading datasets is easier than ever! </h1>
-   <br><br><br><br><br><br>
-    <img src="_static/loading_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
-   <br><br><br><br><br><br><br>
-   <div class="feed-code-box">
-      <pre>
-         <code class="language-python" text-align="left">
-      from datasets import load_dataset
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1> Loading datasets is easier than ever! </h1>
+      </div>
+      <div class="feed-code-box" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span>from unitxt import load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset = load_dataset("card=cards.sst2")</span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span>from datasets import load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset = load_dataset("unitxt/data", "card=cards.sst2")</span>
+            </div>
+         </div>
+          <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
+   </div>
 
-      dataset = load_dataset("unitxt/data", "card=cards.sst2")
-         </code>
-      </pre>
-   </div>
-   </div>
    <div>
-   <br><br><br><br><br><br><br>
-   <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
-   <br><br><br><br><br><br><br>
+         <br><br><br><br><br><br><br>
+         <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
+         <br><br><br><br><br><br>
+         <br><br><br><br><br><br><br>
    </div>
-   <div class="feed-box">
-   <br><br><br><br><br><br><br>
-        <h1> Full evaluation in one line of code! </h1>
-   <br><br><br><br><br><br>
-    <img src="_static/evaluating_code.gif" width="80%" min-width="400px" alt="Descriptive Image Text">
-   <br><br><br><br><br><br><br>
+
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1>Full evaluation in one line of code</h1>
+      </div>
+      <div class="feed-code-box"  data-box="1" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span>from unitxt import evaluate</span>
+               <br>
+               <br>
+               <br>
+               <span>results = evaluate(predictions_list, dataset)</span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span>from evaluate import load</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset = load("unitxt/metric")(predictions_list, dataset)</span>
+            </div>
+         </div>
+         <br>
+         <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
    </div>
 
 --------
