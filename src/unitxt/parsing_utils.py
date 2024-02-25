@@ -96,6 +96,13 @@ def consume_term(instring: str, return_dict: bool) -> tuple:
 def consume_assignment(instring: str, return_dict: bool) -> tuple:
     error_msg = f" in {instring}"
     (name_val, instring) = consume_name_val(instring)
+    if (
+        name_val is None
+        or isinstance(name_val, int)
+        or isinstance(name_val, float)
+        or len(name_val) == 0
+    ):
+        raise ValueError("malformed key" + error_msg)
     if not instring.startswith("="):
         raise ValueError("malformed assignment" + error_msg)
     (term, instring) = consume_term(instring[1:].strip(), return_dict)
