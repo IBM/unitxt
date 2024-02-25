@@ -4,4 +4,3 @@ mecab-python3
 absl-py
 dpath
 ipadic
-pydantic==2.6.0

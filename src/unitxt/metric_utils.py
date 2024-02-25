@@ -3,8 +3,8 @@ import os
 from typing import Any, Dict, Iterable, List, Optional
 
 from datasets import Features, Value
-from pydantic import BaseModel
 
+from .dataclass import Dataclass
 from .operator import (
     MultiStreamOperator,
     SequentialOperatorInitilizer,
@@ -156,7 +156,7 @@ The API of a metric service:
 """
 
 
-class InstanceInput(BaseModel):
+class InstanceInput(Dataclass):
     """A single instance inputted to a metric service."""
 
     prediction: Any
@@ -164,13 +164,13 @@ class InstanceInput(BaseModel):
     additional_inputs: Optional[Dict] = None
 
 
-class MetricRequest(BaseModel):
+class MetricRequest(Dataclass):
     """A request to a metrics service, includes a list of input instances."""
 
     instance_inputs: List[InstanceInput]
 
 
-class MetricResponse(BaseModel):
+class MetricResponse(Dataclass):
     """A response produced by a metrics service, includes the computed scores."""
 
     # A list of instance score dictionaries. Each dictionary contains the

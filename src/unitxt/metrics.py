@@ -1930,9 +1930,9 @@ class RemoteMetric(SingleStreamOperator, Metric):
 
         response = requests.post(
             url=self.get_metric_url(),
-            json=metric_request.model_dump(),
+            json=metric_request.to_dict(),
             headers={"Authorization": f"Bearer {self.api_key}"},
         )
         response.raise_for_status()
         response_json = response.json()
-        return MetricResponse.model_validate(response_json)
+        return MetricResponse(**response_json)
