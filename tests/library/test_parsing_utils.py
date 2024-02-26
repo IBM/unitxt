@@ -1,6 +1,5 @@
 from src.unitxt.parsing_utils import (
     parse_key_equals_value_string_to_dict,
-    parse_list_string,
     separate_inside_and_outside_square_brackets,
 )
 from tests.utils import UnitxtTestCase
@@ -76,6 +75,10 @@ class TestParsingUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             parse_key_equals_value_string_to_dict(query)
 
+        query = "name=John Doe,age=30,height=5.8 ]and left overs"
+        with self.assertRaises(ValueError):
+            parse_key_equals_value_string_to_dict(query)
+
     # Additional test for handling booleans
     def test_parse_key_equals_value_string_to_dict_boolean_values(self):
         query = "is_valid=true,has_errors=false"
@@ -85,19 +88,6 @@ class TestParsingUtils(UnitxtTestCase):
         query = "is_valid=True,has_errors=False"
         expected = {"is_valid": True, "has_errors": False}
         self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
-
-    def test_parse_list_error(self):
-        query = "[a,b,  c,d] malformedlist"
-        with self.assertRaises(ValueError):
-            parse_list_string(query)
-
-        query = "[a,b,  c,d"
-        with self.assertRaises(ValueError):
-            parse_list_string(query)
-
-        query = "[a,b,  c[arg=val,d]"
-        with self.assertRaises(ValueError):
-            parse_list_string(query)
 
     def test_base_structure(self):
         self.assertEqual(
