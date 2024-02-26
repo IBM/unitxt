@@ -57,6 +57,8 @@ def consume_name_val(instring: str) -> tuple:
         return (sign * int(name_val), instring)
     if name_val.replace(".", "", 1).isdigit() and name_val.count(".") < 2:
         return (sign * float(name_val), instring)
+    if sign == -1:
+        name_val = "-" + name_val
     return (name_val, instring)
 
 
@@ -167,39 +169,12 @@ def parse_key_equals_value_string_to_dict(query: str) -> dict:
     # return result
 
 
-# def split_within_depth(
-#     s, dellimiter=",", depth=0, forbbiden_chars=None, level_start="[", level_end="]"
-# ):
-#     result = []
-#     part = ""
-#     current_depth = 0
-#     for char in s:
-#         if char == level_start:
-#             current_depth += 1
-#             part += char
-#         elif char == level_end:
-#             current_depth -= 1
-#             part += char
-#         elif (
-#             forbbiden_chars is not None
-#             and char in forbbiden_chars
-#             and current_depth <= depth
-#         ):
-#             raise ValueError("")
-#         elif char == dellimiter and current_depth <= depth:
-#             result.append(part)
-#             part = ""
-#         else:
-#             part += char
-#     if part:
-#         result.append(part)
-#     return result
-
-
-def parse_list_string(s: str) -> list:
+def parse_list_string(s: str):
     """Parses a query string of the form 'val1,val2,...' into a list."""
     instring = s
-    term, _ = consume_term(instring, True)
+    term, instring = consume_term(instring, True)
+    if len(instring.strip()) > 0:
+        raise ValueError(f"Illegal list structure in {s}")
     return term
 
     # start = s.find("[")
