@@ -1,4 +1,4 @@
-from src.unitxt.blocks import FormTask, LoadHF, RenameFields, SplitRandomMix, TaskCard
+from src.unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import ListFieldValues
 from src.unitxt.test_utils.card import test_card
@@ -12,13 +12,9 @@ card = TaskCard(
         RenameFields(field_to_field={"INSTRUCTION": "question"}),
         ListFieldValues(fields=["RESPONSE"], to_field="answers"),
     ],
-    task=FormTask(
-        inputs=["question"],
-        outputs=["answers"],
-        metrics=["metrics.rouge"],
-    ),
+    task="tasks.qa.open",
     templates="templates.qa.open.all",
 )
 
 test_card(card, debug=False)
-add_to_catalog(card, "cards.almostEvilML_qa", overwrite=True)
+add_to_catalog(card, "cards.almost_evil", overwrite=True)
