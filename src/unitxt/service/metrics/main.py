@@ -60,7 +60,7 @@ compute_lock = threading.Lock()
 
 
 # for computing a metric
-@app.post("/compute/{metric}")
+@app.post("/compute/{metric_name}")
 def compute(
     metric_name: str, request: dict, token: dict = Depends(verify_token)
 ) -> dict:
@@ -82,7 +82,7 @@ def compute(
             metric: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
             metric: MultiStreamOperator = cast(MultiStreamOperator, metric)
             # Confidence interval is currently always off for remote metrics.
-            metric.disable_confidence_interval_calculation()
+            # metric.disable_confidence_interval_calculation()
 
             # prepare the input stream
             multi_stream: MultiStream = MultiStream.from_iterables(
