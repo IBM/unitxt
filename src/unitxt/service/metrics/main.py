@@ -79,10 +79,8 @@ def compute(
             logging.info("Acquired compute_lock, starting computation .. ")
             start_infer_time = datetime.datetime.now()
             # obtain the metric to compute
-            metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
-            metric_artifact: MultiStreamOperator = cast(
-                MultiStreamOperator, metric_artifact
-            )
+            metric: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
+            metric: MultiStreamOperator = cast(MultiStreamOperator, metric)
 
             # prepare the input stream
             multi_stream: MultiStream = MultiStream.from_iterables(
@@ -90,7 +88,7 @@ def compute(
             )
 
             # apply the metric and obtain the results
-            metric_results = list(metric_artifact(multi_stream)["test"])
+            metric_results = list(metric(multi_stream)["test"])
 
         infer_time = datetime.datetime.now() - start_infer_time
         wait_time = start_infer_time - start_time
