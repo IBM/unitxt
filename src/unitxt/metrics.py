@@ -2312,6 +2312,17 @@ class RemoteMetric(SingleStreamOperator, Metric):
         response_json = response.json()
         return MetricResponse(**response_json)
 
+    def disable_confidence_interval_calculation(self):
+        """Confidence intervals are always disabled for RemoteMetric.
+
+        No need to do anything.
+        """
+        pass
+
+    def set_n_resamples(self, n_resample):
+        """Since confidence intervals are always disabled for remote metrics, this is a no-op."""
+        pass
+
 
 def validate_subgroup_types(
     subgroup_scores_dict: Dict[str, List],
