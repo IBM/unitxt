@@ -75,7 +75,7 @@ def load_cards_data():
         data = card_jsons[card]
         if not is_valid_data(data):
             continue
-        task = data["task"]
+        task = data["task"].split("[")[0]
         if task not in cards_data:
             is_augmentable = check_augmentable(task)
         else:
