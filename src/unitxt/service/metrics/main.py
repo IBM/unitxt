@@ -61,11 +61,13 @@ compute_lock = threading.Lock()
 
 # for computing a metric
 @app.post("/compute/{metric}")
-def compute(metric: str, request: dict, token: dict = Depends(verify_token)) -> dict:
+def compute(
+    metric_name: str, request: dict, token: dict = Depends(verify_token)
+) -> dict:
     t0 = time.perf_counter()
     try:
         logging.info(f"Request from [{token['sub']}]")
-        logging.info(f"Computing metric '{metric}'.")
+        logging.info(f"Computing metric '{metric_name}'.")
         logging.info(
             f"MetricRequest contains {len(request['instance_inputs'])} input instances"
         )
@@ -77,7 +79,7 @@ def compute(metric: str, request: dict, token: dict = Depends(verify_token)) -> 
             logging.info("Acquired compute_lock, starting computation .. ")
             start_infer_time = datetime.datetime.now()
             # obtain the metric to compute
-            metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric)
+            metric_artifact: Artifact = ArtifactFetcherMixin.get_artifact(metric_name)
             metric_artifact: MultiStreamOperator = cast(
                 MultiStreamOperator, metric_artifact
             )
@@ -93,7 +95,7 @@ def compute(metric: str, request: dict, token: dict = Depends(verify_token)) -> 
         infer_time = datetime.datetime.now() - start_infer_time
         wait_time = start_infer_time - start_time
         logging.info(
-            f"Computed {len(metric_results)} metric '{metric}' results, "
+            f"Computed {len(metric_results)} metric '{metric_name}' results, "
             f"took: {infer_time!s}, waited: {wait_time!s}')"
         )
 
@@ -105,7 +107,9 @@ def compute(metric: str, request: dict, token: dict = Depends(verify_token)) -> 
         }
     finally:
         t1 = time.perf_counter()
-        logging.info(f"Request for metric '{metric}' handled in [{t1 - t0:.2f}] secs.")
+        logging.info(
+            f"Request for metric '{metric_name}' handled in [{t1 - t0:.2f}] secs."
+        )
 
 
 # wrapper for HTTP exceptions that we throw
