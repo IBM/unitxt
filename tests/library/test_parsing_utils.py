@@ -1,5 +1,6 @@
 from src.unitxt.parsing_utils import (
     parse_key_equals_value_string_to_dict,
+    parse_list_string,
     separate_inside_and_outside_square_brackets,
 )
 from tests.utils import UnitxtTestCase
@@ -10,6 +11,11 @@ class TestParsingUtils(UnitxtTestCase):
     def test_parse_key_equals_value_string_to_dict_simple_query(self):
         query = "name=John Doe,age=30,height=5.8"
         expected = {"name": "John Doe", "age": 30, "height": 5.8}
+        self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
+
+        # hyphen is allowed inside names, also at the beginning
+        query = "name=John-Doe,-age=30,--height=5.8"
+        expected = {"name": "John-Doe", "-age": 30, "--height": 5.8}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
     def test_parse_key_equals_value_string_to_dict_with_spaces(self):
@@ -54,12 +60,13 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"year": 2020, "score": [9.5, "nine", "and", "a half"], "count": 10}
         self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
 
-        query = (
-            "year=2020,score=[9.5, artifactname[init=[nine, and, a, half]]],count=10"
-        )
+        query = "year=2020,score=[9.5, artifactname[init=[nine, and, a, half], anotherinner=true]],count=10"
         expected = {
             "year": 2020,
-            "score": [9.5, "artifactname[init=[nine, and, a, half]]"],
+            "score": [
+                9.5,
+                "artifactname[init=[nine, and, a, half], anotherinner=true]",
+            ],
             "count": 10,
         }
         self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
@@ -74,6 +81,19 @@ class TestParsingUtils(UnitxtTestCase):
         query = "is_valid=true,has_errors=false"
         expected = {"is_valid": "true", "has_errors": "false"}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
+
+    def test_parse_list_error(self):
+        query = "[a,b,  c,d] malformedlist"
+        with self.assertRaises(ValueError):
+            parse_list_string(query)
+
+        query = "[a,b,  c,d"
+        with self.assertRaises(ValueError):
+            parse_list_string(query)
+
+        query = "[a,b,  c[arg=val,d]"
+        with self.assertRaises(ValueError):
+            parse_list_string(query)
 
     def test_base_structure(self):
         self.assertEqual(
