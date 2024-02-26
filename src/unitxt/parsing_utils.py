@@ -35,6 +35,12 @@ def separate_inside_and_outside_square_brackets(s):
     return outside, inside
 
 
+# Formal definition of query:
+#  query -> assignment (, assignment)*
+#  assignment -> name_value = term
+#  term -> name_value | name_value[query] | [ term (, term)* ]
+
+
 def consume_name_val(instring: str) -> tuple:
     name_val = ""
     for char in instring:
@@ -51,50 +57,39 @@ def consume_name_val(instring: str) -> tuple:
         return (sign * int(name_val), instring)
     if name_val.replace(".", "", 1).isdigit() and name_val.count(".") < 2:
         return (sign * float(name_val), instring)
-    if sign == -1:
-        name_val = "-" + name_val
     return (name_val, instring)
 
 
 def consume_term(instring: str, return_dict: bool) -> tuple:
-    error_msg = f" in: {instring}"
+    orig_instring = instring
     if instring.startswith("["):
-        toret = [] if return_dict else "["
+        toret = []
         instring = instring[1:].strip()
         (term, instring) = consume_term(instring, return_dict)
-        if return_dict:
-            toret.append(term)
-        else:
-            toret += term
+        toret.append(term)
         while instring.startswith(","):
-            if not return_dict:
-                toret += ","
             (term, instring) = consume_term(instring[1:].strip(), return_dict)
-            if return_dict:
-                toret.append(term)
-            else:
-                toret += term
+            toret.append(term)
         if not instring.startswith("]"):
-            raise ValueError("malformed list in" + error_msg)
+            raise ValueError(f"malformed list in: {orig_instring}")
         instring = instring[1:].strip()
         if not return_dict:
-            toret += "]"
+            toret = orig_instring[: len(orig_instring) - len(instring)]
         return (toret, instring)
 
     (name_val, instring) = consume_name_val(instring)
     if instring.startswith("["):
-        toret = name_val + "["
         (quey, instring) = consume_query(instring[1:].strip(), False)
-        toret += quey
         if not instring.startswith("]"):
-            raise ValueError("malformed subquery" + error_msg)
+            raise ValueError(f"malformed query in: {orig_instring}")
         instring = instring[1:].strip()
-        return (toret + "]", instring)
+        toret = orig_instring[: len(orig_instring) - len(instring)]
+        return (toret, instring)
     return (name_val, instring)
 
 
 def consume_assignment(instring: str, return_dict: bool) -> tuple:
-    error_msg = f" in {instring}"
+    orig_instring = instring
     (name_val, instring) = consume_name_val(instring)
     if (
         name_val is None
@@ -102,17 +97,18 @@ def consume_assignment(instring: str, return_dict: bool) -> tuple:
         or isinstance(name_val, float)
         or len(name_val) == 0
     ):
-        raise ValueError("malformed key" + error_msg)
+        raise ValueError(f"malformed key in assignment that starts: {orig_instring}")
     if not instring.startswith("="):
-        raise ValueError("malformed assignment" + error_msg)
+        raise ValueError(f"malformed assignment in: {orig_instring}")
     (term, instring) = consume_term(instring[1:].strip(), return_dict)
     if (term is None) or not (
         isinstance(term, int) or isinstance(term, float) or len(term) > 0
     ):
-        raise ValueError("malformed element" + error_msg)
+        raise ValueError(f"malformed assignment in: {orig_instring}")
     if return_dict:
         return ({name_val: term}, instring)
-    return (name_val + "=" + term, instring)
+    toret = orig_instring[: len(orig_instring) - len(instring)]
+    return (toret, instring)
 
 
 def consume_query(instring: str, return_dict: bool) -> tuple:

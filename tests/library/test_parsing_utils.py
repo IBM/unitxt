@@ -37,6 +37,33 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"year": 2020, "score": 9.5, "count": 10}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        query = "year=2020,score=9.5,count=10, balance=-10"
+        expected = {"year": 2020, "score": 9.5, "count": 10, "balance": -10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = "year=2020,score=9.5,count=10, balance=-10.302"
+        expected = {"year": 2020, "score": 9.5, "count": 10, "balance": -10.302}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+    def test_parse_key_equals_value_string_to_dict_lists(self):
+        query = "year=2020,score=[9.5,nine and a half],count=10"
+        expected = {"year": 2020, "score": [9.5, "nine and a half"], "count": 10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = "year=2020,score=[9.5,nine, and, a half],count=10"
+        expected = {"year": 2020, "score": [9.5, "nine", "and", "a half"], "count": 10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = (
+            "year=2020,score=[9.5, artifactname[init=[nine, and, a, half]]],count=10"
+        )
+        expected = {
+            "year": 2020,
+            "score": [9.5, "artifactname[init=[nine, and, a, half]]"],
+            "count": 10,
+        }
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
     def test_parse_key_equals_value_string_to_dict_illegal_format(self):
         query = "malformed"
         with self.assertRaises(ValueError):
