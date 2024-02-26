@@ -69,14 +69,17 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
+    MultiLabelTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
         input_format="Text: {text}",
         output_format="{labels}",
-        target_prefix="The {type_of_class} is ",
+        target_prefix="The {type_of_classes} is ",
+        labels_field="labels",
         instruction="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
         postprocessors=[
             "processors.take_first_non_empty_line",
-            "processors.lower_case_till_punc",
+            "processors.lower_case",
+            "processors.to_list_by_comma",
+            "processors.remove_none_from_list",
         ],
     ),
     "templates.classification.multi_label.instruction",
