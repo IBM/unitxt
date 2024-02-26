@@ -131,76 +131,16 @@ def consume_query(instring: str, return_dict: bool) -> tuple:
 
 
 def parse_key_equals_value_string_to_dict(query: str) -> dict:
+    """Parses a query string of the form 'key1=value1,key2=value2,...' into a dictionary.
+
+    The function converts numeric values into integers or floats as appropriate, and raises an
+    exception if the query string is malformed or does not conform to the expected format.
+
+     :param query: The query string to be parsed.
+     :return: A dictionary with keys and values extracted from the query string, with spaces stripped from keys.
+    """
     instring = query
-    qu, _ = consume_query(instring, True)
-    return qu
-
-    # """Parses a query string of the form 'key1=value1,key2=value2,...' into a dictionary.
-
-    # The function converts numeric values into integers or floats as appropriate, and raises an
-    # exception if the query string is malformed or does not conform to the expected format.
-
-    # :param query: The query string to be parsed.
-    # :return: A dictionary with keys and values extracted from the query string, with spaces stripped from keys.
-    # """
-    # result = {}
-    # kvs = split_within_depth(query, dellimiter=",")
-    # if len(kvs) == 0:
-    #     raise ValueError(
-    #         f'Illegal query: "{query}" should contain at least one assignment of the form: key1=value1,key2=value2'
-    #     )
-    # for kv in kvs:
-    #     kv = kv.strip()
-    #     key_val = split_within_depth(kv, dellimiter="=")
-    #     if (
-    #         len(key_val) != 2
-    #         or len(key_val[0].strip()) == 0
-    #         or len(key_val[1].strip()) == 0
-    #     ):
-    #         raise ValueError(
-    #             f'Illegal query: "{query}" with wrong assignment "{kv}" should be of the form: key=value.'
-    #         )
-    #     key, val = key_val[0].strip(), key_val[1].strip()
-    #     if val.isdigit():
-    #         result[key] = int(val)
-    #     elif val.replace(".", "", 1).isdigit() and val.count(".") < 2:
-    #         result[key] = float(val)
-    #     else:
-    #         try:
-    #             result[key] = parse_list_string(val)
-    #         except:
-    #             result[key] = val
-
-    # return result
-
-
-def parse_list_string(s: str):
-    """Parses a query string of the form 'val1,val2,...' into a list."""
-    instring = s
-    term, instring = consume_term(instring, True)
+    qu, instring = consume_query(instring, True)
     if len(instring.strip()) > 0:
-        raise ValueError(f"Illegal list structure in {s}")
-    return term
-
-    # start = s.find("[")
-    # end = s.rfind("]")
-
-    # Handle no brackets
-    # if start == -1 and end == -1:
-    #     return s
-
-    # Validate brackets
-    # if start == -1 or end == -1 or start > end:
-    #     raise ValueError("Illegal structure: unmatched square brackets.")
-
-    # before = s[:start].strip()
-    # inside = s[start + 1 : end].strip()
-    # after = s[end + 1 :].strip()
-
-    # # Check for text after the closing bracket
-    # if len(before) != 0 or len(after) != 0:
-    #     raise ValueError(
-    #         "Illegal structure: text follows before or after the closing square bracket."
-    #     )
-    # splitted = split_within_depth(inside.strip(), dellimiter=",", forbbiden_chars=["="])
-    # return [s.strip() for s in splitted]
+        raise ValueError(f"Illegal query structure in {query}")
+    return qu
