@@ -36,15 +36,18 @@ def separate_inside_and_outside_square_brackets(s):
 
 
 # Formal definition of query:
-#  query -> assignment (, assignment)*
-#  assignment -> name_value = term
-#  term -> name_value | name_value[query] | [ term (, term)* ]
+#  query -> assignment(=) (, assignment(=))*
+#  assignment(delimeter) -> name_value delimeter term
+#  term -> name_value | name_value[query] | [ term (, term)* ] | { assignment(:) (, assignment(:))* }
+#
+# a boolean parameter, return_dict, maintains a nested query: a query (potentially, indirectly) within another query,
+#  in the form of a string, so that the process of parsing cohere with the recursive process of fetching the artifact.
 
 
 def consume_name_val(instring: str) -> tuple:
     name_val = ""
     for char in instring:
-        if char in "[],=":
+        if char in "[],:{}=":
             break
         name_val += char
     instring = instring[len(name_val) :].strip()
@@ -69,6 +72,7 @@ def consume_name_val(instring: str) -> tuple:
     return (name_val, instring)
 
 
+# flake8: noqa: C901
 def consume_term(instring: str, return_dict: bool) -> tuple:
     orig_instring = instring
     if instring.startswith("["):
@@ -86,6 +90,23 @@ def consume_term(instring: str, return_dict: bool) -> tuple:
             toret = orig_instring[: len(orig_instring) - len(instring)]
         return (toret, instring)
 
+    if instring.startswith("{"):
+        instring = instring[1:].strip()
+        (assignment, instring) = consume_assignment(instring, return_dict, ":")
+        toret = assignment
+        while instring.startswith(","):
+            (assignment, instring) = consume_assignment(
+                instring[1:].strip(), return_dict, ":"
+            )
+            if return_dict:
+                toret = {**toret, **assignment}
+        if not instring.startswith("}"):
+            raise ValueError(f"malformed dict in: {orig_instring}")
+        instring = instring[1:].strip()
+        if not return_dict:
+            toret = orig_instring[: len(orig_instring) - len(instring)]
+        return (toret, instring)
+
     (name_val, instring) = consume_name_val(instring)
     if instring.startswith("["):
         (quey, instring) = consume_query(instring[1:].strip(), False)
@@ -97,7 +118,7 @@ def consume_term(instring: str, return_dict: bool) -> tuple:
     return (name_val, instring)
 
 
-def consume_assignment(instring: str, return_dict: bool) -> tuple:
+def consume_assignment(instring: str, return_dict: bool, delimeter: str) -> tuple:
     orig_instring = instring
     (name_val, instring) = consume_name_val(instring)
     if (
@@ -106,7 +127,7 @@ def consume_assignment(instring: str, return_dict: bool) -> tuple:
         or len(name_val) == 0
     ):
         raise ValueError(f"malformed key in assignment that starts: {orig_instring}")
-    if not instring.startswith("="):
+    if not instring.startswith(delimeter):
         raise ValueError(f"malformed assignment in: {orig_instring}")
     (term, instring) = consume_term(instring[1:].strip(), return_dict)
     if (term is None) or not (isinstance(term, (int, float, bool)) or len(term) > 0):
@@ -119,10 +140,10 @@ def consume_assignment(instring: str, return_dict: bool) -> tuple:
 
 def consume_query(instring: str, return_dict: bool) -> tuple:
     orig_instring = instring
-    (toret, instring) = consume_assignment(instring.strip(), return_dict)
+    (toret, instring) = consume_assignment(instring.strip(), return_dict, "=")
     while instring.startswith(","):
         instring = instring[1:].strip()
-        (assignment, instring) = consume_assignment(instring.strip(), return_dict)
+        (assignment, instring) = consume_assignment(instring.strip(), return_dict, "=")
         if return_dict:
             toret = {**toret, **assignment}
         else:
