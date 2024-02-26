@@ -192,19 +192,13 @@ UNITXT_REMOTE_METRICS = "UNITXT_REMOTE_METRICS"
 UNITXT_REMOTE_METRICS_ENDPOINT = "UNITXT_REMOTE_METRICS_ENDPOINT"
 
 
-def get_env_variable(variable_name: str, default_value: str) -> str:
-    if variable_name not in os.environ:
-        return default_value
-    return os.environ[variable_name]
-
-
 def get_remote_metrics_names() -> List[str]:
     """Load the remote metrics names from an environment variable.
 
     Returns:
         List[str] - names of metrics to be executed remotely.
     """
-    remote_metrics = get_env_variable(UNITXT_REMOTE_METRICS, default_value=[])
+    remote_metrics = os.getenv(UNITXT_REMOTE_METRICS, default=[])
     if remote_metrics:
         remote_metrics = json.loads(remote_metrics)
     if not isinstance(remote_metrics, list):
@@ -227,9 +221,7 @@ def get_remote_metrics_endpoint() -> str:
     Returns:
         str - The remote endpoint on which the remote metrics are available.
     """
-    remote_metrics_endpoint = get_env_variable(
-        UNITXT_REMOTE_METRICS_ENDPOINT, default_value=None
-    )
+    remote_metrics_endpoint = os.getenv(UNITXT_REMOTE_METRICS_ENDPOINT, default=None)
     if not remote_metrics_endpoint:
         raise RuntimeError(
             f"Unexpected None value for '{UNITXT_REMOTE_METRICS_ENDPOINT}'. "
