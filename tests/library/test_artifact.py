@@ -6,6 +6,7 @@ from src.unitxt.catalog import add_to_catalog, get_from_catalog
 from src.unitxt.dataclass import UnexpectedArgumentError
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
+from src.unitxt.operators import AddFields
 from src.unitxt.processors import StringOrNotString
 from src.unitxt.test_utils.catalog import temp_catalog
 from tests.utils import UnitxtTestCase
@@ -70,3 +71,27 @@ class TestArtifact(UnitxtTestCase):
         )
         artifact, _ = fetch_artifact(artifact_identifier)
         self.assertEqual(artifact.metrics, ["metrics.rouge", "metrics.accuracy"])
+
+    def test_artifact_loading_with_overwrite_args_dict(self):
+        with temp_catalog() as catalog_path:
+            add_to_catalog(
+                AddFields(
+                    fields={
+                        "classes": ["war", "peace"],
+                        "text_type": "text",
+                        "type_of_class": "topic",
+                    }
+                ),
+                "test.for.dict",
+                catalog_path=catalog_path,
+            )
+            artifact = get_from_catalog(
+                "test.for.dict[fields={classes:[war_test, peace_test],text_type: text_test, type_of_class: topic_test}]",
+                catalog_path=catalog_path,
+            )
+            expected = {
+                "classes": ["war_test", "peace_test"],
+                "text_type": "text_test",
+                "type_of_class": "topic_test",
+            }
+            self.assertDictEqual(expected, artifact.fields)
