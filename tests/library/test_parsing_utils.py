@@ -82,6 +82,10 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"is_valid": "true", "has_errors": "false"}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        query = "is_valid=True,has_errors=False"
+        expected = {"is_valid": True, "has_errors": False}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
     def test_parse_list_error(self):
         query = "[a,b,  c,d] malformedlist"
         with self.assertRaises(ValueError):
