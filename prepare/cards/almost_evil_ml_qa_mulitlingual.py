@@ -1,6 +1,6 @@
 import json
 
-from src.unitxt.blocks import FormTask, LoadHF, RenameFields, SplitRandomMix, TaskCard
+from src.unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
     Apply,
@@ -31,14 +31,10 @@ for lang in langs:
             RenameFields(field_to_field={"INSTRUCTION": "question"}),
             ListFieldValues(fields=["RESPONSE"], to_field="answers"),
         ],
-        task=FormTask(
-            inputs=["question"],
-            outputs=["answers"],
-            metrics=["metrics.rouge"],
-        ),
+        task="tasks.qa.open",
         templates="templates.qa.open.all",
     )
 
     if lang == langs[0]:
         test_card(card, debug=False)
-    add_to_catalog(card, f"cards.almostEvilML_qa_by_lang.{lang}", overwrite=True)
+    add_to_catalog(card, f"cards.almost_evil.{lang}", overwrite=True)

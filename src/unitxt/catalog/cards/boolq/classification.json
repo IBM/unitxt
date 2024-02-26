@@ -1,0 +1,47 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "google/boolq"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_a_type": "passage",
+                "text_b_type": "question",
+                "classes": [
+                    "yes",
+                    "no"
+                ],
+                "type_of_relation": "answer"
+            }
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "answer": "str"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "answer": {
+                    "True": "yes",
+                    "False": "no"
+                }
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "passage": "text_a",
+                "question": "text_b",
+                "answer": "label"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all"
+}

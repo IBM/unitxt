@@ -27,17 +27,6 @@
             "to_field": "answers"
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "question"
-        ],
-        "outputs": [
-            "answers"
-        ],
-        "metrics": [
-            "metrics.rouge"
-        ]
-    },
+    "task": "tasks.qa.open",
     "templates": "templates.qa.open.all"
 }
