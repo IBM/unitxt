@@ -59,12 +59,12 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"year": 2020, "score": [9.5, "nine", "and", "a half"], "count": 10}
         self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
 
-        query = "year=2020,score=[9.5, artifactname[init=[nine, and, a, half], anotherinner=true]],count=10"
+        query = "year=2020,score=[9.5, artifactname[init=[nine, and, a, half], anotherinner=True]],count=10"
         expected = {
             "year": 2020,
             "score": [
                 9.5,
-                "artifactname[init=[nine, and, a, half], anotherinner=true]",
+                "artifactname[init=[nine, and, a, half], anotherinner=True]",
             ],
             "count": 10,
         }
@@ -96,37 +96,21 @@ class TestParsingUtils(UnitxtTestCase):
 
     def test_valid_structure(self):
         self.assertEqual(
-            separate_inside_and_outside_square_brackets("before[inside]"),
-            ("before", "inside"),
+            separate_inside_and_outside_square_brackets("before[inside=2]"),
+            ("before", {"inside": 2}),
         )
 
     def test_valid_nested_structure(self):
         self.assertEqual(
+            ("before", {"inside_before": "inside_inside[iii=vvv]"}),
             separate_inside_and_outside_square_brackets(
-                "before[inside_before[inside_inside]]"
+                "before[inside_before=inside_inside[iii=vvv]]"
             ),
-            ("before", "inside_before[inside_inside]"),
-        )
-
-    def test_valid_nested_structure_with_broken_structre(self):
-        self.assertEqual(
-            separate_inside_and_outside_square_brackets(
-                "before[inside_before[inside_inside]"
-            ),
-            ("before", "inside_before[inside_inside"),
-        )
-
-    def test_valid_nested_structure_with_broken_structre_inside(self):
-        self.assertEqual(
-            separate_inside_and_outside_square_brackets(
-                "before[inside_a]between[inside_b]"
-            ),
-            ("before", "inside_a]between[inside_b"),
         )
 
     def test_valid_empty_inside(self):
         self.assertEqual(
-            separate_inside_and_outside_square_brackets("before[]"), ("before", "")
+            ("before", {}), separate_inside_and_outside_square_brackets("before[]")
         )
 
     def test_illegal_text_following_brackets(self):

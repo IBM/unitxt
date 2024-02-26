@@ -11,7 +11,6 @@ from typing import Dict, List, Optional, Union, final
 from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
 from .logging_utils import get_logger
 from .parsing_utils import (
-    parse_key_equals_value_string_to_dict,
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_settings
@@ -313,8 +312,6 @@ def get_artifactory_name_and_args(
     name: str, artifactories: Optional[List[Artifactory]] = None
 ):
     name, args = separate_inside_and_outside_square_brackets(name)
-    if args is not None:
-        args = parse_key_equals_value_string_to_dict(args)
 
     if artifactories is None:
         artifactories = list(Artifactories())
