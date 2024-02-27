@@ -130,7 +130,7 @@ Answer: """,
     )
 
     test_card(card)
-    add_to_catalog(card, f"cards.ffqa_filtered.{split}")
+    add_to_catalog(card, f"cards.ffqa_filtered.{split}", overwrite=True)
 
 
 for split in ["2k", "4k", "8k", "16k"]:
