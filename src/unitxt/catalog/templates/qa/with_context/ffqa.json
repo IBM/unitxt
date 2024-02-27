@@ -1,0 +1,5 @@
+{
+    "type": "multi_reference_template",
+    "input_format": "Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words\nDocument: {context}\nQuestion: {question}\nAnswer: ",
+    "references_field": "answers"
+}
