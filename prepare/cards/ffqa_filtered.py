@@ -1,9 +1,7 @@
 from src.unitxt.blocks import (
-    InputOutputTemplate,
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
@@ -115,18 +113,7 @@ def add_card(split: str):
             ),
         ],
         task="tasks.qa.with_context.extractive",
-        templates=TemplatesList(
-            [
-                InputOutputTemplate(
-                    input_format="""\
-Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words
-Document: {context}
-Question: {question}
-Answer: """,
-                    output_format="{answers}",
-                ),
-            ]
-        ),
+        templates="templates.qa.with_context.all",
     )
 
     test_card(card)
