@@ -24,7 +24,12 @@ docs: docs-html
 test-docs: docs clear-docs
 
 format:
-	bash $(DIR)/utils/format
+	ruff check . --fix
+	ruff format .
+
+pre-commit:
+	pre-commit install
+	pre-commit run --all-files
 
 # command: make version={new_version} new-version
 new-version:
