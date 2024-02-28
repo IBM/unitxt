@@ -6,6 +6,10 @@
     },
     "preprocess_steps": [
         {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
             "type": "split_random_mix",
             "mix": {
                 "train": "train[70%]",

@@ -1,3 +1,5 @@
+import sys
+
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -6,6 +8,7 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "financial_tweets"
@@ -37,6 +40,7 @@ mappers = {
 card = TaskCard(
     loader=LoadHF(path="zeroshot/twitter-financial-news-topic"),
     preprocess_steps=[
+        Shuffle(page_size=sys.maxsize),
         SplitRandomMix(
             {
                 "train": "train[85%]",

@@ -1,3 +1,5 @@
+import sys
+
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -7,7 +9,7 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.operators import JoinStr, ListFieldValues
+from src.unitxt.operators import JoinStr, ListFieldValues, Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "yahoo_answers_topics"
@@ -30,6 +32,7 @@ mappers = {str(i): cls for i, cls in enumerate(classes)}
 card = TaskCard(
     loader=LoadHF(path=f"{dataset_name}"),
     preprocess_steps=[
+        Shuffle(page_size=sys.maxsize),
         SplitRandomMix(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),

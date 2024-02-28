@@ -1,3 +1,5 @@
+import sys
+
 from datasets import get_dataset_config_names, load_dataset_builder
 
 from src.unitxt import add_to_catalog
@@ -8,6 +10,7 @@ from src.unitxt.blocks import (
     RenameFields,
     TaskCard,
 )
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "clinc_oos"
@@ -23,6 +26,7 @@ for subset in get_dataset_config_names(dataset_name):
     card = TaskCard(
         loader=LoadHF(path=dataset_name, name=subset),
         preprocess_steps=[
+            Shuffle(page_size=sys.maxsize),
             RenameFields(field_to_field={"intent": "label"}),
             MapInstanceValues(mappers={"label": map_label_to_text}),
             AddFields(
