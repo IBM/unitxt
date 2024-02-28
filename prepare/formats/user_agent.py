@@ -2,8 +2,8 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.formats import SystemFormat
 
 format = SystemFormat(
-    demo_format="User: {source}\nAgent: {target}\n\n",
-    model_input_format="{instruction}\n{demos}\nUser:{source}\nAgent:",
+    demo_format="User: {source}\nAgent: {target_prefix}{target}\n",
+    model_input_format="{system_prompt}{instruction}\n\n{demos}\nUser: {source}\nAgent: {target_prefix}",
 )
 
 add_to_catalog(format, "formats.user_agent", overwrite=True)
