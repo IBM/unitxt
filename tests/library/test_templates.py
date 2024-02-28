@@ -214,7 +214,7 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world'",
                 "target": "positive",
                 "references": ["positive"],
-                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
             },
             {
@@ -226,7 +226,7 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive",
                 "references": ["positive"],
-                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
             },
             {
@@ -238,7 +238,7 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive, 1",
                 "references": ["positive, 1"],
-                "instruction": "Classify sentiment into: ['positive', 'negative'].\n",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
             },
         ]
@@ -273,8 +273,9 @@ class TestTemplates(UnitxtTestCase):
         )
 
         class ToCoverTemplate(Template):
-            def inputs_to_source(self, inputs: Dict[str, object]) -> str:
-                return super().inputs_to_source(inputs)
+            def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+                ret = super().inputs_to_source(inputs)
+                return (ret, ret)
 
             def outputs_to_target_and_references(
                 self, outputs: Dict[str, object]
@@ -301,8 +302,8 @@ class TestTemplates(UnitxtTestCase):
         )
 
         proccessed_input_to_inputs = {
-            "Is text_a of news?": {"text": "text_a", "class": ["news"]},
-            "Is text_b of news?": {"text": "text_b", "class": ["news"]},
+            ("Is text_a of news?", ""): {"text": "text_a", "class": ["news"]},
+            ("Is text_b of news?", ""): {"text": "text_b", "class": ["news"]},
         }
         for expected_processed_input, inputs in proccessed_input_to_inputs.items():
             processed = template.inputs_to_source(inputs)
