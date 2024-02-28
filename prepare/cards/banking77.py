@@ -1,3 +1,5 @@
+import sys
+
 from datasets import load_dataset_builder
 
 from src.unitxt import add_to_catalog
@@ -8,6 +10,7 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "banking77"
@@ -27,6 +30,7 @@ card = TaskCard(
             {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
         ),
         MapInstanceValues(mappers={"label": map_label_to_text}),
+        Shuffle(page_size=sys.maxsize),
         AddFields(
             fields={
                 "classes": classes,
