@@ -120,8 +120,6 @@ def construct_recipe_output_message(
             message += stream_header
 
             for example in examples_in_stream:
-                if "task_data" in example:
-                    example["task_data"] = "{...}"
                 dict_message = construct_dict_str(example)
                 message += dict_message + "\n\n"
 
