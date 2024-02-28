@@ -38,7 +38,7 @@ class TestRecipes(UnitxtTestCase):
                         "metrics.accuracy",
                         "metrics.f1_macro",
                     ],
-                    "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
+                    "source": "Classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
                     "target": "not entailment",
                     "references": ["not entailment"],
                     "group": "unitxt",

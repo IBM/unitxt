@@ -98,7 +98,7 @@ class TestTemplates(UnitxtTestCase):
             {
                 "inputs": {"text": "hello world"},
                 "outputs": {"labels": ["cat", "dog"]},
-                "source": "hello world",
+                "source": "Hello world",
                 "target": "cat, dog",
                 "references": ["cat, dog"],
                 "instruction": "",
@@ -107,7 +107,7 @@ class TestTemplates(UnitxtTestCase):
             {
                 "inputs": {"text": "hello world"},
                 "outputs": {"labels": ["man", "woman", "dog"]},
-                "source": "hello world",
+                "source": "Hello world",
                 "target": "man, woman, dog",
                 "references": ["man, woman, dog"],
                 "instruction": "",

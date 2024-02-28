@@ -5,7 +5,7 @@ from src.unitxt.templates import InputOutputTemplate, MultiLabelTemplate, Templa
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Classify the {type_of_class} of following {text_type} to one of these options: {classes}. {text_type}: {text}",
+        input_format="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}. {text_type}: {text}",
         output_format="{label}",
         postprocessors=[
             "processors.take_first_non_empty_line",
@@ -17,10 +17,10 @@ add_to_catalog(
 )
 add_to_catalog(
     InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
-        input_format="Text: {text}",
+        input_format="{text_type}: {text}",
         output_format="{label}",
         target_prefix="The {type_of_class} is ",
-        instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.",
+        instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.\n",
         postprocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
