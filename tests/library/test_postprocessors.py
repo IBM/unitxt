@@ -31,7 +31,7 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
-    def test_LowerCase(self):
+    def test_lower_case(self):
         parser, _ = fetch_artifact("processors.lower_case")
         inputs = [
             "correct",
@@ -47,7 +47,7 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
-    def test_Capitalize(self):
+    def test_capitalize(self):
         parser, _ = fetch_artifact("processors.capitalize")
         inputs = [
             "correct",
@@ -64,7 +64,7 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
-    def test_Substring(self):
+    def test_substring(self):
         #parser, _ = fetch_artifact("processors.substring")
         inputs = [
             {"a" : "correct"},
