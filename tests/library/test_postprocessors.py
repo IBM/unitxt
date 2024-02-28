@@ -2,6 +2,7 @@ from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
 from src.unitxt.test_utils.operators import check_operator
+from src.unitxt.processors import Substring
 from tests.utils import UnitxtTestCase
 
 
@@ -27,6 +28,73 @@ class TestPostProcessors(UnitxtTestCase):
             operator=parser,
             inputs=list_to_stream_with_prediction_and_references(inputs),
             targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_LowerCase(self):
+        parser, _ = fetch_artifact("processors.lower_case")
+        inputs = [
+            "correct",
+            "Not Sure",
+            "TRUE",
+        ]
+        targets = ["correct", "not sure", "true"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_Capitalize(self):
+        parser, _ = fetch_artifact("processors.capitalize")
+        inputs = [
+            "correct",
+            "Not Sure",
+            "TRUE",
+            "wORD",
+        ]
+        targets = ["Correct", "Not sure", "True", "Word"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_Substring(self):
+        #parser, _ = fetch_artifact("processors.substring")
+        inputs = [
+            {"a" : "correct"},
+            {"a" : "Not Sure"},
+            {"a" : "longer input"},
+            {"a" : "x"},
+        ]
+        targets1 = [
+            {"a" : "correct", "b" : "or"},
+            {"a" : "Not Sure", "b" : "ot"},
+            {"a" : "longer input", "b" : "on"},
+            {"a" : "x", "b" : ""},
+        ]
+        targets2 = [
+            {"a" : "correct", "b" : "orrect"},
+            {"a" : "Not Sure", "b" : "ot Sure"},
+            {"a" : "longer input", "b" : "onger input"},
+            {"a" : "x", "b" : ""},
+        ]
+
+        check_operator(
+            operator=Substring(field="a", to_field="b", begin=1, end=3),
+            inputs=inputs,
+            targets=targets1,
+            tester=self,
+        )
+        check_operator(
+            operator=Substring(field="a", to_field="b", begin=1),
+            inputs=inputs,
+            targets=targets2,
             tester=self,
         )
 

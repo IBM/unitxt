@@ -112,6 +112,21 @@ class LowerCase(FieldOperator):
         return text.lower()
 
 
+class Capitalize(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return text.capitalize()
+
+
+class Substring(FieldOperator):
+    begin: int = 0
+    end: int = None
+
+    def process_value(self, text: Any) -> Any:
+        if self.end is None:
+            return text[self.begin :]
+        return text[self.begin : self.end]
+
+
 class FirstCharacter(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\s*(\w)", text)
