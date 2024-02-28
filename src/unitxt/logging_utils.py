@@ -56,7 +56,7 @@ def _configure_library_root_logger() -> None:
             sys.stderr = open(os.devnull, "w")
 
         _default_handler.flush = sys.stderr.flush
-        _default_handler.setFormatter(SizeLimitedFormatter)
+        _default_handler.setFormatter(SizeLimitedFormatter())
 
         library_root_logger = _get_library_root_logger()
         library_root_logger.addHandler(_default_handler)
