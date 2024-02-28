@@ -2,8 +2,8 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.formats import SystemFormat
 
 format = SystemFormat(
-    demo_format="{source}{target}\n\n",
-    model_input_format="{instruction}\n{demos}\n{source}",
+    demo_format="{source}{target_prefix}{target}\n\n",
+    model_input_format="{system_prompt}{instruction}\n{demos}\n{source}{target_prefix}",
 )
 
 add_to_catalog(format, "formats.empty_input_output_separator", overwrite=True)
