@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any, Dict, Iterable, List, Optional
 
 from datasets import Features, Value
@@ -20,6 +19,7 @@ from .operators import (
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
+from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 
 
@@ -198,7 +198,11 @@ def get_remote_metrics_names() -> List[str]:
     Returns:
         List[str] - names of metrics to be executed remotely.
     """
-    remote_metrics = os.getenv(UNITXT_REMOTE_METRICS, default=[])
+    settings = get_settings()
+    try:
+        remote_metrics = settings.remote_metrics
+    except AttributeError:
+        remote_metrics = []
     if remote_metrics:
         remote_metrics = json.loads(remote_metrics)
     if not isinstance(remote_metrics, list):
@@ -221,11 +225,13 @@ def get_remote_metrics_endpoint() -> str:
     Returns:
         str - The remote endpoint on which the remote metrics are available.
     """
-    remote_metrics_endpoint = os.getenv(UNITXT_REMOTE_METRICS_ENDPOINT, default=None)
-    if not remote_metrics_endpoint:
+    settings = get_settings()
+    try:
+        remote_metrics_endpoint = settings.remote_metrics_endpoint
+    except AttributeError as e:
         raise RuntimeError(
             f"Unexpected None value for '{UNITXT_REMOTE_METRICS_ENDPOINT}'. "
             f"Running remote metrics requires defining an "
             f"endpoint in the environment variable '{UNITXT_REMOTE_METRICS_ENDPOINT}'."
-        )
+        ) from e
     return remote_metrics_endpoint
