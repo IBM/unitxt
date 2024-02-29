@@ -127,3 +127,6 @@ class TestArtifact(UnitxtTestCase):
 
         # returned artifactories should be the same object
         self.assertTrue(artifactory1 == artifactory2)
+
+    def test_clear_cache_of_fetch_artifact(self):
+        fetch_artifact.cache_clear()
