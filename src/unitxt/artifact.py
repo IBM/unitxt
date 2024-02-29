@@ -1,4 +1,5 @@
 import difflib
+import functools
 import inspect
 import json
 import os
@@ -301,16 +302,17 @@ class UnitxtArtifactNotFoundError(Exception):
 def copying_lru_cache_for_first_tuple_item(maxsize=10, typed=False):
     """An LRU cache wrapping a function that returns a tuple, which does deepcopy on the returned first  item."""
 
-    def decorator(f):
-        cached_func = lru_cache(maxsize=maxsize, typed=typed)(f)
+    def decorating_function(user_function):
+        cached_func = lru_cache(maxsize=maxsize, typed=typed)(user_function)
 
         def wrapper(*args, **kwargs):
             first_item, second_item = cached_func(*args, **kwargs)
             return deepcopy(first_item), second_item
 
-        return wrapper
+        wrapper.cache_clear = cached_func.cache_clear
+        return functools.update_wrapper(wrapper, user_function)
 
-    return decorator
+    return decorating_function
 
 
 @copying_lru_cache_for_first_tuple_item(maxsize=None)
