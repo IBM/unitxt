@@ -199,10 +199,7 @@ def get_remote_metrics_names() -> List[str]:
         List[str] - names of metrics to be executed remotely.
     """
     settings = get_settings()
-    try:
-        remote_metrics = settings.remote_metrics
-    except AttributeError:
-        remote_metrics = []
+    remote_metrics = settings.remote_metrics
     if remote_metrics:
         remote_metrics = json.loads(remote_metrics)
     if not isinstance(remote_metrics, list):

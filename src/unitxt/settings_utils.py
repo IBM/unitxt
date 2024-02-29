@@ -91,6 +91,7 @@ if Settings.is_uninitilized():
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "debug"
+    settings.remote_metrics = []
 
 if Constants.is_uninitilized():
     constants = Constants()
