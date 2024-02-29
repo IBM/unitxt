@@ -111,7 +111,7 @@ class FirstCharacter(FieldOperator):
 
 class TakeFirstWord(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        match = re.search(r"[\w]+", text)
+        match = re.search(r"([-]*[0-9]+(\.([0-9]+))*)|([\w]+)", text)
         if match:
             return text[match.start() : match.end()]
         return ""
