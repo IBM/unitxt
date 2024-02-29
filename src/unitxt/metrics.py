@@ -115,10 +115,6 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    @abstractmethod
-    def set_n_resamples(self, n_resample):
-        pass
-
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
@@ -135,12 +131,7 @@ class MetricWithConfidenceInterval(Metric):
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
     def disable_confidence_interval_calculation(self):
-        n = self.n_resamples
         self.n_resamples = None
-        return n
-
-    def set_n_resamples(self, n_resamples):
-        self.n_resamples = n_resamples
 
     def _can_compute_confidence_intervals(self, num_predictions):
         return (
@@ -903,11 +894,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
-        return self.metric.disable_confidence_interval_calculation()
-
-    def set_n_resamples(self, n_resample):
-        if isinstance(self.metric, MetricWithConfidenceInterval):
-            self.metric.set_n_resamples(n_resample)
+        self.metric.disable_confidence_interval_calculation()
 
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
