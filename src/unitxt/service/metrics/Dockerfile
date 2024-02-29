@@ -64,13 +64,11 @@ USER ${NONROOT_USER}
 COPY --chown=${NONROOT_USER}:${NONROOT_GID} . /app/unitxt/.
 
 # Install the unitxt metrics service requirements
-RUN cat /app/unitxt/src/unitxt/service/metrics/requirements.txt
-RUN pip3 install -r /app/unitxt/src/unitxt/service/metrics/requirements.txt
 RUN pip3 install cffi --upgrade
 
 # pip install unitxt
 WORKDIR /app/unitxt
-RUN pip install -e ".[all]"
+RUN pip install -e ".[service]"
 
 WORKDIR /app/unitxt
 ENV HF_HOME=/app/hf/misc
@@ -84,4 +82,4 @@ ENV PYTHONHASHSEED 0
 RUN env
 RUN pip3 list
 RUN conda list
-CMD python3 -m src.unitxt.service.metrics.main
+CMD unitxt-metrics-service

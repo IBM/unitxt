@@ -151,7 +151,7 @@ def print_gpus_status():
 def start_metrics_http_service():
     print_gpus_status()
     uvicorn.run(
-        "src.unitxt.service.metrics.main:app",
+        "unitxt.service.metrics.main:app",
         host="0.0.0.0",
         port=8000,
         reload=False,

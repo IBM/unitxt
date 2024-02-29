@@ -57,6 +57,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "unitxt-explore=unitxt.ui:launch",
+            "unitxt-metrics-service=unitxt.service.metrics.main:start_metrics_http_service",
         ],
     },
 )
