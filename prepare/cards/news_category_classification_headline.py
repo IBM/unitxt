@@ -1,6 +1,6 @@
 import sys
 
-from unitxt.operators import Shuffle
+from src.unitxt.operators import Shuffle
 
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
