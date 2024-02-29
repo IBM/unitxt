@@ -41,7 +41,8 @@ def get_templates(template_data):
     else:
         templates = set()
         for item in template_data:
-            templates.update(get_from_str(item))
+            if isinstance(item, str):
+                templates.update(get_from_str(item))
     # templates.add("templates.key_val_with_new_lines")
     templates_jsons = {
         template: safe_load_json(get_file_from_item_name(template))
@@ -74,7 +75,7 @@ def load_cards_data():
         data = card_jsons[card]
         if not is_valid_data(data):
             continue
-        task = data["task"]
+        task = data["task"].split("[")[0]
         if task not in cards_data:
             is_augmentable = check_augmentable(task)
         else:
@@ -86,9 +87,9 @@ def load_cards_data():
         )
     formats, formats_jsons = get_catalog_items("formats")
     json_data.update(formats_jsons)
-    instructions, instructiosn_jsons = get_catalog_items("instructions")
-    json_data.update(instructiosn_jsons)
-    return cards_data, json_data, formats, instructions
+    system_prompts, system_prompts_jsons = get_catalog_items("system_prompts")
+    json_data.update(system_prompts_jsons)
+    return cards_data, json_data, formats, system_prompts
 
 
 def check_augmentable(task_name):
@@ -140,12 +141,12 @@ def get_catalog_items(items_type):
 
 
 if __name__ == "__main__":
-    data, jsons, formats, instructions = load_cards_data()
+    data, jsons, formats, system_prompts = load_cards_data()
     stuff = {
         "cards_data": data,
         "jsons": jsons,
         "formats": formats,
-        "instructions": instructions,
+        "system_prompts": system_prompts,
     }
     for bla in stuff:
         with open(f"{bla}.txt", "w") as file:

@@ -33,6 +33,18 @@ def _get_library_root_logger() -> logging.Logger:
     return logging.getLogger(__name__.split(".")[0])
 
 
+class SizeLimitedFormatter(logging.Formatter):
+    def format(self, record):
+        original_message = super().format(record)
+        max_size = settings.max_log_message_size
+        if len(original_message) > max_size:
+            return (
+                original_message[:max_size]
+                + f"...\n(Message is too long > {max_size}. Can be set thorugh unitxt.settings.max_log_message_size or UNITXT_MAX_LOG_MESSAGE_SIZE environment variable.)"
+            )
+        return original_message
+
+
 def _configure_library_root_logger() -> None:
     global _default_handler
 
@@ -44,6 +56,7 @@ def _configure_library_root_logger() -> None:
             sys.stderr = open(os.devnull, "w")
 
         _default_handler.flush = sys.stderr.flush
+        _default_handler.setFormatter(SizeLimitedFormatter())
 
         library_root_logger = _get_library_root_logger()
         library_root_logger.addHandler(_default_handler)
@@ -70,7 +83,7 @@ def set_verbosity(level):
 
 def enable_explicit_format() -> None:
     for handler in _get_library_root_logger().handlers:
-        formatter = logging.Formatter(
+        formatter = SizeLimitedFormatter(
             "[Unitxt|%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s >> %(message)s"
         )
         handler.setFormatter(formatter)

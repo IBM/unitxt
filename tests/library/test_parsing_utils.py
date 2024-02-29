@@ -12,6 +12,11 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"name": "John Doe", "age": 30, "height": 5.8}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        # hyphen is allowed inside names, also at the beginning
+        query = "name=John-Doe,-age=30,--height=5.8"
+        expected = {"name": "John-Doe", "-age": 30, "--height": 5.8}
+        self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
+
     def test_parse_key_equals_value_string_to_dict_with_spaces(self):
         query = "first name=Jane Doe, last name=Doe, country=USA, balance=100.50"
         expected = {
@@ -37,8 +42,40 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"year": 2020, "score": 9.5, "count": 10}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        query = "year=2020,score=9.5,count=10, balance=-10"
+        expected = {"year": 2020, "score": 9.5, "count": 10, "balance": -10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = "year=2020,score=9.5,count=10, balance=-10.302"
+        expected = {"year": 2020, "score": 9.5, "count": 10, "balance": -10.302}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+    def test_parse_key_equals_value_string_to_dict_lists(self):
+        query = "year=2020,score=[9.5,nine and a half],count=10"
+        expected = {"year": 2020, "score": [9.5, "nine and a half"], "count": 10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = "year=2020,score=[9.5,nine, and, a half],count=10"
+        expected = {"year": 2020, "score": [9.5, "nine", "and", "a half"], "count": 10}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
+        query = "year=2020,score=[9.5, artifactname[init=[nine, and, a, half], anotherinner=True]],count=10"
+        expected = {
+            "year": 2020,
+            "score": [
+                9.5,
+                "artifactname[init=[nine, and, a, half], anotherinner=True]",
+            ],
+            "count": 10,
+        }
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
     def test_parse_key_equals_value_string_to_dict_illegal_format(self):
         query = "malformed"
+        with self.assertRaises(ValueError):
+            parse_key_equals_value_string_to_dict(query)
+
+        query = "name=John Doe,age=30,height=5.8 ]and left overs"
         with self.assertRaises(ValueError):
             parse_key_equals_value_string_to_dict(query)
 
@@ -48,6 +85,10 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"is_valid": "true", "has_errors": "false"}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        query = "is_valid=True,has_errors=False"
+        expected = {"is_valid": True, "has_errors": False}
+        self.assertEqual(expected, parse_key_equals_value_string_to_dict(query))
+
     def test_base_structure(self):
         self.assertEqual(
             separate_inside_and_outside_square_brackets("text"), ("text", None)
@@ -55,37 +96,21 @@ class TestParsingUtils(UnitxtTestCase):
 
     def test_valid_structure(self):
         self.assertEqual(
-            separate_inside_and_outside_square_brackets("before[inside]"),
-            ("before", "inside"),
+            separate_inside_and_outside_square_brackets("before[inside=2]"),
+            ("before", {"inside": 2}),
         )
 
     def test_valid_nested_structure(self):
         self.assertEqual(
+            ("before", {"inside_before": "inside_inside[iii=vvv]"}),
             separate_inside_and_outside_square_brackets(
-                "before[inside_before[inside_inside]]"
+                "before[inside_before=inside_inside[iii=vvv]]"
             ),
-            ("before", "inside_before[inside_inside]"),
-        )
-
-    def test_valid_nested_structure_with_broken_structre(self):
-        self.assertEqual(
-            separate_inside_and_outside_square_brackets(
-                "before[inside_before[inside_inside]"
-            ),
-            ("before", "inside_before[inside_inside"),
-        )
-
-    def test_valid_nested_structure_with_broken_structre_inside(self):
-        self.assertEqual(
-            separate_inside_and_outside_square_brackets(
-                "before[inside_a]between[inside_b]"
-            ),
-            ("before", "inside_a]between[inside_b"),
         )
 
     def test_valid_empty_inside(self):
         self.assertEqual(
-            separate_inside_and_outside_square_brackets("before[]"), ("before", "")
+            ("before", {}), separate_inside_and_outside_square_brackets("before[]")
         )
 
     def test_illegal_text_following_brackets(self):

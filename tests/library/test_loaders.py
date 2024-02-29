@@ -145,3 +145,22 @@ class TestLoaders(UnitxtTestCase):
             "hide new secretions from the parental units ",
         )
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+
+    def test_load_from_HF_filter(self):
+        loader = LoadHF(
+            path="CohereForAI/aya_evaluation_suite",
+            name="aya_human_annotated",
+            filtering_lambda='lambda instance: instance["language"]=="eng"',
+        )
+        ms = loader.stream_dataset()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")
+        ms = loader.load_dataset()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")

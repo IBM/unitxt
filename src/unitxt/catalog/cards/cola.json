@@ -34,20 +34,6 @@
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "text",
-            "text_type",
-            "classes",
-            "type_of_class"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.matthews_correlation"
-        ]
-    },
+    "task": "tasks.classification.multi_class[metrics=[metrics.matthews_correlation]]",
     "templates": "templates.classification.multi_class.all"
 }

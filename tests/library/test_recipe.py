@@ -38,7 +38,7 @@ class TestRecipes(UnitxtTestCase):
                         "metrics.accuracy",
                         "metrics.f1_macro",
                     ],
-                    "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
+                    "source": "Classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
                     "target": "not entailment",
                     "references": ["not entailment"],
                     "group": "unitxt",
@@ -307,7 +307,7 @@ class TestRecipes(UnitxtTestCase):
         stream = recipe()
         sample = list(stream["test"])[1]
         source = sample["source"]
-        pattern = "Classify the sentiment of following sentence to one of these options: ((negative, positive)|(positive, negative)). Text: (.*)"
+        pattern = "Classify the sentiment of the following sentence to one of these options: ((negative, positive)|(positive, negative)). sentence: (.*)"
         result = re.match(pattern, sample["source"], re.DOTALL)
         assert result, f"Unable to find '{pattern}' in '{source}'"
         result = result.group(4)

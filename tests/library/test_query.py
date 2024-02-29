@@ -16,9 +16,9 @@ class TestQuery(UnitxtTestCase):
         }
         self.assertDictEqual(parsed, target)
 
-    def test_empty_query_fail(self):
-        with self.assertRaises(ValueError):
-            parse("")
+    def test_empty_query_is_ok_but_fruitless_fail(self):
+        self.assertEqual({}, parse(""))
+
         with self.assertRaises(ValueError):
             parse(",")
 

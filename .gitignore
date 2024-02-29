@@ -147,3 +147,4 @@ docs/modules.rst
 docs/unitxt.*.rst
 ibmcosdataset/
 ibmcos_datasets/
+kaggle.json

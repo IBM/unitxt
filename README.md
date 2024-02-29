@@ -39,7 +39,11 @@ https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919f
 
 ### 🦄 Run Unitxt Exploration Dashboard
 
-To launch unitxt graphical user interface run:
+To launch unitxt graphical user interface first install unitxt with ui requirements:
+```
+pip install unitxt[ui]
+```
+Then launch the ui by running:
 ```
 unitxt-explore
 ```

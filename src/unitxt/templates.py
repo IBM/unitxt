@@ -43,20 +43,25 @@ class Template(StreamInstanceOperator):
         inputs = instance.get("inputs")
         outputs = instance.get("outputs")
 
-        source = self.inputs_to_source(inputs)
+        source, instruction = self.inputs_to_source(inputs)
         target, references = self.outputs_to_target_and_references(outputs)
+
+        if len(source) > 0:
+            source = source[0].upper() + source[1:]
+        if len(instruction) > 0:
+            instruction = instruction[0].upper() + instruction[1:]
 
         return {
             **instance,
             "source": source,
             "target": target,
             "references": references,
-            "instruction": self.instruction.format(**inputs),
+            "instruction": instruction,
             "target_prefix": self.target_prefix.format(**inputs),
         }
 
     @abstractmethod
-    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
         pass
 
     @abstractmethod
@@ -82,13 +87,17 @@ class InputOutputTemplate(Template):
         data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
         return template.format(**data)
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
-        try:
-            return self.process_template(self.input_format, inputs)
-        except KeyError as e:
-            raise KeyError(
-                f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{self.input_format}'"
-            ) from e
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        formatted = []
+        for formatting in [self.input_format, self.instruction]:
+            try:
+                formatted.append(self.process_template(formatting, inputs))
+            except KeyError as e:
+                raise KeyError(
+                    f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{formatting}'"
+                ) from e
+
+        return tuple(formatted)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         try:
@@ -159,19 +168,22 @@ class MultipleChoiceTemplate(Template):
             )
         return enumrated_choices
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
         choices = self.get_choices(inputs, self.source_choice_format)
         inputs = {
             "numerals": ",".join(self.get_choices(inputs, "{choice_numeral}")),
             **inputs,
             self.choices_field: self.choices_seperator.join(choices),
         }
-        try:
-            return self.input_format.format(**inputs)
-        except KeyError as e:
-            raise KeyError(
-                f"Available inputs are {inputs.keys()} but input format requires a different one: {self.input_format}"
-            ) from e
+        formatted = []
+        for formatting in [self.input_format, self.instruction]:
+            try:
+                formatted.append(formatting.format(**inputs))
+            except KeyError as e:
+                raise KeyError(
+                    f"Available inputs are {inputs.keys()} but input format requires a different one: {formatting}"
+                ) from e
+        return tuple(formatted)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = outputs[self.target_field]
@@ -232,16 +244,19 @@ class YesNoTemplate(Template):
     yes_answer: str = "Yes"
     no_answer: str = "No"
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
-        try:
-            data = {
-                k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()
-            }
-            return self.input_format.format(**data)
-        except KeyError as e:
-            raise RuntimeError(
-                f"Available inputs are {list(inputs.keys())} but input format requires a different one: {self.input_format}"
-            ) from e
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        data = {
+            k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()
+        }
+        formatted = []
+        for formatting in [self.input_format, self.instruction]:
+            try:
+                formatted.append(formatting.format(**data))
+            except KeyError as e:
+                raise RuntimeError(
+                    f"Available inputs are {list(inputs.keys())} but input format requires a different one: {formatting}"
+                ) from e
+        return tuple(formatted)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         try:
@@ -299,13 +314,14 @@ class KeyValTemplate(Template):
             pairs.append(key_val_sep.join(key_val))
         return pairs_sep.join(pairs)
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> str:
-        return self.process_dict(
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        ret = self.process_dict(
             inputs,
             key_val_sep=self.key_val_seperator,
             pairs_sep=self.pairs_seperator,
             use_keys=self.use_keys_for_inputs,
         )
+        return (ret, ret)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = self.process_dict(

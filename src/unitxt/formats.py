@@ -124,12 +124,6 @@ class SystemFormat(Format):
 
         demos_string = ""
         for demo_instance in demo_instances:
-            demo_instruction = self._retrieve_field_and_assert_not_none(
-                instance=demo_instance, field_name="instruction"
-            )
-            assert (
-                demo_instruction == instruction
-            ), f"instruction in each demo instance should be identical to instruction of main instance. Got demo instruction: '{demo_instruction}' whereas main instruction: '{instruction}'"
             demo_str = self.demo_format.format(
                 target_prefix=target_prefix,
                 source=demo_instance["source"],

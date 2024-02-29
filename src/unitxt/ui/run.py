@@ -31,8 +31,8 @@ from .ui_utils import (
     get_templates,
     hash_dict,
     increase_num,
-    instructions_items,
     jsons,
+    system_prompts_items,
     update_choices_per_task,
 )
 
@@ -43,7 +43,7 @@ def run_unitxt_entry(
     task,
     dataset,
     template,
-    instruction=None,
+    system_prompt=None,
     format=None,
     num_demos=0,
     augmentor=None,
@@ -60,8 +60,8 @@ def run_unitxt_entry(
 
         return msg, "", "", config.EMPTY_SCORES_FRAME, config.EMPTY_SCORES_FRAME, ""
 
-    if not isinstance(instruction, str):
-        instruction = None
+    if not isinstance(system_prompt, str):
+        system_prompt = None
     if not isinstance(format, str):
         format = None
     if not isinstance(num_demos, int):
@@ -75,7 +75,7 @@ def run_unitxt_entry(
     return run_unitxt(
         dataset,
         template,
-        instruction,
+        system_prompt,
         format,
         num_demos,
         augmentor,
@@ -89,7 +89,7 @@ def run_unitxt_entry(
 def run_unitxt(
     dataset,
     template,
-    instruction=None,
+    system_prompt=None,
     format=None,
     num_demos=0,
     augmentor=None,
@@ -100,7 +100,7 @@ def run_unitxt(
     index = index - 1
     try:
         prompts_list, prompt_args = get_prompts(
-            dataset, template, num_demos, instruction, format, augmentor
+            dataset, template, num_demos, system_prompt, format, augmentor
         )
         selected_prompt = prompts_list[index]
         prompt_text = selected_prompt[config.PROMPT_SOURCE_STR]
@@ -204,12 +204,12 @@ with demo:
                     variant="secondary",
                 )
 
-                instructions = gr.Dropdown(
-                    choices=[None, *instructions_items],
-                    label="Instruction",
+                system_prompts = gr.Dropdown(
+                    choices=[None, *system_prompts_items],
+                    label="System Prompt",
                     scale=5,
                 )
-                instructions_js_button = gr.Button(
+                system_prompts_js_button = gr.Button(
                     config.JSON_BUTTON_TXT,
                     scale=1,
                     size="sm",
@@ -321,11 +321,13 @@ with demo:
     templates_js_button.click(
         display_json_button, templates, [tabs, json_intro, element_name, json_viewer]
     )
-    instructions.select(activate_button, outputs=instructions_js_button).then(
+    system_prompts.select(activate_button, outputs=system_prompts_js_button).then(
         activate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
-    instructions_js_button.click(
-        display_json_button, instructions, [tabs, json_intro, element_name, json_viewer]
+    system_prompts_js_button.click(
+        display_json_button,
+        system_prompts,
+        [tabs, json_intro, element_name, json_viewer],
     )
     formats.select(activate_button, outputs=formats_js_button).then(
         activate_button, outputs=generate_prompts_button
@@ -344,7 +346,7 @@ with demo:
         tasks,
         cards,
         templates,
-        instructions,
+        system_prompts,
         formats,
         num_shots,
         augmentors,
@@ -374,7 +376,7 @@ with demo:
         deactivate_button, outputs=cards_js_button
     ).then(deactivate_button, outputs=templates_js_button).then(
         deactivate_button, outputs=formats_js_button
-    ).then(deactivate_button, outputs=instructions_js_button)
+    ).then(deactivate_button, outputs=system_prompts_js_button)
 
     # GENERATE PROMPT BUTTON LOGIC
     generate_prompts_button.click(

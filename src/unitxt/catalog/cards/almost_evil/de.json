@@ -26,7 +26,7 @@
         {
             "type": "filter_by_condition",
             "values": {
-                "extracted_language": "es"
+                "extracted_language": "de"
             },
             "condition": "eq"
         },
@@ -59,17 +59,6 @@
             "to_field": "answers"
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "question"
-        ],
-        "outputs": [
-            "answers"
-        ],
-        "metrics": [
-            "metrics.rouge"
-        ]
-    },
+    "task": "tasks.qa.open",
     "templates": "templates.qa.open.all"
 }
