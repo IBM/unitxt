@@ -94,12 +94,12 @@ def add_card(split: str):
                 condition="lt",
             ),
             ExecuteExpression(
-                expression='re.search(r"Document:\\s(.*)(\\n\\n|$)", inputs, re.DOTALL).group(1)',
+                expression='re.search(r"Document:\\s(.*)(\\n\\n|$)", inputs).group(1)',
                 imports_list=["re"],
                 to_field="context",
             ),
             ExecuteExpression(
-                expression='re.search(r"Question:\\s(.*)(\\n\\n|$)", inputs, re.DOTALL).group(1)',
+                expression='re.search(r"Question:\\s(.*)(\\n\\n|$)", inputs).group(1)',
                 imports_list=["re"],
                 to_field="question",
             ),
