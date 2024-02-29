@@ -115,10 +115,15 @@ class TestArtifact(UnitxtTestCase):
 
     def test_modifying_fetched_artifact_does_not_effect_cached_artifacts(self):
         artifact_identifier = "metrics.accuracy"
-        artifact, _ = fetch_artifact(artifact_identifier)
+        artifact, artifactory1 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(artifact.n_resamples, None)
         artifact.disable_confidence_interval_calculation()
         self.assertEqual(artifact.n_resamples, None)
 
-        same_artifact_retrieved_again, _ = fetch_artifact(artifact_identifier)
+        same_artifact_retrieved_again, artifactory2 = fetch_artifact(
+            artifact_identifier
+        )
         self.assertNotEqual(same_artifact_retrieved_again.n_resamples, None)
+
+        # returned artifactories should be the same object
+        self.assertTrue(artifactory1 == artifactory2)
