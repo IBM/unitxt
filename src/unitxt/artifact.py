@@ -298,7 +298,19 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-@lru_cache(maxsize=None)
+def copying_lru_cache(maxsize=10, typed=False):
+    def decorator(f):
+        cached_func = lru_cache(maxsize=maxsize, typed=typed)(f)
+
+        def wrapper(*args, **kwargs):
+            return deepcopy(cached_func(*args, **kwargs))
+
+        return wrapper
+
+    return decorator
+
+
+@copying_lru_cache(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
