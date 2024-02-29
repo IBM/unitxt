@@ -131,6 +131,11 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         pass
 
+    def filter_source_by_instance(
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+    ) -> List[Dict[str, object]]:
+        return instances_pool
+
 
 class RandomSampler(Sampler):
     def sample(
@@ -252,10 +257,22 @@ class DiverseLabelsSamplerFromClasses(DiverseLabelsSampler):
     def sample(
         self, instances_pool: List[Dict[str, object]]
     ) -> List[Dict[str, object]]:
+        first_instance = instances_pool[0]
+        if "target" not in first_instance:
+            raise ValueError(f"'target' field is missing from '{first_instance}'.")
+
         instance_pool = list(
             filter(lambda x: x["target"] in self.valid_classes, instances_pool)
         )
         return super().sample(instance_pool)
+
+    def filter_source_by_instance(
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+    ) -> List[Dict[str, object]]:
+        if "inputs" not in instance:
+            raise ValueError(f"'inputs' field is missing from '{instance}'.")
+
+        return list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
 
 
 class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
@@ -281,7 +298,9 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
                 self.local_cache = list(multi_stream[self.source_stream])
 
             source_stream = self.local_cache
-
+            source_stream = self.sampler.filter_source_by_instance(
+                source_stream, instance
+            )
             sampled_instances = self.sampler.sample(source_stream)
             instance[self.target_field] = sampled_instances
             return instance
