@@ -3,7 +3,7 @@ from src.unitxt.formats import SystemFormat
 
 format = SystemFormat(
     demo_format="Human: {source}\nAssistant: {target}\n\n",
-    model_input_format="{instruction}\n{demos}Human: {source}\nAssistant: ",
+    model_input_format="{system_prompt}\n{demos}Human: {source}\nAssistant: ",
 )
 
 add_to_catalog(format, "formats.human_assistant", overwrite=True)
