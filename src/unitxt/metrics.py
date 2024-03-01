@@ -1,3 +1,4 @@
+import math
 import re
 import string
 import uuid
@@ -12,6 +13,7 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
+from scipy.stats._common import ConfidenceInterval
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
@@ -174,14 +176,29 @@ class MetricWithConfidenceInterval(Metric):
                 )
                 return self.resample_from_non_nan(scores)
 
-            # apply bootstrap only on the relevant field
-            ci = bootstrap(
-                (instances,),
-                statistic=statistic,
-                n_resamples=self.n_resamples,
-                confidence_level=self.confidence_level,
-                random_state=self.new_random_generator(),
-            ).confidence_interval
+            # apply bootstrap only on the relevant field, and only if samples can be distinct
+            scores_of_instances_to_sample_from = [
+                instance["score"]["instance"][score_name] for instance in instances
+            ]
+            if all(
+                math.isclose(
+                    scores_of_instances_to_sample_from[0],
+                    scores_of_instances_to_sample_from[i],
+                )
+                for i in range(len(instances))
+            ):
+                ci = ConfidenceInterval(
+                    scores_of_instances_to_sample_from[0],
+                    scores_of_instances_to_sample_from[0],
+                )
+            else:
+                ci = bootstrap(
+                    (instances,),
+                    statistic=statistic,
+                    n_resamples=self.n_resamples,
+                    confidence_level=self.confidence_level,
+                    random_state=self.new_random_generator(),
+                ).confidence_interval
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
@@ -291,6 +308,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     )
     process_single_instances = True
 
+    # flake8: noqa: C901
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
         predictions = []
@@ -345,9 +363,31 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         global_score.update(result)
 
         score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, task_data, score_name
+
+        instance_scores = [
+            instance["score"]["instance"][score_name] for instance in instances
+        ]
+        if isinstance(instance_scores[0], list):
+            instance_scores = [score[0] for score in instance_scores]
+        all_scores_are_same = all(
+            math.isclose(instance_scores[0], instance_scores[i])
+            for i in range(len(instances))
         )
+        if all_scores_are_same:
+            # no point in resamples, just produces Degenerated-data warnings
+            if self._can_compute_confidence_intervals(num_predictions=len(predictions)):
+                confidence_interval = {
+                    "score_ci_low": instance_scores[0],
+                    "score_ci_high": instance_scores[0],
+                    score_name + "_ci_low": instance_scores[0],
+                    score_name + "_ci_high": instance_scores[0],
+                }
+            else:
+                confidence_interval = {}
+        else:
+            confidence_interval = self.compute_global_confidence_intervals(
+                references, predictions, task_data, score_name
+            )
         global_score.update(confidence_interval)
 
         for instance in instances:
