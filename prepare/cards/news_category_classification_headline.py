@@ -1,7 +1,5 @@
 import sys
 
-from src.unitxt.operators import Shuffle
-
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -10,6 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.loaders import LoadFromKaggle
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "news_category_classification_headline"
