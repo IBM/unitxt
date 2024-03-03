@@ -856,7 +856,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         self.metric.ci_disabled = self.ci_disabled
-        self.metric.n_resamples = self.n_resamples
+        if self.n_resamples is not None:
+            self.metric.n_resamples = self.n_resamples
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
