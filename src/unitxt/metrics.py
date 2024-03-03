@@ -57,22 +57,11 @@ class UpdateStream(StreamInstanceOperator):
         return instance
 
 
-# TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
-
-
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = OptionalField(default=None)
     confidence_level: float = OptionalField(default=0.95)
     ci_scores: List[str] = OptionalField(default=None)
     ci_disabled: bool = OptionalField(default=False)
-
-    @abstractmethod
-    def disable_confidence_interval_calculation(self):
-        pass
-
-    @abstractmethod
-    def set_n_resamples(self, n_resample):
-        pass
 
 
 class Metric(ConfidenceIntervalMixin):
@@ -99,15 +88,6 @@ class MetricWithConfidenceInterval(Metric):
         # So use '& MAX_32BIT' to get a 32-bit seed.
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
-
-    def disable_confidence_interval_calculation(self):
-        self.ci_disabled = True
-        n = self.n_resamples
-        self.n_resamples = None
-        return n
-
-    def set_n_resamples(self, n_resamples):
-        self.n_resamples = n_resamples
 
     def _can_compute_confidence_intervals(self, num_predictions):
         if self.ci_disabled:
@@ -861,13 +841,6 @@ class MetricPipeline(MultiStreamOperator, Metric):
     )
     metric: Metric = None
 
-    def disable_confidence_interval_calculation(self):
-        return self.metric.disable_confidence_interval_calculation()
-
-    def set_n_resamples(self, n_resample):
-        if isinstance(self.metric, MetricWithConfidenceInterval):
-            self.metric.set_n_resamples(n_resample)
-
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
 
@@ -882,6 +855,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
         )
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
+        self.metric.ci_disabled = self.ci_disabled
+        self.metric.n_resamples = self.n_resamples
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)

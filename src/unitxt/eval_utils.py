@@ -28,7 +28,7 @@ def _(
 
         if not compute_conf_intervals:
             first_step = metrics_operator.steps[0]
-            n_resamples = first_step.disable_confidence_interval_calculation()
+            first_step.ci_disabled = True
 
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
@@ -42,7 +42,7 @@ def _(
         # retrieve the metric with the previous modification.
         # This reverts the confidence interval change and restores the initial metric.
         if not compute_conf_intervals:
-            first_step.set_n_resamples(n_resamples)
+            first_step.ci_disabled = False
 
     return dataset, global_scores
 
