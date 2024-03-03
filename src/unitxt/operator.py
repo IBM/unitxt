@@ -195,7 +195,7 @@ class SingleStreamOperator(MultiStreamOperator):
     apply_to_streams: List[str] = NonPositionalField(
         default=None
     )  # None apply to all streams
-    dont_apply_to_streams: List[str] = NonPositionalField(default_factory=None)
+    dont_apply_to_streams: List[str] = NonPositionalField(default=None)
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}
