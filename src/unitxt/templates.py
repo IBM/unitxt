@@ -46,11 +46,6 @@ class Template(StreamInstanceOperator):
         source, instruction = self.inputs_to_source(inputs)
         target, references = self.outputs_to_target_and_references(outputs)
 
-        if len(source) > 0:
-            source = source[0].upper() + source[1:]
-        if len(instruction) > 0:
-            instruction = instruction[0].upper() + instruction[1:]
-
         return {
             **instance,
             "source": source,
