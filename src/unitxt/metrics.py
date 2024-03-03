@@ -15,7 +15,7 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
-from .dataclass import InternalField, OptionalField
+from .dataclass import AbstractField, InternalField, OptionalField, RequiredField
 from .logging_utils import get_logger
 from .operator import (
     MultiStreamOperator,
@@ -33,17 +33,6 @@ logger = get_logger()
 settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
-
-
-warnings.filterwarnings("ignore", category=DegenerateDataWarning)
-
-
-def abstract_factory():
-    return {}
-
-
-def abstract_field():
-    return field(default_factory=abstract_factory)
 
 
 def nan_mean(x):
@@ -69,11 +58,13 @@ class UpdateStream(StreamInstanceOperator):
 
 
 # TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
-class Metric(Artifact):
-    @property
-    @abstractmethod
-    def main_score(self):
-        pass
+
+
+class ConfidenceIntervalMixin(Artifact):
+    n_resamples: int = OptionalField(default=None)
+    confidence_level: float = OptionalField(default=0.95)
+    ci_scores: List[str] = OptionalField(default=None)
+    ci_disabled: bool = OptionalField(default=False)
 
     @abstractmethod
     def disable_confidence_interval_calculation(self):
@@ -84,12 +75,23 @@ class Metric(Artifact):
         pass
 
 
+class Metric(ConfidenceIntervalMixin):
+    main_score: str = RequiredField()
+
+    def prepare(self):
+        super().prepare()
+        if self.ci_scores is None:
+            self.ci_scores = [self.main_score]
+
+
+class ReducingMixin(Artifact):
+    reduction_map: Dict[str, List[str]] = OptionalField(default=None)
+    implemented_reductions: List[str] = AbstractField()
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
-    n_resamples: int = None
-    confidence_level: float = 0.95
-    ci_scores: List[str] = None
 
     @staticmethod
     def new_random_generator():
@@ -99,6 +101,7 @@ class MetricWithConfidenceInterval(Metric):
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
     def disable_confidence_interval_calculation(self):
+        self.ci_disabled = True
         n = self.n_resamples
         self.n_resamples = None
         return n
@@ -107,11 +110,17 @@ class MetricWithConfidenceInterval(Metric):
         self.n_resamples = n_resamples
 
     def _can_compute_confidence_intervals(self, num_predictions):
-        return (
+        if self.ci_disabled:
+            return False
+
+        assert (
             self.n_resamples is not None
-            and self.n_resamples > 1
-            and num_predictions > 1
-        )
+        ), "Confidence interval requires n_rsamples (got None), otherwise you can disable ci with ci_disabled=True."
+        assert (
+            self.n_resamples > 1
+        ), "Confidence interval requires more n_rsamples > 1, otherwise you can disable ci with ci_disabled=True."
+
+        return num_predictions > 1
 
     @staticmethod
     def average_item_scores(instances: List[dict], score_name: str):
@@ -286,10 +295,12 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples: int = OptionalField(
-        default_factory=lambda: settings.num_resamples_for_global_metrics
-    )
-    process_single_instances = True
+    process_single_instances: bool = True
+
+    def prepare(self):
+        super().prepare()
+        if self.n_resamples is None:
+            self.n_resamples = settings.num_resamples_for_global_metrics
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -375,14 +386,17 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
 
-class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
-    n_resamples: int = OptionalField(
-        default_factory=lambda: settings.num_resamples_for_instance_metrics
-    )
-    main_score: str
-    reduction_map: Dict[str, List[str]]
+class BulkInstanceMetric(
+    SingleStreamOperator, MetricWithConfidenceInterval, ReducingMixin
+):
+    implemented_reductions: List[str] = OptionalField(default_factory=lambda: ["mean"])
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    def prepare(self):
+        super().prepare()
+        if self.n_resamples is None:
+            self.n_resamples = settings.num_resamples_for_instance_metrics
+        if self.reduction_map is None:
+            self.reduction_map = {self.implemented_reductions[0]: [self.main_score]}
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
@@ -466,7 +480,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
 
-class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, ReducingMixin):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
     InstanceMetric currently allows two reductions:
@@ -477,23 +491,22 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         See _validate_group_mean_reduction for formatting instructions.
     """
 
-    n_resamples: int = OptionalField(
-        default_factory=lambda: settings.num_resamples_for_instance_metrics
+    implemented_reductions: List[str] = OptionalField(
+        default_factory=lambda: ["mean", "group_mean"]
     )
 
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
     # require an additional column (e.g., a subgroup identifier) by which the instance scores will be grouped
     # if subgroup_column is not None, a column by the specified name will be required in task_data
-    subgroup_column = None
-    implemented_reductions: List[str] = field(
-        default_factory=lambda: ["mean", "group_mean"]
-    )
+    subgroup_column: str = OptionalField(default=None)
 
-    @property
-    @abstractmethod
-    def reduction_map(self) -> dict:
-        pass
+    def prepare(self):
+        super().prepare()
+        if self.n_resamples is None:
+            self.n_resamples = settings.num_resamples_for_instance_metrics
+        if self.reduction_map is None:
+            self.reduction_map = {self.implemented_reductions[0]: [self.main_score]}
 
     def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
@@ -782,7 +795,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class Squad(GlobalMetric):
-    _metric = None
     main_score = "f1"
     metric = "squad"
 
@@ -813,27 +825,20 @@ class Squad(GlobalMetric):
 
 
 class Accuracy(InstanceMetric):
-    reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
-    ci_scores = ["accuracy"]
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        result = {
+        return {
             self.main_score: float(
                 str(prediction) in [str(reference) for reference in references]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class StringContainment(InstanceMetric):
-    reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
-    ci_scores = ["string_containment"]
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
@@ -1261,9 +1266,7 @@ class Rouge(HuggingfaceMetric):
 
 # Computes char edit distance, ignoring whitespace
 class CharEditDistanceAccuracy(InstanceMetric):
-    reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
-    ci_scores = ["char_edit_dist_accuracy"]
 
     _requirements_list: List[str] = ["editdistance"]
 
@@ -1323,6 +1326,7 @@ class KendallTauMetric(GlobalMetric):
     _requirements_list: List[str] = ["scipy"]
 
     def prepare(self):
+        super().prepare()
         from scipy.stats import kendalltau
 
         self.kendalltau = kendalltau
@@ -1380,6 +1384,7 @@ class RocAuc(GlobalMetric):
     _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
+        super().prepare()
         from sklearn import metrics
 
         self.roc_curve = metrics.roc_curve
@@ -2103,9 +2108,7 @@ class RetrievalMetric(InstanceMetric):
 
 
 class MRR(RetrievalMetric):
-    reduction_map = {"mean": ["mrr"]}
     main_score = "mrr"
-    ci_scores = ["mrr"]
 
     def _compute(
         self,
@@ -2120,9 +2123,7 @@ class MRR(RetrievalMetric):
 
 
 class MAP(RetrievalMetric):
-    reduction_map = {"mean": ["map"]}
     main_score = "map"
-    ci_scores = ["map"]
 
     def _compute(
         self,
@@ -2145,7 +2146,6 @@ class MAP(RetrievalMetric):
 class RetrievalAtK(RetrievalMetric):
     k_list: List[int]
     main_score: str = None
-    reduction_map: Dict[str, List[str]] = None
 
     def prepare(self):
         super().prepare()

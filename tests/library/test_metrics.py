@@ -441,7 +441,7 @@ class TestMetrics(UnitxtTestCase):
 
     def test_rouge_l(self):
         metric = Rouge(
-            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
+            ci_disabled=True,  # disable confidence interval calculation which fails for this metric configuration
             use_aggregator=False,
             rouge_types=["rougeL"],
         )

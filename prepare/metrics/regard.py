@@ -7,7 +7,7 @@ metric = HuggingfaceMetric(
     main_score="regard",
     hf_main_score="score",
     scale=1.0,
-    n_resamples=None,
+    ci_disabled=True,
 )
 
 predictions = [
