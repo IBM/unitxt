@@ -97,9 +97,9 @@ class MetricRecipe(SequentialOperatorInitilizer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             Apply(
-                "task_data",
+                "reference",
                 function="json.loads",
-                to_field="task_data",
+                to_field="reference",
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
