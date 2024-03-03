@@ -1,3 +1,4 @@
+import math
 import re
 import string
 import uuid
@@ -12,6 +13,7 @@ import evaluate
 import numpy
 import numpy as np
 from scipy.stats import bootstrap
+from scipy.stats._common import ConfidenceInterval
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
@@ -113,6 +115,27 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ) -> ConfidenceInterval:
+        return None
+
+    def might_resampling_bear_no_fruits_for_classfiers(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ) -> ConfidenceInterval:
+        result = self._compute(references, predictions, task_data)[self.main_score]
+        ins = [predictions[i] in references[i] for i in range(len(predictions))]
+        if all(ins) or not any(ins):
+            assert isinstance(result, float)
+            return ConfidenceInterval(result, result)
+        return None
+
     @staticmethod
     def average_item_scores(instances: List[dict], score_name: str):
         """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
@@ -174,14 +197,29 @@ class MetricWithConfidenceInterval(Metric):
                 )
                 return self.resample_from_non_nan(scores)
 
-            # apply bootstrap only on the relevant field
-            ci = bootstrap(
-                (instances,),
-                statistic=statistic,
-                n_resamples=self.n_resamples,
-                confidence_level=self.confidence_level,
-                random_state=self.new_random_generator(),
-            ).confidence_interval
+            # apply bootstrap only on the relevant field, and only if samples can be distinct
+            scores_of_instances_to_sample_from = [
+                instance["score"]["instance"][score_name] for instance in instances
+            ]
+            if all(
+                math.isclose(
+                    scores_of_instances_to_sample_from[0],
+                    scores_of_instances_to_sample_from[i],
+                )
+                for i in range(len(instances))
+            ):
+                ci = ConfidenceInterval(
+                    scores_of_instances_to_sample_from[0],
+                    scores_of_instances_to_sample_from[0],
+                )
+            else:
+                ci = bootstrap(
+                    (instances,),
+                    statistic=statistic,
+                    n_resamples=self.n_resamples,
+                    confidence_level=self.confidence_level,
+                    random_state=self.new_random_generator(),
+                ).confidence_interval
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
@@ -260,9 +298,16 @@ class MetricWithConfidenceInterval(Metric):
             # so we replace any NaN values with those resampled from the non-NaN ones.
             return self.resample_from_non_nan(scores)
 
-        result = {}
         num_predictions = len(predictions)
-        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
+        if not self._can_compute_confidence_intervals(num_predictions=num_predictions):
+            return {}
+        result = {}
+        mrbnf = self.might_resampling_bear_no_fruits(
+            references=references, predictions=predictions, task_data=task_data
+        )
+        if mrbnf:
+            ci = mrbnf
+        else:
             identifiers = list(range(num_predictions))
             ci = bootstrap(
                 (identifiers,),
@@ -271,10 +316,10 @@ class MetricWithConfidenceInterval(Metric):
                 confidence_level=self.confidence_level,
                 random_state=random_gen,
             ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+        result["score_ci_low"] = ci.low
+        result["score_ci_high"] = ci.high
+        result[f"{score_name}_ci_low"] = ci.low
+        result[f"{score_name}_ci_high"] = ci.high
         return result
 
 
@@ -983,6 +1028,37 @@ class HuggingfaceMetric(GlobalMetric):
                     result[key] /= self.scale
         return result
 
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ):
+        individual_scores = []
+        for i in range(len(predictions)):
+            try:
+                score = self._compute(
+                    [references[i]],
+                    [predictions[i]],
+                    task_data,
+                )
+            except:
+                return None
+            individual_scores.append(score)
+        if isinstance(individual_scores[0], list):
+            individual_scores = [
+                individual_score[0] for individual_score in individual_scores
+            ]
+        if isinstance(individual_scores[0], dict):
+            individual_scores = [
+                individual_score[self.main_score]
+                for individual_score in individual_scores
+            ]
+        for i in range(len(predictions)):
+            if not math.isclose(individual_scores[0], individual_scores[i]):
+                return None
+        return ConfidenceInterval(individual_scores[0], individual_scores[0])
+
 
 class HuggingfaceBulkMetric(BulkInstanceMetric):
     hf_metric_name: str
@@ -1078,6 +1154,16 @@ class F1(GlobalMetric):
         else:
             final_result = {self.main_score: result["f1"]}
         return final_result
+
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ):
+        return self.might_resampling_bear_no_fruits_for_classfiers(
+            references, predictions, task_data
+        )
 
 
 class F1Micro(F1):
@@ -1345,6 +1431,47 @@ class KendallTauMetric(GlobalMetric):
             f"{self.main_score}_p_val": kendall_results.pvalue,
         }
 
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> ConfidenceInterval:
+        if isinstance(references[0], list):
+            references = [reference[0] for reference in references]
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+
+        # if both go up and down together, and no tie within each: all samplings will yield the same result:1
+        refs_sorted = sorted(references)
+        preds_sorted = sorted(predictions)
+        for i in range(1, len(predictions)):
+            if math.isclose(refs_sorted[i - 1], refs_sorted[i]) or math.isclose(
+                preds_sorted[i - 1], preds_sorted[i]
+            ):
+                return None
+
+        # get the index lists by which references and predictions are sorted
+        indices_to_sort_refs = sorted(
+            range(len(references)), key=lambda k: references[k]
+        )
+        indices_to_sort_preds = sorted(
+            range(len(predictions)), key=lambda k: predictions[k]
+        )
+        # if both are same, then no need for re_samples: they will all yield 1.
+        if indices_to_sort_refs != indices_to_sort_preds:
+            return None
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
+        corr = kendall_results.correlation
+        return ConfidenceInterval(corr, corr)
+
+        kendall_results = self.kendalltau(references, predictions, variant=self.variant)
+        corr = kendall_results.correlation
+        return {
+            self.main_score: corr,
+            f"{self.main_score}_p_val": kendall_results.pvalue,
+        }
+
 
 class MatthewsCorrelation(HuggingfaceMetric):
     hf_metric_name = "matthews_correlation"
@@ -1371,6 +1498,16 @@ class MatthewsCorrelation(HuggingfaceMetric):
         ]
         return self.metric.compute(
             predictions=formatted_predictions, references=formatted_references
+        )
+
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ):
+        return self.might_resampling_bear_no_fruits_for_classfiers(
+            references, predictions, task_data
         )
 
 
@@ -1570,6 +1707,16 @@ class CustomF1(GlobalMetric):
             pn_total, pd_total, rn_total, rd_total
         )
         return result
+
+    def might_resampling_bear_no_fruits(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ):
+        return self.might_resampling_bear_no_fruits_for_classfiers(
+            references, predictions, task_data
+        )
 
 
 class NER(CustomF1):
