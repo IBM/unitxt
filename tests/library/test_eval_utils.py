@@ -41,9 +41,5 @@ class TestEvalUtils(UnitxtTestCase):
                 "accuracy": 0.3333333333333333,
                 "score": 0.3333333333333333,
                 "score_name": "accuracy",
-                "accuracy_ci_low": 0.0,
-                "accuracy_ci_high": 1.0,
-                "score_ci_low": 0.0,
-                "score_ci_high": 1.0,
             },
         )
