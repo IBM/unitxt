@@ -51,13 +51,18 @@ class RequiredField(Field):
         self.required = True
 
 
+class MissingDefaultError(TypeError):
+    pass
+
+
 @dataclasses.dataclass
 class OptionalField(Field):
     def __post_init__(self):
         self.required = False
-        assert (
-            self.default is not None or self.default_factory is not None
-        ), "OptionalField must have default or default_factory"
+        if self.default is None and self.default_factory is None:
+            raise MissingDefaultError(
+                "OptionalField must have default or default_factory"
+            )
 
 
 @dataclasses.dataclass
