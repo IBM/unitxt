@@ -303,6 +303,11 @@ class TestTemplates(UnitxtTestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+        with self.assertRaises(KeyError):
+            template.outputs_to_target_and_references(
+                outputs={"label": "positive", "references": "1"}
+            )
+
         class ToCoverTemplate(Template):
             def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
                 ret = super().inputs_to_source(inputs)
