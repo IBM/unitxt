@@ -964,10 +964,7 @@ class CopyFields(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        try:
-            return copy.deepcopy(value)
-        except Exception:
-            return value
+        return copy.deepcopy(value)
 
 
 class GetItemByIndex(FieldOperator):
