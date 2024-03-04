@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 from src.unitxt.templates import (
+    InputOutputReferenceTemplate,
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
@@ -271,6 +272,36 @@ class TestTemplates(UnitxtTestCase):
             "\"Available outputs are dict_keys(['label']) but output format requires a different one: {no_label}\"",
             str(ke.exception),
         )
+
+    def test_input_output_reference_template_and_standard_template(self):
+        template = InputOutputReferenceTemplate(
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+            reference="{reference}",
+        )
+
+        inputs = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive", "reference": "1"},
+            },
+        ]
+
+        targets = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive", "reference": "1"},
+                "source": "This is my text:'hello world'",
+                "target": "positive",
+                "references": ["1"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
 
         class ToCoverTemplate(Template):
             def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
