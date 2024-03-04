@@ -4,6 +4,7 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
+from copy import deepcopy
 from dataclasses import field
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
@@ -17,6 +18,7 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact
 from .dataclass import AbstractField, InternalField, OptionalField, RequiredField
 from .logging_utils import get_logger
+from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
     MultiStreamOperator,
     SingleStreamOperator,
@@ -63,6 +65,8 @@ class ConfidenceIntervalMixin(Artifact):
     ci_scores: List[str] = OptionalField(default=None)
     ci_disabled: bool = OptionalField(default=False)
 
+    
+
 
 class Metric(ConfidenceIntervalMixin):
     main_score: str = RequiredField()
@@ -71,6 +75,40 @@ class Metric(ConfidenceIntervalMixin):
         super().prepare()
         if self.ci_scores is None:
             self.ci_scores = [self.main_score]
+
+    def consume_stream(self, stream: Stream):
+        references = []
+        predictions = []
+        additional_inputs = []
+        instances = []
+        for instance in stream:
+            references.append(instance["references"])
+            predictions.append(instance["prediction"])
+            additional_inputs.append(
+                instance["task_data"] if "task_data" in instance else {}
+            )
+            instances.append(instance)
+        return predictions, references, additional_inputs, instances
+
+    @staticmethod
+    def update_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
+        for instance, new_scores in zip(instances, instances_scores):
+            if "score" not in instance:
+                instance["score"] = {}
+            scores = instance["score"]
+            if "instance" not in scores:
+                scores["instance"] = {}
+            scores["instance"].update(new_scores)
+
+    @staticmethod
+    def set_global_score(instances, global_score: Dict[str, Any]):
+        for instance in instances:
+            if "score" not in instance:
+                instance["score"] = {}
+            scores = instance["score"]
+            if "global" not in scores:
+                scores["global"] = {}
+            scores["global"] = global_score
 
 
 class ReducingMixin(Artifact):
@@ -363,6 +401,16 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         predictions: List[Any],
         task_data: List[Any],
     ) -> dict:
+        """Computes a scores dictionary on a list of references, predictions and input.
+
+        This function is called once per instance, and then another time
+        over all data instances.
+
+        Returns:
+            a dictionary of scores that is set as:
+              the instance scores when called on a single data instance
+              the global score when called on the all data instances
+        """
         pass
 
 
@@ -1625,7 +1673,7 @@ class BertScore(HuggingfaceBulkMetric):
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name}
+        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 16}
 
 
 class SentenceBert(BulkInstanceMetric):
@@ -1639,10 +1687,12 @@ class SentenceBert(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import torch
         from sentence_transformers import SentenceTransformer
         from sentence_transformers import util as sbert_util
 
-        self.model = SentenceTransformer(self.model_name)
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.model = SentenceTransformer(self.model_name, device=self.device)
         self.util = sbert_util
 
     def compute(
@@ -1664,9 +1714,9 @@ class SentenceBert(BulkInstanceMetric):
             count += len(ref_group)
 
         # compute s-bert embeddings
-        preds_emb = self.model.encode(predictions)
+        preds_emb = self.model.encode(predictions, device=self.device)
         refs_emb = self.model.encode(
-            [ref for ref_group in references for ref in ref_group]
+            [ref for ref_group in references for ref in ref_group], device=self.device
         )
 
         # for each candidate, pick the reference with the highest score
@@ -1688,9 +1738,13 @@ class Reward(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import torch
         from transformers import pipeline
 
-        self.pipe = pipeline("text-classification", model=self.model_name)
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.pipe = pipeline(
+            "text-classification", model=self.model_name, device=device
+        )
 
     def compute(
         self,
@@ -1783,9 +1837,11 @@ class Perplexity(BulkInstanceMetric):
             from transformers import AutoTokenizer
 
             self.model_name = model_name
+            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            self.model = (
+                self.model_class().from_pretrained(self.model_name).to(self.device)
+            )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = self.model_class().from_pretrained(self.model_name)
-            self.is_cuda = torch.cuda.is_available()
 
         def compute_lm(
             self, source: List[str], target: List[str], batch_size: int
@@ -1878,16 +1934,9 @@ class Perplexity(BulkInstanceMetric):
             return AutoModelForSeq2SeqLM
 
         def compute_batch(self, tokens_source, tokens_target):
-            tokens_docs_ids = tokens_source["input_ids"]
-            attention = tokens_source["attention_mask"]
-            labels = tokens_target["input_ids"]
-
-            if self.is_cuda:
-                tokens_docs_ids, attention, labels = (
-                    tokens_docs_ids.cuda(),
-                    attention.cuda(),
-                    labels.cuda(),
-                )
+            tokens_docs_ids = tokens_source["input_ids"].to(self.device)
+            attention = tokens_source["attention_mask"].to(self.device)
+            labels = tokens_target["input_ids"].to(self.device)
 
             logits = self.model(
                 input_ids=tokens_docs_ids.long(),
@@ -1927,12 +1976,9 @@ class Perplexity(BulkInstanceMetric):
             # replace the padding token in the labels by -100
             labels[labels == self.tokenizer.pad_token_id] = -100
 
-            if self.is_cuda:
-                tokens, attention, labels = (
-                    tokens.cuda(),
-                    attention.cuda(),
-                    labels.cuda(),
-                )
+            tokens = tokens.to(self.device)
+            attention = attention.to(self.device)
+            labels = labels.to(self.device)
 
             # no need to pass labels as we calculate the loss below per document
             model_output = self.model(
@@ -2167,6 +2213,93 @@ class KPA(CustomF1):
 
     def should_ignore_element(self, element, additional_input):
         return element == "none"
+
+
+class RemoteMetric(SingleStreamOperator, Metric):
+    """A metric that runs another metric remotely.
+
+    main_score: the score updated by this metric.
+    endpoint: the remote host that supports the remote metric execution.
+    metric_name: the name of the metric that is executed remotely.
+    api_key: optional, passed to the remote metric with the input, allows secure authentication.
+    """
+
+    main_score: str = None
+    endpoint: str
+    metric_name: str
+    api_key: str = None
+
+    @staticmethod
+    def wrap_inner_metric_pipeline_metric(
+        metric_pipeline: MetricPipeline, remote_metrics_endpoint: str
+    ) -> MetricPipeline:
+        """Wrap the inner metric in a MetricPipeline with a RemoteMetric.
+
+        When executing the returned MetricPipeline, the inner metric will be computed
+        remotely (pre and post processing steps in the MetricPipeline will be computed locally).
+        """
+        local_inner_metric = metric_pipeline.metric
+        metric_pipeline = deepcopy(
+            metric_pipeline
+        )  # To avoid unintentional changes to the catalog contents
+        metric_pipeline.metric = RemoteMetric(
+            main_score=local_inner_metric.main_score,
+            metric_name=local_inner_metric.artifact_identifier,
+            endpoint=remote_metrics_endpoint,
+        )
+        return metric_pipeline
+
+    def get_metric_url(self) -> str:
+        return f"{self.endpoint}/{self.metric_name}"
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        predictions, references, additional_inputs, instances = self.consume_stream(
+            stream
+        )
+        metric_request = self.create_metric_request(
+            predictions, references, additional_inputs
+        )
+        metric_response = self.get_metric_response(metric_request)
+        self.update_instance_scores(instances, metric_response.instances_scores)
+        self.set_global_score(instances, metric_response.global_score)
+        yield from instances
+
+    @staticmethod
+    def create_metric_request(predictions, references, additional_inputs):
+        instance_inputs = [
+            InstanceInput(
+                prediction=prediction,
+                references=reference,
+                additional_inputs=additional_input,
+            )
+            for prediction, reference, additional_input in zip(
+                predictions, references, additional_inputs
+            )
+        ]
+        return MetricRequest(instance_inputs=instance_inputs)
+
+    def get_metric_response(self, metric_request: MetricRequest) -> MetricResponse:
+        import requests
+
+        response = requests.post(
+            url=self.get_metric_url(),
+            json=metric_request.to_dict(),
+            headers={"Authorization": f"Bearer {self.api_key}"},
+        )
+        response.raise_for_status()
+        response_json = response.json()
+        return MetricResponse(**response_json)
+
+    def disable_confidence_interval_calculation(self):
+        """Confidence intervals are always disabled for RemoteMetric.
+
+        No need to do anything.
+        """
+        pass
+
+    def set_n_resamples(self, n_resample):
+        """Since confidence intervals are always disabled for remote metrics, this is a no-op."""
+        pass
 
 
 def validate_subgroup_types(
