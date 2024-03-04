@@ -10,3 +10,4 @@ nltk
 sacrebleu
 scikit-learn
 jiwer
+conllu
