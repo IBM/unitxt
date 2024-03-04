@@ -40,11 +40,10 @@ add_to_catalog(
 # Template from https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="""\
-Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words
-Document: {context}
-Question: {question}
-Answer: """,
+        instruction="Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words.\n\n",
+        input_format="Document: {context}\nQuestion: {question}",
+        output_format="{answer}",
+        target_prefix="Answer: ",
         references_field="answers",
     ),
     "templates.qa.with_context.ffqa",

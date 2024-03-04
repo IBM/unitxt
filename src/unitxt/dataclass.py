@@ -6,6 +6,10 @@ from typing import Any, final
 _FIELDS = "__fields__"
 
 
+class Undefined:
+    pass
+
+
 @dataclasses.dataclass
 class Field:
     """An alternative to dataclasses.dataclass decorator for a more flexible field definition.
@@ -21,7 +25,7 @@ class Field:
         origin_cls (type, optional): The original class that defined the field. Defaults to None.
     """
 
-    default: Any = None
+    default: Any = Undefined
     name: str = None
     type: type = None
     init: bool = True
@@ -51,13 +55,18 @@ class RequiredField(Field):
         self.required = True
 
 
+class MissingDefaultError(TypeError):
+    pass
+
+
 @dataclasses.dataclass
 class OptionalField(Field):
     def __post_init__(self):
         self.required = False
-        assert (
-            self.default is not None or self.default_factory is not None
-        ), "OptionalField must have default or default_factory"
+        if self.default is Undefined and self.default_factory is None:
+            raise MissingDefaultError(
+                "OptionalField must have default or default_factory"
+            )
 
 
 @dataclasses.dataclass

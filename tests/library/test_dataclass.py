@@ -6,7 +6,9 @@ from src.unitxt.dataclass import (
     Dataclass,
     FinalField,
     FinalFieldError,
+    MissingDefaultError,
     NonPositionalField,
+    OptionalField,
     RequiredField,
     RequiredFieldError,
     UnexpectedArgumentError,
@@ -53,6 +55,32 @@ class TestDataclass(UnitxtTestCase):
 
             class Child(Parent):
                 a: int = 2
+
+    def test_optional_field_one_generation(self):
+        class Dummy(Dataclass):
+            a: int = 5
+
+        with self.subTest("simple test"):
+            with self.assertRaises(MissingDefaultError):
+
+                class RaiseError(Dataclass):
+                    a: int = OptionalField()
+
+        with self.subTest("test with input value"):
+            d = Dummy(a=1)
+            self.assertEqual(d.a, 1)
+            d = Dummy()
+            self.assertEqual(d.a, 5)
+
+        with self.subTest("test with implicit decleration"):
+
+            class Dummy(Dataclass):
+                a: float = OptionalField(default=2)
+
+            d = Dummy(a=7)
+            self.assertEqual(d.a, 7)
+            d = Dummy()
+            self.assertEqual(d.a, 2)
 
     def test_required_field_one_generation(self):
         class Dummy(Dataclass):
