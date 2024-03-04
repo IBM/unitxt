@@ -33,6 +33,7 @@ General Operaotrs List:
 ------------------------
 """
 import collections
+import copy
 import operator
 import os
 import uuid
@@ -963,7 +964,10 @@ class CopyFields(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        return value
+        try:
+            return copy.deepcopy(value)
+        except Exception:
+            return value
 
 
 class GetItemByIndex(FieldOperator):
@@ -1574,6 +1578,13 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+def get_merged_stream(stream_orig, stream_new):
+    for instance1, instance2 in zip(stream_orig, stream_new):
+        instance1["score"] = deepcopy(instance2["score"])
+
+    yield from stream_new
+
+
 class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
@@ -1605,6 +1616,16 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
+        # Workaround: The metric/MetricPipeline modifies the stream itself, sometines making it incompatible
+        # for further metrics' processing, instead of just modifying the score field.
+        # Here we keep all the fields besides the score, and restore them after the metric finishes.
+        first_instance = stream.peek()
+        keys_to_restore = set(first_instance.keys()).difference({"score"})
+        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = CopyFields(
+            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
+        )(multi_stream)
+
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(
@@ -1614,8 +1635,15 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
 
-            stream = metric(MultiStream({"tmp": stream}))["tmp"]
+            multi_stream = metric(multi_stream)
+            multi_stream = CopyFields(
+                field_to_field={f"{k}_orig": k for k in keys_to_restore}
+            )(multi_stream)
 
+        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
+            multi_stream
+        )
+        stream = multi_stream["tmp"]
         yield from stream
 
 
