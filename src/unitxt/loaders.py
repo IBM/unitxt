@@ -33,7 +33,7 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
-from .dataclass import InternalField
+from .dataclass import InternalField, OptionalField
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
@@ -86,6 +86,13 @@ class LoadHF(Loader):
     streaming: bool = True
     filtering_lambda: Optional[str] = None
     _cache: dict = InternalField(default=None)
+    requirements_list: List[str] = OptionalField(default_factory=list)
+
+    def verify(self):
+        for requirement in self.requirements_list:
+            if requirement not in self._requirements_list:
+                self._requirements_list.append(requirement)
+        super().verify()
 
     def filtered_load(self, dataset):
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
