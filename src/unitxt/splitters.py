@@ -70,6 +70,7 @@ class SeparateSplit(Splitter):
     from_split: str
     to_split_names: List[str]
     to_split_sizes: List[int]
+    remove_targets_from_source_split: bool = True
 
     def verify(self):
         assert (
@@ -82,13 +83,14 @@ class SeparateSplit(Splitter):
         mapping = {
             key: {key: [(None, None)]}
             for key in multi_stream.keys()
-            if key != self.from_split
+            if not self.remove_targets_from_source_split or key != self.from_split
         }
         so_far = 0
         for name, size in itertools.zip_longest(
             self.to_split_names, self.to_split_sizes
         ):
-            mapping[name] = {self.from_split: [(so_far, size)]}
+            if self.remove_targets_from_source_split or name != self.from_split:
+                mapping[name] = {self.from_split: [(so_far, size)]}
             if size:
                 so_far += size
         generators = slice_streams(multi_stream, mapping)

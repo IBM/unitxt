@@ -79,6 +79,36 @@ class TestRecipes(UnitxtTestCase):
             print_dict(instance)
             break
 
+    def test_standard_recipe_with_demos_not_removed_from_data(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=100,
+            num_demos=3,
+            demos_removed_from_data=True,
+        )
+
+        stream = recipe()
+        n_trains_remove_demos = len(list(stream["train"]))
+        n_demos_remove_demos = len(list(stream["demos_pool"]))
+
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=100,
+            num_demos=3,
+            demos_removed_from_data=False,
+        )
+
+        stream = recipe()
+        n_trains_keep_demos = len(list(stream["train"]))
+        n_demos_keep_demos = len(list(stream["demos_pool"]))
+
+        self.assertEqual(
+            n_trains_keep_demos, n_trains_remove_demos + n_demos_remove_demos
+        )
+        self.assertEqual(n_demos_keep_demos, n_demos_remove_demos)
+
     def test_empty_template(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
