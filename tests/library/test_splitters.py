@@ -1,3 +1,5 @@
+import copy
+
 from src.unitxt.splitters import DiverseLabelsSampler
 from tests.utils import UnitxtTestCase
 
@@ -100,3 +102,24 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
     def test_examplar_repr_missing_fields(self):
         self._test_examplar_repr_missing_field(missing_field="inputs")
         self._test_examplar_repr_missing_field(missing_field="outputs")
+
+    def test_filter_with_bad_input(self):
+        sampler = DiverseLabelsSampler(3)
+        choices = ["dog", "cat"]
+        instances = [
+            self.new_examplar(choices, ["dog"], "Bark1"),
+            self.new_examplar(choices, ["dog"], "Bark2"),
+            self.new_examplar(choices, ["cat"], "Cat1"),
+        ]
+        instance = copy.deepcopy(instances[0])
+
+        filtered_instances = sampler.filter_source_by_instance(instances, instance)
+        self.assertEqual(len(filtered_instances), 2)
+
+        del instance["inputs"]
+        with self.assertRaises(ValueError) as cm:
+            sampler.filter_source_by_instance(instances, instance)
+        self.assertEqual(
+            f"'inputs' field is missing from '{instance}'.",
+            str(cm.exception),
+        )
