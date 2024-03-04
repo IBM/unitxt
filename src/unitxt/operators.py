@@ -1578,13 +1578,6 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
-def get_merged_stream(stream_orig, stream_new):
-    for instance1, instance2 in zip(stream_orig, stream_new):
-        instance1["score"] = deepcopy(instance2["score"])
-
-    yield from stream_new
-
-
 class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
