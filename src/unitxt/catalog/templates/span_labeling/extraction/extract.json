@@ -1,0 +1,8 @@
+{
+    "type": "span_labeling_template",
+    "input_format": "{text_type}: {text}",
+    "instruction": "From the following {text_type}, extract the objects for which the {class_type} expressed is one of {classes}.",
+    "postprocessors": [
+        "processors.to_span_label_pairs"
+    ]
+}

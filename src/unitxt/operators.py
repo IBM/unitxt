@@ -966,6 +966,15 @@ class CopyFields(FieldOperator):
         return value
 
 
+class GetItemByIndex(FieldOperator):
+    """Get from the item list by the index in the field."""
+
+    items_list: List[Any]
+
+    def process_value(self, value: Any) -> Any:
+        return self.items_list[value]
+
+
 class AddID(StreamInstanceOperator):
     """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
 
