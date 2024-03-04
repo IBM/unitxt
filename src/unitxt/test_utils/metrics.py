@@ -55,6 +55,7 @@ def apply_metric(
             for prediction, reference in zip(predictions, references)
         ]
     multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
+
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
     return list(output_stream)
@@ -87,7 +88,8 @@ def test_metric(
     global_score = round_floats(outputs[0]["score"]["global"])
     if not dict_equal(global_score, global_target):
         errors.append(
-            f"global score must be equal, got {json.dumps(global_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(global_target, sort_keys=True, ensure_ascii=False)}"
+            f"global score must be equal, got {json.dumps(global_score, sort_keys=True, ensure_ascii=False)} =/= "
+            f"{json.dumps(global_target, sort_keys=True, ensure_ascii=False)}"
         )
 
     if len(outputs) == len(instance_targets):
@@ -95,11 +97,14 @@ def test_metric(
             instance_score = round_floats(output["score"]["instance"])
             if not dict_equal(instance_score, instance_target):
                 errors.append(
-                    f"instance score must be equal, got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= {json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
+                    f"instance score must be equal, "
+                    f"got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= "
+                    f"{json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
                 )
     else:
         errors.append(
-            f"Metric outputs count does not match instance targets count, got {len(outputs)} =/= {len(instance_targets)}"
+            f"Metric outputs count does not match instance targets count, got {len(outputs)} =/= "
+            f"{len(instance_targets)}"
         )
 
     if len(errors) > 0:
