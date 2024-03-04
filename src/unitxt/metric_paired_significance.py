@@ -373,6 +373,7 @@ class PairedDifferenceTest:
                         )
                     ]
                 )
+                ignore_nan_pvalues = np.repeat(False, len(pvalues))
             else:
                 obs_is_not_nan_for_both = [
                     obs_idx_is_never_nan([vec[0], vec[1]])
@@ -382,7 +383,7 @@ class PairedDifferenceTest:
                 ]
 
                 test_res = [
-                    ttest_rel(
+                    self.ttest_modify_for_zero_numerator(
                         a=vec[0][include], b=vec[1][include], alternative=alternative
                     )
                     for vec, include in zip(
@@ -397,11 +398,15 @@ class PairedDifferenceTest:
                 # see e.g. https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Paired_T-Tests_using_Effect_Size.pdf
                 # permutation test doesn't have effect sizes
                 # this affects only the statistic, not the reported num_obs in the report
-                res["effect_sizes"] = np.array(
-                    [
-                        tr.statistic / np.sqrt(include.sum())
-                        for tr, include in zip(test_res, obs_is_not_nan_for_both)
-                    ]
+                statistic_value = np.array([tr.statistic for tr in test_res])
+                sd = np.sqrt([include.sum() for include in obs_is_not_nan_for_both])
+                res["effect_sizes"] = statistic_value / sd
+                # return 0 if the statistic is 0 rather than NaN
+                res["effect_sizes"][np.equal(statistic_value, 0.0)] = 0.0
+
+                # in adjustment, ignore p-values that were converted to non-Nan because of 0/0 (compromise)
+                ignore_nan_pvalues = np.array(
+                    [tr._estimate == tr._standard_error == 0.0 for tr in test_res]
                 )
 
                 if alternative == "two-sided":
@@ -416,8 +421,17 @@ class PairedDifferenceTest:
                     )
 
             if corrected:
-                mult_corr = multipletests(pvals=pvalues, alpha=self.alpha)
-                res.update({"pvalues": mult_corr[1], "pvalue_is_signif": mult_corr[0]})
+                # ignore p-values converted from NaN when doing an adjustment, as a compromise
+                mult_corr = multipletests(
+                    pvals=pvalues[~ignore_nan_pvalues], alpha=self.alpha
+                )
+                from copy import copy
+
+                mcp, mcs = copy(pvalues), np.repeat(True, len(pvalues))
+                mcp[~ignore_nan_pvalues] = mult_corr[1]
+                mcs[~ignore_nan_pvalues] = mult_corr[0]
+
+                res.update({"pvalues": mcp, "pvalue_is_signif": mcs})
             else:
                 res.update(
                     {"pvalues": pvalues, "pvalue_is_signif": pvalues <= self.alpha}
@@ -441,6 +455,39 @@ class PairedDifferenceTest:
             if permute
             else self.TTEST_REPORT(*[res[kk] for kk in self.TTEST_REPORT._fields])
         )
+
+    def ttest_modify_for_zero_numerator(self, a, b, alternative="two-sided"):
+        """Modify ttest result for cases where numerator and denominator are 0, giving a NaN p-value.
+
+        Args:
+            a: first sample
+            b: second sample
+            alternative: the alternative hypothesis
+        return:
+            TtestResult object
+        """
+        from scipy.stats._stats_py import TtestResult
+
+        tuple_res = ttest_rel(a=a, b=b, alternative=alternative)
+        if np.isnan(tuple_res.pvalue):
+            # generally caused by cases where statistic is 0/0
+            # if the numerator = 0, p-value should not be NaN
+            if tuple_res._estimate == 0.0:
+                # since the difference is ALSO 0, the p-value should be maximally insignificant, with value depending on the alternative
+                # the statistic should be 0 rather than NaN
+                return TtestResult(
+                    statistic=0.0,
+                    pvalue=1.0 if alternative == "two-sided" else 0.5,
+                    df=tuple_res.df,
+                    alternative=tuple_res._alternative,
+                    standard_error=tuple_res._standard_error,
+                    estimate=tuple_res._estimate,
+                )
+            # in case this happens in other cases
+            return tuple_res
+
+            # if not NaN, return the original report
+        return tuple_res
 
     def _check_valid_signif_report(self, test_res):
         """Test if an instance of results from signif_pair_diff is a valid comparison to an object of class PairedDifferenceTest.
@@ -705,7 +752,9 @@ class PairedDifferenceTest:
 
         import matplotlib.pyplot as plt
 
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(
+            1, 1, figsize=self._calc_heatmap_figsize(test_results_list)
+        )
         # this coloring uses the recoding, ensure color range is symmetric
         vmx = (
             self.alpha
@@ -717,7 +766,7 @@ class PairedDifferenceTest:
         )
 
         # colorbar
-        cbar = fig.colorbar(img)
+        cbar = fig.colorbar(img, fraction=0.1)
 
         if use_pvalues:
             # set 5 uniform ticks, which will be from -alpha, with 0 in middle, to alpha
@@ -798,6 +847,16 @@ class PairedDifferenceTest:
         plt.subplots_adjust()  # bottom=0.2)
         plt.show()
 
+    def _calc_heatmap_figsize(self, test_results_list):
+        """Adjust the heatmap figsize so if there are many models compared, it doesn't squash them."""
+        # default figsize in inches
+        w, h = 6.4, 4.8
+        num_comparisons = len(test_results_list[0].sample_means)
+        table_rows = self.nmodels + 1
+        min_inch_per_row = 1.0
+        h = max(h, (min_inch_per_row * (num_comparisons + table_rows)) * 1.1)
+        return w, h
+
     def _form_heatmap_matrices(
         self,
         test_results_list,
@@ -827,9 +886,9 @@ class PairedDifferenceTest:
         )
         combined_results_arr_with_nan = deepcopy(combined_results_arr)
         # set any insignificant results to NaN
-        combined_results_arr_with_nan[
-            np.logical_not(combined_results_are_signif)
-        ] = np.nan
+        combined_results_arr_with_nan[np.logical_not(combined_results_are_signif)] = (
+            np.nan
+        )
 
         # color by sign (works for p-values and effect size)
         statistic_sign = pd.DataFrame(
@@ -976,6 +1035,7 @@ class PairedDifferenceTest:
         use_pvalues=True,
         model_name_split_char=None,
         weight_edges=False,
+        font_size=12,
     ):
         """Compare models across a given metric; show a graph where nodes correspond to models, and edges are drawn between pairs that have a significant difference result.
 
@@ -986,6 +1046,7 @@ class PairedDifferenceTest:
             use_pvalues: boolean, if True use p-values, otherwise effect sizes, to decide if significant
             model_name_split_char: string used to split node names on when labeling
             weight_edges: boolean, if True make less significant differences be shown by thicker edge lines
+            font_size: numeric font size for labeling nodes
         """
         self._check_valid_signif_report(test_res)
         if node_color_levels is not None:
@@ -1013,6 +1074,7 @@ class PairedDifferenceTest:
             arrows=test_res.alternative != "two-sided",
             edge_color="gray",
             width=dg.edge_widths,
+            font_size=font_size,
         )
         ax.tick_params(left=True, bottom=False, labelleft=True, labelbottom=False)
         ax.set_ylabel(f"mean model {test_res.metric}")
