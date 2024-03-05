@@ -328,8 +328,7 @@ def verbosed_fetch_artifact(identifer):
 
 
 def reset_artifacts_cache():
-    fetch_artifact.cache_clear()
-    verbosed_fetch_artifact.cache_clear()
+    lru_cached_load_json.cache_clear()
 
 
 def maybe_recover_artifact(artifact):

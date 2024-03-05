@@ -1,6 +1,7 @@
 from src.unitxt.artifact import (
     Artifact,
     fetch_artifact,
+    reset_artifacts_cache,
 )
 from src.unitxt.catalog import add_to_catalog, get_from_catalog
 from src.unitxt.dataclass import UnexpectedArgumentError
@@ -128,5 +129,5 @@ class TestArtifact(UnitxtTestCase):
         # returned artifactories should be the same object
         self.assertTrue(artifactory1 == artifactory2)
 
-    def test_clear_cache_of_fetch_artifact(self):
-        fetch_artifact.cache_clear()
+    def test_reset_artifacts_cache(self):
+        reset_artifacts_cache()
