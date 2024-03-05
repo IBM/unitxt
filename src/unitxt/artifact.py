@@ -1,12 +1,10 @@
 import difflib
-import functools
 import inspect
 import json
 import os
 import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
-from functools import lru_cache
 from typing import Dict, List, Optional, Union, final
 
 from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
@@ -17,7 +15,7 @@ from .parsing_utils import (
 from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import load_json, save_json
+from .utils import lru_cached_load_json, save_json
 
 logger = get_logger()
 settings = get_settings()
@@ -211,7 +209,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
-        d = load_json(path)
+        d = lru_cached_load_json(path)
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
@@ -299,23 +297,6 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-def copying_lru_cache_for_first_tuple_item(maxsize=10, typed=False):
-    """An LRU cache wrapping a function that returns a tuple, which does deepcopy on the returned first  item."""
-
-    def decorating_function(user_function):
-        cached_func = lru_cache(maxsize=maxsize, typed=typed)(user_function)
-
-        def wrapper(*args, **kwargs):
-            first_item, second_item = cached_func(*args, **kwargs)
-            return deepcopy(first_item), second_item
-
-        wrapper.cache_clear = cached_func.cache_clear
-        return functools.update_wrapper(wrapper, user_function)
-
-    return decorating_function
-
-
-@copying_lru_cache_for_first_tuple_item(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
@@ -340,7 +321,6 @@ def get_artifactory_name_and_args(
     raise UnitxtArtifactNotFoundError(name, artifactories)
 
 
-@lru_cache(maxsize=None)
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
     logger.info(f"Artifact {identifer} is fetched from {artifactory}")
