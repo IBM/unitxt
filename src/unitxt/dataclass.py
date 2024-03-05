@@ -298,9 +298,11 @@ class DataclassMeta(ABCMeta):
 
                 if isinstance(default_value, dataclasses._MISSING_TYPE):
                     default_value = Parameter.empty
-
                 param = Parameter(
-                    name, Parameter.POSITIONAL_OR_KEYWORD, default=default_value
+                    name,
+                    Parameter.POSITIONAL_OR_KEYWORD,
+                    default=default_value,
+                    annotation=field.type,
                 )
                 parameters.append(param)
 

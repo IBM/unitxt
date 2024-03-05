@@ -93,5 +93,5 @@ line-ending = "auto"
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.flake8-bugbear]
+[tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
