@@ -170,6 +170,18 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_str_to_float_format(self):
+        parser, _ = fetch_artifact("processors.str_to_float_format")
+        inputs = ["-2.4", "5", "5a"]
+        targets = ["-2.4", "5.0", "5a"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
     def test_stance_to_pro_con(self):
         parser, _ = fetch_artifact("processors.stance_to_pro_con")
         inputs = ["positive", "negative", "suggestion", "neutral", "nothing"]
