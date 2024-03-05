@@ -199,7 +199,7 @@ class MetricWithConfidenceInterval(Metric):
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
-            if self._all_instance_scores_equal(instances):
+            if self._all_instance_scores_equal(instances, score_name):
                 continue
 
             # need to redefine the statistic function within the loop because score_name is a loop variable
