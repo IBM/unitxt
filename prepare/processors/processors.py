@@ -11,6 +11,7 @@ from src.unitxt.processors import (
     StanceToProCon,
     StringOrNotString,
     Substring,
+    StrToFloatFormat,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
     ToYesOrNone,
@@ -134,6 +135,17 @@ add_to_catalog(
         ]
     ),
     "processors.yes_no_to_int",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            StrToFloatFormat(field="prediction", process_every_value=False),
+            StrToFloatFormat(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.str_to_float_format",
     overwrite=True,
 )
 
