@@ -1,40 +1,16 @@
-.. _adding_operator:
+.. _adding_metric:
+
+.. note::
+
+   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
+
 
 =====================================
-Adding Stream Operators and Metrics
+Adding Metrics ✨
 =====================================
 
 In this section we will add brand new stream operators and metrics
 to use in our processing pipelines.
-
-Adding a new stream operator
-----------------------------
-
-Create a new class that extends the `StreamInstanceOperator` or any other :ref:`Stream Operator <operators>` class.
-
-    .. code-block:: python
-
-        from unitxt.operator import StreamInstanceOperator
-
-        class AddFields(StreamInstanceOperator):
-            fields: Dict[str, object]
-
-            def process(self, instance: Dict[str, Any], stream_name: str = None) -> Dict[str, Any]:
-                return {**instance, **self.fields}
-
-To test that our operator works as expected, we can use the unitxt built-in
-testing suit:
-
-    .. code-block:: python
-
-        from unitxt.test_utils.operators import check_operator
-
-        operator = AddFields(fields={"b": 2})
-
-        inputs = [{'a': 1}, {'a': 2}]
-        targets = [{'a': 1, 'b': 2}, {'a': 2, 'b': 2}]
-
-        print(check_operator(operator, inputs, targets)) # True
 
 
 Adding a new metric

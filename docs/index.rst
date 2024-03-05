@@ -171,9 +171,13 @@ Welcome!
    docs/demo
    docs/no_installation_usage
    docs/installation
-   docs/adding_dataset
-   docs/adding_operators_and_metrics
    docs/components
+   docs/adding_dataset
+   docs/adding_task
+   docs/adding_template
+   docs/adding_format
+   docs/adding_operator
+   docs/adding_metric
    docs/backend
    docs/operators
    docs/contributors_guide
