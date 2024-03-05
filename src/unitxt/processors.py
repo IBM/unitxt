@@ -15,9 +15,20 @@ class ToStringStripped(FieldOperator):
         return str(text).strip()
 
 
-class ToListByComma(FieldOperator):
+class Split(FieldOperator):
+    delimiter: str = " "
+    strip_every_element: bool = False
+
     def process_value(self, text: Any) -> Any:
-        return [x.strip() for x in text.split(",")]
+        return [
+            x.strip() if self.strip_every_element else x
+            for x in text.split(self.delimiter)
+        ]
+
+
+class ToListByComma(Split):
+    delimiter = ","
+    strip_every_element = True
 
 
 class RegexParser(FieldOperator):
