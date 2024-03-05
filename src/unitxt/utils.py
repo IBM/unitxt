@@ -29,8 +29,8 @@ def flatten_dict(
 
 
 @lru_cache(maxsize=None)
-def lru_cached_load_json(path):
-    return load_json(path)
+def artifacts_json_cache(artifact_path):
+    return load_json(artifact_path)
 
 
 def load_json(path):
