@@ -176,7 +176,7 @@ class MultiStreamOperator(StreamingOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
-        multi_stream = {stream_name: [instance]}
+        multi_stream = MultiStream({stream_name: [instance]})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
 
