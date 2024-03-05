@@ -15,7 +15,7 @@ from .parsing_utils import (
 from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import lru_cached_load_json, save_json
+from .utils import artifacts_json_cache, save_json
 
 logger = get_logger()
 settings = get_settings()
@@ -209,7 +209,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
-        d = lru_cached_load_json(path)
+        d = artifacts_json_cache(path)
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
@@ -327,8 +327,8 @@ def verbosed_fetch_artifact(identifer):
     return artifact
 
 
-def reset_artifacts_cache():
-    lru_cached_load_json.cache_clear()
+def reset_artifacts_json_cache():
+    artifacts_json_cache.cache_clear()
 
 
 def maybe_recover_artifact(artifact):
