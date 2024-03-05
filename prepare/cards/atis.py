@@ -105,7 +105,7 @@ card = TaskCard(
         IobExtractor(
             labels=classes,
             begin_labels=["B-" + c for c in classes],
-            inside_labels=["B-" + c for c in classes],
+            inside_labels=["I-" + c for c in classes],
             outside_label="O",
         ),
         CopyFields(
