@@ -392,7 +392,7 @@ class TestRecipes(UnitxtTestCase):
 
         stream = recipe()
 
-        self.assertEqual(len(list(stream["train"])), 6)
+        self.assertEqual(len(list(stream["train"])), 10)
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
