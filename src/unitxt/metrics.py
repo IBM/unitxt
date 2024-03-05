@@ -1,3 +1,4 @@
+import logging
 import re
 import string
 import uuid
@@ -176,6 +177,7 @@ class MetricWithConfidenceInterval(Metric):
         Returns:
             Dict of confidence interval values
         """
+        logging.info("score_based_confidence_interval: begin")
         result = {}
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
@@ -188,6 +190,16 @@ class MetricWithConfidenceInterval(Metric):
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
         for score_name in score_names:
+            instance_scores = [
+                instance["score"]["instance"][score_name] for instance in instances
+            ]
+            non_nan_instance_scores = [
+                score for score in instance_scores if score is not np.nan
+            ]
+            num_unique_scores = len(set(non_nan_instance_scores))
+            if num_unique_scores == 1:
+                continue
+
             # need to redefine the statistic function within the loop because score_name is a loop variable
             def statistic(arr, axis, score_name=score_name):
                 # arr is a 2d array where each row is a resampling, so we
@@ -215,6 +227,7 @@ class MetricWithConfidenceInterval(Metric):
             if score_name == self.main_score:
                 result["score_ci_low"] = ci.low
                 result["score_ci_high"] = ci.high
+        logging.info("score_based_confidence_interval: end")
         return result
 
     def resample_from_non_nan(self, values):
