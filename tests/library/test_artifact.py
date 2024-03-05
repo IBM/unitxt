@@ -1,6 +1,7 @@
 from src.unitxt.artifact import (
     Artifact,
     fetch_artifact,
+    reset_artifacts_json_cache,
 )
 from src.unitxt.catalog import add_to_catalog, get_from_catalog
 from src.unitxt.dataclass import UnexpectedArgumentError
@@ -112,3 +113,21 @@ class TestArtifact(UnitxtTestCase):
                 "type_of_class": "topic_test",
             }
             self.assertDictEqual(expected, artifact.fields)
+
+    def test_modifying_fetched_artifact_does_not_effect_cached_artifacts(self):
+        artifact_identifier = "metrics.accuracy"
+        artifact, artifactory1 = fetch_artifact(artifact_identifier)
+        self.assertNotEqual(artifact.n_resamples, None)
+        artifact.disable_confidence_interval_calculation()
+        self.assertEqual(artifact.n_resamples, None)
+
+        same_artifact_retrieved_again, artifactory2 = fetch_artifact(
+            artifact_identifier
+        )
+        self.assertNotEqual(same_artifact_retrieved_again.n_resamples, None)
+
+        # returned artifactories should be the same object
+        self.assertTrue(artifactory1 == artifactory2)
+
+    def test_reset_artifacts_json_cache(self):
+        reset_artifacts_json_cache()

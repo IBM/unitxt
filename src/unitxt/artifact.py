@@ -5,7 +5,6 @@ import os
 import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
-from functools import lru_cache
 from typing import Dict, List, Optional, Union, final
 
 from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
@@ -16,7 +15,7 @@ from .parsing_utils import (
 from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import load_json, save_json
+from .utils import artifacts_json_cache, save_json
 
 logger = get_logger()
 settings = get_settings()
@@ -210,7 +209,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
-        d = load_json(path)
+        d = artifacts_json_cache(path)
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.artifact_identifier = artifact_identifier
         return new_artifact
@@ -298,7 +297,6 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-@lru_cache(maxsize=None)
 def fetch_artifact(name):
     if Artifact.is_artifact_file(name):
         return Artifact.load(name), None
@@ -323,16 +321,14 @@ def get_artifactory_name_and_args(
     raise UnitxtArtifactNotFoundError(name, artifactories)
 
 
-@lru_cache(maxsize=None)
 def verbosed_fetch_artifact(identifer):
     artifact, artifactory = fetch_artifact(identifer)
     logger.info(f"Artifact {identifer} is fetched from {artifactory}")
     return artifact
 
 
-def reset_artifacts_cache():
-    fetch_artifact.cache_clear()
-    verbosed_fetch_artifact.cache_clear()
+def reset_artifacts_json_cache():
+    artifacts_json_cache.cache_clear()
 
 
 def maybe_recover_artifact(artifact):
