@@ -45,6 +45,28 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
             self.assertEqual(counts["cat"], 1)
             self.assertEqual(len(counts.keys()), 3)
 
+    def test_sample_no_empty_labels(self):
+        for i in range(3):
+            num_samples = 3
+            sampler = DiverseLabelsSampler(num_samples, include_empty_label=False)
+            choices = ["dog", "cat"]
+            instances = [
+                self.new_examplar(choices, ["dog"], "Bark1"),
+                self.new_examplar(choices, ["dog"], "Bark2"),
+                self.new_examplar(choices, ["cat"], "Cat1"),
+                self.new_examplar(choices, ["dog"], "Bark3"),
+                self.new_examplar(choices, ["cow"], "Moo1"),
+                self.new_examplar(choices, ["duck"], "Quack"),
+            ]
+            result = sampler.sample(instances)
+
+            from collections import Counter
+
+            counts = Counter()
+            for i in range(0, num_samples):
+                counts[result[i]["outputs"]["labels"][0]] += 1
+            self.assertEqual(set(counts.keys()), {"dog", "cat"})
+
     def test_sample_list(self):
         for _ in range(10):
             num_samples = 2
