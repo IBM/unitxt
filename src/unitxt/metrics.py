@@ -1,4 +1,3 @@
-import logging
 import re
 import string
 import uuid
@@ -50,8 +49,6 @@ def abstract_field():
 
 
 def nan_mean(x):
-    import warnings
-
     with warnings.catch_warnings():
         # final mean should be mean of scores, ignoring NaN, hence nanmean
         # but if the group function values is NaN for ALL values, nanmean throws a
@@ -153,6 +150,17 @@ class MetricWithConfidenceInterval(Metric):
             [instance["score"]["instance"][score_name] for instance in instances]
         )
 
+    @staticmethod
+    def _all_instance_scores_equal(instances, score_name):
+        instance_scores = [
+            instance["score"]["instance"][score_name] for instance in instances
+        ]
+        non_nan_instance_scores = [
+            score for score in instance_scores if score is not np.nan
+        ]
+        num_unique_scores = len(set(non_nan_instance_scores))
+        return num_unique_scores == 1
+
     def score_based_confidence_interval(
         self,
         instances: List[dict],
@@ -177,7 +185,6 @@ class MetricWithConfidenceInterval(Metric):
         Returns:
             Dict of confidence interval values
         """
-        logging.info("score_based_confidence_interval: begin")
         result = {}
 
         if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
@@ -190,14 +197,9 @@ class MetricWithConfidenceInterval(Metric):
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
         for score_name in score_names:
-            instance_scores = [
-                instance["score"]["instance"][score_name] for instance in instances
-            ]
-            non_nan_instance_scores = [
-                score for score in instance_scores if score is not np.nan
-            ]
-            num_unique_scores = len(set(non_nan_instance_scores))
-            if num_unique_scores == 1:
+            # If all computed instance level scores are the same, there is no point in computing
+            # confidence intervals. So skip to the next score.
+            if self._all_instance_scores_equal(instances):
                 continue
 
             # need to redefine the statistic function within the loop because score_name is a loop variable
@@ -227,7 +229,6 @@ class MetricWithConfidenceInterval(Metric):
             if score_name == self.main_score:
                 result["score_ci_low"] = ci.low
                 result["score_ci_high"] = ci.high
-        logging.info("score_based_confidence_interval: end")
         return result
 
     def resample_from_non_nan(self, values):
@@ -304,13 +305,18 @@ class MetricWithConfidenceInterval(Metric):
         num_predictions = len(predictions)
         if self._can_compute_confidence_intervals(num_predictions=num_predictions):
             identifiers = list(range(num_predictions))
-            ci = bootstrap(
-                (identifiers,),
-                statistic=statistic,
-                n_resamples=self.n_resamples,
-                confidence_level=self.confidence_level,
-                random_state=random_gen,
-            ).confidence_interval
+
+            with warnings.catch_warnings():
+                # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
+                # the value of the computed global metric is the same on all resamplings.
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                ci = bootstrap(
+                    (identifiers,),
+                    statistic=statistic,
+                    n_resamples=self.n_resamples,
+                    confidence_level=self.confidence_level,
+                    random_state=random_gen,
+                ).confidence_interval
             result["score_ci_low"] = ci.low
             result["score_ci_high"] = ci.high
             result[f"{score_name}_ci_low"] = ci.low
