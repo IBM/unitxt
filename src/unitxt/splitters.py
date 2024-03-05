@@ -182,6 +182,7 @@ class DiverseLabelsSampler(Sampler):
 
     choices: str = "choices"
     labels: str = "labels"
+    include_empty_label: bool = True
 
     def prepare(self):
         super().prepare()
@@ -217,6 +218,8 @@ class DiverseLabelsSampler(Sampler):
         labels = {}
         for examplar in examplars_pool:
             label_repr = self.examplar_repr(examplar)
+            if label_repr == "[]" and not self.include_empty_label:
+                continue
             if label_repr not in labels:
                 labels[label_repr] = []
             labels[label_repr].append(examplar)
