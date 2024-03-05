@@ -1,8 +1,8 @@
 from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.test_utils.operators import check_operator
 from src.unitxt.processors import Substring
+from src.unitxt.test_utils.operators import check_operator
 from tests.utils import UnitxtTestCase
 
 
@@ -65,24 +65,24 @@ class TestPostProcessors(UnitxtTestCase):
         )
 
     def test_substring(self):
-        #parser, _ = fetch_artifact("processors.substring")
+        # parser, _ = fetch_artifact("processors.substring")
         inputs = [
-            {"a" : "correct"},
-            {"a" : "Not Sure"},
-            {"a" : "longer input"},
-            {"a" : "x"},
+            {"a": "correct"},
+            {"a": "Not Sure"},
+            {"a": "longer input"},
+            {"a": "x"},
         ]
         targets1 = [
-            {"a" : "correct", "b" : "or"},
-            {"a" : "Not Sure", "b" : "ot"},
-            {"a" : "longer input", "b" : "on"},
-            {"a" : "x", "b" : ""},
+            {"a": "correct", "b": "or"},
+            {"a": "Not Sure", "b": "ot"},
+            {"a": "longer input", "b": "on"},
+            {"a": "x", "b": ""},
         ]
         targets2 = [
-            {"a" : "correct", "b" : "orrect"},
-            {"a" : "Not Sure", "b" : "ot Sure"},
-            {"a" : "longer input", "b" : "onger input"},
-            {"a" : "x", "b" : ""},
+            {"a": "correct", "b": "orrect"},
+            {"a": "Not Sure", "b": "ot Sure"},
+            {"a": "longer input", "b": "onger input"},
+            {"a": "x", "b": ""},
         ]
 
         check_operator(
