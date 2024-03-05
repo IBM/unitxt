@@ -14,6 +14,7 @@ For key-value pairs, expected input format is:
 {"key1": "value1", "key2": value2, "key3": "value3"}
 ------------------------
 """
+import json
 import random
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -23,6 +24,8 @@ from typing import (
     List,
     Optional,
 )
+
+import pandas as pd
 
 from .dict_utils import dict_get
 from .operators import FieldOperator, StreamInstanceOperator
@@ -162,10 +165,6 @@ class SerializeTableAsDFLoader(SerializeTable):
     # main method that serializes a table.
     # table_content must be in the presribed input format.
     def serialize_table(self, table_content: Dict) -> str:
-        import json
-
-        import pandas as pd
-
         # Extract headers and rows from the dictionary
         header = table_content.get("header", [])
         rows = table_content.get("rows", [])
@@ -176,8 +175,8 @@ class SerializeTableAsDFLoader(SerializeTable):
         df = pd.DataFrame(rows, columns=header)
 
         # Generate output string in the desired format
-
         data_dict = df.to_dict(orient="list")
+
         return (
             "pd.DataFrame({\n"
             + json.dumps(data_dict)
@@ -206,8 +205,6 @@ class SerializeTableAsJson(SerializeTable):
     # main method that serializes a table.
     # table_content must be in the presribed input format.
     def serialize_table(self, table_content: Dict) -> str:
-        import json
-
         # Extract headers and rows from the dictionary
         header = table_content.get("header", [])
         rows = table_content.get("rows", [])
@@ -448,7 +445,7 @@ class ListToKeyValPairs(StreamInstanceOperator):
 
 
 class ConvertTableColNamesToSequential(FieldOperator):
-    """Replaces actual table column names to static sequntial names.
+    """Replaces actual table column names with static sequential names like col_0, col_1,...
 
     Sample input:
     {
@@ -533,16 +530,16 @@ class ShuffleTableColumns(FieldOperator):
         table_input = deepcopy(table)
         return self.shuffle_columns(table_content=table_input)
 
-    # shuffles table rows randomly
+    # shuffles table columns randomly
     def shuffle_columns(self, table_content: Dict) -> str:
         # extract header & rows from the dictionary
         header = table_content.get("header", [])
         rows = table_content.get("rows", [])
         assert header and rows, "Incorrect input table format"
 
-        # shuffle columns
+        # shuffle the indices first
         indices = list(range(len(header)))
-        random.shuffle(indices)  # Shuffle the indices
+        random.shuffle(indices)  #
 
         # shuffle the header & rows based on that indices
         shuffled_header = [header[i] for i in indices]
