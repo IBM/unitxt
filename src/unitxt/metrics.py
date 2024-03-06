@@ -1132,12 +1132,14 @@ class F1(GlobalMetric):
             labels=labels,
             average=self.average,
         )
-        if isinstance(result["f1"], numpy.ndarray):
-            final_result = {self.main_score: mean(result["f1"])}
+        if isinstance(result[self.metric], numpy.ndarray):
+            final_result = {self.main_score: mean(result[self.metric])}
             for i, label in enumerate(labels):
-                final_result["f1_" + self.id_to_str[label]] = result["f1"][i]
+                final_result[f"{self.metric}_" + self.id_to_str[label]] = result[
+                    self.metric
+                ][i]
         else:
-            final_result = {self.main_score: result["f1"]}
+            final_result = {self.main_score: result[self.metric]}
         return final_result
 
 
@@ -1168,6 +1170,16 @@ class F1Binary(F1):
         if n_classes == 2 and len(set(classes).difference(self.pos_classes)) == 0:
             return False
         return True
+
+
+class RecallBinary(F1Binary):
+    main_score = "recall_binary"
+    metric = "recall"
+
+
+class PrecisionBinary(F1Binary):
+    main_score = "precision_binary"
+    metric = "precision"
 
 
 class F1Macro(F1):
@@ -2945,3 +2957,51 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
             ],
         }
     }
+
+
+class BinaryMaxF1(F1Binary):
+    main_score = "max_f1_binary"
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in F1 metric"
+        classes = set(itertools.chain(*references))
+        n_clases = len(classes)
+        assert len(classes) <= 2, "References of BinaryMaxF1 must be binary"
+        pos_classes = classes.intersection(self.pos_classes)
+        neg_classes = classes.difference(self.pos_classes)
+        n_pos_classes = len(pos_classes)
+        if n_clases == 2:
+            assert (
+                n_pos_classes == 1
+            ), "Only one positive class is allowed in BinaryMaxF1"
+        pos_class = next(iter(pos_classes)) if n_pos_classes > 0 else "1.0"
+        neg_class = next(iter(neg_classes)) if len(neg_classes) > 0 else "0.0"
+
+        float_predictions = []
+        for prediction in predictions:
+            try:
+                float_predictions.append(float(prediction))
+            except Exception:
+                float_predictions.append(0)
+            best_thr = -1
+            best_f1 = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                pos_class if float_prediction >= thr else neg_class
+                for float_prediction in float_predictions
+            ]
+            f1 = super().compute(references, new_predictions, task_data)[
+                self.main_score
+            ]
+            if f1 > best_f1:
+                best_f1 = f1
+                best_thr = thr
+
+        return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
