@@ -157,7 +157,7 @@ class StrToFloatFormat(FieldOperator):
         try:
             return str(float(text))
         except ValueError:
-            return text
+            return str(text)
 
 
 class ToYesOrNone(FieldOperator):
