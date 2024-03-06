@@ -906,7 +906,7 @@ class StringContainment(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postprseprocess_steps: Optional[List[StreamingOperator]] = field(
+    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
         default_factory=list
     )
     metric: Metric = None
@@ -931,7 +931,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postprseprocess_steps:
+        for step in self.postpreprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
