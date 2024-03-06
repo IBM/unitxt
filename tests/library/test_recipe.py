@@ -42,7 +42,7 @@ class TestRecipes(UnitxtTestCase):
                     "target": "not entailment",
                     "references": ["not entailment"],
                     "group": "unitxt",
-                    "postrue_positive_ratesocessors": ["processors.to_string_stripped"],
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             )
             break

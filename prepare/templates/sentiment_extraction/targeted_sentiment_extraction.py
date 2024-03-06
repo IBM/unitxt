@@ -27,7 +27,7 @@ def add_templates():
     for template_name, template_input_format in targeted_sentiment_templates.items():
         template = SpanLabelingTemplate(
             input_format=template_input_format,
-            postrue_positive_ratesocessors=["processors.to_span_label_pairs"],
+            postprocessors=["processors.to_span_label_pairs"],
         )
         full_template_name = f"templates.{task_name}.{template_name}"
         template_list.append(full_template_name)
@@ -73,9 +73,7 @@ def add_single_sentiment_templates():
                 input_format=single_sentiment_template_input_format,
                 labels_support=[sentiment],
                 span_label_format="{span}",
-                postrue_positive_ratesocessors=[
-                    "processors.to_span_label_pairs_surface_only"
-                ],
+                postprocessors=["processors.to_span_label_pairs_surface_only"],
             )
             full_template_name = (
                 f"templates.{task_name}.{sentiment}.{single_sentiment_template_name}"

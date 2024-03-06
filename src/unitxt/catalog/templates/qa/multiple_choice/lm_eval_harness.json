@@ -3,7 +3,7 @@
     "input_format": "Question: {question}\nChoices:\n{choices}\nAnswer:",
     "target_field": "answer",
     "choices_seperator": "\n",
-    "postrue_positive_ratesocessors": [
+    "postprocessors": [
         "processors.first_character"
     ]
 }

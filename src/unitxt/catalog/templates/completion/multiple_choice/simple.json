@@ -5,7 +5,7 @@
     "choices_seperator": "",
     "source_choice_format": "{choice_text}",
     "target_choice_format": " {choice_text}",
-    "postrue_positive_ratesocessors": [
+    "postprocessors": [
         "processors.first_character"
     ]
 }

@@ -19,7 +19,7 @@ class TaskCard(Artifact):
 
         task: specifies the fields (of the already (pre)processed instance) making the inputs, the fields making the outputs, and the metrics to be used for evaluating the model output.
 
-        templates: format strings to be applied on the input fields (specified by the task) and the output fields. The template also carries the instructions and the list of postrue_positive_ratesocessing steps, to be applied to the model output.
+        templates: format strings to be applied on the input fields (specified by the task) and the output fields. The template also carries the instructions and the list of postprocessing steps, to be applied to the model output.
     """
 
     loader: Loader

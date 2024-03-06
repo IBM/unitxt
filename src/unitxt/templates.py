@@ -16,14 +16,14 @@ class Template(StreamInstanceOperator):
 
     Args:
         skip_rendered_instance (bool): if "source", "target", and "references" are already defined fields in the instance, skip its processing
-        postrue_positive_ratesocessors: a list of strings being artifact names of text processors, to be applied on the model output
+        postprocessors: a list of strings being artifact names of text processors, to be applied on the model output
         instruction: a formatting string that yields an instruction with potential participation of values from the "inputs" part of the instance
         target_prefix: a string to be used to format the prompt. Not a formatting string.
 
     """
 
     skip_rendered_instance: bool = NonPositionalField(default=True)
-    postrue_positive_ratesocessors: List[str] = NonPositionalField(
+    postprocessors: List[str] = NonPositionalField(
         default_factory=lambda: ["processors.to_string_stripped"]
     )
     instruction: str = NonPositionalField(default_factory=lambda: "")
@@ -65,8 +65,8 @@ class Template(StreamInstanceOperator):
     ) -> Tuple[str, List[str]]:
         pass
 
-    def get_postrue_positive_ratesocessors(self) -> List[str]:
-        return self.postrue_positive_ratesocessors
+    def get_postprocessors(self) -> List[str]:
+        return self.postprocessors
 
 
 class InputOutputTemplate(Template):
@@ -362,7 +362,7 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
     labels_seprator: str = ", "
-    postrue_positive_ratesocessors: List[str] = ["processors.to_list_by_comma"]
+    postprocessors: List[str] = ["processors.to_list_by_comma"]
     output_format: str = "{labels}"
     empty_label: str = "None"
 
@@ -444,7 +444,7 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
 class SpanLabelingTemplate(SpanLabelingBaseTemplate):
     span_label_format: str = "{span}: {label}"
     escape_characters: List[str] = [":", ","]
-    postrue_positive_ratesocessors: List[str] = ["processors.to_span_label_pairs"]
+    postprocessors: List[str] = ["processors.to_span_label_pairs"]
 
     def span_label_pairs_to_targets(self, span_label_pairs):
         targets = []
@@ -457,7 +457,7 @@ class SpanLabelingTemplate(SpanLabelingBaseTemplate):
 
 
 class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
-    postrue_positive_ratesocessors = [
+    postprocessors = [
         "processors.load_json",
         "processors.dict_of_lists_to_value_key_pairs",
     ]
