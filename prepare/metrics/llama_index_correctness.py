@@ -1,10 +1,12 @@
-from unitxt import add_to_catalog
-from unitxt.metrics import (
+from src.unitxt import add_to_catalog
+from src.unitxt.metrics import (
     LlamaIndexCorrectnessMetric,
 )
-from unitxt.test_utils.metrics import test_metric
+from src.unitxt.test_utils.metrics import test_metric
 
-model_name = "gpt-3.5-turbo"
+# Test with mock 
+model_name = "mock"
+model_name_normalized = model_name.replace(".", "_").replace("-", "_")
 metric = LlamaIndexCorrectnessMetric(model_name=model_name)
 
 predictions = ["The right answer"]
@@ -17,7 +19,6 @@ task_data = [
     },
 ]
 
-model_name_normalized = model_name.replace(".", "_").replace("-", "_")
 score_name = f"correctness_llama_index_by_{model_name_normalized}_judge"
 
 instance_targets = [  # nDCG is undefined at instance level
@@ -44,4 +45,9 @@ outputs = test_metric(
     global_target=global_target,
 )
 
-add_to_catalog(metric, "metrics.rag.llama_index_correctness", overwrite=True)
+# GPT model to catalog
+model_name = "gpt-3.5-turbo"
+model_name_normalized = model_name.replace(".", "_").replace("-", "_")
+metric = LlamaIndexCorrectnessMetric(model_name=model_name)
+
+add_to_catalog(metric, f"metrics.rag.correctness.llama_index_by_{model_name_normalized}", overwrite=True)
