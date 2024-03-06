@@ -10,12 +10,18 @@ UNITXT_DATASET_SCHEMA = Features(
     {
         "source": Value("string"),
         "target": Value("string"),
-        "references": Sequence(Value("string")),
-        "metrics": Sequence(Value("string")),
-        "group": Value("string"),
-        "postprocessors": Sequence(Value("string")),
-        "task_data": Value(dtype="string"),
+        "reference": {
+            "metrics": Sequence(Value("string")),
+            "group": Value("string"),
+            "postprocessors": Sequence(Value("string")),
+            "task_data": Value("dict"),  # this contains all the task data including
+            # gold labels or references bases on task
+        },
     }
+)
+
+UNITXT_HF_DATASET_SCHEMA = Features(
+    {"source": Value("string"), "target": Value("string"), "reference": Value("string")}
 )
 
 # UNITXT_METRIC_SCHEMA = Features({
