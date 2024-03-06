@@ -1099,7 +1099,7 @@ class F1(GlobalMetric):
         return self.str_to_id[str]
 
     def _labels_match_average_format(
-        self, references: list[int], predictions: list[int]
+        self, references: List[List[str]], predictions: List[str]
     ):
         return True
 
@@ -1159,7 +1159,7 @@ class F1Binary(F1):
 
     # References and predictions must include up to 2 unique values, one of them in pos_classes
     def _labels_match_average_format(
-        self, references: list[str], predictions: list[str]
+        self, references: List[List[str]], predictions: List[str]
     ):
         classes = set(predictions + list(itertools.chain(*references)))
         n_classes = len(classes)
