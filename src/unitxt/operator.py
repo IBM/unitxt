@@ -508,3 +508,40 @@ class SequentialOperatorInitilizer(SequentialOperator):
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
+
+
+class PlugInOperator(StreamInstanceOperator):
+    """Applies an operator to each instance in a stream based on specific field.
+
+    Args:
+        field (str): name of the field that contains a single name of the operator to be applied
+        for the processing of the instance. Each operator is equipped with 'process_instance()'
+        method.
+
+        default_operator (List[str]): A list of default operators to be used if no operators are found in the instance.
+
+    Example:
+        when instance {"prediction": "abc", "references": [222, 333] , "c": "processors.first_character"}
+        is processed by operator (please look up the catalog that these operators, they are tuned to process fields "prediction" and
+        "references"):
+        operator = PlugInOperator(field="c"),
+        the resulting instance is: {"prediction": "a", "references": ["2", "3"], "c": ["processors.to_string", "processors.first_character"]}
+
+    """
+
+    field: str
+    default: StreamingOperator = None
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        operator_name = instance.get(self.field)
+
+        if operator_name is None and self.default is None:
+            return instance
+
+        if operator_name is None:
+            operator_name = self.default
+
+        operator = SequentialOperator(steps=[operator_name])
+        return operator.process_instance(instance)
