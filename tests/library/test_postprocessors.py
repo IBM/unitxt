@@ -225,6 +225,17 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_load_json_from_predictions(self):
+        parser, _ = fetch_artifact("processors.load_json_from_predictions")
+        inputs = [{"prediction": '{"yes":0.46}', "references": '{"yes":0.46}'}]
+        targets = [{"prediction": {"yes": 0.46}, "references": '{"yes":0.46}'}]
+        check_operator(
+            operator=parser,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_dict_of_lists_to_value_key_pairs(self):
         parser, _ = fetch_artifact("processors.dict_of_lists_to_value_key_pairs")
         inputs = [
