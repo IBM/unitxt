@@ -67,7 +67,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
-                    "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers."
+                    "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
@@ -167,13 +167,15 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postprocessors = self.template.get_postprocessors()
+        postrue_positive_ratesocessors = (
+            self.template.get_postrue_positive_ratesocessors()
+        )
 
         self.steps.append(
             ToUnitxtGroup(
                 group="unitxt",
                 metrics=self.card.task.metrics,
-                postprocessors=postprocessors,
+                postrue_positive_ratesocessors=postrue_positive_ratesocessors,
             )
         )
 

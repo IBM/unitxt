@@ -41,7 +41,7 @@ Example:
         ```
 
 
-## Structre
+## Structure
 
 ### Layout
 The layout of the repo is [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/)

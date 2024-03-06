@@ -7,7 +7,7 @@ add_to_catalog(
         output_format="{label}",
         target_prefix="The {type_of_relation} class is ",
         instruction="Given a {text_a_type} and {text_b_type} classify the {type_of_relation} of the {text_b_type} to one of {classes}.",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
         ],
@@ -20,7 +20,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Given this {text_a_type}: {text_a}, classify if this {text_b_type}: {text_b} is {classes}.",
         output_format="{label}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
         ],

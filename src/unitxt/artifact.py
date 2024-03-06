@@ -150,7 +150,7 @@ class Artifact(Dataclass):
         if cls.is_registered_type(snake_case_key):
             assert (
                 str(cls._class_register[snake_case_key]) == str(artifact_class)
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overriden by {artifact_class}."
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
 
             return snake_case_key
 
@@ -321,9 +321,9 @@ def get_artifactory_name_and_args(
     raise UnitxtArtifactNotFoundError(name, artifactories)
 
 
-def verbosed_fetch_artifact(identifer):
-    artifact, artifactory = fetch_artifact(identifer)
-    logger.info(f"Artifact {identifer} is fetched from {artifactory}")
+def verbosed_fetch_artifact(identifier):
+    artifact, artifactory = fetch_artifact(identifier)
+    logger.info(f"Artifact {identifier} is fetched from {artifactory}")
     return artifact
 
 

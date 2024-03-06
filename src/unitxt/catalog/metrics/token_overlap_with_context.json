@@ -23,7 +23,7 @@
     "metric": {
         "type": "token_overlap"
     },
-    "postpreprocess_steps": [
+    "postrue_positive_rateseprocess_steps": [
         {
             "type": "copy_fields",
             "field_to_field": [

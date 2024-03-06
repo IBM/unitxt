@@ -42,7 +42,7 @@ class TestRecipes(UnitxtTestCase):
                     "target": "not entailment",
                     "references": ["not entailment"],
                     "group": "unitxt",
-                    "postprocessors": ["processors.to_string_stripped"],
+                    "postrue_positive_ratesocessors": ["processors.to_string_stripped"],
                 },
             )
             break
@@ -233,7 +233,7 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.",
+            "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers.",
         )
 
         with self.assertRaises(Exception) as cm:

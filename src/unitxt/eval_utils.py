@@ -31,7 +31,7 @@ def _(
             metric = verbosed_fetch_artifact(metric_name)
             metric_step = as_remote_metric(metric)
         else:
-            # The SequentialOperator below will handle the load of the metric fromm its name
+            # The SequentialOperator below will handle the load of the metric from its name
             metric_step = metric_name
         metrics_operator = SequentialOperator(steps=[metric_step])
 

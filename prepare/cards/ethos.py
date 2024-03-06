@@ -33,17 +33,17 @@ card = TaskCard(
             InputOutputTemplate(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}.",
                 output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line"],
+                postrue_positive_ratesocessors=["processors.take_first_non_empty_line"],
             ),
             InputOutputTemplate(
                 input_format="Does the following {text_type} contains {type_of_class}? Answer only by choosing one of the options {classes}. {text_type}: {text}.",
                 output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line"],
+                postrue_positive_ratesocessors=["processors.take_first_non_empty_line"],
             ),
             InputOutputTemplate(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                 output_format="{label}",
-                postprocessors=[
+                postrue_positive_ratesocessors=[
                     "processors.take_first_non_empty_line",
                     "processors.lower_case_till_punc",
                 ],
@@ -51,7 +51,7 @@ card = TaskCard(
             InputOutputTemplate(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
                 output_format="{label}",
-                postprocessors=[
+                postrue_positive_ratesocessors=[
                     "processors.take_first_non_empty_line",
                     "processors.hate_speech_or_not_hate_speech",
                 ],

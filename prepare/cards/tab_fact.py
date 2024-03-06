@@ -9,7 +9,7 @@ from src.unitxt.blocks import (
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
 
-# Set unitxt.settings.allow_unverified_code=True or environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE to True
+# Set unitxt.settings.allow_unverified_code=True or environment variable: UNITXT_ALLOW_UNVERIFIED_CODE to True
 
 card = TaskCard(
     loader=LoadHF(path="ibm/tab_fact", streaming=False),

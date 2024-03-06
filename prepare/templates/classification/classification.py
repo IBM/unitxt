@@ -7,7 +7,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}. {text_type}: {text}",
         output_format="{label}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
         ],
@@ -21,7 +21,7 @@ add_to_catalog(
         output_format="{label}",
         target_prefix="The {type_of_class} is ",
         instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.\n",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
         ],
@@ -57,7 +57,7 @@ add_to_catalog(
         input_format="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.\nText: {text}\n{type_of_classes}: ",
         output_format="{labels}",
         labels_field="labels",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case",
             "processors.to_list_by_comma",
@@ -75,7 +75,7 @@ add_to_catalog(
         target_prefix="The {type_of_classes} is ",
         labels_field="labels",
         instruction="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case",
             "processors.to_list_by_comma",
@@ -91,7 +91,7 @@ add_to_catalog(
         input_format="{text}",
         output_format="{labels}",
         labels_field="labels",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case",
             "processors.to_list_by_comma",

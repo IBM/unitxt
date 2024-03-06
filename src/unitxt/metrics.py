@@ -68,7 +68,6 @@ class UpdateStream(StreamInstanceOperator):
         return instance
 
 
-# TODO: currently we have two classes with this name. metric.Metric and matrics.Metric...
 class Metric(Artifact):
     @property
     @abstractmethod
@@ -563,7 +562,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         - an 'agg_func' field with value being a 3-element list where
             - 1st element is a string name of the aggregation function (used in naming the CI report)
             - 2nd element is the callable aggregation function
-            - 3rd element is a Boolean indicator of whether, during boostrap CI calculation, the groups are to be sampled as single units.
+            - 3rd element is a Boolean indicator of whether, during bootstrap CI calculation, the groups are to be sampled as single units.
                 If True, the group scores are calculated and then resampled.  This treats the group units as the unit of
                 interest for which the CI is being compared.
                 If False, the instances are resampled individually, and the groups determined
@@ -907,7 +906,7 @@ class StringContainment(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
+    postrue_positive_rateseprocess_steps: Optional[List[StreamingOperator]] = field(
         default_factory=list
     )
     metric: Metric = None
@@ -932,7 +931,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
+        for step in self.postrue_positive_rateseprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
@@ -1448,8 +1447,10 @@ class RocAuc(GlobalMetric):
         references = [to_float_or_default(r) for r in references]
         predictions = [to_float_or_default(p) for p in predictions]
 
-        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
-        roc_auc = self.auc(fpr, tpr)
+        false_positive_rates, true_positive_rates, thrs = self.roc_curve(
+            y_true=references, y_score=predictions
+        )
+        roc_auc = self.auc(false_positive_rates, true_positive_rates)
         return {self.main_score: roc_auc}
 
 
@@ -1531,7 +1532,7 @@ class CustomF1(GlobalMetric):
 
         assert len(references) == len(predictions), (
             f"references size ({len(references)})"
-            f" doesn't mach predictions sise ({len(references)})."
+            f" doesn't mach predictions size ({len(references)})."
         )
 
         if self.groups is None:

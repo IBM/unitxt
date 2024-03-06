@@ -33,7 +33,7 @@ card = TaskCard(
                 input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {"
                 "classes}. I would classify this {text_type} as: ",
                 output_format="{label}",
-                postprocessors=[
+                postrue_positive_ratesocessors=[
                     "processors.take_first_non_empty_line",
                     "processors.toxic_or_not_toxic",
                 ],

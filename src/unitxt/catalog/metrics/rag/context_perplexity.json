@@ -24,7 +24,7 @@
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
-    "postpreprocess_steps": [
+    "postrue_positive_rateseprocess_steps": [
         {
             "type": "copy_fields",
             "field_to_field": [

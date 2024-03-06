@@ -1,7 +1,7 @@
 ==============
 Explore Unitxt
 ==============
-Explore the exisiting assets in Unitxt catalog and generate your prompt.
+Explore the existing assets in Unitxt catalog and generate your prompt.
 
 .. raw:: html
 

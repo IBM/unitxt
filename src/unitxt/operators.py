@@ -180,7 +180,7 @@ class MapInstanceValues(StreamInstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instance = {instance}"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
@@ -336,7 +336,7 @@ class FieldOperator(StreamInstanceOperator):
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
-        # for backward compatibility also allow list of tupples of two strings
+        # for backward compatibility also allow list of tuples of two strings
         if isoftype(self.field_to_field, List[List[str]]) or isoftype(
             self.field_to_field, List[Tuple[str, str]]
         ):
@@ -773,11 +773,11 @@ class Apply(StreamInstanceOperator):
         return ".".join(parts)
 
     def str_to_function(self, function_str: str) -> Callable:
-        splitted = function_str.split(".", 1)
-        if len(splitted) == 1:
-            return __builtins__[splitted[0]]
+        parts = function_str.split(".", 1)
+        if len(parts) == 1:
+            return __builtins__[parts[0]]
 
-        module_name, function_name = splitted
+        module_name, function_name = parts
         if module_name in __builtins__:
             obj = __builtins__[module_name]
         elif module_name in globals():
@@ -892,34 +892,32 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class Perturbate(FieldOperator):
-    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+class Perturb(FieldOperator):
+    """Slightly perturbs the contents of 'field'. Could be Handy for imitating prediction from given target.
 
     When task was classification, argument 'select_from' can be used to list the other potential classes, as a
     relevant perturbation
     """
 
     select_from: List[Any] = []
-    percentage_to_perturbate: int = 1  # 1 percent
+    percentage_to_perturb: int = 1  # 1 percent
 
     def verify(self):
         assert (
-            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
-        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+            0 <= self.percentage_to_perturb and self.percentage_to_perturb <= 100
+        ), f"'percentage_to_perturb' should be in the range 0..100. Received {self.percentage_to_perturb}"
 
     def prepare(self):
         super().prepare()
         self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
 
     def process_value(self, value: Any) -> Any:
-        perturbate = (
-            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
-        )
-        if not perturbate:
+        perturb = self.random_generator.randint(1, 100) <= self.percentage_to_perturb
+        if not perturb:
             return value
 
         if value in self.select_from:
-            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            # 80% of cases, return a decent class, otherwise, perturb the value itself as follows
             if self.random_generator.random() < 0.8:
                 return self.random_generator.choice(self.select_from)
 
@@ -1397,7 +1395,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
                 counter.update(instance[self.field])
-        # here counter counts occurrences of individual values, or tupples.
+        # here counter counts occurrences of individual values, or tuples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
             top_frequency = (
@@ -1606,7 +1604,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
-        # Workaround: The metric/MetricPipeline modifies the stream itself, sometines making it incompatible
+        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
         # for further metrics' processing, instead of just modifying the score field.
         # Here we keep all the fields besides the score, and restore them after the metric finishes.
         first_instance = stream.peek()

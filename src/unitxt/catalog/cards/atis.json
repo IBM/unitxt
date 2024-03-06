@@ -275,7 +275,7 @@
             "type": "add_fields",
             "fields": {
                 "text_type": "text",
-                "class_type": "entitiy type",
+                "class_type": "entity type",
                 "classes": [
                     "aircraft_code",
                     "airline_code",

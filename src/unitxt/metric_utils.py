@@ -105,7 +105,7 @@ class MetricRecipe(SequentialOperatorInitilizer):
                 to_field="task_data",
             ),
             ApplyOperatorsField(
-                operators_field="postprocessors",
+                operators_field="postrue_positive_ratesocessors",
             ),
             SplitByValue(["group"]),
             ApplyMetric(

@@ -51,7 +51,7 @@ If a cataloged task fits your use case, call it by name:
 
 .. code-block:: python
 
-    task='tasks.tanslation.directed',
+    task='tasks.translation.directed',
 
 
 The Preprocessing pipeline

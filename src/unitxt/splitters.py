@@ -188,10 +188,10 @@ class DiverseLabelsSampler(Sampler):
         super().prepare()
         self.labels_cache = None
 
-    def examplar_repr(self, examplar):
-        if "inputs" not in examplar:
-            raise ValueError(f"'inputs' field is missing from '{examplar}'.")
-        inputs = examplar["inputs"]
+    def exemplar_repr(self, exemplar):
+        if "inputs" not in exemplar:
+            raise ValueError(f"'inputs' field is missing from '{exemplar}'.")
+        inputs = exemplar["inputs"]
         if self.choices not in inputs:
             raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
@@ -200,29 +200,29 @@ class DiverseLabelsSampler(Sampler):
                 f"Unexpected input choices value '{choices}'. Expected a list."
             )
 
-        if "outputs" not in examplar:
-            raise ValueError(f"'outputs' field is missing from '{examplar}'.")
-        outputs = examplar["outputs"]
+        if "outputs" not in exemplar:
+            raise ValueError(f"'outputs' field is missing from '{exemplar}'.")
+        outputs = exemplar["outputs"]
         if self.labels not in outputs:
             raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
 
-        examplar_outputs = examplar["outputs"][self.labels]
-        if not isinstance(examplar_outputs, list):
+        exemplar_outputs = exemplar["outputs"][self.labels]
+        if not isinstance(exemplar_outputs, list):
             raise ValueError(
-                f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list."
+                f"Unexpected exemplar_outputs value '{exemplar_outputs}'. Expected a list."
             )
 
-        return str([choice for choice in choices if choice in examplar_outputs])
+        return str([choice for choice in choices if choice in exemplar_outputs])
 
-    def divide_by_repr(self, examplars_pool):
+    def divide_by_repr(self, exemplars_pool):
         labels = {}
-        for examplar in examplars_pool:
-            label_repr = self.examplar_repr(examplar)
+        for exemplar in exemplars_pool:
+            label_repr = self.exemplar_repr(exemplar)
             if label_repr == "[]" and not self.include_empty_label:
                 continue
             if label_repr not in labels:
                 labels[label_repr] = []
-            labels[label_repr].append(examplar)
+            labels[label_repr].append(exemplar)
         return labels
 
     def sample(

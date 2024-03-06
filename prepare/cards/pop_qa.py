@@ -30,7 +30,7 @@ card = TaskCard(
                 "the question or words from the question. The answer text should be partial and contain "
                 "only {prop}. Do not use full sentence. \nQuestion: {question}\nThe {prop} of {subj} is:",
                 references_field="possible_answers",
-                postprocessors=[
+                postrue_positive_ratesocessors=[
                     "processors.take_first_non_empty_line",
                     "processors.lower_case",
                 ],

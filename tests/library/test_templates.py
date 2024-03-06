@@ -657,7 +657,7 @@ class TestTemplates(UnitxtTestCase):
         # check error and more options, to code cover additional lines
         template = MultipleChoiceTemplate(
             input_format="Text: {no_text}, Choices: {no_choices}.",
-            postprocessors=["post1", "post2"],
+            postrue_positive_ratesocessors=["post1", "post2"],
         )
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
@@ -666,7 +666,9 @@ class TestTemplates(UnitxtTestCase):
             str(ve.exception),
         )
 
-        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
+        self.assertListEqual(
+            ["post1", "post2"], template.get_postrue_positive_ratesocessors()
+        )
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
