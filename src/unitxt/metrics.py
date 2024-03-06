@@ -2990,8 +2990,9 @@ class BinaryMaxF1(F1Binary):
                 float_predictions.append(float(prediction))
             except Exception:
                 float_predictions.append(0)
-            best_thr = -1
-            best_f1 = -1
+
+        best_thr = -1
+        best_f1 = -1
         for thr in set(float_predictions):
             new_predictions = [
                 pos_class if float_prediction >= thr else neg_class
