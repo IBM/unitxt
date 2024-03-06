@@ -4,7 +4,7 @@ Loaders: Generators of Unitxt Multistreams from existing date sources
 ==============================================================
 
 Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
-postrue_positive_ratesocessing the model's output, preparing it for any given evaluator.
+post-processing the model's output, preparing it for any given evaluator.
 
 Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
 of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
