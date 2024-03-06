@@ -62,10 +62,10 @@ class TestExamples(UnitxtCatalogPreparationTestCase):
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Finished testing preparation file:\n  {file}."
-                f"  Preperation Time: {formatted_time}"
+                f"  Preparation Time: {formatted_time}"
                 "\n_____________________________________________\n"
             )
 
             times[file] = formatted_time
-        logger.info("Preperation times table:")
+        logger.info("Preparation times table:")
         print_dict(times)

@@ -3,7 +3,7 @@
     "input_format": "{text}",
     "output_format": "{labels}",
     "labels_field": "labels",
-    "postprocessors": [
+    "postrue_positive_ratesocessors": [
         "processors.take_first_non_empty_line",
         "processors.lower_case",
         "processors.to_list_by_comma",

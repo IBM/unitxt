@@ -109,7 +109,7 @@ def run_unitxt(
     except Exception as e:
         logger.info("An exception occurred:\n%s", traceback.format_exc())
         prompt_text = f"""
-    Oops... this combination didnt work! Try something else.
+    Oops... this combination didn't work! Try something else.
 
     Exception: {e!r}
     """
@@ -129,7 +129,7 @@ def run_unitxt(
             agg_result = create_dataframe(selected_result["global"])
         except Exception as e:
             selected_prediction = f"""
-            An exception has occured:
+            An exception has occurred:
 
             {e!r}
             """

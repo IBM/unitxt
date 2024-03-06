@@ -4,7 +4,7 @@ Loaders: Generators of Unitxt Multistreams from existing date sources
 ==============================================================
 
 Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
-postprocessing the model's output, preparing it for any given evaluator.
+postrue_positive_ratesocessing the model's output, preparing it for any given evaluator.
 
 Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
 of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
@@ -120,7 +120,7 @@ class LoadHF(Loader):
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
                         raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
 
             if self.filtering_lambda is not None:
@@ -153,7 +153,7 @@ class LoadHF(Loader):
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
                         raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
 
             if self.filtering_lambda is not None:

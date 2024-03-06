@@ -40,7 +40,7 @@ class SizeLimitedFormatter(logging.Formatter):
         if len(original_message) > max_size:
             return (
                 original_message[:max_size]
-                + f"...\n(Message is too long > {max_size}. Can be set thorugh unitxt.settings.max_log_message_size or UNITXT_MAX_LOG_MESSAGE_SIZE environment variable.)"
+                + f"...\n(Message is too long > {max_size}. Can be set through unitxt.settings.max_log_message_size or UNITXT_MAX_LOG_MESSAGE_SIZE environment variable.)"
             )
         return original_message
 

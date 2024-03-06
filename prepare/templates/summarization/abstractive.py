@@ -5,7 +5,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Summarize the following {document_type}: {document}.",
         output_format="{summary}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
         ],
     ),
@@ -17,7 +17,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Summarize the following text into one sentence: {document}.",
         output_format="{summary}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
         ],
     ),
@@ -29,7 +29,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="The following {document_type} is to be summarized into one sentence: {document}.",
         output_format="{summary}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
         ],
     ),
@@ -41,7 +41,7 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Write a succinct summary of the following {document_type}: {document}.",
         output_format="{summary}",
-        postprocessors=[
+        postrue_positive_ratesocessors=[
             "processors.take_first_non_empty_line",
         ],
     ),

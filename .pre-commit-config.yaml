@@ -10,7 +10,7 @@ repos:
       args: [ --fix ]
     # Run the formatter.
     - id: ruff-format
-    
+
 - repo: https://github.com/ibm/detect-secrets
   # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
   # You are encouraged to use static refs such as tags, instead of branch name
@@ -25,3 +25,10 @@ repos:
       # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
       # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
       args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.4
+  hooks:
+  - id: codespell
+    additional_dependencies:
+      - tomli

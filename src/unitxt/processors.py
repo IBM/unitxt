@@ -81,10 +81,10 @@ class DictOfListsToPairs(FieldOperator):
 
 class TakeFirstNonEmptyLine(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        splitted = str(text).strip().split("\n")
-        if len(splitted) == 0:
+        parts = str(text).strip().split("\n")
+        if len(parts) == 0:
             return ""
-        return splitted[0].strip()
+        return parts[0].strip()
 
 
 class ConvertToBoolean(FieldOperator):

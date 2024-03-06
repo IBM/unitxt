@@ -24,7 +24,7 @@ data = [
 for d in data:
     d["task_data"] = {}
     d["metrics"] = ["metrics.accuracy"]
-    d["postprocessors"] = ["processors.to_string"]
+    d["postrue_positive_ratesocessors"] = ["processors.to_string"]
 
 predictions = ["4", " 3", "3", "3"]
 

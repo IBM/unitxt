@@ -5,7 +5,7 @@
         "negative"
     ],
     "span_label_format": "{span}",
-    "postprocessors": [
+    "postrue_positive_ratesocessors": [
         "processors.to_span_label_pairs_surface_only"
     ]
 }
