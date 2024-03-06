@@ -156,7 +156,7 @@ class StrToFloatFormat(FieldOperator):
     def process_value(self, text: Any) -> Any:
         try:
             return str(float(text))
-        except ValueError:
+        except Exception:
             return str(text)
 
 
