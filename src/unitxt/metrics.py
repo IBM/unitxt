@@ -906,7 +906,7 @@ class StringContainment(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postrue_positive_rateseprocess_steps: Optional[List[StreamingOperator]] = field(
+    postprseprocess_steps: Optional[List[StreamingOperator]] = field(
         default_factory=list
     )
     metric: Metric = None
@@ -931,7 +931,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postrue_positive_rateseprocess_steps:
+        for step in self.postprseprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
@@ -1447,7 +1447,7 @@ class RocAuc(GlobalMetric):
         references = [to_float_or_default(r) for r in references]
         predictions = [to_float_or_default(p) for p in predictions]
 
-        false_positive_rates, true_positive_rates, thrs = self.roc_curve(
+        false_positive_rates, true_positive_rates, _ = self.roc_curve(
             y_true=references, y_score=predictions
         )
         roc_auc = self.auc(false_positive_rates, true_positive_rates)

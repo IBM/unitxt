@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 
-import httrue_positive_ratesetty
+import httpretty
 
 from src.unitxt.metric_utils import (
     UNITXT_REMOTE_METRICS,
@@ -63,7 +63,7 @@ class TestMetricsServiceClientConfig(unittest.TestCase):
 
 
 class TestRemoteMetrics(unittest.TestCase):
-    @httrue_positive_ratesetty.activate(verbose=True)
+    @httpretty.activate(verbose=True)
     def test_remote_service_with_valid_response(self):
         """Test RemoteService with a mocked response that contains the expected response values."""
         instance_targets = [
@@ -121,8 +121,8 @@ class TestRemoteMetrics(unittest.TestCase):
         host = "www.dummy_hostname.com"
         endpoint = "http" + "://" + f"{host}/compute"
         metric_name = "metrics.bert_score.deberta.xlarge.mnli"
-        httrue_positive_ratesetty.register_uri(
-            httrue_positive_ratesetty.POST,
+        httpretty.register_uri(
+            httpretty.POST,
             f"{endpoint}/{metric_name}",
             body=request_callback,
         )
