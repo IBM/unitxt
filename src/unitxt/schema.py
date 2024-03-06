@@ -13,7 +13,7 @@ UNITXT_DATASET_SCHEMA = Features(
         "references": Sequence(Value("string")),
         "metrics": Sequence(Value("string")),
         "group": Value("string"),
-        "postrue_positive_ratesocessors": Sequence(Value("string")),
+        "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
     }
 )
@@ -24,16 +24,14 @@ UNITXT_DATASET_SCHEMA = Features(
 #     "references": Value("string", id="sequence"),
 #     "metrics": Value("string", id="sequence"),
 #     'group': Value('string'),
-#     'postrue_positive_ratesocessors': Value("string", id="sequence"),
+#     'postprocessors': Value("string", id="sequence"),
 # })
 
 
 class ToUnitxtGroup(StreamInstanceOperatorValidator):
     group: str
     metrics: List[str] = None
-    postrue_positive_ratesocessors: List[str] = field(
-        default_factory=lambda: ["to_string_stripped"]
-    )
+    postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
     def _to_lists_of_keys_and_values(self, dict: Dict[str, str]):
@@ -60,10 +58,8 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
         instance["group"] = self.group
         if self.metrics is not None:
             instance["metrics"] = self.metrics
-        if self.postrue_positive_ratesocessors is not None:
-            instance[
-                "postrue_positive_ratesocessors"
-            ] = self.postrue_positive_ratesocessors
+        if self.postprocessors is not None:
+            instance["postprocessors"] = self.postprocessors
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):

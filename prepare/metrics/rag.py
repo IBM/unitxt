@@ -63,7 +63,7 @@ metric = MetricPipeline(
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=metrics["metrics.token_overlap"],
-    postrue_positive_rateseprocess_steps=[
+    postpreprocess_steps=[
         CopyFields(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
@@ -241,7 +241,7 @@ context_perplexity = MetricPipeline(
         ),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
-    postrue_positive_rateseprocess_steps=[
+    postpreprocess_steps=[
         CopyFields(
             field_to_field=[
                 ("score/instance/reference_scores", "score/instance/score")

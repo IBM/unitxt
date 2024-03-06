@@ -167,15 +167,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postrue_positive_ratesocessors = (
-            self.template.get_postrue_positive_ratesocessors()
-        )
+        postprocessors = self.template.get_postprocessors()
 
         self.steps.append(
             ToUnitxtGroup(
                 group="unitxt",
                 metrics=self.card.task.metrics,
-                postrue_positive_ratesocessors=postrue_positive_ratesocessors,
+                postprocessors=postprocessors,
             )
         )
 

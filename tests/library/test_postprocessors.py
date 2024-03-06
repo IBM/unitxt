@@ -233,8 +233,8 @@ class TestPostProcessors(UnitxtTestCase):
         )
 
     def test_span_labeling_json_template_errors(self):
-        postrue_positive_ratesocessor1, _ = fetch_artifact("processors.load_json")
-        postrue_positive_ratesocessor2, _ = fetch_artifact(
+        postprocessor1, _ = fetch_artifact("processors.load_json")
+        postprocessor2, _ = fetch_artifact(
             "processors.dict_of_lists_to_value_key_pairs"
         )
 
@@ -244,13 +244,13 @@ class TestPostProcessors(UnitxtTestCase):
         post2_targets = [[], [("b", "d")], [], []]
 
         check_operator(
-            operator=postrue_positive_ratesocessor1,
+            operator=postprocessor1,
             inputs=list_to_stream_with_prediction_and_references(predictions),
             targets=list_to_stream_with_prediction_and_references(post1_targets),
             tester=self,
         )
         check_operator(
-            operator=postrue_positive_ratesocessor2,
+            operator=postprocessor2,
             inputs=list_to_stream_with_prediction_and_references(post1_targets),
             targets=list_to_stream_with_prediction_and_references(post2_targets),
             tester=self,

@@ -62,7 +62,7 @@ class TestExamples(UnitxtTestCase):
 
         for d in data:
             d["metrics"] = ["metrics.accuracy"]
-            d["postrue_positive_ratesocessors"] = ["processors.to_string"]
+            d["postprocessors"] = ["processors.to_string"]
 
         predictions = ["4", " 3", "3", "3"]
 
@@ -126,7 +126,7 @@ class TestExamples(UnitxtTestCase):
 
         for d in data:
             d["metrics"] = ["metrics.accuracy"]
-            d["postrue_positive_ratesocessors"] = ["processors.to_string"]
+            d["postprocessors"] = ["processors.to_string"]
 
         predictions = ["4", " 3", "3", "3"]
 
@@ -143,7 +143,7 @@ class TestExamples(UnitxtTestCase):
             "references": ["333", "4"],
             "metrics": ["metrics.accuracy"],
             "group": "group1",
-            "postrue_positive_ratesocessors": ["processors.to_string"],
+            "postprocessors": ["processors.to_string"],
             "prediction": "4",
             "score_global_accuracy": 0.0,
             "score_global_score": 0.0,

@@ -3,7 +3,7 @@ transformers
 sentence_transformers
 ibm-cos-sdk
 opendatasets
-httrue_positive_ratesetty~=1.1.4
+httpretty~=1.1.4
 editdistance
 rouge-score
 nltk
