@@ -5,11 +5,7 @@ from .dataclass import Field, InternalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import (
-    Augmentor,
-    NullAugmentor,
-    StreamRefiner,
-)
+from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -114,6 +110,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def prepare(self):
         self.steps = [
             self.card.loader,
+            AddFields(
+                fields={
+                    "recipe_metadata": {
+                        "card": self.card,
+                        "template": self.template,
+                        "system_prompt": self.system_prompt,
+                        "format": self.format,
+                    }
+                }
+            ),
         ]
 
         if self.loader_limit:
