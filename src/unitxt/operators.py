@@ -285,7 +285,7 @@ class RemoveFields(StreamInstanceOperator):
         return instance
 
 
-class FieldOperator(StreamInstanceOperator):
+class InstanceFieldOperator(StreamInstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
@@ -365,7 +365,7 @@ class FieldOperator(StreamInstanceOperator):
         )
 
     @abstractmethod
-    def process_value(self, value: Any) -> Any:
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
 
     def prepare(self):
@@ -408,9 +408,12 @@ class FieldOperator(StreamInstanceOperator):
                 ) from e
             try:
                 if self.process_every_value:
-                    new_value = [self.process_value(value) for value in old_value]
+                    new_value = [
+                        self.process_instance_value(value, instance)
+                        for value in old_value
+                    ]
                 else:
-                    new_value = self.process_value(old_value)
+                    new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
@@ -425,6 +428,15 @@ class FieldOperator(StreamInstanceOperator):
                 not_exist_ok=True,
             )
         return instance
+
+
+class FieldOperator(InstanceFieldOperator):
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        return self.process_value(value)
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
 
 
 class RenameFields(FieldOperator):
