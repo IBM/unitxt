@@ -1951,7 +1951,7 @@ class TestOperators(UnitxtTestCase):
             set(page_1_outputs)
         )
         self.assertSetEqual(inputs_outputs_intersection, set())
-        
+
     def test_shuffle_field_value(self):
         operator = ShuffleFieldValues([["from", "to"]])
         in_list = [1, 2, 3, 4, 5, 6, 7, 8]
