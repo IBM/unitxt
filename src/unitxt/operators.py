@@ -1751,7 +1751,7 @@ class FeatureGroupedShuffle(Shuffle):
 
         # now flatten the list so it consists of individual dicts, but in (randomized) block order
         return list(itertools.chain(*page_blocks))
-
+        
 
 class EncodeLabels(StreamInstanceOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
