@@ -32,6 +32,7 @@ The rest of this section is dedicated for general operators.
 General Operaotrs List:
 ------------------------
 """
+
 import collections
 import copy
 import operator
