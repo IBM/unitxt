@@ -1704,6 +1704,53 @@ class Shuffle(PagedStreamOperator):
         yield from page
 
 
+class FeatureGroupedShuffle(Shuffle):
+    """Class for shuffling an input dataset by instance 'blocks', not on the individual instance level.
+
+    Example is if the dataset consists of questions with paraphrases of it, and each question falls into a topic.
+    All paraphrases have the same ID value as the original.
+    In this case, we may want to shuffle on grouping_features = ['question iD'],
+    to keep the paraphrases and original question together.
+    We may also want to group by both 'question ID' and 'topic', if the question IDs are repeated between topics.
+    """
+
+    # list of feature names to use to define the groups
+    # a group is defined by each unique observed combination of data values for features in grouping_features
+    grouping_features: List[str] = None
+    # whether to further shuffle the instances within each group block, keeping the block order
+    shuffle_within_group: bool = False
+
+    def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
+        if self.grouping_features is None:
+            super().process(page, stream_name)
+        else:
+            yield from self.shuffle_by_grouping_features(page)
+
+    def shuffle_by_grouping_features(self, page):
+        import itertools
+        from collections import defaultdict
+
+        groups_to_instances = defaultdict(list)
+        for item in page:
+            groups_to_instances[
+                tuple(item[ff] for ff in self.grouping_features)
+            ].append(item)
+        # now extract the groups (i.e., lists of dicts with order preserved)
+        page_blocks = list(groups_to_instances.values())
+        # and now shuffle the blocks
+        self.random_generator.shuffle(page_blocks)
+        if self.shuffle_within_group:
+            blocks = []
+            # reshuffle the instances within each block, but keep the blocks in order
+            for block in page_blocks:
+                self.random_generator.shuffle(block)
+                blocks.append(block)
+            page_blocks = blocks
+
+        # now flatten the list so it consists of individual dicts, but in (randomized) block order
+        return list(itertools.chain(*page_blocks))
+        
+
 class EncodeLabels(StreamInstanceOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
 
