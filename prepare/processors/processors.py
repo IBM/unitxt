@@ -16,6 +16,7 @@ from src.unitxt.processors import (
     TakeFirstWord,
     ToYesOrNone,
     YesNoToInt,
+    YesToOneElseZero,
 )
 
 logger = get_logger()
@@ -157,6 +158,16 @@ add_to_catalog(
         ]
     ),
     "processors.to_yes_or_none",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            YesToOneElseZero(field="prediction", process_every_value=False),
+        ]
+    ),
+    "processors.predictions_yes_1_else_0",
     overwrite=True,
 )
 
