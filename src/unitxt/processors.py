@@ -152,6 +152,13 @@ class YesNoToInt(FieldOperator):
         return text
 
 
+class YesToOneElseZero(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "yes":
+            return "1"
+        return "0"
+
+
 class StrToFloatFormat(FieldOperator):
     def process_value(self, text: Any) -> Any:
         try:
