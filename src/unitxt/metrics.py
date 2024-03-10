@@ -1753,7 +1753,7 @@ class SentenceBert(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["sentence_transformers"]
+    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1804,7 +1804,7 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
         super().prepare()
@@ -1846,7 +1846,7 @@ class Perplexity(BulkInstanceMetric):
     batch_size: int = 32
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def compute(
         self,
