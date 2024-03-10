@@ -38,7 +38,7 @@ card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(fields={"context_type": "dialog", "completion_type": "answer"}),
+        AddFields(fields={"context_type": "dialog", "completion_type": "response"}),
         ListsToListOfDicts(
             fields=["questions", "answers/input_text"],
             with_keys=["user", "system"],
