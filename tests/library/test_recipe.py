@@ -53,13 +53,13 @@ class TestRecipes(UnitxtTestCase):
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=5,
             num_demos=3,
         )
 
         stream = recipe()
 
-        for instance in stream["train"]:
+        for instance in stream["test"]:
             print_dict(instance)
             break
 
