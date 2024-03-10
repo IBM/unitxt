@@ -9,6 +9,15 @@ from .random_utils import new_random_generator
 from .type_utils import isoftype
 
 
+class TemplateFormatKeyError(KeyError):
+    def __init__(self, template, data, data_type, format_str, format_name):
+        keys = ", ".join(data.keys())
+        super().__init__(
+            f"Available {data_type}s are [{keys}] "
+            f"but {template.__class__.__name__}.{format_name} format requires a different ones: '{format_str}'"
+        )
+
+
 class Template(StreamInstanceOperator):
     """The role of template is to take the fields of every instance and verbalize it.
 
@@ -26,8 +35,8 @@ class Template(StreamInstanceOperator):
     postprocessors: List[str] = NonPositionalField(
         default_factory=lambda: ["processors.to_string_stripped"]
     )
-    instruction: str = NonPositionalField(default_factory=lambda: "")
-    target_prefix: str = NonPositionalField(default_factory=lambda: "")
+    instruction: str = NonPositionalField(default="")
+    target_prefix: str = NonPositionalField(default="")
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -43,7 +52,7 @@ class Template(StreamInstanceOperator):
         inputs = instance.get("inputs")
         outputs = instance.get("outputs")
 
-        source, instruction = self.inputs_to_source(inputs)
+        source = self.inputs_to_source(inputs)
         target, references = self.outputs_to_target_and_references(outputs)
 
         return {
@@ -51,8 +60,12 @@ class Template(StreamInstanceOperator):
             "source": source,
             "target": target,
             "references": references,
-            "instruction": instruction,
-            "target_prefix": self.target_prefix.format(**inputs),
+            "instruction": self.apply_formatting(
+                inputs, "input", self.instruction, "instruction", serialize=True
+            ),
+            "target_prefix": self.apply_formatting(
+                inputs, "input", self.target_prefix, "target_prefix", serialize=True
+            ),
         }
 
     @abstractmethod
@@ -68,6 +81,24 @@ class Template(StreamInstanceOperator):
     def get_postprocessors(self) -> List[str]:
         return self.postprocessors
 
+    def serialize_data(self, data):
+        return {
+            k: ", ".join(str(t) for t in v) if isinstance(v, list) else v
+            for k, v in data.items()
+        }
+
+    def apply_formatting(
+        self, data, data_type, format_str, format_name, serialize=False
+    ) -> str:
+        if serialize:
+            data = self.serialize_data(data)
+        try:
+            return format_str.format(**data)
+        except KeyError as e:
+            raise TemplateFormatKeyError(
+                self, data, data_type, format_str, format_name
+            ) from e
+
 
 class InputOutputTemplate(Template):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
@@ -78,30 +109,15 @@ class InputOutputTemplate(Template):
     input_format: str = None
     output_format: str = None
 
-    def process_template(self, template: str, data: Dict[str, object]) -> str:
-        data = {k: ", ".join(v) if isinstance(v, list) else v for k, v in data.items()}
-        return template.format(**data)
-
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        formatted = []
-        for formatting in [self.input_format, self.instruction]:
-            try:
-                formatted.append(self.process_template(formatting, inputs))
-            except KeyError as e:
-                raise KeyError(
-                    f"Available inputs are {list(inputs.keys())} but input format requires a different ones: '{formatting}'"
-                ) from e
-
-        return tuple(formatted)
+        return self.apply_formatting(
+            inputs, "input", self.input_format, "input_format", serialize=True
+        )
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        try:
-            target = self.process_template(self.output_format, outputs)
-        except KeyError as e:
-            raise KeyError(
-                f"Available outputs are {outputs.keys()} but output format requires a different one: {self.output_format}"
-            ) from e
-
+        target = self.apply_formatting(
+            outputs, "output", self.output_format, "output_format", serialize=True
+        )
         references = [target]
         return target, references
 
@@ -110,19 +126,13 @@ class InputOutputReferenceTemplate(InputOutputTemplate):
     reference: str
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        output_fields = {}
-        for name, val in [
-            ("target", self.output_format),
-            ("reference", self.reference),
-        ]:
-            try:
-                result = self.process_template(val, outputs)
-                output_fields[name] = result
-            except KeyError as e:
-                raise KeyError(
-                    f"Available outputs are {outputs.keys()} but {name} requires a different one: {val}"
-                ) from e
-        return output_fields["target"], [output_fields["reference"]]
+        target = self.apply_formatting(
+            outputs, "output", self.output_format, "output_format", serialize=True
+        )
+        reference = self.apply_formatting(
+            outputs, "output", self.reference, "reference", serialize=True
+        )
+        return target, [reference]
 
 
 class MultipleChoiceTemplate(Template):
@@ -189,15 +199,9 @@ class MultipleChoiceTemplate(Template):
             **inputs,
             self.choices_field: self.choices_seperator.join(choices),
         }
-        formatted = []
-        for formatting in [self.input_format, self.instruction]:
-            try:
-                formatted.append(formatting.format(**inputs))
-            except KeyError as e:
-                raise KeyError(
-                    f"Available inputs are {inputs.keys()} but input format requires a different one: {formatting}"
-                ) from e
-        return tuple(formatted)
+        return self.apply_formatting(
+            inputs, "input", self.input_format, "input_format", serialize=True
+        )
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = outputs[self.target_field]
@@ -259,18 +263,9 @@ class YesNoTemplate(Template):
     no_answer: str = "No"
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        data = {
-            k: ", ".join(v) if isinstance(v, list) else v for k, v in inputs.items()
-        }
-        formatted = []
-        for formatting in [self.input_format, self.instruction]:
-            try:
-                formatted.append(formatting.format(**data))
-            except KeyError as e:
-                raise RuntimeError(
-                    f"Available inputs are {list(inputs.keys())} but input format requires a different one: {formatting}"
-                ) from e
-        return tuple(formatted)
+        return self.apply_formatting(
+            inputs, "input", self.input_format, "input_format", serialize=True
+        )
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         try:
@@ -316,26 +311,22 @@ class KeyValTemplate(Template):
     use_keys_for_outputs: bool = False
 
     def process_dict(
-        self, dic: Dict[str, object], key_val_sep, pairs_sep, use_keys
+        self, data: Dict[str, object], key_val_sep, pairs_sep, use_keys
     ) -> str:
-        dic = {
-            k: ", ".join([str(vi) for vi in v]) if isinstance(v, list) else v
-            for k, v in dic.items()
-        }
+        data = self.serialize_data(data)
         pairs = []
-        for key, val in dic.items():
+        for key, val in data.items():
             key_val = [key, str(val)] if use_keys else [str(val)]
             pairs.append(key_val_sep.join(key_val))
         return pairs_sep.join(pairs)
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        ret = self.process_dict(
+        return self.process_dict(
             inputs,
             key_val_sep=self.key_val_seperator,
             pairs_sep=self.pairs_seperator,
             use_keys=self.use_keys_for_inputs,
         )
-        return (ret, ret)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = self.process_dict(
