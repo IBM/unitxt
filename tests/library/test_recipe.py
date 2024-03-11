@@ -408,6 +408,17 @@ class TestRecipes(UnitxtTestCase):
         next(iterator)
         print_dict(next(iterator))
 
+    def test_recipe_loaded_from_parameters_and_overwrites_only(self):
+        from unitxt import load_dataset
+
+        dataset = load_dataset(
+            "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
+        )
+
+        iterator = iter(dataset["train"])
+        first_inst = next(iterator)
+        self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
+
     def test_standard_recipe_with_a_sampler(self):
         """Check that the sampler is re-initialized before processing a recipe.
 
