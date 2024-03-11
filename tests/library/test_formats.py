@@ -4,47 +4,47 @@ from src.unitxt.test_utils.operators import (
 )
 from tests.utils import UnitxtTestCase
 
-instruction = "solve the math exercises"
-
-demo_instances = [
-    {"source": "1+2", "target": "3", "instruction": instruction, "inputs": {}},
-    {"source": "4-2", "target": "2", "instruction": instruction, "inputs": {}},
-]
-
-inputs = [
-    {
-        "source": "1+1",
-        "target": "2",
-        "instruction": instruction,
-        "demos": demo_instances,
-        "inputs": {},
-    },
-    {
-        "source": "3+2",
-        "target": "5",
-        "instruction": instruction,
-        "demos": demo_instances,
-        "inputs": {},
-    },
-    {
-        "source": "7-4",
-        "target": "3",
-        "instruction": instruction,
-        "demos": demo_instances,
-        "inputs": {},
-    },
-    {
-        "source": "12-3",
-        "target": "9",
-        "instruction": instruction,
-        "demos": demo_instances,
-        "inputs": {},
-    },
-]
-
 
 class TestFormats(UnitxtTestCase):
     def test_system_format(self):
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {"source": "1+2", "target": "3", "instruction": instruction, "inputs": {}},
+            {"source": "4-2", "target": "2", "instruction": instruction, "inputs": {}},
+        ]
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+        ]
+
         # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
         system_format = SystemFormat(
             demos_field="demos",
@@ -266,6 +266,44 @@ class TestFormats(UnitxtTestCase):
             demo_format="{input_prefix}{source}\n{output_prefix}{target}\n\n",
             model_input_format="{demos}{input_prefix}{instruction}\n\n{source}\n{output_prefix}",
         )
+
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {"source": "1+2", "target": "3", "instruction": instruction, "inputs": {}},
+            {"source": "4-2", "target": "2", "instruction": instruction, "inputs": {}},
+        ]
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "7-4",
+                "target": "3",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+            {
+                "source": "12-3",
+                "target": "9",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+            },
+        ]
 
         targets = [
             {

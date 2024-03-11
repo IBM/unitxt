@@ -5,16 +5,12 @@ format = SystemFormat(
     model_input_format="<|system|>\n{system_prompt}\n<|user|>\n{source}\n<|assistant|>\n{target_prefix}",
 )
 
-add_to_catalog(format, "formats.labrador.zero_shot", overwrite=True)
+add_to_catalog(format, "formats.models.labrador.zero_shot", overwrite=True)
 
 format = SystemFormat(
     format_args={"input_label": "Input:", "output_label": "Output:"},
     demo_format=(
-        "{input_label}\n"
-        "{source}\n"
-        "{output_label}\n"
-        "<|assistant|>\n"
-        "{target_prefix}{target}\n\n"
+        "{input_label}\n" "{source}\n" "{output_label}\n" "{target_prefix}{target}\n\n"
     ),
     model_input_format=(
         "<|system|>\n"
@@ -34,4 +30,4 @@ format = SystemFormat(
     ),
 )
 
-add_to_catalog(format, "formats.labrador.instruction", overwrite=True)
+add_to_catalog(format, "formats.models.labrador.few_shot", overwrite=True)
