@@ -408,8 +408,8 @@ class TestRecipes(UnitxtTestCase):
         next(iterator)
         print_dict(next(iterator))
 
-    def test_recipe_loaded_from_parameters_and_overwrites_only(self):
-        from unitxt import load_dataset
+    def test_recipe_loaded_from_arguments_and_overwrites_only(self):
+        from src.unitxt import load_dataset
 
         dataset = load_dataset(
             "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
