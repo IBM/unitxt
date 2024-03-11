@@ -1,0 +1,9 @@
+{
+    "type": "system_format",
+    "format_args": {
+        "input_label": "Input:",
+        "output_label": "Output:"
+    },
+    "demo_format": "{input_label}\n{source}\n{output_label}\n{target_prefix}{target}\n\n",
+    "model_input_format": "<|system|>\n{system_prompt}\n<|user|>\n{instruction}\nYour response should only include the answer. Do not provide any further explanation.\n\n\nHere are some examples, complete the last one:\n{demos}{input_label}\n{source}\n{output_label}\n<|assistant|>\n{target_prefix}"
+}
