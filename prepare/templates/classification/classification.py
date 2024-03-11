@@ -20,7 +20,7 @@ add_to_catalog(
         input_format="{text_type}: {text}",
         output_format="{label}",
         target_prefix="The {type_of_class} is ",
-        instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.\n",
+        instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.",
         postprocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
