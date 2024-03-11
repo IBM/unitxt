@@ -19,7 +19,6 @@ format = SystemFormat(
         "{instruction}\n"
         "Your response should only include the answer. Do not provide any further explanation.\n"
         "\n"
-        "\n"
         "Here are some examples, complete the last one:\n"
         "{demos}"
         "{input_label}\n"
