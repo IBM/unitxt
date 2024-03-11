@@ -1836,7 +1836,7 @@ class Reward(BulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
-class LlamaIndexCorrectnessMetric(InstanceMetric):
+class LlamaIndexCorrectness(InstanceMetric):
     """Custom metric class for evaluating correctness using Llama Index.
 
     Attributes:
@@ -1861,10 +1861,14 @@ class LlamaIndexCorrectnessMetric(InstanceMetric):
     anthropic_models: List[
         str
     ] = []  # this is here for the sake of documentation for future models
-    mock_models : List[str] = ["mock"]
+    mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
 
     _requirements_list: List[str] = ["llama_index"]
+
+    from collections.abc import Callable
+
+    parser: Callable[[str], Tuple[Optional[float], Optional[str]]] = None
 
     def _model_using_extrnal_api(self):
         return self.model_name in self.external_api_models
@@ -1884,16 +1888,20 @@ class LlamaIndexCorrectnessMetric(InstanceMetric):
 
         if self.model_name in self.openai_models:
             from llama_index.llms.openai import OpenAI
+
             llm = OpenAI("gpt-3.5-turbo")
         elif self.model_name in self.mock_models:
-            from llama_index.core.llms import MockLLM
-            llm = MockLLM(system_prompt="5") # perfect score
+            from llama_index.core.llms.mock import MockLLM
+
+            llm = MockLLM(system_prompt="5")  # perfect score
         else:
             raise NotImplementedError(
                 f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
             )
 
         self.evaluator = CorrectnessEvaluator(llm=llm)
+        if self.parser:
+            self.evaluator.parser_function = self.parser
 
     def compute(
         self,
@@ -1917,7 +1925,10 @@ class LlamaIndexCorrectnessMetric(InstanceMetric):
         # treat the references as the questions and the predictions as answers
         # assume a single reference
 
-        assert not self._model_using_extrnal_api() or settings.allow_passing_data_to_remote_api, f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
+        assert (
+            not self._model_using_extrnal_api()
+            or settings.allow_passing_data_to_remote_api
+        ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
 
         query = task_data["question"]
         contexts = task_data["contexts"]

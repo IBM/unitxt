@@ -1,13 +1,13 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.metrics import (
-    LlamaIndexCorrectnessMetric,
+    LlamaIndexCorrectness,
 )
 from src.unitxt.test_utils.metrics import test_metric
 
-# Test with mock 
+# Test with mock
 model_name = "mock"
 model_name_normalized = model_name.replace(".", "_").replace("-", "_")
-metric = LlamaIndexCorrectnessMetric(model_name=model_name)
+metric = LlamaIndexCorrectness(model_name=model_name)
 
 predictions = ["The right answer"]
 references = [["The right answer", "The wrong answer"]]
@@ -48,6 +48,10 @@ outputs = test_metric(
 # GPT model to catalog
 model_name = "gpt-3.5-turbo"
 model_name_normalized = model_name.replace(".", "_").replace("-", "_")
-metric = LlamaIndexCorrectnessMetric(model_name=model_name)
+metric = LlamaIndexCorrectness(model_name=model_name)
 
-add_to_catalog(metric, f"metrics.rag.correctness.llama_index_by_{model_name_normalized}", overwrite=True)
+add_to_catalog(
+    metric,
+    f"metrics.rag.correctness.llama_index_by_{model_name_normalized}",
+    overwrite=True,
+)
