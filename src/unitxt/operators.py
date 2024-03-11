@@ -1626,6 +1626,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 
+        first_metric_name = metric_names[0] if len(metric_names) > 0 else "no metrics"
         metric_names = [
             metric_name
             for metric_name in metric_names
@@ -1657,11 +1658,12 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         # The instances do not stay in main memory. Only one instance at a time.
 
         ci_aggregators = {}
-        for needed_aggregator_name in needed_aggregators_names:
-            aggs = []
-            for _ in range(self.n_resamples):
-                aggs.append(aggregator_dispatcher(needed_aggregator_name))
-            ci_aggregators[needed_aggregator_name] = aggs
+        if self.calc_confidence_intervals:
+            for needed_aggregator_name in needed_aggregators_names:
+                aggs = []
+                for _ in range(self.n_resamples):
+                    aggs.append(aggregator_dispatcher(needed_aggregator_name))
+                ci_aggregators[needed_aggregator_name] = aggs
 
         ###
         # confidence interval is computed by resampling. But, rather than having the whole stream laid in main memory,
@@ -1690,9 +1692,6 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
             total_num_of_instances += 1
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
-            else:
-                if "global" not in instance["score"]:
-                    instance["score"]["global"] = {}
 
             # compute instance score, and update it into the instance, and accumulate-aggregate toward the global score
             for _, aggregator in main_aggregators.items():
@@ -1707,10 +1706,18 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                     instance["score"]["instance"].update(
                         {metric_name[8:]: raw_instance_score}
                     )
+                    # for backward compatibility:
+                    if metric_name == first_metric_name:
+                        instance["score"]["instance"].update(
+                            {"score": raw_instance_score, "score_name": metric_name[8:]}
+                        )
+
                 aggregator.accumulate_instance_value(
                     instance["references"], instance["prediction"]
                 )
 
+            if not self.calc_confidence_intervals:
+                continue
             num_of_participations_of_this_instance_in_each_resample = poisson.rvs(
                 mu=1, size=self.n_resamples
             )
@@ -1726,7 +1733,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         if total_num_of_instances == 0:
             yield from stream
 
-        ## now for the globalscores
+        ## now for the global scores
         global_score = {}
         for needed_aggregator_name in needed_aggregators_names:
             for metric_name in main_aggregators[needed_aggregator_name].covered_metrics:
@@ -1734,13 +1741,16 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                     needed_aggregator_name
                 ].compute_final_from_aggregated(metric_name)
                 global_score.update(metric_score)
-                global_score.update(
-                    {
-                        "score": metric_score[metric_name[8:]],
-                        "score_name": metric_name[8:],
-                    }
-                )
+                if metric_name == first_metric_name:
+                    global_score.update(
+                        {
+                            "score": metric_score[metric_name[8:]],
+                            "score_name": metric_name[8:],
+                        }
+                    )
                 # and the ci for the above score:
+                if not self.calc_confidence_intervals:
+                    continue
                 bootstrap_scores = []
                 for i in range(self.n_resamples):
                     bootstrap_scores.append(
@@ -1756,6 +1766,14 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                 ci = np.percentile(bootstrap_scores, [2.5, 97.5])
                 global_score.update({metric_name[8:] + "_ci_low": ci[0]})
                 global_score.update({metric_name[8:] + "_ci_high": ci[1]})
+                # for backward compatibility
+                if metric_name == first_metric_name:
+                    global_score.update(
+                        {
+                            "score_ci_low": ci[0],
+                            "score_ci_high": ci[1],
+                        }
+                    )
 
         ## later stages demand instance["score"]["global"]["score"] for some averaging, which matches the score of "score_name"
         ## currently in branch 'main', these hold the metrics that happes to be computed last. needs to be looked into
@@ -1802,6 +1820,10 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 
+        first_metric_name = metric_names[0]
+        # for backward compatibility, the one which computes the first metric
+        # should work the last - to leave the "score" and "score_name" marks in global and instance
+
         multi_stream = MultiStream({"tmp": stream})
 
         # identify the metrics for thin evaluation and thin-evaluate them, then continue with
@@ -1812,17 +1834,22 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             if metric_name in self.metrics_for_thin_evaluation
         ]
 
-        if metrics_for_thin_evaluations:
-            multi_stream = ApplyThinMetricsEvaluations(
-                metric_field=self.metric_field,
-                calc_confidence_intervals=self.calc_confidence_intervals,
-            )(multi_stream)
-
+        # the metric left for the classic unitxt evaluation:
         metric_names = [
             metric_name
             for metric_name in metric_names
             if metric_name not in metrics_for_thin_evaluations
         ]
+
+        if metrics_for_thin_evaluations and (
+            not metric_names or first_metric_name in metric_names
+        ):
+            # only thin evaluation, it would push the correct "score_name" in global and instance
+            # or classic works last, and it pushes "score_name"
+            multi_stream = ApplyThinMetricsEvaluations(
+                metric_field=self.metric_field,
+                calc_confidence_intervals=self.calc_confidence_intervals,
+            )(multi_stream)
 
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
@@ -1857,6 +1884,18 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
             multi_stream
         )
+
+        # if thin evaluation work now to leave the correct mark of "score_name"
+        if (
+            metrics_for_thin_evaluations
+            and metric_names
+            and first_metric_name not in metric_names
+        ):
+            multi_stream = ApplyThinMetricsEvaluations(
+                metric_field=self.metric_field,
+                calc_confidence_intervals=self.calc_confidence_intervals,
+            )(multi_stream)
+
         stream = multi_stream["tmp"]
         yield from stream
 
