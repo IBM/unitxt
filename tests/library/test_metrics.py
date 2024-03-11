@@ -30,6 +30,7 @@ from src.unitxt.metrics import (
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
     KendallTauMetric,
+    LlamaIndexCorrectness,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -569,6 +570,53 @@ class TestMetrics(UnitxtTestCase):
         )
         global_target = 0.81649658092772
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_llama_index_correctness(self):
+        def parser(eval_response: str):
+            """Default parser function for evaluation response.
+
+            Args:
+                eval_response (str): The response string from the evaluation.
+
+            Returns:
+                Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
+            """
+            score_str = eval_response.split("\n")[0]
+            reasoning_str = "\n".join(eval_response.split("\n")[1:])
+            score = float(score_str)
+            reasoning = reasoning_str.lstrip("\n")
+            return score, reasoning
+
+        metric = LlamaIndexCorrectness(model_name="mock", parser=parser)
+        predictions = ["1976"]
+        references = [["1976"]]
+        task_data = [
+            {
+                "group_id": "group1",
+                "variant_type": "original",
+                "question": "what year is it",
+                "contexts": ["the year is 1976"],
+            },
+        ]
+
+        instance_targets = [
+            {
+                "correctness_llama_index_by_mock_judge": 1.0,
+                "score": 1.0,
+                "score_name": "correctness_llama_index_by_mock_judge",
+            }
+        ]
+        global_target = 1.0
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        for output, target in zip(outputs, instance_targets):
+            self.assertEqual(output["score"]["instance"], target)
 
     def test_grouped_instance_metrics(self):
         accuracy_metrics = [
