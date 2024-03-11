@@ -39,7 +39,7 @@ import os
 import uuid
 import zipfile
 from abc import abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -79,7 +79,6 @@ from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
-from .thin_aggregators import Aggregator, F1AccMatt
 from .type_utils import isoftype
 from .utils import flatten_dict
 
@@ -1607,17 +1606,21 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
             "metrics.f1_macro",
             "metrics.f1_micro",
             "metrics.matthews_correlation",
+            "metrics.rouge",
         ]
         self.aggregator_mapper = {
             "metrics.f1_micro": "F1AccMatt",
             "metrics.f1_macro": "F1AccMatt",
             "metrics.accuracy": "F1AccMatt",
             "metrics.matthews_correlation": "F1AccMatt",
+            "metrics.rouge": "MeanAndVar",
         }
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         import numpy as np
         from scipy.stats import poisson
+
+        from .thin_aggregators import Aggregator, F1AccMatt, MeanAndVar
 
         first_instance = stream.peek()
 
@@ -1627,6 +1630,14 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
             metric_names = [metric_names]
 
         first_metric_name = metric_names[0] if len(metric_names) > 0 else "no metrics"
+
+        sub_name_of_first_metric_name = {"metrics.rouge": "rougeL"}
+        name_to_look_for_score_name = (
+            sub_name_of_first_metric_name[first_metric_name]
+            if first_metric_name in sub_name_of_first_metric_name
+            else first_metric_name[8:]
+        )
+
         metric_names = [
             metric_name
             for metric_name in metric_names
@@ -1647,16 +1658,24 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                         if self.aggregator_mapper[metric_name] == "F1AccMatt"
                     ]
                 )
+            if aggregator_name == "MeanAndVar":
+                return MeanAndVar(
+                    covered_metrics=[
+                        metric_name
+                        for metric_name in metric_names
+                        if self.aggregator_mapper[metric_name] == "MeanAndVar"
+                    ],
+                )
             raise ValueError("should not be here")
 
         main_aggregators = {
             needed_aggregator_name: aggregator_dispatcher(needed_aggregator_name)
             for needed_aggregator_name in needed_aggregators_names
         }
+
         # all the aggregators needed to evaluate all the metrics for that stream
         # each of these will be updated once for each instance, and produce the final result at the end.
         # The instances do not stay in main memory. Only one instance at a time.
-
         ci_aggregators = {}
         if self.calc_confidence_intervals:
             for needed_aggregator_name in needed_aggregators_names:
@@ -1698,19 +1717,16 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                 raw_instance_score = aggregator.single_instance_score(
                     instance["references"], instance["prediction"]
                 )
-                for metric_name in [
-                    metric_name
-                    for metric_name in metric_names
-                    if metric_name in aggregator.covered_metrics
-                ]:
+                instance["score"]["instance"].update(raw_instance_score)
+
+                # for backward compatibility:
+                if first_metric_name in aggregator.covered_metrics:
                     instance["score"]["instance"].update(
-                        {metric_name[8:]: raw_instance_score}
+                        {
+                            "score": raw_instance_score[name_to_look_for_score_name],
+                            "score_name": name_to_look_for_score_name,
+                        }
                     )
-                    # for backward compatibility:
-                    if metric_name == first_metric_name:
-                        instance["score"]["instance"].update(
-                            {"score": raw_instance_score, "score_name": metric_name[8:]}
-                        )
 
                 aggregator.accumulate_instance_value(
                     instance["references"], instance["prediction"]
@@ -1736,47 +1752,58 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         ## now for the global scores
         global_score = {}
         for needed_aggregator_name in needed_aggregators_names:
-            for metric_name in main_aggregators[needed_aggregator_name].covered_metrics:
-                metric_score = main_aggregators[
-                    needed_aggregator_name
-                ].compute_final_from_aggregated(metric_name)
-                global_score.update(metric_score)
-                if metric_name == first_metric_name:
-                    global_score.update(
-                        {
-                            "score": metric_score[metric_name[8:]],
-                            "score_name": metric_name[8:],
-                        }
-                    )
-                # and the ci for the above score:
-                if not self.calc_confidence_intervals:
-                    continue
-                bootstrap_scores = []
-                for i in range(self.n_resamples):
-                    bootstrap_scores.append(
-                        ci_aggregators[needed_aggregator_name][
-                            i
-                        ].compute_final_from_aggregated(metric_name)[metric_name[8:]]
-                    )
-                bootstrap_scores = [
-                    bootstrap_score
-                    for bootstrap_score in bootstrap_scores
-                    if not np.isnan(bootstrap_score)
-                ]
-                ci = np.percentile(bootstrap_scores, [2.5, 97.5])
-                global_score.update({metric_name[8:] + "_ci_low": ci[0]})
-                global_score.update({metric_name[8:] + "_ci_high": ci[1]})
-                # for backward compatibility
-                if metric_name == first_metric_name:
-                    global_score.update(
-                        {
-                            "score_ci_low": ci[0],
-                            "score_ci_high": ci[1],
-                        }
-                    )
+            global_scores_from_this_aggregator = main_aggregators[
+                needed_aggregator_name
+            ].compute_final_from_aggregated()
+            global_score.update(global_scores_from_this_aggregator)
+
+            # for backward compatibility
+            if (
+                first_metric_name
+                in main_aggregators[needed_aggregator_name].covered_metrics
+            ):
+                global_score.update(
+                    {
+                        "score": global_score[name_to_look_for_score_name],
+                        "score_name": name_to_look_for_score_name,
+                    }
+                )
+
+            # and the ci for the above score:
+            if not self.calc_confidence_intervals:
+                continue
+
+            bootstrap_scores = defaultdict(list)
+            for i in range(self.n_resamples):
+                bootstrap_score = ci_aggregators[needed_aggregator_name][
+                    i
+                ].compute_final_from_aggregated()
+                if bootstrap_score is None:
+                    continue  # too few instances included in this resample
+                for key in bootstrap_score.keys():
+                    if not np.isnan(bootstrap_score[key]):
+                        bootstrap_scores[key].append(bootstrap_score[key])
+
+            for key in bootstrap_scores.keys():
+                ci = np.percentile(bootstrap_scores[key], [2.5, 97.5])
+                global_score.update({key + "_ci_low": ci[0]})
+                global_score.update({key + "_ci_high": ci[1]})
+
+            # for backward compatibility
+            if (
+                first_metric_name
+                in main_aggregators[needed_aggregator_name].covered_metrics
+            ):
+                score_name = global_score["score_name"]
+                global_score.update(
+                    {"score_ci_high": global_score[score_name + "_ci_high"]}
+                )
+                global_score.update(
+                    {"score_ci_low": global_score[score_name + "_ci_low"]}
+                )
 
         ## later stages demand instance["score"]["global"]["score"] for some averaging, which matches the score of "score_name"
-        ## currently in branch 'main', these hold the metrics that happes to be computed last. needs to be looked into
+        ## currently in branch 'main', these hold the metrics that happens to be computed last. needs to be looked into
         ## so for now, we did the same above
         ##
         ## update each instance of the whole stream with the news
@@ -1804,6 +1831,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             "metrics.f1_macro",
             "metrics.f1_micro",
             "metrics.matthews_correlation",
+            "metrics.rouge",
         ]
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:

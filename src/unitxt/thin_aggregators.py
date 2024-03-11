@@ -1,16 +1,35 @@
-from collections import Counter
+from collections import Counter, defaultdict
 from math import sqrt
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from .artifact import Artifact, fetch_artifact
 
-class Aggregator:
+
+class MetricFetcherMixin:
+    """Provides a way to fetch and cache artifacts in the system.
+
+    Args:
+        cache (Dict[str, Artifact]): A cache for storing fetched artifacts.
+    """
+
+    cache: Dict[str, Artifact] = {}
+
+    @classmethod
+    def get_artifact(cls, artifact_identifier: str) -> Artifact:
+        if artifact_identifier not in cls.cache:
+            artifact, artifactory = fetch_artifact(artifact_identifier)
+            cls.cache[artifact_identifier] = artifact
+        return cls.cache[artifact_identifier]
+
+
+class Aggregator(MetricFetcherMixin):
     def __init__(self, covered_metrics: Optional[List[str]] = None):
         self.covered_metrics = covered_metrics
         pass
 
-    def single_instance_score(self, references: List[Any], prediction: Any) -> float:
+    def single_instance_score(self, references: List[Any], prediction: Any):
         pass
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
@@ -23,24 +42,54 @@ class Aggregator:
 class MeanAndVar(Aggregator):
     def __init__(self, covered_metrics: Optional[List[str]] = None):
         super().__init__(covered_metrics)
+        self.metrics = {
+            metric_name: self.get_artifact(metric_name + "[use_aggregator=False]")
+            for metric_name in self.covered_metrics
+        }
         self.num_of_elements = 0
-        self.sum_of_elements = 0.0
-        self.sum_of_squares_of_elements = 0.0
+        self.sum_of_elements = defaultdict(float)
+        self.sum_of_squares_of_elements = defaultdict(float)
 
-    def accumulate_instance_value(self, instance_value: Any):
-        if instance_value is None:
-            return  # is that OK?
+    def single_instance_score(self, references: List[Any], prediction: Any) -> dict:
+        to_ret = {}
+        for metric in self.metrics.values():
+            to_ret.update(
+                metric.compute(
+                    references=[references], predictions=[prediction], task_data=[]
+                )
+            )
+        for key, val in to_ret.items():
+            if isinstance(val, list):
+                assert (
+                    len(val) == 1
+                ), f"length of computed {key} is expected to be 1. received: {val}"
+                to_ret[key] = val[0]
+        return to_ret  # receiver will employ the instantiation the covered metric, to evaluate
+
+    def accumulate_instance_value(self, references: List[Any], prediction: Any):
+        instance_score = self.single_instance_score(
+            references=references, prediction=prediction
+        )
+        if instance_score is None:
+            return
         self.num_of_elements += 1
-        self.sum_of_elements += instance_value
-        self.sum_of_squares_of_elements += instance_value**2
+        for key in instance_score.keys():
+            self.sum_of_elements[key] += instance_score[key]
+            self.sum_of_squares_of_elements[key] += instance_score[key] ** 2
 
     # return a pair of (mean, variance), computed over non-nan values
     # if no valid values: return (None, None)
     def compute_final_from_aggregated(self) -> Any:
         if self.num_of_elements < 1:
-            return (None, None)
-        mn = self.sum_of_elements / self.num_of_elements
-        return (mn, self.sum_of_squares_of_elements / self.num_of_elements - (mn**2))
+            return None
+        res = {}
+        for key in self.sum_of_elements.keys():
+            mn = self.sum_of_elements[key] / self.num_of_elements
+            res[key] = mn
+            res[key + "_var"] = self.sum_of_squares_of_elements[
+                key
+            ] / self.num_of_elements - (mn**2)
+        return res
 
 
 class F1AccMatt(Aggregator):
@@ -53,13 +102,22 @@ class F1AccMatt(Aggregator):
         assert (
             len(references) == 1
         ), "Only a single reference per prediction is allowed in F1/Acc metrics"
-        return 1.0 if prediction == references[0] else 0.0
+        to_ret = {}
+        for metric_name in self.covered_metrics:
+            to_ret[metric_name[8:]] = 1.0 if prediction == references[0] else 0.0
+        return to_ret
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
         # instance value for F1AccMatt is a pair (ref, pred), both are same type. ref is references[0] if more than one reference
         self.confusion_matrix.update([(references[0], prediction)])
 
-    def compute_final_from_aggregated(self, metric_name):
+    def compute_final_from_aggregated(self) -> dict:
+        to_ret = {}
+        for metric_name in self.covered_metrics:
+            to_ret.update(self._compute_final_from_aggregated(metric_name))
+        return to_ret
+
+    def _compute_final_from_aggregated(self, metric_name):
         if metric_name == "metrics.f1_micro":
             return self.compute_f1_micro_from_confusion_matrix("metrics.f1_micro")
         if metric_name == "metrics.f1_macro":
