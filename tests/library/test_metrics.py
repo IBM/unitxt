@@ -572,22 +572,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_llama_index_correctness(self):
-        def parser(eval_response: str):
-            """Default parser function for evaluation response.
-
-            Args:
-                eval_response (str): The response string from the evaluation.
-
-            Returns:
-                Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
-            """
-            score_str = eval_response.split("\n")[0]
-            reasoning_str = "\n".join(eval_response.split("\n")[1:])
-            score = float(score_str)
-            reasoning = reasoning_str.lstrip("\n")
-            return score, reasoning
-
-        metric = LlamaIndexCorrectness(model_name="mock", parser=parser)
+        metric = LlamaIndexCorrectness(model_name="mock")
         predictions = ["1976"]
         references = [["1976"]]
         task_data = [

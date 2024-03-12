@@ -1866,7 +1866,21 @@ class LlamaIndexCorrectness(InstanceMetric):
 
     _requirements_list: List[str] = ["llama_index"]
 
-    parser: callable = None
+    @staticmethod
+    def _custom_parser(eval_response: str):
+        """Default parser function for evaluation response.
+
+        Args:
+            eval_response (str): The response string from the evaluation.
+
+        Returns:
+            Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
+        """
+        score_str = eval_response.split("\n")[0]
+        reasoning_str = "\n".join(eval_response.split("\n")[1:])
+        score = float(score_str)
+        reasoning = reasoning_str.lstrip("\n")
+        return score, reasoning
 
     def _model_using_extrnal_api(self):
         return self.model_name in self.external_api_models
@@ -1897,9 +1911,9 @@ class LlamaIndexCorrectness(InstanceMetric):
                 f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
             )
 
-        self.evaluator = CorrectnessEvaluator(llm=llm)
-        if self.parser:
-            self.evaluator.parser_function = self.parser
+        self.evaluator = CorrectnessEvaluator(
+            llm=llm, parser_function=self._custom_parser
+        )
 
     def compute(
         self,
