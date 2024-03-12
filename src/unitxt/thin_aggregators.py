@@ -109,6 +109,18 @@ class F1AccMatt(Aggregator):
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
         # instance value for F1AccMatt is a pair (ref, pred), both are same type. ref is references[0] if more than one reference
+        # see if easy to cover for accuracy, shows in reuters which is multi_label
+        # F1 , if to be applied to multi_label, is called metrics.f1_micro_multi_label
+        if isinstance(prediction, list):
+            assert isinstance(
+                references[0], list
+            ), "prediction and references[0] should both be same: list or scalar"
+            for pred in prediction:
+                if pred in references[0]:
+                    self.confusion_matrix.update([(pred, pred)])
+                else:
+                    self.confusion_matrix.update([(pred, np.nan)])
+            return
         self.confusion_matrix.update([(references[0], prediction)])
 
     def compute_final_from_aggregated(self) -> dict:

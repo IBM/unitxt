@@ -1154,7 +1154,7 @@ class ApplyOperatorsField(StreamInstanceOperator):
             operator_names = [operator_names]
         # otherwise , operator_names is already a list
 
-        # we now have a list of nanes of operators, each is equipped with process_instance method.
+        # we now have a list of names of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
         return operator.process_instance(instance)
 
@@ -1622,6 +1622,41 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
         from .thin_aggregators import Aggregator, F1AccMatt, MeanAndVar
 
+        class ScoreEachInstance(StreamInstanceOperator):
+            scorers: List[Aggregator]
+            first_metric_name: str
+            name_to_look_for_score_name: str
+
+            def process(
+                self, inst: Dict[str, Any], stream_name: Optional[str] = None
+            ) -> Dict[str, Any]:
+                if "score" not in inst:
+                    inst["score"] = {"global": {}, "instance": {}}
+                if "instance" not in inst["score"]:
+                    inst["score"]["instance"] = {}
+                if "global" not in inst["score"]:
+                    inst["score"]["global"] = {}
+
+                # compute instance score, and update it into the instance
+                for scorer in self.scorers:
+                    raw_instance_score = scorer.single_instance_score(
+                        inst["references"], inst["prediction"]
+                    )
+                    inst["score"]["instance"].update(raw_instance_score)
+
+                    # for backward compatibility:
+                    if self.first_metric_name in scorer.covered_metrics:
+                        inst["score"]["instance"].update(
+                            {
+                                "score": raw_instance_score[
+                                    self.name_to_look_for_score_name
+                                ],
+                                "score_name": self.name_to_look_for_score_name,
+                            }
+                        )
+
+                return inst
+
         first_instance = stream.peek()
 
         metric_names = first_instance.get(self.metric_field, [])
@@ -1673,6 +1708,16 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
             for needed_aggregator_name in needed_aggregators_names
         }
 
+        # score the individual instances
+        ms = MultiStream({"tmp": stream})
+        score_each_instance = ScoreEachInstance(
+            scorers=[v for k, v in main_aggregators.items()],
+            first_metric_name=first_metric_name,
+            name_to_look_for_score_name=name_to_look_for_score_name,
+        )
+        ms = score_each_instance(ms)
+        stream = ms["tmp"]
+
         # all the aggregators needed to evaluate all the metrics for that stream
         # each of these will be updated once for each instance, and produce the final result at the end.
         # The instances do not stay in main memory. Only one instance at a time.
@@ -1705,29 +1750,12 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         # the length s of the stream. Which is the desired size of each resample, by the bootstrapping method.
         #
 
-        # needed_metrics = []  # for rouge blue etc.
         total_num_of_instances = 0
         for instance in stream:
             total_num_of_instances += 1
-            if "score" not in instance:
-                instance["score"] = {"global": {}, "instance": {}}
 
-            # compute instance score, and update it into the instance, and accumulate-aggregate toward the global score
+            # compute instance score, and accumulate-aggregate toward the global score
             for _, aggregator in main_aggregators.items():
-                raw_instance_score = aggregator.single_instance_score(
-                    instance["references"], instance["prediction"]
-                )
-                instance["score"]["instance"].update(raw_instance_score)
-
-                # for backward compatibility:
-                if first_metric_name in aggregator.covered_metrics:
-                    instance["score"]["instance"].update(
-                        {
-                            "score": raw_instance_score[name_to_look_for_score_name],
-                            "score_name": name_to_look_for_score_name,
-                        }
-                    )
-
                 aggregator.accumulate_instance_value(
                     instance["references"], instance["prediction"]
                 )
@@ -1749,8 +1777,10 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         if total_num_of_instances == 0:
             yield from stream
 
+        first_instance = stream.peek()  # stream is after scoring each instance
+
         ## now for the global scores
-        global_score = {}
+        global_score = first_instance["score"]["global"]
         for needed_aggregator_name in needed_aggregators_names:
             global_scores_from_this_aggregator = main_aggregators[
                 needed_aggregator_name
@@ -1807,10 +1837,10 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         ## so for now, we did the same above
         ##
         ## update each instance of the whole stream with the news
-        mstoret = MultiStream({"tmp": stream})
+        ms = MultiStream({"tmp": stream})
         add_globals = AddFields(fields={"score/global": global_score}, use_query=True)
-        mstoret = add_globals(mstoret)
-        yield from mstoret["tmp"]
+        ms = add_globals(ms)
+        yield from ms["tmp"]
 
 
 class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
@@ -1869,10 +1899,11 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             if metric_name not in metrics_for_thin_evaluations
         ]
 
-        if metrics_for_thin_evaluations and (
-            not metric_names or first_metric_name in metric_names
+        if (
+            metrics_for_thin_evaluations
+            and first_metric_name not in metrics_for_thin_evaluations
         ):
-            # only thin evaluation, it would push the correct "score_name" in global and instance
+            # if needed, thin evaluation would push the correct "score_name" in global and instance
             # or classic works last, and it pushes "score_name"
             multi_stream = ApplyThinMetricsEvaluations(
                 metric_field=self.metric_field,
@@ -1913,11 +1944,10 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             multi_stream
         )
 
-        # if thin evaluation work now to leave the correct mark of "score_name"
+        # if thin evaluation needs to work now to leave the correct mark of "score_name"
         if (
             metrics_for_thin_evaluations
-            and metric_names
-            and first_metric_name not in metric_names
+            and first_metric_name in metrics_for_thin_evaluations
         ):
             multi_stream = ApplyThinMetricsEvaluations(
                 metric_field=self.metric_field,
