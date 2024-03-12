@@ -1866,8 +1866,7 @@ class LlamaIndexCorrectness(InstanceMetric):
 
     _requirements_list: List[str] = ["llama_index"]
 
-    # from collections.abc import Callable
-    parser = None
+    parser: callable = None
 
     def _model_using_extrnal_api(self):
         return self.model_name in self.external_api_models
