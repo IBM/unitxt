@@ -1159,7 +1159,7 @@ class F1Binary(F1):
         predictions_floats = [to_float_or_default(p) for p in predictions]
         predictions = [str(int(p > 0.5)) for p in predictions_floats]
         references = [
-            ["1"] if r[0].lower() in self.pos_classes else "0" for r in references
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
         ]
         return super().compute(references, predictions, task_data)
 
