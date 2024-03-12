@@ -1618,10 +1618,11 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
         from .thin_aggregators import Aggregator, F1AccMatt, MeanAndVar
 
-        class ScoreEachInstance(StreamInstanceOperator):
+        class ScoreEachInstanceAndAddGlobalScore(StreamInstanceOperator):
             scorers: List[Aggregator]
             first_metric_name: str
             name_to_look_for_score_name: str
+            global_acore: dict
 
             def process(
                 self, inst: Dict[str, Any], stream_name: Optional[str] = None
@@ -1632,6 +1633,8 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                     inst["score"]["instance"] = {}
                 if "global" not in inst["score"]:
                     inst["score"]["global"] = {}
+
+                inst["score"]["global"].update(self.global_acore)
 
                 # compute instance score, and update it into the instance
                 for scorer in self.scorers:
@@ -1690,14 +1693,6 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         }
 
         # score the individual instances
-        ms = MultiStream({"tmp": stream})
-        score_each_instance = ScoreEachInstance(
-            scorers=[v for k, v in main_aggregators.items()],
-            first_metric_name=self.first_metric_name,
-            name_to_look_for_score_name=name_to_look_for_score_name,
-        )
-        ms = score_each_instance(ms)
-        stream = ms["tmp"]
 
         # all the aggregators needed to evaluate all the metrics for that stream
         # each of these will be updated once for each instance, and produce the final result at the end.
@@ -1761,7 +1756,10 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         first_instance = stream.peek()  # stream is after scoring each instance
 
         ## now for the global scores
-        global_score = first_instance["score"]["global"]
+        if "score" not in first_instance or "global" not in first_instance["score"]:
+            global_score = {}
+        else:
+            global_score = first_instance["score"]["global"]
         for needed_aggregator_name in needed_aggregators_names:
             global_scores_from_this_aggregator = main_aggregators[
                 needed_aggregator_name
@@ -1817,10 +1815,16 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         ## currently in branch 'main', these hold the metrics that happens to be computed last. needs to be looked into
         ## so for now, we did the same above
         ##
-        ## update each instance of the whole stream with the news
+        ## update each instance of the whole stream with the news, and store its instance score
         ms = MultiStream({"tmp": stream})
-        add_globals = AddFields(fields={"score/global": global_score}, use_query=True)
-        ms = add_globals(ms)
+        score_each_instance_and_add_global_score = ScoreEachInstanceAndAddGlobalScore(
+            scorers=[v for k, v in main_aggregators.items()],
+            first_metric_name=self.first_metric_name,
+            name_to_look_for_score_name=name_to_look_for_score_name,
+            global_acore=global_score,
+        )
+        ms = score_each_instance_and_add_global_score(ms)
+
         yield from ms["tmp"]
 
 
@@ -1892,39 +1896,40 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
                 calc_confidence_intervals=self.calc_confidence_intervals,
             )(multi_stream)
 
-        # Each metric operator computes its score and then sets the main score, overwriting
-        # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
-        # This will cause the first listed metric to run last, and the main score will be set
-        # by the first listed metric (as desired).
-        metric_names = list(reversed(metric_names))
+        if metric_names:
+            # Each metric operator computes its score and then sets the main score, overwriting
+            # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
+            # This will cause the first listed metric to run last, and the main score will be set
+            # by the first listed metric (as desired).
+            metric_names = list(reversed(metric_names))
 
-        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
-        # for further metrics' processing, instead of just modifying the score field.
-        # Here we keep all the fields besides the score, and restore them after the metric finishes.
-        first_instance = stream.peek()
-        keys_to_restore = set(first_instance.keys()).difference({"score"})
+            # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
+            # for further metrics' processing, instead of just modifying the score field.
+            # Here we keep all the fields besides the score, and restore them after the metric finishes.
+            first_instance = stream.peek()
+            keys_to_restore = set(first_instance.keys()).difference({"score"})
 
-        multi_stream = CopyFields(
-            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
-        )(multi_stream)
-
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            assert isinstance(
-                metric, Metric
-            ), f"Operator {metric_name} must be a Metric"
-
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
-
-            multi_stream = metric(multi_stream)
             multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore}
+                field_to_field={k: f"{k}_orig" for k in keys_to_restore}
             )(multi_stream)
 
-        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
-            multi_stream
-        )
+            for metric_name in metric_names:
+                metric = self.get_artifact(metric_name)
+                assert isinstance(
+                    metric, Metric
+                ), f"Operator {metric_name} must be a Metric"
+
+                if not self.calc_confidence_intervals:
+                    metric.disable_confidence_interval_calculation()
+
+                multi_stream = metric(multi_stream)
+                multi_stream = CopyFields(
+                    field_to_field={f"{k}_orig": k for k in keys_to_restore}
+                )(multi_stream)
+
+            multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
+                multi_stream
+            )
 
         # if thin evaluation needs to work now, to leave the correct mark of "score_name"
         if (

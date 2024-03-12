@@ -25,9 +25,10 @@ class MetricFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class Aggregator(MetricFetcherMixin):
-    def __init__(self, covered_metrics: Optional[List[str]] = None):
-        self.covered_metrics = covered_metrics
+class Aggregator(Artifact, MetricFetcherMixin):
+    covered_metrics: Optional[List[str]] = None
+
+    def prepare(self):
         pass
 
     def single_instance_score(self, references: List[Any], prediction: Any):
@@ -41,8 +42,7 @@ class Aggregator(MetricFetcherMixin):
 
 
 class MeanAndVar(Aggregator):
-    def __init__(self, covered_metrics: Optional[List[str]] = None):
-        super().__init__(covered_metrics)
+    def prepare(self):
         self.metrics = {
             metric_name: self.get_artifact(metric_name + "[use_aggregator=False]")
             for metric_name in self.covered_metrics
@@ -94,8 +94,7 @@ class MeanAndVar(Aggregator):
 
 
 class F1AccMatt(Aggregator):
-    def __init__(self, covered_metrics: Optional[List[str]] = None):
-        super().__init__(covered_metrics)
+    def prepare(self):
         self.confusion_matrix = Counter()
 
     def single_instance_score(self, references: List[Any], prediction: Any) -> float:
@@ -262,11 +261,13 @@ class F1AccMatt(Aggregator):
 
 
 class F1AccMattMultiLabel(Aggregator):
-    def __init__(self, covered_metrics: Optional[List[str]] = None):
-        super().__init__(covered_metrics)
+    def prepare(self):
         self.confusion_matrix = Counter()
 
     def single_instance_score(self, references: List[Any], prediction: Any) -> float:
+        self._validate_references_and_prediction(
+            references=references, prediction=prediction
+        )
         # from F1(GlobalMetric) in metricts.py
         assert (
             len(references) == 1
