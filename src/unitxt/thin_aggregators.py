@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from .artifact import Artifact, fetch_artifact
+from .type_utils import isoftype
 
 
 class MetricFetcherMixin:
@@ -99,12 +100,12 @@ class F1AccMatt(Aggregator):
 
     def single_instance_score(self, references: List[Any], prediction: Any) -> float:
         # from F1(GlobalMetric) in metricts.py
-        assert (
-            len(references) == 1
-        ), "Only a single reference per prediction is allowed in F1/Acc metrics"
+        # assert (
+        #     len(references) == 1
+        # ), "Only a single reference per prediction is allowed in F1/Acc metrics"
         to_ret = {}
         for metric_name in self.covered_metrics:
-            to_ret[metric_name[8:]] = 1.0 if prediction == references[0] else 0.0
+            to_ret[metric_name[8:]] = 1.0 if prediction in references else 0.0
         return to_ret
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
@@ -258,3 +259,42 @@ class F1AccMatt(Aggregator):
 
         f1.update({"f1_macro": round(our_f1_macro, 2)})
         return f1
+
+
+class F1AccMattMultiLabel(Aggregator):
+    def __init__(self, covered_metrics: Optional[List[str]] = None):
+        super().__init__(covered_metrics)
+        self.confusion_matrix = Counter()
+
+    def single_instance_score(self, references: List[Any], prediction: Any) -> float:
+        # from F1(GlobalMetric) in metricts.py
+        assert (
+            len(references) == 1
+        ), "Only a single reference per prediction is allowed in F1/Acc metrics"
+        to_ret = {}
+        for metric_name in self.covered_metrics:
+            to_ret[metric_name[8:]] = 1.0 if prediction in references else 0.0
+        return to_ret
+
+    def accumulate_instance_value(self, references: List[Any], prediction: Any):
+        # instance value for F1AccMatt is a pair (ref, pred), both are same type. ref is references[0] if more than one reference
+        # see if easy to cover for accuracy, shows in reuters which is multi_label
+        return None
+
+    # adapted from metrics.py for multilabel
+    def _validate_references_and_prediction(
+        self, references: List[Any], prediction: Any
+    ):
+        if not len(references) == 1:
+            raise ValueError(
+                f"Only a single reference per instance is allowed in multi label metric. Received reference: {references}"
+            )
+        if not isoftype(references[0], List[str]):
+            raise ValueError(
+                f"Instance references is expected to be a list of one item being a list of strings in multi label metric. Received references: '{references}'"
+            )
+
+        if not isoftype(prediction, List[str]):
+            raise ValueError(
+                f"Instance prediction is expected to be a list of strings in multi label metric. Received prediction: '{prediction}'"
+            )
