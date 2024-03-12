@@ -1589,11 +1589,14 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
     """Applies metrics evaluations never holding the whole stream lying in main memory.
 
     Args:
-        metric_field (str): The field containing the metrics to be applied.
+        metric_names: List[str]: The metric_names for this thin evaluator now to measure, instance and global.
+        first_metric_name: str: name of a metric to be left in fields score[global][score] and score[instance][score] for backward compatibility
         calc_confidence_intervals (bool): Whether the applied metric should calculate confidence intervals or not.
+
     """
 
-    metric_field: str
+    metric_names: List[str]
+    first_metric_name: str
     calc_confidence_intervals: bool
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_global_metrics
@@ -1601,13 +1604,6 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
     def prepare(self):
         super().prepare()
-        self.metrics_for_thin_evaluation = [
-            "metrics.accuracy",
-            "metrics.f1_macro",
-            "metrics.f1_micro",
-            "metrics.matthews_correlation",
-            "metrics.rouge",
-        ]
         self.aggregator_mapper = {
             "metrics.f1_micro": "F1AccMatt",
             "metrics.f1_macro": "F1AccMatt",
@@ -1657,30 +1653,15 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
                 return inst
 
-        first_instance = stream.peek()
-
-        metric_names = first_instance.get(self.metric_field, [])
-
-        if isinstance(metric_names, str):
-            metric_names = [metric_names]
-
-        first_metric_name = metric_names[0] if len(metric_names) > 0 else "no metrics"
-
         sub_name_of_first_metric_name = {"metrics.rouge": "rougeL"}
         name_to_look_for_score_name = (
-            sub_name_of_first_metric_name[first_metric_name]
-            if first_metric_name in sub_name_of_first_metric_name
-            else first_metric_name[8:]
+            sub_name_of_first_metric_name[self.first_metric_name]
+            if self.first_metric_name in sub_name_of_first_metric_name
+            else self.first_metric_name[8:]
         )
 
-        metric_names = [
-            metric_name
-            for metric_name in metric_names
-            if metric_name in self.metrics_for_thin_evaluation
-        ]
-
         needed_aggregators_names = {
-            self.aggregator_mapper[metric_name] for metric_name in metric_names
+            self.aggregator_mapper[metric_name] for metric_name in self.metric_names
         }
         needed_aggregators_names = list(needed_aggregators_names)
 
@@ -1689,7 +1670,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                 return F1AccMatt(
                     covered_metrics=[
                         metric_name
-                        for metric_name in metric_names
+                        for metric_name in self.metric_names
                         if self.aggregator_mapper[metric_name] == "F1AccMatt"
                     ]
                 )
@@ -1697,7 +1678,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                 return MeanAndVar(
                     covered_metrics=[
                         metric_name
-                        for metric_name in metric_names
+                        for metric_name in self.metric_names
                         if self.aggregator_mapper[metric_name] == "MeanAndVar"
                     ],
                 )
@@ -1712,7 +1693,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         ms = MultiStream({"tmp": stream})
         score_each_instance = ScoreEachInstance(
             scorers=[v for k, v in main_aggregators.items()],
-            first_metric_name=first_metric_name,
+            first_metric_name=self.first_metric_name,
             name_to_look_for_score_name=name_to_look_for_score_name,
         )
         ms = score_each_instance(ms)
@@ -1789,7 +1770,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
             # for backward compatibility
             if (
-                first_metric_name
+                self.first_metric_name
                 in main_aggregators[needed_aggregator_name].covered_metrics
             ):
                 global_score.update(
@@ -1821,7 +1802,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
             # for backward compatibility
             if (
-                first_metric_name
+                self.first_metric_name
                 in main_aggregators[needed_aggregator_name].covered_metrics
             ):
                 score_name = global_score["score_name"]
@@ -1903,10 +1884,11 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             metrics_for_thin_evaluations
             and first_metric_name not in metrics_for_thin_evaluations
         ):
-            # if needed, thin evaluation would push the correct "score_name" in global and instance
-            # or classic works last, and it pushes "score_name"
+            # if thin evaluation need not push the correct "score_name" in global and instance,
+            # it can work first. classic evaluation would works last and thus would push "score_name"
             multi_stream = ApplyThinMetricsEvaluations(
-                metric_field=self.metric_field,
+                metric_names=metrics_for_thin_evaluations,
+                first_metric_name=first_metric_name,
                 calc_confidence_intervals=self.calc_confidence_intervals,
             )(multi_stream)
 
@@ -1944,13 +1926,14 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             multi_stream
         )
 
-        # if thin evaluation needs to work now to leave the correct mark of "score_name"
+        # if thin evaluation needs to work now, to leave the correct mark of "score_name"
         if (
             metrics_for_thin_evaluations
             and first_metric_name in metrics_for_thin_evaluations
         ):
             multi_stream = ApplyThinMetricsEvaluations(
-                metric_field=self.metric_field,
+                metric_names=metrics_for_thin_evaluations,
+                first_metric_name=first_metric_name,
                 calc_confidence_intervals=self.calc_confidence_intervals,
             )(multi_stream)
 
