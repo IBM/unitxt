@@ -1098,11 +1098,6 @@ class F1(GlobalMetric):
             self.id_to_str[id] = str
         return self.str_to_id[str]
 
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        return True
-
     def compute(
         self,
         references: List[List[str]],
@@ -1112,8 +1107,6 @@ class F1(GlobalMetric):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
-        if not self._labels_match_average_format(references, predictions):
-            return {self.main_score: np.nan}
 
         self.str_to_id = {}
         self.id_to_str = {}
@@ -1155,21 +1148,20 @@ class F1Binary(F1):
     pos_classes = {"1", "1.0", "yes", "true"}
 
     def get_str_id(self, str):
-        if str.lower() in self.pos_classes:
-            return 1
-        return 0
+        return int(str)
 
-    # References and predictions must include up to 2 unique values, one of them in pos_classes
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        classes = set(predictions + list(itertools.chain(*references)))
-        n_classes = len(classes)
-        if n_classes > 2:
-            return False
-        if n_classes == 2 and len(set(classes).difference(self.pos_classes)) == 0:
-            return False
-        return True
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        predictions_floats = [to_float_or_default(p) for p in predictions]
+        predictions = [str(int(p > 0.5)) for p in predictions_floats]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else "0" for r in references
+        ]
+        return super().compute(references, predictions, task_data)
 
 
 class RecallBinary(F1Binary):

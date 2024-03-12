@@ -169,8 +169,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_binary(self):
         metric = F1Binary()
-        references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
+        references = [["1"], ["0"], ["0"], ["0"], ["Yes"], ["1"]]
+        predictions = ["0.8", "1", "0.2", "0", "0.6", "1"]
 
         global_target = 0.8571428571428
         outputs = apply_metric(
@@ -212,25 +212,6 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("recall_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("recall_binary", outputs[0]["score"]["instance"]["score_name"])
-
-    def test_f1_binary_non_binary(self):
-        metric = F1Binary()
-        references = [["1"], ["0"], ["yes"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
-        metric = F1Binary()
-        references = [["1"], ["yes"], ["1"], ["1"]]
-        predictions = ["1", "1", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
 
     def test_max_f1(self):
         metric = BinaryMaxF1()
