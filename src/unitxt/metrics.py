@@ -1,4 +1,3 @@
-import ast
 import itertools
 import re
 import string
