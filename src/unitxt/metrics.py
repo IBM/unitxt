@@ -1936,7 +1936,10 @@ class LlamaIndexCorrectness(InstanceMetric):
         ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
 
         query = task_data["question"]
-        contexts = task_data["contexts"]
+
+        contexts = None
+        if "contexts" in task_data:
+            contexts = task_data["contexts"]
 
         per_reference_results = []
         for reference_response in references:
