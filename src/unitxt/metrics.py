@@ -1,4 +1,3 @@
-import itertools
 import re
 import string
 import uuid
@@ -3091,31 +3090,14 @@ class BinaryMaxF1(F1Binary):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
-        classes = set(itertools.chain(*references))
-        n_clases = len(classes)
-        assert len(classes) <= 2, "References of BinaryMaxF1 must be binary"
-        pos_classes = classes.intersection(self.pos_classes)
-        neg_classes = classes.difference(self.pos_classes)
-        n_pos_classes = len(pos_classes)
-        if n_clases == 2:
-            assert (
-                n_pos_classes == 1
-            ), "Only one positive class is allowed in BinaryMaxF1"
-        pos_class = next(iter(pos_classes)) if n_pos_classes > 0 else "1.0"
-        neg_class = next(iter(neg_classes)) if len(neg_classes) > 0 else "0.0"
 
-        float_predictions = []
-        for prediction in predictions:
-            try:
-                float_predictions.append(float(prediction))
-            except Exception:
-                float_predictions.append(0)
+        float_predictions = [to_float_or_default(p) for p in predictions]
 
         best_thr = -1
         best_f1 = -1
         for thr in set(float_predictions):
             new_predictions = [
-                pos_class if float_prediction >= thr else neg_class
+                "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
             ]
             f1 = super().compute(references, new_predictions, task_data)[
