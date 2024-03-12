@@ -37,6 +37,7 @@ class Template(StreamInstanceOperator):
     )
     instruction: str = NonPositionalField(default="")
     target_prefix: str = NonPositionalField(default="")
+    title_fields: List[str] = NonPositionalField(default_factory=list)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -51,6 +52,8 @@ class Template(StreamInstanceOperator):
 
         inputs = instance.get("inputs")
         outputs = instance.get("outputs")
+
+        self.set_titles(inputs)
 
         source = self.inputs_to_source(inputs)
         target, references = self.outputs_to_target_and_references(outputs)
@@ -71,6 +74,10 @@ class Template(StreamInstanceOperator):
     @abstractmethod
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
         pass
+
+    def set_titles(self, data):
+        for field in self.title_fields:
+            data[field] = data[field].title()
 
     @abstractmethod
     def outputs_to_target_and_references(

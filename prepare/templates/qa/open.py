@@ -13,7 +13,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Answer the question.\n",
+        instruction="Answer the question.",
         input_format="Question: {question}",
         target_prefix="Answer: ",
         references_field="answers",
@@ -23,10 +23,22 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Answer the question.",
+        input_format="Question:\n{question}",
+        target_prefix="Answer:\n",
+        references_field="answers",
+    ),
+    "templates.qa.open.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.qa.open.simple",
             "templates.qa.open.simple2",
+            "templates.qa.open.title",
         ]
     ),
     "templates.qa.open.all",

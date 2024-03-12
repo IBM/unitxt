@@ -29,6 +29,23 @@ add_to_catalog(
     "templates.classification.multi_class.instruction",
     overwrite=True,
 )
+
+add_to_catalog(
+    InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
+        input_format="{text_type}: {text}",
+        output_format="{label}",
+        target_prefix="{type_of_class}:\n",
+        instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.",
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case_till_punc",
+        ],
+        title_fields=["type_of_class", "text_type"],
+    ),
+    "templates.classification.multi_class.title",
+    overwrite=True,
+)
+
 add_to_catalog(
     InputOutputTemplate(
         input_format="{text}",
@@ -43,6 +60,7 @@ add_to_catalog(
         [
             "templates.classification.multi_class.default",
             "templates.classification.multi_class.instruction",
+            "templates.classification.multi_class.title",
             "templates.classification.multi_class.empty",
         ]
     ),
@@ -87,6 +105,25 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    MultiLabelTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
+        input_format="{text_type}: {text}",
+        output_format="{labels}",
+        target_prefix="{type_of_classes}:\n",
+        labels_field="labels",
+        instruction="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case",
+            "processors.to_list_by_comma",
+            "processors.remove_none_from_list",
+        ],
+        title_fields=["type_of_classes", "text_type"],
+    ),
+    "templates.classification.multi_label.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     MultiLabelTemplate(
         input_format="{text}",
         output_format="{labels}",
@@ -107,6 +144,7 @@ add_to_catalog(
         [
             "templates.classification.multi_label.default",
             "templates.classification.multi_label.instruction",
+            "templates.classification.multi_label.title",
             "templates.classification.multi_label.empty",
         ]
     ),
