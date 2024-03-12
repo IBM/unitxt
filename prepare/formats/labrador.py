@@ -8,7 +8,7 @@ format = SystemFormat(
 add_to_catalog(format, "formats.models.labrador.zero_shot", overwrite=True)
 
 format = SystemFormat(
-    demo_format=("{source}\n{target_prefix}{target}\n\n"),
+    demo_format="{source}\n{target_prefix}{target}\n\n",
     model_input_format=(
         "<|system|>\n"
         "{system_prompt}\n"
@@ -19,8 +19,8 @@ format = SystemFormat(
         "Here are some examples, complete the last one:\n"
         "{demos}"
         "{source}\n"
-        "<|assistant|>\n"
         "{target_prefix}"
+        "<|assistant|>\n"
     ),
 )
 

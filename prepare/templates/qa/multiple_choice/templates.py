@@ -227,6 +227,19 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Answer the multiple choice Question based on the Choices (choose from {numerals}).",
+        input_format="Question:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.title",
+    overwrite=True,
+)
+
 input_format = "Context: {context}\nQuestion: {question}\nChoices:\n{choices}\nAnswer:"
 add_to_catalog(
     MultipleChoiceTemplate(
@@ -236,6 +249,20 @@ add_to_catalog(
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_context.lm_eval_harness",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Answer the multiple choice Question from one of the Choices (choose from {numerals}) based on the {context_type}.",
+        input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+        title_fields=["context_type"],
+    ),
+    "templates.qa.multiple_choice.with_context.title",
     overwrite=True,
 )
 
@@ -267,6 +294,33 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Answer the multiple choice Question about {topic} from one of the Choices (choose from {numerals}) based on the {context_type}.",
+        input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+        title_fields=["context_type"],
+    ),
+    "templates.qa.multiple_choice.with_context.with_topic.title",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Answer the multiple choice Question about {topic} from one of the Choices (choose from {numerals}).",
+        input_format="Question:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.with_topic.title",
+    overwrite=True,
+)
+
 
 def remove_duplicates(input_list):
     seen = set()
@@ -289,6 +343,7 @@ add_to_catalog(
                         "templates.qa.multiple_choice.with_context.no_intro.all"
                     )[0].items
                 ],
+                "templates.qa.multiple_choice.with_context.title",
             ]
         )
     ),
@@ -309,6 +364,7 @@ add_to_catalog(
                         "templates.qa.multiple_choice.with_context.with_topic.all"
                     )[0].items
                 ],
+                "templates.qa.multiple_choice.with_context.with_topic.title",
             ]
         )
     ),
@@ -330,6 +386,7 @@ add_to_catalog(
                         "templates.qa.multiple_choice.with_topic.all"
                     )[0].items
                 ],
+                "templates.qa.multiple_choice.with_topic.title",
             ]
         )
     ),
