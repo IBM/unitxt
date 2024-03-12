@@ -39,6 +39,15 @@ class Template(StreamInstanceOperator):
     target_prefix: str = NonPositionalField(default="")
     title_fields: List[str] = NonPositionalField(default_factory=list)
 
+    def inputs_to_instruction_and_target_prefix(self, inputs):
+        instruction = self.apply_formatting(
+            inputs, "input", self.instruction, "instruction", serialize=True
+        )
+        target_prefix = self.apply_formatting(
+            inputs, "input", self.target_prefix, "target_prefix", serialize=True
+        )
+        return instruction, target_prefix
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -56,6 +65,9 @@ class Template(StreamInstanceOperator):
         self.set_titles(inputs)
 
         source = self.inputs_to_source(inputs)
+        instruction, target_prefix = self.inputs_to_instruction_and_target_prefix(
+            inputs
+        )
         target, references = self.outputs_to_target_and_references(outputs)
 
         return {
@@ -63,12 +75,8 @@ class Template(StreamInstanceOperator):
             "source": source,
             "target": target,
             "references": references,
-            "instruction": self.apply_formatting(
-                inputs, "input", self.instruction, "instruction", serialize=True
-            ),
-            "target_prefix": self.apply_formatting(
-                inputs, "input", self.target_prefix, "target_prefix", serialize=True
-            ),
+            "instruction": instruction,
+            "target_prefix": target_prefix,
         }
 
     @abstractmethod
@@ -152,7 +160,6 @@ class MultipleChoiceTemplate(Template):
     choices_seperator: str = ", "
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
-    add_numerals_as_field: str = None
     enumerator: str = "capitals"
 
     def prepare(self):
@@ -187,7 +194,7 @@ class MultipleChoiceTemplate(Template):
                 "XX",
             ]
 
-    def get_choices(self, data: Dict[str, object], choice_format: str) -> str:
+    def inputs_to_choices(self, data: Dict[str, object], choice_format: str) -> str:
         choices = data[self.choices_field]
         enumrated_choices = []
         for i, choice in enumerate(choices):
@@ -199,16 +206,28 @@ class MultipleChoiceTemplate(Template):
             )
         return enumrated_choices
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        choices = self.get_choices(inputs, self.source_choice_format)
-        inputs = {
-            "numerals": ",".join(self.get_choices(inputs, "{choice_numeral}")),
+    def inputs_to_numerals(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        return self.inputs_to_choices(inputs, "{choice_numeral}")
+
+    def prepare_multiple_choice_inputs(
+        self, inputs: Dict[str, object]
+    ) -> Dict[str, object]:
+        choices = self.inputs_to_choices(inputs, self.source_choice_format)
+        return {
+            "numerals": self.inputs_to_numerals(inputs),
             **inputs,
             self.choices_field: self.choices_seperator.join(choices),
         }
+
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        inputs = self.prepare_multiple_choice_inputs(inputs)
         return self.apply_formatting(
             inputs, "input", self.input_format, "input_format", serialize=True
         )
+
+    def inputs_to_instruction_and_target_prefix(self, inputs):
+        inputs = self.prepare_multiple_choice_inputs(inputs)
+        return super().inputs_to_instruction_and_target_prefix(inputs)
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = outputs[self.target_field]
@@ -221,7 +240,7 @@ class MultipleChoiceTemplate(Template):
                     f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {outputs[self.choices_field]}"
                 ) from e
 
-        choices = self.get_choices(outputs, self.target_choice_format)
+        choices = self.inputs_to_choices(outputs, self.target_choice_format)
 
         try:
             target = choices[target]
@@ -237,7 +256,7 @@ class MultipleChoiceTemplate(Template):
     ) -> Dict[str, Any]:
         result = super().process(instance, stream_name)
         if "options" not in result["outputs"]:
-            result["outputs"]["options"] = self.get_choices(
+            result["outputs"]["options"] = self.inputs_to_choices(
                 instance["outputs"], self.target_choice_format
             )
         return result
