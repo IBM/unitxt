@@ -3110,6 +3110,31 @@ class BinaryMaxF1(F1Binary):
         return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
 
 
+class BinaryAccuracy(InstanceMetric):
+    """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
+    reduction_map = {"mean": ["accuracy_binary"]}
+    main_score = "accuracy_binary"
+    ci_scores = ["accuracy_binary"]
+    pos_classes = {"1", "1.0", "yes", "true"}
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        assert (
+            len(references) == 1
+        ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
+
+        float_prediction = to_float_or_default(prediction)
+        prediction = str(int(float_prediction > 0.5))
+        references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
+
+        result = {self.main_score: float([prediction] == references)}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class BinaryMaxAccuracy(GlobalMetric):
     process_single_instances = False
     main_score = "max_accuracy_binary"

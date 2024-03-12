@@ -1,5 +1,5 @@
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import Accuracy, BinaryMaxAccuracy
+from src.unitxt.metrics import Accuracy, BinaryAccuracy, BinaryMaxAccuracy
 from src.unitxt.test_utils.metrics import test_metric
 
 metric = Accuracy()
@@ -32,6 +32,9 @@ outputs = test_metric(
 )
 
 add_to_catalog(metric, "metrics.accuracy", overwrite=True)
+
+metric = BinaryAccuracy()
+add_to_catalog(metric, "metrics.accuracy_binary")
 
 metric = BinaryMaxAccuracy()
 add_to_catalog(metric, "metrics.max_accuracy_binary", overwrite=True)
