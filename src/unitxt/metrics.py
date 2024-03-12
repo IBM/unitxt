@@ -1869,9 +1869,16 @@ class LlamaIndexCorrectness(InstanceMetric):
         Returns:
             Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
         """
-        score_str = eval_response.split("\n")[0]
+        import re
+
+        match = re.search(r"\n(\d+\.\d+)\n", eval_response)
+
+        if match:
+            score = float(match.group(1))
+        else:
+            score = -1.0
+
         reasoning_str = "\n".join(eval_response.split("\n")[1:])
-        score = float(score_str)
         reasoning = reasoning_str.lstrip("\n")
         return score, reasoning
 
