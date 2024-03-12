@@ -1837,7 +1837,7 @@ class Reward(BulkInstanceMetric):
 
 
 class LlamaIndexCorrectness(InstanceMetric):
-    """Custom metric class for evaluating correctness using Llama Index.
+    """LlamaIndex based metric class for evaluating correctness.
 
     Attributes:
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
