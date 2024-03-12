@@ -3,6 +3,7 @@ from math import isnan
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
     Accuracy,
+    BinaryMaxAccuracy,
     BinaryMaxF1,
     F1Binary,
     F1Macro,
@@ -226,6 +227,24 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_binary_max_accuracy(self):
+        metric = BinaryMaxAccuracy()
+        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+
+        global_target = 0.8
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["global"]["score_name"]
+        )
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["instance"]["score_name"]
+        )
 
     def test_f1_macro(self):
         metric = F1Macro()

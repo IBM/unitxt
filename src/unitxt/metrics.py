@@ -3108,3 +3108,43 @@ class BinaryMaxF1(F1Binary):
                 best_thr = thr
 
         return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+
+
+class BinaryMaxAccuracy(GlobalMetric):
+    process_single_instances = False
+    main_score = "max_accuracy_binary"
+    pos_classes = {"1", "1.0", "yes", "true"}
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in BinaryMaxAccuracy metric"
+
+        float_predictions = [to_float_or_default(p) for p in predictions]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+
+        best_thr = -1
+        best_acc = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                "1" if float_prediction >= thr else "0"
+                for float_prediction in float_predictions
+            ]
+            acc = np.mean(
+                [
+                    [prediction] == reference
+                    for prediction, reference in zip(new_predictions, references)
+                ]
+            )
+            if acc > best_acc:
+                best_acc = acc
+                best_thr = thr
+
+        return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
