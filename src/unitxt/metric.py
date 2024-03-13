@@ -38,13 +38,13 @@ from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
+from .standard_metrics import __file__ as _
 from .stream import __file__ as _
 from .struct_data_operators import __file__ as _
 from .system_prompts import __file__ as _
 from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
-from .thin_aggregators import __file__ as _
 from .type_utils import __file__ as _
 from .utils import is_package_installed
 from .validate import __file__ as _
