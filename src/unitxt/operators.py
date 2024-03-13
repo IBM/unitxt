@@ -1604,7 +1604,7 @@ class StandardGlobalMetricEvaluator(SingleStreamOperator, ArtifactFetcherMixin):
         # https://stackoverflow.com/questions/5924879/how-to-create-a-new-instance-from-a-class-object-in-python
         # https://stackoverflow.com/questions/14112179/using-class-to-create-instances
 
-        # all the aggregators needed to evaluate all the metrics for that stream
+        # all the aggregators needed to evaluate ci over the metric for this stream
         # each of these will be updated once for each instance, and produce the final result at the end.
         # The instances do not stay in main memory. Only one instance at a time.
         ci_aggregators = []
@@ -1660,11 +1660,6 @@ class StandardGlobalMetricEvaluator(SingleStreamOperator, ArtifactFetcherMixin):
             yield from stream
 
         ## compute all global scores from what was aggregated above in one pass over the stream
-        # if "score" not in first_instance or "global" not in first_instance["score"]:
-        #     global_score = {}
-        # else:
-        #     global_score = first_instance["score"]["global"]
-        # for needed_aggregator_name in needed_aggregators_names:
 
         short_name = self.aggregator.metric_name[8:]  ## for rouge change to rougeL
 
@@ -1704,8 +1699,8 @@ class StandardGlobalMetricEvaluator(SingleStreamOperator, ArtifactFetcherMixin):
             ## later stages demand instance["score"]["global"]["score"] for some averaging, which matches the score of "score_name"
             ## currently in branch 'main', these hold the metrics that happens to be computed last. needs to be looked into
             ## so for now, we did the same above
-            ##
-            ## update each instance of the whole stream with the news, and store its instance score
+
+        ## update each instance of the whole stream with the news, and store its instance score
 
         class ScoreEachInstanceAndAddGlobalScore(StreamInstanceOperator):
             scorer: Aggregator
@@ -1763,11 +1758,17 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             "metrics.accuracy",
             "metrics.f1_macro",
             "metrics.f1_micro",
+            "metrics.f1_micro_multi_label",
+            "metrics.f1_macro_multi_label",
         ]
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric
-        from .standard_metrics import AccuracyF1Aggregator, F1MacroAggregator
+        from .standard_metrics import (
+            AccF1MultiLabelAggregator,
+            AccuracyF1Aggregator,
+            F1MacroAggregator,
+        )
 
         first_instance = stream.peek()
 
@@ -1779,8 +1780,6 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
 
         if isinstance(metric_names, str):
             metric_names = [metric_names]
-
-        multi_stream = MultiStream({"tmp": stream})
 
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
@@ -1794,13 +1793,20 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
 
+        multi_stream = MultiStream({"tmp": stream})
         multi_stream = CopyFields(
             field_to_field={k: f"{k}_orig" for k in keys_to_restore}
         )(multi_stream)
 
         for metric_name in metric_names:
             if metric_name in self.metrics_for_thin_evaluation:
-                if metric_name in ["metrics.accuracy", "metrics.f1_micro"]:
+                if (
+                    metric_name == "metrics.accuracy"
+                    and isinstance(first_instance["prediction"], list)
+                    or "_multi_label" in metric_name
+                ):
+                    aggregator = AccF1MultiLabelAggregator(metric_name)
+                elif metric_name in ["metrics.accuracy", "metrics.f1_micro"]:
                     aggregator = AccuracyF1Aggregator(metric_name)
                 else:
                     aggregator = F1MacroAggregator("metrics.f1_macro")

@@ -1,9 +1,11 @@
-from collections import Counter
+from collections import Counter, defaultdict
+from math import isclose
 from typing import Any, Dict, List
 
 import numpy as np
 
 from .artifact import Artifact, fetch_artifact
+from .type_utils import isoftype
 
 
 class MetricFetcherMixin:
@@ -145,3 +147,151 @@ class AccuracyF1Aggregator(ConfusionMatrixAggregator):
 class F1MacroAggregator(ConfusionMatrixAggregator):
     def compute_final_from_aggregated(self) -> dict:
         return compute_f1_macro_from_confusion_matrix(self.confusion_matrix)
+
+
+class ConfusionMatrixForMultiLabelAggregator(Aggregator):
+    def prepare(self):
+        self.classes_seen_thus_far = set()
+        self.references_seen_thus_far = set()
+        self.tp = defaultdict(int)  # true/false positive/negative of what seen thus far
+        self.tn = defaultdict(int)
+        self.fp = defaultdict(int)
+        self.fn = defaultdict(int)
+        self.num_of_instances_seen_thus_far = 0
+
+    def single_instance_score(self, references: List[Any], prediction: Any) -> float:
+        self._validate_references_and_prediction(
+            references=references, prediction=prediction
+        )
+        num_of_hits = len([pred for pred in prediction if pred in references[0]])
+        # this method is invoked for storing instance[score][instance], after global was computed,
+        # so self.classes_seen_thus_far is updated with all classes ever seen in pred or ref
+        # for coherence, and in order to clean results, we only report on classes ever seen in references
+        # num_of_true_misses = len(
+        #     [
+        #         ref
+        #         for ref in self.references_seen_thus_far
+        #         if ref not in prediction and ref not in references[0]
+        #     ]
+        # )
+        # hit_ratio = float(num_of_hits + num_of_true_misses) / len(prediction)
+        hit_ratio = 0.0 if len(prediction) == 0 else num_of_hits / len(prediction)
+        return {self.metric_name[8:]: round(hit_ratio, 2)}
+
+    def accumulate_instance_value(self, references: List[Any], prediction: Any):
+        self._validate_references_and_prediction(
+            references=references, prediction=prediction
+        )
+        # two lists of distinct str (distinct inside each list), reference is wrapped.
+        # we increase tp for each member of pred that is also in ref.
+        # we increase fp for each member of pred that is not in ref,
+        # we increase fn for each member of ref that is not in pred.
+        # we increase tn for all members of classes that we know of, that are missing from both,
+        #
+        # once a new class becomes known to us, we increase its tn by the number of instances seen thus
+        # far (not including this one).
+        for pred in prediction:
+            if pred in references[0]:
+                self.tp[pred] += 1
+            else:
+                self.fp[pred] += 1
+        for ref in references[0]:
+            self.references_seen_thus_far.add(ref)
+            if ref not in prediction:
+                self.fn[ref] += 1
+        for c in self.classes_seen_thus_far:
+            if c not in prediction and c not in references[0]:
+                self.tn[c] += 1
+        for d in prediction + references[0]:
+            if d not in self.classes_seen_thus_far:
+                self.tn[d] = self.num_of_instances_seen_thus_far
+                self.classes_seen_thus_far.add(d)
+        self.num_of_instances_seen_thus_far += 1
+
+    def compute_final_from_aggregated(self) -> dict:
+        if self.metric_name in ["metrics.f1_micro_multi_label", "metrics.accuracy"]:
+            return (
+                self.compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix()
+            )
+        if self.metric_name == "metrics.f1_macro_multi_label":
+            return self.compute_f1_macro_multi_label_from_confusion_matrix()
+        # if metric_name == "metrics.matthews_correlation":
+        #     return self.compute_matthews_correlation_coefficient_from_confusion_matrix()
+        raise ValueError("should not be here - metric name is wrong")
+
+    def compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix(self):
+        if self.num_of_instances_seen_thus_far == 0:
+            return {self.metric_name[8:]: np.nan}
+        total_tp = sum(v for k, v in self.tp.items())
+        total_tn = sum(v for k, v in self.tn.items())
+        total_fp = sum(v for k, v in self.fp.items())
+        total_fn = sum(v for k, v in self.fn.items())
+        if self.metric_name == "metrics.accuracy":
+            acc = (total_tp + total_tn) / self.num_of_instances_seen_thus_far
+            return {"accuracy": round(acc, 2)}
+        if self.metric_name == "metrics.f1_micro_multi_label":
+            if total_tp == 0:
+                return {"f1_micro_multi_label": 0.0}
+            total_recall = total_tp / (total_fn + total_tp)
+            total_precision = total_tp / (total_tp + total_fp)
+            f1_micro = (
+                2 * total_recall * total_precision / (total_recall + total_precision)
+            )
+            return {"f1_micro_multi_label": round(f1_micro, 2)}
+        return None
+
+    # adapted from metrics.py for multilabel
+    def _validate_references_and_prediction(
+        self, references: List[Any], prediction: Any
+    ):
+        if not len(references) == 1:
+            raise ValueError(
+                f"Only a single reference per instance is allowed in multi label metric. Received reference: {references}"
+            )
+        if not isoftype(references[0], List[str]):
+            raise ValueError(
+                f"Instance references is expected to be a list of one item being a list of strings in multi label metric. Received references: '{references}'"
+            )
+
+        if not isoftype(prediction, List[str]):
+            raise ValueError(
+                f"Instance prediction is expected to be a list of strings in multi label metric. Received prediction: '{prediction}'"
+            )
+        if not len(set(prediction)) == len(prediction):
+            raise ValueError(
+                f"Elements of prediction are expected to be distinct strings, in multi label metric. Received prediction: '{prediction}'"
+            )
+        if not len(set(references[0])) == len(references[0]):
+            raise ValueError(
+                f"Elements of references[0] are expected to be distinct strings, in multi label metric. Received references[0]: '{references[0]}'"
+            )
+
+    def compute_f1_macro_multi_label_from_confusion_matrix(self) -> Any:
+        # e.g. from here: https://medium.com/synthesio-engineering/precision-accuracy-and-f1-score-for-multi-label-classification-34ac6bdfb404
+        # report only for the classes seen as references
+        if len(self.references_seen_thus_far) == 0:
+            return {"f1_macro_multi_label": np.nan}
+        to_ret = {}
+        for c in self.references_seen_thus_far:  # report only on them
+            num_as_pred = self.tp[c] + self.fp[c]
+            precision = 0.0 if num_as_pred == 0 else self.tp[c] / num_as_pred
+            num_as_ref = self.tp[c] + self.fn[c]
+            recall = np.nan if num_as_ref == 0 else self.tp[c] / num_as_ref
+            f1 = (
+                0.0
+                if np.isnan(precision)
+                or np.isnan(recall)
+                or isclose(precision, 0)
+                or isclose(recall, 0)
+                else 2 * precision * recall / (precision + recall)
+            )
+            to_ret["f1_" + c] = round(f1, 2)
+        avg_across_classes = (
+            sum(val for val in to_ret.values() if not np.isnan(val))
+        ) / len(self.references_seen_thus_far)
+        to_ret["f1_macro"] = round(avg_across_classes, 2)
+        return to_ret
+
+
+class AccF1MultiLabelAggregator(ConfusionMatrixForMultiLabelAggregator):
+    pass
