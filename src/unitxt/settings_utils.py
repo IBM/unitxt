@@ -95,7 +95,7 @@ if Settings.is_uninitilized():
     settings.allow_passing_data_to_remote_api = False
     settings.test_card_disable = False
     settings.test_metric_disable = False
-    settings.metrics_master_key = None
+    settings.metrics_master_key_token = None
 
 if Constants.is_uninitilized():
     constants = Constants()
