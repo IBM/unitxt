@@ -3082,6 +3082,8 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
 
 
 class BinaryMaxF1(F1Binary):
+    """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
+
     main_score = "max_f1_binary"
 
     def compute(
@@ -3140,6 +3142,8 @@ class BinaryAccuracy(InstanceMetric):
 
 
 class BinaryMaxAccuracy(GlobalMetric):
+    """Calculate the maximal accuracy and the decision threshold that achieves it for a binary task with float predictions."""
+
     process_single_instances = False
     main_score = "max_accuracy_binary"
     pos_classes = {"1", "1.0", "yes", "true"}
