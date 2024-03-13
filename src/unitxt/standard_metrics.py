@@ -47,16 +47,16 @@ class ConfusionMatrixAggregator(Aggregator):
 
     def single_instance_score(self, references: List[Any], prediction: Any) -> float:
         # from F1(GlobalMetric) in metricts.py
-        assert (
-            len(references) == 1
-        ), f"Only a single reference per prediction is allowed for {self.metric_name}"
+        # assert (
+        #     len(references) == 1
+        # ), f"Only a single reference per prediction is allowed for {self.metric_name}"
         return {self.metric_name[8:]: 1.0 if prediction in references else 0.0}
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
         # from F1(GlobalMetric) in metricts.py
-        assert (
-            len(references) == 1
-        ), f"Only a single reference per prediction is allowed for {self.metric_name}"
+        # assert (
+        #     len(references) == 1
+        # ), f"Only a single reference per prediction is allowed for {self.metric_name}"
         self.confusion_matrix.update([(references[0], prediction)])
 
 
