@@ -1141,10 +1141,13 @@ class F1Micro(F1):
 
 
 class F1Binary(F1):
+    """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
     process_single_instances = False
     main_score = "f1_binary"
     average = "binary"
     pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
 
     def get_str_id(self, str):
         return int(str)
@@ -1156,7 +1159,7 @@ class F1Binary(F1):
         task_data: List[Dict],
     ) -> dict:
         predictions_floats = [to_float_or_default(p) for p in predictions]
-        predictions = [str(int(p > 0.5)) for p in predictions_floats]
+        predictions = [str(int(p > self.threshold)) for p in predictions_floats]
         references = [
             ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
         ]
@@ -3117,6 +3120,7 @@ class BinaryAccuracy(InstanceMetric):
     main_score = "accuracy_binary"
     ci_scores = ["accuracy_binary"]
     pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
@@ -3126,7 +3130,7 @@ class BinaryAccuracy(InstanceMetric):
         ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
 
         float_prediction = to_float_or_default(prediction)
-        prediction = str(int(float_prediction > 0.5))
+        prediction = str(int(float_prediction > self.threshold))
         references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
 
         result = {self.main_score: float([prediction] == references)}
