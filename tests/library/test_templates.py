@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 from src.unitxt.templates import (
+    InputOutputReferenceTemplate,
     InputOutputTemplate,
     KeyValTemplate,
     MultiLabelTemplate,
@@ -9,6 +10,7 @@ from src.unitxt.templates import (
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
     Template,
+    TemplateFormatKeyError,
     TemplatesDict,
     YesNoTemplate,
 )
@@ -255,22 +257,57 @@ class TestTemplates(UnitxtTestCase):
         err_input_template = InputOutputTemplate(
             input_format="This is my text:'{no_text}'", output_format="{label}"
         )
-        with self.assertRaises(KeyError) as ke:
+        with self.assertRaises(TemplateFormatKeyError) as ke:
             err_input_template.process(inputs[0])
         self.assertEqual(
-            "\"Available inputs are ['labels', 'text'] but input format requires a different ones: 'This is my text:'{no_text}''\"",
+            "\"Available inputs are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text:'{no_text}''\"",
             str(ke.exception),
         )
 
         err_output_template = InputOutputTemplate(
             input_format="This is my text:'{text}'", output_format="{no_label}"
         )
-        with self.assertRaises(KeyError) as ke:
+        with self.assertRaises(TemplateFormatKeyError) as ke:
             err_output_template.process(inputs[0])
         self.assertEqual(
-            "\"Available outputs are dict_keys(['label']) but output format requires a different one: {no_label}\"",
+            "\"Available outputs are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'\"",
             str(ke.exception),
         )
+
+    def test_input_output_reference_template_and_standard_template(self):
+        template = InputOutputReferenceTemplate(
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+            reference="{reference}",
+        )
+
+        inputs = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive", "reference": "1"},
+            },
+        ]
+
+        targets = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive", "reference": "1"},
+                "source": "This is my text:'hello world'",
+                "target": "positive",
+                "references": ["1"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+        with self.assertRaises(KeyError):
+            template.outputs_to_target_and_references(
+                outputs={"label": "positive", "references": "1"}
+            )
 
         class ToCoverTemplate(Template):
             def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
@@ -302,8 +339,8 @@ class TestTemplates(UnitxtTestCase):
         )
 
         proccessed_input_to_inputs = {
-            ("Is text_a of news?", ""): {"text": "text_a", "class": ["news"]},
-            ("Is text_b of news?", ""): {"text": "text_b", "class": ["news"]},
+            "Is text_a of news?": {"text": "text_a", "class": ["news"]},
+            "Is text_b of news?": {"text": "text_b", "class": ["news"]},
         }
         for expected_processed_input, inputs in proccessed_input_to_inputs.items():
             processed = template.inputs_to_source(inputs)
@@ -315,11 +352,11 @@ class TestTemplates(UnitxtTestCase):
         template = YesNoTemplate(
             input_format=input_format, class_field="class", label_field=""
         )
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(TemplateFormatKeyError) as cm:
             wrong_field_name = "wrong_field_name"
             template.inputs_to_source(inputs={wrong_field_name: ["news"]})
         self.assertEqual(
-            f"Available inputs are ['{wrong_field_name}'] but input format requires a different one: {input_format}",
+            "\"Available inputs are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'\"",
             str(cm.exception),
         )
 
@@ -623,10 +660,11 @@ class TestTemplates(UnitxtTestCase):
             input_format="Text: {no_text}, Choices: {no_choices}.",
             postprocessors=["post1", "post2"],
         )
+
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
         self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are dict_keys(['numerals', 'choices', 'text']) but input format requires a different one: Text: {no_text}, Choices: {no_choices}.\"",
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
 

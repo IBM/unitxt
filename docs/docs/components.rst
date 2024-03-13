@@ -1,8 +1,8 @@
 ==============
-Components
+Basics
 ==============
 
-Unitxt processes data in `pipelines`_, by applying a modular sequence of **operators**.
+Unitxt processes data in `pipelines`_, by applying a modular sequence of :ref:`operators <operators>`.
 Each operator is of a specific `ingredients`_ type.
 Operators may be are defined and shared within the :ref:`Unitxt Catalog <unitxt_catalog>`.
 The operators compose larger unitxt `Building Blocks`_.

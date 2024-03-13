@@ -209,23 +209,20 @@ def separate_inside_and_outside_square_brackets(s: str) -> Tuple[str, any]:
     if start == -1 or end == -1 or start > end:
         raise ValueError("Illegal structure: unmatched square brackets.")
 
-    after = s[end + 1 :]
-
-    # Check for text after the closing bracket
-    if len(after.strip()) != 0:
-        raise ValueError(
-            "Illegal structure: text follows after the closing square bracket."
-        )
-
     instring = s.strip()
     orig_instring = instring
     if "[" not in instring:
         # no alternative values to artifact: consider the whole input string as an artifact name
         return (instring, None)
+    if ("=" in instring and instring.find("=") < instring.find("[")) or (
+        "," in instring and instring.find(",") < instring.find("[")
+    ):
+        # this could also constitute just overwrites for recipe's args, as conceived by fetch_artifact
+        return (instring, None)
     # parse to identify artifact name and alternative values to artifact's arguments
     (query, instring) = consume_query(instring)
     if len(instring) > 0:
         raise ValueError(
-            f"malformed end of query: excessive text following the ] that closes the overwrites in: {orig_instring}"
+            f"malformed end of query: excessive text following the ] that closes the overwrites in: '{orig_instring}'"
         )
     return query

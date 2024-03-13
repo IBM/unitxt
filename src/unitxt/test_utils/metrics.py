@@ -1,13 +1,14 @@
 import json
-import os
 from typing import Any, List, Optional
 
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
+from ..settings_utils import get_settings
 from ..stream import MultiStream
 from ..type_utils import isoftype
 
 logger = get_logger()
+settings = get_settings()
 
 
 def round_floats(obj, precision=2, recursive=True):
@@ -69,10 +70,9 @@ def test_metric(
     global_target: dict,
     task_data: Optional[List[dict]] = None,
 ):
-    disable = os.getenv("UNITXT_TEST_METRIC_DISABLE", None)
-    if disable is not None:
+    if settings.test_metric_disable is not None:
         logger.info(
-            "test_metric() functionality is disabled because UNITXT_TEST_METRIC_DISABLE environment variable is set"
+            "test_metric() functionality is disabled because unitxt.settings.test_metric_disable=True or UNITXT_TEST_METRIC_DISABLE environment variable is set"
         )
         return None
 

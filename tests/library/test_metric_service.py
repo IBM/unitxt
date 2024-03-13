@@ -122,7 +122,9 @@ class TestRemoteMetrics(unittest.TestCase):
         endpoint = "http" + "://" + f"{host}/compute"
         metric_name = "metrics.bert_score.deberta.xlarge.mnli"
         httpretty.register_uri(
-            httpretty.POST, f"{endpoint}/{metric_name}", body=request_callback
+            httpretty.POST,
+            f"{endpoint}/{metric_name}",
+            body=request_callback,
         )
 
         metric = RemoteMetric(endpoint=endpoint, metric_name=metric_name)

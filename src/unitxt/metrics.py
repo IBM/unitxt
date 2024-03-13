@@ -38,8 +38,6 @@ warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
 def nan_mean(x):
-    import warnings
-
     with warnings.catch_warnings():
         # final mean should be mean of scores, ignoring NaN, hence nanmean
         # but if the group function values is NaN for ALL values, nanmean throws a
@@ -76,6 +74,7 @@ class Metric(ConfidenceIntervalMixin):
         if self.ci_scores is None:
             self.ci_scores = [self.main_score]
 
+
     def consume_stream(self, stream: Stream):
         references = []
         predictions = []
@@ -111,9 +110,11 @@ class Metric(ConfidenceIntervalMixin):
             scores["global"] = global_score
 
 
+
 class ReducingMixin(Artifact):
     reduction_map: Dict[str, List[str]] = OptionalField(default=None)
     implemented_reductions: List[str] = AbstractField()
+
 
 
 class MetricWithConfidenceInterval(Metric):
@@ -126,6 +127,7 @@ class MetricWithConfidenceInterval(Metric):
         # So use '& MAX_32BIT' to get a 32-bit seed.
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
+
 
     def _can_compute_confidence_intervals(self, num_predictions):
         if self.ci_disabled:
@@ -151,6 +153,17 @@ class MetricWithConfidenceInterval(Metric):
         return nan_mean(
             [instance["score"]["instance"][score_name] for instance in instances]
         )
+
+    @staticmethod
+    def _all_instance_scores_equal(instances, score_name):
+        instance_scores = [
+            instance["score"]["instance"][score_name] for instance in instances
+        ]
+        non_nan_instance_scores = [
+            score for score in instance_scores if score is not np.nan
+        ]
+        num_unique_scores = len(set(non_nan_instance_scores))
+        return num_unique_scores == 1
 
     def score_based_confidence_interval(
         self,
@@ -188,6 +201,11 @@ class MetricWithConfidenceInterval(Metric):
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
         for score_name in score_names:
+            # If all computed instance level scores are the same, there is no point in computing
+            # confidence intervals. So skip to the next score.
+            if self._all_instance_scores_equal(instances, score_name):
+                continue
+
             # need to redefine the statistic function within the loop because score_name is a loop variable
             def statistic(arr, axis, score_name=score_name):
                 # arr is a 2d array where each row is a resampling, so we
@@ -291,13 +309,18 @@ class MetricWithConfidenceInterval(Metric):
         num_predictions = len(predictions)
         if self._can_compute_confidence_intervals(num_predictions=num_predictions):
             identifiers = list(range(num_predictions))
-            ci = bootstrap(
-                (identifiers,),
-                statistic=statistic,
-                n_resamples=self.n_resamples,
-                confidence_level=self.confidence_level,
-                random_state=random_gen,
-            ).confidence_interval
+
+            with warnings.catch_warnings():
+                # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
+                # the value of the computed global metric is the same on all resamplings.
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                ci = bootstrap(
+                    (identifiers,),
+                    statistic=statistic,
+                    n_resamples=self.n_resamples,
+                    confidence_level=self.confidence_level,
+                    random_state=random_gen,
+                ).confidence_interval
             result["score_ci_low"] = ci.low
             result["score_ci_high"] = ci.high
             result[f"{score_name}_ci_low"] = ci.low
@@ -548,7 +571,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
         - an 'agg_func' field with value being a 3-element list where
             - 1st element is a string name of the aggregation function (used in naming the CI report)
             - 2nd element is the callable aggregation function
-            - 3rd element is a Boolean indicator of whether, during boostrap CI calculation, the groups are to be sampled as single units.
+            - 3rd element is a Boolean indicator of whether, during bootstrap CI calculation, the groups are to be sampled as single units.
                 If True, the group scores are calculated and then resampled.  This treats the group units as the unit of
                 interest for which the CI is being compared.
                 If False, the instances are resampled individually, and the groups determined
@@ -889,6 +912,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     )
     metric: Metric = None
 
+
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
 
@@ -1084,6 +1108,7 @@ class F1(GlobalMetric):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
+
         self.str_to_id = {}
         self.id_to_str = {}
         formatted_references = [
@@ -1094,24 +1119,63 @@ class F1(GlobalMetric):
             self.get_str_id(prediction) for prediction in predictions
         ]
         labels = list(set(formatted_references))
+
         result = self._metric.compute(
             predictions=formatted_predictions,
             references=formatted_references,
             labels=labels,
             average=self.average,
         )
-        if isinstance(result["f1"], numpy.ndarray):
-            final_result = {self.main_score: mean(result["f1"])}
+        if isinstance(result[self.metric], numpy.ndarray):
+            final_result = {self.main_score: mean(result[self.metric])}
             for i, label in enumerate(labels):
-                final_result["f1_" + self.id_to_str[label]] = result["f1"][i]
+                final_result[f"{self.metric}_" + self.id_to_str[label]] = result[
+                    self.metric
+                ][i]
         else:
-            final_result = {self.main_score: result["f1"]}
+            final_result = {self.main_score: result[self.metric]}
         return final_result
 
 
 class F1Micro(F1):
     main_score = "f1_micro"
     average = "micro"
+
+
+class F1Binary(F1):
+    """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
+    process_single_instances = False
+    main_score = "f1_binary"
+    average = "binary"
+    pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
+
+    def get_str_id(self, str):
+        return int(str)
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        predictions_floats = [to_float_or_default(p) for p in predictions]
+        predictions = [str(int(p > self.threshold)) for p in predictions_floats]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+        return super().compute(references, predictions, task_data)
+
+
+class RecallBinary(F1Binary):
+    main_score = "recall_binary"
+    metric = "recall"
+
+
+class PrecisionBinary(F1Binary):
+    main_score = "precision_binary"
+    metric = "precision"
 
 
 class F1Macro(F1):
@@ -1425,8 +1489,10 @@ class RocAuc(GlobalMetric):
         references = [to_float_or_default(r) for r in references]
         predictions = [to_float_or_default(p) for p in predictions]
 
-        fpr, tpr, thrs = self.roc_curve(y_true=references, y_score=predictions)
-        roc_auc = self.auc(fpr, tpr)
+        false_positive_rates, true_positive_rates, _ = self.roc_curve(
+            y_true=references, y_score=predictions
+        )
+        roc_auc = self.auc(false_positive_rates, true_positive_rates)
         return {self.main_score: roc_auc}
 
 
@@ -1508,7 +1574,7 @@ class CustomF1(GlobalMetric):
 
         assert len(references) == len(predictions), (
             f"references size ({len(references)})"
-            f" doesn't mach predictions sise ({len(references)})."
+            f" doesn't mach predictions size ({len(references)})."
         )
 
         if self.groups is None:
@@ -1683,7 +1749,7 @@ class SentenceBert(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["sentence_transformers"]
+    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1734,7 +1800,7 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
         super().prepare()
@@ -1765,6 +1831,134 @@ class Reward(BulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
+class LlamaIndexCorrectness(InstanceMetric):
+    """LlamaIndex based metric class for evaluating correctness.
+
+    Attributes:
+        reduction_map (dict): A dictionary specifying the reduction method for the metric.
+        main_score (str): The main score used for evaluation.
+        _requirements_list (List[str]): A list specifying any additional requirements for the metric.
+
+    Methods:
+        prepare(self): Initialization method for the metric.
+        compute(self, references, predictions, additional_inputs): Method to compute the metric.
+
+    Usage:
+        metric = LlamaIndexCorrectnessMetric()
+        scores = metric.compute(references, prediction, additional_inputs)
+    """
+
+    model_name: str = ""
+    main_score: str = ""
+
+    reduction_map: Dict[str, List[str]] = None
+    openai_models: List[str] = ["gpt-3.5-turbo"]
+    anthropic_models: List[
+        str
+    ] = []  # this is here for the sake of documentation for future models
+    mock_models: List[str] = ["mock"]
+    external_api_models = openai_models + anthropic_models
+
+    _requirements_list: List[str] = ["llama_index"]
+
+    @staticmethod
+    def _custom_parser(eval_response: str):
+        """Default parser function for evaluation response.
+
+        Args:
+            eval_response (str): The response string from the evaluation.
+
+        Returns:
+            Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
+        """
+        score_str = eval_response.split("\n")[0]
+        reasoning_str = "\n".join(eval_response.split("\n")[1:])
+        score = float(score_str)
+        reasoning = reasoning_str.lstrip("\n")
+        return score, reasoning
+
+    def _model_using_extrnal_api(self):
+        return self.model_name in self.external_api_models
+
+    def prepare(self):
+        """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
+        super().prepare()
+
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = (
+            f"correctness_llama_index_by_{self.model_name_normalized}_judge"
+        )
+
+        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
+
+        from llama_index.core.evaluation import CorrectnessEvaluator
+
+        if self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            llm = OpenAI("gpt-3.5-turbo")
+        elif self.model_name in self.mock_models:
+            from llama_index.core.llms.mock import MockLLM
+
+            llm = MockLLM(system_prompt="5")  # perfect score
+        else:
+            raise NotImplementedError(
+                f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+            )
+
+        self.evaluator = CorrectnessEvaluator(
+            llm=llm, parser_function=self._custom_parser
+        )
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: Dict,
+    ) -> Dict[str, Any]:
+        """Method to compute the correctness metric.
+
+        Args:
+            references (List[str]): List of reference instances.
+            prediction (str): List of predicted instances.
+            task_data (Dict): List of additional input data.
+
+        Returns:
+            Dict[str, Any]: List of computed scores and feedback.
+
+        Raises:
+            AssertionError: If the input does not meet the expected format.
+        """
+        # treat the references as the questions and the predictions as answers
+        # assume a single reference
+
+        assert (
+            not self._model_using_extrnal_api()
+            or settings.allow_passing_data_to_remote_api
+        ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
+
+        query = task_data["question"]
+        contexts = task_data["contexts"]
+
+        per_reference_results = []
+        for reference_response in references:
+            per_reference_results.append(
+                self.evaluator.evaluate(
+                    query=query,
+                    response=prediction,
+                    contexts=contexts,
+                    reference=reference_response,
+                )
+            )
+        result = max([results.score for results in per_reference_results])
+
+        return {
+            self.main_score: result / 5,
+            # "score_name": self.main_score,
+            # "feedback": result.feedback, # removed since this cannot be tested
+        }
+
+
 class Perplexity(BulkInstanceMetric):
     """Computes the likelihood of generating text Y after text X - P(Y|X)."""
 
@@ -1776,7 +1970,7 @@ class Perplexity(BulkInstanceMetric):
     batch_size: int = 32
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def compute(
         self,
@@ -2882,3 +3076,105 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
             ],
         }
     }
+
+
+class BinaryMaxF1(F1Binary):
+    """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
+
+    main_score = "max_f1_binary"
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in F1 metric"
+
+        float_predictions = [to_float_or_default(p) for p in predictions]
+
+        best_thr = -1
+        best_f1 = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                "1" if float_prediction >= thr else "0"
+                for float_prediction in float_predictions
+            ]
+            f1 = super().compute(references, new_predictions, task_data)[
+                self.main_score
+            ]
+            if f1 > best_f1:
+                best_f1 = f1
+                best_thr = thr
+
+        return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+
+
+class BinaryAccuracy(InstanceMetric):
+    """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
+    reduction_map = {"mean": ["accuracy_binary"]}
+    main_score = "accuracy_binary"
+    ci_scores = ["accuracy_binary"]
+    pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        assert (
+            len(references) == 1
+        ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
+
+        float_prediction = to_float_or_default(prediction)
+        prediction = str(int(float_prediction > self.threshold))
+        references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
+
+        result = {self.main_score: float([prediction] == references)}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
+class BinaryMaxAccuracy(GlobalMetric):
+    """Calculate the maximal accuracy and the decision threshold that achieves it for a binary task with float predictions."""
+
+    process_single_instances = False
+    main_score = "max_accuracy_binary"
+    pos_classes = {"1", "1.0", "yes", "true"}
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in BinaryMaxAccuracy metric"
+
+        float_predictions = [to_float_or_default(p) for p in predictions]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+
+        best_thr = -1
+        best_acc = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                "1" if float_prediction >= thr else "0"
+                for float_prediction in float_predictions
+            ]
+            acc = np.mean(
+                [
+                    [prediction] == reference
+                    for prediction, reference in zip(new_predictions, references)
+                ]
+            )
+            if acc > best_acc:
+                best_acc = acc
+                best_thr = thr
+
+        return {self.main_score: best_acc, "best_thr_max_acc": best_thr}

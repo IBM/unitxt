@@ -109,7 +109,7 @@ def run_unitxt(
     except Exception as e:
         logger.info("An exception occurred:\n%s", traceback.format_exc())
         prompt_text = f"""
-    Oops... this combination didnt work! Try something else.
+    Oops... this combination didn't work! Try something else.
 
     Exception: {e!r}
     """
@@ -129,7 +129,7 @@ def run_unitxt(
             agg_result = create_dataframe(selected_result["global"])
         except Exception as e:
             selected_prediction = f"""
-            An exception has occured:
+            An exception has occurred:
 
             {e!r}
             """
@@ -293,7 +293,9 @@ with demo:
                     json_intro = gr.Markdown(value=config.JSON_INTRO_TXT)
                     element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
-    acknowledgement = gr.Markdown(config.ACK_TEXT)
+
+    if config.HEADER_VISBLE:
+        acknowledgement = gr.Markdown(config.ACK_TEXT)
     # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)
     sample_choice = gr.Number(value=0, visible=False)

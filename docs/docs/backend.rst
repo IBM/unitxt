@@ -20,7 +20,7 @@ Operator
 
 An operator is a class that takes multiple streams as input and produces multiple streams as output.
 Every modification of the data in the stream is done by an operator.
-Every opertor should perform a single task and its name should reflect its operation.
+Every operator should perform a single task and its name should reflect its operation.
 
 .. image:: ../../assets/flow_animation_3.gif
    :alt: Optional alt text

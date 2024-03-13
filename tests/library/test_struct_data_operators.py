@@ -1,13 +1,18 @@
 import unittest
 
 from src.unitxt.struct_data_operators import (
+    ConvertTableColNamesToSequential,
     ListToKeyValPairs,
     SerializeKeyValPairs,
+    SerializeTableAsDFLoader,
     SerializeTableAsIndexedRowMajor,
+    SerializeTableAsJson,
     SerializeTableAsMarkdown,
     SerializeTableRowAsList,
     SerializeTableRowAsText,
     SerializeTriples,
+    ShuffleTableColumns,
+    ShuffleTableRows,
     TruncateTableCells,
     TruncateTableRows,
 )
@@ -78,6 +83,66 @@ class TestStructDataOperators(unittest.TestCase):
             operator=SerializeTableAsIndexedRowMajor(
                 field_to_field={"table": "serialized_table"}
             ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serializetable_dfloader(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                }
+            }
+        ]
+
+        serialized_str = 'pd.DataFrame({\n{"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]}},\nindex=[0, 1, 2])'
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                },
+                "serialized_table": serialized_str,
+            }
+        ]
+
+        check_operator(
+            operator=SerializeTableAsDFLoader(
+                field_to_field={"table": "serialized_table"}
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serializetable_json(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                }
+            }
+        ]
+
+        serialized_str = '{"0": {"name": "Alex", "age": 26}, "1": {"name": "Raj", "age": 34}, "2": {"name": "Donald", "age": 39}}'
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                },
+                "serialized_table": serialized_str,
+            }
+        ]
+
+        check_operator(
+            operator=SerializeTableAsJson(field_to_field={"table": "serialized_table"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -276,6 +341,114 @@ class TestStructDataOperators(unittest.TestCase):
             operator=ListToKeyValPairs(
                 fields=["keys", "values"], to_field="kvpairs", use_query=True
             ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_convert_table_colnames_to_sequential_names(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [
+                        ["Alex", 21],
+                        ["Donald", 34],
+                    ],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["col_0", "col_1"],
+                    "rows": [
+                        ["Alex", 21],
+                        ["Donald", 34],
+                    ],
+                }
+            }
+        ]
+
+        check_operator(
+            operator=ConvertTableColNamesToSequential(field="table"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_shuffle_table_rows(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [
+                        ["Alex", 21],
+                        ["Raj", 34],
+                        ["Donald", 39],
+                    ],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [
+                        ["Donald", 39],
+                        ["Raj", 34],
+                        ["Alex", 21],
+                    ],
+                }
+            }
+        ]
+
+        import random
+
+        random.seed(123)
+
+        check_operator(
+            operator=ShuffleTableRows(field="table"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_shuffle_table_columns(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [
+                        ["Alex", 21],
+                        ["Raj", 34],
+                        ["Donald", 39],
+                    ],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["age", "name"],
+                    "rows": [
+                        [21, "Alex"],
+                        [34, "Raj"],
+                        [39, "Donald"],
+                    ],
+                }
+            }
+        ]
+
+        import random
+
+        random.seed(123)
+
+        check_operator(
+            operator=ShuffleTableColumns(field="table"),
             inputs=inputs,
             targets=targets,
             tester=self,

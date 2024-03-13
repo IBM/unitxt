@@ -72,7 +72,7 @@ class TestDataclass(UnitxtTestCase):
             d = Dummy()
             self.assertEqual(d.a, 5)
 
-        with self.subTest("test with implicit decleration"):
+        with self.subTest("test with implicit declaration"):
 
             class Dummy(Dataclass):
                 a: float = OptionalField(default=2)
@@ -94,7 +94,7 @@ class TestDataclass(UnitxtTestCase):
             d = Dummy(a=1)
             self.assertEqual(d.a, 1)
 
-        with self.subTest("test with implicit decleration"):
+        with self.subTest("test with implicit declaration"):
 
             class Dummy(Dataclass):
                 a: float = RequiredField()
@@ -241,11 +241,11 @@ class TestDataclass(UnitxtTestCase):
         class Parent(Dataclass):
             a: int = 1
 
-        class Chiled(Parent):
+        class Child(Parent):
             a: int = 2
             b: int = 3
 
-        c = Chiled()
+        c = Child()
         p = Parent()
         parent_fields = fields(Parent)
         self.assertEqual(len(parent_fields), 1)

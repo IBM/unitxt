@@ -44,7 +44,7 @@ class FixedFusion(BaseFusion):
     """FixedFusion operator that combines multiple streams into one based on a fixed number of examples per task.
 
     Args:
-        orgins: List of SourceOperator objects.
+        origins: List of SourceOperator objects.
         examples_per_task: Number of examples per task. If None, all examples are returned.
         splits: List of splits to include. If None, all splits are included.
     """
@@ -68,7 +68,7 @@ class WeightedFusion(BaseFusion):
     """Fusion operator that combines multiple streams based.
 
     Args:
-        orgins: List of SourceOperator objects.
+        origins: List of SourceOperator objects.
         weights: List of weights for each origin.
         max_total_examples: Total number of examples to return. If None, all examples are returned.
     """

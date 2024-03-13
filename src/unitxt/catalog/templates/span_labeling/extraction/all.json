@@ -1,0 +1,11 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.span_labeling.extraction.extract",
+        "templates.span_labeling.extraction.having",
+        "templates.span_labeling.extraction.carry",
+        "templates.span_labeling.extraction.identify",
+        "templates.span_labeling.extraction.title",
+        "templates.span_labeling.extraction.empty"
+    ]
+}

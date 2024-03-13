@@ -5,11 +5,7 @@ from .dataclass import Field, InternalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import (
-    Augmentor,
-    NullAugmentor,
-    StreamRefiner,
-)
+from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -46,6 +42,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     demos_pool_size: int = None
     num_demos: int = 0
+    demos_removed_from_data: bool = True
 
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
@@ -66,7 +63,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
-                    "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers."
+                    "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
@@ -113,6 +110,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def prepare(self):
         self.steps = [
             self.card.loader,
+            AddFields(
+                fields={
+                    "recipe_metadata": {
+                        "card": self.card,
+                        "template": self.template,
+                        "system_prompt": self.system_prompt,
+                        "format": self.format,
+                    }
+                }
+            ),
         ]
 
         if self.loader_limit:
@@ -135,6 +142,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     from_split=self.demos_taken_from,
                     to_split_names=[self.demos_pool_name, self.demos_taken_from],
                     to_split_sizes=[int(self.demos_pool_size)],
+                    remove_targets_from_source_split=self.demos_removed_from_data,
                 )
             )
 
@@ -225,6 +233,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_pool_name (str, optional): Name of the demos pool. Default is "demos_pool".
         demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
         demos_field (str, optional): Field name for demos. Default is "demos".
+        demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
         sampler (Sampler, optional): Sampler object to be used in the recipe.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text

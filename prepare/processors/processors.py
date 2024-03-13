@@ -3,16 +3,20 @@ from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
 from src.unitxt.operators import RemoveValues
 from src.unitxt.processors import (
+    Capitalize,
     ConvertToBoolean,
     FirstCharacter,
     LowerCase,
     LowerCaseTillPunc,
     StanceToProCon,
     StringOrNotString,
+    StrToFloatFormat,
+    Substring,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
     ToYesOrNone,
     YesNoToInt,
+    YesToOneElseZero,
 )
 
 logger = get_logger()
@@ -68,6 +72,28 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            Capitalize(field="prediction", process_every_value=False),
+            Capitalize(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.capitalize",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            Substring(field="prediction", process_every_value=False),
+            Substring(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.substring",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             StringOrNotString(
                 string="toxic", field="prediction", process_every_value=False
             ),
@@ -116,11 +142,32 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            StrToFloatFormat(field="prediction", process_every_value=False),
+            StrToFloatFormat(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.str_to_float_format",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             ToYesOrNone(field="prediction", process_every_value=False),
             ToYesOrNone(field="references", process_every_value=True),
         ]
     ),
     "processors.to_yes_or_none",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            YesToOneElseZero(field="prediction", process_every_value=False),
+        ]
+    ),
+    "processors.predictions_yes_1_else_0",
     overwrite=True,
 )
 
