@@ -270,7 +270,7 @@ class ConfusionMatrixForMultiLabelAggregator(Aggregator):
         # e.g. from here: https://medium.com/synthesio-engineering/precision-accuracy-and-f1-score-for-multi-label-classification-34ac6bdfb404
         # report only for the classes seen as references
         if len(self.references_seen_thus_far) == 0:
-            return {"f1_macro_multi_label": np.nan}
+            return {self.metric_name[8:]: np.nan}
         to_ret = {}
         for c in self.references_seen_thus_far:  # report only on them
             num_as_pred = self.tp[c] + self.fp[c]
@@ -289,7 +289,7 @@ class ConfusionMatrixForMultiLabelAggregator(Aggregator):
         avg_across_classes = (
             sum(val for val in to_ret.values() if not np.isnan(val))
         ) / len(self.references_seen_thus_far)
-        to_ret["f1_macro"] = round(avg_across_classes, 2)
+        to_ret[self.metric_name[8:]] = round(avg_across_classes, 2)
         return to_ret
 
 
