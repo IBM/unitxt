@@ -5,3 +5,4 @@ absl-py
 dpath
 ipadic
 scipy
+pytrec_eval

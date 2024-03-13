@@ -35,6 +35,7 @@ from src.unitxt.metrics import (
     LlamaIndexCorrectness,
     PrecisionBinary,
     RecallBinary,
+    RerankRecall,
     RocAuc,
     Rouge,
     Squad,
