@@ -34,7 +34,7 @@ outputs = test_metric(
 add_to_catalog(metric, "metrics.accuracy", overwrite=True)
 
 metric = BinaryAccuracy()
-add_to_catalog(metric, "metrics.accuracy_binary")
+add_to_catalog(metric, "metrics.accuracy_binary", overwrite=True)
 
 metric = BinaryMaxAccuracy()
 add_to_catalog(metric, "metrics.max_accuracy_binary", overwrite=True)
