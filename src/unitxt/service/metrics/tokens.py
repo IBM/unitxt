@@ -1,7 +1,7 @@
 """This module handles authorization tokens for a service.
 
 To generate a master token key, run "openssl rand -hex 32".
-Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY.
+Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY_TOKEN.
 To create tokens that have access for the master key, use create_token(..), as shown in main().
 """
 from datetime import datetime, timedelta
@@ -27,7 +27,7 @@ class InvalidTokenError(Exception):
 
 
 def create_token(name: str):
-    assert settings.metrics_master_key is not None
+    assert settings.metrics_master_key_token is not None
 
     # create the token data
     now = datetime.utcnow()
@@ -40,14 +40,14 @@ def create_token(name: str):
     }
 
     # generate the jwt token and return it
-    return jwt.encode(payload, settings.metrics_master_key, algorithm=ALGORITHM)
+    return jwt.encode(payload, settings.metrics_master_key_token, algorithm=ALGORITHM)
 
 
 def verify_jwt_token(jwt_token):
     try:
-        if settings.metrics_master_key:
+        if settings.metrics_master_key_token:
             payload = jwt.decode(
-                jwt_token, settings.metrics_master_key, algorithms=[ALGORITHM]
+                jwt_token, settings.metrics_master_key_token, algorithms=[ALGORITHM]
             )
             if payload["sub"] is None:
                 raise InvalidTokenError("Token subject claim is empty")
