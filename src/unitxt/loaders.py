@@ -250,11 +250,41 @@ class LoadCSV(Loader):
         )
 
 
+class LoadFromSklearn(Loader):
+    dataset_name: str
+    splits: List[str] = ["train", "test"]
+
+    _requirements_list: List[str] = ["sklearn", "pandas"]
+
+    def verify(self):
+        super().verify()
+
+        if self.streaming:
+            raise NotImplementedError("LoadFromSklearn cannot load with streaming.")
+
+    def prepare(self):
+        super().prepare()
+        from sklearn import datasets as sklearn_datatasets
+
+        self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
+
+    def process(self):
+        with TemporaryDirectory() as temp_directory:
+            for split in self.splits:
+                split_data = self.downloader(subset=split)
+                targets = [split_data["target_names"][t] for t in split_data["target"]]
+                df = pd.DataFrame([split_data["data"], targets]).T
+                df.columns = ["data", "target"]
+                df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
+            dataset = hf_load_dataset(temp_directory, streaming=False)
+
+        return MultiStream.from_iterables(dataset)
+
+
 class MissingKaggleCredentialsError(ValueError):
     pass
 
 
-# TODO write how to obtain kaggle credentials
 class LoadFromKaggle(Loader):
     url: str
     _requirements_list: List[str] = ["opendatasets"]
