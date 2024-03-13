@@ -1,5 +1,9 @@
-import logging
-import os
+"""This module handles authorization tokens for a service.
+
+To generate a master token key, run "openssl rand -hex 32".
+Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY.
+To create tokens that have access for the master key, use create_token(..), as shown in main().
+"""
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException
@@ -7,20 +11,15 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from starlette import status
 
-# This module handles authorization tokens for a service.
-# To generate a master token key, run "openssl rand -hex 32".
-# Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY.
-# To create tokens that have access for the master key, use create_token(..), as shown in main().
+from ...logging_utils import get_logger
+from ...settings_utils import get_settings
 
-if "UNITXT_METRICS_MASTER_KEY" in os.environ:
-    MASTER_KEY = os.environ["UNITXT_METRICS_MASTER_KEY"]
-else:
-    MASTER_KEY = None
+settings = get_settings()
+logger = get_logger()
+
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 360
-
-log = logging.getLogger("tokens")
 
 
 class InvalidTokenError(Exception):
@@ -28,7 +27,7 @@ class InvalidTokenError(Exception):
 
 
 def create_token(name: str):
-    assert MASTER_KEY is not None
+    assert settings.metrics_master_key is not None
 
     # create the token data
     now = datetime.utcnow()
@@ -41,13 +40,15 @@ def create_token(name: str):
     }
 
     # generate the jwt token and return it
-    return jwt.encode(payload, MASTER_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, settings.metrics_master_key, algorithm=ALGORITHM)
 
 
 def verify_jwt_token(jwt_token):
     try:
-        if MASTER_KEY:
-            payload = jwt.decode(jwt_token, MASTER_KEY, algorithms=[ALGORITHM])
+        if settings.metrics_master_key:
+            payload = jwt.decode(
+                jwt_token, settings.metrics_master_key, algorithms=[ALGORITHM]
+            )
             if payload["sub"] is None:
                 raise InvalidTokenError("Token subject claim is empty")
             return payload
@@ -66,7 +67,7 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         return verify_jwt_token(token)
     except InvalidTokenError as e:
-        log.exception(e)
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -76,7 +77,7 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
 
 def main():
     name = "unitxt-metrics-service-tester"
-    log.info(f"{name}: {create_token(name)}")
+    logger.info(f"{name}: {create_token(name)}")
 
 
 if __name__ == "__main__":
