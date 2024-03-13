@@ -1871,12 +1871,12 @@ class LlamaIndexCorrectness(InstanceMetric):
         """
         import re
 
-        match = re.search(r"\n(\d+\.\d+)\n", eval_response)
+        match = re.search(r"\d+\.\d+", eval_response)
 
         if match:
-            score = float(match.group(1))
+            score = float(match.group())
         else:
-            score = -1.0
+            raise Exception("could not parse judge response")
 
         reasoning_str = "\n".join(eval_response.split("\n")[1:])
         reasoning = reasoning_str.lstrip("\n")
