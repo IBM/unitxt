@@ -1604,57 +1604,68 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
 
     def prepare(self):
         super().prepare()
-        self.aggregator_mapper = {
+
+    def _aggregator_mapper(self, metric_name: str, prediction: Any) -> str:
+        if metric_name == "metrics.accuracy" and isinstance(prediction, list):
+            return "F1AccMattMultiLabel"
+        general_map = {
             "metrics.f1_micro": "F1AccMatt",
             "metrics.f1_macro": "F1AccMatt",
             "metrics.accuracy": "F1AccMatt",
             "metrics.matthews_correlation": "F1AccMatt",
             "metrics.rouge": "MeanAndVar",
+            "metrics.f1_micro_multi_label": "F1AccMattMultiLabel",
+            "metrics.f1_macro_multi_label": "F1AccMattMultiLabel",
         }
+        return general_map[metric_name]
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         import numpy as np
         from scipy.stats import poisson
 
-        from .thin_aggregators import Aggregator, F1AccMatt, MeanAndVar
+        from .thin_aggregators import (
+            Aggregator,
+            F1AccMatt,
+            F1AccMattMultiLabel,
+            MeanAndVar,
+        )
 
-        class ScoreEachInstanceAndAddGlobalScore(StreamInstanceOperator):
-            scorers: List[Aggregator]
-            first_metric_name: str
-            name_to_look_for_score_name: str
-            global_acore: dict
+        first_instance = stream.peek()
 
-            def process(
-                self, inst: Dict[str, Any], stream_name: Optional[str] = None
-            ) -> Dict[str, Any]:
-                if "score" not in inst:
-                    inst["score"] = {"global": {}, "instance": {}}
-                if "instance" not in inst["score"]:
-                    inst["score"]["instance"] = {}
-                if "global" not in inst["score"]:
-                    inst["score"]["global"] = {}
+        needed_aggregators_names = {
+            self._aggregator_mapper(metric_name, first_instance["prediction"])
+            for metric_name in self.metric_names
+        }
 
-                inst["score"]["global"].update(self.global_acore)
+        needed_aggregators_names = list(needed_aggregators_names)
 
-                # compute instance score, and update it into the instance
-                for scorer in self.scorers:
-                    raw_instance_score = scorer.single_instance_score(
-                        inst["references"], inst["prediction"]
-                    )
-                    inst["score"]["instance"].update(raw_instance_score)
+        covered_metrics_of = {
+            aggregator_name: [
+                metric_name
+                for metric_name in self.metric_names
+                if self._aggregator_mapper(metric_name, first_instance["prediction"])
+                == aggregator_name
+            ]
+            for aggregator_name in needed_aggregators_names
+        }
 
-                    # for backward compatibility:
-                    if self.first_metric_name in scorer.covered_metrics:
-                        inst["score"]["instance"].update(
-                            {
-                                "score": raw_instance_score[
-                                    self.name_to_look_for_score_name
-                                ],
-                                "score_name": self.name_to_look_for_score_name,
-                            }
-                        )
+        def aggregator_dispatcher(aggregator_name) -> Aggregator:
+            assert (
+                aggregator_name in needed_aggregators_names
+            ), f"Unknown aggregator name {aggregator_name} is to be dispatched"
+            covered = covered_metrics_of[aggregator_name]
+            if aggregator_name == "F1AccMattMultiLabel":
+                return F1AccMattMultiLabel(covered_metrics=covered)
+            if aggregator_name == "F1AccMatt":
+                return F1AccMatt(covered_metrics=covered)
+            if aggregator_name == "MeanAndVar":
+                return MeanAndVar(covered_metrics=covered)
+            raise ValueError("Should not be here")
 
-                return inst
+        main_aggregators = {
+            needed_aggregator_name: aggregator_dispatcher(needed_aggregator_name)
+            for needed_aggregator_name in needed_aggregators_names
+        }
 
         sub_name_of_first_metric_name = {"metrics.rouge": "rougeL"}
         name_to_look_for_score_name = (
@@ -1662,37 +1673,6 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
             if self.first_metric_name in sub_name_of_first_metric_name
             else self.first_metric_name[8:]
         )
-
-        needed_aggregators_names = {
-            self.aggregator_mapper[metric_name] for metric_name in self.metric_names
-        }
-        needed_aggregators_names = list(needed_aggregators_names)
-
-        def aggregator_dispatcher(aggregator_name) -> Aggregator:
-            if aggregator_name == "F1AccMatt":
-                return F1AccMatt(
-                    covered_metrics=[
-                        metric_name
-                        for metric_name in self.metric_names
-                        if self.aggregator_mapper[metric_name] == "F1AccMatt"
-                    ]
-                )
-            if aggregator_name == "MeanAndVar":
-                return MeanAndVar(
-                    covered_metrics=[
-                        metric_name
-                        for metric_name in self.metric_names
-                        if self.aggregator_mapper[metric_name] == "MeanAndVar"
-                    ],
-                )
-            raise ValueError("should not be here")
-
-        main_aggregators = {
-            needed_aggregator_name: aggregator_dispatcher(needed_aggregator_name)
-            for needed_aggregator_name in needed_aggregators_names
-        }
-
-        # score the individual instances
 
         # all the aggregators needed to evaluate all the metrics for that stream
         # each of these will be updated once for each instance, and produce the final result at the end.
@@ -1753,9 +1733,7 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
         if total_num_of_instances == 0:
             yield from stream
 
-        first_instance = stream.peek()  # stream is after scoring each instance
-
-        ## now for the global scores
+        ## compute all global scores from what was aggregated above in one pass over the stream
         if "score" not in first_instance or "global" not in first_instance["score"]:
             global_score = {}
         else:
@@ -1804,18 +1782,59 @@ class ApplyThinMetricsEvaluations(SingleStreamOperator, ArtifactFetcherMixin):
                 in main_aggregators[needed_aggregator_name].covered_metrics
             ):
                 score_name = global_score["score_name"]
-                global_score.update(
-                    {"score_ci_high": global_score[score_name + "_ci_high"]}
-                )
-                global_score.update(
-                    {"score_ci_low": global_score[score_name + "_ci_low"]}
-                )
+                if score_name + "_ci_high" in global_score:
+                    global_score.update(
+                        {"score_ci_high": global_score[score_name + "_ci_high"]}
+                    )
+                if score_name + "_ci_low" in global_score:
+                    global_score.update(
+                        {"score_ci_low": global_score[score_name + "_ci_low"]}
+                    )
 
         ## later stages demand instance["score"]["global"]["score"] for some averaging, which matches the score of "score_name"
         ## currently in branch 'main', these hold the metrics that happens to be computed last. needs to be looked into
         ## so for now, we did the same above
         ##
         ## update each instance of the whole stream with the news, and store its instance score
+
+        class ScoreEachInstanceAndAddGlobalScore(StreamInstanceOperator):
+            scorers: List[Aggregator]
+            first_metric_name: str
+            name_to_look_for_score_name: str
+            global_acore: dict
+
+            def process(
+                self, inst: Dict[str, Any], stream_name: Optional[str] = None
+            ) -> Dict[str, Any]:
+                if "score" not in inst:
+                    inst["score"] = {"global": {}, "instance": {}}
+                if "instance" not in inst["score"]:
+                    inst["score"]["instance"] = {}
+                if "global" not in inst["score"]:
+                    inst["score"]["global"] = {}
+
+                inst["score"]["global"].update(self.global_acore)
+
+                # compute instance score, and update it into the instance
+                for scorer in self.scorers:
+                    raw_instance_score = scorer.single_instance_score(
+                        inst["references"], inst["prediction"]
+                    )
+                    inst["score"]["instance"].update(raw_instance_score)
+
+                    # for backward compatibility:
+                    if self.first_metric_name in scorer.covered_metrics:
+                        inst["score"]["instance"].update(
+                            {
+                                "score": raw_instance_score[
+                                    self.name_to_look_for_score_name
+                                ],
+                                "score_name": self.name_to_look_for_score_name,
+                            }
+                        )
+
+                return inst
+
         ms = MultiStream({"tmp": stream})
         score_each_instance_and_add_global_score = ScoreEachInstanceAndAddGlobalScore(
             scorers=[v for k, v in main_aggregators.items()],
@@ -1847,6 +1866,8 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             "metrics.f1_micro",
             "metrics.matthews_correlation",
             "metrics.rouge",
+            "metrics.f1_micro_multi_label",
+            "metrics.f1_macro_multi_label",
         ]
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:

@@ -1,5 +1,5 @@
 from collections import Counter, defaultdict
-from math import sqrt
+from math import isclose, sqrt
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -109,18 +109,9 @@ class F1AccMatt(Aggregator):
 
     def accumulate_instance_value(self, references: List[Any], prediction: Any):
         # instance value for F1AccMatt is a pair (ref, pred), both are same type. ref is references[0] if more than one reference
-        # see if easy to cover for accuracy, shows in reuters which is multi_label
-        # F1 , if to be applied to multi_label, is called metrics.f1_micro_multi_label
-        if isinstance(prediction, list):
-            assert isinstance(
-                references[0], list
-            ), "prediction and references[0] should both be same: list or scalar"
-            for pred in prediction:
-                if pred in references[0]:
-                    self.confusion_matrix.update([(pred, pred)])
-                else:
-                    self.confusion_matrix.update([(pred, np.nan)])
-            return
+        # if accuracy is needed for list, it is dealt with by F1AccMattMultiLabel
+        # F1 , if to be applied to multi_label, is called metrics.f1_micro_multi_label, and
+        # readily goes to F1AccMattMultiLabel
         self.confusion_matrix.update([(references[0], prediction)])
 
     def compute_final_from_aggregated(self) -> dict:
@@ -130,14 +121,10 @@ class F1AccMatt(Aggregator):
         return to_ret
 
     def _compute_final_from_aggregated(self, metric_name):
-        if metric_name == "metrics.f1_micro":
-            return self.compute_f1_micro_from_confusion_matrix("metrics.f1_micro")
+        if metric_name in ["metrics.f1_micro", "metrics.accuracy"]:
+            return self.compute_f1_micro_from_confusion_matrix(metric_name)
         if metric_name == "metrics.f1_macro":
             return self.compute_f1_macro_from_confusion_matrix()
-        if metric_name == "metrics.accuracy":
-            return self.compute_f1_micro_from_confusion_matrix(
-                "metrics.accuracy"
-            )  # accuracy is same as f1_micro
         if metric_name == "metrics.matthews_correlation":
             return self.compute_matthews_correlation_coefficient_from_confusion_matrix()
         raise ValueError("should not be here - metric name is wrong")
@@ -279,14 +266,15 @@ class F1AccMattMultiLabel(Aggregator):
         # this method is invoked for storing instance[score][instance], after global was computed,
         # so self.classes_seen_thus_far is updated with all classes ever seen in pred or ref
         # for coherence, and in order to clean results, we only report on classes ever seen in references
-        num_of_true_misses = len(
-            [
-                ref
-                for ref in self.references_seen_thus_far
-                if ref not in prediction and ref not in references[0]
-            ]
-        )
-        hit_ratio = float(num_of_hits + num_of_true_misses) / len(prediction)
+        # num_of_true_misses = len(
+        #     [
+        #         ref
+        #         for ref in self.references_seen_thus_far
+        #         if ref not in prediction and ref not in references[0]
+        #     ]
+        # )
+        # hit_ratio = float(num_of_hits + num_of_true_misses) / len(prediction)
+        hit_ratio = 0.0 if len(prediction) == 0 else num_of_hits / len(prediction)
         for metric_name in self.covered_metrics:
             to_ret[metric_name[8:]] = hit_ratio
         return to_ret
@@ -321,17 +309,40 @@ class F1AccMattMultiLabel(Aggregator):
                 self.classes_seen_thus_far.add(d)
         self.num_of_instances_seen_thus_far += 1
 
+    def compute_final_from_aggregated(self) -> dict:
+        to_ret = {}
+        for metric_name in self.covered_metrics:
+            to_ret.update(self._compute_final_from_aggregated(metric_name))
+        return to_ret
+
+    def _compute_final_from_aggregated(self, metric_name):
+        if metric_name in ["metrics.f1_micro_multi_label", "metrics.accuracy"]:
+            return self.compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix(
+                metric_name
+            )
+        if metric_name == "metrics.f1_macro_multi_label":
+            return self.compute_f1_macro_multi_label_from_confusion_matrix()
+        # if metric_name == "metrics.matthews_correlation":
+        #     return self.compute_matthews_correlation_coefficient_from_confusion_matrix()
+        raise ValueError("should not be here - metric name is wrong")
+
     def compute_f1_macro_multi_label_from_confusion_matrix(self) -> Any:
         # e.g. from here: https://medium.com/synthesio-engineering/precision-accuracy-and-f1-score-for-multi-label-classification-34ac6bdfb404
+        # report only for the classes seen as references
+        if len(self.references_seen_thus_far) == 0:
+            return {"f1_macro_multi_label": np.nan}
         to_ret = {}
         for c in self.references_seen_thus_far:  # report only on them
             num_as_pred = self.tp[c] + self.fp[c]
-            precision = np.nan if num_as_pred == 0 else self.tp[c] / num_as_pred
+            precision = 0.0 if num_as_pred == 0 else self.tp[c] / num_as_pred
             num_as_ref = self.tp[c] + self.fn[c]
             recall = np.nan if num_as_ref == 0 else self.tp[c] / num_as_ref
             f1 = (
-                np.nan
-                if np.isnan(precision) or np.isnan(recall)
+                0.0
+                if np.isnan(precision)
+                or np.isnan(recall)
+                or isclose(precision, 0)
+                or isclose(recall, 0)
                 else 2 * precision * recall / (precision + recall)
             )
             to_ret["f1_" + c] = round(f1, 2)
@@ -341,7 +352,27 @@ class F1AccMattMultiLabel(Aggregator):
         to_ret["f1_macro"] = round(avg_across_classes, 2)
         return to_ret
 
-    def compute_f1_micro_multi_label_from_confusion_matrix(self):
+    def compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix(
+        self, metric_name
+    ):
+        if self.num_of_instances_seen_thus_far == 0:
+            return {metric_name[8:]: np.nan}
+        total_tp = sum(v for k, v in self.tp.items())
+        total_tn = sum(v for k, v in self.tn.items())
+        total_fp = sum(v for k, v in self.fp.items())
+        total_fn = sum(v for k, v in self.fn.items())
+        if metric_name == "metrics.accuracy":
+            acc = (total_tp + total_tn) / self.num_of_instances_seen_thus_far
+            return {"accuracy": round(acc, 2)}
+        if metric_name == "metrics.f1_micro_multi_label":
+            if total_tp == 0:
+                return {"f1_micro_multi_label": 0.0}
+            total_recall = total_tp / (total_fn + total_tp)
+            total_precision = total_tp / (total_tp + total_fp)
+            f1_micro = (
+                2 * total_recall * total_precision / (total_recall + total_precision)
+            )
+            return {"f1_micro_multi_label": round(f1_micro, 2)}
         return None
 
     # adapted from metrics.py for multilabel
