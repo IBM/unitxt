@@ -118,7 +118,7 @@ class TestArtifact(UnitxtTestCase):
         artifact_identifier = "metrics.accuracy"
         artifact, artifactory1 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(artifact.n_resamples, None)
-        artifact.disable_confidence_interval_calculation()
+        artifact.ci_disabled = True
         self.assertEqual(artifact.n_resamples, None)
 
         same_artifact_retrieved_again, artifactory2 = fetch_artifact(

@@ -47,6 +47,46 @@ def nan_mean(x):
         return np.nanmean(x)
 
 
+def new_random_generator():
+    # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+    # So use '& MAX_32BIT' to get a 32-bit seed.
+    _max_32bit = 2**32 - 1
+    return np.random.default_rng(hash(get_seed()) & _max_32bit)
+
+
+def resample_from_non_nan(values):
+    """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones.
+
+    here we deal with samples on which the metric could not be computed. These are
+    edge cases - for example, when the sample contains only empty strings.
+    CI is about the distribution around the statistic (e.g. mean), it doesn't deal with
+    cases in which the metric is not computable. Therefore, we ignore these edge cases
+    as part of the computation of CI.
+
+    In theory there would be several ways to deal with this:
+    1. skip the errors and return a shorter array => this fails because Scipy requires
+    this callback (i.e. the statistic() callback) to return an array of the same size
+    as the number of resamples
+    2. Put np.nan for the errors => this fails because in such case the ci itself
+    becomes np.nan. So one edge case can fail the whole CI computation.
+    3. Replace the errors with a sampling from the successful cases => this is what is implemented.
+
+    This resampling makes it so that, if possible, the bca confidence interval returned by bootstrap will not be NaN, since
+    bootstrap does not ignore NaNs.  However, if there are 0 or 1 non-NaN values, or all non-NaN values are equal,
+    the resulting distribution will be degenerate (only one unique value) so the CI will still be NaN since there is
+    no variability.  In this case, the CI is essentially an interval of length 0 equaling the mean itself.
+    """
+    if values.size > 1:
+        error_indices = numpy.isnan(values)
+        n_errors = sum(error_indices)
+        if 0 < n_errors < values.size:
+            # replace NaN aggregate scores with random draws from non-NaN scores, so that confidence interval isn't NaN itself
+            values[error_indices] = new_random_generator().choice(
+                values[~error_indices], n_errors, replace=True
+            )
+    return values
+
+
 class UpdateStream(StreamInstanceOperator):
     update: dict
 
@@ -63,7 +103,14 @@ class ConfidenceIntervalMixin(Artifact):
     ci_scores: List[str] = OptionalField(default=None)
     ci_disabled: bool = OptionalField(default=False)
 
-    
+    def verify(self):
+        if not self.ci_disabled:
+            assert (
+                self.n_resamples is not None
+            ), "Confidence interval requires n_rsamples (got None), otherwise you can disable ci with ci_disabled=True."
+            assert (
+                self.n_resamples > 1
+            ), "Confidence interval requires more n_rsamples > 1, otherwise you can disable ci with ci_disabled=True."
 
 
 class Metric(ConfidenceIntervalMixin):
@@ -73,7 +120,6 @@ class Metric(ConfidenceIntervalMixin):
         super().prepare()
         if self.ci_scores is None:
             self.ci_scores = [self.main_score]
-
 
     def consume_stream(self, stream: Stream):
         references = []
@@ -110,49 +156,48 @@ class Metric(ConfidenceIntervalMixin):
             scores["global"] = global_score
 
 
-
 class ReducingMixin(Artifact):
     reduction_map: Dict[str, List[str]] = OptionalField(default=None)
     implemented_reductions: List[str] = AbstractField()
 
 
+class Aggregator(Artifact):
+    score_name: str = None
+
+    def __call__(self, instances: Dict[str, Any]):
+        scores = [
+            instance["score"]["instance"][self.score_name] for instance in instances
+        ]
+        return self.aggregate(scores)
+
+    def get_statistic(self):
+        def statistic(arr, axis):
+            scores = numpy.apply_along_axis(
+                self,
+                axis=axis,
+                arr=arr,
+            )
+            return resample_from_non_nan(scores)
+
+        return statistic
+
+    @abstractmethod
+    def aggregate(self, scores):
+        pass
+
+
+class Mean(Aggregator):
+    def aggregate(self, scores):
+        return nan_mean(scores)
+
+
+class GroupMean(Mean):
+    pass
+
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
-
-    @staticmethod
-    def new_random_generator():
-        # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
-        # So use '& MAX_32BIT' to get a 32-bit seed.
-        _max_32bit = 2**32 - 1
-        return np.random.default_rng(hash(get_seed()) & _max_32bit)
-
-
-    def _can_compute_confidence_intervals(self, num_predictions):
-        if self.ci_disabled:
-            return False
-
-        assert (
-            self.n_resamples is not None
-        ), "Confidence interval requires n_rsamples (got None), otherwise you can disable ci with ci_disabled=True."
-        assert (
-            self.n_resamples > 1
-        ), "Confidence interval requires more n_rsamples > 1, otherwise you can disable ci with ci_disabled=True."
-
-        return num_predictions > 1
-
-    @staticmethod
-    def average_item_scores(instances: List[dict], score_name: str):
-        """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
-
-        Args:
-            instances: list of dicts of each instance's instance scores.
-            score_name: score field names to compute the mean for.
-        """
-        return nan_mean(
-            [instance["score"]["instance"][score_name] for instance in instances]
-        )
 
     @staticmethod
     def _all_instance_scores_equal(instances, score_name):
@@ -169,7 +214,7 @@ class MetricWithConfidenceInterval(Metric):
         self,
         instances: List[dict],
         score_names: List[str],
-        aggregation_func=None,
+        aggregator: Aggregator = Mean,
         ci_score_prefix="",
     ):
         """Compute confidence intervals based on existing scores, already computed on the input instances.
@@ -180,54 +225,34 @@ class MetricWithConfidenceInterval(Metric):
         Args:
             instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
             score_names: List of instance score field names to compute a confidence interval for.
-            aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include task_data
+            aggregator: A function with arguments instances, field_name; is applied on list of instances (which may include task_data
                 field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
                 instances after resampling, if argument is None.
             ci_score_prefix: An optional string prefix to the score_name in the CI.  Useful in cases where the
-                aggregation_func is something other than the mean
+                aggregator is something other than the mean
 
         Returns:
             Dict of confidence interval values
         """
         result = {}
 
-        if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
+        if len(instances) < 2 or self.ci_disabled:
             return result
 
-        ci_score_prefix = str(ci_score_prefix)
-        if aggregation_func is None:
-            # if aggregation_func is None, we simply take the mean of the resampled instance scores
-            # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
-            #   that is, re-form the groups, calculate the function, and take the mean of the group scores
-            aggregation_func = self.average_item_scores
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
             if self._all_instance_scores_equal(instances, score_name):
                 continue
 
-            # need to redefine the statistic function within the loop because score_name is a loop variable
-            def statistic(arr, axis, score_name=score_name):
-                # arr is a 2d array where each row is a resampling, so we
-                # iterate over the rows and compute the metric on each resampling
-                scores = numpy.apply_along_axis(
-                    lambda resampled_instances: aggregation_func(
-                        resampled_instances, score_name
-                    ),
-                    axis=axis,
-                    arr=arr,
-                )
-                return self.resample_from_non_nan(scores)
-
-            # apply bootstrap only on the relevant field
             ci = bootstrap(
                 (instances,),
-                statistic=statistic,
+                statistic=aggregator(score_name).get_statistic(),
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                random_state=self.new_random_generator(),
+                random_state=new_random_generator(),
             ).confidence_interval
-            full_score_name = ci_score_prefix + score_name
+            full_score_name = str(ci_score_prefix) + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
             if score_name == self.main_score:
@@ -262,7 +287,7 @@ class MetricWithConfidenceInterval(Metric):
             n_errors = sum(error_indices)
             if 0 < n_errors < values.size:
                 # replace NaN aggregate scores with random draws from non-NaN scores, so that confidence interval isn't NaN itself
-                values[error_indices] = self.new_random_generator().choice(
+                values[error_indices] = new_random_generator().choice(
                     values[~error_indices], n_errors, replace=True
                 )
         return values
@@ -271,7 +296,7 @@ class MetricWithConfidenceInterval(Metric):
         self, references, predictions, task_data, score_name
     ):
         """Computed confidence intervals for a set of references and predictions."""
-        random_gen = self.new_random_generator()
+        random_gen = new_random_generator()
 
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
@@ -306,25 +331,27 @@ class MetricWithConfidenceInterval(Metric):
             return self.resample_from_non_nan(scores)
 
         result = {}
-        num_predictions = len(predictions)
-        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
-            identifiers = list(range(num_predictions))
 
-            with warnings.catch_warnings():
-                # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
-                # the value of the computed global metric is the same on all resamplings.
-                warnings.simplefilter("ignore", category=RuntimeWarning)
-                ci = bootstrap(
-                    (identifiers,),
-                    statistic=statistic,
-                    n_resamples=self.n_resamples,
-                    confidence_level=self.confidence_level,
-                    random_state=random_gen,
-                ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+        if len(predictions) < 2 or self.ci_disabled:
+            return result
+
+        identifiers = list(range(len(predictions)))
+
+        with warnings.catch_warnings():
+            # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
+            # the value of the computed global metric is the same on all resamplings.
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            ci = bootstrap(
+                (identifiers,),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=random_gen,
+            ).confidence_interval
+        result["score_ci_low"] = ci.low
+        result["score_ci_high"] = ci.high
+        result[f"{score_name}_ci_low"] = ci.low
+        result[f"{score_name}_ci_high"] = ci.high
         return result
 
 
@@ -665,7 +692,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
 
             field_name_full_prefix = ""
             # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = self.average_item_scores
+            aggregator = Mean
             if reduction_type == "mean":
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
@@ -685,7 +712,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
                     field_name_full_prefix = "fixed_" + field_name_full_prefix
                 (
                     scores_to_resample,
-                    aggregation_function,
+                    aggregator,
                 ) = self._set_up_group_mean_aggregation(
                     instances, reduction_params, reduction_fields
                 )
@@ -699,13 +726,13 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
                 field_name_full = field_name_full_prefix + field_name
                 # if group resampling (3rd element of agg_func parameter) is True, then
                 #   1. scores_to_resample are the group scores, and
-                #   2. aggregation_function is to take the raw mean
+                #   2. aggregator is to take the raw mean
                 # if no group resampling (3rd element of agg_func parameter) is False, then
                 #   1. scores_to_resample are the original instance scores, and
-                #   2. aggregation_function is to apply the group aggregation from the instance scores
-                # either way, the application of aggregation_function to scores_to_resample yields the global score
-                global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, field_name
+                #   2. aggregator is to apply the group aggregation from the instance scores
+                # either way, the application of aggregator to scores_to_resample yields the global score
+                global_score[field_name_full] = aggregator(field_name)(
+                    scores_to_resample
                 )
                 if field_name == self.main_score:
                     global_score["score"] = global_score[field_name_full]
@@ -718,7 +745,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
                     instances=scores_to_resample,
                     score_names=list(set(self.ci_scores)),
                     ci_score_prefix=field_name_full_prefix,
-                    aggregation_func=aggregation_function,
+                    aggregator=aggregator,
                 )
                 global_score.update(confidence_interval)
 
@@ -818,7 +845,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
         do_resample_as_group = reduction_params["agg_func"][2]
         if do_resample_as_group:
             # pass the group aggregate---not instance---scores to resample as usual
-            aggregation_function = self.average_item_scores
+            aggregator = Mean
             scores_to_resample = self.get_group_scores(
                 instances, reduction_fields, group_aggregation_func
             )
@@ -826,7 +853,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
             scores_to_resample = instances
 
-            def aggregation_function(
+            def aggregator(
                 instances,
                 field_name,
                 group_aggregation_func=group_aggregation_func,
@@ -838,7 +865,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval, Reducin
                     [group["score"]["instance"][field_name] for group in group_scores]
                 )
 
-        return scores_to_resample, aggregation_function
+        return scores_to_resample, aggregator
 
     @abstractmethod
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
@@ -911,7 +938,6 @@ class MetricPipeline(MultiStreamOperator, Metric):
         default_factory=list
     )
     metric: Metric = None
-
 
     def verify(self):
         assert self.main_score is not None, "main_score is not set"
@@ -2422,6 +2448,7 @@ class RemoteMetric(SingleStreamOperator, Metric):
     endpoint: str
     metric_name: str
     api_key: str = None
+    ci_disabled: bool = True
 
     @staticmethod
     def wrap_inner_metric_pipeline_metric(
@@ -2483,17 +2510,6 @@ class RemoteMetric(SingleStreamOperator, Metric):
         response.raise_for_status()
         response_json = response.json()
         return MetricResponse(**response_json)
-
-    def disable_confidence_interval_calculation(self):
-        """Confidence intervals are always disabled for RemoteMetric.
-
-        No need to do anything.
-        """
-        pass
-
-    def set_n_resamples(self, n_resample):
-        """Since confidence intervals are always disabled for remote metrics, this is a no-op."""
-        pass
 
 
 def validate_subgroup_types(
