@@ -3,9 +3,9 @@
     "loader": {
         "type": "load_hf",
         "path": "CohereForAI/aya_evaluation_suite",
-        "name": "dolly_human_edited",
+        "name": "aya_human_annotated",
         "streaming": true,
-        "filtering_lambda": "lambda instance: instance[\"language\"]==\"spa\""
+        "filtering_lambda": "lambda instance: instance[\"language\"]==\"arb\""
     },
     "preprocess_steps": [
         {
