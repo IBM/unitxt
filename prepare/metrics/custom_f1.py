@@ -192,15 +192,17 @@ predictions = [
         ("FBI", "Org"),
     ]
 ]
-references = [ 
-    [ [
-        ("Amir", "Person"),
-        ("Yaron", "Person"),
-        ("Dalia", "Person"),
-        ("Naftali", "Person"),
-        ("Ramat-Gan", "Location"),
-        ("Givataaim", "Location"),
-    ] ]
+references = [
+    [
+        [
+            ("Amir", "Person"),
+            ("Yaron", "Person"),
+            ("Dalia", "Person"),
+            ("Naftali", "Person"),
+            ("Ramat-Gan", "Location"),
+            ("Givataaim", "Location"),
+        ]
+    ]
 ]
 # Person: Precision = 3/3, Recall = 3/4, F1 = 2 * 1 * 0.75 / (1 + 0.75) = 0.8571
 # Location: Precision = 1/2, Recall = 1/2, F1 = 0.5
@@ -257,12 +259,14 @@ predictions = [
     ]
 ]
 references = [
-    [ [
-        ("a", "B"),
-        ("b", "B"),
-        ("c", "C"),
-        ("d", "D"),
-    ] ] 
+    [
+        [
+            ("a", "B"),
+            ("b", "B"),
+            ("c", "C"),
+            ("d", "D"),
+        ]
+    ]
 ]
 
 instance_targets = [
@@ -312,9 +316,11 @@ predictions = [
     ]
 ]
 references = [
-    [ [
-        ("b", "B"),
-    ] ]
+    [
+        [
+            ("b", "B"),
+        ]
+    ]
 ]
 
 instance_targets = [

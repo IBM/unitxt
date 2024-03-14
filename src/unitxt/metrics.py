@@ -80,60 +80,81 @@ class Metric(Artifact):
 
     # Some metrics require a single reference per prediction (usually as single element list)
     # In this case, set to True.
-    validate_single_reference_per_prediction : bool = False
+    validate_single_reference_per_prediction: bool = False
 
     # In most case references is a list (with potentionally one element)
     # but in some HF metrics the reference is a scalar (e.g. spearmanr)
-    validate_reference_is_a_list : bool = True
+    validate_reference_is_a_list: bool = True
 
     # Most metrics do not allow None as predictions, but some do (e.g. ndcg)
-    validate_allow_none_predictions : bool = False
+    validate_allow_none_predictions: bool = False
 
     def _validate_references_and_prediction(self, references, predictions):
-        prediction_type_pretty_print_map = {"typing.List[str]":"list of strings"}
-
-        prediction_type_pretty_print = str(self.validate_prediction_type)
-        if prediction_type_pretty_print in prediction_type_pretty_print_map:
-            prediction_type_pretty_print = prediction_type_pretty_print_map[prediction_type_pretty_print]
+        prediction_type_pretty_print = self._get_prediction_type_prett_print()
 
         for reference in references:
-            if self.validate_reference_is_a_list:
-                if not isoftype(reference,List[Any]):
-                    raise ValueError(
-                            f"Expecting a reference list list in {self.__class__.__name__} metric. Received reference of type {type(reference)}: {reference}"
-                    )
-                if self.validate_single_reference_per_prediction and not len(reference) == 1:
-                    raise ValueError(
-                        f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
-                    )
-                for ref in reference:
-                    if self.validate_prediction_type is not None and not isoftype(ref, self.validate_prediction_type):
-                        raise ValueError(
-                            f"Each reference is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received reference of type {type(ref)}: {ref}"
-                        )
-            else:
-                if self.validate_prediction_type is not None and not isoftype(reference, self.validate_prediction_type):
-                    raise ValueError(
-                        f"Each reference is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received reference of type {type(reference)}: {reference}"
-                    )
+            self._validate_reference(prediction_type_pretty_print, reference)
         for prediction in predictions:
-            if prediction is None:
-                if not self.validate_allow_none_predictions:
-                    raise ValueError(
-                        f"Prediction is not allowed to be None in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
-                    )
-            elif self.validate_prediction_type is not None and not isoftype(prediction, self.validate_prediction_type  ):
-                raise ValueError(
-                    f"Each prediction is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
-                )
-        
-        if  len(references) != len(predictions):
+            self._validate_prediction(prediction_type_pretty_print, prediction)
+
+        if len(references) != len(predictions):
             raise ValueError(
                 f"references size ({len(references)})"
                 f" doesn't mach predictions size ({len(references)})."
             )
 
-            
+    def _validate_prediction(self, prediction_type_pretty_print, prediction):
+        if prediction is None:
+            if not self.validate_allow_none_predictions:
+                raise ValueError(
+                    f"Prediction is not allowed to be None in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
+                )
+        elif self.validate_prediction_type is not None and not isoftype(
+            prediction, self.validate_prediction_type
+        ):
+            raise ValueError(
+                f"Each prediction is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
+            )
+
+    def _validate_reference(self, prediction_type_pretty_print, reference):
+        if self.validate_reference_is_a_list:
+            if not isoftype(reference, List[Any]):
+                raise ValueError(
+                    f"Expecting a reference list list in {self.__class__.__name__} metric. Received reference of type {type(reference)}: {reference}"
+                )
+            if (
+                self.validate_single_reference_per_prediction
+                and not len(reference) == 1
+            ):
+                raise ValueError(
+                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
+                )
+            for ref in reference:
+                if self.validate_prediction_type is not None and not isoftype(
+                    ref, self.validate_prediction_type
+                ):
+                    raise ValueError(
+                        f"Each reference is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received reference of type {type(ref)}: {ref}"
+                    )
+        else:
+            if self.validate_prediction_type is not None and not isoftype(
+                reference, self.validate_prediction_type
+            ):
+                raise ValueError(
+                    f"Each reference is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received reference of type {type(reference)}: {reference}"
+                )
+
+    def _get_prediction_type_prett_print(self):
+        prediction_type_pretty_print_map = {"typing.List[str]": "list of strings"}
+
+        prediction_type_pretty_print = str(self.validate_prediction_type)
+        if prediction_type_pretty_print in prediction_type_pretty_print_map:
+            prediction_type_pretty_print = prediction_type_pretty_print_map[
+                prediction_type_pretty_print
+            ]
+
+        return prediction_type_pretty_print
+
     def consume_stream(self, stream: Stream):
         references = []
         predictions = []
@@ -395,10 +416,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: settings.num_resamples_for_global_metrics
     )
 
-    # calculate scores for single instances  
+    # calculate scores for single instances
     process_single_instances = True
 
-    
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
         predictions = []
@@ -939,8 +959,8 @@ class Accuracy(InstanceMetric):
     main_score = "accuracy"
     ci_scores = ["accuracy"]
 
-    validate_prediction_type = None # string representation is compared
-    validate_single_reference_per_prediction = False # multiple references allows
+    validate_prediction_type = None  # string representation is compared
+    validate_single_reference_per_prediction = False  # multiple references allows
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
@@ -960,8 +980,9 @@ class StringContainment(InstanceMetric):
     main_score = "string_containment"
     ci_scores = ["string_containment"]
 
-    validate_prediction_type = None # string representation is compared
-    validate_single_reference_per_prediction = False # multiple references allows
+    validate_prediction_type = None  # string representation is compared
+    validate_single_reference_per_prediction = False  # multiple references allows
+
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
@@ -1178,7 +1199,6 @@ class F1(GlobalMetric):
         predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
-
         self.str_to_id = {}
         self.id_to_str = {}
         formatted_references = [
@@ -1205,7 +1225,6 @@ class F1(GlobalMetric):
         else:
             final_result = {self.main_score: result[self.metric]}
         return final_result
-
 
 
 class F1Micro(F1):
@@ -1376,7 +1395,7 @@ class Rouge(HuggingfaceMetric):
     main_score = "rougeL"
     scale = 1.0
 
-    validate_single_reference_per_prediction = False # multiple references allowed
+    validate_single_reference_per_prediction = False  # multiple references allowed
     validate_prediction_type = str
 
     use_aggregator: bool = True
@@ -1534,6 +1553,7 @@ class RocAuc(GlobalMetric):
     _requirements_list: List[str] = ["sklearn"]
     validate_single_reference_per_prediction = True
     validate_prediction_type = str
+
     def prepare(self):
         from sklearn import metrics
 
@@ -1626,9 +1646,8 @@ class CustomF1(GlobalMetric):
         predictions: List[Any],
         task_data: List[Dict],
     ) -> dict:
-    
         references = [element[0] for element in references]
-        
+
         if self.groups is None:
             groups = self.get_groups(references, task_data)
         else:
@@ -1721,14 +1740,16 @@ class CustomF1(GlobalMetric):
 
 class NER(CustomF1):
     validate_single_reference_per_prediction = True
-    validate_prediction_type = List[Tuple] 
+    validate_prediction_type = List[Tuple]
 
     def get_element_group(self, element, additional_input):
         try:
             return element[1]
-        except KeyError as e:
-            raise Exception(f"Unable to extract group in NER metric {element}.  Expecting tuple of strings (entity-type, entity-surface-form)")
-                
+        except KeyError:
+            raise Exception(
+                f"Unable to extract group in NER metric {element}.  Expecting tuple of strings (entity-type, entity-surface-form)"
+            ) from None
+
     def get_element_representation(self, element, additional_input):
         return str(element)
 
@@ -1758,7 +1779,7 @@ class TokenOverlap(InstanceMetric):
     ci_scores = ["f1", "precision", "recall"]
     validate_single_reference_per_prediction = False
     validate_prediction_type = str
-  
+
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
@@ -1794,7 +1815,7 @@ class BertScore(HuggingfaceBulkMetric):
     hf_metric_fields = ["f1", "precision", "recall"]
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
-    
+
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
@@ -2281,7 +2302,7 @@ class NDCG(GlobalMetric):
     validate_prediction_type = float
     validate_reference_is_a_list = False
     validate_allow_none_predictions = True
-  
+
     def prepare(self):
         from sklearn.metrics import ndcg_score
 
@@ -2480,7 +2501,7 @@ class RetrievalAtK(RetrievalMetric):
 class KPA(CustomF1):
     validate_single_reference_per_prediction = True
     validate_prediction_type = str
-  
+
     def get_element_group(self, element, additional_input):
         return additional_input["keypoint"]
 
@@ -3166,14 +3187,13 @@ class BinaryMaxF1(F1Binary):
     main_score = "max_f1_binary"
     validate_single_reference_per_prediction = True
     validate_prediction_type = str
-  
+
     def compute(
         self,
         references: List[List[str]],
         predictions: List[List[str]],
         task_data: List[Dict],
     ) -> dict:
-    
         float_predictions = [to_float_or_default(p) for p in predictions]
 
         best_thr = -1
@@ -3204,11 +3224,10 @@ class BinaryAccuracy(InstanceMetric):
 
     validate_single_reference_per_prediction = True
     validate_prediction_type = str
-  
+
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-  
         float_prediction = to_float_or_default(prediction)
         prediction = str(int(float_prediction > self.threshold))
         references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
@@ -3228,14 +3247,13 @@ class BinaryMaxAccuracy(GlobalMetric):
 
     validate_single_reference_per_prediction = True
     validate_prediction_type = str
-  
+
     def compute(
         self,
         references: List[List[str]],
         predictions: List[List[str]],
         task_data: List[Dict],
     ) -> dict:
- 
         float_predictions = [to_float_or_default(p) for p in predictions]
         references = [
             ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references

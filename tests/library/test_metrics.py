@@ -171,7 +171,7 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_errors(self):
         metric = F1Micro()
-        references = [["cat","dog"],["dog"]]
+        references = [["cat", "dog"], ["dog"]]
         predictions = ["cat", "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
@@ -179,7 +179,7 @@ class TestMetrics(UnitxtTestCase):
             str(cm.exception),
             "Only a single reference per prediction is allowed in F1Micro metric. Received reference: ['cat', 'dog']",
         )
-        references = [[["cat","dog"]],["dog"]]
+        references = [[["cat", "dog"]], ["dog"]]
         predictions = ["cat", "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
@@ -187,16 +187,14 @@ class TestMetrics(UnitxtTestCase):
             str(cm.exception),
             "Each reference is expected to be a <class 'str'> in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
         )
-        references = [["cat"],["dog"]]
-        predictions = [["cat","dog"], "dog"]
+        references = [["cat"], ["dog"]]
+        predictions = [["cat", "dog"], "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertEqual(
             str(cm.exception),
             "Each prediction is expected to be a <class 'str'> in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
         )
-        
-
 
     def test_f1_binary(self):
         metric = F1Binary()
