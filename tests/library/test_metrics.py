@@ -185,7 +185,7 @@ class TestMetrics(UnitxtTestCase):
             apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertEqual(
             str(cm.exception),
-            "Each reference is expected to be a string in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
+            "Each reference is expected to be a <class 'str'> in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
         )
         references = [["cat"],["dog"]]
         predictions = [["cat","dog"], "dog"]
@@ -193,7 +193,7 @@ class TestMetrics(UnitxtTestCase):
             apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertEqual(
             str(cm.exception),
-            "Each prediction is expected to be a string in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
+            "Each prediction is expected to be a <class 'str'> in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
         )
         
 

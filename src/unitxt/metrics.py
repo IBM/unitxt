@@ -74,6 +74,33 @@ class Metric(Artifact):
     def main_score(self):
         pass
 
+    validate_prediction_type = None
+    validate_single_reference_per_prediction = False
+
+    def _validate_references_and_prediction(self, references, predictions):
+        prediction_type_pretty_print_map = {"typing.List[str]":"list of strings"}
+
+        prediction_type_pretty_print = str(self.validate_prediction_type)
+        if prediction_type_pretty_print in prediction_type_pretty_print_map:
+            prediction_type_pretty_print = prediction_type_pretty_print_map[prediction_type_pretty_print]
+
+        for reference in references:
+            if self.validate_single_reference_per_prediction and not len(reference) == 1:
+                raise ValueError(
+                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
+                )
+            for ref in reference:
+                if self.validate_prediction_type is not None and not isoftype(ref, self.validate_prediction_type):
+                    raise ValueError(
+                        f"Each reference is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received reference of type {type(ref)}: {ref}"
+                    )
+
+        for prediction in predictions:
+            if self.validate_prediction_type is not None and not isoftype(prediction, self.validate_prediction_type  ):
+                raise ValueError(
+                    f"Each prediction is expected to be a {prediction_type_pretty_print} in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
+                )
+            
     def consume_stream(self, stream: Stream):
         references = []
         predictions = []
@@ -336,6 +363,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     )
     process_single_instances = True
 
+    
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
         predictions = []
@@ -384,6 +412,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(instance_score)
+        self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
 
@@ -841,6 +870,9 @@ class Squad(GlobalMetric):
     main_score = "f1"
     metric = "squad"
 
+    validate_prediction_type = str
+    validate_single_reference_per_prediction = False
+
     def prepare(self):
         super().prepare()
         self._metric = evaluate.load(self.metric)
@@ -872,6 +904,9 @@ class Accuracy(InstanceMetric):
     main_score = "accuracy"
     ci_scores = ["accuracy"]
 
+    validate_prediction_type = None # string representation is compared
+    validate_single_reference_per_prediction = False # multiple references allows
+
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
@@ -890,6 +925,8 @@ class StringContainment(InstanceMetric):
     main_score = "string_containment"
     ci_scores = ["string_containment"]
 
+    validate_prediction_type = None # string representation is compared
+    validate_single_reference_per_prediction = False # multiple references allows
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
@@ -1086,6 +1123,9 @@ class F1(GlobalMetric):
     average = None  # Report per class then aggregate by mean
     metric = "f1"
 
+    validate_prediction_type = str
+    validate_single_reference_per_prediction = True
+
     def prepare(self):
         super().prepare()
         self._metric = evaluate.load(self.metric)
@@ -1103,8 +1143,6 @@ class F1(GlobalMetric):
         predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
-
-        self._validate_references_and_prediction(references, predictions)
 
         self.str_to_id = {}
         self.id_to_str = {}
@@ -1132,23 +1170,6 @@ class F1(GlobalMetric):
         else:
             final_result = {self.main_score: result[self.metric]}
         return final_result
-    
-    def _validate_references_and_prediction(self, references, predictions):
-        for reference in references:
-            if not len(reference) == 1:
-                raise ValueError(
-                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
-                )
-            if not isoftype(reference[0], str):
-                raise ValueError(
-                    f"Each reference is expected to be a string in {self.__class__.__name__} metric. Received reference of type {type(reference[0])}: {reference[0]}"
-                )
-
-        for prediction in predictions:
-            if not isoftype(prediction, str):
-                raise ValueError(
-                    f"Each prediction is expected to be a string in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
-                )
 
 
 
@@ -1208,6 +1229,9 @@ class F1MultiLabel(GlobalMetric):
     average = None  # Report per class then aggregate by mean
     metric = "f1"
 
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = List[str]
+
     def prepare(self):
         super().prepare()
         self._metric = evaluate.load(self.metric, "multilabel")
@@ -1235,7 +1259,6 @@ class F1MultiLabel(GlobalMetric):
         self.str_to_id = {}
         self.id_to_str = {}
 
-        self._validate_references_and_prediction(references, predictions)
         references = [reference[0] for reference in references]
 
         labels = list({label for reference in references for label in reference})
@@ -1278,23 +1301,6 @@ class F1MultiLabel(GlobalMetric):
             final_result = {self.main_score: result[self.metric]}
         return final_result
 
-    def _validate_references_and_prediction(self, references, predictions):
-        for reference in references:
-            if not len(reference) == 1:
-                raise ValueError(
-                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
-                )
-            if not isoftype(reference[0], List[str]):
-                raise ValueError(
-                    f"Each reference is expected to be a list of strings in {self.__class__.__name__} metric. Received reference of type {type(reference[0])}: {reference[0]}"
-                )
-
-        for prediction in predictions:
-            if not isoftype(prediction, List[str]):
-                raise ValueError(
-                    f"Each prediction is expected to be a list of strings in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
-                )
-
 
 class PrecisionMacroMultiLabel(F1MultiLabel):
     main_score = "precision_macro"
@@ -1335,6 +1341,9 @@ class Rouge(HuggingfaceMetric):
     main_score = "rougeL"
     scale = 1.0
 
+    validate_single_reference_per_prediction = False # multiple references allowed
+    validate_prediction_type = str
+
     use_aggregator: bool = True
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
@@ -1372,6 +1381,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
     reduction_map = {"mean": ["char_edit_dist_accuracy"]}
     main_score = "char_edit_dist_accuracy"
     ci_scores = ["char_edit_dist_accuracy"]
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
 
     _requirements_list: List[str] = ["editdistance"]
 
@@ -1398,7 +1409,8 @@ class CharEditDistanceAccuracy(InstanceMetric):
 class Wer(HuggingfaceMetric):
     hf_metric_name = "wer"
     main_score = "wer"
-
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
     _requirements_list: List[str] = ["jiwer"]
 
     def compute(
@@ -1459,6 +1471,9 @@ class MatthewsCorrelation(HuggingfaceMetric):
     main_score = "matthews_correlation"
     str_to_id: dict = InternalField(default_factory=dict)
 
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+
     def get_str_id(self, str):
         if str not in self.str_to_id:
             id = len(self.str_to_id)
@@ -1486,7 +1501,8 @@ class RocAuc(GlobalMetric):
     main_score = "roc_auc"
     process_single_instances = False
     _requirements_list: List[str] = ["sklearn"]
-
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
     def prepare(self):
         from sklearn import metrics
 
@@ -1683,6 +1699,9 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = Tuple
+
     def get_element_group(self, element, additional_input):
         try:
             return element[1]
@@ -1716,7 +1735,9 @@ class TokenOverlap(InstanceMetric):
     reduction_map = {"mean": ["f1", "precision", "recall"]}
     main_score = "f1"
     ci_scores = ["f1", "precision", "recall"]
-
+    validate_single_reference_per_prediction = False
+    validate_prediction_type = str
+  
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
@@ -1752,7 +1773,7 @@ class BertScore(HuggingfaceBulkMetric):
     hf_metric_fields = ["f1", "precision", "recall"]
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
-
+    
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
@@ -2235,7 +2256,9 @@ class NDCG(GlobalMetric):
     main_score = "nDCG"
 
     _requirements_list: List[str] = ["sklearn"]
-
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+  
     def prepare(self):
         from sklearn.metrics import ndcg_score
 
@@ -2432,6 +2455,9 @@ class RetrievalAtK(RetrievalMetric):
 
 
 class KPA(CustomF1):
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+  
     def get_element_group(self, element, additional_input):
         return additional_input["keypoint"]
 
@@ -3115,17 +3141,16 @@ class BinaryMaxF1(F1Binary):
     """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
 
     main_score = "max_f1_binary"
-
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+  
     def compute(
         self,
         references: List[List[str]],
         predictions: List[List[str]],
         task_data: List[Dict],
     ) -> dict:
-        assert all(
-            len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 metric"
-
+    
         float_predictions = [to_float_or_default(p) for p in predictions]
 
         best_thr = -1
@@ -3154,13 +3179,13 @@ class BinaryAccuracy(InstanceMetric):
     pos_classes = {"1", "1.0", "yes", "true"}
     threshold = 0.5
 
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+  
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        assert (
-            len(references) == 1
-        ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
-
+  
         float_prediction = to_float_or_default(prediction)
         prediction = str(int(float_prediction > self.threshold))
         references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
@@ -3178,16 +3203,16 @@ class BinaryMaxAccuracy(GlobalMetric):
     main_score = "max_accuracy_binary"
     pos_classes = {"1", "1.0", "yes", "true"}
 
+    validate_single_reference_per_prediction = True
+    validate_prediction_type = str
+  
     def compute(
         self,
         references: List[List[str]],
         predictions: List[List[str]],
         task_data: List[Dict],
     ) -> dict:
-        assert all(
-            len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in BinaryMaxAccuracy metric"
-
+ 
         float_predictions = [to_float_or_default(p) for p in predictions]
         references = [
             ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
