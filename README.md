@@ -3,12 +3,12 @@
 </div>
 
 [![Button](https://img.shields.io/badge/Video-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Demo-pink?style=for-the-badge)](https://huggingface.co/spaces/unitxt/explore)
+[![Button](https://img.shields.io/badge/Demo-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/demo.html)
 [![Button](https://img.shields.io/badge/Tutorial-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html)
 [![Button](https://img.shields.io/badge/Paper-pink?style=for-the-badge)](https://arxiv.org/abs/2401.14019)
-[![Button](https://img.shields.io/badge/Documentation-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Catalog-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Contributers-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
+[![Button](https://img.shields.io/badge/Documentation-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/modules.html)
+[![Button](https://img.shields.io/badge/Catalog-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/catalog.html)
+[![Button](https://img.shields.io/badge/Contributers-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/contributors_guide.html)
 [![Button](https://img.shields.io/badge/PyPi-pink?style=for-the-badge)](https://pypi.org/project/unitxt/)
 
 
