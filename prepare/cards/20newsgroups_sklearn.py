@@ -10,8 +10,6 @@ from src.unitxt.loaders import LoadFromSklearn
 from src.unitxt.operators import FilterByCondition
 from src.unitxt.test_utils.card import test_card
 
-dataset_name = "20newsgroups"
-
 map_labels = {
     "alt.atheism": "atheism",
     "comp.graphics": "computer graphics",
@@ -36,7 +34,7 @@ map_labels = {
 }
 
 card = TaskCard(
-    loader=LoadFromSklearn(dataset_name=f"{dataset_name}", streaming=False),
+    loader=LoadFromSklearn(dataset_name="20newsgroups", streaming=False),
     preprocess_steps=[
         FilterByCondition(values={"data": ""}, condition="ne"),
         SplitRandomMix(
@@ -57,4 +55,4 @@ card = TaskCard(
 )
 
 test_card(card, debug=False)
-add_to_catalog(artifact=card, name=f"cards.{dataset_name}_sklearn", overwrite=True)
+add_to_catalog(artifact=card, name="cards.20_newsgroups.sklearn", overwrite=True)
