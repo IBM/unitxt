@@ -34,7 +34,7 @@ for subset in subsets:
                 ),
                 ListFieldValues(fields=["answers"], to_field="answers"),
             ],
-            task="tasks.qa.open[metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
+            task="tasks.qa.open",  # [metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
             templates="templates.qa.open.all",
         )
 
