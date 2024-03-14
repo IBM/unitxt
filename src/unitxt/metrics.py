@@ -74,7 +74,13 @@ class Metric(Artifact):
     def main_score(self):
         pass
 
+    # Override 'validate_prediction_type' with the expected type of predictions
+    # and references.  Example: List[str], List[Dict], string
     validate_prediction_type = None
+
+    # Override 'single_reference_per_prediction' to True if the metric can support
+    # more than one reference per prediction.
+     
     validate_single_reference_per_prediction = False
 
     def _validate_references_and_prediction(self, references, predictions):
@@ -1699,8 +1705,8 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
-    validate_single_reference_per_prediction = True
-    validate_prediction_type = Tuple
+    validate_single_reference_per_prediction = False
+    validate_prediction_type = None # TODO: Should be List[Tuple] but references are not this way right now
 
     def get_element_group(self, element, additional_input):
         try:
