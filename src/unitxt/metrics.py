@@ -1,4 +1,3 @@
-import itertools
 import re
 import string
 import uuid
@@ -1098,11 +1097,6 @@ class F1(GlobalMetric):
             self.id_to_str[id] = str
         return self.str_to_id[str]
 
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        return True
-
     def compute(
         self,
         references: List[List[str]],
@@ -1111,9 +1105,6 @@ class F1(GlobalMetric):
     ) -> dict:
 
         self._validate_references_and_prediction(references, predictions)
-
-        if not self._labels_match_average_format(references, predictions):
-            return {self.main_score: np.nan}
 
         self.str_to_id = {}
         self.id_to_str = {}
@@ -1167,27 +1158,29 @@ class F1Micro(F1):
 
 
 class F1Binary(F1):
+    """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
     process_single_instances = False
     main_score = "f1_binary"
     average = "binary"
     pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
 
     def get_str_id(self, str):
-        if str.lower() in self.pos_classes:
-            return 1
-        return 0
+        return int(str)
 
-    # References and predictions must include up to 2 unique values, one of them in pos_classes
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        classes = set(predictions + list(itertools.chain(*references)))
-        n_classes = len(classes)
-        if n_classes > 2:
-            return False
-        if n_classes == 2 and len(set(classes).difference(self.pos_classes)) == 0:
-            return False
-        return True
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        predictions_floats = [to_float_or_default(p) for p in predictions]
+        predictions = [str(int(p > self.threshold)) for p in predictions_floats]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+        return super().compute(references, predictions, task_data)
 
 
 class RecallBinary(F1Binary):
@@ -1896,9 +1889,16 @@ class LlamaIndexCorrectness(InstanceMetric):
         Returns:
             Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
         """
-        score_str = eval_response.split("\n")[0]
+        import re
+
+        match = re.search(r"\b\d+\.\d+\b|\b\d+\b", eval_response)
+
+        if match:
+            score = float(match.group())
+        else:
+            raise Exception("could not parse judge response")
+
         reasoning_str = "\n".join(eval_response.split("\n")[1:])
-        score = float(score_str)
         reasoning = reasoning_str.lstrip("\n")
         return score, reasoning
 
@@ -1963,7 +1963,10 @@ class LlamaIndexCorrectness(InstanceMetric):
         ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
 
         query = task_data["question"]
-        contexts = task_data["contexts"]
+
+        contexts = None
+        if "contexts" in task_data:
+            contexts = task_data["contexts"]
 
         per_reference_results = []
         for reference_response in references:
@@ -3109,6 +3112,8 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
 
 
 class BinaryMaxF1(F1Binary):
+    """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
+
     main_score = "max_f1_binary"
 
     def compute(
@@ -3120,31 +3125,14 @@ class BinaryMaxF1(F1Binary):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
-        classes = set(itertools.chain(*references))
-        n_clases = len(classes)
-        assert len(classes) <= 2, "References of BinaryMaxF1 must be binary"
-        pos_classes = classes.intersection(self.pos_classes)
-        neg_classes = classes.difference(self.pos_classes)
-        n_pos_classes = len(pos_classes)
-        if n_clases == 2:
-            assert (
-                n_pos_classes == 1
-            ), "Only one positive class is allowed in BinaryMaxF1"
-        pos_class = next(iter(pos_classes)) if n_pos_classes > 0 else "1.0"
-        neg_class = next(iter(neg_classes)) if len(neg_classes) > 0 else "0.0"
 
-        float_predictions = []
-        for prediction in predictions:
-            try:
-                float_predictions.append(float(prediction))
-            except Exception:
-                float_predictions.append(0)
+        float_predictions = [to_float_or_default(p) for p in predictions]
 
         best_thr = -1
         best_f1 = -1
         for thr in set(float_predictions):
             new_predictions = [
-                pos_class if float_prediction >= thr else neg_class
+                "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
             ]
             f1 = super().compute(references, new_predictions, task_data)[
@@ -3155,3 +3143,71 @@ class BinaryMaxF1(F1Binary):
                 best_thr = thr
 
         return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+
+
+class BinaryAccuracy(InstanceMetric):
+    """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
+    reduction_map = {"mean": ["accuracy_binary"]}
+    main_score = "accuracy_binary"
+    ci_scores = ["accuracy_binary"]
+    pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        assert (
+            len(references) == 1
+        ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
+
+        float_prediction = to_float_or_default(prediction)
+        prediction = str(int(float_prediction > self.threshold))
+        references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
+
+        result = {self.main_score: float([prediction] == references)}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
+class BinaryMaxAccuracy(GlobalMetric):
+    """Calculate the maximal accuracy and the decision threshold that achieves it for a binary task with float predictions."""
+
+    process_single_instances = False
+    main_score = "max_accuracy_binary"
+    pos_classes = {"1", "1.0", "yes", "true"}
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in BinaryMaxAccuracy metric"
+
+        float_predictions = [to_float_or_default(p) for p in predictions]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+
+        best_thr = -1
+        best_acc = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                "1" if float_prediction >= thr else "0"
+                for float_prediction in float_predictions
+            ]
+            acc = np.mean(
+                [
+                    [prediction] == reference
+                    for prediction, reference in zip(new_predictions, references)
+                ]
+            )
+            if acc > best_acc:
+                best_acc = acc
+                best_thr = thr
+
+        return {self.main_score: best_acc, "best_thr_max_acc": best_thr}

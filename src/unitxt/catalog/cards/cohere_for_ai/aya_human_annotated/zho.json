@@ -5,7 +5,7 @@
         "path": "CohereForAI/aya_evaluation_suite",
         "name": "aya_human_annotated",
         "streaming": true,
-        "filtering_lambda": "lambda instance: instance[\"language\"]==\"deu\""
+        "filtering_lambda": "lambda instance: instance[\"language\"]==\"zho\""
     },
     "preprocess_steps": [
         {
@@ -31,6 +31,6 @@
             "to_field": "answers"
         }
     ],
-    "task": "tasks.qa.open",
+    "task": "tasks.qa.open[metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
     "templates": "templates.qa.open.all"
 }

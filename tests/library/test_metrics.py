@@ -3,6 +3,8 @@ from math import isnan
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
     Accuracy,
+    BinaryAccuracy,
+    BinaryMaxAccuracy,
     BinaryMaxF1,
     F1Binary,
     F1Macro,
@@ -198,8 +200,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_binary(self):
         metric = F1Binary()
-        references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
+        references = [["1"], ["0"], ["0"], ["0"], ["Yes"], ["1"]]
+        predictions = ["0.8", "1", "0.2", "0", "0.6", "1"]
 
         global_target = 0.8571428571428
         outputs = apply_metric(
@@ -242,25 +244,6 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual("recall_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("recall_binary", outputs[0]["score"]["instance"]["score_name"])
 
-    def test_f1_binary_non_binary(self):
-        metric = F1Binary()
-        references = [["1"], ["0"], ["yes"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
-        metric = F1Binary()
-        references = [["1"], ["yes"], ["1"], ["1"]]
-        predictions = ["1", "1", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
     def test_max_f1(self):
         metric = BinaryMaxF1()
         references = [["1"], ["0"], ["0"]]
@@ -274,6 +257,45 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_accuracy_binary(self):
+        metric = BinaryAccuracy()
+        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+
+        expected_global_result = {
+            "accuracy_binary": 3 / 5,
+            "score": 3 / 5,
+            "score_name": "accuracy_binary",
+        }
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_result = {
+            k: v
+            for k, v in outputs[0]["score"]["global"].items()
+            if k in expected_global_result
+        }
+        self.assertDictEqual(expected_global_result, global_result)
+
+    def test_binary_max_accuracy(self):
+        metric = BinaryMaxAccuracy()
+        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+
+        global_target = 0.8
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["global"]["score_name"]
+        )
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["instance"]["score_name"]
+        )
 
     def test_f1_macro(self):
         metric = F1Macro()

@@ -117,6 +117,13 @@ class Capitalize(FieldOperator):
         return text.capitalize()
 
 
+class GetStringAfter(FieldOperator):
+    substring: str
+
+    def process_value(self, text: Any) -> Any:
+        return text.split(self.substring, 1)[-1].strip()
+
+
 class Substring(FieldOperator):
     begin: int = 0
     end: int = None
@@ -150,6 +157,13 @@ class YesNoToInt(FieldOperator):
         if text == "no":
             return "0"
         return text
+
+
+class YesToOneElseZero(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "yes":
+            return "1"
+        return "0"
 
 
 class StrToFloatFormat(FieldOperator):
