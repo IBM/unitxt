@@ -1109,9 +1109,9 @@ class F1(GlobalMetric):
         predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
-        assert all(
-            len(reference) == 1 for reference in references
-        ), "Only a single reference per prediction is allowed in F1 metric"
+
+        self._validate_references_and_prediction(references, predictions)
+
         if not self._labels_match_average_format(references, predictions):
             return {self.main_score: np.nan}
 
@@ -1141,6 +1141,24 @@ class F1(GlobalMetric):
         else:
             final_result = {self.main_score: result[self.metric]}
         return final_result
+    
+    def _validate_references_and_prediction(self, references, predictions):
+        for reference in references:
+            if not len(reference) == 1:
+                raise ValueError(
+                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
+                )
+            if not isoftype(reference[0], str):
+                raise ValueError(
+                    f"Each reference is expected to be a string in {self.__class__.__name__} metric. Received reference of type {type(reference[0])}: {reference[0]}"
+                )
+
+        for prediction in predictions:
+            if not isoftype(prediction, str):
+                raise ValueError(
+                    f"Each prediction is expected to be a string in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
+                )
+
 
 
 class F1Micro(F1):
@@ -1271,17 +1289,17 @@ class F1MultiLabel(GlobalMetric):
         for reference in references:
             if not len(reference) == 1:
                 raise ValueError(
-                    f"Only a single reference per prediction is allowed in F1 multi label metric. Received reference: {reference}"
+                    f"Only a single reference per prediction is allowed in {self.__class__.__name__} metric. Received reference: {reference}"
                 )
             if not isoftype(reference[0], List[str]):
                 raise ValueError(
-                    f"Each reference is expected to be a list of strings in F1 multi label metric. Received reference: '{reference[0]}'"
+                    f"Each reference is expected to be a list of strings in {self.__class__.__name__} metric. Received reference of type {type(reference[0])}: {reference[0]}"
                 )
 
         for prediction in predictions:
             if not isoftype(prediction, List[str]):
                 raise ValueError(
-                    f"Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '{prediction}'"
+                    f"Each prediction is expected to be a list of strings in {self.__class__.__name__} metric. Received prediction of type {type(prediction)}: {prediction}"
                 )
 
 
@@ -1673,8 +1691,11 @@ class CustomF1(GlobalMetric):
 
 class NER(CustomF1):
     def get_element_group(self, element, additional_input):
-        return element[1]
-
+        try:
+            return element[1]
+        except KeyError as e:
+            raise Exception(f"Unable to extract group in NER metric {element}.  Expecting tuple of strings (entity-type, entity-surface-form)")
+                
     def get_element_representation(self, element, additional_input):
         return str(element)
 

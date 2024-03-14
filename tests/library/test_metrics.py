@@ -167,6 +167,35 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
 
+    def test_f1_errors(self):
+        metric = F1Micro()
+        references = [["cat","dog"],["dog"]]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Only a single reference per prediction is allowed in F1Micro metric. Received reference: ['cat', 'dog']",
+        )
+        references = [[["cat","dog"]],["dog"]]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Each reference is expected to be a string in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
+        )
+        references = [["cat"],["dog"]]
+        predictions = [["cat","dog"], "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Each prediction is expected to be a string in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
+        )
+        
+
+
     def test_f1_binary(self):
         metric = F1Binary()
         references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
@@ -387,7 +416,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Each reference is expected to be a list of strings in F1 multi label metric. Received reference: 'A B'",
+            "Each reference is expected to be a list of strings in F1MicroMultiLabel metric. Received reference of type <class 'str'>: A B",
         )
 
         references2 = [["A", "B"], ["BC", "D"], ["C"], ["123"]]
@@ -397,7 +426,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Only a single reference per prediction is allowed in F1 multi label metric. Received reference: ['A', 'B']",
+            "Only a single reference per prediction is allowed in F1MicroMultiLabel metric. Received reference: ['A', 'B']",
         )
 
         references3 = [[["A"]], [["BC"]], [["C"]], [["123"]]]  # OK references
@@ -407,7 +436,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '[13, 23, 234]'",
+            "Each prediction is expected to be a list of strings in F1MicroMultiLabel metric. Received prediction of type <class 'list'>: [13, 23, 234]",
         )
 
     def test_f1_macro_multilabel_with_nones(self):
