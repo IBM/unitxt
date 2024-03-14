@@ -1,0 +1,4 @@
+{
+    "type": "standard_f1_macro",
+    "metric_name": "metrics.f1_macro"
+}

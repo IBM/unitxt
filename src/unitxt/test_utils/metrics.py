@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..settings_utils import get_settings
+from ..standard_metrics import StandardGlobalMetric
 from ..stream import MultiStream
 from ..type_utils import isoftype
 
@@ -33,7 +34,9 @@ def apply_metric(
     references: List[List[Any]],
     task_data: Optional[List[dict]] = None,
 ):
-    assert isoftype(metric, Metric), "metric must be a Metric"
+    assert isoftype(metric, Metric) or isoftype(
+        metric, StandardGlobalMetric
+    ), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
     assert task_data is None or isoftype(
@@ -62,6 +65,34 @@ def apply_metric(
     return list(output_stream)
 
 
+def test_standard_metric(
+    standard_metric: StandardGlobalMetric,
+    predictions: List[Any],
+    references: List[List[Any]],
+    instance_targets: List[dict],
+    global_target: dict,
+    task_data: Optional[List[dict]] = None,
+):
+    assert len(predictions) == len(
+        references
+    ), "in test_standard_metric, predictions and references are of different lentgths"
+    assert isoftype(
+        predictions, List[Any]
+    ), "in test_standard_netric, predictions is not of type List[Any]"
+    assert isoftype(
+        references, List[List[Any]]
+    ), "in test_standard_netric, references is not of type List[List[Any]]"
+    input_instances = [
+        {"prediction": pred, "references": reference}
+        for pred, reference in zip(predictions, references)
+    ]
+    ms = MultiStream.from_iterables({"tmp": input_instances})
+    outputs = standard_metric(ms)["tmp"]
+    output_instances = list(outputs)
+
+    return list(output_instances)
+
+
 def test_metric(
     metric: Metric,
     predictions: List[Any],
@@ -76,7 +107,9 @@ def test_metric(
         )
         return None
 
-    assert isoftype(metric, Metric), "operator must be an Operator"
+    assert isoftype(metric, Metric) or isoftype(
+        metric, StandardGlobalMetric
+    ), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 
