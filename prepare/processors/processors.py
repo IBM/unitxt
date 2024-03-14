@@ -6,6 +6,7 @@ from src.unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     FirstCharacter,
+    GetStringAfter,
     LowerCase,
     LowerCaseTillPunc,
     StanceToProCon,
@@ -90,6 +91,20 @@ add_to_catalog(
     "processors.substring",
     overwrite=True,
 )
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            GetStringAfter(
+                substring=":", field="prediction", process_every_value=False
+            ),
+            GetStringAfter(substring=":", field="references", process_every_value=True),
+        ]
+    ),
+    "processors.get_string_after_colon",
+    overwrite=True,
+)
+
 
 add_to_catalog(
     SequentialOperator(

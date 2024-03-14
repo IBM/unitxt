@@ -98,6 +98,6 @@ convention = "google"
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
 
 [tool.codespell]
-ignore-words-list = 'rouge,ot'
+ignore-words-list = 'rouge,ot,ans'
 check-filenames = true
 check-hidden = false
