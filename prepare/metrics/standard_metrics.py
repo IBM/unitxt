@@ -6,6 +6,7 @@ from src.unitxt.standard_metrics import (
     StandardF1MacroMultiLabel,
     StandardF1Micro,
     StandardF1MicroMultiLabel,
+    StandardMatthewsCorrelation,
 )
 
 standard_accuracy = StandardAccuracy(metric_name="metrics.accuracy")
@@ -41,5 +42,14 @@ standard_f1_micro_multi_label = StandardF1MicroMultiLabel(
 add_to_catalog(
     standard_f1_micro_multi_label,
     "standard_metrics.f1_micro_multi_label",
+    overwrite=True,
+)
+
+standard_matthews_correlation = StandardMatthewsCorrelation(
+    metric_name="metrics.matthews_correlation"
+)
+add_to_catalog(
+    standard_f1_micro_multi_label,
+    "standard_metrics.matthews_correlation",
     overwrite=True,
 )

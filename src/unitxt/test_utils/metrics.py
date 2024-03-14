@@ -65,34 +65,6 @@ def apply_metric(
     return list(output_stream)
 
 
-def test_standard_metric(
-    standard_metric: StandardGlobalMetric,
-    predictions: List[Any],
-    references: List[List[Any]],
-    instance_targets: List[dict],
-    global_target: dict,
-    task_data: Optional[List[dict]] = None,
-):
-    assert len(predictions) == len(
-        references
-    ), "in test_standard_metric, predictions and references are of different lentgths"
-    assert isoftype(
-        predictions, List[Any]
-    ), "in test_standard_netric, predictions is not of type List[Any]"
-    assert isoftype(
-        references, List[List[Any]]
-    ), "in test_standard_netric, references is not of type List[List[Any]]"
-    input_instances = [
-        {"prediction": pred, "references": reference}
-        for pred, reference in zip(predictions, references)
-    ]
-    ms = MultiStream.from_iterables({"tmp": input_instances})
-    outputs = standard_metric(ms)["tmp"]
-    output_instances = list(outputs)
-
-    return list(output_instances)
-
-
 def test_metric(
     metric: Metric,
     predictions: List[Any],

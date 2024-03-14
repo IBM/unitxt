@@ -1604,6 +1604,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             "metrics.f1_micro",
             "metrics.f1_micro_multi_label",
             "metrics.f1_macro_multi_label",
+            "metrics.matthews_correlation",
         ]
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
