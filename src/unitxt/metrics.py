@@ -1871,7 +1871,7 @@ class LlamaIndexCorrectness(InstanceMetric):
         """
         import re
 
-        match = re.search(r"\d+\.\d+", eval_response)
+        match = re.search(r"\b\d+\.\d+\b|\b\d+\b", eval_response)
 
         if match:
             score = float(match.group())
