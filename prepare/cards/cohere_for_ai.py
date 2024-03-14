@@ -5,17 +5,14 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.logging_utils import get_logger
 from src.unitxt.operators import ListFieldValues
-from src.unitxt.standard import StandardRecipeWithIndexes
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "CohereForAI/aya_evaluation_suite"
 subsets = ["aya_human_annotated", "dolly_machine_translated", "dolly_human_edited"]
-langs = ["eng", "fra", "deu", "spa", "por", "jpn"]
 subset_to_langs = {
-    "aya_human_annotated": langs,
-    "dolly_machine_translated": langs,
+    "aya_human_annotated": ["eng", "zho", "arb", "yor", "tur", "tel", "por"],
+    "dolly_machine_translated": ["eng", "fra", "deu", "spa", "por", "jpn"],
     "dolly_human_edited": ["fra", "spa"],
 }
 
@@ -40,32 +37,32 @@ for subset in subsets:
             task="tasks.qa.open[metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
             templates="templates.qa.open.all",
         )
-        if lang == subset_to_langs[subset][0]:
-            test_card(card, debug=False, strict=False)
+
+        test_card(card, debug=False, strict=False)
         add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
 
 ########################  to remove once done ############################
-logger = get_logger()
-recipe = StandardRecipeWithIndexes(
-    template_card_index=1,
-    card=f"cards.cohere_for_ai.{subsets[0]}.{langs[0]}",
-    num_demos=2,
-    demos_pool_size=10,
-)
-ms = recipe()
-logger.info(ms)
-train_as_list = list(ms["train"])
-logger.info(len(train_as_list))
-logger.info(train_as_list[0])
-logger.info(train_as_list[1])
-logger.info("+++++++++++1+++++++++++++++")
-logger.info(train_as_list[0]["source"])
-logger.info("+++++++++++2+++++++++++++++")
-logger.info(train_as_list[1]["source"])
-logger.info("+++++++++++3+++++++++++++++")
-logger.info(train_as_list[2]["source"])
-logger.info("+++++++++++4+++++++++++++++")
-logger.info(train_as_list[3]["source"])
-logger.info("+++++++++++done+++++++++++++++")
-logger.info("done")
+# logger = get_logger()
+# recipe = StandardRecipeWithIndexes(
+#     template_card_index=1,
+#     card=f"cards.cohere_for_ai.{subsets[0]}.{langs[0]}",
+#     num_demos=2,
+#     demos_pool_size=10,
+# )
+# ms = recipe()
+# logger.info(ms)
+# train_as_list = list(ms["train"])
+# logger.info(len(train_as_list))
+# logger.info(train_as_list[0])
+# logger.info(train_as_list[1])
+# logger.info("+++++++++++1+++++++++++++++")
+# logger.info(train_as_list[0]["source"])
+# logger.info("+++++++++++2+++++++++++++++")
+# logger.info(train_as_list[1]["source"])
+# logger.info("+++++++++++3+++++++++++++++")
+# logger.info(train_as_list[2]["source"])
+# logger.info("+++++++++++4+++++++++++++++")
+# logger.info(train_as_list[3]["source"])
+# logger.info("+++++++++++done+++++++++++++++")
+# logger.info("done")
 ############# end of to remove once done ##################

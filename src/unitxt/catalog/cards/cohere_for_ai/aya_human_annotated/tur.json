@@ -5,7 +5,7 @@
         "path": "CohereForAI/aya_evaluation_suite",
         "name": "aya_human_annotated",
         "streaming": true,
-        "filtering_lambda": "lambda instance: instance[\"language\"]==\"fra\""
+        "filtering_lambda": "lambda instance: instance[\"language\"]==\"tur\""
     },
     "preprocess_steps": [
         {
