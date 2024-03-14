@@ -117,6 +117,13 @@ class Capitalize(FieldOperator):
         return text.capitalize()
 
 
+class GetStringAfter(FieldOperator):
+    substring: str
+
+    def process_value(self, text: Any) -> Any:
+        return text.split(self.substring, 1)[-1].strip()
+
+
 class Substring(FieldOperator):
     begin: int = 0
     end: int = None
