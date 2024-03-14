@@ -458,7 +458,9 @@ class StandardAccuracyMultiLabel(ConfusionMatrixForMultiLabelAggregator):
             return {self.short_name: np.nan}
         total_tp = sum(v for k, v in self.tp.items())
         total_tn = sum(v for k, v in self.tn.items())
-        acc = (total_tp + total_tn) / self.num_of_instances_seen_thus_far
+        total_fp = sum(v for k, v in self.fp.items())
+        total_fn = sum(v for k, v in self.fn.items())
+        acc = (total_tp + total_tn) / (total_tp + total_tn + total_fp + total_fn)
         return {self.short_name: round(acc, 2)}
 
 
