@@ -3260,6 +3260,8 @@ class RerankRecall(GlobalMetric):
     # This doesn't seem to make sense
     n_resamples = None
 
+    _requirements_list: List[str] = ["pytrec_eval"]
+
     def compute(
         self,
         references: List[List[str]],
