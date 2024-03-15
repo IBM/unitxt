@@ -1,6 +1,6 @@
 from datasets import get_dataset_config_names
 
-from src.unitxt import add_to_catalog
+from src.unitxt import add_to_catalog, settings
 from src.unitxt.blocks import (
     AddFields,
     LoadHF,
@@ -9,6 +9,8 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.test_utils.card import test_card
+
+settings.test_card_disable = None
 
 dataset_name = "reuters21578"
 
@@ -139,7 +141,11 @@ classlabels["ModHayes"] = sorted(classlabels["ModApte"] + ["bfr", "hk"])
 
 for subset in get_dataset_config_names(dataset_name):
     card = TaskCard(
-        loader=LoadHF(path=f"{dataset_name}", name=subset),
+        loader=LoadHF(
+            path=f"{dataset_name}",
+            name=subset,
+            filtering_lambda='lambda inst: len(inst["topics"])>0',
+        ),
         preprocess_steps=[
             SplitRandomMix(
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}

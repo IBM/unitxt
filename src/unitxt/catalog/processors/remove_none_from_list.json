@@ -5,18 +5,19 @@
             "type": "remove_values",
             "field": "prediction",
             "unallowed_values": [
-                "none"
+                "none",
+                "None"
             ],
             "process_every_value": false
         },
         {
             "type": "remove_values",
-            "field": "references/*",
+            "field": "references",
             "unallowed_values": [
-                "none"
+                "none",
+                "None"
             ],
-            "process_every_value": false,
-            "use_query": true
+            "process_every_value": true
         }
     ]
 }
