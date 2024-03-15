@@ -53,18 +53,12 @@ class StandardGlobalMetric(SingleStreamOperator):
         # The instances do not stay in main memory. Only one instance at a time.
         ci_aggregators = []
         if self.calc_confidence_intervals:
-            original_standard_metric, _ = (
-                unitxt.artifact.fetch_artifact(f"standard_{self.metric_name}")
-                if self.short_name != "accuracy_multi_label"
-                else unitxt.artifact.fetch_artifact(
-                    "standard_metrics.accuracy_multi_label"
-                )
-            )
+            # original_standard_metric, _ = unitxt.artifact.fetch_artifact(self.metric_name)
             if self.n_resamples is None:
                 self.n_resamples = unitxt.settings.num_resamples_for_global_metrics
             for _ in range(self.n_resamples):
                 ci_aggregators.append(
-                    type(original_standard_metric)(self.metric_name)
+                    type(self)()
                     # type(self.aggregator)(self.metric_name)
                 )
 
@@ -94,7 +88,7 @@ class StandardGlobalMetric(SingleStreamOperator):
             total_num_of_instances += 1
 
             self.accumulate_instance_value(
-                instance["references"], instance["prediction"]
+                references=instance["references"], prediction=instance["prediction"]
             )
 
             if not self.calc_confidence_intervals:
@@ -107,7 +101,8 @@ class StandardGlobalMetric(SingleStreamOperator):
                     num_of_participations_of_this_instance_in_each_resample[i]
                 ):
                     aggregator.accumulate_instance_value(
-                        instance["references"], instance["prediction"]
+                        references=instance["references"],
+                        prediction=instance["prediction"],
                     )
 
         if total_num_of_instances == 0:

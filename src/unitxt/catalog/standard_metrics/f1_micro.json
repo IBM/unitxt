@@ -1,4 +1,4 @@
 {
     "type": "standard_f1_micro",
-    "metric_name": "metrics.f1_micro"
+    "metric_name": "standard_metrics.f1_micro"
 }

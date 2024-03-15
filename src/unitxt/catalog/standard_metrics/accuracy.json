@@ -1,4 +1,4 @@
 {
     "type": "standard_accuracy",
-    "metric_name": "metrics.accuracy"
+    "metric_name": "standard_metrics.accuracy"
 }

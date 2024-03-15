@@ -9,7 +9,7 @@ from src.unitxt.standard_metrics import (
     StandardMatthewsCorrelation,
 )
 
-standard_accuracy = StandardAccuracy(metric_name="metrics.accuracy")
+standard_accuracy = StandardAccuracy(metric_name="standard_metrics.accuracy")
 add_to_catalog(standard_accuracy, "standard_metrics.accuracy", overwrite=True)
 
 standard_accuracy_multi_label = StandardAccuracyMultiLabel(
@@ -21,14 +21,14 @@ add_to_catalog(
     overwrite=True,
 )
 
-standard_f1_macro = StandardF1Macro(metric_name="metrics.f1_macro")
+standard_f1_macro = StandardF1Macro(metric_name="standard_metrics.f1_macro")
 add_to_catalog(standard_f1_macro, "standard_metrics.f1_macro", overwrite=True)
 
-standard_f1_micro = StandardF1Micro(metric_name="metrics.f1_micro")
+standard_f1_micro = StandardF1Micro(metric_name="standard_metrics.f1_micro")
 add_to_catalog(standard_f1_micro, "standard_metrics.f1_micro", overwrite=True)
 
 standard_f1_macro_multi_label = StandardF1MacroMultiLabel(
-    metric_name="metrics.f1_macro_multi_label"
+    metric_name="standard_metrics.f1_macro_multi_label"
 )
 add_to_catalog(
     standard_f1_macro_multi_label,
@@ -37,7 +37,7 @@ add_to_catalog(
 )
 
 standard_f1_micro_multi_label = StandardF1MicroMultiLabel(
-    metric_name="metrics.f1_micro_multi_label"
+    metric_name="standard_metrics.f1_micro_multi_label"
 )
 add_to_catalog(
     standard_f1_micro_multi_label,
@@ -46,7 +46,7 @@ add_to_catalog(
 )
 
 standard_matthews_correlation = StandardMatthewsCorrelation(
-    metric_name="metrics.matthews_correlation"
+    metric_name="standard_metrics.matthews_correlation"
 )
 add_to_catalog(
     standard_f1_micro_multi_label,
