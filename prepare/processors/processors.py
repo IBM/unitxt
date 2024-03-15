@@ -223,12 +223,12 @@ add_to_catalog(
         steps=[
             RemoveValues(
                 field="prediction",
-                unallowed_values=["none", "None"],
+                unallowed_values=["none"],
                 process_every_value=False,
             ),
             RemoveValues(
                 field="references",
-                unallowed_values=["none", "None"],
+                unallowed_values=["none"],
                 process_every_value=True,
             ),
         ]
@@ -247,7 +247,7 @@ add_to_catalog(
             ),
         ]
     ),
-    "processors.remove_empty_lists_from_list",
+    "processors.remove_empty_sublists_from_references",
     overwrite=True,
 )
 

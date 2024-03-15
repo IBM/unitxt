@@ -5,8 +5,7 @@
             "type": "remove_values",
             "field": "prediction",
             "unallowed_values": [
-                "none",
-                "None"
+                "none"
             ],
             "process_every_value": false
         },
@@ -14,8 +13,7 @@
             "type": "remove_values",
             "field": "references",
             "unallowed_values": [
-                "none",
-                "None"
+                "none"
             ],
             "process_every_value": true
         }
