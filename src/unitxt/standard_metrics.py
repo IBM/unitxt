@@ -213,12 +213,11 @@ class ConfusionMatrixAggregator(StandardGlobalMetric):
         self.num_of_instances_seen_thus_far += 1
 
     def compute_final_from_aggregated(self) -> dict:
-        #  good for metric_name in ["metrics.accuracy", "metrics.f1_micro"]:
         pass
 
 
 class StandardAccuracy(ConfusionMatrixAggregator):
-    metric_name = "metrics.accuracy"
+    metric_name = "standard_metrics.accuracy"
 
     def compute_final_from_aggregated(self) -> dict:
         # compute_acc_f1_micro_from_confusion_matrix()
@@ -250,7 +249,7 @@ class StandardF1Micro(StandardAccuracy):
 
 
 class StandardF1Macro(ConfusionMatrixAggregator):
-    metric_name = "metrics.f1_macro"
+    metric_name = "standard_metrics.f1_macro"
 
     def compute_final_from_aggregated(self) -> dict:
         # def compute_f1_macro_from_confusion_matrix(self) -> Any:
@@ -312,7 +311,11 @@ class StandardF1Macro(ConfusionMatrixAggregator):
 
 
 class StandardMatthewsCorrelation(ConfusionMatrixAggregator):
-    metric_name = "metrics.matthews_correlation"
+    metric_name = "standard_metrics.matthews_correlation"
+
+    def single_instance_score(self, references: List[Any], prediction: Any) -> dict:
+        # matthews along a list of one pair of items is 0 by definition
+        return {self.short_name: 0.0}
 
     def compute_final_from_aggregated(self) -> dict:
         # def compute_matthews_correlation_coefficient_from_confusion_matrix() -> Any:
@@ -445,7 +448,7 @@ class ConfusionMatrixForMultiLabelAggregator(StandardGlobalMetric):
 
 
 class StandardAccuracyMultiLabel(ConfusionMatrixForMultiLabelAggregator):
-    metric_name = "metrics.accuracy_multi_label"
+    metric_name = "standard_metrics.accuracy_multi_label"
 
     def compute_final_from_aggregated(self) -> dict:
         # def compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix(self):
@@ -460,7 +463,7 @@ class StandardAccuracyMultiLabel(ConfusionMatrixForMultiLabelAggregator):
 
 
 class StandardF1MicroMultiLabel(ConfusionMatrixForMultiLabelAggregator):
-    metric_name = "metric.f1_micro_multi_label"
+    metric_name = "standard_metric.f1_micro_multi_label"
 
     def compute_final_from_aggregated(self) -> dict:
         # def compute_accuracy_and_f1_micro_multi_label_from_confusion_matrix(self):
@@ -480,7 +483,7 @@ class StandardF1MicroMultiLabel(ConfusionMatrixForMultiLabelAggregator):
 
 
 class StandardF1MacroMultiLabel(ConfusionMatrixForMultiLabelAggregator):
-    metric_name = "metric.f1_macro_multi_label"
+    metric_name = "standard_metric.f1_macro_multi_label"
 
     def compute_final_from_aggregated(self) -> dict:
         # def compute_f1_macro_multi_label_from_confusion_matrix(self) -> Any:
