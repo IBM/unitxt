@@ -11,6 +11,7 @@ from src.unitxt.text_utils import print_dict
 from tests.utils import UnitxtCatalogPreparationTestCase
 
 settings.test_card_disable = None
+settings.test_metric_disable = None
 
 logger = get_logger()
 project_dir = os.path.dirname(
