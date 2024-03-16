@@ -1,6 +1,6 @@
 from datasets import get_dataset_config_names
 
-from src.unitxt import add_to_catalog, settings
+from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
     LoadHF,
@@ -9,8 +9,6 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.test_utils.card import test_card
-
-settings.test_card_disable = None
 
 dataset_name = "reuters21578"
 
