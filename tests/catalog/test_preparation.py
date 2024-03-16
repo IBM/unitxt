@@ -4,10 +4,13 @@ import os
 import time
 from datetime import timedelta
 
+from src.unitxt import settings
 from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.text_utils import print_dict
 from tests.utils import UnitxtCatalogPreparationTestCase
+
+settings.test_card_disable = None
 
 logger = get_logger()
 project_dir = os.path.dirname(
