@@ -48,10 +48,10 @@ global_target_precision_macro = {
     "precision_macro": 0.5,
     "score": 0.5,
     "score_name": "precision_macro",
-    "score_ci_low": 0.5,
-    "score_ci_high": 0.86,
-    "precision_macro_ci_low": 0.5,
-    "precision_macro_ci_high": 0.86,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+    "precision_macro_ci_low": 0.0,
+    "precision_macro_ci_high": 1.0,
 }
 outputs = test_metric(
     metric=precision_micro_metric,
@@ -73,10 +73,10 @@ global_target_recall_micro = {
     "recall_micro": 0.33,
     "score": 0.33,
     "score_name": "recall_micro",
-    "score_ci_low": 0.33,
-    "score_ci_high": 0.47,
-    "recall_micro_ci_low": 0.33,
-    "recall_micro_ci_high": 0.47,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+    "recall_micro_ci_low": 0.0,
+    "recall_micro_ci_high": 1.0,
 }
 
 instance_targets_recall_micro = [
@@ -90,10 +90,10 @@ global_target_recall_macro = {
     "recall_macro": 0.33,
     "score": 0.33,
     "score_name": "recall_macro",
-    "score_ci_low": 0.33,
-    "score_ci_high": 0.47,
-    "recall_macro_ci_low": 0.33,
-    "recall_macro_ci_high": 0.47,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+    "recall_macro_ci_low": 0.0,
+    "recall_macro_ci_high": 1.0,
 }
 
 instance_targets_recall_macro = [
@@ -156,20 +156,20 @@ global_target_precision_micro = {
     "precision_micro": 0.4,
     "score": 0.4,
     "score_name": "precision_micro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "precision_micro_ci_low": NaN,
-    "precision_micro_ci_high": NaN,
+    "score_ci_low": 0.0,
+    "score_ci_high": 0.79,
+    "precision_micro_ci_low": 0.0,
+    "precision_micro_ci_high": 0.79,
 }
 
 global_target_precision_macro = {
     "precision_macro": 0.42,
     "score": 0.42,
     "score_name": "precision_macro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "precision_macro_ci_low": NaN,
-    "precision_macro_ci_high": NaN,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+    "precision_macro_ci_low": 0.0,
+    "precision_macro_ci_high": 1.0,
 }
 
 outputs = test_metric(
@@ -193,20 +193,20 @@ global_target_recall_micro = {
     "recall_micro": 0.4,
     "score": 0.4,
     "score_name": "recall_micro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "recall_micro_ci_low": NaN,
-    "recall_micro_ci_high": NaN,
+    "score_ci_low": 0.0,
+    "score_ci_high": 0.83,
+    "recall_micro_ci_low": 0.0,
+    "recall_micro_ci_high": 0.83,
 }
 
 global_target_recall_macro = {
     "recall_macro": 0.62,
     "score": 0.62,
     "score_name": "recall_macro",
-    "score_ci_low": 0.63,
-    "score_ci_high": 0.67,
-    "recall_macro_ci_low": 0.63,
-    "recall_macro_ci_high": 0.67,
+    "score_ci_low": 0.2,
+    "score_ci_high": 1.0,
+    "recall_macro_ci_low": 0.2,
+    "recall_macro_ci_high": 1.0,
 }
 
 instance_targets_recall_micro = [

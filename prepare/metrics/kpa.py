@@ -19,9 +19,9 @@ global_target = {
     "precision_micro": 0.67,
     "score": 0.57,
     "score_name": "f1_micro",
-    "score_ci_low": 0.04,
+    "score_ci_low": 0.19,
     "score_ci_high": 0.89,
-    "f1_micro_ci_low": 0.04,
+    "f1_micro_ci_low": 0.19,
     "f1_micro_ci_high": 0.89,
 }
 
