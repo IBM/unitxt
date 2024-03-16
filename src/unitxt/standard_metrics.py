@@ -21,6 +21,12 @@ class StandardGlobalMetric(SingleStreamOperator):
 
     @abstractmethod
     def single_instance_score(self, references: List[Any], prediction: Any):
+        # Two possible interpretations:
+        # (1) the contribution of this instance to the global score
+        # (2) the score of this instance as the global score of a stream made of one and only instance: this one.
+        # These two are not the same for many metrics.
+        # We choose here interpretation (2), although, by our design, when instance score is computed, the whole picture
+        # from the whole stream is already accumulated. E.g., can find true negatives of a given instance.
         pass
 
     @abstractmethod
@@ -236,7 +242,10 @@ class StandardAccuracy(ConfusionMatrixAggregator):
         # for micro, overall_precision == overall_recall, we thus have:
         # our_micro_f1 = 2 * precision * precision / (precision + precision) = precision
         # and unlike the multi_level, we have no true negative here, hence
-        # also accuracy == precision
+        # also accuracy == precision, since we are not aware of true negatives on a single instance.
+        # (by our design, instance score is calculated when the whole stream is already accumulated, so we can,
+        # but we choose to stick to the commonly accepted interpretation of score of a single instance is the global score
+        # of a stream made of a single instance - this instance)
         # as nicely explained here:
         # https://simonhessner.de/why-are-precision-recall-and-f1-score-equal-when-using-micro-averaging-in-a-multi-class-problem/
         return {self.short_name: round(precision, 2)}
@@ -245,7 +254,6 @@ class StandardAccuracy(ConfusionMatrixAggregator):
 class StandardF1Micro(StandardAccuracy):
     metric_name = "metrics.f1_micro"
     # return the same result, just a different name
-    pass
 
 
 class StandardF1Macro(ConfusionMatrixAggregator):
@@ -400,15 +408,8 @@ class ConfusionMatrixForMultiLabelAggregator(StandardGlobalMetric):
         )
         num_of_hits = len([pred for pred in prediction if pred in references[0]])
         # this method is invoked for storing instance[score][instance], after global was computed,
-        # so self.classes_seen_thus_far is updated with all classes ever seen in pred or ref
-        # for coherence, and in order to clean results, we only report on classes ever seen in references
-        # num_of_true_misses = len(
-        #     [
-        #         ref
-        #         for ref in self.references_seen_thus_far
-        #         if ref not in prediction and ref not in references[0]
-        #     ]
-        # )
+        # so we can tell true negatives, but we stick to the commonly accepted interpretation
+        # and score the single instance as by the global score given to a stream made of only this instance.
         # hit_ratio = float(num_of_hits + num_of_true_misses) / len(prediction)
         hit_ratio = 0.0 if len(prediction) == 0 else num_of_hits / len(prediction)
         return {self.short_name: round(hit_ratio, 2)}
@@ -421,7 +422,8 @@ class ConfusionMatrixForMultiLabelAggregator(StandardGlobalMetric):
         # we increase tp for each member of pred that is also in ref.
         # we increase fp for each member of pred that is not in ref,
         # we increase fn for each member of ref that is not in pred.
-        # we increase tn for all members of classes that we know of, that are missing from both,
+        # we increase tn for all members of classes that we know of, as true classes (showed as references)
+        # that are missing from both,
         #
         # once a new class becomes known to us, we increase its tn by the number of instances seen thus
         # far (not including this one).
@@ -431,16 +433,14 @@ class ConfusionMatrixForMultiLabelAggregator(StandardGlobalMetric):
             else:
                 self.fp[pred] += 1
         for ref in references[0]:
-            self.references_seen_thus_far.add(ref)
             if ref not in prediction:
                 self.fn[ref] += 1
-        for c in self.classes_seen_thus_far:
+            if ref not in self.references_seen_thus_far:
+                self.tn[ref] = self.num_of_instances_seen_thus_far
+            self.references_seen_thus_far.add(ref)
+        for c in self.references_seen_thus_far:
             if c not in prediction and c not in references[0]:
                 self.tn[c] += 1
-        for d in prediction + references[0]:
-            if d not in self.classes_seen_thus_far:
-                self.tn[d] = self.num_of_instances_seen_thus_far
-                self.classes_seen_thus_far.add(d)
         self.num_of_instances_seen_thus_far += 1
 
     def compute_final_from_aggregated(self) -> dict:
