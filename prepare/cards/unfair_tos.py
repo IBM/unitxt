@@ -39,7 +39,5 @@ card = TaskCard(
     task="tasks.classification.multi_label",
     templates="templates.classification.multi_label.all",
 )
-test_card(
-    card, strict=False, debug=False
-)  # Not strict because first predictions are none
+test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)
