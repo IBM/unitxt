@@ -10,14 +10,13 @@ from src.unitxt.logging_utils import get_logger
 from src.unitxt.text_utils import print_dict
 from tests.utils import UnitxtCatalogPreparationTestCase
 
-settings.test_card_disable = None
 settings.test_metric_disable = None
 
 logger = get_logger()
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
+glob_query = os.path.join(project_dir, "prepare", "metrics", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 
 

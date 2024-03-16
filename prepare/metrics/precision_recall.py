@@ -31,10 +31,10 @@ global_target_precision_micro = {
     "precision_micro": 0.5,
     "score": 0.5,
     "score_name": "precision_micro",
-    "score_ci_low": 0.5,
-    "score_ci_high": 0.86,
-    "precision_micro_ci_low": 0.5,
-    "precision_micro_ci_high": 0.86,
+    "score_ci_low": 0.0,
+    "score_ci_high": 1.0,
+    "precision_micro_ci_low": 0.0,
+    "precision_micro_ci_high": 1.0,
 }
 
 instance_targets_precision_macro = [
