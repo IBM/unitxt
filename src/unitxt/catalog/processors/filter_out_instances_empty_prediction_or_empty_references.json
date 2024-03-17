@@ -1,0 +1,17 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "prediction": [
+                    []
+                ],
+                "references": [
+                    []
+                ]
+            },
+            "condition": "not in"
+        }
+    ]
+}

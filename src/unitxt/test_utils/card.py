@@ -270,7 +270,7 @@ def test_card(
     full_mismatch_score=0.0,
     **kwargs,
 ):
-    if settings.test_card_disable is not None:
+    if settings.test_card_disable:
         logger.info(
             "test_card() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
         )

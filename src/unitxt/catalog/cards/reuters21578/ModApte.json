@@ -3,7 +3,8 @@
     "loader": {
         "type": "load_hf",
         "path": "reuters21578",
-        "name": "ModApte"
+        "name": "ModApte",
+        "filtering_lambda": "lambda inst: len(inst[\"topics\"])>0"
     },
     "preprocess_steps": [
         {

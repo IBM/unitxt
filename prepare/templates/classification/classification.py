@@ -69,18 +69,21 @@ add_to_catalog(
 )
 
 # Multi label
+post_processors_for_multi_label_classification = [
+    "processors.take_first_non_empty_line",
+    "processors.lower_case",
+    "processors.to_list_by_comma",
+    "processors.remove_none_from_list",
+    "processors.remove_empty_sublists_from_references",
+    "processors.filter_out_instances_empty_prediction_or_empty_references",
+]
 
 add_to_catalog(
     MultiLabelTemplate(
         input_format="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.\nText: {text}\n{type_of_classes}: ",
         output_format="{labels}",
         labels_field="labels",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-            "processors.lower_case",
-            "processors.to_list_by_comma",
-            "processors.remove_none_from_list",
-        ],
+        postprocessors=post_processors_for_multi_label_classification,
     ),
     "templates.classification.multi_label.default",
     overwrite=True,
@@ -93,12 +96,7 @@ add_to_catalog(
         target_prefix="The {type_of_classes} is ",
         labels_field="labels",
         instruction="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-            "processors.lower_case",
-            "processors.to_list_by_comma",
-            "processors.remove_none_from_list",
-        ],
+        postprocessors=post_processors_for_multi_label_classification,
     ),
     "templates.classification.multi_label.instruction",
     overwrite=True,
@@ -111,12 +109,7 @@ add_to_catalog(
         target_prefix="{type_of_classes}:\n",
         labels_field="labels",
         instruction="What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-            "processors.lower_case",
-            "processors.to_list_by_comma",
-            "processors.remove_none_from_list",
-        ],
+        postprocessors=post_processors_for_multi_label_classification,
         title_fields=["type_of_classes", "text_type"],
     ),
     "templates.classification.multi_label.title",
@@ -128,12 +121,7 @@ add_to_catalog(
         input_format="{text}",
         output_format="{labels}",
         labels_field="labels",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-            "processors.lower_case",
-            "processors.to_list_by_comma",
-            "processors.remove_none_from_list",
-        ],
+        postprocessors=post_processors_for_multi_label_classification,
     ),
     "templates.classification.multi_label.empty",
     overwrite=True,

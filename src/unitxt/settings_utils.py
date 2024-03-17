@@ -5,9 +5,29 @@ import pkg_resources
 from .version import version
 
 
+def cast_to_type(value, value_type):
+    if value_type is bool:
+        if value not in ["True", "False", True, False]:
+            raise ValueError(
+                f"Value must be in ['True', 'False', True, False] got {value}"
+            )
+        if value == "True":
+            return True
+        if value == "False":
+            return False
+        return value
+    if value_type is int:
+        return int(value)
+    if value_type is float:
+        return float(value)
+
+    raise ValueError("Unsupported type.")
+
+
 class Settings:
     _instance = None
     _settings = {}
+    _types = {}
     _logger = None
 
     @classmethod
@@ -22,6 +42,19 @@ class Settings:
     def __setattr__(self, key, value):
         if key.endswith("_key") or key in {"_instance", "_settings"}:
             raise AttributeError(f"Modifying '{key}' is not allowed.")
+
+        if isinstance(value, tuple) and len(value) == 2:
+            value_type, value = value
+            if value_type not in [int, float, bool]:
+                raise ValueError(
+                    f"Setting settings with tuple requires the first element to be either [int, float, bool], got {value_type}"
+                )
+            self._types[key] = value_type
+
+        if key in self._types and value is not None:
+            value_type = self._types[key]
+            value = cast_to_type(value, value_type)
+
         if key in self._settings:
             if self._logger is not None:
                 self._logger.info(
@@ -82,19 +115,19 @@ class Constants:
 
 if Settings.is_uninitilized():
     settings = Settings()
-    settings.allow_unverified_code = False
-    settings.use_only_local_catalogs = False
-    settings.global_loader_limit = None
-    settings.num_resamples_for_instance_metrics = 1000
-    settings.num_resamples_for_global_metrics = 100
-    settings.max_log_message_size = 100000
+    settings.allow_unverified_code = (bool, False)
+    settings.use_only_local_catalogs = (bool, False)
+    settings.global_loader_limit = (int, None)
+    settings.num_resamples_for_instance_metrics = (int, 1000)
+    settings.num_resamples_for_global_metrics = (int, 100)
+    settings.max_log_message_size = (int, 100000)
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "debug"
     settings.remote_metrics = []
-    settings.allow_passing_data_to_remote_api = False
-    settings.test_card_disable = False
-    settings.test_metric_disable = False
+    settings.allow_passing_data_to_remote_api = (bool, False)
+    settings.test_card_disable = (bool, False)
+    settings.test_metric_disable = (bool, False)
     settings.metrics_master_key_token = None
 
 if Constants.is_uninitilized():
