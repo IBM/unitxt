@@ -20,9 +20,14 @@ jobs:
        with:
          python-version: '3.8'
          cache: 'pip' # caching pip dependencies
+     - run: ls src/unitxt/catalog/metrics/map.json
+     - run: pwd
      - run: pip install -r requirements/base.rqr
      - run: pip install -r requirements/tests.rqr
 
-     - run: export PYTHONPATH="$(pwd)/src:$PYTHONPATH"
+
+     - name: Set PYTHONPATH environment variable
+       run: echo "PYTHONPATH=$(pwd)/src:$PYTHONPATH" >> $GITHUB_ENV
      - name: Run Tests
        run: python utils/prepare_all_artifacts.py
+       #run: python utils/prepare_all_artifacts.py

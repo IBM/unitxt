@@ -4,6 +4,8 @@ import importlib.util
 import os
 import shutil
 
+from src.unitxt.artifact import UnitxtArtifactNotFoundError
+
 
 def import_module_from_file(file_path):
     # Get the module name (file name without extension)
@@ -17,19 +19,37 @@ def import_module_from_file(file_path):
     return module
 
 
+def import_module_from_file_recursively(file_path):
+    for i in range(100):
+        try:
+            import_module_from_file(file_path)
+            break
+        except UnitxtArtifactNotFoundError as e:
+            missing_prepare_file = f'./prepare/{e.name.replace(".", "/")}.py'
+            print(f'failed to import {file_path} due to missing artifact {e.name}. '
+                  f'Trying to import {missing_prepare_file}')
+            result = import_module_from_file_recursively(missing_prepare_file)
+            if result and 'exception' in result:
+                print(f'Failed running {missing_prepare_file} exception: {result["exception"]}')
+                raise result["exception"]
+        except Exception as e:
+            print(f'failed to import module {file_path}. An exception occurred: {e}')
+            return {'file': file_path, 'exception': e}
+
+
 def prepare_all_artifacts_in_catalog_for_type(artifact_type):
     all_prepare_paths = [
         str(p) for p in Path(f"./prepare/{artifact_type}").glob(f"**/*.py")
     ]
     errors = []
+    all_prepare_paths.sort()
     for file in all_prepare_paths:
         print("*" * 100)
         print("* " + file)
         print("*")
-        try:
-            import_module_from_file(file)
-        except Exception as e:
-            errors.append({'file': file, 'exception': e})
+        result = import_module_from_file_recursively(file)
+        if result is not None:
+            errors.append(result)
 
     return errors
 
@@ -101,6 +121,13 @@ def main():
         for diff in diffs:
             print(diff)
         raise RuntimeError('Directories has differences')
+
+
+def darker():
+    os.environ["UNITXT_USE_ONLY_LOCAL_CATALOGS"] = "True"
+    os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
+    os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
+    import_module_from_file_recursively('./prepare/metrics/rag.py')
 
 
 if __name__ == '__main__':
