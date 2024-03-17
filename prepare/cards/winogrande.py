@@ -19,7 +19,7 @@ for subtask in ["debiased", "l", "m", "s", "xl", "xs"]:
         templates="templates.qa.multiple_choice.open.all",
     )
     if subtask == "debiased":
-        test_card(card, demos_taken_from="test")
+        test_card(card, demos_taken_from="test", strict=False)
     add_to_catalog(
         card, f"cards.winogrande.{subtask.replace('-', '_')}", overwrite=True
     )

@@ -245,11 +245,10 @@ add_to_catalog(
         steps=[
             MatchClosestOption(
                 field="prediction",
-                process_every_value=False,
             ),
             MatchClosestOption(
                 field="references",
-                process_every_value=False,
+                process_every_value=True,
             ),
         ]
     ),

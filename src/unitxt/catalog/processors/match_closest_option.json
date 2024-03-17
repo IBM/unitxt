@@ -3,13 +3,12 @@
     "steps": [
         {
             "type": "match_closest_option",
-            "field": "prediction",
-            "process_every_value": false
+            "field": "prediction"
         },
         {
             "type": "match_closest_option",
             "field": "references",
-            "process_every_value": false
+            "process_every_value": true
         }
     ]
 }
