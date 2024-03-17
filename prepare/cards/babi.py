@@ -1,5 +1,6 @@
 from src.unitxt.blocks import AddFields, LoadHF, RenameFields, TaskCard
 from src.unitxt.catalog import add_to_catalog
+from src.unitxt.operators import ListFieldValues
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -7,6 +8,7 @@ card = TaskCard(
     preprocess_steps=[
         RenameFields(field_to_field={"passage": "context"}),
         AddFields({"context_type": "description"}),
+        ListFieldValues(fields=["answer"], to_field="answers"),
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
