@@ -249,7 +249,7 @@ add_to_catalog(
         choices_seperator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
-            "processors.to_string_stripped",
+            "processors.take_first_non_empty_line",
             "processors.match_closest_option",
         ],
     ),
@@ -293,7 +293,7 @@ add_to_catalog(
         choices_seperator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
-            "processors.to_string_stripped",
+            "processors.take_first_non_empty_line",
             "processors.match_closest_option",
         ],
         title_fields=["context_type"],
@@ -351,7 +351,7 @@ add_to_catalog(
         choices_seperator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
-            "processors.to_string_stripped",
+            "processors.take_first_non_empty_line",
             "processors.match_closest_option",
         ],
         title_fields=["context_type"],
@@ -382,7 +382,7 @@ add_to_catalog(
         choices_seperator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
-            "processors.to_string_stripped",
+            "processors.take_first_non_empty_line",
             "processors.match_closest_option",
         ],
     ),
