@@ -7,7 +7,7 @@ on:
      branches: [ main ]
 
 jobs:
-   run-catalog-preparation:
+   run-catalog-preparation-consistency:
 
      runs-on: ubuntu-latest
      env:
@@ -24,4 +24,4 @@ jobs:
      - run: pip install -r requirements/tests.rqr
 
      - name: Run Tests
-       run: python -m unittest discover -s tests/catalog -p "test_*.py"
+       run: python utils/prepare_all_artifacts.py
