@@ -5,6 +5,7 @@
         "templates.qa.multiple_choice.with_topic.mmlu",
         "templates.qa.multiple_choice.with_topic.helm",
         "templates.qa.multiple_choice.with_topic.lm_eval_harness",
-        "templates.qa.multiple_choice.with_topic.title"
+        "templates.qa.multiple_choice.with_topic.title",
+        "templates.qa.multiple_choice.with_topic.match"
     ]
 }

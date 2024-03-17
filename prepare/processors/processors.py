@@ -9,6 +9,7 @@ from src.unitxt.processors import (
     GetStringAfter,
     LowerCase,
     LowerCaseTillPunc,
+    MatchClosestOption,
     StanceToProCon,
     StringOrNotString,
     StrToFloatFormat,
@@ -235,5 +236,23 @@ add_to_catalog(
         ]
     ),
     "processors.remove_none_from_list",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            MatchClosestOption(
+                field="prediction",
+                process_every_value=False,
+            ),
+            MatchClosestOption(
+                field="references",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.match_closest_option",
     overwrite=True,
 )
