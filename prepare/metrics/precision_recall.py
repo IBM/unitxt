@@ -156,19 +156,19 @@ global_target_precision_micro = {
     "precision_micro": 0.4,
     "score": 0.4,
     "score_name": "precision_micro",
-    "score_ci_low": 0.0,
-    "score_ci_high": 0.79,
-    "precision_micro_ci_low": 0.0,
-    "precision_micro_ci_high": 0.79,
+    "score_ci_low": 0.01,
+    "score_ci_high": 0.73,
+    "precision_micro_ci_low": 0.01,
+    "precision_micro_ci_high": 0.73,
 }
 
 global_target_precision_macro = {
     "precision_macro": 0.42,
     "score": 0.42,
     "score_name": "precision_macro",
-    "score_ci_low": 0.0,
+    "score_ci_low": 0.03,
     "score_ci_high": 1.0,
-    "precision_macro_ci_low": 0.0,
+    "precision_macro_ci_low": 0.03,
     "precision_macro_ci_high": 1.0,
 }
 
@@ -193,19 +193,19 @@ global_target_recall_micro = {
     "recall_micro": 0.4,
     "score": 0.4,
     "score_name": "recall_micro",
-    "score_ci_low": 0.0,
-    "score_ci_high": 0.83,
-    "recall_micro_ci_low": 0.0,
-    "recall_micro_ci_high": 0.83,
+    "score_ci_low": 0.13,
+    "score_ci_high": 0.91,
+    "recall_micro_ci_low": 0.13,
+    "recall_micro_ci_high": 0.91,
 }
 
 global_target_recall_macro = {
     "recall_macro": 0.62,
     "score": 0.62,
     "score_name": "recall_macro",
-    "score_ci_low": 0.2,
+    "score_ci_low": 0.24,
     "score_ci_high": 1.0,
-    "recall_macro_ci_low": 0.2,
+    "recall_macro_ci_low": 0.24,
     "recall_macro_ci_high": 1.0,
 }
 

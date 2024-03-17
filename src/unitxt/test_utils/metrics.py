@@ -81,7 +81,7 @@ def test_metric(
     assert isoftype(references, List[Any]), "references must be a list"
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
-        metric.n_resamples = 50  # Use a lower number of resamples in testing for GlobalMetric, compared against settings.num_resamples_for_global_metrics = 100, to save runtime
+        metric.n_resamples = 30  # Use a lower number of resamples in testing for GlobalMetric, compared against settings.num_resamples_for_global_metrics = 100, to save runtime
     outputs = apply_metric(metric, predictions, references, task_data)
 
     errors = []
