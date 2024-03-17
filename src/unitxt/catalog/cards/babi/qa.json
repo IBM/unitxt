@@ -1,0 +1,30 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "Muennighoff/babi"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "passage": "context"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "description"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "answer"
+            ],
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
+}

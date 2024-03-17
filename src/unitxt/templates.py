@@ -161,6 +161,7 @@ class MultipleChoiceTemplate(Template):
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
     enumerator: str = "capitals"
+    shuffle_choices: bool = False
 
     def prepare(self):
         super().prepare()
@@ -229,6 +230,18 @@ class MultipleChoiceTemplate(Template):
         inputs = self.prepare_multiple_choice_inputs(inputs)
         return super().inputs_to_instruction_and_target_prefix(inputs)
 
+    def outputs_to_target_index(self, outputs: Dict[str, object]) -> str:
+        target = outputs[self.target_field]
+
+        if not isinstance(target, int):
+            try:
+                return outputs[self.choices_field].index(target)
+            except ValueError as e:
+                raise ValueError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {outputs[self.choices_field]}"
+                ) from e
+        return target
+
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = outputs[self.target_field]
 
@@ -251,9 +264,24 @@ class MultipleChoiceTemplate(Template):
 
         return target, [target]
 
+    def _shuffle_choices(self, instance):
+        target_index = self.outputs_to_target_index(instance["outputs"])
+        original_label_choice = instance["outputs"][self.choices_field][target_index]
+        choices = instance["inputs"][self.choices_field]
+        random_generator = new_random_generator(
+            {**instance["inputs"], **instance["outputs"]}
+        )
+        random_generator.shuffle(choices)
+        instance["inputs"][self.choices_field] = choices
+        instance["outputs"][self.choices_field] = choices
+        instance["outputs"][self.target_field] = choices.index(original_label_choice)
+        return instance
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        if self.shuffle_choices:
+            instance = self._shuffle_choices(instance)
         result = super().process(instance, stream_name)
         if "options" not in result["outputs"]:
             result["outputs"]["options"] = self.inputs_to_choices(

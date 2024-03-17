@@ -670,6 +670,92 @@ class TestTemplates(UnitxtTestCase):
 
         self.assertListEqual(["post1", "post2"], template.get_postprocessors())
 
+    def test_multiple_choice_template_with_shuffle(self):
+        enumerators = ["capitals", "lowercase", "numbers", "roman"]
+        firsts = ["A", "a", "1", "I"]
+        seconds = ["B", "b", "2", "II"]
+        temp = "temp"
+        for enumerator, first, second in zip(enumerators, firsts, seconds):
+            template = MultipleChoiceTemplate(
+                input_format="Text: {text}, Choices: {choices}.",
+                enumerator=enumerator,
+                shuffle_choices=True,
+            )
+
+            inputs = [
+                {
+                    "inputs": {"choices": ["True", "False"], "text": "example A"},
+                    "outputs": {"choices": ["True", "False"], "label": 0},
+                },
+                {
+                    "inputs": {"choices": ["True", "False"], "text": "example A"},
+                    "outputs": {"choices": ["True", "False"], "label": "False"},
+                },
+                {
+                    "inputs": {"choices": ["True", temp], "text": "example A"},
+                    "outputs": {"choices": ["True", temp], "label": temp},
+                },
+            ]
+
+            targets = [
+                {
+                    "inputs": {"choices": ["True", "False"], "text": "example A"},
+                    "outputs": {
+                        "choices": ["True", "False"],
+                        "label": 0,
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+                {
+                    "inputs": {"choices": ["True", "False"], "text": "example A"},
+                    "outputs": {
+                        "choices": ["True", "False"],
+                        "label": 1,
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{second}",
+                    "references": [f"{second}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+                {
+                    "inputs": {"choices": [temp, "True"], "text": "example A"},
+                    "outputs": {
+                        "choices": [temp, "True"],
+                        "label": 0,
+                        "options": [f"{first}", f"{second}"],
+                    },
+                    "source": f"Text: example A, Choices: {first}. {temp}, {second}. True.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
+                    "instruction": "",
+                    "target_prefix": "",
+                },
+            ]
+
+            check_operator(template, inputs, targets, tester=self)
+
+        # check error and more options, to code cover additional lines
+        template = MultipleChoiceTemplate(
+            input_format="Text: {no_text}, Choices: {no_choices}.",
+            postprocessors=["post1", "post2"],
+        )
+
+        with self.assertRaises(ValueError) as ve:
+            check_operator(template, inputs, targets, tester=self)
+        self.assertEqual(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+            str(ve.exception),
+        )
+
+        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
+
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
 
