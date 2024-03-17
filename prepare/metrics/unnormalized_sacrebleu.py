@@ -26,7 +26,7 @@ metric = MetricPipeline(
         scale=1.0,
         scaled_fields=["sacrebleu", "precisions"],
         hf_additional_input_fields_pass_one_value=["tokenize"],
-        prediction_type="str"
+        prediction_type="str",
     ),
 )
 
