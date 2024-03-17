@@ -15,6 +15,7 @@ def cast_to_type(value, value_type):
             return True
         if value == "False":
             return False
+        return value
     if value_type is int:
         return int(value)
     if value_type is float:
