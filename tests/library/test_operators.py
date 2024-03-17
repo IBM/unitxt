@@ -572,6 +572,42 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_remove_none(self):
+        inputs = [
+            {"references": [["none"]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        targets = [
+            {"references": [[]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=RemoveValues(
+                    field="references/*",
+                    unallowed_values=["none"],
+                    process_every_value=False,
+                    use_query=True,
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references/0",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_remove_values(self):
         inputs = [
             {"label": ["a", "b"]},
