@@ -7,7 +7,7 @@
     "choices_seperator": "\n",
     "target_choice_format": "{choice_numeral}. {choice_text}",
     "postprocessors": [
-        "processors.to_string_stripped",
+        "processors.take_first_non_empty_line",
         "processors.match_closest_option"
     ]
 }
