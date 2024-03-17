@@ -148,3 +148,5 @@ docs/unitxt.*.rst
 ibmcosdataset/
 ibmcos_datasets/
 kaggle.json
+
+src/unitxt/catalog_old/*
