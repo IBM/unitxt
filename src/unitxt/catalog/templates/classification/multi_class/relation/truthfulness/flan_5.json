@@ -1,0 +1,10 @@
+{
+    "type": "input_output_template",
+    "input_format": "Problem: Sentence: \"{text_a}\";\nAnother sentence: \"{text_b}\"?",
+    "output_format": "{label}",
+    "target_prefix": "A: ",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.lower_case_till_punc"
+    ]
+}

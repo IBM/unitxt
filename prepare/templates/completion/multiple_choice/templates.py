@@ -29,7 +29,6 @@ add_to_catalog(
         input_format=input_format,
         target_field="answer",
         choices_seperator="\n",
-        add_numerals_as_field="numerals",
         postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.enumerated",

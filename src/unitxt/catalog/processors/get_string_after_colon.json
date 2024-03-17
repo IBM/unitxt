@@ -1,0 +1,17 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "get_string_after",
+            "substring": ":",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "get_string_after",
+            "substring": ":",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

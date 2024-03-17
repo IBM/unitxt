@@ -1,0 +1,10 @@
+{
+    "type": "input_output_template",
+    "input_format": "Sentence 1: \"{text_a}\"\nSentence 2: \"{text_b}\"\nIs sentence 2 true, based on sentence 1?\n",
+    "output_format": "ANS:\n{label}",
+    "postprocessors": [
+        "processors.get_string_after_colon",
+        "processors.take_first_non_empty_line",
+        "processors.lower_case_till_punc"
+    ]
+}

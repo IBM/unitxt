@@ -3,6 +3,8 @@ from math import isnan
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.metrics import (
     Accuracy,
+    BinaryAccuracy,
+    BinaryMaxAccuracy,
     BinaryMaxF1,
     F1Binary,
     F1Macro,
@@ -30,6 +32,7 @@ from src.unitxt.metrics import (
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
     KendallTauMetric,
+    LlamaIndexCorrectness,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -168,8 +171,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_binary(self):
         metric = F1Binary()
-        references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
+        references = [["1"], ["0"], ["0"], ["0"], ["Yes"], ["1"]]
+        predictions = ["0.8", "1", "0.2", "0", "0.6", "1"]
 
         global_target = 0.8571428571428
         outputs = apply_metric(
@@ -212,25 +215,6 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual("recall_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("recall_binary", outputs[0]["score"]["instance"]["score_name"])
 
-    def test_f1_binary_non_binary(self):
-        metric = F1Binary()
-        references = [["1"], ["0"], ["yes"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
-        metric = F1Binary()
-        references = [["1"], ["yes"], ["1"], ["1"]]
-        predictions = ["1", "1", "1", "1"]
-
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
     def test_max_f1(self):
         metric = BinaryMaxF1()
         references = [["1"], ["0"], ["0"]]
@@ -244,6 +228,45 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_accuracy_binary(self):
+        metric = BinaryAccuracy()
+        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+
+        expected_global_result = {
+            "accuracy_binary": 3 / 5,
+            "score": 3 / 5,
+            "score_name": "accuracy_binary",
+        }
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_result = {
+            k: v
+            for k, v in outputs[0]["score"]["global"].items()
+            if k in expected_global_result
+        }
+        self.assertDictEqual(expected_global_result, global_result)
+
+    def test_binary_max_accuracy(self):
+        metric = BinaryMaxAccuracy()
+        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+
+        global_target = 0.8
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["global"]["score_name"]
+        )
+        self.assertEqual(
+            "max_accuracy_binary", outputs[0]["score"]["instance"]["score_name"]
+        )
 
     def test_f1_macro(self):
         metric = F1Macro()
@@ -569,6 +592,38 @@ class TestMetrics(UnitxtTestCase):
         )
         global_target = 0.81649658092772
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_llama_index_correctness(self):
+        metric = LlamaIndexCorrectness(model_name="mock")
+        predictions = ["1976"]
+        references = [["1976"]]
+        task_data = [
+            {
+                "group_id": "group1",
+                "variant_type": "original",
+                "question": "what year is it",
+                "contexts": ["the year is 1976"],
+            },
+        ]
+
+        instance_targets = [
+            {
+                "correctness_llama_index_by_mock_judge": 1.0,
+                "score": 1.0,
+                "score_name": "correctness_llama_index_by_mock_judge",
+            }
+        ]
+        global_target = 1.0
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        for output, target in zip(outputs, instance_targets):
+            self.assertEqual(output["score"]["instance"], target)
 
     def test_grouped_instance_metrics(self):
         accuracy_metrics = [

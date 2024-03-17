@@ -52,6 +52,18 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    SpanLabelingTemplate(
+        input_format="{text_type}:\n{text}",
+        instruction="From the following {text_type}, extract the objects for which the {class_type} expressed is one of {classes}.",
+        target_prefix="{class_type}:\n",
+        postprocessors=["processors.to_span_label_pairs"],
+        title_fields=["text_type", "class_type"],
+    ),
+    "templates.span_labeling.extraction.title",
+    overwrite=True,
+)
+
 
 add_to_catalog(
     TemplatesList(
@@ -60,6 +72,7 @@ add_to_catalog(
             "templates.span_labeling.extraction.having",
             "templates.span_labeling.extraction.carry",
             "templates.span_labeling.extraction.identify",
+            "templates.span_labeling.extraction.title",
             "templates.span_labeling.extraction.empty",
         ]
     ),

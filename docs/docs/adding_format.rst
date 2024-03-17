@@ -54,8 +54,8 @@ To define this exact format you can use this code:
 
 .. code-block:: python
 
-   from src.unitxt.catalog import add_to_catalog
-   from src.unitxt.formats import SystemFormat
+   from unitxt.catalog import add_to_catalog
+   from unitxt.formats import SystemFormat
 
    format = SystemFormat(
       demo_format="{source} [/INST] {target_prefix}{target} </s><s>[INST] ",

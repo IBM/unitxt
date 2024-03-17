@@ -14,9 +14,23 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    OutputQuantizingTemplate(
+        instruction="Given a text, on a scale of {min_value} to {max_value}, what is the {attribute_name} of this text?",
+        input_format="Text:\n{text}",
+        output_format="{attribute_value}",
+        target_prefix="{attribute_name}:\n",
+        quantum=0.2,
+        title_fields=["attribute_name"],
+    ),
+    "templates.regression.single_text.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.regression.single_text.simple",
+            "templates.regression.single_text.title",
         ]
     ),
     "templates.regression.single_text.all",

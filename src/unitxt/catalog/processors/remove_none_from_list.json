@@ -10,15 +10,13 @@
             "process_every_value": false
         },
         {
-            "type": "map_instance_values",
-            "mappers": {
-                "references": {
-                    "[['none']]": [
-                        []
-                    ]
-                }
-            },
-            "strict": false
+            "type": "remove_values",
+            "field": "references/0",
+            "unallowed_values": [
+                "none"
+            ],
+            "process_every_value": false,
+            "use_query": true
         }
     ]
 }

@@ -1,0 +1,12 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.classification.multi_class.relation.truthfulness.flan_1",
+        "templates.classification.multi_class.relation.truthfulness.flan_2",
+        "templates.classification.multi_class.relation.truthfulness.flan_3",
+        "templates.classification.multi_class.relation.truthfulness.flan_4",
+        "templates.classification.multi_class.relation.truthfulness.flan_5",
+        "templates.classification.multi_class.relation.truthfulness.flan_6",
+        "templates.classification.multi_class.relation.truthfulness.flan_7"
+    ]
+}

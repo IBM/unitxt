@@ -170,6 +170,22 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_predictions_yes_1_else_0(self):
+        parser, _ = fetch_artifact("processors.predictions_yes_1_else_0")
+        inputs = ["yes", "no", "yaa"]
+        targets = [
+            {"references": ["yes"], "prediction": "1"},
+            {"references": ["no"], "prediction": "0"},
+            {"references": ["yaa"], "prediction": "0"},
+        ]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=targets,
+            tester=self,
+        )
+
     def test_str_to_float_format(self):
         parser, _ = fetch_artifact("processors.str_to_float_format")
         inputs = ["-2.4", "5", "5a"]

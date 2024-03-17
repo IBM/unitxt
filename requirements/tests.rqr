@@ -11,3 +11,5 @@ sacrebleu
 scikit-learn
 jiwer
 conllu
+llama-index-core
+llama-index-llms-openai

@@ -1,0 +1,90 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_from_sklearn",
+        "dataset_name": "20newsgroups",
+        "streaming": false
+    },
+    "preprocess_steps": [
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "data": ""
+            },
+            "condition": "ne"
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[90%]",
+                "validation": "train[10%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "data": "text",
+                "target": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "alt.atheism": "atheism",
+                    "comp.graphics": "computer graphics",
+                    "comp.os.ms-windows.misc": "microsoft windows",
+                    "comp.sys.ibm.pc.hardware": "pc hardware",
+                    "comp.sys.mac.hardware": "mac hardware",
+                    "comp.windows.x": "windows x",
+                    "misc.forsale": "for sale",
+                    "rec.autos": "cars",
+                    "rec.motorcycles": "motorcycles",
+                    "rec.sport.baseball": "baseball",
+                    "rec.sport.hockey": "hockey",
+                    "sci.crypt": "cryptography",
+                    "sci.electronics": "electronics",
+                    "sci.med": "medicine",
+                    "sci.space": "space",
+                    "soc.religion.christian": "christianity",
+                    "talk.politics.guns": "guns",
+                    "talk.politics.mideast": "middle east",
+                    "talk.politics.misc": "politics",
+                    "talk.religion.misc": "religion"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "atheism",
+                    "computer graphics",
+                    "microsoft windows",
+                    "pc hardware",
+                    "mac hardware",
+                    "windows x",
+                    "for sale",
+                    "cars",
+                    "motorcycles",
+                    "baseball",
+                    "hockey",
+                    "cryptography",
+                    "electronics",
+                    "medicine",
+                    "space",
+                    "christianity",
+                    "guns",
+                    "middle east",
+                    "politics",
+                    "religion"
+                ],
+                "text_type": "text",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

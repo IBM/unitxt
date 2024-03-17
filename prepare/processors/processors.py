@@ -6,6 +6,7 @@ from src.unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     FirstCharacter,
+    GetStringAfter,
     LowerCase,
     LowerCaseTillPunc,
     StanceToProCon,
@@ -16,6 +17,7 @@ from src.unitxt.processors import (
     TakeFirstWord,
     ToYesOrNone,
     YesNoToInt,
+    YesToOneElseZero,
 )
 
 logger = get_logger()
@@ -93,6 +95,20 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            GetStringAfter(
+                substring=":", field="prediction", process_every_value=False
+            ),
+            GetStringAfter(substring=":", field="references", process_every_value=True),
+        ]
+    ),
+    "processors.get_string_after_colon",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             StringOrNotString(
                 string="toxic", field="prediction", process_every_value=False
             ),
@@ -163,6 +179,16 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            YesToOneElseZero(field="prediction", process_every_value=False),
+        ]
+    ),
+    "processors.predictions_yes_1_else_0",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             StanceToProCon(field="prediction", process_every_value=False),
             StanceToProCon(field="references", process_every_value=True),
         ]
@@ -201,7 +227,7 @@ add_to_catalog(
                 process_every_value=False,
             ),
             RemoveValues(
-                field="references/*",
+                field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
                 use_query=True,

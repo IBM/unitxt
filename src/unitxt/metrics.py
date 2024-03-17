@@ -1,4 +1,3 @@
-import itertools
 import re
 import string
 import uuid
@@ -1098,11 +1097,6 @@ class F1(GlobalMetric):
             self.id_to_str[id] = str
         return self.str_to_id[str]
 
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        return True
-
     def compute(
         self,
         references: List[List[str]],
@@ -1112,8 +1106,6 @@ class F1(GlobalMetric):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
-        if not self._labels_match_average_format(references, predictions):
-            return {self.main_score: np.nan}
 
         self.str_to_id = {}
         self.id_to_str = {}
@@ -1149,27 +1141,29 @@ class F1Micro(F1):
 
 
 class F1Binary(F1):
+    """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
     process_single_instances = False
     main_score = "f1_binary"
     average = "binary"
     pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
 
     def get_str_id(self, str):
-        if str.lower() in self.pos_classes:
-            return 1
-        return 0
+        return int(str)
 
-    # References and predictions must include up to 2 unique values, one of them in pos_classes
-    def _labels_match_average_format(
-        self, references: List[List[str]], predictions: List[str]
-    ):
-        classes = set(predictions + list(itertools.chain(*references)))
-        n_classes = len(classes)
-        if n_classes > 2:
-            return False
-        if n_classes == 2 and len(set(classes).difference(self.pos_classes)) == 0:
-            return False
-        return True
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        predictions_floats = [to_float_or_default(p) for p in predictions]
+        predictions = [str(int(p > self.threshold)) for p in predictions_floats]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+        return super().compute(references, predictions, task_data)
 
 
 class RecallBinary(F1Binary):
@@ -1753,7 +1747,7 @@ class SentenceBert(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["sentence_transformers"]
+    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
 
     def prepare(self):
         super().prepare()
@@ -1804,7 +1798,7 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
         super().prepare()
@@ -1835,6 +1829,144 @@ class Reward(BulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
+class LlamaIndexCorrectness(InstanceMetric):
+    """LlamaIndex based metric class for evaluating correctness.
+
+    Attributes:
+        reduction_map (dict): A dictionary specifying the reduction method for the metric.
+        main_score (str): The main score used for evaluation.
+        _requirements_list (List[str]): A list specifying any additional requirements for the metric.
+
+    Methods:
+        prepare(self): Initialization method for the metric.
+        compute(self, references, predictions, additional_inputs): Method to compute the metric.
+
+    Usage:
+        metric = LlamaIndexCorrectnessMetric()
+        scores = metric.compute(references, prediction, additional_inputs)
+    """
+
+    model_name: str = ""
+    main_score: str = ""
+
+    reduction_map: Dict[str, List[str]] = None
+    openai_models: List[str] = ["gpt-3.5-turbo"]
+    anthropic_models: List[
+        str
+    ] = []  # this is here for the sake of documentation for future models
+    mock_models: List[str] = ["mock"]
+    external_api_models = openai_models + anthropic_models
+
+    _requirements_list: List[str] = ["llama_index"]
+
+    @staticmethod
+    def _custom_parser(eval_response: str):
+        """Default parser function for evaluation response.
+
+        Args:
+            eval_response (str): The response string from the evaluation.
+
+        Returns:
+            Tuple[float, str]: A tuple containing the score as a float and the reasoning as a string.
+        """
+        import re
+
+        match = re.search(r"\b\d+\.\d+\b|\b\d+\b", eval_response)
+
+        if match:
+            score = float(match.group())
+        else:
+            raise Exception("could not parse judge response")
+
+        reasoning_str = "\n".join(eval_response.split("\n")[1:])
+        reasoning = reasoning_str.lstrip("\n")
+        return score, reasoning
+
+    def _model_using_extrnal_api(self):
+        return self.model_name in self.external_api_models
+
+    def prepare(self):
+        """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
+        super().prepare()
+
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = (
+            f"correctness_llama_index_by_{self.model_name_normalized}_judge"
+        )
+
+        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
+
+        from llama_index.core.evaluation import CorrectnessEvaluator
+
+        if self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            llm = OpenAI("gpt-3.5-turbo")
+        elif self.model_name in self.mock_models:
+            from llama_index.core.llms.mock import MockLLM
+
+            llm = MockLLM(system_prompt="5")  # perfect score
+        else:
+            raise NotImplementedError(
+                f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+            )
+
+        self.evaluator = CorrectnessEvaluator(
+            llm=llm, parser_function=self._custom_parser
+        )
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: Dict,
+    ) -> Dict[str, Any]:
+        """Method to compute the correctness metric.
+
+        Args:
+            references (List[str]): List of reference instances.
+            prediction (str): List of predicted instances.
+            task_data (Dict): List of additional input data.
+
+        Returns:
+            Dict[str, Any]: List of computed scores and feedback.
+
+        Raises:
+            AssertionError: If the input does not meet the expected format.
+        """
+        # treat the references as the questions and the predictions as answers
+        # assume a single reference
+
+        assert (
+            not self._model_using_extrnal_api()
+            or settings.allow_passing_data_to_remote_api
+        ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
+
+        query = task_data["question"]
+
+        contexts = None
+        if "contexts" in task_data:
+            contexts = task_data["contexts"]
+
+        per_reference_results = []
+        for reference_response in references:
+            per_reference_results.append(
+                self.evaluator.evaluate(
+                    query=query,
+                    response=prediction,
+                    contexts=contexts,
+                    reference=reference_response,
+                )
+            )
+        result = max([results.score for results in per_reference_results])
+
+        return {
+            self.main_score: result / 5,
+            # "score_name": self.main_score,
+            # "feedback": result.feedback, # removed since this cannot be tested
+        }
+
+
 class Perplexity(BulkInstanceMetric):
     """Computes the likelihood of generating text Y after text X - P(Y|X)."""
 
@@ -1846,7 +1978,7 @@ class Perplexity(BulkInstanceMetric):
     batch_size: int = 32
     model_name: str
 
-    _requirements_list: List[str] = ["transformers"]
+    _requirements_list: List[str] = ["transformers", "torch"]
 
     def compute(
         self,
@@ -2960,6 +3092,8 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
 
 
 class BinaryMaxF1(F1Binary):
+    """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
+
     main_score = "max_f1_binary"
 
     def compute(
@@ -2971,31 +3105,14 @@ class BinaryMaxF1(F1Binary):
         assert all(
             len(reference) == 1 for reference in references
         ), "Only a single reference per prediction is allowed in F1 metric"
-        classes = set(itertools.chain(*references))
-        n_clases = len(classes)
-        assert len(classes) <= 2, "References of BinaryMaxF1 must be binary"
-        pos_classes = classes.intersection(self.pos_classes)
-        neg_classes = classes.difference(self.pos_classes)
-        n_pos_classes = len(pos_classes)
-        if n_clases == 2:
-            assert (
-                n_pos_classes == 1
-            ), "Only one positive class is allowed in BinaryMaxF1"
-        pos_class = next(iter(pos_classes)) if n_pos_classes > 0 else "1.0"
-        neg_class = next(iter(neg_classes)) if len(neg_classes) > 0 else "0.0"
 
-        float_predictions = []
-        for prediction in predictions:
-            try:
-                float_predictions.append(float(prediction))
-            except Exception:
-                float_predictions.append(0)
+        float_predictions = [to_float_or_default(p) for p in predictions]
 
         best_thr = -1
         best_f1 = -1
         for thr in set(float_predictions):
             new_predictions = [
-                pos_class if float_prediction >= thr else neg_class
+                "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
             ]
             f1 = super().compute(references, new_predictions, task_data)[
@@ -3006,3 +3123,71 @@ class BinaryMaxF1(F1Binary):
                 best_thr = thr
 
         return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+
+
+class BinaryAccuracy(InstanceMetric):
+    """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
+
+    reduction_map = {"mean": ["accuracy_binary"]}
+    main_score = "accuracy_binary"
+    ci_scores = ["accuracy_binary"]
+    pos_classes = {"1", "1.0", "yes", "true"}
+    threshold = 0.5
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        assert (
+            len(references) == 1
+        ), "Only a single reference per prediction is allowed in Binary Accuracy metric"
+
+        float_prediction = to_float_or_default(prediction)
+        prediction = str(int(float_prediction > self.threshold))
+        references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
+
+        result = {self.main_score: float([prediction] == references)}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
+class BinaryMaxAccuracy(GlobalMetric):
+    """Calculate the maximal accuracy and the decision threshold that achieves it for a binary task with float predictions."""
+
+    process_single_instances = False
+    main_score = "max_accuracy_binary"
+    pos_classes = {"1", "1.0", "yes", "true"}
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[List[str]],
+        task_data: List[Dict],
+    ) -> dict:
+        assert all(
+            len(reference) == 1 for reference in references
+        ), "Only a single reference per prediction is allowed in BinaryMaxAccuracy metric"
+
+        float_predictions = [to_float_or_default(p) for p in predictions]
+        references = [
+            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
+        ]
+
+        best_thr = -1
+        best_acc = -1
+        for thr in set(float_predictions):
+            new_predictions = [
+                "1" if float_prediction >= thr else "0"
+                for float_prediction in float_predictions
+            ]
+            acc = np.mean(
+                [
+                    [prediction] == reference
+                    for prediction, reference in zip(new_predictions, references)
+                ]
+            )
+            if acc > best_acc:
+                best_acc = acc
+                best_thr = thr
+
+        return {self.main_score: best_acc, "best_thr_max_acc": best_thr}

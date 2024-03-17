@@ -40,13 +40,26 @@ add_to_catalog(
 # Template from https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words.\n\n",
-        input_format="Document: {context}\nQuestion: {question}",
+        instruction="Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words.",
+        input_format="Document: {context}\nQuestion:{question}",
         output_format="{answer}",
-        target_prefix="Answer: ",
+        target_prefix="Answer:\n",
         references_field="answers",
     ),
     "templates.qa.with_context.ffqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Answer the question based on the information provided in the {context_type} given below. The answer should be a single word or a number or a short phrase of few words.",
+        input_format="{context_type}:\n{context}\nQuestion:\n{question}",
+        output_format="{answer}",
+        target_prefix="Answer:\n",
+        references_field="answers",
+        title_fields=["context_type"],
+    ),
+    "templates.qa.with_context.title",
     overwrite=True,
 )
 
@@ -59,6 +72,7 @@ add_to_catalog(
             "templates.qa.with_context.with_type",
             "templates.qa.with_context.question_first",
             "templates.qa.with_context.ffqa",
+            "templates.qa.with_context.title",
         ]
     ),
     "templates.qa.with_context.all",

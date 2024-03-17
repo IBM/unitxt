@@ -114,11 +114,15 @@ class TestParsingUtils(UnitxtTestCase):
         )
 
     def test_illegal_text_following_brackets(self):
-        with self.assertRaisesRegex(
-            ValueError,
-            "Illegal structure: text follows after the closing square bracket.",
-        ):
+        with self.assertRaises(ValueError) as ve:
             separate_inside_and_outside_square_brackets("before[inside]after")
+        self.assertEqual("malformed assignment in: inside]after", str(ve.exception))
+        with self.assertRaises(ValueError) as ve:
+            separate_inside_and_outside_square_brackets("before[ins=ide]after")
+        self.assertEqual(
+            "malformed end of query: excessive text following the ] that closes the overwrites in: 'before[ins=ide]after'",
+            str(ve.exception),
+        )
 
     def test_illegal_unmatched_left_bracket(self):
         with self.assertRaisesRegex(
@@ -133,24 +137,31 @@ class TestParsingUtils(UnitxtTestCase):
             separate_inside_and_outside_square_brackets("before]inside")
 
     def test_illegal_extra_characters_after_closing_bracket(self):
-        with self.assertRaisesRegex(
-            ValueError,
-            "Illegal structure: text follows after the closing square bracket.",
-        ):
-            separate_inside_and_outside_square_brackets("[inside]extra")
+        with self.assertRaises(ValueError) as ve:
+            separate_inside_and_outside_square_brackets("before[ins=ide]extra")
+        self.assertEqual(
+            "malformed end of query: excessive text following the ] that closes the overwrites in: 'before[ins=ide]extra'",
+            str(ve.exception),
+        )
 
     def test_illegal_nested_brackets(self):
-        with self.assertRaisesRegex(
-            ValueError,
-            "Illegal structure: text follows after the closing square bracket.",
-        ):
+        with self.assertRaises(ValueError) as ve:
+            separate_inside_and_outside_square_brackets("before[ins=ide[nest=ed]]after")
+        self.assertEqual(
+            "malformed end of query: excessive text following the ] that closes the overwrites in: 'before[ins=ide[nest=ed]]after'",
+            str(ve.exception),
+        )
+        with self.assertRaises(ValueError) as ve:
             separate_inside_and_outside_square_brackets("before[inside[nested]]after")
+        self.assertEqual(
+            "malformed assignment in: inside[nested]]after", str(ve.exception)
+        )
 
     def test_illegal_multiple_bracket_pairs(self):
-        with self.assertRaisesRegex(
-            ValueError,
-            "Illegal structure: text follows after the closing square bracket.",
-        ):
+        with self.assertRaises(ValueError) as ve:
             separate_inside_and_outside_square_brackets(
                 "before[inside]middle[another]after"
             )
+        self.assertEqual(
+            "malformed assignment in: inside]middle[another]after", str(ve.exception)
+        )
