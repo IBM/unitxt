@@ -674,6 +674,7 @@ class TestTemplates(UnitxtTestCase):
         enumerators = ["capitals", "lowercase", "numbers", "roman"]
         firsts = ["A", "a", "1", "I"]
         seconds = ["B", "b", "2", "II"]
+        temp = "temp"
         for enumerator, first, second in zip(enumerators, firsts, seconds):
             template = MultipleChoiceTemplate(
                 input_format="Text: {text}, Choices: {choices}.",
@@ -691,8 +692,8 @@ class TestTemplates(UnitxtTestCase):
                     "outputs": {"choices": ["True", "False"], "label": "False"},
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
-                    "outputs": {"choices": ["True", "small"], "label": "small"},
+                    "inputs": {"choices": ["True", temp], "text": "example A"},
+                    "outputs": {"choices": ["True", temp], "label": temp},
                 },
             ]
 
@@ -724,15 +725,15 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
+                    "inputs": {"choices": [temp, "True"], "text": "example A"},
                     "outputs": {
-                        "choices": ["True", "small"],
-                        "label": 1,
+                        "choices": [temp, "True"],
+                        "label": 0,
                         "options": [f"{first}", f"{second}"],
                     },
-                    "source": f"Text: example A, Choices: {first}. True, {second}. small.",
-                    "target": f"{second}",
-                    "references": [f"{second}"],
+                    "source": f"Text: example A, Choices: {first}. {temp}, {second}. True.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
                 },
