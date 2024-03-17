@@ -126,17 +126,41 @@ class TestPostProcessors(UnitxtTestCase):
 
     def test_select_closest_option(self):
         inputs = [
-            {"prediction": "option2", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "choice1", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "chase3", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "2", "options": ["option1", "choice2", "cheese3"]},
+            {
+                "prediction": "option2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "chase3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
         ]
 
         targets = [
-            {"prediction": "option1", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "choice2", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "cheese3", "options": ["option1", "choice2", "cheese3"]},
-            {"prediction": "choice2", "options": ["option1", "choice2", "cheese3"]},
+            {
+                "prediction": "option1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "cheese3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
         ]
 
         check_operator(
