@@ -1557,6 +1557,8 @@ class RocAuc(GlobalMetric):
 
 class CustomF1(GlobalMetric):
     main_score = "f1_micro"
+    prediction_type = "Any"
+    single_reference_per_prediction = True
     groups = None
     zero_division = 0.0
 
@@ -1611,6 +1613,8 @@ class CustomF1(GlobalMetric):
     def get_groups(self, elements, task_data):
         groups = set()
         for sublist, additional_input in zip(elements, task_data):
+            if not isinstance(sublist, list):
+                sublist = [sublist]
             for e in sublist:
                 if self.should_ignore_element(e, additional_input):
                     continue
@@ -1716,7 +1720,6 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
-    single_reference_per_prediction = True
     prediction_type = "List[Tuple[str,str]]"
 
     def get_element_group(self, element, additional_input):
