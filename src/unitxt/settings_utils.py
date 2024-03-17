@@ -129,6 +129,7 @@ if Settings.is_uninitilized():
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)
     settings.metrics_master_key_token = None
+    settings.seed = (int, 42)
 
 if Constants.is_uninitilized():
     constants = Constants()
