@@ -94,17 +94,26 @@ class Metric(Artifact):
         if self.disable_type_validation:
             return
         prediction_type = self.get_prediction_type()
+        if not isoftype(predictions, List[Any]):
+            raise ValueError(
+                f"Metric {self.get_metric_name()} should receive a list of predictions {self.get_metric_name()}.  Received predictions of type {type(predictions)}: {predictions}"
+            )
 
-        for reference in references:
-            self._validate_reference(prediction_type, reference)
-        for prediction in predictions:
-            self._validate_prediction(prediction_type, prediction)
-
+        if not isoftype(references, List[Any]):
+            raise ValueError(
+                f"Metric {self.get_metric_name()} should receive a list of predictions. Received references of type {type(references)}: {references}"
+            )
         if len(references) != len(predictions):
             raise ValueError(
                 f"references size ({len(references)})"
                 f" doesn't mach predictions size ({len(references)})."
             )
+
+        for reference in references:
+            self._validate_reference(prediction_type, reference)
+
+        for prediction in predictions:
+            self._validate_prediction(prediction_type, prediction)
 
     def _validate_prediction(self, prediction_type, prediction):
         if prediction is None:
@@ -134,7 +143,9 @@ class Metric(Artifact):
 
     def get_prediction_type(self):
         for type in [
+            "Any",
             "str",
+            "int",
             "float",
             "List[str]",
             "List[float]",
@@ -144,10 +155,10 @@ class Metric(Artifact):
         ]:
             if self.prediction_type == type:
                 return eval(type)
-        logger.info(
-            f"Could convert prediction type {self.prediction_type} in {self.get_metric_name} to known type. Defaulting to 'Any'. This will disable type checking.  To enable type checking for this prediction type, open unitxt issue with this message."
+
+        raise ValueError(
+            f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's 'disable_type_validation' to 'True'"
         )
-        return Any
 
     def get_metric_name(self):
         if self.artifact_identifier is not None:

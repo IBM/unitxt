@@ -93,11 +93,13 @@ def test_metric(
         )
 
     if len(outputs) == len(instance_targets):
-        for output, instance_target in zip(outputs, instance_targets):
+        for i, output, instance_target in zip(
+            range(0, len(outputs)), outputs, instance_targets
+        ):
             instance_score = round_floats(output["score"]["instance"])
             if not dict_equal(instance_score, instance_target):
                 errors.append(
-                    f"instance score must be equal, "
+                    f"instance {i} score must be equal, "
                     f"got {json.dumps(instance_score, sort_keys=True, ensure_ascii=False)} =/= "
                     f"{json.dumps(instance_target, sort_keys=True, ensure_ascii=False)}"
                 )
