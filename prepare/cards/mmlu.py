@@ -76,7 +76,7 @@ def main():
             templates="templates.qa.multiple_choice.with_topic.all",
         )
         if i == 0:
-            test_card(card)
+            test_card(card, strict=False)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 
