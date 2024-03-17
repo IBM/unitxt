@@ -5,6 +5,7 @@ from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="sacrebleu",
+    prediction_type="str",
     preprocess_steps=[
         CopyFields(
             field_to_field=[("task_data/target_language", "task_data/tokenize")],
@@ -25,6 +26,7 @@ metric = MetricPipeline(
         scale=1.0,
         scaled_fields=["sacrebleu", "precisions"],
         hf_additional_input_fields_pass_one_value=["tokenize"],
+        prediction_type="str"
     ),
 )
 
