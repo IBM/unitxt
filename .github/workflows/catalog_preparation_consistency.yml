@@ -23,5 +23,6 @@ jobs:
      - run: pip install -r requirements/base.rqr
      - run: pip install -r requirements/tests.rqr
 
+     - run: export PYTHONPATH="$(pwd)/src:$PYTHONPATH"
      - name: Run Tests
        run: python utils/prepare_all_artifacts.py

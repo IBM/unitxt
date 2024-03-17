@@ -3,7 +3,6 @@ from pathlib import Path
 import importlib.util
 import os
 import shutil
-from src.unitxt.settings_utils import get_settings
 
 
 def import_module_from_file(file_path):
@@ -36,8 +35,7 @@ def prepare_all_artifacts_in_catalog_for_type(artifact_type):
 
 
 def prepare_all_catalog_artifacts():
-    settings = get_settings()
-    settings.use_only_local_catalogs = True
+    os.environ["UNITXT_USE_ONLY_LOCAL_CATALOGS"] = "True"
     os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
     os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
     print("*" * 100)
