@@ -3,8 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "reuters21578",
-        "name": "ModHayes",
-        "filtering_lambda": "lambda inst: len(inst[\"topics\"])>0"
+        "name": "ModHayes"
     },
     "preprocess_steps": [
         {
