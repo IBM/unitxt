@@ -27,6 +27,6 @@
             }
         }
     ],
-    "task": "tasks.completion.multiple_choice.standard",
+    "task": "tasks.completion.multiple_choice",
     "templates": "templates.completion.multiple_choice.all"
 }

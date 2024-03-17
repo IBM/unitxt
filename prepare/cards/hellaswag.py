@@ -17,7 +17,7 @@ card = TaskCard(
         RenameFields(field_to_field={"label": "answer"}),
         CastFields(fields={"answer": "int"}),
     ],
-    task="tasks.completion.multiple_choice.standard",
+    task="tasks.completion.multiple_choice",
     templates="templates.completion.multiple_choice.all",
 )
 # We disable strict checking because garbage predictions (when using the post processor

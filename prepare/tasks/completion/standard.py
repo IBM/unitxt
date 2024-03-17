@@ -7,6 +7,6 @@ add_to_catalog(
         outputs=["answer", "choices"],
         metrics=["metrics.accuracy"],
     ),
-    "tasks.completion.multiple_choice.standard",
+    "tasks.completion.multiple_choice",
     overwrite=True,
 )
