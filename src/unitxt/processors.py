@@ -1,8 +1,9 @@
 import json
 import re
-from typing import Any
+from difflib import get_close_matches
+from typing import Any, Dict
 
-from .operators import FieldOperator
+from .operators import FieldOperator, InstanceFieldOperator
 
 
 class ToString(FieldOperator):
@@ -122,6 +123,21 @@ class GetStringAfter(FieldOperator):
 
     def process_value(self, text: Any) -> Any:
         return text.split(self.substring, 1)[-1].strip()
+
+
+class MatchClosestOption(InstanceFieldOperator):
+    options_field: str = "options"
+
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        options = instance["task_data"][self.options_field]
+        return get_close_matches(value, options, n=1, cutoff=0.0)[0]
+
+
+def process_instance_value(self, value, instance):
+    options = instance[self.options_field]
+    # Get the closest match; n=1 returns the single closest match
+    closest_match = get_close_matches(value, options, n=1, cutoff=0)
+    return closest_match[0] if closest_match else None
 
 
 class Substring(FieldOperator):

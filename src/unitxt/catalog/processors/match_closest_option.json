@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "match_closest_option",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "match_closest_option",
+            "field": "references",
+            "process_every_value": false
+        }
+    ]
+}
