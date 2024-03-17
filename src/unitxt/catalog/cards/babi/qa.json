@@ -23,6 +23,13 @@
                 "answer"
             ],
             "to_field": "answers"
+        },
+        {
+
+            "type": "add_fields",
+            "fields": {
+                "context_type": "description"
+            }
         }
     ],
     "task": "tasks.qa.with_context.extractive",
