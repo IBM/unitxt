@@ -70,7 +70,7 @@ def test_metric(
     global_target: dict,
     task_data: Optional[List[dict]] = None,
 ):
-    if settings.test_metric_disable is not None:
+    if settings.test_metric_disable:
         logger.info(
             "test_metric() functionality is disabled because unitxt.settings.test_metric_disable=True or UNITXT_TEST_METRIC_DISABLE environment variable is set"
         )
