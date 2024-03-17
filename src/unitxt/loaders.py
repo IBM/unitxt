@@ -405,7 +405,7 @@ class LoadFromIBMCloud(Loader):
         local_dir = os.path.join(
             self.cache_dir,
             self.bucket_name,
-            self.data_dir,
+            self.data_dir or "",  # data_dir can be None
             f"loader_limit_{self.get_limit()}",
         )
         if not os.path.exists(local_dir):
