@@ -18,6 +18,15 @@ class TestSettings(UnitxtTestCase):
 
         self.assertEqual(settings2.test1, "test1")
 
+    def test_typed_assignment(self):
+        settings = Settings()
+        settings.test_bool_assignment = (bool, "False")
+        settings.test_int_assignment = (int, 1)
+        settings.test_int_assignment = "0"
+
+        self.assertEqual(settings.test_bool_assignment, False)
+        self.assertEqual(settings.test_int_assignment, 0)
+
     def test_singleton_assignment_with_get_settings(self):
         settings1 = Settings()
         settings2 = get_settings()
