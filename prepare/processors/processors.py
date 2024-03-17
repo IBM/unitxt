@@ -1,7 +1,7 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import RemoveValues
+from src.unitxt.operators import FilterByCondition, RemoveValues
 from src.unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
@@ -227,13 +227,39 @@ add_to_catalog(
                 process_every_value=False,
             ),
             RemoveValues(
-                field="references/*",
+                field="references",
                 unallowed_values=["none"],
-                process_every_value=False,
-                use_query=True,
+                process_every_value=True,
             ),
         ]
     ),
     "processors.remove_none_from_list",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            RemoveValues(
+                field="references",
+                unallowed_values=[[]],
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.remove_empty_sublists_from_references",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            FilterByCondition(
+                values={"prediction": [[]], "references": [[]]},
+                condition="not in",
+            ),
+        ]
+    ),
+    "processors.filter_out_instances_empty_prediction_or_empty_references",
     overwrite=True,
 )
