@@ -1,0 +1,5 @@
+{
+    "type": "system_format",
+    "demo_format": "### Prompt:\n{source}\n### Response:\n {target_prefix}{target}\n\n",
+    "model_input_format": "{system_prompt}{instruction}{demos}### Prompt:\n{source}\n### Response:\n{target_prefix}"
+}

@@ -6,4 +6,4 @@ format = SystemFormat(
     model_input_format="{system_prompt}{instruction}{demos}### Prompt:\n{source}\n### Response:\n{target_prefix}",
 )
 
-add_to_catalog(format, "formats.###prompt_###response", overwrite=True)
+add_to_catalog(format, "formats.prompt_response_triple_hash", overwrite=True)

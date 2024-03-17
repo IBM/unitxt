@@ -6,4 +6,4 @@ format = SystemFormat(
     model_input_format="{system_prompt}{instruction}{demos}### User:\n{source}\n### Assistant:\n{target_prefix}",
 )
 
-add_to_catalog(format, "formats.###user_###assistant", overwrite=True)
+add_to_catalog(format, "formats.user_assistant_triple_hash", overwrite=True)
