@@ -227,7 +227,7 @@ add_to_catalog(
                 process_every_value=False,
             ),
             RemoveValues(
-                field="references/*",
+                field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
                 use_query=True,

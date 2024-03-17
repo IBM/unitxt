@@ -11,7 +11,7 @@
         },
         {
             "type": "remove_values",
-            "field": "references/*",
+            "field": "references/0",
             "unallowed_values": [
                 "none"
             ],
