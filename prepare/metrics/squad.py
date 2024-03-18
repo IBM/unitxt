@@ -40,7 +40,7 @@ metric = MetricPipeline(
         main_score="f1",
         scale=100.0,
         scaled_fields=["f1", "exact_match"],
-        disable_type_validation=True,  # squad does not confirm to unitxt reference API (hence the MetricPipelineWtapper)
+        disable_type_validation=True,  # squad does not confirm to unitxt reference API (hence the MetricPipeline wrapper)
     ),
 )
 

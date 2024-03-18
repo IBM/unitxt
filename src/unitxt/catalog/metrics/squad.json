@@ -1,6 +1,7 @@
 {
     "type": "metric_pipeline",
     "main_score": "f1",
+    "prediction_type": "str",
     "preprocess_steps": [
         {
             "type": "add_id"
@@ -69,6 +70,7 @@
         "scaled_fields": [
             "f1",
             "exact_match"
-        ]
+        ],
+        "disable_type_validation": true
     }
 }
