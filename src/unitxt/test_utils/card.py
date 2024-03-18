@@ -115,7 +115,9 @@ def construct_recipe_output_message(
     for split in dataset.keys():
         if streams is None or split in streams:
             stream = dataset[split]
-            examples_in_stream = [stream[i] for i in range(0, num_examples)]
+            examples_in_stream = [
+                stream[i] for i in range(min(num_examples, len(stream)))
+            ]
             stream_header = "-" * 10 + "\n"
             stream_header += (
                 f"Showing {len(examples_in_stream)} example(s) from stream '{split}':\n"
