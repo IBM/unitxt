@@ -7,8 +7,8 @@ card = TaskCard(
     loader=LoadHF(path="Muennighoff/babi"),
     preprocess_steps=[
         RenameFields(field_to_field={"passage": "context"}),
-        ListFieldValues(fields=["answer"], to_field="answers"),
         AddFields({"context_type": "description"}),
+        ListFieldValues(fields=["answer"], to_field="answers"),
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",

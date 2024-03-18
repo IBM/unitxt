@@ -11,11 +11,12 @@
         },
         {
             "type": "remove_values",
-            "field": "references",
+            "field": "references/0",
             "unallowed_values": [
                 "none"
             ],
-            "process_every_value": true
+            "process_every_value": false,
+            "use_query": true
         }
     ]
 }

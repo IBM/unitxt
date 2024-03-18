@@ -139,11 +139,7 @@ classlabels["ModHayes"] = sorted(classlabels["ModApte"] + ["bfr", "hk"])
 
 for subset in get_dataset_config_names(dataset_name):
     card = TaskCard(
-        loader=LoadHF(
-            path=f"{dataset_name}",
-            name=subset,
-            filtering_lambda='lambda inst: len(inst["topics"])>0',
-        ),
+        loader=LoadHF(path=f"{dataset_name}", name=subset),
         preprocess_steps=[
             SplitRandomMix(
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}

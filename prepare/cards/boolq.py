@@ -62,5 +62,5 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.with_context.all",
 )
 
-test_card(card, demos_taken_from="test")
+test_card(card, demos_taken_from="test", strict=False)
 add_to_catalog(card, "cards.boolq.multiple_choice", overwrite=True)

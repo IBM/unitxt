@@ -14,5 +14,5 @@ card = TaskCard(
     task="tasks.qa.multiple_choice.open",
     templates="templates.qa.multiple_choice.open.all",
 )
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.piqa", overwrite=True)

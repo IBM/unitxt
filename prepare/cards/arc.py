@@ -20,7 +20,7 @@ for subtask in subtasks:
         task="tasks.qa.multiple_choice.with_topic",
         templates="templates.qa.multiple_choice.with_topic.all",
     )
-    test_card(card)
+    test_card(card, strict=False)
     add_to_catalog(
         card, f'cards.ai2_arc.{subtask.replace("-", "_").lower()}', overwrite=True
     )

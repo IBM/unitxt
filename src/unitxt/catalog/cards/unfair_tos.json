@@ -3,8 +3,7 @@
     "loader": {
         "type": "load_hf",
         "path": "lex_glue",
-        "name": "unfair_tos",
-        "filtering_lambda": "lambda inst: len(inst[\"labels\"])>0"
+        "name": "unfair_tos"
     },
     "preprocess_steps": [
         {

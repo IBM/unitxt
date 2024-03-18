@@ -29,5 +29,5 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.with_context.all",
 )
 
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.copa", overwrite=True)

@@ -5,9 +5,10 @@
     "target_prefix": "Answer:\n",
     "target_field": "answer",
     "choices_seperator": "\n",
+    "target_choice_format": "{choice_numeral}. {choice_text}",
     "postprocessors": [
-        "processors.to_string_stripped",
-        "processors.first_character"
+        "processors.take_first_non_empty_line",
+        "processors.match_closest_option"
     ],
     "title_fields": [
         "context_type"

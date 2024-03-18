@@ -1,13 +1,14 @@
 import hashlib
 import random as python_random
-
-__default_seed__ = 42
-
 from typing import Any, Hashable
+
+from .settings_utils import get_settings
+
+settings = get_settings()
 
 
 def get_seed():
-    return __default_seed__
+    return settings.seed
 
 
 def new_random_generator(sub_seed: Any) -> python_random.Random:
@@ -30,5 +31,5 @@ def new_random_generator(sub_seed: Any) -> python_random.Random:
         # for Hashable objects that are not strings
         sub_seed = str(hash(sub_seed))
 
-    sub_default_seed = str(__default_seed__) + "/" + sub_seed
+    sub_default_seed = str(settings.seed) + "/" + sub_seed
     return python_random.Random(sub_default_seed)

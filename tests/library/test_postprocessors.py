@@ -1,7 +1,7 @@
 from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
-from src.unitxt.processors import Substring
+from src.unitxt.processors import MatchClosestOption, Substring
 from src.unitxt.test_utils.operators import check_operator
 from tests.utils import UnitxtTestCase
 
@@ -65,7 +65,6 @@ class TestPostProcessors(UnitxtTestCase):
         )
 
     def test_substring(self):
-        # parser, _ = fetch_artifact("processors.substring")
         inputs = [
             {"a": "correct"},
             {"a": "Not Sure"},
@@ -122,6 +121,52 @@ class TestPostProcessors(UnitxtTestCase):
             operator=parser,
             inputs=list_to_stream_with_prediction_and_references(inputs),
             targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_select_closest_option(self):
+        inputs = [
+            {
+                "prediction": "option2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "chase3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+        ]
+
+        targets = [
+            {
+                "prediction": "option1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "cheese3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+        ]
+
+        check_operator(
+            operator=MatchClosestOption(field="prediction"),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 

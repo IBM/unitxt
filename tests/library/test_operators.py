@@ -572,6 +572,42 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_remove_none(self):
+        inputs = [
+            {"references": [["none"]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        targets = [
+            {"references": [[]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=RemoveValues(
+                    field="references/*",
+                    unallowed_values=["none"],
+                    process_every_value=False,
+                    use_query=True,
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references/0",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_remove_values(self):
         inputs = [
             {"label": ["a", "b"]},
@@ -600,6 +636,20 @@ class TestOperators(UnitxtTestCase):
             )
         self.assertEqual(
             str(cm.exception), "The unallowed_values is not a list but '3'"
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            check_operator(
+                operator=RemoveValues(
+                    field="label", unallowed_values=["3"], process_every_value=True
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "'process_every_value=True' is not supported in RemoveValues operator",
         )
 
         inputs = [
