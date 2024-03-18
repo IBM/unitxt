@@ -17,6 +17,7 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     DivideAllFieldsBy,
+    DuplicateInstances,
     EncodeLabels,
     ExecuteExpression,
     ExtractFieldValues,
@@ -2417,6 +2418,26 @@ class TestOperators(UnitxtTestCase):
                 str(e),
                 "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
             )
+
+    def test_duplicate_instance(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2},
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+            {"a": 3, "b": 4},
+        ]
+
+        check_operator(
+            operator=DuplicateInstances(num_duplications=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
 
 class TestApplyMetric(UnitxtTestCase):
