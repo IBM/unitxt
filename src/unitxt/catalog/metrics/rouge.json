@@ -1,4 +1,4 @@
 {
     "type": "rouge",
-    "n_resamples": null
+    "ci_disabled": true
 }

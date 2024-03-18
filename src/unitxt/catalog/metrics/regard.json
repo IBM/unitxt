@@ -4,5 +4,5 @@
     "main_score": "regard",
     "hf_main_score": "score",
     "scale": 1.0,
-    "n_resamples": null
+    "ci_disabled": true
 }

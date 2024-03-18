@@ -2,7 +2,7 @@ from src.unitxt import add_to_catalog
 from src.unitxt.metrics import Rouge
 from src.unitxt.test_utils.metrics import test_metric
 
-metric = Rouge(n_resamples=None)
+metric = Rouge(ci_disabled=True)
 
 predictions = ["hello there", "general kenobi"]
 references = [["hello", "there"], ["general kenobi", "general yoda"]]
