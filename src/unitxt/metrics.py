@@ -82,12 +82,12 @@ class Metric(Artifact):
     allow_none_prediction: bool = False
 
     # Standard metrics can receive multiple references per predictions (in a list)
-    # Some metrics require a single reference per prediction (one element in the list)
+    # Some metrics support only a single reference per prediction (one element in the list)
     single_reference_per_prediction: bool = False
 
     # Some metrics (e.g. HF metrics) do not follow the standard unitxt metric API
     # where references are passed as list (e.g. in spearmanr references is a scalar).
-    # In this case, and other special case, we can disable type validation.
+    # In this case, and other special cases, we can disable type validation.
     disable_type_validation: bool = False
 
     def _validate_references_and_prediction(self, references, predictions):
