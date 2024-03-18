@@ -103,25 +103,22 @@ def construct_recipe_output_message(
         header += "=" * 8 + "\n"
         message += header
 
-    dataset = recipe().to_dataset()
+    multi_stream = recipe()
+
     if print_stream_size:
-        for split in dataset.keys():
-            stream = dataset[split]
-            num_instances = len(stream)
-            message += f"stream named '{split}' has {num_instances} instances\n"
+        for stream_name in multi_stream.keys():
+            stream = multi_stream[stream_name]
+            num_instances = len(list(iter(stream)))
+            message += f"stream named '{stream_name}' has {num_instances} instances\n"
         message += "\n"
 
     examples = []
-    for split in dataset.keys():
-        if streams is None or split in streams:
-            stream = dataset[split]
-            examples_in_stream = [
-                stream[i] for i in range(min(num_examples, len(stream)))
-            ]
+    for stream_name in multi_stream.keys():
+        if streams is None or stream_name in streams:
+            stream = multi_stream[stream_name]
+            examples_in_stream = list(stream.take(num_examples))
             stream_header = "-" * 10 + "\n"
-            stream_header += (
-                f"Showing {len(examples_in_stream)} example(s) from stream '{split}':\n"
-            )
+            stream_header += f"Showing {len(examples_in_stream)} example(s) from stream '{stream_name}':\n"
             message += stream_header
 
             for example in examples_in_stream:
