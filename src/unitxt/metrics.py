@@ -1723,12 +1723,7 @@ class NER(CustomF1):
     prediction_type = "List[Tuple[str,str]]"
 
     def get_element_group(self, element, additional_input):
-        try:
-            return element[1]
-        except KeyError:
-            raise Exception(
-                f"Unable to extract group in NER metric {element}.  Expecting tuple of strings (entity-type, entity-surface-form)"
-            ) from None
+        return element[1]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
