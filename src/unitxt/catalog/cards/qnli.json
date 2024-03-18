@@ -19,20 +19,23 @@
         {
             "type": "add_fields",
             "fields": {
-                "choices": [
+                "classes": [
                     "entailment",
                     "not entailment"
-                ]
+                ],
+                "type_of_relation": "entailment",
+                "text_a_type": "question",
+                "text_b_type": "sentence"
             }
         },
         {
             "type": "rename_fields",
             "field_to_field": {
-                "question": "premise",
-                "sentence": "hypothesis"
+                "question": "text_a",
+                "sentence": "text_b"
             }
         }
     ],
-    "task": "tasks.nli",
-    "templates": "templates.classification.nli.all"
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all"
 }

@@ -1,3 +1,4 @@
+import json
 import sys
 from ast import literal_eval
 
@@ -16,7 +17,19 @@ if __name__ == "__main__":
         },
     )
 
-    evaluate(
+    # passing list of dicts
+    result, _ = evaluate(
+        df.to_dict("records"),
+        metric_names=[
+            "metrics.rag.mrr",
+            "metrics.rag.map",
+            "metrics.rag.answer_correctness",
+        ],
+    )
+    with open("dataset_out.json", "w") as f:
+        json.dump(result, f, indent=4)
+
+    result, _ = evaluate(
         df,
         metric_names=[
             "metrics.rag.mrr",
@@ -24,7 +37,9 @@ if __name__ == "__main__":
             "metrics.rag.answer_correctness",
             "metrics.rag.context_relevance",
             "metrics.rag.faithfulness",
-            "metrics.rag.answer_relevance",
+            "metrics.rag.answer_reward",
+            "metrics.rag.context_correctness",
             "metrics.rag.context_perplexity",
         ],
-    ).round(2).to_csv("dataset_out.csv")
+    )
+    result.round(2).to_csv("dataset_out.csv")

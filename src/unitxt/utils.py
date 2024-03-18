@@ -1,5 +1,8 @@
 import json
+from functools import lru_cache
 from typing import Any, Dict
+
+import pkg_resources
 
 
 class Singleton(type):
@@ -25,6 +28,11 @@ def flatten_dict(
     return dict(items)
 
 
+@lru_cache(maxsize=None)
+def artifacts_json_cache(artifact_path):
+    return load_json(artifact_path)
+
+
 def load_json(path):
     with open(path) as f:
         try:
@@ -42,3 +50,35 @@ def save_json(path, data):
         dumped = json.dumps(data, indent=4, ensure_ascii=False)
         f.write(dumped)
         f.write("\n")
+
+
+def is_package_installed(package_name):
+    """Check if a package is installed.
+
+    Parameters:
+    - package_name (str): The name of the package to check.
+
+    Returns:
+    - bool: True if the package is installed, False otherwise.
+    """
+    try:
+        pkg_resources.get_distribution(package_name)
+        return True
+    except pkg_resources.DistributionNotFound:
+        return False
+
+
+def is_module_available(module_name):
+    """Check if a module is available in the current Python environment.
+
+    Parameters:
+    - module_name (str): The name of the module to check.
+
+    Returns:
+    - bool: True if the module is available, False otherwise.
+    """
+    try:
+        __import__(module_name)
+        return True
+    except ImportError:
+        return False

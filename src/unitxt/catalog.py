@@ -1,19 +1,26 @@
 import os
 import re
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
 import requests
 
-from .artifact import Artifact, Artifactories, Artifactory, reset_artifacts_cache
+from .artifact import (
+    Artifact,
+    Artifactories,
+    Artifactory,
+    get_artifactory_name_and_args,
+    reset_artifacts_json_cache,
+)
 from .logging_utils import get_logger
+from .settings_utils import get_constants
 from .text_utils import print_dict
 from .version import version
 
 logger = get_logger()
-COLLECTION_SEPARATOR = "."
-PATHS_SEP = ":"
+constants = get_constants()
 
 
 class Catalog(Artifactory):
@@ -21,41 +28,33 @@ class Catalog(Artifactory):
     location: str = None
 
 
-try:
-    import unitxt
-
-    if unitxt.__file__:
-        lib_dir = os.path.dirname(unitxt.__file__)
-    else:
-        lib_dir = os.path.dirname(__file__)
-except ImportError:
-    lib_dir = os.path.dirname(__file__)
-
-default_catalog_path = os.path.join(lib_dir, "catalog")
-
-
 class LocalCatalog(Catalog):
     name: str = "local"
-    location: str = default_catalog_path
+    location: str = constants.default_catalog_path
     is_local: bool = True
 
     def path(self, artifact_identifier: str):
         assert (
             artifact_identifier.strip()
         ), "artifact_identifier should not be an empty string."
-        parts = artifact_identifier.split(COLLECTION_SEPARATOR)
+        parts = artifact_identifier.split(constants.catalog_hirarchy_sep)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
-    def load(self, artifact_identifier: str):
+    def load(self, artifact_identifier: str, overwrite_args=None):
         assert (
             artifact_identifier in self
         ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
-        return Artifact.load(path)
+        return Artifact.load(
+            path, artifact_identifier=artifact_identifier, overwrite_args=overwrite_args
+        )
 
     def __getitem__(self, name) -> Artifact:
         return self.load(name)
+
+    def get_with_overwrite(self, name, overwrite_args):
+        return self.load(name, overwrite_args=overwrite_args)
 
     def __contains__(self, artifact_identifier: str):
         if not os.path.exists(self.location):
@@ -101,11 +100,13 @@ class GithubCatalog(LocalCatalog):
         tag = version
         self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{tag}/{self.repo_dir}"
 
-    def load(self, artifact_identifier: str):
+    def load(self, artifact_identifier: str, overwrite_args=None):
         url = self.path(artifact_identifier)
         response = requests.get(url)
         data = response.json()
-        return Artifact.from_dict(data)
+        new_artifact = Artifact.from_dict(data, overwrite_args=overwrite_args)
+        new_artifact.artifact_identifier = artifact_identifier
+        return new_artifact
 
     def __contains__(self, artifact_identifier: str):
         url = self.path(artifact_identifier)
@@ -115,7 +116,7 @@ class GithubCatalog(LocalCatalog):
 
 def verify_legal_catalog_name(name):
     assert re.match(
-        r"^[\w" + COLLECTION_SEPARATOR + "]+$", name
+        r"^[\w" + constants.catalog_hirarchy_sep + "]+$", name
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
@@ -127,16 +128,40 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
-    reset_artifacts_cache()
+    reset_artifacts_json_cache()
     if catalog is None:
         if catalog_path is None:
-            catalog_path = default_catalog_path
+            catalog_path = constants.default_catalog_path
         catalog = LocalCatalog(location=catalog_path)
     verify_legal_catalog_name(name)
     catalog.save_artifact(
         artifact, name, overwrite=overwrite, verbose=verbose
     )  # remove collection (its actually the dir).
     # verify name
+
+
+@lru_cache(maxsize=None)
+def get_from_catalog(
+    name: str,
+    catalog: Catalog = None,
+    catalog_path: Optional[str] = None,
+):
+    if catalog_path is not None:
+        catalog = LocalCatalog(location=catalog_path)
+
+    if catalog is None:
+        artifactories = None
+    else:
+        artifactories = [catalog]
+
+    catalog, name, args = get_artifactory_name_and_args(
+        name, artifactories=artifactories
+    )
+
+    return catalog.get_with_overwrite(
+        name=name,
+        overwrite_args=args,
+    )
 
 
 def get_local_catalogs_paths():
@@ -167,7 +192,34 @@ def local_catalog_summary(catalog_path):
 
 def summary():
     result = Counter()
+    done = set()
     for local_catalog_path in get_local_catalogs_paths():
-        result += Counter(local_catalog_summary(local_catalog_path))
+        if local_catalog_path not in done:
+            result += Counter(local_catalog_summary(local_catalog_path))
+        done.add(local_catalog_path)
     print_dict(result)
+    return result
+
+
+def ls(to_file=None):
+    done = set()
+    result = []
+    for local_catalog_path in get_local_catalogs_paths():
+        if local_catalog_path not in done:
+            for root, _, files in os.walk(local_catalog_path):
+                for file in files:
+                    if ".json" not in file:
+                        continue
+                    file_path = os.path.relpath(
+                        os.path.join(root, file), local_catalog_path
+                    )
+                    file_id = ".".join(
+                        file_path.replace(".json", "").split(os.path.sep)
+                    )
+                    result.append(file_id)
+    if to_file:
+        with open(to_file, "w+") as f:
+            f.write("\n".join(result))
+    else:
+        logger.info("\n".join(result))
     return result

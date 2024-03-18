@@ -1,0 +1,38 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "wikitablequestions"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "table"
+            }
+        },
+        {
+            "type": "truncate_table_cells",
+            "max_length": 15,
+            "table": "table",
+            "text_output": "answers"
+        },
+        {
+            "type": "truncate_table_rows",
+            "field": "table",
+            "rows_to_keep": 50
+        },
+        {
+            "type": "serialize_table_as_indexed_row_major",
+            "field_to_field": [
+                [
+                    "table",
+                    "context"
+                ]
+            ]
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
+}

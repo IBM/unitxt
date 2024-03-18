@@ -1,7 +1,0 @@
-{
-    "type": "standard_recipe",
-    "card": "cards.wnli",
-    "demos_pool_size": 100,
-    "num_demos": 3,
-    "template_card_index": 0
-}

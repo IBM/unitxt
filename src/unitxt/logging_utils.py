@@ -4,6 +4,10 @@ import sys
 import threading
 from typing import Optional
 
+from .settings_utils import get_settings
+
+settings = get_settings()
+
 _lock = threading.Lock()
 _default_handler: Optional[logging.Handler] = None
 
@@ -15,23 +19,30 @@ log_levels = {
     "critical": logging.CRITICAL,
 }
 
-_default_log_level = logging.DEBUG
-
 
 def _get_default_logging_level():
-    env_level_str = os.getenv("UNITXT_VERBOSITY", None)
-    if env_level_str is not None:
-        try:
-            return log_levels[env_level_str]
-        except KeyError as e:
-            raise ValueError(
-                f"UNITXT_VERBOSITY has to be one of: { ', '.join(log_levels.keys()) }. Got {env_level_str}."
-            ) from e
-    return _default_log_level
+    try:
+        return log_levels[settings.default_verbosity]
+    except KeyError as e:
+        raise ValueError(
+            f"unitxt.settings.default_verobsity or env variable UNITXT_DEFAULT_VERBOSITY has to be one of: { ', '.join(log_levels.keys()) }. Got {settings.default_verbosity}."
+        ) from e
 
 
 def _get_library_root_logger() -> logging.Logger:
     return logging.getLogger(__name__.split(".")[0])
+
+
+class SizeLimitedFormatter(logging.Formatter):
+    def format(self, record):
+        original_message = super().format(record)
+        max_size = settings.max_log_message_size
+        if len(original_message) > max_size:
+            return (
+                original_message[:max_size]
+                + f"...\n(Message is too long > {max_size}. Can be set through unitxt.settings.max_log_message_size or UNITXT_MAX_LOG_MESSAGE_SIZE environment variable.)"
+            )
+        return original_message
 
 
 def _configure_library_root_logger() -> None:
@@ -45,6 +56,7 @@ def _configure_library_root_logger() -> None:
             sys.stderr = open(os.devnull, "w")
 
         _default_handler.flush = sys.stderr.flush
+        _default_handler.setFormatter(SizeLimitedFormatter())
 
         library_root_logger = _get_library_root_logger()
         library_root_logger.addHandler(_default_handler)
@@ -61,6 +73,9 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     return logging.getLogger(name)
 
 
+settings._logger = get_logger("settings")
+
+
 def set_verbosity(level):
     _configure_library_root_logger()
     _get_library_root_logger().setLevel(log_levels.get(level))
@@ -68,7 +83,7 @@ def set_verbosity(level):
 
 def enable_explicit_format() -> None:
     for handler in _get_library_root_logger().handlers:
-        formatter = logging.Formatter(
+        formatter = SizeLimitedFormatter(
             "[Unitxt|%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s >> %(message)s"
         )
         handler.setFormatter(formatter)

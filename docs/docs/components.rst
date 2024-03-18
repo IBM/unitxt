@@ -1,8 +1,8 @@
 ==============
-Components
+Basics
 ==============
 
-Unitxt processes data in `pipelines`_, by applying a modular sequence of **operators**.
+Unitxt processes data in `pipelines`_, by applying a modular sequence of :ref:`operators <operators>`.
 Each operator is of a specific `ingredients`_ type.
 Operators may be are defined and shared within the :ref:`Unitxt Catalog <unitxt_catalog>`.
 The operators compose larger unitxt `Building Blocks`_.
@@ -107,7 +107,7 @@ A Unitxt **Format** defines a set of extra formatting requirements, unrelated to
 those pertaining to system prompts, special tokens or user/agent prefixes, and in-context demonstrations.
 
 Continuing the example from the above :ref:`figure <prompt_structure>`, the Unitxt format receives the text produced by the template
-"**classify the sentence: ``I like toast''**", and adds the system prompt "**<SYS>You are a helpful agent</SYS>}**",
+"**classify the sentence: ``I like toast''**", and adds the system prompt "**<SYS>You are a helpful agent</SYS>**",
 the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
 The catalog contains predefined formats :ref:`here <catalog.formats>`.
@@ -119,7 +119,7 @@ Unitxt supports **Extensions** such as "**input-augmentation**"
 (for example, adding random whitespace, introducing spelling mistakes, or replacing words with their synonyms) or
 label-noising (replaces the labels in the demonstrations randomly from a list of options).
 Such extensions can be added anywhere in the data-preparation pipeline between any two operators, depending on the
-desired logic (see :ref:`the unitxt flow diagram <unitxt_flow_diagram`}).
+desired logic (see :ref:`the unitxt flow diagram <unitxt_flow_diagram>`).
 
 Unitxt supports the addition of custom extensions to the Unitxt Catalog.
 Each extension is an independent unit, reusable across different datasets and tasks, templates and formats.

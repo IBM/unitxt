@@ -1,0 +1,86 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_from_kaggle",
+        "url": "https://www.kaggle.com/datasets/rmisra/news-category-dataset"
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[70%]",
+                "validation": "train[10%]",
+                "test": "train[20%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "headline": "text"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "category": "label"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "ARTS",
+                    "ARTS & CULTURE",
+                    "BLACK VOICES",
+                    "BUSINESS",
+                    "COLLEGE",
+                    "COMEDY",
+                    "CRIME",
+                    "CULTURE & ARTS",
+                    "DIVORCE",
+                    "EDUCATION",
+                    "ENTERTAINMENT",
+                    "ENVIRONMENT",
+                    "FIFTY",
+                    "FOOD & DRINK",
+                    "GOOD NEWS",
+                    "GREEN",
+                    "HEALTHY LIVING",
+                    "HOME & LIVING",
+                    "IMPACT",
+                    "LATINO VOICES",
+                    "MEDIA",
+                    "MONEY",
+                    "PARENTING",
+                    "PARENTS",
+                    "POLITICS",
+                    "QUEER VOICES",
+                    "RELIGION",
+                    "SCIENCE",
+                    "SPORTS",
+                    "STYLE",
+                    "STYLE & BEAUTY",
+                    "TASTE",
+                    "TECH",
+                    "THE WORLDPOST",
+                    "TRAVEL",
+                    "U.S. NEWS",
+                    "WEDDINGS",
+                    "WEIRD NEWS",
+                    "WELLNESS",
+                    "WOMEN",
+                    "WORLD NEWS",
+                    "WORLDPOST"
+                ],
+                "text_type": "sentence",
+                "type_of_class": "topic"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

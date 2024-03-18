@@ -1,0 +1,14 @@
+{
+    "type": "multi_label_template",
+    "input_format": "Text: {text}",
+    "output_format": "{labels}",
+    "target_prefix": "The {type_of_classes} is ",
+    "labels_field": "labels",
+    "instruction": "What are the {type_of_classes} expressed in following {text_type}?\nSelect your answer from the options: {classes}.\nIf no {type_of_classes} are expressed answer none.",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.lower_case",
+        "processors.to_list_by_comma",
+        "processors.remove_none_from_list"
+    ]
+}

@@ -1,6 +1,5 @@
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
     LoadHF,
     MapInstanceValues,
     RenameFields,
@@ -23,11 +22,7 @@ card = TaskCard(
             }
         ),
     ],
-    task=FormTask(
-        inputs=["text", "text_type", "classes", "type_of_class"],
-        outputs=["label"],
-        metrics=["metrics.matthews_correlation"],
-    ),
+    task="tasks.classification.multi_class[metrics=[metrics.matthews_correlation]]",
     templates="templates.classification.multi_class.all",
 )
 

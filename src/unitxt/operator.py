@@ -4,12 +4,39 @@ from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional
 
 from .artifact import Artifact
-from .dataclass import NonPositionalField
+from .dataclass import InternalField, NonPositionalField
 from .stream import MultiStream, Stream
+from .utils import is_module_available
 
 
 class Operator(Artifact):
     pass
+
+
+class PackageRequirementsMixin(Artifact):
+    _requirements_list: List[str] = InternalField(default_factory=list)
+
+    def verify(self):
+        super().verify()
+        self.check_missing_requirements()
+
+    def check_missing_requirements(self, requirements=None):
+        if requirements is None:
+            requirements = self._requirements_list
+        missing_packages = []
+        for package in requirements:
+            if not is_module_available(package):
+                missing_packages.append(package)
+        if missing_packages:
+            raise MissingRequirementsError(self.__class__.__name__, missing_packages)
+
+
+class MissingRequirementsError(Exception):
+    def __init__(self, class_name, missing_packages):
+        self.class_name = class_name
+        self.missing_packages = missing_packages
+        self.message = f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}"
+        super().__init__(self.message)
 
 
 class OperatorError(Exception):
@@ -31,7 +58,7 @@ class OperatorError(Exception):
         return cls(exception, [operator])
 
 
-class StreamingOperator(Artifact):
+class StreamingOperator(Operator, PackageRequirementsMixin):
     """Base class for all stream operators in the streaming model.
 
     Stream operators are a key component of the streaming model and are responsible for processing continuous data streams.
@@ -149,7 +176,7 @@ class MultiStreamOperator(StreamingOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
-        multi_stream = {stream_name: [instance]}
+        multi_stream = MultiStream({stream_name: [instance]})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
 
@@ -168,7 +195,7 @@ class SingleStreamOperator(MultiStreamOperator):
     apply_to_streams: List[str] = NonPositionalField(
         default=None
     )  # None apply to all streams
-    dont_apply_to_streams: List[str] = NonPositionalField(default_factory=None)
+    dont_apply_to_streams: List[str] = NonPositionalField(default=None)
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         result = {}

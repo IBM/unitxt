@@ -2,6 +2,8 @@
     "type": "templates_list",
     "items": [
         "templates.classification.multi_class.default",
+        "templates.classification.multi_class.instruction",
+        "templates.classification.multi_class.title",
         "templates.classification.multi_class.empty"
     ]
 }

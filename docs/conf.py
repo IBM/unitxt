@@ -7,14 +7,15 @@ import os
 import sys
 from dataclasses import Field as _Field
 
+import unitxt
 from unitxt.artifact import Artifact
 from unitxt.dataclass import Field
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from catalog import CatalogDocsBuilder
+from catalog import create_catalog_docs
 
-CatalogDocsBuilder().run()
+create_catalog_docs()
 
 
 # -- Project information -----------------------------------------------------
@@ -23,7 +24,8 @@ CatalogDocsBuilder().run()
 project = "Unitxt"
 copyright = "2023, IBM Research"
 author = "IBM Research"
-release = "1.0.0"
+release = unitxt.__version__
+html_short_title = "Unitxt"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -31,6 +33,7 @@ release = "1.0.0"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinxext.opengraph",
 ]
 
 templates_path = ["_templates"]
@@ -39,14 +42,22 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
-html_static_path = []
+html_theme = "piccolo_theme"
+html_logo = "./static/logo.png"
 html_theme_options = {
-    "logo_only": True,
-    "display_version": False,
-    "prev_next_buttons_location": "bottom",
-    "style_nav_header_background": "#ff66ff",
+    "show_theme_credit": False,
+    "source_url": "https://github.com/IBM/unitxt/",
 }
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
+html_js_files = ["custom.js"]
+html_show_sphinx = False
+html_favicon = "./static/favicon.ico"
+html_title = "Unitxt"
+
+ogp_image = (
+    "https://raw.githubusercontent.com/IBM/unitxt/main/docs/static/opg_image.png"
+)
 
 autodoc_default_flags = [
     "members",

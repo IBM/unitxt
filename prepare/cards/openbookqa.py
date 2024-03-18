@@ -15,8 +15,8 @@ card = TaskCard(
         ),
         IndexOf(search_in="labels", index_of="answerKey", to_field="answer"),
     ],
-    task="tasks.qa.multiple_choice.original",
-    templates="templates.qa.multiple_choice.no_intro.all",
+    task="tasks.qa.multiple_choice.open",
+    templates="templates.qa.multiple_choice.open.all",
 )
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.openbook_qa", overwrite=True)

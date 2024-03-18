@@ -21,11 +21,5 @@
         }
     ],
     "task": "tasks.summarization.abstractive",
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            "templates.summarization.abstractive.full",
-            "templates.summarization.abstractive.write_succinct"
-        ]
-    }
+    "templates": "templates.summarization.abstractive.all"
 }

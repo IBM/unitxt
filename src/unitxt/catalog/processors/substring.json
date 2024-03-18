@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "substring",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "substring",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

@@ -17,14 +17,20 @@
             "fields": [
                 "relevant_context"
             ],
-            "to_field": "answer"
+            "to_field": "answers"
         },
         {
-            "type": "execute_query",
-            "query": "question.split('[SEP]')[0]",
+            "type": "execute_expression",
+            "expression": "question.split('[SEP]')[0]",
             "to_field": "question"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "document"
+            }
         }
     ],
-    "task": "tasks.qa.contextual.extractive",
-    "templates": "templates.qa.contextual.all"
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
 }

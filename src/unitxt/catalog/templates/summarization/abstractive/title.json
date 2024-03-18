@@ -1,0 +1,10 @@
+{
+    "type": "input_output_template",
+    "instruction": "Summarize the following {document_type}.",
+    "input_format": "{document_type}:\n{document}.",
+    "target_prefix": "Summary:\n",
+    "output_format": "{summary}",
+    "title_fields": [
+        "document_type"
+    ]
+}

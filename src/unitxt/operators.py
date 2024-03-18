@@ -20,6 +20,7 @@ Some operators are specielized in specific task such as:
 
 - :class:`loaders<unitxt.loaders>` for loading data.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
+- :class:`struct_data_operators<unitxt.struct_data_operators>` for structured data operators.
 
 Other specelized operators are used by unitxt internally:
 
@@ -32,7 +33,7 @@ General Operaotrs List:
 ------------------------
 """
 import collections
-import importlib
+import copy
 import operator
 import os
 import uuid
@@ -58,11 +59,12 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField
+from .dataclass import NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
     MultiStreamOperator,
+    PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
@@ -74,10 +76,13 @@ from .operator import (
     StreamInstanceOperator,
 )
 from .random_utils import new_random_generator
+from .settings_utils import get_settings
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
+
+settings = get_settings()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -175,7 +180,7 @@ class MapInstanceValues(StreamInstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instance = {instance}"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
@@ -280,7 +285,7 @@ class RemoveFields(StreamInstanceOperator):
         return instance
 
 
-class FieldOperator(StreamInstanceOperator):
+class InstanceFieldOperator(StreamInstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
@@ -331,7 +336,7 @@ class FieldOperator(StreamInstanceOperator):
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
-        # for backward compatibility also allow list of tupples of two strings
+        # for backward compatibility also allow list of tuples of two strings
         if isoftype(self.field_to_field, List[List[str]]) or isoftype(
             self.field_to_field, List[Tuple[str, str]]
         ):
@@ -360,7 +365,7 @@ class FieldOperator(StreamInstanceOperator):
         )
 
     @abstractmethod
-    def process_value(self, value: Any) -> Any:
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
 
     def prepare(self):
@@ -403,9 +408,12 @@ class FieldOperator(StreamInstanceOperator):
                 ) from e
             try:
                 if self.process_every_value:
-                    new_value = [self.process_value(value) for value in old_value]
+                    new_value = [
+                        self.process_instance_value(value, instance)
+                        for value in old_value
+                    ]
                 else:
-                    new_value = self.process_value(old_value)
+                    new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
@@ -420,6 +428,15 @@ class FieldOperator(StreamInstanceOperator):
                 not_exist_ok=True,
             )
         return instance
+
+
+class FieldOperator(InstanceFieldOperator):
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        return self.process_value(value)
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
 
 
 class RenameFields(FieldOperator):
@@ -484,7 +501,7 @@ class AddConstant(FieldOperator):
 
 
 class Augmentor(StreamInstanceOperator):
-    """A stream that augments the values of either the task input fields before rendering with the template,  or the  input passed to the model after rendering of the template.
+    """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
 
     Args:
         augment_model_input: Whether to augment the input to the model.
@@ -564,9 +581,9 @@ class NullAugmentor(Augmentor):
 
 
 class AugmentWhitespace(Augmentor):
-    """Augments the inputs by replace existing whitespace with other whitespace.
+    """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
-    Currently each whitespace is replaced by a random choice of 1-3 whitespace charaters (spcae, tab, newline).
+    Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
     """
 
     def process_value(self, value: Any) -> Any:
@@ -768,17 +785,17 @@ class Apply(StreamInstanceOperator):
         return ".".join(parts)
 
     def str_to_function(self, function_str: str) -> Callable:
-        splitted = function_str.split(".", 1)
-        if len(splitted) == 1:
-            return __builtins__[splitted[0]]
+        parts = function_str.split(".", 1)
+        if len(parts) == 1:
+            return __builtins__[parts[0]]
 
-        module_name, function_name = splitted
+        module_name, function_name = parts
         if module_name in __builtins__:
             obj = __builtins__[module_name]
         elif module_name in globals():
             obj = globals()[module_name]
         else:
-            obj = importlib.import_module(module_name)
+            obj = __import__(module_name)
         for part in function_name.split("."):
             obj = getattr(obj, part)
         return obj
@@ -887,34 +904,32 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class Perturbate(FieldOperator):
-    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+class Perturb(FieldOperator):
+    """Slightly perturbs the contents of 'field'. Could be Handy for imitating prediction from given target.
 
     When task was classification, argument 'select_from' can be used to list the other potential classes, as a
     relevant perturbation
     """
 
     select_from: List[Any] = []
-    percentage_to_perturbate: int = 1  # 1 percent
+    percentage_to_perturb: int = 1  # 1 percent
 
     def verify(self):
         assert (
-            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
-        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+            0 <= self.percentage_to_perturb and self.percentage_to_perturb <= 100
+        ), f"'percentage_to_perturb' should be in the range 0..100. Received {self.percentage_to_perturb}"
 
     def prepare(self):
         super().prepare()
         self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
 
     def process_value(self, value: Any) -> Any:
-        perturbate = (
-            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
-        )
-        if not perturbate:
+        perturb = self.random_generator.randint(1, 100) <= self.percentage_to_perturb
+        if not perturb:
             return value
 
         if value in self.select_from:
-            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            # 80% of cases, return a decent class, otherwise, perturb the value itself as follows
             if self.random_generator.random() < 0.8:
                 return self.random_generator.choice(self.select_from)
 
@@ -959,7 +974,16 @@ class CopyFields(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        return value
+        return copy.deepcopy(value)
+
+
+class GetItemByIndex(FieldOperator):
+    """Get from the item list by the index in the field."""
+
+    items_list: List[Any]
+
+    def process_value(self, value: Any) -> Any:
+        return self.items_list[value]
 
 
 class AddID(StreamInstanceOperator):
@@ -1094,7 +1118,7 @@ class ArtifactFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class ApplyOperatorsField(StreamInstanceOperator, ArtifactFetcherMixin):
+class ApplyOperatorsField(StreamInstanceOperator):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
@@ -1215,30 +1239,59 @@ class FilterByCondition(SingleStreamOperator):
         return True
 
 
-class FilterByQuery(SingleStreamOperator):
+class ComputeExpressionMixin(Artifact):
+    """Computes an expression expressed over fields of an instance.
+
+    Args:
+        expression (str): the expression, in terms of names of fields of an instance
+        imports_list (List[str]): list of names of imports needed for the evaluation of the expression
+    """
+
+    expression: str
+    imports_list: List[str] = OptionalField(default_factory=list)
+
+    def verify(self):
+        PackageRequirementsMixin.check_missing_requirements(self, self.imports_list)
+
+    def prepare(self):
+        # can not do the imports here, because object does not pickle with imports
+        self.globals = {
+            module_name: __import__(module_name) for module_name in self.imports_list
+        }
+
+    def compute_expression(self, instance: dict) -> Any:
+        if settings.allow_unverified_code:
+            return eval(self.expression, self.globals, instance)
+
+        raise ValueError(
+            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+        )
+
+
+class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
     """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
 
     Raises an error if a field participating in the specified condition is missing from the instance
 
     Args:
-       query (str): a condition over fields of the instance, to be processed by python's eval()
+       expression (str): a condition over fields of the instance, to be processed by python's eval()
+       imports_list (List[str]): names of imports needed for the eval of the query (e.g. 're', 'json')
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByQuery(query = "a > 4") will yield only instances where "a">4
-       FilterByQuery(query = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
-       FilterByQuery(query = "a in [4, 8]") will yield only instances where "a" is 4 or 8
-       FilterByQuery(query = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
+       FilterByExpression(expression = "a > 4") will yield only instances where "a">4
+       FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
+       FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
+       FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
 
     """
 
-    query: str
     error_on_filtered_all: bool = True
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         yielded = False
         for instance in stream:
-            if eval(self.query, None, instance):
+            if self.compute_expression(instance):
                 yielded = True
                 yield instance
 
@@ -1248,33 +1301,33 @@ class FilterByQuery(SingleStreamOperator):
             )
 
 
-class ExecuteQuery(StreamInstanceOperator):
-    """Compute an expression (query), expressed as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
+class ExecuteExpression(StreamInstanceOperator, ComputeExpressionMixin):
+    """Compute an expression, specified as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
 
     Args:
-       query (str): an expression to be evaluated over the fields of the instance
+       expression (str): an expression to be evaluated over the fields of the instance
        to_field (str): the field where the result is to be stored into
+       imports_list (List[str]): names of imports needed for the eval of the query (e.g. 're', 'json')
 
     Examples:
        When instance {"a": 2, "b": 3} is process-ed by operator
-       ExecuteQuery(query="a+b", to_field = "c")
+       ExecuteExpression(expression="a+b", to_field = "c")
        the result is {"a": 2, "b": 3, "c": 5}
 
        When instance {"a": "hello", "b": "world"} is process-ed by operator
-       ExecuteQuery(query = "a+' '+b", to_field = "c")
+       ExecuteExpression(expression = "a+' '+b", to_field = "c")
        the result is {"a": "hello", "b": "world", "c": "hello world"}
 
     """
 
-    query: str
     to_field: str
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = eval(self.query, None, instance)
+        instance[self.to_field] = self.compute_expression(instance)
         return instance
 
 
@@ -1354,7 +1407,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
                 counter.update(instance[self.field])
-        # here counter counts occurrences of individual values, or tupples.
+        # here counter counts occurrences of individual values, or tuples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
             top_frequency = (
@@ -1544,7 +1597,7 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     calc_confidence_intervals: bool
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        from .metrics import Metric, MetricPipeline, MetricWithConfidenceInterval
+        from .metrics import Metric
 
         first_instance = stream.peek()
 
@@ -1563,6 +1616,16 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
+        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
+        # for further metrics' processing, instead of just modifying the score field.
+        # Here we keep all the fields besides the score, and restore them after the metric finishes.
+        first_instance = stream.peek()
+        keys_to_restore = set(first_instance.keys()).difference({"score"})
+        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = CopyFields(
+            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
+        )(multi_stream)
+
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(
@@ -1570,15 +1633,17 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             ), f"Operator {metric_name} must be a Metric"
 
             if not self.calc_confidence_intervals:
-                if isinstance(metric, MetricWithConfidenceInterval):
-                    metric.disable_confidence_interval_calculation()
-                elif isinstance(metric, MetricPipeline) and isinstance(
-                    metric.metric, MetricWithConfidenceInterval
-                ):
-                    metric.metric.disable_confidence_interval_calculation()
+                metric.disable_confidence_interval_calculation()
 
-            stream = metric(MultiStream({"tmp": stream}))["tmp"]
+            multi_stream = metric(multi_stream)
+            multi_stream = CopyFields(
+                field_to_field={f"{k}_orig": k for k in keys_to_restore}
+            )(multi_stream)
 
+        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
+            multi_stream
+        )
+        stream = multi_stream["tmp"]
         yield from stream
 
 

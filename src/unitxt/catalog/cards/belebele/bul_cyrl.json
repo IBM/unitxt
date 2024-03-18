@@ -1,0 +1,53 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "facebook/belebele",
+        "name": "default",
+        "split": "bul_Cyrl"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "bul_Cyrl": "test"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "mc_answer1",
+                "mc_answer2",
+                "mc_answer3",
+                "mc_answer4"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "correct_answer_num": "answer",
+                "flores_passage": "context"
+            }
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "answer": "int"
+            }
+        },
+        {
+            "type": "add_constant",
+            "field": "answer",
+            "add": -1
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "passage"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.no_intro.all"
+}

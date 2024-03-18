@@ -1,5 +1,5 @@
 {
     "type": "system_format",
-    "demo_format": "User:{source}\nAgent:{target}\n\n",
-    "model_input_format": "{instruction}\n{demos}\nUser:{source}\nAgent:"
+    "demo_format": "User: {source}\nAgent: {target_prefix}{target}\n\n",
+    "model_input_format": "{system_prompt}{instruction}\n{demos}\nUser:{source}\nAgent:{target_prefix}"
 }

@@ -2,7 +2,8 @@
     "type": "task_card",
     "loader": {
         "type": "load_hf",
-        "path": "SetFit/20_newsgroups"
+        "path": "SetFit/20_newsgroups",
+        "streaming": true
     },
     "preprocess_steps": [
         {
@@ -78,7 +79,7 @@
                     "politics",
                     "religion"
                 ],
-                "text_type": "sentence",
+                "text_type": "text",
                 "type_of_class": "topic"
             }
         }

@@ -1,3 +1,5 @@
+import sys
+
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import (
     AddFields,
@@ -6,6 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.loaders import LoadFromKaggle
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "news_category_classification_headline"
@@ -61,6 +64,7 @@ card = TaskCard(
         url="https://www.kaggle.com/datasets/rmisra/news-category-dataset"
     ),
     preprocess_steps=[
+        Shuffle(page_size=sys.maxsize),
         SplitRandomMix(
             {"train": "train[70%]", "validation": "train[10%]", "test": "train[20%]"}
         ),

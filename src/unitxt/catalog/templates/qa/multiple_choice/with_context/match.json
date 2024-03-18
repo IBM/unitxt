@@ -1,0 +1,16 @@
+{
+    "type": "multiple_choice_template",
+    "instruction": "Answer the multiple choice Question from one of the Choices (choose from {numerals}) based on the {context_type}.",
+    "input_format": "{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+    "target_prefix": "Answer:\n",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "target_choice_format": "{choice_numeral}. {choice_text}",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.match_closest_option"
+    ],
+    "title_fields": [
+        "context_type"
+    ]
+}

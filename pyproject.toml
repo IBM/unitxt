@@ -36,8 +36,8 @@ target-version = "py38"
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
 "src/unitxt/blocks.py" = ["F811", "F401"]
-"tests/test_loaders.py" = ["N802", "N803"]
-"tests/test_dataclass.py" = ["F811"]
+"tests/library/test_loaders.py" = ["N802", "N803"]
+"tests/library/test_dataclass.py" = ["F811"]
 "src/unitxt/validate.py" = ["B024"]
 "src/unitxt/type_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
@@ -46,6 +46,7 @@ target-version = "py38"
 "prepare/instructions/models/llama.py" = ["RUF001"]
 "utils/hf/prepare_dataset.py" = ["T201"]
 "utils/hf/prepare_metric.py" = ["T201"]
+"utils/compare_unitxt_datasets_between_versions.py" = ["C901"]
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
@@ -92,3 +93,11 @@ line-ending = "auto"
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+[tool.codespell]
+ignore-words-list = 'rouge,ot,ans'
+check-filenames = true
+check-hidden = false

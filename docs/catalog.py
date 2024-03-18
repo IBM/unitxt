@@ -7,10 +7,11 @@ from unitxt.utils import load_json
 
 
 def write_title(title, label):
-    underline_char = "-"
-    underline = underline_char * len(title)
+    title = f"📁 {title}"
+    wrap_char = "="
+    wrap = wrap_char * (len(title) + 1)
 
-    return f".. _{label}:\n\n----------\n\n{title}\n{underline}\n\n"
+    return f".. _{label}:\n\n{wrap}\n{title}\n{wrap}\n\n"
 
 
 def custom_walk(top):
@@ -22,13 +23,39 @@ def custom_walk(top):
             yield entry
 
 
+def all_subtypes_of_artifact(artifact):
+    if (
+        artifact is None
+        or isinstance(artifact, str)
+        or isinstance(artifact, bool)
+        or isinstance(artifact, int)
+        or isinstance(artifact, float)
+    ):
+        return []
+    if isinstance(artifact, list):
+        to_return = []
+        for art in artifact:
+            to_return.extend(all_subtypes_of_artifact(art))
+        return to_return
+    # artifact is a dict
+    to_return = []
+    for key, value in artifact.items():
+        if isinstance(value, str):
+            if key == "type":
+                to_return.append(value)
+        else:
+            to_return.extend(all_subtypes_of_artifact(value))
+    return to_return
+
+
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
     type_class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
+    catalog_id = label.replace("catalog.", "")
     result = (
-        f".. note:: ID: ``{label}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
+        f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
         f"   .. code-block:: json\n\n      "
     )
     result += (
@@ -44,13 +71,29 @@ def make_content(artifact, label, all_labels):
         result += "+" * len(explanation_str) + "\n\n"
         result += artifact_class.__doc__ + "\n"
 
+    subtypes = all_subtypes_of_artifact(artifact)
+    subtypes = list(set(subtypes))
+    subtypes.remove(artifact_type)  # this was already documented
+    for subtype in subtypes:
+        subtype_class = Artifact._class_register.get(subtype)
+        subtype_class_name = subtype_class.__name__
+        if subtype_class.__doc__:
+            explanation_str = f"Explanation about `{subtype_class_name}`"
+            result += f"\n{explanation_str}\n"
+            result += "+" * len(explanation_str) + "\n\n"
+            result += subtype_class.__doc__ + "\n"
+
     references = []
     for label in all_labels:
-        if f'"{label}"' in result:
-            references.append(f":ref:`{label} <{label}>`")
+        label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
+        if f'"{label_no_catalog}"' in result:
+            references.append(f":ref:`{label_no_catalog} <{label}>`")
     if len(references) > 0:
         result += "\nReferences: " + ", ".join(references)
-    return result
+    return (
+        result
+        + "\n\n\n\n\nRead more about catalog usage :ref:`here <using_catalog>`.\n\n"
+    )
 
 
 class CatalogEntry:
@@ -78,7 +121,7 @@ class CatalogEntry:
 
     def get_label(self):
         label = self.rel_path.replace(".json", "")
-        label = label.replace("/", ".")
+        label = label.replace(os.path.sep, ".")
         if not self.is_main_catalog_entry():
             label = "catalog." + label
         return label
@@ -140,20 +183,24 @@ class CatalogEntry:
         dir_doc_path = self.get_artifact_doc_path(destination_directory)
         Path(dir_doc_path).parent.mkdir(exist_ok=True, parents=True)
         with open(dir_doc_path, "w+") as f:
-            f.write(dir_doc_content)
+            f.write(
+                dir_doc_content
+                + "\n\n\n\n\nRead more about catalog usage :ref:`here <using_catalog>`.\n\n"
+            )
 
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         label = self.get_label()
         content = make_content(artifact, label, all_labels)
 
-        underline_char = "-"
-        underline = underline_char * len(self.get_title())
+        title_char = "="
+        title = "📄 " + self.get_title()
+        title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
             f".. _{label}:\n\n"
-            f"----------\n\n"
-            f"{self.get_title()}\n"
-            f"{underline}\n\n"
+            f"{title_wrapper}\n"
+            f"{title}\n"
+            f"{title_wrapper}\n\n"
             f"{content}\n\n"
             f"|\n"
             f"|\n\n"
@@ -216,5 +263,24 @@ class CatalogDocsBuilder:
         )
 
 
-if __name__ == "__main__":
+def replace_in_file(source_str, target_str, file_path):
+    """Replace all occurrences of source_str with target_str in the file specified by file_path.
+
+    Parameters:
+    - source_str: The string to be replaced.
+    - target_str: The string to replace with.
+    - file_path: The path to the file where the replacement should occur.
+    """
+    with open(file_path) as file:
+        file_contents = file.read()
+    modified_contents = file_contents.replace(source_str, target_str)
+    with open(file_path, "w") as file:
+        file.write(modified_contents)
+
+
+def create_catalog_docs():
     CatalogDocsBuilder().run()
+
+
+if __name__ == "__main__":
+    create_catalog_docs()

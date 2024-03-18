@@ -17,8 +17,10 @@ card = TaskCard(
         RenameFields(field_to_field={"label": "answer"}),
         CastFields(fields={"answer": "int"}),
     ],
-    task="tasks.completion.multiple_choice.standard",
+    task="tasks.completion.multiple_choice",
     templates="templates.completion.multiple_choice.all",
 )
-test_card(card, debug=False)
+# We disable strict checking because garbage predictions (when using the post processor
+# that takes the first letter) is sometimes right and yields a non zero score.
+test_card(card, debug=False, strict=False)
 add_to_catalog(card, "cards.hellaswag", overwrite=True)

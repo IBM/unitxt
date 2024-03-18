@@ -30,7 +30,6 @@ card = TaskCard(
                 "type_of_classes": "contractual clauses",
             }
         ),
-        MapInstanceValues(mappers={"labels": {"[]": ["none"]}}, strict=False),
     ],
     sampler=DiverseLabelsSampler(choices="classes", labels="labels"),
     task="tasks.classification.multi_label",

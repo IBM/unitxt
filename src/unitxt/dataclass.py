@@ -1,9 +1,15 @@
 import copy
 import dataclasses
+import functools
 from abc import ABCMeta
+from inspect import Parameter, Signature
 from typing import Any, final
 
 _FIELDS = "__fields__"
+
+
+class Undefined:
+    pass
 
 
 @dataclasses.dataclass
@@ -21,7 +27,7 @@ class Field:
         origin_cls (type, optional): The original class that defined the field. Defaults to None.
     """
 
-    default: Any = None
+    default: Any = Undefined
     name: str = None
     type: type = None
     init: bool = True
@@ -51,13 +57,18 @@ class RequiredField(Field):
         self.required = True
 
 
+class MissingDefaultError(TypeError):
+    pass
+
+
 @dataclasses.dataclass
 class OptionalField(Field):
     def __post_init__(self):
         self.required = False
-        assert (
-            self.default is not None or self.default_factory is not None
-        ), "OptionalField must have default or default_factory"
+        if self.default is Undefined and self.default_factory is None:
+            raise MissingDefaultError(
+                "OptionalField must have default or default_factory"
+            )
 
 
 @dataclasses.dataclass
@@ -269,7 +280,46 @@ class DataclassMeta(ABCMeta):
     @final
     def __init__(cls, name, bases, attrs):
         super().__init__(name, bases, attrs)
-        setattr(cls, _FIELDS, get_fields(cls, attrs))
+        fields = get_fields(cls, attrs)
+        setattr(cls, _FIELDS, fields)
+        cls.update_init_signature()
+
+    def update_init_signature(cls):
+        parameters = []
+
+        for name, field in getattr(cls, _FIELDS).items():
+            if field.init and not field.internal:
+                if field.default is not Undefined:
+                    default_value = field.default
+                elif field.default_factory is not None:
+                    default_value = field.default_factory()
+                else:
+                    default_value = Parameter.empty
+
+                if isinstance(default_value, dataclasses._MISSING_TYPE):
+                    default_value = Parameter.empty
+                param = Parameter(
+                    name,
+                    Parameter.POSITIONAL_OR_KEYWORD,
+                    default=default_value,
+                    annotation=field.type,
+                )
+                parameters.append(param)
+
+        if getattr(cls, "__allow_unexpected_arguments__", False):
+            parameters.append(Parameter("_argv", Parameter.VAR_POSITIONAL))
+            parameters.append(Parameter("_kwargs", Parameter.VAR_KEYWORD))
+
+        signature = Signature(parameters, __validate_parameters__=False)
+
+        original_init = cls.__init__
+
+        @functools.wraps(original_init)
+        def custom_cls_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+
+        custom_cls_init.__signature__ = signature
+        cls.__init__ = custom_cls_init
 
 
 class Dataclass(metaclass=DataclassMeta):

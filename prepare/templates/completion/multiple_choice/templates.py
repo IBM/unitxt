@@ -1,15 +1,13 @@
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
-input_format = "{context}"
 add_to_catalog(
     MultipleChoiceTemplate(
-        input_format=input_format,
+        input_format="{context}",
         target_field="answer",
         choices_seperator="",
         source_choice_format="{choice_text}",
-        target_choice_format=" {choice_text}",
-        postprocessors=["processors.first_character"],
+        target_choice_format="{choice_text}",
     ),
     "templates.completion.multiple_choice.simple",
     overwrite=True,
@@ -29,7 +27,6 @@ add_to_catalog(
         input_format=input_format,
         target_field="answer",
         choices_seperator="\n",
-        add_numerals_as_field="numerals",
         postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.enumerated",

@@ -36,7 +36,7 @@ map_labels = {
 }
 
 card = TaskCard(
-    loader=LoadHF(path=f"SetFit/{dataset_name}"),
+    loader=LoadHF(path=f"SetFit/{dataset_name}", streaming=True),
     preprocess_steps=[
         FilterByCondition(values={"text": ""}, condition="ne"),
         SplitRandomMix(
@@ -47,7 +47,7 @@ card = TaskCard(
         AddFields(
             fields={
                 "classes": list(map_labels.values()),
-                "text_type": "sentence",
+                "text_type": "text",
                 "type_of_class": "topic",
             }
         ),
@@ -55,5 +55,6 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
 )
+
 test_card(card, debug=False)
 add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)

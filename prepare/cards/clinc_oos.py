@@ -1,3 +1,5 @@
+import sys
+
 from datasets import get_dataset_config_names, load_dataset_builder
 
 from src.unitxt import add_to_catalog
@@ -8,6 +10,7 @@ from src.unitxt.blocks import (
     RenameFields,
     TaskCard,
 )
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "clinc_oos"
@@ -15,19 +18,20 @@ dataset_name = "clinc_oos"
 for subset in get_dataset_config_names(dataset_name):
     ds_builder = load_dataset_builder(dataset_name, subset)
     classlabels = ds_builder.info.features["intent"]
-
-    mappers = {}
-    for i in range(len(classlabels.names)):
-        mappers[str(i)] = classlabels.names[i]
+    map_label_to_text = {
+        str(i): label.replace("_", " ") for i, label in enumerate(classlabels.names)
+    }
+    classes = [label.replace("_", " ") for label in classlabels.names]
 
     card = TaskCard(
         loader=LoadHF(path=dataset_name, name=subset),
         preprocess_steps=[
+            Shuffle(page_size=sys.maxsize),
             RenameFields(field_to_field={"intent": "label"}),
-            MapInstanceValues(mappers={"label": mappers}),
+            MapInstanceValues(mappers={"label": map_label_to_text}),
             AddFields(
                 fields={
-                    "classes": classlabels.names,
+                    "classes": classes,
                     "text_type": "sentence",
                     "type_of_class": "intent",
                 }

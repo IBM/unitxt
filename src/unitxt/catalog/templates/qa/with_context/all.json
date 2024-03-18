@@ -1,0 +1,11 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title"
+    ]
+}

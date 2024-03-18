@@ -1,0 +1,8 @@
+{
+    "type": "templates_list",
+    "items": [
+        "templates.qa.multiple_choice.open.fr.helm",
+        "templates.qa.multiple_choice.open.fr.lm_eval_harness",
+        "templates.qa.multiple_choice.open.fr.mmlu"
+    ]
+}

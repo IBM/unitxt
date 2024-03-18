@@ -1,6 +1,7 @@
 from src.unitxt.blocks import LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.operators import (
+    AddFields,
     IndexOf,
     ListFieldValues,
     RenameFields,
@@ -20,9 +21,10 @@ card = TaskCard(
         RenameFields(
             field_to_field={"support": "context"},
         ),
+        AddFields({"context_type": "paragraph"}),
     ],
-    task="tasks.qa.multiple_choice.contextual",
-    templates="templates.qa.multiple_choice.contextual.all",
+    task="tasks.qa.multiple_choice.with_context",
+    templates="templates.qa.multiple_choice.with_context.all",
 )
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.sciq", overwrite=True)

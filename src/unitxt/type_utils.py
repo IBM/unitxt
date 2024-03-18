@@ -481,3 +481,12 @@ def issubtype(
             issubtype(typing.Dict[str, bytes], JSON, forward_refs={'JSON': JSON})  # False
     """
     return _is_normal_subtype(normalize(left), normalize(right), forward_refs)
+
+
+def to_float_or_default(v, failure_default=0):
+    try:
+        return float(v)
+    except Exception as e:
+        if failure_default is None:
+            raise e
+        return failure_default

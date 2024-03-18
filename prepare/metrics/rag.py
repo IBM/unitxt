@@ -24,7 +24,7 @@ metrics = {
 
 predictions = ["apple", "boy", "cat"]
 references = [["apple2"], ["boys"], ["dogs"]]
-additional_inputs = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
+task_data = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
 instance_targets = [
     {"f1": 0.67, "precision": 1.0, "recall": 0.5, "score": 0.67, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
@@ -58,7 +58,7 @@ metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         CopyFields(
-            field_to_field=[("additional_inputs/context", "references")], use_query=True
+            field_to_field=[("task_data/context", "references")], use_query=True
         ),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
@@ -86,7 +86,7 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
-    additional_inputs=additional_inputs,
+    task_data=task_data,
 )
 
 metric = metrics["metrics.bert_score.deberta_xlarge_mnli"]
@@ -199,7 +199,11 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
 
-for metric_name in ["map", "mrr"]:
+for metric_name, catalog_name in [
+    ("map", "metrics.rag.map"),
+    ("mrr", "metrics.rag.mrr"),
+    ("mrr", "metrics.rag.context_correctness"),
+]:
     metric = MetricPipeline(
         main_score="score",
         preprocess_steps=[
@@ -211,11 +215,11 @@ for metric_name in ["map", "mrr"]:
         ],
         metric=f"metrics.{metric_name}",
     )
-    add_to_catalog(metric, f"metrics.rag.{metric_name}", overwrite=True)
+    add_to_catalog(metric, catalog_name, overwrite=True)
 
 
 context_relevance = MetricPipeline(
-    main_score="score",
+    main_score="perplexity",
     preprocess_steps=[
         CopyFields(field_to_field=[("contexts", "references")], use_query=True),
         CopyFields(
@@ -255,7 +259,7 @@ for new_catalog_name, base_catalog_name in [
     ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_xlarge_mnli"),
 ]:
     metric = MetricPipeline(
-        main_score="score",
+        main_score="precision",
         preprocess_steps=[
             CopyFields(field_to_field=[("contexts", "references")], use_query=True),
             CopyFields(
@@ -264,14 +268,6 @@ for new_catalog_name, base_catalog_name in [
             ),
         ],
         metric=base_catalog_name,
-        postpreprocess_steps=[
-            CopyFields(
-                field_to_field=[
-                    ("score/instance/precision", "score/instance/score"),
-                ],
-                use_query=True,
-            )
-        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
@@ -281,7 +277,7 @@ for new_catalog_name, base_catalog_name in [
     ("metrics.rag.bert_recall", "metrics.bert_score.deberta_xlarge_mnli"),
 ]:
     metric = MetricPipeline(
-        main_score="score",
+        main_score="recall",
         preprocess_steps=[
             CopyFields(
                 field_to_field=[("ground_truths", "references")], use_query=True
@@ -292,18 +288,10 @@ for new_catalog_name, base_catalog_name in [
             ),
         ],
         metric=base_catalog_name,
-        postpreprocess_steps=[
-            CopyFields(
-                field_to_field=[
-                    ("score/instance/recall", "score/instance/score"),
-                ],
-                use_query=True,
-            )
-        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
-answer_relevance = MetricPipeline(
+answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         CopyFields(field_to_field=[("question", "references")], use_query=True),
@@ -318,4 +306,4 @@ answer_relevance = MetricPipeline(
     ],
     metric="metrics.reward.deberta_v3_large_v2",
 )
-add_to_catalog(answer_relevance, "metrics.rag.answer_relevance", overwrite=True)
+add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)

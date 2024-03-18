@@ -1,19 +1,15 @@
 from typing import List
 
 from .card import TaskCard
-from .dataclass import Field, InternalField, OptionalField
+from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
-from .instructions import EmptyInstruction, Instruction
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import (
-    Augmentor,
-    NullAugmentor,
-    StreamRefiner,
-)
+from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
 
 logger = get_logger()
@@ -31,8 +27,10 @@ class AddDemosField(SpreadSplit):
 class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
-    instruction: Instruction = Field(default_factory=EmptyInstruction)
+    system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
+    metrics: List[str] = NonPositionalField(default=None)
+    postprocessors: List[str] = NonPositionalField(default=None)
 
     loader_limit: int = None
 
@@ -46,6 +44,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     demos_pool_size: int = None
     num_demos: int = 0
+    demos_removed_from_data: bool = True
 
     demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
@@ -66,7 +65,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
-                    "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers."
+                    "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
@@ -97,9 +96,44 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
 
+    def prepare_refiners(self):
+        self.train_refiner.max_instances = self.max_train_instances
+        self.train_refiner.apply_to_streams = ["train"]
+        self.steps.append(self.train_refiner)
+
+        self.validation_refiner.max_instances = self.max_validation_instances
+        self.validation_refiner.apply_to_streams = ["validation"]
+        self.steps.append(self.validation_refiner)
+
+        self.test_refiner.max_instances = self.max_test_instances
+        self.test_refiner.apply_to_streams = ["test"]
+        self.steps.append(self.test_refiner)
+
+    def prepare_metrics_and_postprocessors(self):
+        if self.postprocessors is None:
+            postprocessors = self.template.get_postprocessors()
+        else:
+            postprocessors = self.postprocessors
+
+        if self.metrics is None:
+            metrics = self.card.task.metrics
+        else:
+            metrics = self.metrics
+        return metrics, postprocessors
+
     def prepare(self):
         self.steps = [
             self.card.loader,
+            AddFields(
+                fields={
+                    "recipe_metadata": {
+                        "card": self.card,
+                        "template": self.template,
+                        "system_prompt": self.system_prompt,
+                        "format": self.format,
+                    }
+                }
+            ),
         ]
 
         if self.loader_limit:
@@ -122,6 +156,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     from_split=self.demos_taken_from,
                     to_split_names=[self.demos_pool_name, self.demos_taken_from],
                     to_split_sizes=[int(self.demos_pool_size)],
+                    remove_targets_from_source_split=self.demos_removed_from_data,
                 )
             )
 
@@ -136,17 +171,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
             self.sampler.set_size(self.num_demos)
 
-        self.train_refiner.max_instances = self.max_train_instances
-        self.train_refiner.apply_to_streams = ["train"]
-        self.steps.append(self.train_refiner)
-
-        self.validation_refiner.max_instances = self.max_validation_instances
-        self.validation_refiner.apply_to_streams = ["validation"]
-        self.steps.append(self.validation_refiner)
-
-        self.test_refiner.max_instances = self.max_test_instances
-        self.test_refiner.apply_to_streams = ["test"]
-        self.steps.append(self.test_refiner)
+        self.prepare_refiners()
 
         self.steps.append(self.template)
         if self.num_demos > 0:
@@ -157,24 +182,23 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     sampler=self.sampler,
                 )
             )
-        self.steps.append(self.instruction)
+        self.steps.append(self.system_prompt)
         self.steps.append(self.format)
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postprocessors = self.template.get_postprocessors()
+        metrics, postprocessors = self.prepare_metrics_and_postprocessors()
 
         self.steps.append(
             ToUnitxtGroup(
                 group="unitxt",
-                metrics=self.card.task.metrics,
+                metrics=metrics,
                 postprocessors=postprocessors,
             )
         )
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
-    instruction_card_index: int = None
     template_card_index: int = None
 
     def prepare(self):
@@ -189,17 +213,12 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 self.template = self.card.templates[self.template_card_index]
             except Exception as e:
                 if isinstance(self.card.templates, dict):
-                    options = self.card.templates.keys()
+                    options = list(self.card.templates.keys())
                 else:
                     options = list(range(0, len(self.card.templates)))
                 raise ValueError(
-                    f"card_template_index '{self.template_card_index}' is not in card. Available options: {options}"
+                    f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
                 ) from e
-        assert (
-            self.instruction_card_index is None or self.instruction is None
-        ), "Specify either instruction or instruction_card_index"
-        if self.instruction_card_index is not None:
-            self.instruction = self.card.instructions[int(self.instruction_card_index)]
 
         super().prepare()
 
@@ -214,9 +233,11 @@ class StandardRecipe(StandardRecipeWithIndexes):
     Attributes:
         card (TaskCard): TaskCard object associated with the recipe.
         template (Template, optional): Template object to be used for the recipe.
-        instruction (Instruction, optional): Instruction object to be used for the recipe.
+        system_prompt (SystemPrompt, optional): SystemPrompt object to be used for the recipe.
         loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
+        metrics (List[str]): list of catalog metrics to use with this recipe.
+        postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.
@@ -228,6 +249,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_pool_name (str, optional): Name of the demos pool. Default is "demos_pool".
         demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
         demos_field (str, optional): Field name for demos. Default is "demos".
+        demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
         sampler (Sampler, optional): Sampler object to be used in the recipe.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
@@ -241,8 +263,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
             by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
-        AssertionError: If both template and template_card_index, or instruction and instruction_card_index
-            are specified at the same time.
+        AssertionError: If both template and template_card_index are specified at the same time.
     """
 
     pass
