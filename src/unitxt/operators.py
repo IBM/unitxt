@@ -35,7 +35,6 @@ General Operaotrs List:
 import collections
 import copy
 import operator
-import os
 import uuid
 import zipfile
 from abc import abstractmethod
@@ -472,17 +471,17 @@ class RenameFields(FieldOperator):
                 not is_subpath(to_field, from_field)
             ):
                 dict_delete(res, from_field)
-                if self.use_query:
-                    from_field_components = list(
-                        os.path.normpath(from_field).split(os.path.sep)
-                    )
-                    while len(from_field_components) > 1:
-                        from_field_components.pop()
-                        parent = dict_get(res, os.path.sep.join(from_field_components))
-                        if isinstance(parent, dict) and not parent:
-                            dict_delete(res, os.path.sep.join(from_field_components))
-                        else:
-                            break
+                # if self.use_query:
+                #     from_field_components = list(
+                #         os.path.normpath(from_field).split(os.path.sep)
+                #     )
+                #     while len(from_field_components) > 1:
+                #         from_field_components.pop()
+                #         parent = dict_get(res, os.path.sep.join(from_field_components))
+                #         if isinstance(parent, dict) and not parent:
+                #             dict_delete(res, os.path.sep.join(from_field_components))
+                #         else:
+                #             break
 
         return res
 
