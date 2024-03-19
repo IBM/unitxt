@@ -1,4 +1,7 @@
 {
     "type": "reward",
     "model_name": "OpenAssistant/reward-model-deberta-v3-large-v2"
+    "system_prompt" :
+    "format_prompt" :
+    "template" :
 }
