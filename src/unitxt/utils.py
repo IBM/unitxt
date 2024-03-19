@@ -4,6 +4,8 @@ from typing import Any, Dict
 
 import pkg_resources
 
+from .text_utils import is_made_of_sub_strings
+
 
 class Singleton(type):
     _instances = {}
@@ -82,3 +84,10 @@ def is_module_available(module_name):
         return True
     except ImportError:
         return False
+
+
+def safe_eval(expression, context, allowd_tokens):
+    allowd_sub_strings = list(context.keys()) + allowd_tokens
+    if is_made_of_sub_strings(expression, allowd_sub_strings):
+        return eval(expression, {"__builtins__": {}}, context)
+    raise ValueError(f"Unreocgnized Expression: {expression}")
