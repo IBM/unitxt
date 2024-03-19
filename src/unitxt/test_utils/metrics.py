@@ -32,13 +32,25 @@ def apply_metric(
     predictions: List[Any],
     references: List[List[Any]],
     task_data: Optional[List[dict]] = None,
+    perform_validations_in_apply_metric=True,
 ):
-    assert isoftype(metric, Metric), "metric must be a Metric"
-    assert isoftype(predictions, List[Any]), "predictions must be a list"
-    assert isoftype(references, List[List[Any]]), "references must be a list of lists"
-    assert task_data is None or isoftype(
-        task_data, List[Any]
-    ), "task_data must be a list"
+    if perform_validations_in_apply_metric:
+        assert isoftype(metric, Metric), "metric must be a Metric"
+        assert isoftype(predictions, List[Any]), "predictions must be a list"
+        assert isoftype(
+            references, List[List[Any]]
+        ), "references must be a list of lists"
+        assert len(references) == len(
+            predictions
+        ), "number of references and predictions elements must be equal"
+        assert task_data is None or (
+            len(references) == len(task_data)
+        ), "number of references and task data elements must be equal"
+
+        assert task_data is None or isoftype(
+            task_data, List[Any]
+        ), "task_data must be a list"
+
     if task_data is not None:
         test_iterable = [
             {

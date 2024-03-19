@@ -152,13 +152,38 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_errors(self):
         metric = F1Micro()
+
+        references = [["cat"]]
+        predictions = [None]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Prediction is not allowed to be None in F1Micro metric. Received prediction of type <class 'NoneType'>: None",
+        )
+
+        references = [["cat"], "dog"]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            # disable validationd done in apply_metric
+            apply_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                perform_validations_in_apply_metric=False,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Expecting a list of references for each prediction in F1Micro metric. Received reference of type <class 'str'>: dog",
+        )
+
         references = [["cat", "dog"], ["dog"]]
         predictions = ["cat", "dog"]
         with self.assertRaises(ValueError) as cm:
             apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertEqual(
             str(cm.exception),
-            "Only a single reference per prediction is allowed in F1Micro metric. Received reference: ['cat', 'dog']",
+            "Expecting a list with a single reference per prediction in F1Micro metric. Received a list with multiple references: ['cat', 'dog']",
         )
         references = [[["cat", "dog"]], ["dog"]]
         predictions = ["cat", "dog"]

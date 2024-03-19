@@ -103,6 +103,7 @@ class Metric(Artifact):
             raise ValueError(
                 f"Metric {self.get_metric_name()} should receive a list of predictions. Received references of type {type(references)}: {references}"
             )
+
         if len(references) != len(predictions):
             raise ValueError(
                 f"references size ({len(references)})"
@@ -129,11 +130,11 @@ class Metric(Artifact):
     def _validate_reference(self, prediction_type, reference):
         if not isoftype(reference, List[Any]):
             raise ValueError(
-                f"Expecting a reference list in {self.get_metric_name()} metric. Received reference of type {type(reference)}: {reference}"
+                f"Expecting a list of references for each prediction in {self.get_metric_name()} metric. Received reference of type {type(reference)}: {reference}"
             )
         if self.single_reference_per_prediction and not len(reference) == 1:
             raise ValueError(
-                f"Only a single reference per prediction is allowed in {self.get_metric_name()} metric. Received reference: {reference}"
+                f"Expecting a list with a single reference per prediction in {self.get_metric_name()} metric. Received a list with multiple references: {reference}"
             )
         for ref in reference:
             if not isoftype(ref, prediction_type):
