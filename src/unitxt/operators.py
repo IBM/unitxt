@@ -1911,14 +1911,21 @@ class DuplicateInstances(SingleStreamOperator):
 
     Attributes:
         num_duplications (int): How many times each instance should be duplicated (1 means no duplication).
+        duplication_index_field (bool):
+            If True, then additional field 'duplication_id' is added to each duplicated instance, which
+            contains id of a given duplication. Defaults to False.
     """
 
     num_duplications: int
+    duplication_index_field: bool = False
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         for instance in stream:
-            for _ in range(self.num_duplications):
-                yield deepcopy(instance)
+            for idx in range(self.num_duplications):
+                duplicate = deepcopy(instance)
+                if self.duplication_index_field:
+                    duplicate.update({"duplication_id": idx})
+                yield duplicate
 
     def verify(self):
         if not isinstance(self.num_duplications, int) or self.num_duplications < 1:
