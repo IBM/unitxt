@@ -2454,7 +2454,7 @@ class TestOperators(UnitxtTestCase):
 
         check_operator(
             operator=DuplicateInstances(
-                num_duplications=2, duplication_index_field=True
+                num_duplications=2, duplication_index_field="duplication_id"
             ),
             inputs=inputs,
             targets=targets,
