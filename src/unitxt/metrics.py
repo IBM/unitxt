@@ -78,21 +78,11 @@ class Metric(Artifact):
     # and references.  Example: "List[str]", "List[Dict]"", "string"
     prediction_type: string = "Any"
 
-    # Most metrics do not allow None as predictions, but some do (e.g. ndcg)
-    allow_none_prediction: bool = False
-
     # Standard metrics can receive multiple references per predictions (in a list)
     # Some metrics support only a single reference per prediction (one element in the list)
     single_reference_per_prediction: bool = False
 
-    # Some metrics (e.g. HF metrics) do not follow the standard unitxt metric API
-    # where references are passed as list (e.g. in spearmanr references is a scalar).
-    # In this case, and other special cases, we can disable type validation.
-    disable_type_validation: bool = False
-
     def _validate_references_and_prediction(self, references, predictions):
-        if self.disable_type_validation:
-            return
         prediction_type = self.get_prediction_type()
         if not isoftype(predictions, List[Any]):
             raise ValueError(
@@ -117,12 +107,7 @@ class Metric(Artifact):
             self._validate_prediction(prediction_type, prediction)
 
     def _validate_prediction(self, prediction_type, prediction):
-        if prediction is None:
-            if not self.allow_none_prediction:
-                raise ValueError(
-                    f"Prediction is not allowed to be None in {self.get_metric_name()} metric. Received prediction of type {type(prediction)}: {prediction}"
-                )
-        elif not isoftype(prediction, prediction_type):
+        if not isoftype(prediction, prediction_type):
             raise ValueError(
                 f"Each prediction is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(prediction)}: {prediction}"
             )
@@ -150,15 +135,16 @@ class Metric(Artifact):
             "float",
             "List[str]",
             "List[float]",
-            "Dict",
             "Dict[str,str]",
+            "Dict[str,Any]",
             "List[Tuple[str,str]]",
         ]:
             if self.prediction_type == type:
                 return eval(type)
-
+            if self.prediction_type == f"Optional[{type}]":
+                return eval(f"Optional[{type}]")
         raise ValueError(
-            f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's 'disable_type_validation' to 'True'"
+            f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
         )
 
     def get_metric_name(self):
@@ -1457,9 +1443,14 @@ class Spearmanr(HuggingfaceMetric):
     hf_metric_name = "spearmanr"
     main_score = "spearmanr"
     process_single_instances = False
-    disable_type_validation = (
-        True  # Spearman is not a standard metric - requires MetricPipeline
-    )
+    prediction_type = "float"
+
+    # Spearmanr references are not list
+    def _validate_reference(self, prediction_type, reference):
+        if not isoftype(reference, prediction_type):
+            raise ValueError(
+                f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
+            )
 
 
 class KendallTauMetric(GlobalMetric):
@@ -2256,6 +2247,21 @@ class Perplexity(BulkInstanceMetric):
             return shifted_logits, shifted_labels
 
 
+class Squad(HuggingfaceMetric):
+    hf_metric_name = "squad"
+    main_score = "f1"
+    scale = 100.0
+    scaled_fields = ["f1", "exact_match"]
+    prediction_type = "Dict[str,Any]"
+
+    # Squad references are not list
+    def _validate_reference(self, prediction_type, reference):
+        if not isoftype(reference, prediction_type):
+            raise ValueError(
+                f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
+            )
+
+
 class NDCG(GlobalMetric):
     """Normalized Discounted Cumulative Gain: measures the quality of ranking with respect to ground truth ranking scores.
 
@@ -2275,8 +2281,7 @@ class NDCG(GlobalMetric):
 
     _requirements_list: List[str] = ["sklearn"]
     single_reference_per_prediction = True
-    prediction_type = "float"
-    disable_type_validation = True
+    prediction_type = "Optional[float]"
 
     def prepare(self):
         from sklearn.metrics import ndcg_score
@@ -2293,6 +2298,7 @@ class NDCG(GlobalMetric):
         from collections import defaultdict
 
         query_to_predictions_and_references = defaultdict(lambda: [[], []])
+        references = [reference[0] for reference in references]
         for reference, pred, inputs_dict in zip(references, predictions, task_data):
             query = inputs_dict.get("query")
             query_to_predictions_and_references[query][0].append(pred)

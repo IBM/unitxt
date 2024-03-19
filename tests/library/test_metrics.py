@@ -159,7 +159,7 @@ class TestMetrics(UnitxtTestCase):
             apply_metric(metric=metric, predictions=predictions, references=references)
         self.assertEqual(
             str(cm.exception),
-            "Prediction is not allowed to be None in F1Micro metric. Received prediction of type <class 'NoneType'>: None",
+            "Each prediction is expected to be of type 'str' in F1Micro metric. Received prediction of type <class 'NoneType'>: None",
         )
 
         references = [["cat"], "dog"]
