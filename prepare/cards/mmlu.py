@@ -80,5 +80,4 @@ def main():
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 
-if __name__ == "__main__":
-    main()
+main()

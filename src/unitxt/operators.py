@@ -1904,3 +1904,25 @@ class ExtractZipFile(SideEffectOperator):
     def process(self):
         with zipfile.ZipFile(self.zip_file) as zf:
             zf.extractall(self.target_dir)
+
+
+class DuplicateInstances(SingleStreamOperator):
+    """Operator which duplicates each instance in stream a given number of times.
+
+    Attributes:
+        num_duplications (int): How many times each instance should be duplicated (1 means no duplication).
+    """
+
+    num_duplications: int
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for instance in stream:
+            for _ in range(self.num_duplications):
+                yield deepcopy(instance)
+
+    def verify(self):
+        if not isinstance(self.num_duplications, int) or self.num_duplications < 1:
+            raise ValueError(
+                f"num_duplications must be an integer equal to or greater than 1. "
+                f"Got: {self.num_duplications}."
+            )
