@@ -452,7 +452,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Only a single reference per prediction is allowed in F1MicroMultiLabel metric. Received reference: ['A', 'B']",
+            "Expecting a list with a single reference per prediction in F1MicroMultiLabel metric. Received a list with multiple references: ['A', 'B']",
         )
 
         references3 = [[["A"]], [["BC"]], [["C"]], [["123"]]]  # OK references
@@ -478,13 +478,6 @@ class TestMetrics(UnitxtTestCase):
 
         references = [[[]]]
         predictions = [["x", "y"]]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
-        references = [[[]]]
-        predictions = [[], "x", "y"]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
