@@ -417,8 +417,6 @@ class InstanceFieldOperator(StreamInstanceOperator):
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
                 ) from e
-            if is_subpath(from_field, to_field) or is_subpath(to_field, from_field):
-                dict_delete(instance, from_field)
             dict_set(
                 instance,
                 to_field,
@@ -470,18 +468,7 @@ class RenameFields(FieldOperator):
             if (not is_subpath(from_field, to_field)) and (
                 not is_subpath(to_field, from_field)
             ):
-                dict_delete(res, from_field)
-                # if self.use_query:
-                #     from_field_components = list(
-                #         os.path.normpath(from_field).split(os.path.sep)
-                #     )
-                #     while len(from_field_components) > 1:
-                #         from_field_components.pop()
-                #         parent = dict_get(res, os.path.sep.join(from_field_components))
-                #         if isinstance(parent, dict) and not parent:
-                #             dict_delete(res, os.path.sep.join(from_field_components))
-                #         else:
-                #             break
+                dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
 
@@ -1479,10 +1466,10 @@ class RemoveValues(FieldOperator):
 
     def verify(self):
         super().verify()
-        if self.process_every_value:
-            raise ValueError(
-                "'process_every_value=True' is not supported in RemoveValues operator"
-            )
+        # if self.process_every_value:
+        #     raise ValueError(
+        #         "'process_every_value=True' is not supported in RemoveValues operator"
+        #     )
 
         if not isinstance(self.unallowed_values, list):
             raise ValueError(
@@ -1722,20 +1709,34 @@ class EncodeLabels(StreamInstanceOperator):
         self.encoder = {}
         return super()._process_multi_stream(multi_stream)
 
+    def encode_values(self, values) -> Any:
+        assert isoftype(values, List[str]) or isinstance(
+            values, str
+        ), "expected a string or a list of strings, received {values}"
+        old_values_was_a_list = isinstance(values, list)
+        if not isinstance(values, list):
+            values = [values]
+        for value in values:
+            if value not in self.encoder:
+                self.encoder[value] = len(self.encoder)
+        new_values = [self.encoder[value] for value in values]
+        if not old_values_was_a_list:
+            new_values = new_values[0]
+        return new_values
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name in self.fields:
-            values = dict_get(instance, field_name, use_dpath=True)
-            if not isinstance(values, list):
-                values = [values]
-            for value in values:
-                if value not in self.encoder:
-                    self.encoder[value] = len(self.encoder)
-            new_values = [self.encoder[value] for value in values]
-            dict_set(
-                instance, field_name, new_values, use_dpath=True, set_multiple=True
-            )
+            new_values = []
+            original_values = dict_get(instance, field_name, use_dpath=True)
+            if isoftype(original_values, List[List[str]]):  # as for classic references
+                for values in original_values:
+                    new_values.append(self.encode_values(values))
+            else:
+                new_values = self.encode_values(original_values)
+
+            dict_set(instance, field_name, new_values, use_dpath=True)
 
         return instance
 

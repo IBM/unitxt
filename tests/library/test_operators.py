@@ -575,27 +575,27 @@ class TestOperators(UnitxtTestCase):
 
     def test_remove_none(self):
         inputs = [
-            {"references": [["none"]]},
-            {"references": [["news", "games"]]},
+            {"references": [["none"], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
         ]
 
         targets = [
-            {"references": [[]]},
-            {"references": [["news", "games"]]},
+            {"references": [[], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
         ]
 
-        with self.assertRaises(ValueError):
-            check_operator(
-                operator=RemoveValues(
-                    field="references/*",
-                    unallowed_values=["none"],
-                    process_every_value=False,
-                    use_query=True,
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
+        # with self.assertRaises(ValueError):
+        #     check_operator(
+        #         operator=RemoveValues(
+        #             field="references",
+        #             unallowed_values=["none"],
+        #             process_every_value=True,
+        #             use_query=True,
+        #         ),
+        #         inputs=inputs,
+        #         targets=targets,
+        #         tester=self,
+        #     )
 
         check_operator(
             operator=RemoveValues(
@@ -606,6 +606,36 @@ class TestOperators(UnitxtTestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references/1",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
+            ),
+            inputs=inputs,
+            targets=[
+                {"references": [["none"], []]},
+                {"references": [["news", "games"], []]},
+            ],
+            tester=self,
+        )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references",
+                unallowed_values=["none"],
+                use_query=True,
+                process_every_value=True,
+            ),
+            inputs=inputs,
+            targets=[
+                {"references": [[], []]},
+                {"references": [["news", "games"], []]},
+            ],
             tester=self,
         )
 
@@ -639,19 +669,19 @@ class TestOperators(UnitxtTestCase):
             str(cm.exception), "The unallowed_values is not a list but '3'"
         )
 
-        with self.assertRaises(ValueError) as cm:
-            check_operator(
-                operator=RemoveValues(
-                    field="label", unallowed_values=["3"], process_every_value=True
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "'process_every_value=True' is not supported in RemoveValues operator",
-        )
+        # with self.assertRaises(ValueError) as cm:
+        #     check_operator(
+        #         operator=RemoveValues(
+        #             field="label", unallowed_values=["3"], process_every_value=True
+        #         ),
+        #         inputs=inputs,
+        #         targets=targets,
+        #         tester=self,
+        #     )
+        # self.assertEqual(
+        #     str(cm.exception),
+        #     "'process_every_value=True' is not supported in RemoveValues operator",
+        # )
 
         inputs = [
             {"label": "b"},
@@ -2037,7 +2067,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            operator=EncodeLabels(fields=["prediction", "references"]),
             inputs=inputs,
             targets=targets,
             tester=self,
