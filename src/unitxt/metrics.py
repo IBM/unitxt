@@ -84,6 +84,10 @@ class Metric(Artifact):
     # Some metrics support only a single reference per prediction (one element in the list)
     single_reference_per_prediction: bool = False
 
+    # Used to store the parsed prediction type and avoid
+    # parsing on every use
+    _parsed_prediction_type = None
+
     def _validate_references_and_prediction(self, references, predictions):
         if not isoftype(predictions, List[Any]):
             raise ValueError(
@@ -135,12 +139,16 @@ class Metric(Artifact):
             )
             return Any
         try:
-            type = parse_type_string(self.prediction_type)
+            if self._parsed_prediction_type is not None:
+                return self._parsed_prediction_type
+
+            self._parsed_prediction_type = parse_type_string(self.prediction_type)
+            return self._parsed_prediction_type
+
         except ValueError:
             raise ValueError(
                 "Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
             ) from None
-        return type
 
     def get_metric_name(self):
         if self.artifact_identifier is not None:
