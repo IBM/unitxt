@@ -133,11 +133,13 @@ class MatchClosestOption(InstanceFieldOperator):
         return get_close_matches(value, options, n=1, cutoff=0.0)[0]
 
 
-def process_instance_value(self, value, instance):
-    options = instance[self.options_field]
-    # Get the closest match; n=1 returns the single closest match
-    closest_match = get_close_matches(value, options, n=1, cutoff=0)
-    return closest_match[0] if closest_match else None
+class DetectNoResponse(InstanceFieldOperator):
+    # no_response_string_field: str = "no_response_string"
+
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        # no_response_string = instance["task_data"][self.no_response_string_field]
+        # response_detected = value == no_response_string
+        return {instance["task_data"]["response_field"]: instance["task_data"]}
 
 
 class Substring(FieldOperator):
@@ -214,4 +216,44 @@ class StringOrNotString(FieldOperator):
             return "not " + self.string.lower()
         if self.string.lower() in text.lower():
             return self.string.lower()
+        return text
+
+
+class ExtractAnswerability(FieldOperator):
+    unanswerable_match_strings: list[str] = [
+        "i don't know",
+        "i do not know",
+        "can not provide an answer",
+        "can't provide an answer",
+        "cannot provide an answer",
+        "cannot provide information",
+        "can not provide information",
+        "can't provide information",
+        "i don't have enough information",
+        "i do not have enough information",
+        "i don't have that information",
+        "i do not have that information",
+        "i am not able to answer that question",
+        "i do not have any information",
+        "i don't have any information",
+        "i do not have information",
+        "i don't have information",
+        "i can't answer",
+        "i cannot answer",
+        "i can not answer",
+        "i do not have ",
+        "i don't have ",
+        "i am a virtual assistant who can only help you with information",
+    ]
+
+    def process_value(self, text: Any) -> Any:
+        is_answerable_prediction = not any(
+            unanswerable_match_string.lower() in text.lower()
+            for unanswerable_match_string in self.unanswerable_match_strings
+        )
+        return {
+            "prediction": text,
+            "is_answerable_prediction": is_answerable_prediction,
+        }
+
         return text
