@@ -933,6 +933,20 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class UnsortedListExactMatch(InstanceMetric):
+    reduction_map = {"mean": ["unsorted_list_exact_match"]}
+    main_score = "unsorted_list_exact_match"
+    ci_scores = ["unsorted_list_exact_match"]
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        result = {self.main_score: float(sorted(prediction) == sorted(references[0]))}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class StringContainment(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"

@@ -38,6 +38,7 @@ from src.unitxt.metrics import (
     RocAuc,
     Rouge,
     TokenOverlap,
+    UnsortedListExactMatch,
 )
 from src.unitxt.test_utils.metrics import apply_metric
 from tests.utils import UnitxtTestCase
@@ -104,6 +105,51 @@ GROUPED_INSTANCE_ADDL_INPUTS = [
 
 
 class TestMetrics(UnitxtTestCase):
+    def test_unsorted_list_exact_match(self):
+        metric = UnsortedListExactMatch()
+
+        predictions = [["A", "B"], ["B", "A"], ["A", "B", "C"]]
+        references = [[["A", "B"]], [["A", "B"]], [["A", "B", "D"]]]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "unsorted_list_exact_match": 2 / 3,
+            "score": 2 / 3,
+            "score_name": "unsorted_list_exact_match",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {
+                "unsorted_list_exact_match": 1.0,
+                "score": 1.0,
+                "score_name": "unsorted_list_exact_match",
+            },
+            {
+                "unsorted_list_exact_match": 1.0,
+                "score": 1.0,
+                "score_name": "unsorted_list_exact_match",
+            },
+            {
+                "unsorted_list_exact_match": 0.0,
+                "score": 0.0,
+                "score_name": "unsorted_list_exact_match",
+            },
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
     def test_accuracy(self):
         metric = Accuracy()
 
