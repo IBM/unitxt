@@ -8,7 +8,6 @@ from src.unitxt.test_utils.metrics import test_metric
 # Normalized Discounted Cumulative Gain
 metric = MetricPipeline(
     main_score="nDCG",
-    prediction_type="str",
     single_reference_per_prediction=True,
     preprocess_steps=[
         CastFields(

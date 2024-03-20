@@ -1,7 +1,6 @@
 {
     "type": "metric_pipeline",
     "main_score": "f1",
-    "prediction_type": "str",
     "preprocess_steps": [
         {
             "type": "add_id"

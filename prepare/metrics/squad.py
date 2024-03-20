@@ -5,7 +5,6 @@ from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="f1",
-    prediction_type="str",
     preprocess_steps=[
         AddID(),
         AddFields(

@@ -29,7 +29,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .type_utils import isoftype, to_float_or_default
+from .type_utils import get_type_from_string, isoftype, to_float_or_default
 
 logger = get_logger()
 settings = get_settings()
@@ -75,15 +75,16 @@ class Metric(Artifact):
         pass
 
     # Override 'prediction_type' with the expected type of predictions
-    # and references.  Example: "List[str]", "List[Dict]"", "string"
-    prediction_type: string = "Any"
+    # and references.  Example: "List[str]", "List[Dict]"", "string".
+    # If left with default "None", a warning will be displayed.
+    # In future version of unitxt, this will be an error.
+    prediction_type: str = None
 
     # Standard metrics can receive multiple references per predictions (in a list)
     # Some metrics support only a single reference per prediction (one element in the list)
     single_reference_per_prediction: bool = False
 
     def _validate_references_and_prediction(self, references, predictions):
-        prediction_type = self.get_prediction_type()
         if not isoftype(predictions, List[Any]):
             raise ValueError(
                 f"Metric {self.get_metric_name()} should receive a list of predictions {self.get_metric_name()}.  Received predictions of type {type(predictions)}: {predictions}"
@@ -101,18 +102,18 @@ class Metric(Artifact):
             )
 
         for reference in references:
-            self._validate_reference(prediction_type, reference)
+            self._validate_reference(reference)
 
         for prediction in predictions:
-            self._validate_prediction(prediction_type, prediction)
+            self._validate_prediction(prediction)
 
-    def _validate_prediction(self, prediction_type, prediction):
-        if not isoftype(prediction, prediction_type):
+    def _validate_prediction(self, prediction):
+        if not isoftype(prediction, self.get_prediction_type()):
             raise ValueError(
                 f"Each prediction is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(prediction)}: {prediction}"
             )
 
-    def _validate_reference(self, prediction_type, reference):
+    def _validate_reference(self, reference):
         if not isoftype(reference, List[Any]):
             raise ValueError(
                 f"Expecting a list of references for each prediction in {self.get_metric_name()} metric. Received reference of type {type(reference)}: {reference}"
@@ -122,30 +123,23 @@ class Metric(Artifact):
                 f"Expecting a list with a single reference per prediction in {self.get_metric_name()} metric. Received a list with multiple references: {reference}"
             )
         for ref in reference:
-            if not isoftype(ref, prediction_type):
+            if not isoftype(ref, self.get_prediction_type()):
                 raise ValueError(
                     f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received reference of type {type(ref)}: {ref}"
                 )
 
     def get_prediction_type(self):
-        for type in [
-            "Any",
-            "str",
-            "int",
-            "float",
-            "List[str]",
-            "List[float]",
-            "Dict[str,str]",
-            "Dict[str,Any]",
-            "List[Tuple[str,str]]",
-        ]:
-            if self.prediction_type == type:
-                return eval(type)
-            if self.prediction_type == f"Optional[{type}]":
-                return eval(f"Optional[{type}]")
-        raise ValueError(
-            f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
-        )
+        if self.prediction_type is None:
+            logger.warning(
+                "{self.get_metric_name()} metric does not set the 'prediction_type' parameter so input type checking is not performed. Set the prediction type to the expected prediction type (e.g. 'str', 'List[str]', or 'Any'). In future version of unitxt this will raise an exception."
+            )
+            return Any
+        type = get_type_from_string(self.prediction_type)
+        if type is None:
+            raise ValueError(
+                f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
+            )
+        return type
 
     def get_metric_name(self):
         if self.artifact_identifier is not None:
@@ -539,7 +533,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instance["task_data"] if "task_data" in instance else {}
             for instance in stream
         ]
-
+        self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
         instance_scores = self.compute(
             references=references,
@@ -804,6 +798,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             refs, pred = instance["references"], instance["prediction"]
+            self._validate_prediction(pred)
+            self._validate_reference(refs)
             task_data = instance["task_data"] if "task_data" in instance else {}
 
             instance_score = self.compute(
@@ -1880,25 +1876,11 @@ class Reward(BulkInstanceMetric):
 
 
 class LlamaIndexCorrectness(InstanceMetric):
-    """LlamaIndex based metric class for evaluating correctness.
-
-    Attributes:
-        reduction_map (dict): A dictionary specifying the reduction method for the metric.
-        main_score (str): The main score used for evaluation.
-        _requirements_list (List[str]): A list specifying any additional requirements for the metric.
-
-    Methods:
-        prepare(self): Initialization method for the metric.
-        compute(self, references, predictions, additional_inputs): Method to compute the metric.
-
-    Usage:
-        metric = LlamaIndexCorrectnessMetric()
-        scores = metric.compute(references, prediction, additional_inputs)
-    """
+    """LlamaIndex based metric class for evaluating correctness."""
 
     model_name: str = ""
     main_score: str = ""
-
+    prediction_type: str = "str"
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
     anthropic_models: List[
@@ -2022,9 +2004,9 @@ class Perplexity(BulkInstanceMetric):
 
     main_score = "perplexity"
     reduction_map = {"mean": ["perplexity"]}
+    prediction_type = "str"
 
     perplexity_prompt: str
-
     batch_size: int = 32
     model_name: str
 
@@ -2254,9 +2236,10 @@ class Squad(HuggingfaceMetric):
     scaled_fields = ["f1", "exact_match"]
     prediction_type = "Dict[str,Any]"
 
-    # Squad references are not list
-    def _validate_reference(self, prediction_type, reference):
-        if not isoftype(reference, prediction_type):
+    # Squad references are not list, but a dict that contain a field called 'answers/text'
+    # which is the list of references
+    def _validate_reference(self, reference):
+        if not isoftype(reference, self.get_prediction_type()):
             raise ValueError(
                 f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
             )
@@ -2329,10 +2312,13 @@ class NDCG(GlobalMetric):
 
 
 class RetrievalMetric(InstanceMetric):
+    prediction_type = "List[str]"
+    single_reference_per_prediction = True
+
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # digest input
         pred_ids: List[Any] = prediction
-        ref_ids: List[Any] = list(dict.fromkeys(references))
+        ref_ids: List[Any] = list(dict.fromkeys(references[0]))
 
         # relevance_at_k: 1-based dictionary of indicators (0/1), telling whether
         # the doc id retrieved at position k (assuming it is 1-based, so k starts

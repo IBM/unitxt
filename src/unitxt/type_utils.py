@@ -490,3 +490,29 @@ def to_float_or_default(v, failure_default=0):
         if failure_default is None:
             raise e
         return failure_default
+
+
+def init_string_to_type_map():
+    string_to_type_map = {}
+    for type in [
+        "Any",
+        "str",
+        "int",
+        "float",
+        "List[int]",
+        "List[str]",
+        "List[float]",
+        "Dict[str,str]",
+        "Dict[str,Any]",
+        "List[Tuple[str,str]]",
+    ]:
+        string_to_type_map[type] = eval(f"{type}")
+        string_to_type_map[f"Optional[{type}]"] = eval(f"Optional[{type}]")
+    return string_to_type_map
+
+
+string_to_type_map = init_string_to_type_map()
+
+
+def get_type_from_string(type_as_string: str):
+    return string_to_type_map.get(type_as_string, None)

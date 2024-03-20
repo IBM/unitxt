@@ -7,7 +7,6 @@ from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="spearmanr",
-    prediction_type="float",
     preprocess_steps=[
         CopyFields(field_to_field=[("references/0", "references")], use_query=True),
         CastFields(
