@@ -31,10 +31,6 @@
             "process_every_value": true
         },
         {
-            "type": "duplicate_by_sub_lists",
-            "field": "dialog"
-        },
-        {
             "type": "get",
             "field": "dialog",
             "item": -1,
