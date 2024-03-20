@@ -14,7 +14,7 @@ class TestCollectionsOperators(UnitxtTestCase):
     def test_dictify(self):
         operator = Dictify(field="tuple", with_keys=["a", "b"], to_field="dict")
 
-        inputs = [{"tuples": [(1, 2), (3, 4)]}]
+        inputs = [{"tuple": (1, 2)}]
 
         targets = [{"tuple": (1, 2), "dict": {"a": 1, "b": 2}}]
 
