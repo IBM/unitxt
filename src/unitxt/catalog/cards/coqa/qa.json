@@ -13,30 +13,52 @@
             }
         },
         {
-            "type": "lists_to_list_of_dicts",
+            "type": "zip_field_values",
             "fields": [
                 "questions",
                 "answers/input_text"
-            ],
-            "with_keys": [
-                "user",
-                "system"
             ],
             "to_field": "dialog",
             "use_query": true
         },
         {
-            "type": "dialog_serializer",
+            "type": "dictify",
             "field": "dialog",
-            "to_field": "context",
-            "context_field": "story",
-            "last_user_turn_to_field": "question",
-            "last_system_turn_to_field": "answer"
+            "with_keys": [
+                "user",
+                "system"
+            ],
+            "process_every_value": true
         },
         {
-            "type": "wrap_with_list",
+            "type": "duplicate_by_sub_lists",
+            "field": "dialog"
+        },
+        {
+            "type": "get",
+            "field": "dialog",
+            "item": -1,
+            "to_field": "last_turn"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "last_turn/user": "question",
+                "last_turn/system": "answer"
+            },
+            "use_query": true
+        },
+        {
+            "type": "wrap",
             "field": "answer",
+            "inside": "list",
             "to_field": "answers"
+        },
+        {
+            "type": "serialize_dialog",
+            "field": "dialog",
+            "to_field": "context",
+            "context_field": "story"
         }
     ],
     "task": "tasks.qa.with_context.extractive",
