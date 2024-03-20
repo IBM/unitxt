@@ -76,8 +76,8 @@ class Metric(Artifact):
 
     # Override 'prediction_type' with the expected type of predictions
     # and references.  Example: "List[str]", "List[Dict]"", "string".
-    # If left with default "None", a warning will be displayed.
-    # In future version of unitxt, this will be an error.
+    # If left with default None, a warning will be displayed.
+    # In future versions of unitxt, this will be an error.
     prediction_type: str = None
 
     # Standard metrics can receive multiple references per predictions (in a list)
