@@ -54,7 +54,7 @@ add_to_catalog(
         target_field="answer",
         choices_seperator="\n",
         title_fields=["context_type"],
-        postprocessors=["processors.title"],
+        postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.title",
     overwrite=True,

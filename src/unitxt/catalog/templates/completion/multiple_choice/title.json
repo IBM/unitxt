@@ -9,6 +9,6 @@
         "context_type"
     ],
     "postprocessors": [
-        "processors.title"
+        "processors.first_character"
     ]
 }
