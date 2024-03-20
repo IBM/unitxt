@@ -1,0 +1,38 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "hellaswag"
+    },
+    "preprocess_steps": [
+        "splitters.large_no_test",
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "ctx": "context",
+                "activity_label": "topic",
+                "endings": "choices"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "label": "answer"
+            }
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "answer": "int"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "sentence"
+            }
+        }
+    ],
+    "task": "tasks.completion.multiple_choice",
+    "templates": "templates.completion.multiple_choice.all"
+}
