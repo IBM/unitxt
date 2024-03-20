@@ -21,11 +21,11 @@ metric = MetricPipeline(
     metric=HuggingfaceMetric(
         hf_metric_name="sacrebleu",
         hf_main_score="score",
+        prediction_type="str",
         main_score="sacrebleu",
         scale=1.0,
         scaled_fields=["sacrebleu", "precisions"],
         hf_additional_input_fields_pass_one_value=["tokenize"],
-        prediction_type="str",
     ),
 )
 

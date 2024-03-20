@@ -1,7 +1,6 @@
 {
     "type": "metric_pipeline",
     "main_score": "sacrebleu",
-    "prediction_type": "str",
     "preprocess_steps": [
         {
             "type": "copy_fields",
@@ -31,6 +30,7 @@
         "type": "huggingface_metric",
         "hf_metric_name": "sacrebleu",
         "hf_main_score": "score",
+        "prediction_type": "str",
         "main_score": "sacrebleu",
         "scale": 1.0,
         "scaled_fields": [
@@ -39,7 +39,6 @@
         ],
         "hf_additional_input_fields_pass_one_value": [
             "tokenize"
-        ],
-        "prediction_type": "str"
+        ]
     }
 }

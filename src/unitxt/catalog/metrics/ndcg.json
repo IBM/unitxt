@@ -1,7 +1,6 @@
 {
     "type": "metric_pipeline",
     "main_score": "nDCG",
-    "prediction_type": "str",
     "single_reference_per_prediction": true,
     "preprocess_steps": [
         {

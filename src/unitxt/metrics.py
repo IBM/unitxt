@@ -131,14 +131,15 @@ class Metric(Artifact):
     def get_prediction_type(self):
         if self.prediction_type is None:
             logger.warning(
-                "{self.get_metric_name()} metric does not set the 'prediction_type' parameter so input type checking is not performed. Set the prediction type to the expected prediction type (e.g. 'str', 'List[str]', or 'Any'). In future version of unitxt this will raise an exception."
+                f"{self.get_metric_name()} metric does not set the 'prediction_type' parameter so input type checking is not performed. Set the prediction type to the expected prediction type (e.g. 'str', 'List[str]', or 'Any'). In future version of unitxt this will raise an exception."
             )
             return Any
-        type = parse_type_string(self.prediction_type)
-        if type is None:
+        try:
+            type = parse_type_string(self.prediction_type)
+        except ValueError:
             raise ValueError(
-                f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
-            )
+                "Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
+            ) from None
         return type
 
     def get_metric_name(self):
@@ -1456,8 +1457,8 @@ class Spearmanr(HuggingfaceMetric):
     prediction_type = "float"
 
     # Spearmanr references are not list
-    def _validate_reference(self, prediction_type, reference):
-        if not isoftype(reference, prediction_type):
+    def _validate_reference(self, reference):
+        if not isoftype(reference, self.get_prediction_type()):
             raise ValueError(
                 f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
             )
