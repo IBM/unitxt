@@ -1,0 +1,4 @@
+{
+    "type": "standard_accuracy_multi_label",
+    "metric_name": "standard_metrics.accuracy_multi_label"
+}

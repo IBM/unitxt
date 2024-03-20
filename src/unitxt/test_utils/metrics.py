@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..settings_utils import get_settings
+from ..standard_metrics import StandardGlobalMetric
 from ..stream import MultiStream
 from ..type_utils import isoftype
 
@@ -33,7 +34,9 @@ def apply_metric(
     references: List[List[Any]],
     task_data: Optional[List[dict]] = None,
 ):
-    assert isoftype(metric, Metric), "metric must be a Metric"
+    assert isoftype(metric, Metric) or isoftype(
+        metric, StandardGlobalMetric
+    ), "metric must be a Metric"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[List[Any]]), "references must be a list of lists"
     assert task_data is None or isoftype(
@@ -76,7 +79,9 @@ def test_metric(
         )
         return None
 
-    assert isoftype(metric, Metric), "operator must be an Operator"
+    assert isoftype(metric, Metric) or isoftype(
+        metric, StandardGlobalMetric
+    ), "operator must be an Operator"
     assert isoftype(predictions, List[Any]), "predictions must be a list"
     assert isoftype(references, List[Any]), "references must be a list"
 

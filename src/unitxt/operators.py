@@ -1154,7 +1154,7 @@ class ApplyOperatorsField(StreamInstanceOperator):
             operator_names = [operator_names]
         # otherwise , operator_names is already a list
 
-        # we now have a list of nanes of operators, each is equipped with process_instance method.
+        # we now have a list of names of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
         return operator.process_instance(instance)
 
@@ -1596,6 +1596,17 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
     metric_field: str
     calc_confidence_intervals: bool
 
+    def prepare(self):
+        super().prepare()
+        self.metrics_for_thin_evaluation = [
+            "metrics.accuracy",
+            "metrics.f1_macro",
+            "metrics.f1_micro",
+            "metrics.f1_micro_multi_label",
+            "metrics.f1_macro_multi_label",
+            "metrics.matthews_correlation",
+        ]
+
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric
 
@@ -1621,28 +1632,36 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         # Here we keep all the fields besides the score, and restore them after the metric finishes.
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
+
         multi_stream = MultiStream({"tmp": stream})
         multi_stream = CopyFields(
             field_to_field={k: f"{k}_orig" for k in keys_to_restore}
         )(multi_stream)
 
         for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            assert isinstance(
-                metric, Metric
-            ), f"Operator {metric_name} must be a Metric"
+            if metric_name in self.metrics_for_thin_evaluation:
+                if "accuracy" in metric_name and isoftype(
+                    first_instance["prediction"], list
+                ):
+                    metric, _ = fetch_artifact("standard_metrics.accuracy_multi_label")
+                else:
+                    metric, _ = fetch_artifact(f"standard_{metric_name}")
+
+            else:
+                metric = self.get_artifact(metric_name)
+                assert isinstance(
+                    metric, Metric
+                ), f"Operator {metric_name} must be a Metric"
 
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
 
             multi_stream = metric(multi_stream)
-            multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore}
-            )(multi_stream)
 
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
             multi_stream
         )
+
         stream = multi_stream["tmp"]
         yield from stream
 
