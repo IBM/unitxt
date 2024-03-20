@@ -12,6 +12,8 @@ language_to_tokenizer = {
     "French": None,
     "Spanish": None,
     "Portuguese": None,
+    "ar": "intl",
+    "Arabic": "intl",
     "fr": None,
     "de": None,
     "es": None,
