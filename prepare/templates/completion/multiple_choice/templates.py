@@ -40,7 +40,6 @@ add_to_catalog(
         target_prefix="Answer: ",
         target_field="answer",
         choices_seperator="\n",
-        add_numerals_as_field="numerals",
         postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.standard",
