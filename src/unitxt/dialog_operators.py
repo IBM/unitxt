@@ -6,94 +6,83 @@ text that can be fed to the model.
 The format of the dialog is:
 
 dialog = [
-    {"user": "kkk", "agent": ""},
-    {"user": "kkk", "agent": ""},
+    {"user": "hello", "system": "hi"},
+    {"user": "kkk", "system": ""},
+    {"user": "kkk", "system": ""},
 ]
-
 """
-from typing import Generator, Optional
+from typing import Any, Dict, List, Optional
 
-from unitxt.stream import Stream
+from .formats import SystemFormat
+from .operators import InstanceFieldOperator
 
-from .operators import SingleStreamOperator
 
+class SerializeDialog(InstanceFieldOperator):
+    """Serializes dialog data for feeding into a model.
 
-class DialogSerializer(SingleStreamOperator):
-    field: str
-    to_field: str = None
-    last_user_turn_to_field: str = None
-    last_system_turn_to_field: str = None
-    yield_every_turn: bool = False
-    context_field: str = None
+    This class takes structured dialog data and converts it into a text format
+    according to a specified template. It allows for the inclusion or exclusion
+    of system responses and can operate on a per-turn basis or aggregate the entire
+    dialog.
 
-    def serialize_turn(self, turn, turn_format, without_system=False):
-        if without_system:
-            turn_format = turn_format[: turn_format.index("{user}") + len("{user}")]
-            turn = {"user": turn["user"]}
+    Attributes:
+        field (str): The field in the input data that contains the dialog.
+        to_field (Optional[str]): The field in the output data where the serialized dialog will be stored.
+        last_user_turn_to_field (Optional[str]): Field to store the last user turn.
+        last_system_turn_to_field (Optional[str]): Field to store the last system turn.
+        context_field (Optional[str]): Field that contains additional context to be prepended to the dialog.
+    """
 
-        return turn_format.format(**turn)
+    format: Optional[SystemFormat] = None
+    last_response_to_field: Optional[str] = None
+    context_field: Optional[str] = None
+    context_seperator: str = " "
 
-    def process_turn(self, dialog, last_turn, turn_format):
-        to_field = self.to_field if self.to_field is not None else self.field
-        new_dialog = dialog + self.serialize_turn(last_turn, turn_format)
+    def standartize_format(self, demo_format):
+        turn_format = demo_format.replace("{source}", "{user}")
+        turn_format = turn_format.replace("{target}", "{system}")
+        return turn_format.replace("{target_prefix}", "")
 
-        if (
-            self.last_system_turn_to_field is not None
-            and self.last_user_turn_to_field is not None
-        ):
-            result = {
-                self.last_system_turn_to_field: last_turn["system"],
-                self.last_user_turn_to_field: last_turn["user"],
-                to_field: dialog,
-            }
-        elif self.last_system_turn_to_field is not None:
-            result = {
-                self.last_system_turn_to_field: last_turn["system"],
-                to_field: dialog
-                + self.serialize_turn(last_turn, turn_format, without_system=True),
-            }
-        elif self.last_user_turn_to_field is not None:
-            raise ValueError(
-                "if last_user_turn_to_field is not None then last_system_turn_to_field should be not None."
+    def slice_first_turn(self, turn_format):
+        return turn_format[turn_format.index("{user}") :]
+
+    def slice_last_turn(self, turn_format):
+        return turn_format[: turn_format.index("{system}") + len("{system}")]
+
+    def slice_last_reponse(self, turn_format):
+        return turn_format[: turn_format.index("{user}") + len("{user}")]
+
+    def get_turn_format(self, turn_format, step, length):
+        if step == 0:
+            turn_format = self.slice_first_turn(turn_format)
+        if step == length - 1:
+            turn_format = self.slice_last_turn(turn_format)
+            if self.last_response_to_field is not None:
+                turn_format = self.slice_last_reponse(turn_format)
+        return turn_format
+
+    def get_general_turn_format(self, instance):
+        general_format = (
+            instance["recipe_metadata"]["format"]
+            if self.format is None
+            else self.format
+        )
+        return self.standartize_format(general_format.demo_format)
+
+    def process_instance_value(
+        self, structred_dialog: List[Dict[str, str]], instance: Dict[str, Any]
+    ):
+        dialog = (
+            ""
+            if self.context_field is None
+            else instance[self.context_field] + self.context_seperator
+        )
+        general_turn_format = self.get_general_turn_format(instance)
+        for i, turn in enumerate(structred_dialog):
+            turn_format = self.get_turn_format(
+                general_turn_format, i, len(structred_dialog)
             )
-        else:
-            result = {to_field: new_dialog}
-
-        return result, new_dialog
-
-    def get_turn_format(self, instance):
-        turn_fomrat = instance["recipe_metadata"]["format"].demo_format
-        turn_fomrat = turn_fomrat.replace("{source}", "{user}")
-        turn_fomrat = turn_fomrat.replace("{target}", "{system}")
-        return turn_fomrat.replace("{target_prefix}", "")
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        for instance in stream:
-            structred_dialog = instance[self.field]
-            general_turn_format = self.get_turn_format(instance)
-
-            dialog = "" if self.context_field is None else instance[self.context_field]
-            for i, turn in enumerate(structred_dialog):
-                turn_format = general_turn_format
-                if i == 0:
-                    turn_format = turn_format[turn_format.index("{user}") :]
-                if i == len(structred_dialog) - 1:
-                    turn_format = turn_format[
-                        : turn_format.index("{system}") + len("{system}")
-                    ]
-                if (
-                    i == len(structred_dialog) - 2
-                    and self.last_user_turn_to_field is not None
-                    and self.last_system_turn_to_field is not None
-                ):
-                    turn_format = turn_format[
-                        : turn_format.index("{system}") + len("{system}")
-                    ]
-
-                result, dialog = self.process_turn(dialog, turn, turn_format)
-
-                if self.yield_every_turn:
-                    yield {**instance, **result}
-
-            if not self.yield_every_turn:
-                yield {**instance, **result}
+            dialog += turn_format.format(**turn)
+        if self.last_response_to_field is not None:
+            instance[self.last_response_to_field] = turn["system"]
+        return dialog

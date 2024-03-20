@@ -1,7 +1,8 @@
 from src.unitxt.blocks import AddFields, LoadHF, TaskCard
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.dialog_operators import DialogSerializer
-from src.unitxt.list_operators import ListsToListOfDicts, WrapWithList
+from src.unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
+from src.unitxt.dialog_operators import SerializeDialog
+from src.unitxt.operators import CopyFields, ZipFieldValues
 from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -9,22 +10,27 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         AddFields(fields={"context_type": "story"}),
-        ListsToListOfDicts(
+        ZipFieldValues(
             fields=["questions", "answers/input_text"],
-            with_keys=["user", "system"],
             to_field="dialog",
             use_query=True,
         ),
-        DialogSerializer(
+        Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
+        DuplicateBySubLists(field="dialog"),
+        Get(field="dialog", item=-1, to_field="last_turn"),
+        CopyFields(
+            field_to_field={"last_turn/user": "question", "last_turn/system": "answer"},
+            use_query=True,
+        ),
+        Wrap(
+            field="answer",
+            inside="list",
+            to_field="answers",
+        ),
+        SerializeDialog(
             field="dialog",
             to_field="context",
             context_field="story",
-            last_user_turn_to_field="question",
-            last_system_turn_to_field="answer",
-        ),
-        WrapWithList(
-            field="answer",
-            to_field="answers",
         ),
     ],
     task="tasks.qa.with_context.extractive",
@@ -39,17 +45,18 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         AddFields(fields={"context_type": "dialog", "completion_type": "response"}),
-        ListsToListOfDicts(
+        ZipFieldValues(
             fields=["questions", "answers/input_text"],
-            with_keys=["user", "system"],
             to_field="dialog",
             use_query=True,
         ),
-        DialogSerializer(
+        Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
+        DuplicateBySubLists(field="dialog"),
+        SerializeDialog(
             field="dialog",
             to_field="context",
             context_field="story",
-            last_system_turn_to_field="completion",
+            last_response_to_field="completion",
         ),
     ],
     task="tasks.completion.abstractive",
