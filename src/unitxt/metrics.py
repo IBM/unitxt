@@ -137,18 +137,17 @@ class Metric(Artifact):
             logger.warning(
                 f"{self.get_metric_name()} metric does not set the 'prediction_type' parameter so input type checking is not performed. Set the prediction type to the expected prediction type (e.g. 'str', 'List[str]', or 'Any'). In future version of unitxt this will raise an exception."
             )
-            return Any
+            self._parsed_prediction_type = Any
         try:
             if self._parsed_prediction_type is not None:
                 return self._parsed_prediction_type
 
             self._parsed_prediction_type = parse_type_string(self.prediction_type)
-            return self._parsed_prediction_type
-
         except ValueError:
             raise ValueError(
                 "Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
             ) from None
+        return self._parsed_prediction_type
 
     def get_metric_name(self):
         if self.artifact_identifier is not None:
