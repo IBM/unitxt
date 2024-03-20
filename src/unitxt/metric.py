@@ -9,6 +9,7 @@ from .catalog import __file__ as _
 from .collections import __file__ as _
 from .dataclass import __file__ as _
 from .dataset_utils import __file__ as _
+from .deprecation_utils import __file__ as _
 from .dict_utils import __file__ as _
 from .eval_utils import __file__ as _
 from .file_utils import __file__ as _

@@ -2439,6 +2439,28 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_duplicate_instance_added_field(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "duplication_id": 0},
+            {"a": 1, "b": 2, "duplication_id": 1},
+            {"a": 3, "b": 4, "duplication_id": 0},
+            {"a": 3, "b": 4, "duplication_id": 1},
+        ]
+
+        check_operator(
+            operator=DuplicateInstances(
+                num_duplications=2, duplication_index_field="duplication_id"
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
 
 class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
