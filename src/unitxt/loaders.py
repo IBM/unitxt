@@ -27,7 +27,7 @@ import os
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -205,7 +205,7 @@ class LoadCSV(Loader):
     _cache = InternalField(default_factory=dict)
     loader_limit: Optional[int] = None
     streaming: bool = True
-    pandas_load_args: Dict[str, Any] = OptionalField(default_factory=dict)
+    sep: str = ","
 
     def stream_csv(self, file):
         if self.get_limit() is not None:
@@ -215,7 +215,7 @@ class LoadCSV(Loader):
             chunksize = self.chunksize
 
         row_count = 0
-        for chunk in pd.read_csv(file, chunksize=chunksize, **self.pandas_load_args):
+        for chunk in pd.read_csv(file, chunksize=chunksize, sep=self.sep):
             for _, row in chunk.iterrows():
                 if self.get_limit() is not None and row_count >= self.get_limit():
                     return
@@ -227,7 +227,7 @@ class LoadCSV(Loader):
             if self.get_limit() is not None:
                 self.log_limited_loading()
                 self._cache[file] = pd.read_csv(
-                    file, nrows=self.get_limit(), **self.pandas_load_args
+                    file, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
                 self._cache[file] = pd.read_csv(file).to_dict("records")
