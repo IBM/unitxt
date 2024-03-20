@@ -29,7 +29,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .type_utils import get_type_from_string, isoftype, to_float_or_default
+from .type_utils import isoftype, parse_type_string, to_float_or_default
 
 logger = get_logger()
 settings = get_settings()
@@ -134,7 +134,7 @@ class Metric(Artifact):
                 "{self.get_metric_name()} metric does not set the 'prediction_type' parameter so input type checking is not performed. Set the prediction type to the expected prediction type (e.g. 'str', 'List[str]', or 'Any'). In future version of unitxt this will raise an exception."
             )
             return Any
-        type = get_type_from_string(self.prediction_type)
+        type = parse_type_string(self.prediction_type)
         if type is None:
             raise ValueError(
                 f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
