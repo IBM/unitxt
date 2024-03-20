@@ -75,13 +75,13 @@ class TestLoaders(UnitxtTestCase):
             dfs = {}
 
             for file in ["train", "test"]:
-                path = os.path.join(tmp_dir, file + ".csv")  # Adding a file extension
+                path = os.path.join(tmp_dir, file + ".tsv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
                 dfs[file] = df
                 df.to_csv(path, index=False, sep="\t")
                 files[file] = path
 
-            loader = LoadCSV(files=files, pandas_load_args={"sep": "\t"})
+            loader = LoadCSV(files=files, sep="\t")
             ms = loader()
 
             for file in ["train", "test"]:
