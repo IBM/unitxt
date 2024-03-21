@@ -49,16 +49,6 @@ def is_subpath(subpath, fullpath):
     return fullpath_components[: len(subpath_components)] == subpath_components
 
 
-# returns all the values sitting inside dic, in all the paths that match query_path
-# returns them as a list of values whose length equals the number of paths in dic
-# that match the query:
-def qpath_get(dic: dict, qpath: str) -> List[Any]:
-    components = qpath.split("/")
-    if len(components) == 1:
-        return [dic[components[0]]]
-    return get_values(dic, components, -1 * len(components))
-
-
 def qpath_delete(
     current_element: dict,
     query: List[str],
@@ -136,13 +126,15 @@ def dict_delete(dic: dict, qpath: str, remove_empty_ancestors=False):
     )
 
 
+# returns all the values sitting inside dic, in all the paths that match query_path
+# if query includes * then return a list of values reached by all paths that match the query
 # flake8: noqa: C901
 def get_values(
     current_element: Any, query: List[str], index_into_query: int
 ) -> List[Any]:
     # going down from current_element through query[index_into_query].
     if index_into_query == 0:
-        return [current_element]
+        return current_element
     component = query[index_into_query]
     # index_into_query < 0
     if component == "*":  # current_element must be a list or a dictionary
@@ -153,28 +145,28 @@ def get_values(
         to_ret = []
         for sub_element in current_element:
             if isinstance(current_element, dict):
-                to_ret.extend(
+                to_ret.append(
                     get_values(
                         current_element[sub_element], query, index_into_query + 1
                     )
                 )
             else:
-                to_ret.extend(get_values(sub_element, query, index_into_query + 1))
+                to_ret.append(get_values(sub_element, query, index_into_query + 1))
         return to_ret
     # next_component is indx or name
     if indx.match(component):
         component = int(component)
-        return (
-            []
-            if component >= len(current_element)
-            else get_values(current_element[component], query, index_into_query + 1)
-        )
+        if component >= len(current_element):
+            raise ValueError(
+                f"Trying to fetch element in position {component} from a shorter list: {current_element}"
+            )
+        return get_values(current_element[component], query, index_into_query + 1)
     # next_component is a name
-    return (
-        []
-        if (component not in current_element)
-        else get_values(current_element[component], query, index_into_query + 1)
-    )
+    if component not in current_element:
+        raise ValueError(
+            f"Trying to look up key {component} in a dictionary {current_element} that misses that key"
+        )
+    return get_values(current_element[component], query, index_into_query + 1)
 
 
 # going down from current_element via query[index_into_query]
@@ -317,18 +309,29 @@ def dict_get(
     not_exist_ok: bool = False,
     default: Any = None,
 ):
-    query = validate_qpath(query)  # validate and normalize
-    if use_dpath and "/" in query:
-        values = qpath_get(
-            dic, query
-        )  # list of values, whose length == number of paths that match the query
-        if len(values) == 0:
+    qpath = validate_qpath(query)  # validate and normalize
+    if use_dpath and "/" in qpath:
+        components = qpath.split("/")
+        if len(components) == 1:
+            if qpath in dic:
+                return dic[qpath]
+            if not_exist_ok:
+                return default
+            raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
+        try:
+            values = get_values(dic, components, -1 * len(components))
+        except Exception as e:
+            if not_exist_ok:
+                return default
+            raise ValueError(
+                f'query "{query}" did not match any item in dict: {dic}'
+            ) from e
+
+        if isinstance(values, list) and len(values) == 0:
             if not_exist_ok:
                 return default
             raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
 
-        if len(values) == 1:
-            return values[0]
         return values
 
     if query in dic:
