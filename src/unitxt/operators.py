@@ -1683,62 +1683,38 @@ class Shuffle(PagedStreamOperator):
         yield from page
 
 
-class EncodeLabels(StreamInstanceOperator):
+class EncodeLabels(InstanceFieldOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
 
     Encoding is determined by a str->int map that is built on the go, as different values are
     first encountered in the stream, either as list members or as values in single-value fields.
 
-    Args:
-        fields (List[str]): The fields to encode together.
+    Args (of super class):
+
+        field_to_field: a list of pair of field names: (to encode from, to store result in)
+        process_every_value: boolean, should be set to True for fields whose values are lists
 
     Example: applying
-        EncodeLabels(fields = ["a", "b/*"])
+        EncodeLabels(field_to_field = ["a", "a"])
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
         {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
+        output stream = [{'a': 0, 'b': ["red", "blue"], 'c': 'bread'},
+        {'a': 1, 'b': ["green"], 'c': 'water'}]
+        feeding that output stream through
+        EncoderLabels(field_to_field = ["b", "b"], process_every_value=True)
+        will yield the output:
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
-        Note: dpath is applied here, and hence, fields that are lists, should be included in
-        input 'fields' with the appendix "/*"  as in the above example.
-
     """
-
-    fields: List[str]
 
     def _process_multi_stream(self, multi_stream: MultiStream) -> MultiStream:
         self.encoder = {}
         return super()._process_multi_stream(multi_stream)
 
-    def encode_values(self, values) -> Any:
-        assert isoftype(values, List[str]) or isinstance(
-            values, str
-        ), "expected a string or a list of strings, received {values}"
-        old_values_was_a_list = isinstance(values, list)
-        if not isinstance(values, list):
-            values = [values]
-        for value in values:
-            if value not in self.encoder:
-                self.encoder[value] = len(self.encoder)
-        new_values = [self.encoder[value] for value in values]
-        if not old_values_was_a_list:
-            new_values = new_values[0]
-        return new_values
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        for field_name in self.fields:
-            new_values = []
-            original_values = dict_get(instance, field_name, use_dpath=True)
-            if isoftype(original_values, List[List[str]]):  # as for classic references
-                for values in original_values:
-                    new_values.append(self.encode_values(values))
-            else:
-                new_values = self.encode_values(original_values)
-
-            dict_set(instance, field_name, new_values, use_dpath=True)
-
-        return instance
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]) -> Any:
+        if value not in self.encoder:
+            self.encoder[value] = len(self.encoder)
+        return self.encoder[value]
 
 
 class StreamRefiner(SingleStreamOperator):

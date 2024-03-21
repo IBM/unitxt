@@ -2066,9 +2066,13 @@ class TestOperators(UnitxtTestCase):
             {"prediction": 2, "references": [0]},
         ]
 
+        operator_pred = EncodeLabels(field="prediction")
+        inputs1 = list(
+            operator_pred(MultiStream.from_iterables({"tmp": inputs}))["tmp"]
+        )
         check_operator(
-            operator=EncodeLabels(fields=["prediction", "references"]),
-            inputs=inputs,
+            operator=EncodeLabels(field="references", process_every_value=True),
+            inputs=inputs1,
             targets=targets,
             tester=self,
         )

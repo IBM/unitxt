@@ -2,7 +2,7 @@ import re
 from typing import Any, List
 
 indx = re.compile(r"^(\d+)$")
-name = re.compile(r"^(\w+)$")
+name = re.compile(r"^[\w. -]+$")
 
 # formal definition of qpath syntax:
 # qpath -> A (/A)*
@@ -65,11 +65,10 @@ def qpath_delete(
     if index_into_query == -1:
         if component == "*":
             current_element = []
-        elif indx.match(component):
-            current_element.pop(
-                int(component)
-            )  # thrown exception will be caught outside
-        elif name.match(component):
+        else:
+            # component is a name or an index
+            if indx.match(component):
+                component = int(component)
             current_element.pop(component)  # thrown exception will be caught outside
         return (
             None
