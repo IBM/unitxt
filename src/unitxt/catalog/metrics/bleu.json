@@ -2,5 +2,6 @@
     "type": "huggingface_metric",
     "hf_metric_name": "bleu",
     "main_score": "bleu",
-    "scale": 1.0
+    "scale": 1.0,
+    "prediction_type": "str"
 }
