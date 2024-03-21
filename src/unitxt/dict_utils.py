@@ -334,8 +334,8 @@ def dict_get(
 
         return values
 
-    if query in dic:
-        return dic[query]
+    if qpath in dic:
+        return dic[qpath]
 
     if not_exist_ok:
         return default

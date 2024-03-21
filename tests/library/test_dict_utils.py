@@ -24,6 +24,18 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual(dict_get(dic, "a/*/b", use_dpath=True), [1, 2])
         dic = {"a": [{"b": 1}, {"b": 2}], "c": [{"b": 3}, {"b": 4}]}
         self.assertEqual(dict_get(dic, "*/1/b", use_dpath=True), [2, 4])
+        dic = {"references": ["r1", "r2", "r3"]}
+        self.assertEqual(
+            dict_get(dic, "references/*", use_dpath=True), ["r1", "r2", "r3"]
+        )
+        self.assertEqual(
+            dict_get(dic, "references/", use_dpath=True), ["r1", "r2", "r3"]
+        )
+        self.assertEqual(
+            dict_get(dic, "references", use_dpath=True), ["r1", "r2", "r3"]
+        )
+        with self.assertRaises(ValueError):
+            dict_get(dic, "references+#/^!", use_dpath=True)
 
     def test_simple_set(self):
         dic = {"a": 1, "b": 2}
