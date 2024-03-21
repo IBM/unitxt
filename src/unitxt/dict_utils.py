@@ -152,7 +152,8 @@ def get_values(
         return current_element
     component = query[index_into_query]
     # index_into_query < 0
-    if component == "*":  # current_element must be a list or a dictionary
+    if component == "*":
+        # current_element must be a list or a dictionary, otherwise, an exception will be thrown, and cuaght outside
         if not isinstance(current_element, (list, dict)):
             raise ValueError(
                 f"* in query {query}, when evaluated over the input dictionary, does not correspond to a dict nor a list"
