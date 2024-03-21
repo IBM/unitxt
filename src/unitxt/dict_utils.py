@@ -378,8 +378,8 @@ def dict_set(
     if set_multiple and (not isinstance(value, list)):
         raise ValueError(f"set_multiple == True, but value, {value}, is not a list")
     if use_dpath and "/" in query:
-        query = validate_qpath(query)
-        components = query.split("/")
+        qpath = validate_qpath(query)
+        components = qpath.split("/")
         fixed_parameters = {
             "query": components,
             "generate_if_not_exists": not_exist_ok,

@@ -1696,12 +1696,14 @@ class EncodeLabels(InstanceFieldOperator):
 
     Example: applying
         EncodeLabels(field_to_field = ["a", "a"])
+        ( or: EncodeLabels(field="a") , in this simple case of single field that serves as source and target)
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
         {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': ["red", "blue"], 'c': 'bread'},
         {'a': 1, 'b': ["green"], 'c': 'water'}]
         feeding that output stream through
         EncoderLabels(field_to_field = ["b", "b"], process_every_value=True)
+        ( or: EncodeLabels(field="b", process_every_value=True), in this simple case)
         will yield the output:
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 

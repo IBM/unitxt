@@ -129,7 +129,6 @@ class TestDictUtils(UnitxtTestCase):
 
     def test_query_set_with_multiple_non_existing(self):
         dic = {"a": [{"b": 1}, {"b": 2}]}
-        # with self.assertRaises(ValueError):
         dict_set(dic, "a/*/c", [3, 4], use_dpath=True, set_multiple=True)
         self.assertDictEqual({"a": [{"b": 1, "c": 3}, {"b": 2, "c": 4}]}, dic)
         dict_set(
@@ -141,6 +140,10 @@ class TestDictUtils(UnitxtTestCase):
             not_exist_ok=True,
         )
         self.assertEqual({"a": [{"b": 1, "c": [3, 4]}, {"b": 2, "c": [3, 4]}]}, dic)
+
+        dic = {"a": [{"b": 1}, {"b": 2}]}
+        with self.assertRaises(ValueError):
+            dict_set(dic, "a/*/d", [3, 4, 5], use_dpath=True, set_multiple=True)
 
     def test_adding_one_new_field(self):
         dic = {"a": {"b": {"c": 0}}}
