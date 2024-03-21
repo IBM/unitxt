@@ -14,23 +14,16 @@ name = re.compile(r"^[\w. -]+$")
 # validate and normalize
 # leading / is ignored, all paths are treated as coming from root of dic
 # trailing / is ignored
-def validate_qpath(qpath: str, for_deletion: bool = False):
-    qpath = qpath.replace("//", "/").strip()
-    if qpath.startswith("/"):
-        qpath = qpath[1:]  # remove the leading /
+def validate_query_and_break_to_components(query: str) -> List[str]:
+    query = query.replace("//", "/").strip()
+    if query.startswith("/"):
+        query = query[1:]  # remove the leading /
 
-    if not for_deletion and qpath.endswith("*"):
-        # remove trailing *, treating the element to the left of the/ as leading to a single value, being the whole list or dict corresponding to the * at the end of the query
-        qpath = qpath[:-1]
-    if not for_deletion and qpath.endswith("/"):
-        qpath = qpath[:-1]  # remove the trailing /, will be treated as if followed by *
-    if for_deletion and qpath.endswith("/"):
-        qpath = (
-            qpath + "*"
-        )  # for deletion they mean the same: emptying the list lead to. not popping out the end of the path ldeading to it
-        # the leading path will be considered for emptying parents
+    if query.endswith("/"):
+        query = query + "*"
+        # same meaning, and make sure the / not lost when splitting
 
-    components = qpath.split("/")
+    components = query.split("/")
     components = [component.strip() for component in components]
     for component in components:
         if not (
@@ -39,17 +32,15 @@ def validate_qpath(qpath: str, for_deletion: bool = False):
             or bool(indx.match(component))
         ):
             raise ValueError(
-                f"Component {component} in input qpath is none of: valid field-name, non-neg-int, or '*'"
+                f"Component {component} in input query is none of: valid field-name, non-neg-int, or '*'"
             )
-    return "/".join(components)
+    return components
 
 
 def is_subpath(subpath, fullpath):
     # Split the paths into individual components
-    subpath = validate_qpath(subpath)
-    fullpath = validate_qpath(fullpath)
-    subpath_components = subpath.split("/")
-    fullpath_components = fullpath.split("/")
+    subpath_components = validate_query_and_break_to_components(subpath)
+    fullpath_components = validate_query_and_break_to_components(fullpath)
 
     # Check if the full path starts with the subpath
     return fullpath_components[: len(subpath_components)] == subpath_components
@@ -117,24 +108,24 @@ def dict_delete(dic: dict, query: str, remove_empty_ancestors=False):
     # we remove from dic all the elements lead to by the path.
     # If remove_empty_ancestors=True, and the removal of any such element leaves its parent (list or dict)
     # within dic empty -- remove that parent as well, and continue recursively
-    # we need to be careful here trimming the trailing /* :
-    # delete  references/* means just to shrink to 0 the list of children of references
+    # Treating trailing /* :
+    # delete  references/* means just to shrink to [] the list of children of references
     # delete  references/ means the same as delete references/*
     # delete references, pops references out from dic
     # the above -- before dealing with removal of empty ancestors.
-    qpath = validate_qpath(query, for_deletion=True)
-    if "/" not in qpath:
-        if qpath not in dic:
+    if "/" not in query:
+        if query.strip() not in dic:
             raise ValueError(
-                f"An attempt to delete from dictionary {dic}, an element {qpath}, that does not exist in the dictionary"
+                f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary"
             )
-        dic.pop(qpath)
+        dic.pop(query.strip())
         return
+    qpath = validate_query_and_break_to_components(query)
     try:
         qpath_delete(
             current_element=dic,
-            query=qpath.split("/"),
-            index_into_query=(-1) * len(qpath.split("/")),
+            query=qpath,
+            index_into_query=(-1) * len(qpath),
             remove_empty_ancestors=remove_empty_ancestors,
         )
     except Exception as e:
@@ -187,7 +178,7 @@ def get_values(
 
 # going down from current_element via query[index_into_query]
 # returns the updated current_element
-def qpath_set_values(
+def set_values(
     current_element: Any,
     value: Any,
     index_into_query: int,
@@ -225,7 +216,7 @@ def qpath_set_values(
                 current_element[i] = (
                     value
                     if index_into_query == -1
-                    else qpath_set_values(
+                    else set_values(
                         current_element=current_element[i],
                         value=value[i] if fixed_parameters["set_individual"] else value,
                         index_into_query=index_into_query + 1,
@@ -240,7 +231,7 @@ def qpath_set_values(
             a_list[i] = (
                 (value if not fixed_parameters["set_individual"] else value[i])
                 if index_into_query == -1
-                else qpath_set_values(
+                else set_values(
                     current_element=None,
                     value=value[i],
                     index_into_query=index_into_query + 1,
@@ -255,7 +246,7 @@ def qpath_set_values(
             current_element[component] = (
                 value
                 if index_into_query == -1
-                else qpath_set_values(
+                else set_values(
                     current_element=current_element[component]
                     if isinstance(current_element[component], (dict, list))
                     else None,
@@ -278,7 +269,7 @@ def qpath_set_values(
         a_list[component - (0 if not current_element else len(current_element))] = (
             value
             if index_into_query == -1
-            else qpath_set_values(
+            else set_values(
                 current_element=None,
                 value=value,
                 index_into_query=index_into_query + 1,
@@ -304,7 +295,7 @@ def qpath_set_values(
     a_dict[component] = (
         value
         if index_into_query == -1
-        else qpath_set_values(
+        else set_values(
             current_element=a_dict[component]
             if component in a_dict and isinstance(a_dict[component], (dict, list))
             else None,
@@ -325,12 +316,11 @@ def dict_get(
     not_exist_ok: bool = False,
     default: Any = None,
 ):
-    qpath = validate_qpath(query)  # validate and normalize
-    if use_dpath and "/" in qpath:
-        components = qpath.split("/")
+    if use_dpath and "/" in query:
+        components = validate_query_and_break_to_components(query)
         if len(components) == 1:
-            if qpath in dic:
-                return dic[qpath]
+            if components[0] in dic:
+                return dic[components[0]]
             if not_exist_ok:
                 return default
             raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
@@ -350,8 +340,8 @@ def dict_get(
 
         return values
 
-    if qpath in dic:
-        return dic[qpath]
+    if query.strip() in dic:
+        return dic[query.strip()]
 
     if not_exist_ok:
         return default
@@ -359,7 +349,7 @@ def dict_get(
     raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
 
 
-# dict_set sets value, which by itself, can be a dict or list or scalar, into dic, in the element specified by query.
+# dict_set sets a value, which by itself, can be a dict or list or scalar, into dic, in the element specified by query.
 # if not_exist_ok = True, and such a path does not exist in dic, this function also builds that path inside dic, and then
 # assigns the value.
 # if two or more (existing in input dic, or newly generated per not_exist_ok = True) paths in dic match the query
@@ -375,18 +365,22 @@ def dict_set(
     not_exist_ok=True,
     set_multiple=False,
 ):
-    if set_multiple and (not isinstance(value, list)):
-        raise ValueError(f"set_multiple == True, but value, {value}, is not a list")
+    if (set_multiple or query.strip().endswith("*")) and (not isinstance(value, list)):
+        raise ValueError(
+            f"set_multiple == True, or a 'whole list' is expected to be assigned, and yet value, {value}, is not a list"
+        )
     if use_dpath and "/" in query:
-        qpath = validate_qpath(query)
-        components = qpath.split("/")
+        components = validate_query_and_break_to_components(query)
+        if components[-1] == "*":
+            # value is a list, and it is to be assigned to the parent of this * in the query
+            components = components[:-1]
         fixed_parameters = {
             "query": components,
             "generate_if_not_exists": not_exist_ok,
             "set_individual": set_multiple,
         }
         try:
-            dic = qpath_set_values(
+            dic = set_values(
                 current_element=dic,
                 value=value,
                 index_into_query=(-1) * len(components),
