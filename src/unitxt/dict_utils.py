@@ -14,16 +14,22 @@ name = re.compile(r"^(\w+)$")
 # validate and normalize
 # leading / is ignored, all paths are treated as coming from root of dic
 # trailing / is ignored
-def validate_qpath(qpath: str):
-    qpath = qpath.replace(" ", "").replace("//", "/").strip()
+def validate_qpath(qpath: str, for_deletion: bool = False):
+    qpath = qpath.replace("//", "/").strip()
     if qpath.startswith("/"):
         qpath = qpath[1:]  # remove the leading /
-    if qpath.endswith("*"):
-        qpath = qpath[
-            :-1
-        ]  # remove trailing *, treating the element above as consisting of a single value, being the whole list or dict corresponding to the * at the end of the query
-    if qpath.endswith("/"):
+
+    if not for_deletion and qpath.endswith("*"):
+        # remove trailing *, treating the element to the left of the/ as leading to a single value, being the whole list or dict corresponding to the * at the end of the query
+        qpath = qpath[:-1]
+    if not for_deletion and qpath.endswith("/"):
         qpath = qpath[:-1]  # remove the trailing /, will be treated as if followed by *
+    if for_deletion and qpath.endswith("/"):
+        qpath = (
+            qpath + "*"
+        )  # for deletion they mean the same: emptying the list lead to. not popping out the end of the path ldeading to it
+        # the leading path will be considered for emptying parents
+
     components = qpath.split("/")
     components = [component.strip() for component in components]
     for component in components:
@@ -59,10 +65,12 @@ def qpath_delete(
     if index_into_query == -1:
         if component == "*":
             current_element = []
-        elif indx.match(component) and int(component) < len(current_element):
-            current_element.pop(int(component))
-        elif name.match(component) and component in current_element:
-            current_element.pop(component)
+        elif indx.match(component):
+            current_element.pop(
+                int(component)
+            )  # thrown exception will be caught outside
+        elif name.match(component):
+            current_element.pop(component)  # thrown exception will be caught outside
         return (
             None
             if remove_empty_ancestors and len(current_element) == 0
@@ -81,7 +89,7 @@ def qpath_delete(
             for sub_element in current_element
         ]
         current_element = [elem for elem in current_element if elem is not None]
-    elif indx.match(component) and int(component) < len(current_element):
+    elif indx.match(component):  # thrown exception will be caught
         current_element[int(component)] = qpath_delete(
             current_element=current_element[int(component)],
             query=query,
@@ -90,7 +98,7 @@ def qpath_delete(
         )
         if current_element[int(component)] is None:
             current_element.pop(int(component))
-    elif name.match(component) and component in current_element:
+    elif name.match(component):  # thrown exception will be caught
         current_element[component] = qpath_delete(
             current_element=current_element[component],
             query=query,
@@ -106,11 +114,16 @@ def qpath_delete(
     )
 
 
-def dict_delete(dic: dict, qpath: str, remove_empty_ancestors=False):
+def dict_delete(dic: dict, query: str, remove_empty_ancestors=False):
     # we remove from dic all the elements lead to by the path.
     # If remove_empty_ancestors=True, and the removal of any such element leaves its parent (list or dict)
     # within dic empty -- remove that parent as well, and continue recursively
-    qpath = validate_qpath(qpath)
+    # we need to be careful here trimming the trailing /* :
+    # delete  references/* means just to shrink to 0 the list of children of references
+    # delete  references/ means the same as delete references/*
+    # delete references, pops references out from dic
+    # the above -- before dealing with removal of empty ancestors.
+    qpath = validate_qpath(query, for_deletion=True)
     if "/" not in qpath:
         if qpath not in dic:
             raise ValueError(
@@ -118,12 +131,15 @@ def dict_delete(dic: dict, qpath: str, remove_empty_ancestors=False):
             )
         dic.pop(qpath)
         return
-    dic = qpath_delete(
-        current_element=dic,
-        query=qpath.split("/"),
-        index_into_query=(-1) * len(qpath.split("/")),
-        remove_empty_ancestors=remove_empty_ancestors,
-    )
+    try:
+        qpath_delete(
+            current_element=dic,
+            query=qpath.split("/"),
+            index_into_query=(-1) * len(qpath.split("/")),
+            remove_empty_ancestors=remove_empty_ancestors,
+        )
+    except Exception as e:
+        raise ValueError(f"query {query} matches no path in dictionary {dic}") from e
 
 
 # returns all the values sitting inside dic, in all the paths that match query_path
@@ -377,8 +393,8 @@ def dict_set(
                 fixed_parameters=fixed_parameters,
                 set_individual_already_used=False,
             )
-        except ValueError as ve:
-            raise ValueError(str(ve).format(query=query, dic=dic, value=value)) from ve
+        except Exception as e:
+            raise ValueError(str(e).format(query=query, dic=dic, value=value)) from e
     else:
         if query not in dic and not not_exist_ok:
             raise ValueError(

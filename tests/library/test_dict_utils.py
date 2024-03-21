@@ -1,4 +1,4 @@
-from src.unitxt.dict_utils import dict_get, dict_set
+from src.unitxt.dict_utils import dict_delete, dict_get, dict_set
 from tests.utils import UnitxtTestCase
 
 
@@ -36,6 +36,34 @@ class TestDictUtils(UnitxtTestCase):
         )
         with self.assertRaises(ValueError):
             dict_get(dic, "references+#/^!", use_dpath=True)
+
+    def test_query_delete(self):
+        dic = {"a": [{"b": 1}, {"b": 2, "c": 3}]}
+        dict_delete(dic, "a/*/b", remove_empty_ancestors=True)
+        self.assertEqual({"a": [{"c": 3}]}, dic)
+
+        dic = {"references": ["r1", "r2", "r3"]}
+        dict_delete(dic, "references/*")
+        self.assertEqual({"references": []}, dic)
+
+        dic = {"references": ["r1", "r2", "r3"]}
+        dict_delete(dic, "references/*", remove_empty_ancestors=True)
+        self.assertEqual({}, dic)
+
+        dic = {"references": ["r1", "r2", "r3"]}
+        dict_delete(dic, "references/*")
+        self.assertEqual({"references": []}, dic)
+
+        dic = {"references": ["r1", "r2", "r3"]}
+        dict_delete(dic, "references/")
+        self.assertEqual({"references": []}, dic)
+
+        dic = {"references": ["r1", "r2", "r3"]}
+        dict_delete(dic, "references", remove_empty_ancestors=True)
+        self.assertEqual({}, dic)
+
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "references+#/^!", remove_empty_ancestors=True)
 
     def test_simple_set(self):
         dic = {"a": 1, "b": 2}
