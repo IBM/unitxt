@@ -1,0 +1,14 @@
+{
+    "type": "multiple_choice_template",
+    "instruction": "Pick the best ending to the {context_type}.",
+    "input_format": "{context_type}: {context}\nChoices:\n{choices}",
+    "target_prefix": "Answer: ",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "title_fields": [
+        "context_type"
+    ],
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}

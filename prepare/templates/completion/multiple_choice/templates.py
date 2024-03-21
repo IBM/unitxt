@@ -34,10 +34,39 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Pick the best ending to the {context_type}.",
+        input_format="Context: {context}...\nChoices:\n{choices}",
+        target_prefix="Answer: ",
+        target_field="answer",
+        choices_seperator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.completion.multiple_choice.standard",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        instruction="Pick the best ending to the {context_type}.",
+        input_format="{context_type}: {context}\nChoices:\n{choices}",
+        target_prefix="Answer: ",
+        target_field="answer",
+        choices_seperator="\n",
+        title_fields=["context_type"],
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.completion.multiple_choice.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.completion.multiple_choice.simple",
             "templates.completion.multiple_choice.enumerated",
+            "templates.completion.multiple_choice.standard",
+            "templates.completion.multiple_choice.title",
         ]
     ),
     "templates.completion.multiple_choice.all",

@@ -203,8 +203,9 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
     _cache = InternalField(default_factory=dict)
-    loader_limit: int = None
+    loader_limit: Optional[int] = None
     streaming: bool = True
+    sep: str = ","
 
     def stream_csv(self, file):
         if self.get_limit() is not None:
@@ -214,7 +215,7 @@ class LoadCSV(Loader):
             chunksize = self.chunksize
 
         row_count = 0
-        for chunk in pd.read_csv(file, chunksize=chunksize):
+        for chunk in pd.read_csv(file, chunksize=chunksize, sep=self.sep):
             for _, row in chunk.iterrows():
                 if self.get_limit() is not None and row_count >= self.get_limit():
                     return
@@ -225,9 +226,9 @@ class LoadCSV(Loader):
         if file not in self._cache:
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                self._cache[file] = pd.read_csv(file, nrows=self.get_limit()).to_dict(
-                    "records"
-                )
+                self._cache[file] = pd.read_csv(
+                    file, nrows=self.get_limit(), sep=self.sep
+                ).to_dict("records")
             else:
                 self._cache[file] = pd.read_csv(file).to_dict("records")
 

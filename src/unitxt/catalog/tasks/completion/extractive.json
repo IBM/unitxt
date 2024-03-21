@@ -3,13 +3,12 @@
     "inputs": [
         "context",
         "context_type",
-        "choices"
+        "completion_type"
     ],
     "outputs": [
-        "answer",
-        "choices"
+        "completion"
     ],
     "metrics": [
-        "metrics.accuracy"
+        "metrics.squad"
     ]
 }
