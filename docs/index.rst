@@ -48,16 +48,16 @@
       </style>
    </head>
    <body>
-      <a href="https://www.unitxt.org/en/latest/" class="custom-button">Video</a>
-      <a href="https://www.unitxt.org/en/latest/docs/demo.html" class="custom-button">Demo</a>
-      <a href="https://www.unitxt.org/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/" class="custom-button">Video</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/demo.html" class="custom-button">Demo</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
       <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
-      <a href="https://www.unitxt.org/en/latest/modules.html" class="custom-button">Documentation</a>
-      <a href="https://www.unitxt.org/en/latest/catalog.html" class="custom-button">Catalog</a>
-      <a href="https://www.unitxt.org/en/latest/docs/contributors_guide.html" class="custom-button">Contributers</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/catalog.html" class="custom-button">Catalog</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/contributors_guide.html" class="custom-button">Contributors</a>
       <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
-      <a href="https://www.unitxt.org/en/latest/search.html" class="custom-button">Search</a>
-      <a href="https://www.unitxt.org/en/latest/py-modindex.html" class="custom-button">Modules</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/search.html" class="custom-button">Search</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/py-modindex.html" class="custom-button">Modules</a>
       <br>
    </body>
    </html>
@@ -69,12 +69,94 @@
    </video>
 
 
+.. raw:: html
 
-Unitxt is a Python library for getting data prepared and ready for utilization in training, evaluation and inference of language models.
-It provides a set of reusable building blocks and methodology for defining datasets and metrics.
+   <div>
+      <br><br><br><br><br><br><br>
+   </div>
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1> Loading datasets is easier than ever! </h1>
+      </div>
+      <div class="feed-code-box" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span><span style="color: #f321e2;">from</span> datasets <span style="color: #f321e2;">import</span> load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/data"</span>, <span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
+            </div>
+         </div>
+          <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
+   </div>
 
-In one line of code, it prepares a dataset or mixtures-of-datasets into an input-output format for training and evaluation.
-Our aspiration is to be simple, adaptable, and transparent.
+   <div>
+         <br><br><br><br><br><br><br>
+         <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
+         <br><br><br><br><br><br>
+         <br><br><br><br><br><br><br>
+   </div>
+
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1>Full evaluation in one line of code</h1>
+      </div>
+      <div class="feed-code-box"  data-box="1" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> evaluate</span>
+               <br>
+               <br>
+               <br>
+               <span>results <span style="color: #868bff;">=</span>  evaluate<span style="color: #f321e2;">(</span>predictions_list, dataset)</span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span><span style="color: #f321e2;">from</span> evaluate <span style="color: #f321e2;">import</span> load</span>
+               <br>
+               <br>
+               <br>
+               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)</span>.compute<span style="color: #f321e2;">(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
+            </div>
+         </div>
+         <br>
+         <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
+   </div>
 
 --------
 Welcome!
@@ -89,12 +171,17 @@ Welcome!
    docs/demo
    docs/no_installation_usage
    docs/installation
-   docs/adding_dataset
-   docs/adding_operators_and_metrics
    docs/components
+   docs/adding_dataset
+   docs/adding_task
+   docs/adding_template
+   docs/adding_format
+   docs/adding_operator
+   docs/adding_metric
    docs/backend
    docs/operators
    docs/contributors_guide
+   docs/saving_and_loading_from_catalog
    modules
    catalog
 

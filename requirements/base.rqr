@@ -4,3 +4,4 @@ mecab-python3
 absl-py
 dpath
 ipadic
+scipy

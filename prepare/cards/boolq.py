@@ -1,132 +1,66 @@
-from typing import List, Optional, Union
-
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
-    InputOutputTemplate,
     LoadHF,
     TaskCard,
 )
 from src.unitxt.catalog import add_to_catalog
-
-# numbering=tuple(str(x) for x in range(200))
-from src.unitxt.operator import StreamingOperator
 from src.unitxt.operators import (
     CastFields,
-    JoinStr,
+    MapInstanceValues,
     RenameFields,
 )
-from src.unitxt.templates import TemplatesDict
 from src.unitxt.test_utils.card import test_card
 
-answers = ["yes", "false"]
-expected_answer = "number"  # 'number_and_answer' #'number'
-
-templates = {
-    "clean": """Question: {question}.\nAnswer:
-                    """.strip(),
-}
-
-QA_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(input_format=val, output_format="{label}")
-        for key, val in templates.items()
-    }
-)
-
-CONTEXT_QA_TEMPLATES = TemplatesDict(
-    {
-        key: InputOutputTemplate(
-            input_format=val.replace(
-                "Question:", "Context: {context}\nQuestion:"
-            ).replace("{sentence1}", "{context}\n{sentence1}"),
-            output_format="{label}",
-        )
-        for key, val in templates.items()
-    }
-)
-
-
-def question_answering_outputs():
-    return ["label"]
-
-
-def question_answering_inputs_outputs(context=False, answers=False, topic=False):
-    return {
-        "inputs": question_answering_inputs(
-            context=context, answers=answers, topic=topic
-        ),
-        "outputs": question_answering_outputs(),
-    }
-
-
-def question_answering_inputs(context=False, answers=False, topic=False):
-    inputs = ["question", "label"]
-    if context:
-        inputs.append("context")
-    if answers:
-        inputs.append("answers")
-    if topic:
-        inputs.append("topic")
-    return inputs
-
-
-def question_answering_preprocess(
-    question: str,
-    answer: str,
-    context: Optional[str] = None,
-    answers: Optional[str] = None,
-    topic: Optional[str] = None,
-) -> List[Union[StreamingOperator, str]]:
-    r"""Processing to make a unified format of question answering.
-
-    :param numbering: the field containing the numerals to use (e.g. ABCD [1,2,3,4])
-    :param choices: the field with the choices (e.g. ['apple','bannana']
-    :param topic: the field containing the topic of the question
-    :param label_index: in what index is the right index (consider using IndexOf function if you have the answer instead)
-    :param expected_answer: what format should the 'label' field be answer\number\number_and_answer
-    :return:
-    """
-    renames = {
-        "question": question,
-        "label": answer,
-        "context": context,
-        "answers": answers,
-        "topic": topic,
-    }
-    renames = {v: k for k, v in renames.items() if v}
-
-    return [
-        RenameFields(field_to_field=renames),
-        JoinStr(separator=",", field=answers, to_field="answers"),
-    ]
-
-
 card = TaskCard(
-    loader=LoadHF(path="boolq"),
+    loader=LoadHF(path="google/boolq"),
     preprocess_steps=[
         "splitters.small_no_test",
         AddFields(
             {
-                "topic": "boolean questions",
-                "answers": answers,
+                "text_a_type": "passage",
+                "text_b_type": "question",
+                "classes": ["yes", "no"],
+                "type_of_relation": "answer",
             },
         ),
         CastFields(fields={"answer": "str"}),
-        *question_answering_preprocess(
-            context="passage",
-            question="question",
-            answers="answers",
-            answer="answer",
-            topic="topic",
+        MapInstanceValues(mappers={"answer": {"True": "yes", "False": "no"}}),
+        RenameFields(
+            field_to_field={
+                "passage": "text_a",
+                "question": "text_b",
+                "answer": "label",
+            }
         ),
     ],
-    task=FormTask(
-        **question_answering_inputs_outputs(topic=True, context=True),
-        metrics=["metrics.accuracy"],
-    ),
-    templates=CONTEXT_QA_TEMPLATES,
+    task="tasks.classification.multi_class.relation",
+    templates="templates.classification.multi_class.relation.all",
 )
 
 test_card(card, demos_taken_from="test")
-add_to_catalog(card, "cards.boolq", overwrite=True)
+add_to_catalog(card, "cards.boolq.classification", overwrite=True)
+
+card = TaskCard(
+    loader=LoadHF(path="google/boolq"),
+    preprocess_steps=[
+        "splitters.small_no_test",
+        AddFields(
+            {
+                "context_type": "passage",
+                "choices": ["yes", "no"],
+            },
+        ),
+        CastFields(fields={"answer": "str"}),
+        MapInstanceValues(mappers={"answer": {"True": "yes", "False": "no"}}),
+        RenameFields(
+            field_to_field={
+                "passage": "context",
+            }
+        ),
+    ],
+    task="tasks.qa.multiple_choice.with_context",
+    templates="templates.qa.multiple_choice.with_context.all",
+)
+
+test_card(card, demos_taken_from="test", strict=False)
+add_to_catalog(card, "cards.boolq.multiple_choice", overwrite=True)

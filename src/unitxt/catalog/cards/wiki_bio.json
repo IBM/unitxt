@@ -1,0 +1,50 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "wiki_bio"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train",
+                "validation": "val",
+                "test": "test"
+            }
+        },
+        {
+            "type": "list_to_key_val_pairs",
+            "fields": [
+                "input_text/table/column_header",
+                "input_text/table/content"
+            ],
+            "to_field": "kvpairs",
+            "use_query": true
+        },
+        {
+            "type": "serialize_key_val_pairs",
+            "field_to_field": [
+                [
+                    "kvpairs",
+                    "input"
+                ]
+            ]
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "target_text": "output"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "type_of_input": "Key-Value pairs",
+                "type_of_output": "Text"
+            }
+        }
+    ],
+    "task": "tasks.generation",
+    "templates": "templates.generation.all"
+}

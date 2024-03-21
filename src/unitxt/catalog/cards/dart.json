@@ -1,0 +1,41 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "dart"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "serialize_triples",
+            "field_to_field": [
+                [
+                    "tripleset",
+                    "serialized_triples"
+                ]
+            ]
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "serialized_triples": "input"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "annotations/text/0": "output"
+            },
+            "use_query": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "type_of_input": "Triples",
+                "type_of_output": "Text"
+            }
+        }
+    ],
+    "task": "tasks.generation",
+    "templates": "templates.generation.all"
+}

@@ -1,5 +1,5 @@
 {
     "type": "system_format",
-    "demo_format": "{source}{target}\n\n",
-    "model_input_format": "{instruction}\n{demos}\n{source}"
+    "demo_format": "{source}{target_prefix}{target}\n\n",
+    "model_input_format": "{system_prompt}{instruction}\n{demos}\n{source}{target_prefix}"
 }

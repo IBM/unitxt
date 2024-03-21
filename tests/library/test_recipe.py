@@ -16,7 +16,7 @@ class TestRecipes(UnitxtTestCase):
         recipe = StandardRecipe(
             card="cards.wnli",
             template=InputOutputTemplate(
-                input_format="{premise}",
+                input_format="{text_a}",
                 output_format="{label}",
                 instruction="classify",
             ),
@@ -29,22 +29,18 @@ class TestRecipes(UnitxtTestCase):
 
         for instance in stream["train"]:
             print_dict(instance)
+            del instance["task_data"]
             self.assertDictEqual(
                 instance,
                 {
-                    "metrics": ["metrics.accuracy"],
+                    "metrics": [
+                        "metrics.f1_micro",
+                        "metrics.accuracy",
+                        "metrics.f1_macro",
+                    ],
                     "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
                     "target": "not entailment",
                     "references": ["not entailment"],
-                    "additional_inputs": {
-                        "key": ["choices", "premise", "hypothesis", "label"],
-                        "value": [
-                            "['entailment', 'not entailment']",
-                            "I stuck a pin through a carrot. When I pulled the pin out, it had a hole.",
-                            "The carrot had a hole.",
-                            "not entailment",
-                        ],
-                    },
                     "group": "unitxt",
                     "postprocessors": ["processors.to_string_stripped"],
                 },
@@ -57,13 +53,13 @@ class TestRecipes(UnitxtTestCase):
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=5,
             num_demos=3,
         )
 
         stream = recipe()
 
-        for instance in stream["train"]:
+        for instance in stream["test"]:
             print_dict(instance)
             break
 
@@ -82,6 +78,36 @@ class TestRecipes(UnitxtTestCase):
         for instance in stream["train"]:
             print_dict(instance)
             break
+
+    def test_standard_recipe_with_demos_not_removed_from_data(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=100,
+            num_demos=3,
+            demos_removed_from_data=True,
+        )
+
+        stream = recipe()
+        n_trains_remove_demos = len(list(stream["train"]))
+        n_demos_remove_demos = len(list(stream["demos_pool"]))
+
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=100,
+            num_demos=3,
+            demos_removed_from_data=False,
+        )
+
+        stream = recipe()
+        n_trains_keep_demos = len(list(stream["train"]))
+        n_demos_keep_demos = len(list(stream["demos_pool"]))
+
+        self.assertEqual(
+            n_trains_keep_demos, n_trains_remove_demos + n_demos_remove_demos
+        )
+        self.assertEqual(n_demos_keep_demos, n_demos_remove_demos)
 
     def test_empty_template(self):
         recipe = StandardRecipeWithIndexes(
@@ -207,7 +233,7 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.",
+            "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers.",
         )
 
         with self.assertRaises(Exception) as cm:
@@ -275,11 +301,11 @@ class TestRecipes(UnitxtTestCase):
             StandardRecipeWithIndexes(
                 card="cards.wnli", template_card_index="illegal_template"
             )
-        self.assertTrue("is not in card" in str(cm.exception))
+        self.assertTrue("not defined in card." in str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
             StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
-        self.assertTrue("is not in card" in str(cm.exception))
+        self.assertTrue("not defined in card." in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
         recipe = StandardRecipeWithIndexes(
@@ -311,7 +337,7 @@ class TestRecipes(UnitxtTestCase):
         stream = recipe()
         sample = list(stream["test"])[1]
         source = sample["source"]
-        pattern = "Classify the sentiment of following sentence to one of these options: ((negative, positive)|(positive, negative)). Text: (.*)"
+        pattern = "Classify the sentiment of the following sentence to one of these options: ((negative, positive)|(positive, negative)). sentence: (.*)"
         result = re.match(pattern, sample["source"], re.DOTALL)
         assert result, f"Unable to find '{pattern}' in '{source}'"
         result = result.group(4)
@@ -366,7 +392,7 @@ class TestRecipes(UnitxtTestCase):
 
         stream = recipe()
 
-        self.assertEqual(len(list(stream["train"])), 6)
+        self.assertEqual(len(list(stream["train"])), 10)
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
@@ -374,13 +400,24 @@ class TestRecipes(UnitxtTestCase):
 
         d = load_dataset(
             dataset_file,
-            "type=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.nli.simple,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=5",
+            "type=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=5",
             streaming=True,
         )
 
         iterator = iter(d["train"])
         next(iterator)
         print_dict(next(iterator))
+
+    def test_recipe_loaded_from_arguments_and_overwrites_only(self):
+        from src.unitxt import load_dataset
+
+        dataset = load_dataset(
+            "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
+        )
+
+        iterator = iter(dataset["train"])
+        first_inst = next(iterator)
+        self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
 
     def test_standard_recipe_with_a_sampler(self):
         """Check that the sampler is re-initialized before processing a recipe.

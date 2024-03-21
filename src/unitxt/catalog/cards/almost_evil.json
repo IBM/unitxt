@@ -1,0 +1,32 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "0x22almostEvil/multilingual-wikihow-qa-16k"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[90%]",
+                "validation": "train[5%]",
+                "test": "train[5%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "INSTRUCTION": "question"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "RESPONSE"
+            ],
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.open",
+    "templates": "templates.qa.open.all"
+}

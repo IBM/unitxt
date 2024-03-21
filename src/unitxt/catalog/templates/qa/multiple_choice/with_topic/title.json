@@ -1,0 +1,12 @@
+{
+    "type": "multiple_choice_template",
+    "instruction": "Answer the multiple choice Question about {topic} from one of the Choices (choose from {numerals}).",
+    "input_format": "Question:\n{question}\nChoices:\n{choices}",
+    "target_prefix": "Answer:\n",
+    "target_field": "answer",
+    "choices_seperator": "\n",
+    "postprocessors": [
+        "processors.to_string_stripped",
+        "processors.first_character"
+    ]
+}

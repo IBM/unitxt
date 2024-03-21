@@ -52,6 +52,17 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    InputOutputTemplate(
+        instruction="Translate the provided Text from {source_language} to {target_language}",
+        input_format="Text:\n{text}",
+        target_prefix="Translation:\n",
+        output_format="{translation}",
+    ),
+    "templates.translation.directed.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.translation.directed.simple",
@@ -59,6 +70,7 @@ add_to_catalog(
             "templates.translation.directed.casual",
             "templates.translation.directed.playful",
             "templates.translation.directed.instructional",
+            "templates.translation.directed.title",
         ]
     ),
     "templates.translation.directed.all",

@@ -8,7 +8,6 @@ from src.unitxt.blocks import (
     TaskCard,
 )
 from src.unitxt.operators import FilterByCondition
-from src.unitxt.templates import InputOutputTemplate
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "20_newsgroups"
@@ -54,18 +53,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.classification.multi_class",
-    templates=[
-        InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
-            input_format="Text: {text}",
-            output_format="{label}",
-            target_prefix="Topic: ",
-            instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.\n",
-            postprocessors=[
-                "processors.take_first_non_empty_line",
-                "processors.lower_case_till_punc",
-            ],
-        )
-    ],
+    templates="templates.classification.multi_class.all",
 )
 
 test_card(card, debug=False)

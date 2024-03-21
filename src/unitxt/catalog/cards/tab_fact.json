@@ -1,0 +1,50 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "ibm/tab_fact",
+        "streaming": false
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "serialize_table_as_indexed_row_major",
+            "field_to_field": [
+                [
+                    "table",
+                    "table_serialized"
+                ]
+            ]
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "table_serialized": "text_a",
+                "statement": "text_b"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "refuted",
+                    "1": "entailed"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "type_of_relation": "entailment",
+                "text_a_type": "Table",
+                "text_b_type": "Statement",
+                "classes": [
+                    "refuted",
+                    "entailed"
+                ]
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all"
+}

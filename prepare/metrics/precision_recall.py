@@ -16,8 +16,8 @@ recall_macro_metric = RecallMacroMultiLabel()
 
 
 # Binary case: micro = macro
-predictions = [["yes"], ["yes"], ["none"], ["none"]]
-references = [[["yes"]], [["none"]], [["yes"]], [["yes"]]]
+predictions = [["yes"], ["yes"], [], []]
+references = [[["yes"]], [[]], [["yes"]], [["yes"]]]
 
 
 instance_targets_precision_micro = [
@@ -121,13 +121,13 @@ outputs = test_metric(
 
 # multi-class case
 
-predictions = [["yes"], ["yes"], ["none"], ["none"], ["maybe"], ["maybe"], ["maybe"]]
+predictions = [["yes"], ["yes"], [], [], ["maybe"], ["maybe"], ["maybe"]]
 references = [
     [["yes"]],
-    [["none"]],
+    [[]],
     [["yes"]],
     [["yes"]],
-    [["none"]],
+    [[]],
     [["maybe"]],
     [["yes"]],
 ]

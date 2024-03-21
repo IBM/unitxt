@@ -1,5 +1,4 @@
 import glob
-import importlib.util
 import os
 import time
 from datetime import timedelta
@@ -8,6 +7,7 @@ from src.unitxt.loaders import MissingKaggleCredentialsError
 from src.unitxt.logging_utils import get_logger
 from src.unitxt.text_utils import print_dict
 from tests.utils import UnitxtCatalogPreparationTestCase
+from utils.prepare_all_artifacts import import_module_from_file
 
 logger = get_logger()
 project_dir = os.path.dirname(
@@ -17,23 +17,7 @@ glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 
 
-def import_module_from_file(file_path):
-    # Get the module name (file name without extension)
-    module_name = os.path.splitext(os.path.basename(file_path))[0]
-
-    # Create a module specification
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-
-    # Create a new module based on the specification
-    module = importlib.util.module_from_spec(spec)
-
-    # Load the module
-    spec.loader.exec_module(module)
-
-    return module
-
-
-class TestExamples(UnitxtCatalogPreparationTestCase):
+class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         logger.info(f"Testing preparation files: {all_preparation_files}")
@@ -62,10 +46,10 @@ class TestExamples(UnitxtCatalogPreparationTestCase):
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Finished testing preparation file:\n  {file}."
-                f"  Preperation Time: {formatted_time}"
+                f"  Preparation Time: {formatted_time}"
                 "\n_____________________________________________\n"
             )
 
             times[file] = formatted_time
-        logger.info("Preperation times table:")
+        logger.info("Preparation times table:")
         print_dict(times)

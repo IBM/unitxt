@@ -7,11 +7,14 @@ from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
 from ..logging_utils import get_logger
 from ..metric import _compute
+from ..settings_utils import get_settings
 from ..standard import StandardRecipe
 from ..templates import TemplatesDict
 from ..text_utils import construct_dict_str
 
 logger = get_logger()
+settings = get_settings()
+
 TEMP_NAME = "tmp_name"
 
 
@@ -43,10 +46,9 @@ def test_loading_from_catalog(card):
 
 
 def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
-    disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
-    if disable is not None:
+    if settings.test_card_disable:
         logger.info(
-            "load_examples_from_standard_recipe() functionality is disabled because UNITXT_TEST_CARD_DISABLE environment variable is set"
+            "load_examples_from_standard_recipe() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
         )
         return None
 
@@ -154,12 +156,29 @@ def test_with_eval(
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
+            test_predictions(
+                examples=examples,
+                strict=strict,
+                exact_match_score=exact_match_score,
+                full_mismatch_score=full_mismatch_score,
+            )
     else:
         num_templates = len(card.templates)
         for template_card_index in range(0, num_templates):
             examples = load_examples_from_standard_recipe(
                 card, template_card_index=template_card_index, debug=debug, **kwargs
             )
+            test_predictions(
+                examples=examples,
+                strict=strict,
+                exact_match_score=exact_match_score,
+                full_mismatch_score=full_mismatch_score,
+            )
+
+
+def test_predictions(
+    examples, strict=True, exact_match_score=1.0, full_mismatch_score=0.0
+):
     # metric = evaluate.load('unitxt/metric')
     correct_predictions = []
     for example in examples:
@@ -180,6 +199,9 @@ def test_with_eval(
         )
         logger.info(
             f"Processed prediction: ({type(result['prediction']).__name__}) {result['prediction']}"
+        )
+        logger.info(
+            f"Processed references: ({type(result['references']).__name__}) {result['references']}"
         )
     logger.info("*" * 80)
     score_name = results[0]["score"]["global"]["score_name"]
@@ -248,10 +270,9 @@ def test_card(
     full_mismatch_score=0.0,
     **kwargs,
 ):
-    disable = os.getenv("UNITXT_TEST_CARD_DISABLE", None)
-    if disable is not None:
+    if settings.test_card_disable:
         logger.info(
-            "test_card() functionality is disabled because UNITXT_TEST_CARD_DISABLE environment variable is set"
+            "test_card() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
         )
         return
     test_adding_to_catalog(card)

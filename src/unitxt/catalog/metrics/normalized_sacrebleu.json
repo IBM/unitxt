@@ -6,8 +6,8 @@
             "type": "copy_fields",
             "field_to_field": [
                 [
-                    "additional_inputs/target_language",
-                    "additional_inputs/tokenize"
+                    "task_data/target_language",
+                    "task_data/tokenize"
                 ]
             ],
             "use_query": true,
@@ -17,7 +17,7 @@
         {
             "type": "map_instance_values",
             "mappers": {
-                "additional_inputs/tokenize": {
+                "task_data/tokenize": {
                     "deutch": null,
                     "french": null,
                     "romanian": null,
@@ -26,11 +26,15 @@
                     "French": null,
                     "Spanish": null,
                     "Portuguese": null,
+                    "Arabic": null,
+                    "Korean": null,
                     "fr": null,
                     "de": null,
                     "es": null,
                     "pt": null,
                     "en": null,
+                    "ar": null,
+                    "ko": null,
                     "japanese": "ja-mecab",
                     "Japanese": "ja-mecab",
                     "ja": "ja-mecab"

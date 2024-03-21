@@ -4,7 +4,7 @@ Loaders: Generators of Unitxt Multistreams from existing date sources
 ==============================================================
 
 Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
-postprocessing the model's output, preparing it for any given evaluator.
+post-processing the model's output, preparing it for any given evaluator.
 
 Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
 of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
@@ -33,7 +33,7 @@ import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
-from .dataclass import InternalField
+from .dataclass import InternalField, OptionalField
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
@@ -48,7 +48,7 @@ class Loader(SourceOperator):
     # It is usually provided to the loader via the recipe (see standard.py)
     # The loader can use this value to limit the amount of data downloaded from the source
     # to reduce loading time.  However, this may not always be possible, so the
-    # loader may ingore this.  In any case, the recipe, will limit the number of instances in the returned
+    # loader may ignore this.  In any case, the recipe, will limit the number of instances in the returned
     # stream, after load is complete.
     loader_limit: int = None
     streaming: bool = False
@@ -84,7 +84,24 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     streaming: bool = True
+    filtering_lambda: Optional[str] = None
     _cache: dict = InternalField(default=None)
+    requirements_list: List[str] = OptionalField(default_factory=list)
+
+    def verify(self):
+        for requirement in self.requirements_list:
+            if requirement not in self._requirements_list:
+                self._requirements_list.append(requirement)
+        super().verify()
+
+    def filtered_load(self, dataset):
+        logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
+        return MultiStream(
+            {
+                name: dataset[name].filter(eval(self.filtering_lambda))
+                for name in dataset
+            }
+        )
 
     def stream_dataset(self):
         if self._cache is None:
@@ -103,8 +120,11 @@ class LoadHF(Loader):
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
                         raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+
+            if self.filtering_lambda is not None:
+                dataset = self.filtered_load(dataset)
 
             if self.split is not None:
                 dataset = {self.split: dataset}
@@ -133,8 +153,12 @@ class LoadHF(Loader):
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
                         raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment vairable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+
+            if self.filtering_lambda is not None:
+                dataset = self.filtered_load(dataset)
+
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
@@ -179,8 +203,9 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
     _cache = InternalField(default_factory=dict)
-    loader_limit: int = None
+    loader_limit: Optional[int] = None
     streaming: bool = True
+    sep: str = ","
 
     def stream_csv(self, file):
         if self.get_limit() is not None:
@@ -190,7 +215,7 @@ class LoadCSV(Loader):
             chunksize = self.chunksize
 
         row_count = 0
-        for chunk in pd.read_csv(file, chunksize=chunksize):
+        for chunk in pd.read_csv(file, chunksize=chunksize, sep=self.sep):
             for _, row in chunk.iterrows():
                 if self.get_limit() is not None and row_count >= self.get_limit():
                     return
@@ -201,9 +226,9 @@ class LoadCSV(Loader):
         if file not in self._cache:
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                self._cache[file] = pd.read_csv(file, nrows=self.get_limit()).to_dict(
-                    "records"
-                )
+                self._cache[file] = pd.read_csv(
+                    file, nrows=self.get_limit(), sep=self.sep
+                ).to_dict("records")
             else:
                 self._cache[file] = pd.read_csv(file).to_dict("records")
 
@@ -226,11 +251,41 @@ class LoadCSV(Loader):
         )
 
 
+class LoadFromSklearn(Loader):
+    dataset_name: str
+    splits: List[str] = ["train", "test"]
+
+    _requirements_list: List[str] = ["sklearn", "pandas"]
+
+    def verify(self):
+        super().verify()
+
+        if self.streaming:
+            raise NotImplementedError("LoadFromSklearn cannot load with streaming.")
+
+    def prepare(self):
+        super().prepare()
+        from sklearn import datasets as sklearn_datatasets
+
+        self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
+
+    def process(self):
+        with TemporaryDirectory() as temp_directory:
+            for split in self.splits:
+                split_data = self.downloader(subset=split)
+                targets = [split_data["target_names"][t] for t in split_data["target"]]
+                df = pd.DataFrame([split_data["data"], targets]).T
+                df.columns = ["data", "target"]
+                df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
+            dataset = hf_load_dataset(temp_directory, streaming=False)
+
+        return MultiStream.from_iterables(dataset)
+
+
 class MissingKaggleCredentialsError(ValueError):
     pass
 
 
-# TODO write how to obtain kaggle credentials
 class LoadFromKaggle(Loader):
     url: str
     _requirements_list: List[str] = ["opendatasets"]
@@ -351,7 +406,7 @@ class LoadFromIBMCloud(Loader):
         local_dir = os.path.join(
             self.cache_dir,
             self.bucket_name,
-            self.data_dir,
+            self.data_dir or "",  # data_dir can be None
             f"loader_limit_{self.get_limit()}",
         )
         if not os.path.exists(local_dir):

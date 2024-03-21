@@ -17,7 +17,7 @@
             "fields": [
                 "relevant_context"
             ],
-            "to_field": "answer"
+            "to_field": "answers"
         },
         {
             "type": "execute_expression",

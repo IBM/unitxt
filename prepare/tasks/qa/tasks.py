@@ -4,7 +4,7 @@ from src.unitxt.catalog import add_to_catalog
 add_to_catalog(
     FormTask(
         inputs=["context", "context_type", "question"],
-        outputs=["answer"],
+        outputs=["answers"],
         metrics=["metrics.squad"],
     ),
     "tasks.qa.with_context.extractive",
@@ -14,7 +14,7 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs=["context", "context_type", "question"],
-        outputs=["answer"],
+        outputs=["answers"],
         metrics=["metrics.rouge"],
         augmentable_inputs=["context", "question"],
     ),
@@ -25,7 +25,7 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs=["question"],
-        outputs=["answer"],
+        outputs=["answers"],
         metrics=["metrics.rouge"],
     ),
     "tasks.qa.open",

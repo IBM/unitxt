@@ -1,6 +1,6 @@
 {
     "type": "metric_pipeline",
-    "main_score": "score",
+    "main_score": "perplexity",
     "preprocess_steps": [
         {
             "type": "copy_fields",

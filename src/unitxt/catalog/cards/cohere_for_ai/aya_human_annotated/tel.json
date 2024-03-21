@@ -1,0 +1,36 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "CohereForAI/aya_evaluation_suite",
+        "name": "aya_human_annotated",
+        "streaming": true,
+        "filtering_lambda": "lambda instance: instance[\"language\"]==\"tel\""
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "test[90%]",
+                "validation": "test[5%]",
+                "test": "test[5%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "inputs": "question",
+                "targets": "answers"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "answers"
+            ],
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.open",
+    "templates": "templates.qa.open.all"
+}

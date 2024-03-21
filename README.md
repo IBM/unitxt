@@ -3,12 +3,12 @@
 </div>
 
 [![Button](https://img.shields.io/badge/Video-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Demo-pink?style=for-the-badge)](https://huggingface.co/spaces/unitxt/explore)
+[![Button](https://img.shields.io/badge/Demo-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/demo.html)
 [![Button](https://img.shields.io/badge/Tutorial-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html)
 [![Button](https://img.shields.io/badge/Paper-pink?style=for-the-badge)](https://arxiv.org/abs/2401.14019)
-[![Button](https://img.shields.io/badge/Documentation-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Catalog-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
-[![Button](https://img.shields.io/badge/Contributers-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
+[![Button](https://img.shields.io/badge/Documentation-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/modules.html)
+[![Button](https://img.shields.io/badge/Catalog-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/catalog.html)
+[![Button](https://img.shields.io/badge/Contributers-pink?style=for-the-badge)](https://unitxt.readthedocs.io/en/latest/docs/contributors_guide.html)
 [![Button](https://img.shields.io/badge/PyPi-pink?style=for-the-badge)](https://pypi.org/project/unitxt/)
 
 
@@ -31,15 +31,19 @@ https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919f
 
 ### 🦄 Currently on Unitxt Catalog
 
-![NLP Tasks](https://img.shields.io/badge/NLP_tasks-24-blue)
-![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-382-blue)
-![Templates](https://img.shields.io/badge/Templates-186-blue)
-![Formats](https://img.shields.io/badge/Formats-7-blue)
-![Metrics](https://img.shields.io/badge/Metrics-49-blue)
+![NLP Tasks](https://img.shields.io/badge/NLP_tasks-22-blue)
+![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-423-blue)
+![Templates](https://img.shields.io/badge/Templates-204-blue)
+![Formats](https://img.shields.io/badge/Formats-13-blue)
+![Metrics](https://img.shields.io/badge/Metrics-79-blue)
 
 ### 🦄 Run Unitxt Exploration Dashboard
 
-To launch unitxt graphical user interface run:
+To launch unitxt graphical user interface first install unitxt with ui requirements:
+```
+pip install unitxt[ui]
+```
+Then launch the ui by running:
 ```
 unitxt-explore
 ```

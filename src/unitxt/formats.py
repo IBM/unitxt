@@ -5,6 +5,7 @@ from typing import (
     Optional,
 )
 
+from .dataclass import OptionalField
 from .operator import StreamInstanceOperator
 from .type_utils import isoftype
 
@@ -34,6 +35,7 @@ class SystemFormat(Format):
         demo_format (str): formatting string for a single demo, combining fields "source" and "target"
         model_input_format (str) overall product format, combining instruction and source (as read from fields "instruction"
         and "source" of the input instance), together with demos (as formatted into one string)
+        format_args: Dict[str,str]: additional format args to be used when formatting the different format strings
 
     Example:
         when input instance:
@@ -73,6 +75,7 @@ class SystemFormat(Format):
     model_input_format: str = (
         "{system_prompt}{instruction}{demos}{source}\n{target_prefix}"
     )
+    format_args: Dict[str, str] = OptionalField(default_factory=dict)
 
     @staticmethod
     def _retrieve_field_and_assert_not_none(instance, field_name) -> str:
@@ -124,16 +127,11 @@ class SystemFormat(Format):
 
         demos_string = ""
         for demo_instance in demo_instances:
-            demo_instruction = self._retrieve_field_and_assert_not_none(
-                instance=demo_instance, field_name="instruction"
-            )
-            assert (
-                demo_instruction == instruction
-            ), f"instruction in each demo instance should be identical to instruction of main instance. Got demo instruction: '{demo_instruction}' whereas main instruction: '{instruction}'"
             demo_str = self.demo_format.format(
                 target_prefix=target_prefix,
                 source=demo_instance["source"],
                 target=demo_instance["target"],
+                **self.format_args,
             )
             demos_string += demo_str
 
@@ -143,6 +141,7 @@ class SystemFormat(Format):
             demos=demos_string,
             source=source,
             target_prefix=target_prefix,
+            **self.format_args,
         )
         instance["source"] = output
         return instance

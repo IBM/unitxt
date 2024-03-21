@@ -8,15 +8,16 @@ def run_test(metric_to_test, instance_scores, global_scores):
     predictions = []
     instance_targets = []
 
-    for r, p, pr in instance_scores:
-        references.append([r])
-        predictions.append(p)
+    for instance in instance_scores:
+        score = instance["score"]
+        references.append(instance["references"])
+        predictions.append(instance["prediction"])
         instance_targets.append(
             {
-                "perplexity": pr,
-                "score": pr,
+                "perplexity": score,
+                "score": score,
                 "score_name": "perplexity",
-                "reference_scores": [pr],
+                "reference_scores": [score],
             }
         )
 
@@ -39,15 +40,34 @@ def run_test(metric_to_test, instance_scores, global_scores):
     )
 
 
-def flatten(instances: dict, flip: bool):
-    result = []
-    for q, answers in instances.items():
-        for a, pr in answers:
-            if flip:
-                result.append((a, q, pr))
-            else:
-                result.append((q, a, pr))
-    return result
+def generate_completions(instances, global_scores):
+    instance_scores = []
+    for opening, completions in instances.items():
+        for completion, pr in completions:
+            instance_scores.append(
+                {"prediction": completion, "references": [opening], "score": pr}
+            )
+    run_test(perplexity, instance_scores, global_scores)
+
+
+def generate_answers(instances, global_scores):
+    instance_scores = []
+    for question, answers in instances.items():
+        for answer, pr in answers:
+            instance_scores.append(
+                {"prediction": answer, "references": [question], "score": pr}
+            )
+    run_test(perplexity_answer, instance_scores, global_scores)
+
+
+def generate_questions(instances, global_scores, metric):
+    instance_scores = []
+    for question, answers in instances.items():
+        for answer, pr in answers:
+            instance_scores.append(
+                {"prediction": question, "references": [answer], "score": pr}
+            )
+    run_test(metric, instance_scores, global_scores)
 
 
 perplexity = Perplexity(
@@ -76,8 +96,8 @@ perplexity_chat_bloom = Perplexity(
     "based on the given content:",
 )
 
-gen_instances = flatten(
-    {
+generate_completions(
+    instances={
         "together we are": [  # prediction 1
             ("ok", 0.04),  # reference 1
             ("stronger", 0.01),  # reference 2
@@ -89,21 +109,20 @@ gen_instances = flatten(
             ("those who believe in the beauty of their dreams", 0.06),
         ],
     },
-    flip=True,
+    global_scores={
+        "mean": 0.03,
+        "ci_high": 0.05,
+        "ci_low": 0.01,
+    },
 )
 
-gen_global = {
-    "mean": 0.03,
-    "ci_high": 0.05,
-    "ci_low": 0.01,
-}
 
-q_instances = flatten(
-    {
-        "who are we?": [  # reference 1
-            ("we are the world", 0.06),  # prediction 1
-            ("we are the children", 0.07),  # prediction 2
-            ("we are the people", 0.08),  # prediction 3
+generate_questions(
+    instances={
+        "who are we?": [  # prediction
+            ("we are the world", 0.06),  # reference 1
+            ("we are the children", 0.07),  # reference 2
+            ("we are the people", 0.08),  # reference 3
         ],
         "what are we saving?": [
             ("we make a brighter day", 0.07),
@@ -111,40 +130,34 @@ q_instances = flatten(
             ("we are saving our own lives", 0.26),
         ],
         "Which city is the capital of Italy?": [
-            ("Milan", 0.21),
-            ("Rome", 0.22),
-            ("Naples", 0.2),
+            ("The capital of Italy is Milan", 0.54),
+            ("The capital of England is London", 0.2),
+            ("The capital of Spain is Madrid", 0.22),
         ],
     },
-    flip=False,
+    global_scores={
+        "mean": 0.17,
+        "ci_high": 0.31,
+        "ci_low": 0.1,
+    },
+    metric=perplexity_question,
 )
-q_global = {
-    "mean": 0.14,
-    "ci_high": 0.19,
-    "ci_low": 0.08,
-}
 
-a_instances = flatten(
-    {
-        "Which city is the capital of Italy?": [
-            ("The capital of Italy is Milan", 0.08),
-            ("The capital of Italy is Rome", 0.08),
-            ("The capital of Italy is Naples", 0.05),
-        ],
-        "Where Albert Einstein was born?": [
+generate_answers(
+    instances={
+        "Where was Einstein born?": [
             ("Einstein was born in Ulm, Germany", 0.07),
-            ("Einstein was born in Ulm, Poland", 0.04),
+            ("Einstein was raised in Ulm, Poland", 0.02),
             ("Ulm", 0.0),
-            ("Germany", 0.12),
+            ("Germany", 0.15),
         ],
     },
-    flip=True,
+    global_scores={
+        "mean": 0.06,
+        "ci_high": 0.13,
+        "ci_low": 0.01,
+    },
 )
-a_global = {
-    "mean": 0.06,
-    "ci_high": 0.09,
-    "ci_low": 0.04,
-}
 
 chat_pension_policy = (
     "Pension policy refers to the mix of public and private programs that provide income to an individual or "
@@ -170,43 +183,38 @@ chat_construction_policy = (
     "Japan Earthquake experience."
 )
 
-chat_instances = flatten(
-    {
+generate_questions(
+    instances={
         "user: hello\nagent:I have a question about my retirement policy.": [
             (chat_pension_policy, 0.02),
             (chat_retirement_policy, 0.03),
             (chat_construction_policy, 0.01),
         ],
     },
-    flip=False,
+    global_scores={
+        "mean": 0.02,
+        "ci_high": 0.03,
+        "ci_low": 0.01,
+    },
+    metric=perplexity_chat,
 )
-chat_global = {
-    "mean": 0.02,
-    "ci_high": 0.03,
-    "ci_low": 0.01,
-}
 
-chat_instances_bloom = flatten(
-    {
+generate_questions(
+    instances={
         "user: hello\nagent:I have a question about my retirement policy.": [
             (chat_pension_policy, 0.01),
             (chat_retirement_policy, 0.02),
             (chat_construction_policy, 0.01),
         ],
     },
-    flip=False,
+    global_scores={
+        "mean": 0.01,
+        "ci_high": 0.02,
+        "ci_low": 0.01,
+    },
+    metric=perplexity_chat_bloom,
 )
-chat_global_bloom = {
-    "mean": 0.01,
-    "ci_high": 0.02,
-    "ci_low": 0.01,
-}
 
-run_test(perplexity, gen_instances, gen_global)
-run_test(perplexity_question, q_instances, q_global)
-run_test(perplexity_answer, a_instances, a_global)
-run_test(perplexity_chat, chat_instances, chat_global)
-run_test(perplexity_chat_bloom, chat_instances_bloom, chat_global_bloom)
 
 add_to_catalog(perplexity, "metrics.perplexity.flan_t5_small", overwrite=True)
 add_to_catalog(

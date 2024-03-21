@@ -35,28 +35,28 @@ class TestExamples(UnitxtTestCase):
                 "references": ["333", "4"],
                 "source": "source1",
                 "target": "target1",
-                "additional_inputs": [],
+                "task_data": "{}",
             },
             {
                 "group": "group1",
                 "references": ["4"],
                 "source": "source2",
                 "target": "target2",
-                "additional_inputs": [],
+                "task_data": "{}",
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source3",
                 "target": "target3",
-                "additional_inputs": [],
+                "task_data": "{}",
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source4",
                 "target": "target4",
-                "additional_inputs": [],
+                "task_data": "{}",
             },
         ]
 
@@ -99,40 +99,28 @@ class TestExamples(UnitxtTestCase):
                 "references": ["333", "4"],
                 "source": "source1",
                 "target": "target1",
-                "additional_inputs": [
-                    {"key": "a", "value": "1"},
-                    {"key": "b", "value": "1"},
-                ],
+                "task_data": '{"a": 1, "b": 1}',
             },
             {
                 "group": "group1",
                 "references": ["4"],
                 "source": "source2",
                 "target": "target2",
-                "additional_inputs": [
-                    {"key": "a", "value": "2"},
-                    {"key": "b", "value": "2"},
-                ],
+                "task_data": '{"a": 2, "b": 2}',
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source3",
                 "target": "target3",
-                "additional_inputs": [
-                    {"key": "a", "value": "3"},
-                    {"key": "b", "value": "3"},
-                ],
+                "task_data": '{"a": 3, "b": 3}',
             },
             {
                 "group": "group2",
                 "references": ["3"],
                 "source": "source4",
                 "target": "target4",
-                "additional_inputs": [
-                    {"key": "a", "value": "4"},
-                    {"key": "b", "value": "4"},
-                ],
+                "task_data": '{"a": 4, "b": 4}',
             },
         ]
 

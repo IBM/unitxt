@@ -1,0 +1,77 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "universalner/universal_ner",
+        "name": "en_ewt",
+        "requirements_list": [
+            "conllu"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "ner_tags": "labels"
+            }
+        },
+        {
+            "type": "get_item_by_index",
+            "field": "labels",
+            "items_list": [
+                "O",
+                "B-PER",
+                "I-PER",
+                "B-ORG",
+                "I-ORG",
+                "B-LOC",
+                "I-LOC"
+            ],
+            "process_every_value": true
+        },
+        {
+            "type": "iob_extractor",
+            "labels": [
+                "Person",
+                "Organization",
+                "Location"
+            ],
+            "begin_labels": [
+                "B-PER",
+                "B-ORG",
+                "B-LOC"
+            ],
+            "inside_labels": [
+                "I-PER",
+                "I-ORG",
+                "I-LOC"
+            ],
+            "outside_label": "O"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "spans/*/start": "spans_starts",
+                "spans/*/end": "spans_ends",
+                "spans/*/label": "labels"
+            },
+            "use_query": true,
+            "get_default": [],
+            "not_exist_ok": true
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "text",
+                "class_type": "entity type",
+                "classes": [
+                    "Person",
+                    "Organization",
+                    "Location"
+                ]
+            }
+        }
+    ],
+    "task": "tasks.span_labeling.extraction",
+    "templates": "templates.span_labeling.extraction.all"
+}

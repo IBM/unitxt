@@ -12,7 +12,7 @@ from . import settings as config
 from .load_catalog_data import get_catalog_items, load_cards_data
 
 logger = get_logger()
-data, jsons, formats_items, instructions_items = load_cards_data()
+data, jsons, formats_items, system_prompts_items = load_cards_data()
 
 
 def conditionally_activate_button(conditional_element, button):
@@ -39,13 +39,13 @@ def safe_add(parameter, key, args):
 
 
 @lru_cache
-def get_prompts(dataset, template, num_demos, instruction, format, augmentor):
+def get_prompts(dataset, template, num_demos, system_prompt, format, augmentor):
     prompt_args = {"card": dataset, "template": template, config.LOADER_LIMIT_STR: 300}
     if num_demos != 0:
         prompt_args.update(
             {"num_demos": num_demos, "demos_pool_size": config.DEMOS_POOL_SIZE}
         )
-    safe_add(instruction, "instruction", prompt_args)
+    safe_add(system_prompt, "system_prompt", prompt_args)
     safe_add(format, "format", prompt_args)
     safe_add(augmentor, "augmentor", prompt_args)
 

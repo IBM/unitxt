@@ -1,6 +1,5 @@
 from src.unitxt.blocks import (
     AddFields,
-    FormTask,
     LoadHF,
     MapInstanceValues,
     RenameFields,
@@ -8,14 +7,6 @@ from src.unitxt.blocks import (
 )
 from src.unitxt.catalog import add_to_catalog
 from src.unitxt.test_utils.card import test_card
-
-nli_task = FormTask(
-    inputs=["choices", "premise", "hypothesis"],
-    outputs=["label"],
-    metrics=["metrics.accuracy"],
-)
-
-add_to_catalog(nli_task, "tasks.nli", overwrite=True)
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="rte"),
@@ -26,18 +17,21 @@ card = TaskCard(
         ),
         AddFields(
             fields={
-                "choices": ["entailment", "not entailment"],
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
             }
         ),
         RenameFields(
             field_to_field={
-                "sentence1": "premise",
-                "sentence2": "hypothesis",
+                "sentence1": "text_a",
+                "sentence2": "text_b",
             }
         ),
     ],
-    task="tasks.nli",
-    templates="templates.classification.nli.all",
+    task="tasks.classification.multi_class.relation",
+    templates="templates.classification.multi_class.relation.all",
 )
 
 test_card(card)

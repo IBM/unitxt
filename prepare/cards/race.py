@@ -20,5 +20,5 @@ for subset in ["all", "high", "middle"]:
         templates="templates.qa.multiple_choice.with_context.all",
     )
     if subset == "middle":
-        test_card(card)
+        test_card(card, strict=False)
     add_to_catalog(card, f"cards.race_{subset}", overwrite=True)

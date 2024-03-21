@@ -1,0 +1,65 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_from_kaggle",
+        "url": "https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[70%]",
+                "validation": "train[10%]",
+                "test": "train[20%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "HeartDisease": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Normal",
+                    "1": "Heart Disease"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "Person medical record",
+                "type_of_class": "Heart Disease Possibility"
+            }
+        },
+        {
+            "type": "extract_field_values",
+            "field": "label",
+            "to_field": "classes",
+            "stream_name": "train"
+        },
+        {
+            "type": "serialize_table_row_as_text",
+            "fields": [
+                "Age",
+                "Sex",
+                "ChestPainType",
+                "RestingBP",
+                "Cholesterol",
+                "FastingBS",
+                "RestingECG",
+                "MaxHR",
+                "ExerciseAngina",
+                "Oldpeak",
+                "ST_Slope"
+            ],
+            "to_field": "text",
+            "max_cell_length": 25
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

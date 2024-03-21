@@ -1,0 +1,5 @@
+{
+    "type": "system_format",
+    "demo_format": "{source} [/INST] {target_prefix}{target} </s><s>[INST] ",
+    "model_input_format": "[INST] <<SYS>>\n{system_prompt}\n\n{instruction}<<SYS>>\n\n\n{demos}{source} [/INST]{target_prefix}"
+}
