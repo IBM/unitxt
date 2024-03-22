@@ -584,18 +584,20 @@ class TestOperators(UnitxtTestCase):
             {"references": [["news", "games"], ["none"]]},
         ]
 
-        # with self.assertRaises(ValueError):
-        #     check_operator(
-        #         operator=RemoveValues(
-        #             field="references",
-        #             unallowed_values=["none"],
-        #             process_every_value=True,
-        #             use_query=True,
-        #         ),
-        #         inputs=inputs,
-        #         targets=targets,
-        #         tester=self,
-        #     )
+        check_operator(
+            operator=RemoveValues(
+                field="references/*",
+                unallowed_values=["none"],
+                use_query=True,
+                process_every_value=True,
+            ),
+            inputs=inputs,
+            targets=[
+                {"references": [[], []]},
+                {"references": [["news", "games"], []]},
+            ],
+            tester=self,
+        )
 
         check_operator(
             operator=RemoveValues(
@@ -2066,13 +2068,9 @@ class TestOperators(UnitxtTestCase):
             {"prediction": 2, "references": [0]},
         ]
 
-        operator_pred = EncodeLabels(field="prediction")
-        inputs1 = list(
-            operator_pred(MultiStream.from_iterables({"tmp": inputs}))["tmp"]
-        )
         check_operator(
-            operator=EncodeLabels(field="references", process_every_value=True),
-            inputs=inputs1,
+            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            inputs=inputs,
             targets=targets,
             tester=self,
         )
