@@ -68,8 +68,17 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references", remove_empty_ancestors=True)
         self.assertEqual({}, dic)
+        dic = {"references": [{"r11": 1, "r12": 2}, "r2", "r3"]}
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "refrefs/1", remove_empty_ancestors=True)
+        dict_delete(dic, "references/0/*", remove_empty_ancestors=False)
+        self.assertEqual({"references": [{}, "r2", "r3"]}, dic)
+        dict_delete(dic, "references/0/*", remove_empty_ancestors=True)
+        self.assertEqual({"references": ["r2", "r3"]}, dic)
         with self.assertRaises(ValueError):
             dict_delete(dic, "references+#/^!", remove_empty_ancestors=True)
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "", remove_empty_ancestors=True)
 
         dic = {"a": [[["i1", "i2"], ["i3", "i4"]], [["i5", "i6"], ["i7", "i8"]]]}
         dict_delete(dic, "a/1/0/1")
@@ -146,6 +155,16 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(
             dic, {"a": [{"b": 1}, {"b": 5}], "c": [{"b": 3}, {"b": 6}]}
         )
+        with self.assertRaises(ValueError):
+            # lengths do not match for set_multiple
+            dict_set(
+                dic,
+                "*/1/b",
+                [5, 6, 7],
+                use_dpath=True,
+                set_multiple=True,
+                not_exist_ok=False,
+            )
 
         dic = {"a": {"b": []}}
         dict_set(dic, "a/b/2/c", [3, 4], use_dpath=True)
