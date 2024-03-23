@@ -1,27 +1,67 @@
 import re
-from typing import Any, List
+from typing import Any, List, Tuple
 
 indx = re.compile(r"^(\d+)$")
 name = re.compile(r"^[\w. -]+$")
 
-# formal definition of qpath syntax:
+# formal definition of qpath syntax by which a query is specified:
 # qpath -> A (/A)*
 # A -> name | * | non-neg-int
 # name -> name.matches()
-# * should only replace indexes of a list, not all fields of a dictionary
+#  * matches ALL members (each and every) of a list or a dictionary element in input dictionary,
+#
+# a path p in dictionary dic is said to match query qpath if it satisfies the following recursively
+# defined condition:
+# (1) the prefix of length 0 of p (i.e., pref = "") matches the whole of dic. Also denoted here: pref leads to dic.
+# (2) Denoting by el the element in dic lead to by prefix pref of qpath (el must be a list or dictionary),
+# and by A (as the definition above) the component, DIFFERENT from *, in qpath, that follows pref, the element
+# lead to by pref/A is el[A]. If el[A] is missing from dic, then no path in dic matches prefix pref/A of qpath,
+# and hence no path in dic matches query qpath. (E.g., when el is a list, A must match indx, and its
+# int value should be smaller than len(el) in order for the path in dic leading to element el[A] to match pref/A)
+# (3) Denoting as in (2), now with A == * : when el is a list, each and every element in the set:
+# {el[0], el[1], .. , el[len(el)-1]} is said to be lead to by a path matching pref/*
+# and when el is a dict, each and every element in the set {el[k] for k being a key in el} is said to be lead
+# to by a path matching pref/*
+#
+# An element el lead to by path p that matches qpath as a whole is thus either a list member (when indx.match the last
+# component of p, indexing into el) or a dictionary item (the key of which equals the last component of p). The value
+# of el (i.e. el[last component of p]) is returned (dic_get) or popped (dic_delete) or replaced by a new value (dic_set).
+#
+# Thus, for a query with no *, dic contains at most one element the path to which matches the query.
+# If there is such one in dic - the function (either dict_get, dict_set, or dict_delete) operates on
+# that element according to its arguments, other than not_exist_ok
+# If there is not any such element in dic - the function throws or does not throw an exception, depending
+# on flag not_exist_ok.
+# For a query with *, there could be up to as many as there are values to match the *
+# (i.e., length of the list element or dictionary element the children of which match the *; and
+# for more than one * in the query -- this effect multiplies)
+# Each of the three functions below (dict_get, dict_set, dict_delete) applies the requested
+# operation (read, set, or delete) to each and every element el in dic, the path to which matches the query in whole,
+# and reads a value from, or sets a new value to, or pops the value out from dic.
+#
+# If no path in dic matches the query, then # if not_exist_ok=False, the function throws an exception;
+# but if not_exist_ok=True, the function returns a default value (dict_get) or does nothing (dict_delete)
+# or generates all the needed missing suffixes (dict_set, see details below).
+#
+# Each of the functions below scans the dic-tree recursively.
+# It swallows all exceptions, in order to not stop prematurely, before the scan
+# has exhaustively found each and every matching path.
 
 
-# validate and normalize
-# leading / is ignored, all paths are treated as coming from root of dic
-# trailing / is ignored
+# validate and normalizes into components
 def validate_query_and_break_to_components(query: str) -> List[str]:
+    if not isinstance(query, str) or len(query) == 0:
+        raise ValueError(
+            f"invalid query: either not a string or an empty string: {query}"
+        )
     query = query.replace("//", "/").strip()
     if query.startswith("/"):
-        query = query[1:]  # remove the leading /
+        query = query[1:]
+        # ignore the leading /, all paths are treated as coming from root of dic
 
     if query.endswith("/"):
         query = query + "*"
-        # same meaning, and make sure the / not lost when splitting
+        # same meaning, and make sure the / is not lost when splitting
 
     components = query.split("/")
     components = [component.strip() for component in components]
@@ -46,88 +86,120 @@ def is_subpath(subpath, fullpath):
     return fullpath_components[: len(subpath_components)] == subpath_components
 
 
-def qpath_delete(
-    current_element: dict,
+# We are on current_element, going down from it via query[index_into_query].
+# query comprising at least two components is assumed. dic_delete worries about
+# single component queries without invoking qpath_delete
+# Returned value is a pair (boolean, element_of_input dic or None)
+# the first component signals whether the second is yielded from a reach to the query end,
+# or rather -- a result of a failure before query end has been reached.
+# If the first component is True, the second is current_element following a successful delete
+def delete_values(
+    current_element: Any,
     query: List[str],
     index_into_query: int,
     remove_empty_ancestors=False,
-):
+) -> Tuple[bool, Any]:
     component = query[index_into_query]
     if index_into_query == -1:
         if component == "*":
-            current_element = []
-        else:
-            # component is a name or an index
-            if indx.match(component):
-                component = int(component)
-            current_element.pop(component)  # thrown exception will be caught outside
-        return (
-            None
-            if remove_empty_ancestors and len(current_element) == 0
-            else current_element
-        )
+            # delete all members of the list or dict
+            current_element = [] if isinstance(current_element, list) else {}
+            return (True, current_element)
+        # component is a either a dictionary key or an index into a list,
+        # pop the respective element from current_element
+        if indx.match(component):
+            component = int(component)
+        try:
+            current_element.pop(component)
+            return (True, current_element)
+        except:
+            # no continuation in dic, from current_element down, that matches the query
+            return (False, None)
 
     # index_into_query < -1
     if component == "*":
-        current_element = [
-            qpath_delete(
-                current_element=sub_element,
-                query=query,
-                index_into_query=index_into_query + 1,
-                remove_empty_ancestors=remove_empty_ancestors,
-            )
-            for sub_element in current_element
-        ]
-        current_element = [elem for elem in current_element if elem is not None]
-    elif indx.match(component):  # thrown exception will be caught
-        current_element[int(component)] = qpath_delete(
-            current_element=current_element[int(component)],
-            query=query,
-            index_into_query=index_into_query + 1,
-            remove_empty_ancestors=remove_empty_ancestors,
-        )
-        if current_element[int(component)] is None:
-            current_element.pop(int(component))
-    elif name.match(component):  # thrown exception will be caught
-        current_element[component] = qpath_delete(
+        # current_element must be a dict or list. We need to update value for all its members
+        # through which passes a path that reached the query end
+        if isinstance(current_element, dict):
+            key_values = list(current_element.items())
+            keys, values = zip(*key_values)
+        elif isinstance(current_element, list):
+            keys = list(range(len(current_element)))
+            values = current_element
+        else:
+            return (False, None)
+
+        any_success = False
+        for i in range(
+            len(keys) - 1, -1, -1
+        ):  # going backward to allow popping from a list
+            try:
+                success, new_val = delete_values(
+                    current_element=values[i],
+                    query=query,
+                    index_into_query=index_into_query + 1,
+                    remove_empty_ancestors=remove_empty_ancestors,
+                )
+                if not success:
+                    continue
+                any_success = True
+                if (len(new_val) == 0) and remove_empty_ancestors:
+                    current_element.pop(keys[i])
+                else:
+                    current_element[keys[i]] = new_val
+
+            except:
+                continue
+        return (any_success, current_element)
+
+    # current component is index into a list or a key into a dictionary
+    if indx.match(component):
+        component = int(component)
+    try:
+        success, new_val = delete_values(
             current_element=current_element[component],
             query=query,
             index_into_query=index_into_query + 1,
             remove_empty_ancestors=remove_empty_ancestors,
         )
-        if current_element[component] is None:
+        if not success:
+            return (False, None)
+        if (len(new_val) == 0) and remove_empty_ancestors:
             current_element.pop(component)
-    return (
-        None
-        if remove_empty_ancestors and len(current_element) == 0
-        else current_element
-    )
+        else:
+            current_element[component] = new_val
+        return (True, current_element)
+    except:
+        return (False, None)
 
 
-def dict_delete(dic: dict, query: str, remove_empty_ancestors=False):
-    # we remove from dic all the elements lead to by the path.
-    # If remove_empty_ancestors=True, and the removal of any such element leaves its parent (list or dict)
-    # within dic empty -- remove that parent as well, and continue recursively
-    # Treating trailing /* :
-    # delete  references/* means just to shrink to [] the list of children of references
-    # delete  references/ means the same as delete references/*
-    # delete references, pops references out from dic
-    # the above -- before dealing with removal of empty ancestors.
-    if "/" not in query:
-        if query.strip() not in dic:
+def dict_delete(
+    dic: dict, query: str, not_exist_ok: bool = False, remove_empty_ancestors=False
+):
+    # We remove from dic the value from each and every element lead to by a path matching the query.
+    # If remove_empty_ancestors=True, and the removal of any such value leaves its containing element (list or dict)
+    # within dic empty -- remove that element as well, and continue recursively
+    qpath = validate_query_and_break_to_components(query)
+    if len(qpath) == 1:
+        if qpath[0] in dic:
+            dic.pop(qpath[0])
+            return
+        if not not_exist_ok:
             raise ValueError(
                 f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary"
             )
-        dic.pop(query.strip())
-        return
-    qpath = validate_query_and_break_to_components(query)
+
     try:
-        qpath_delete(
+        success, new_val = delete_values(
             current_element=dic,
             query=qpath,
             index_into_query=(-1) * len(qpath),
             remove_empty_ancestors=remove_empty_ancestors,
         )
+        if not success and not not_exist_ok:
+            raise ValueError(
+                f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary"
+            )
     except Exception as e:
         raise ValueError(f"query {query} matches no path in dictionary {dic}") from e
 
@@ -137,43 +209,43 @@ def dict_delete(dic: dict, query: str, remove_empty_ancestors=False):
 # flake8: noqa: C901
 def get_values(
     current_element: Any, query: List[str], index_into_query: int
-) -> List[Any]:
+) -> Tuple[bool, Any]:
     # going down from current_element through query[index_into_query].
     if index_into_query == 0:
-        return current_element
-    component = query[index_into_query]
+        return (True, current_element)
+
     # index_into_query < 0
+    component = query[index_into_query]
     if component == "*":
-        # current_element must be a list or a dictionary, otherwise, an exception will be thrown, and cuaght outside
+        # current_element must be a list or a dictionary
         if not isinstance(current_element, (list, dict)):
-            raise ValueError(
-                f"* in query {query}, when evaluated over the input dictionary, does not correspond to a dict nor a list"
-            )
+            return (False, None)  # nothing good from here down the query
         to_ret = []
-        for sub_element in current_element:
-            if isinstance(current_element, dict):
-                to_ret.append(
-                    get_values(
-                        current_element[sub_element], query, index_into_query + 1
-                    )
-                )
-            else:
-                to_ret.append(get_values(sub_element, query, index_into_query + 1))
-        return to_ret
-    # next_component is indx or name
+        if isinstance(current_element, dict):
+            sub_elements = list(current_element.values())
+        else:  # a list
+            sub_elements = current_element
+        for sub_element in sub_elements:
+            try:
+                success, val = get_values(sub_element, query, index_into_query + 1)
+                if success:
+                    to_ret.append(val)
+            except:
+                continue
+
+        return (len(to_ret) > 0, to_ret)
+    # next_component is indx or name, current_element must be a list or a dict
     if indx.match(component):
         component = int(component)
-        if component >= len(current_element):
-            raise ValueError(
-                f"Trying to fetch element in position {component} from a shorter list: {current_element}"
-            )
-        return get_values(current_element[component], query, index_into_query + 1)
-    # next_component is a name
-    if component not in current_element:
-        raise ValueError(
-            f"Trying to look up key {component} in a dictionary {current_element} that misses that key"
+    try:
+        success, new_val = get_values(
+            current_element[component], query, index_into_query + 1
         )
-    return get_values(current_element[component], query, index_into_query + 1)
+        if success:
+            return (True, new_val)
+        return (False, None)
+    except:
+        return (False, None)
 
 
 # going down from current_element via query[index_into_query]
@@ -183,129 +255,103 @@ def set_values(
     value: Any,
     index_into_query: int,
     fixed_parameters: dict,
-    set_individual_already_used: bool = False,
-):
-    assert (
-        current_element or fixed_parameters["generate_if_not_exists"]
-    ), "Current_element == None, and yet not generate_if_not_exists. Check who sent us here"
+    set_multiple: bool = False,
+) -> Tuple[bool, Any]:
+    if index_into_query == 0:
+        return (True, value)  # matched query all along!
+
+    # current_element should be a list or dict: a containing element
+    if current_element and not isinstance(current_element, (list, dict)):
+        current_element = None  # give it a chance to become what is needed, if allowed
+
+    if not current_element and not fixed_parameters["generate_if_not_exists"]:
+        return (False, None)
     component = fixed_parameters["query"][index_into_query]
-    if component == "*":
-        # it is not a trailing * of the original query, that one, if there was any, was removed on starting of processing
-        if set_individual_already_used:
-            # set_individual_already_used indicates that generate_if_not_exists == True and current_element == None
-            assert (
-                not current_element and fixed_parameters["generate_if_not_exists"]
-            ), "Should not happen. Dafna to check"
-            raise ValueError(
-                "Can not respect * more than once along the path for generation of new list of length determined by the length of the input value"
-            )
-        if not current_element and not fixed_parameters["set_individual"]:
-            raise ValueError(
-                "Can not tell the length of the list to generate for a * that does not end the input query, when set_multiple == False"
-            )
 
     if component == "*":
-        if current_element:
-            if fixed_parameters["set_individual"] and len(current_element) != len(
-                value
-            ):
-                raise ValueError(
-                    "set_multiple == True, while an existing element matching a * has a different len than values. dic: {dic}, query: {query}, value: {value}"
-                )
-            for i in range(len(current_element)):
-                current_element[i] = (
-                    value
-                    if index_into_query == -1
-                    else set_values(
-                        current_element=current_element[i],
-                        value=value[i] if fixed_parameters["set_individual"] else value,
-                        index_into_query=index_into_query + 1,
-                        fixed_parameters=fixed_parameters,
-                        set_individual_already_used=set_individual_already_used,
-                    )
-                )
-            return current_element
-        a_list = [None] * len(value)
-        # not current_element, and we are now using set_individual:
-        for i in range(len(a_list)):
-            a_list[i] = (
-                (value if not fixed_parameters["set_individual"] else value[i])
-                if index_into_query == -1
-                else set_values(
-                    current_element=None,
-                    value=value[i],
-                    index_into_query=index_into_query + 1,
-                    fixed_parameters=fixed_parameters,
-                    set_individual_already_used=True,
-                )
-            )
-        return a_list
-    if indx.match(component):
-        component = int(component)
-        if current_element and component < len(current_element):
-            current_element[component] = (
-                value
-                if index_into_query == -1
-                else set_values(
-                    current_element=current_element[component]
-                    if isinstance(current_element[component], (dict, list))
-                    else None,
-                    value=value,
-                    index_into_query=index_into_query + 1,
-                    fixed_parameters=fixed_parameters,
-                    set_individual_already_used=set_individual_already_used,
-                )
-            )
-            return current_element
-        if not fixed_parameters["generate_if_not_exists"]:
-            raise ValueError(
-                "Trying to set a value into dic {dic} via a query {query} that matches no path, while not_exist_ok=False"
-            )
-        a_list = [None] * (
-            (1 + component)
-            if not current_element
-            else (1 + component - len(current_element))
-        )
-        a_list[component - (0 if not current_element else len(current_element))] = (
-            value
-            if index_into_query == -1
-            else set_values(
-                current_element=None,
-                value=value,
-                index_into_query=index_into_query + 1,
-                fixed_parameters=fixed_parameters,
-                set_individual_already_used=set_individual_already_used,
-            )
-        )
-
+        if current_element and set_multiple:
+            if isinstance(current_element, dict) and len(current_element) != len(value):
+                return (False, None)
+            if isinstance(current_element, list) and len(current_element) > len(value):
+                return (False, None)
+            if len(current_element) < len(value):
+                if not fixed_parameters["generate_if_not_exists"]:
+                    return (False, None)
+                # current_element must be a list, extend current_element to the length needed
+                current_element.extend([None] * (len(value) - len(current_element)))
         if not current_element:
-            return a_list  # the updated value of current_element:
-        current_element.extend(a_list)
-        return current_element
+            current_element = [None] * (len(value) if set_multiple else 1)
+        # now current_element is of size suiting value
+        if isinstance(current_element, dict):
+            keys = sorted(current_element.keys())
+        else:
+            keys = list(range(len(current_element)))
 
-    # query[index_into_query] must be a name
-    if (
-        not current_element or component not in current_element
-    ) and not fixed_parameters["generate_if_not_exists"]:
-        raise ValueError(
-            "Trying to set a value into dic {dic} via a query {query} that matches no path, while not_exist_ok=False"
+        any_success = False
+        for i in range(len(keys)):
+            try:
+                success, new_val = set_values(
+                    current_element=current_element[keys[i]],
+                    value=value[i] if set_multiple else value,
+                    index_into_query=index_into_query + 1,
+                    set_multiple=False,  # now used, not allowed again,
+                    fixed_parameters=fixed_parameters,
+                )
+                if not success:
+                    continue
+                any_success = True
+                current_element[keys[i]] = new_val
+
+            except:
+                continue
+        return (any_success, current_element)
+
+    # component is an index into a list or a key into a dictionary
+    if indx.match(component):
+        if current_element and not isinstance(current_element, list):
+            if not fixed_parameters["generate_if_not_exists"]:
+                return (False, None)
+            current_element = []
+        component = int(component)
+        if (
+            current_element and component >= len(current_element)
+        ) or not current_element:
+            if not fixed_parameters["generate_if_not_exists"]:
+                return (False, None)
+            # extend current_element to the length needed
+            if not current_element:
+                current_element = []
+            current_element.extend([None] * (component + 1 - len(current_element)))
+        next_current_element = current_element[component]
+    else:  # component is a key into a dictionary
+        if current_element and not isinstance(current_element, dict):
+            if not fixed_parameters["generate_if_not_exists"]:
+                return (False, None)
+            current_element = {}
+        if not current_element:
+            current_element = {}
+        if (
+            component not in current_element
+            and not fixed_parameters["generate_if_not_exists"]
+        ):
+            return (False, None)
+        next_current_element = (
+            None if component not in current_element else current_element[component]
         )
-
-    a_dict = current_element if current_element else {}
-    a_dict[component] = (
-        value
-        if index_into_query == -1
-        else set_values(
-            current_element=a_dict[component]
-            if component in a_dict and isinstance(a_dict[component], (dict, list))
-            else None,
+    try:
+        success, new_val = set_values(
+            current_element=next_current_element,
             value=value,
             index_into_query=index_into_query + 1,
             fixed_parameters=fixed_parameters,
-            set_individual_already_used=set_individual_already_used,
+            set_multiple=set_multiple,
         )
-    )
-    return a_dict
+        if success:
+            current_element[component] = new_val
+            return (True, current_element)
+        return (False, None)
+    except:
+        return (False, None)
 
 
 # the returned values are ordered by the lexicographic order of the paths leading to them
@@ -323,22 +369,32 @@ def dict_get(
                 return dic[components[0]]
             if not_exist_ok:
                 return default
-            raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
+            raise ValueError(
+                f'query "{query}" did not match any item in dict: {dic}, and not_exist_ok==False'
+            )
         try:
-            values = get_values(dic, components, -1 * len(components))
+            success, values = get_values(dic, components, -1 * len(components))
+            if not success:
+                if not_exist_ok:
+                    return default
+                raise ValueError(
+                    f'query "{query}" did not match any item in dict: {dic}'
+                )
+            if isinstance(values, list) and len(values) == 0:
+                if not_exist_ok:
+                    return default
+                raise ValueError(
+                    f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
+                )
+
+            return values
+
         except Exception as e:
             if not_exist_ok:
                 return default
             raise ValueError(
-                f'query "{query}" did not match any item in dict: {dic}'
+                f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
             ) from e
-
-        if isinstance(values, list) and len(values) == 0:
-            if not_exist_ok:
-                return default
-            raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
-
-        return values
 
     if query.strip() in dic:
         return dic[query.strip()]
@@ -346,17 +402,56 @@ def dict_get(
     if not_exist_ok:
         return default
 
-    raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
+    raise ValueError(
+        f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
+    )
 
 
-# dict_set sets a value, which by itself, can be a dict or list or scalar, into dic, in the element specified by query.
-# if not_exist_ok = True, and such a path does not exist in dic, this function also builds that path inside dic, and then
-# assigns the value.
-# if two or more (existing in input dic, or newly generated per not_exist_ok = True) paths in dic match the query
-# all these paths are assigned copies of value.
-# if set_multiple=True, value must be a list, and there should be exactly len(values) paths matching of query,
-# and in this case, function assigns one member of list value to each path.
-# the matching paths are sorted alphabetically toward the above assignment
+# dict_set sets a value, 'value', which by itself, can be a dict or list or scalar, into 'dic', to become the value of
+# the element the path from 'dic' head to which matches 'query'. (aka - 'the element specified by the query')
+# 'the element specified by the query' is thus either a key in a dictionary, or a list member specified by its index in the list.
+# Unless otherwise specified (through 'not_exist_ok=True'), the processing of 'query' by dict_set does not generate
+# any new elements into 'dic'. Rather - it just sets the 'value' arg to each and every element the path to which matches
+# the query. That 'value' arg, again, can be complex and involved, a dictionary or a list, or scalar, or whatever.
+#
+# When not_exist_ok = True, the processing itself is allowed to generate new containing elements (dictionaries, lists, or elements
+# therein) into dictionary 'dic', new containing elements such that, at the end of the processing, 'dic' will contain at
+# least one element the path to which matches 'query', provided that no existing value in 'dic' is modified nor popped out,
+# other than the values sitting on the path along 'query' in whole.
+# This generation is defined as follows.
+# Having generated what is needed to have in dic an element el, lead to by prefix pref of 'query', and A (as above) is the
+# component that follows pref in 'query' (i.e., pref/A is a prefix of 'query', longer than pref by one component) then:
+# (1) if indx.match(A), and el existed in 'dic' before dict_set was invoked, then if el is not a list, generate an empty
+# list for it: []. If len(el)>A, proceed to element el[A], and continue recursively. If len(el) <= A, extend
+# el with [None]*(A+1-len(el)), and continue recursively from there, with elements that surely did not exist in dic
+# before dict_set was invoked. If el did not exist in 'dic' before dict_set was invoked, then a whole new list [None]*(A+1)
+# is generated, and continue from there recursively.
+# (2) if not indx but name.match(A), continue in analogy with (1), with el being a dictionary now.
+# (3) if A is '*', and el already exists, continue into ALL el's existing sub_elements as above. if el was not existing
+# in dic before dict_set was invoked, which means it is None that we ride on from (1) or (2), then we generate
+# a new [None] List (only a list, not a dict, because we have no keys to offer), and continue as above
+# once the end of the query is thus reached, 'value' is returned backward on the recursion, and the elements
+# that were None for a while - reshape into the needed (dict or list) element.
+#
+# If two or more (existing in input dic, or newly generated per not_exist_ok = True) paths in dic match the query
+# all the elements lead to by these paths are assigned copies of value.
+#
+# If set_multiple=True, 'value' must be a list, 'query' should contain at least one * , and there should be exactly
+# len(values) paths that match the query, and in this case, dict_set assigns one member of 'value' to each path.
+# The matching paths are sorted alphabetically toward the above assignment.
+# The processing of set_multiple=True applies to the first occurrence of * in the query, and only to it, and is
+# done as follows:
+# Let el denote the element lead to by prefix pref of 'query' down to one component preceding the first * in 'query'
+# (depending on not_exist_ok, el can be None). If el existed in dic before dict_set is invoked (el is not None) and
+# is not a list nor a dict, or is a list longer than len('value') or is a dict of len different from len('value'),
+# return a failure for prefix pref/*.
+# If el existed, and is a list shorted than len('value'), or did not exist at all, then if not_exist_ok= False,
+# return a failure for prefix pref/*. If not_exist_ok = True, then make el into a list of length
+# len('value') that starts with el (if existed) and continues into zero or more None-s, as many as needed.
+# Now that el (potentially wholly or partly generated just now) is a list of length len('value'), set value='value'[i]
+# as the target value for the i-th path that goes through el.
+# Such a breakdown of 'value' for set_multiple=True, is done only once - on the leftmost * in 'query'.
+#
 def dict_set(
     dic: dict,
     query: str,
@@ -365,33 +460,36 @@ def dict_set(
     not_exist_ok=True,
     set_multiple=False,
 ):
-    if (set_multiple or query.strip().endswith("*")) and (not isinstance(value, list)):
+    if set_multiple and (
+        not isinstance(value, list) or len(value) == 0 or "*" not in query
+    ):
         raise ValueError(
-            f"set_multiple == True, or a 'whole list' is expected to be assigned, and yet value, {value}, is not a list"
+            f"set_multiple == True, and yet value, {value}, is not a list or '*' is not in query '{query}'"
         )
-    if use_dpath and "/" in query:
-        components = validate_query_and_break_to_components(query)
-        if components[-1] == "*":
-            # value is a list, and it is to be assigned to the parent of this * in the query
-            components = components[:-1]
-        fixed_parameters = {
-            "query": components,
-            "generate_if_not_exists": not_exist_ok,
-            "set_individual": set_multiple,
-        }
-        try:
-            dic = set_values(
-                current_element=dic,
-                value=value,
-                index_into_query=(-1) * len(components),
-                fixed_parameters=fixed_parameters,
-                set_individual_already_used=False,
-            )
-        except Exception as e:
-            raise ValueError(str(e).format(query=query, dic=dic, value=value)) from e
-    else:
-        if query not in dic and not not_exist_ok:
-            raise ValueError(
-                f"not_exist_ok=False and query {query} matches no path in dic {dic}, still was trying to set a value into dic by the query"
-            )
-        dic[query] = value
+    if not use_dpath or "/" not in query:
+        if query.strip() in dic or not_exist_ok:
+            dic[query] = value
+            return
+        raise ValueError(
+            f"not_exist_ok=False and the single component query '{query}' is not a key in dic {dic}"
+        )
+
+    # use_dpath and "/" in query
+    components = validate_query_and_break_to_components(query)
+    fixed_parameters = {
+        "query": components,
+        "generate_if_not_exists": not_exist_ok,
+    }
+    try:
+        success, val = set_values(
+            current_element=dic,
+            value=value,
+            index_into_query=(-1) * len(components),
+            fixed_parameters=fixed_parameters,
+            set_multiple=set_multiple,
+        )
+        if not success and not not_exist_ok:
+            raise ValueError(f"No path in dic {dic} matches query {query}.")
+
+    except Exception as e:
+        raise ValueError(f"No path in dic {dic} matches query {query}.") from e

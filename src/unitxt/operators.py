@@ -1710,20 +1710,22 @@ class EncodeLabels(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         for field_name in self.fields:
             values = dict_get(instance, field_name, use_dpath=True)
-            assert isoftype(values, List[str]) or isinstance(
-                values, str
-            ), "expected a string or a list of strings, received {values}"
-            old_values_was_a_list = isinstance(values, list)
+            values_was_a_list = isinstance(values, list)
             if not isinstance(values, list):
                 values = [values]
             for value in values:
                 if value not in self.encoder:
                     self.encoder[value] = len(self.encoder)
             new_values = [self.encoder[value] for value in values]
-            if not old_values_was_a_list:
+            if not values_was_a_list:
                 new_values = new_values[0]
-
-            dict_set(instance, field_name, new_values, use_dpath=True)
+            dict_set(
+                instance,
+                field_name,
+                new_values,
+                use_dpath=True,
+                set_multiple="*" in field_name,
+            )
 
         return instance
 

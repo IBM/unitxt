@@ -586,21 +586,6 @@ class TestOperators(UnitxtTestCase):
 
         check_operator(
             operator=RemoveValues(
-                field="references/*",
-                unallowed_values=["none"],
-                use_query=True,
-                process_every_value=True,
-            ),
-            inputs=inputs,
-            targets=[
-                {"references": [[], []]},
-                {"references": [["news", "games"], []]},
-            ],
-            tester=self,
-        )
-
-        check_operator(
-            operator=RemoveValues(
                 field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
@@ -696,7 +681,7 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'} while not_exist_ok=False"
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,

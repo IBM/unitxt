@@ -119,16 +119,33 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"a": [{"b": 1}, {"b": 2}]}
         dict_set(dic, "a/*/b", [3, 4], use_dpath=True, set_multiple=True)
         self.assertDictEqual(dic, {"a": [{"b": 3}, {"b": 4}]})
-        with self.assertRaises(ValueError):
-            dict_set(dic, "a/0/b/c/*/d/*/e", [3, 4], use_dpath=True, set_multiple=True)
-        with self.assertRaises(ValueError):
-            dict_set(dic, "a/0/b/c/*/d", [3, 4], use_dpath=True, set_multiple=False)
+        dict_set(dic, "a/*/b", [3, 4], use_dpath=True, set_multiple=False)
+        self.assertDictEqual(dic, {"a": [{"b": [3, 4]}, {"b": [3, 4]}]})
 
-        # dic = {"a": [{"b": 1}, {"b": 2}], "c": [{"b": 3}, {"b": 4}]}
-        # dict_set(dic, "*/1/b", [5, 6], use_dpath=True, set_multiple=True)
-        # self.assertDictEqual(
-        #     dic, {"a": [{"b": 1}, {"b": 5}], "c": [{"b": 3}, {"b": 6}]}
-        # )
+        dict_set(dic, "a/0/b/c/*/d", [5, 6], use_dpath=True, set_multiple=False)
+        self.assertDictEqual(dic, {"a": [{"b": {"c": [{"d": [5, 6]}]}}, {"b": [3, 4]}]})
+
+        dict_set(dic, "a/0/c/d/*/e/*/f", [7, 8], use_dpath=True, set_multiple=True)
+        # breaks up just one, smoothly
+        self.assertDictEqual(
+            dic,
+            {
+                "a": [
+                    {
+                        "b": {"c": [{"d": [5, 6]}]},
+                        "c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]},
+                    },
+                    {"b": [3, 4]},
+                ]
+            },
+        )
+
+        dic = {"c": [{"b": 3}, {"b": 4}], "a": [{"b": 1}, {"b": 2}]}
+        dict_set(dic, "*/1/b", [5, 6], use_dpath=True, set_multiple=True)
+        # ordered paths alphabetically before assigning
+        self.assertDictEqual(
+            dic, {"a": [{"b": 1}, {"b": 5}], "c": [{"b": 3}, {"b": 6}]}
+        )
 
         dic = {"a": {"b": []}}
         dict_set(dic, "a/b/2/c", [3, 4], use_dpath=True)
@@ -153,8 +170,15 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual({"a": [{"b": 1, "c": [3, 4]}, {"b": 2, "c": [3, 4]}]}, dic)
 
         dic = {"a": [{"b": 1}, {"b": 2}]}
-        with self.assertRaises(ValueError):
-            dict_set(dic, "a/*/d", [3, 4, 5], use_dpath=True, set_multiple=True)
+        dict_set(
+            dic,
+            "a/*/d",
+            [3, 4, 5],
+            use_dpath=True,
+            set_multiple=True,
+            not_exist_ok=True,
+        )
+        self.assertDictEqual({"a": [{"b": 1, "d": 3}, {"b": 2, "d": 4}, {"d": 5}]}, dic)
 
     def test_adding_one_new_field(self):
         dic = {"a": {"b": {"c": 0}}}
