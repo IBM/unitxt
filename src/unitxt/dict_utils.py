@@ -364,14 +364,6 @@ def dict_get(
 ):
     if use_dpath and "/" in query:
         components = validate_query_and_break_to_components(query)
-        if len(components) == 1:
-            if components[0] in dic:
-                return dic[components[0]]
-            if not_exist_ok:
-                return default
-            raise ValueError(
-                f'query "{query}" did not match any item in dict: {dic}, and not_exist_ok==False'
-            )
         try:
             success, values = get_values(dic, components, -1 * len(components))
             if not success:

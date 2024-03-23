@@ -11,6 +11,7 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_get(dic, "c")
         self.assertEqual(dict_get(dic, "d/1"), 4)
+        self.assertEqual(dict_get(dic, "d/8", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "d/2")
 
@@ -64,6 +65,11 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references/1")
         self.assertEqual({"references": ["r1", "r3"]}, dic)
+        dict_delete(dic, "references/8", not_exist_ok=True)
+        # do nothing if not_exist_ok=True, and query asks to delete non existing path
+        self.assertDictEqual({"references": ["r1", "r3"]}, dic)
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "references/8")
 
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references", remove_empty_ancestors=True)
@@ -101,6 +107,19 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0", use_dpath=True))
         with self.assertRaises(ValueError):
             dict_get(dic, "a/0/0/0/*/0")
+
+        dic = {
+            "a": {
+                "b": {"c": {"d": 7}, "g": {"d": 7}},
+                "h": {"c": {"d": 7}, "g": {"d": 7}, "i": {"d": 7}},
+                "w": 3,
+            }
+        }
+        dict_delete(dic, "a/*/c")
+        self.assertDictEqual(
+            {"a": {"b": {"g": {"d": 7}}, "h": {"g": {"d": 7}, "i": {"d": 7}}, "w": 3}},
+            dic,
+        )
 
     def test_simple_set(self):
         dic = {"a": 1, "b": 2}
@@ -156,15 +175,49 @@ class TestDictUtils(UnitxtTestCase):
             dic, {"a": [{"b": 1}, {"b": 5}], "c": [{"b": 3}, {"b": 6}]}
         )
         with self.assertRaises(ValueError):
-            # lengths do not match for set_multiple
+            # lengths do not match for dict with set_multiple, so not success, and not_exist_ok = False, so raises
             dict_set(
                 dic,
                 "*/1/b",
-                [5, 6, 7],
+                [50, 60, 70],
                 use_dpath=True,
                 set_multiple=True,
                 not_exist_ok=False,
             )
+
+        dic = [[{"b": 1}, {"b": 5}], [{"b": 3}, {"b": 6}]]
+        with self.assertRaises(ValueError):
+            # list is not allowed to extend to length of value
+            dict_set(
+                dic,
+                "*/1/b",
+                [50, 60, 70],
+                use_dpath=True,
+                set_multiple=True,
+                not_exist_ok=False,
+            )
+        with self.assertRaises(ValueError):
+            # list is too long to begin with
+            dict_set(
+                dic,
+                "*/1/b",
+                [50],
+                use_dpath=True,
+                set_multiple=True,
+                not_exist_ok=False,
+            )
+
+        dict_set(
+            dic,
+            "*/1/b",
+            [50, 60, 70],
+            use_dpath=True,
+            set_multiple=True,
+        )
+        # list extends to the length of value
+        self.assertListEqual(
+            [[{"b": 1}, {"b": 50}], [{"b": 3}, {"b": 60}], [None, {"b": 70}]], dic
+        )
 
         dic = {"a": {"b": []}}
         dict_set(dic, "a/b/2/c", [3, 4], use_dpath=True)
