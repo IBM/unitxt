@@ -3,9 +3,13 @@ transformers
 sentence_transformers
 ibm-cos-sdk
 opendatasets
+httpretty~=1.1.4
 editdistance
 rouge-score
 nltk
 sacrebleu
 scikit-learn
 jiwer
+conllu
+llama-index-core
+llama-index-llms-openai

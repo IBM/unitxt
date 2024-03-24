@@ -6,7 +6,7 @@ metric = RetrievalAtK(k_list=[1, 3, 5, 10, 20, 40])
 
 predictions = [["a", "b", "c", "d", "e", "f"], ["g", "r", "u"], ["a", "b", "c"]]
 
-references = [["c", "d"], ["g"], []]  # third hit  # first hit  # no hit
+references = [[["c", "d"]], [["g"]], [[]]]  # third hit  # first hit  # no hit
 
 instance_targets = [
     {

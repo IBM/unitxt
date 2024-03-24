@@ -70,6 +70,7 @@ class SeparateSplit(Splitter):
     from_split: str
     to_split_names: List[str]
     to_split_sizes: List[int]
+    remove_targets_from_source_split: bool = True
 
     def verify(self):
         assert (
@@ -82,13 +83,14 @@ class SeparateSplit(Splitter):
         mapping = {
             key: {key: [(None, None)]}
             for key in multi_stream.keys()
-            if key != self.from_split
+            if not self.remove_targets_from_source_split or key != self.from_split
         }
         so_far = 0
         for name, size in itertools.zip_longest(
             self.to_split_names, self.to_split_sizes
         ):
-            mapping[name] = {self.from_split: [(so_far, size)]}
+            if self.remove_targets_from_source_split or name != self.from_split:
+                mapping[name] = {self.from_split: [(so_far, size)]}
             if size:
                 so_far += size
         generators = slice_streams(multi_stream, mapping)
@@ -131,6 +133,14 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         pass
 
+    def filter_source_by_instance(
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+    ) -> List[Dict[str, object]]:
+        if "inputs" not in instance:
+            raise ValueError(f"'inputs' field is missing from '{instance}'.")
+
+        return list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
+
 
 class RandomSampler(Sampler):
     def sample(
@@ -172,15 +182,16 @@ class DiverseLabelsSampler(Sampler):
 
     choices: str = "choices"
     labels: str = "labels"
+    include_empty_label: bool = True
 
     def prepare(self):
         super().prepare()
         self.labels_cache = None
 
-    def examplar_repr(self, examplar):
-        if "inputs" not in examplar:
-            raise ValueError(f"'inputs' field is missing from '{examplar}'.")
-        inputs = examplar["inputs"]
+    def exemplar_repr(self, exemplar):
+        if "inputs" not in exemplar:
+            raise ValueError(f"'inputs' field is missing from '{exemplar}'.")
+        inputs = exemplar["inputs"]
         if self.choices not in inputs:
             raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
@@ -189,27 +200,29 @@ class DiverseLabelsSampler(Sampler):
                 f"Unexpected input choices value '{choices}'. Expected a list."
             )
 
-        if "outputs" not in examplar:
-            raise ValueError(f"'outputs' field is missing from '{examplar}'.")
-        outputs = examplar["outputs"]
+        if "outputs" not in exemplar:
+            raise ValueError(f"'outputs' field is missing from '{exemplar}'.")
+        outputs = exemplar["outputs"]
         if self.labels not in outputs:
             raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
 
-        examplar_outputs = examplar["outputs"][self.labels]
-        if not isinstance(examplar_outputs, list):
+        exemplar_outputs = exemplar["outputs"][self.labels]
+        if not isinstance(exemplar_outputs, list):
             raise ValueError(
-                f"Unexpected examplar_outputs value '{examplar_outputs}'. Expected a list."
+                f"Unexpected exemplar_outputs value '{exemplar_outputs}'. Expected a list."
             )
 
-        return str([choice for choice in choices if choice in examplar_outputs])
+        return str([choice for choice in choices if choice in exemplar_outputs])
 
-    def divide_by_repr(self, examplars_pool):
+    def divide_by_repr(self, exemplars_pool):
         labels = {}
-        for examplar in examplars_pool:
-            label_repr = self.examplar_repr(examplar)
+        for exemplar in exemplars_pool:
+            label_repr = self.exemplar_repr(exemplar)
+            if label_repr == "[]" and not self.include_empty_label:
+                continue
             if label_repr not in labels:
                 labels[label_repr] = []
-            labels[label_repr].append(examplar)
+            labels[label_repr].append(exemplar)
         return labels
 
     def sample(
@@ -269,7 +282,9 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
                 self.local_cache = list(multi_stream[self.source_stream])
 
             source_stream = self.local_cache
-
+            source_stream = self.sampler.filter_source_by_instance(
+                source_stream, instance
+            )
             sampled_instances = self.sampler.sample(source_stream)
             instance[self.target_field] = sampled_instances
             return instance

@@ -1,3 +1,5 @@
+import sys
+
 from datasets import load_dataset_builder
 
 from src.unitxt import add_to_catalog
@@ -8,6 +10,7 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
+from src.unitxt.operators import Shuffle
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "banking77"
@@ -23,6 +26,7 @@ classes = [label.replace("_", " ") for label in classlabels.names]
 card = TaskCard(
     loader=LoadHF(path=f"PolyAI/{dataset_name}"),
     preprocess_steps=[
+        Shuffle(page_size=sys.maxsize),
         SplitRandomMix(
             {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
         ),

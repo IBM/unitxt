@@ -17,6 +17,7 @@ from src.unitxt.operators import (
     CopyFields,
     DeterministicBalancer,
     DivideAllFieldsBy,
+    DuplicateInstances,
     EncodeLabels,
     ExecuteExpression,
     ExtractFieldValues,
@@ -35,7 +36,7 @@ from src.unitxt.operators import (
     MapInstanceValues,
     MergeStreams,
     NullAugmentor,
-    Perturbate,
+    Perturb,
     RemoveFields,
     RemoveValues,
     RenameFields,
@@ -88,7 +89,7 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=inputs,
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instace = {'a': '1', 'b': '2'}",
+            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instance = {'a': '1', 'b': '2'}",
             tester=self,
         )
 
@@ -219,15 +220,15 @@ class TestOperators(UnitxtTestCase):
                 return str(value).upper()
 
         inputs = [
-            {"a": "imagine", "b": ["theres", "no", "heaven"]},
+            {"a": "imagine", "b": ["there's", "no", "heaven"]},
             {"a": "imagine", "b": ["all", "the", "people"]},
         ]
 
         targets = [
             {
                 "a": "imagine",
-                "b": ["theres", "no", "heaven"],
-                "B": ["THERES", "NO", "HEAVEN"],
+                "b": ["there's", "no", "heaven"],
+                "B": ["THERE'S", "NO", "HEAVEN"],
             },
             {
                 "a": "imagine",
@@ -569,6 +570,42 @@ class TestOperators(UnitxtTestCase):
             operator=Intersect(field="label", allowed_values=["c"]),
             inputs=inputs,
             exception_text=exception_text,
+            tester=self,
+        )
+
+    def test_remove_none(self):
+        inputs = [
+            {"references": [["none"]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        targets = [
+            {"references": [[]]},
+            {"references": [["news", "games"]]},
+        ]
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=RemoveValues(
+                    field="references/*",
+                    unallowed_values=["none"],
+                    process_every_value=False,
+                    use_query=True,
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references/0",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
+            ),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
@@ -2382,6 +2419,48 @@ class TestOperators(UnitxtTestCase):
                 "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
             )
 
+    def test_duplicate_instance(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2},
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+            {"a": 3, "b": 4},
+        ]
+
+        check_operator(
+            operator=DuplicateInstances(num_duplications=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_duplicate_instance_added_field(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "duplication_id": 0},
+            {"a": 1, "b": 2, "duplication_id": 1},
+            {"a": 3, "b": 4, "duplication_id": 0},
+            {"a": 3, "b": 4, "duplication_id": 1},
+        ]
+
+        check_operator(
+            operator=DuplicateInstances(
+                num_duplications=2, duplication_index_field="duplication_id"
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
 
 class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
@@ -2671,22 +2750,22 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)
 
-    def test_perturbate(self):
+    def test_perturb(self):
         instance = {
             "target": 1,
             "classes": [0, 1],
             "source": "Classify the given text to yes or no",
         }
-        operator = Perturbate(
-            field="target", to_field="prediction", percentage_to_perturbate=0
+        operator = Perturb(
+            field="target", to_field="prediction", percentage_to_perturb=0
         )
         out = operator.process(instance)
         self.assertEqual(out["target"], out["prediction"])
-        operator = Perturbate(
+        operator = Perturb(
             field="target",
             to_field="prediction",
             select_from=[0, 1],
-            percentage_to_perturbate=100,
+            percentage_to_perturb=100,
         )
         predictions = []
         for _ in range(100):
@@ -2696,8 +2775,8 @@ Agent:"""
         self.assertGreaterEqual(counter[0], 25)
         self.assertGreaterEqual(counter[1], 25)
         instance["target"] = "abcdefghijklmnop"
-        operator = Perturbate(
-            field="target", to_field="prediction", percentage_to_perturbate=100
+        operator = Perturb(
+            field="target", to_field="prediction", percentage_to_perturb=100
         )
         out = operator.process(instance)
         self.assertGreater(len(out["target"]), len(out["prediction"]))
@@ -2708,8 +2787,8 @@ Agent:"""
         out = operator.process(instance)
         self.assertNotEqual(out["target"], out["prediction"])
         with self.assertRaises(AssertionError) as ae:
-            operator = Perturbate(field="target", percentage_to_perturbate=200)
+            operator = Perturb(field="target", percentage_to_perturb=200)
         self.assertEqual(
-            "'percentage_to_perturbate' should be in the range 0..100. Received 200",
+            "'percentage_to_perturb' should be in the range 0..100. Received 200",
             str(ae.exception),
         )

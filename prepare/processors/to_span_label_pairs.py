@@ -86,6 +86,17 @@ add_to_catalog(
     "processors.load_json",
     overwrite=True,
 )
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            LoadJson(field="prediction", process_every_value=False),
+        ]
+    ),
+    "processors.load_json_from_predictions",
+    overwrite=True,
+)
+
 add_to_catalog(
     SequentialOperator(
         steps=[

@@ -1,0 +1,64 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "abacusai/WikiQA-Free_Form_QA"
+    },
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "conversations/0/value": "inputs",
+                "conversations/0/tok_len": "inputs_len",
+                "conversations/1/value": "answer"
+            },
+            "use_query": true
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "answer"
+            ],
+            "to_field": "answers"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "inputs_len": 16384
+            },
+            "condition": "lt"
+        },
+        {
+            "type": "execute_expression",
+            "expression": "re.search(r\"Document:\\s(.*)(\\n\\n|$)\", inputs).group(1)",
+            "imports_list": [
+                "re"
+            ],
+            "to_field": "context"
+        },
+        {
+            "type": "execute_expression",
+            "expression": "re.search(r\"Question:\\s(.*)(\\n\\n|$)\", inputs).group(1)",
+            "imports_list": [
+                "re"
+            ],
+            "to_field": "question"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "document"
+            }
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "16k[80%]",
+                "validation": "16k[10%]",
+                "test": "16k[10%]"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
+}

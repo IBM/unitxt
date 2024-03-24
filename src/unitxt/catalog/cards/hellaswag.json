@@ -25,8 +25,14 @@
             "fields": {
                 "answer": "int"
             }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "sentence"
+            }
         }
     ],
-    "task": "tasks.completion.multiple_choice.standard",
+    "task": "tasks.completion.multiple_choice",
     "templates": "templates.completion.multiple_choice.all"
 }

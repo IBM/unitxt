@@ -48,16 +48,16 @@
       </style>
    </head>
    <body>
-      <a href="https://www.unitxt.org/en/latest/" class="custom-button">Video</a>
-      <a href="https://www.unitxt.org/en/latest/docs/demo.html" class="custom-button">Demo</a>
-      <a href="https://www.unitxt.org/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/" class="custom-button">Video</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/demo.html" class="custom-button">Demo</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
       <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
-      <a href="https://www.unitxt.org/en/latest/modules.html" class="custom-button">Documentation</a>
-      <a href="https://www.unitxt.org/en/latest/catalog.html" class="custom-button">Catalog</a>
-      <a href="https://www.unitxt.org/en/latest/docs/contributors_guide.html" class="custom-button">Contributers</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/catalog.html" class="custom-button">Catalog</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/docs/contributors_guide.html" class="custom-button">Contributors</a>
       <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
-      <a href="https://www.unitxt.org/en/latest/search.html" class="custom-button">Search</a>
-      <a href="https://www.unitxt.org/en/latest/py-modindex.html" class="custom-button">Modules</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/search.html" class="custom-button">Search</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/py-modindex.html" class="custom-button">Modules</a>
       <br>
    </body>
    </html>
@@ -143,7 +143,7 @@
                <br>
                <br>
                <br>
-               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
+               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)</span>.compute<span style="color: #f321e2;">(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
             </div>
          </div>
          <br>
@@ -171,9 +171,13 @@ Welcome!
    docs/demo
    docs/no_installation_usage
    docs/installation
-   docs/adding_dataset
-   docs/adding_operators_and_metrics
    docs/components
+   docs/adding_dataset
+   docs/adding_task
+   docs/adding_template
+   docs/adding_format
+   docs/adding_operator
+   docs/adding_metric
    docs/backend
    docs/operators
    docs/contributors_guide

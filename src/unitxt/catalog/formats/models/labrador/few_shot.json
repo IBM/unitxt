@@ -1,0 +1,5 @@
+{
+    "type": "system_format",
+    "demo_format": "{source}\n{target_prefix}{target}\n\n",
+    "model_input_format": "<|system|>\n{system_prompt}\n<|user|>\n{instruction}\nYour response should only include the answer. Do not provide any further explanation.\n\nHere are some examples, complete the last one:\n{demos}{source}\n{target_prefix}<|assistant|>\n"
+}

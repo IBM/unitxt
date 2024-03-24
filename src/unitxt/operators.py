@@ -33,6 +33,7 @@ General Operaotrs List:
 ------------------------
 """
 import collections
+import copy
 import operator
 import os
 import uuid
@@ -179,7 +180,7 @@ class MapInstanceValues(StreamInstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instace = {instance}"
+                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instance = {instance}"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
@@ -284,7 +285,7 @@ class RemoveFields(StreamInstanceOperator):
         return instance
 
 
-class FieldOperator(StreamInstanceOperator):
+class InstanceFieldOperator(StreamInstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
@@ -335,7 +336,7 @@ class FieldOperator(StreamInstanceOperator):
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
-        # for backward compatibility also allow list of tupples of two strings
+        # for backward compatibility also allow list of tuples of two strings
         if isoftype(self.field_to_field, List[List[str]]) or isoftype(
             self.field_to_field, List[Tuple[str, str]]
         ):
@@ -364,7 +365,7 @@ class FieldOperator(StreamInstanceOperator):
         )
 
     @abstractmethod
-    def process_value(self, value: Any) -> Any:
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
 
     def prepare(self):
@@ -407,9 +408,12 @@ class FieldOperator(StreamInstanceOperator):
                 ) from e
             try:
                 if self.process_every_value:
-                    new_value = [self.process_value(value) for value in old_value]
+                    new_value = [
+                        self.process_instance_value(value, instance)
+                        for value in old_value
+                    ]
                 else:
-                    new_value = self.process_value(old_value)
+                    new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
@@ -424,6 +428,15 @@ class FieldOperator(StreamInstanceOperator):
                 not_exist_ok=True,
             )
         return instance
+
+
+class FieldOperator(InstanceFieldOperator):
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        return self.process_value(value)
+
+    @abstractmethod
+    def process_value(self, value: Any) -> Any:
+        pass
 
 
 class RenameFields(FieldOperator):
@@ -772,11 +785,11 @@ class Apply(StreamInstanceOperator):
         return ".".join(parts)
 
     def str_to_function(self, function_str: str) -> Callable:
-        splitted = function_str.split(".", 1)
-        if len(splitted) == 1:
-            return __builtins__[splitted[0]]
+        parts = function_str.split(".", 1)
+        if len(parts) == 1:
+            return __builtins__[parts[0]]
 
-        module_name, function_name = splitted
+        module_name, function_name = parts
         if module_name in __builtins__:
             obj = __builtins__[module_name]
         elif module_name in globals():
@@ -891,34 +904,32 @@ class TakeByField(StreamInstanceOperator):
         return instance
 
 
-class Perturbate(FieldOperator):
-    """Slightly perturbates the contents of 'field'. Could be Handy for imitating prediction from given target.
+class Perturb(FieldOperator):
+    """Slightly perturbs the contents of 'field'. Could be Handy for imitating prediction from given target.
 
     When task was classification, argument 'select_from' can be used to list the other potential classes, as a
     relevant perturbation
     """
 
     select_from: List[Any] = []
-    percentage_to_perturbate: int = 1  # 1 percent
+    percentage_to_perturb: int = 1  # 1 percent
 
     def verify(self):
         assert (
-            0 <= self.percentage_to_perturbate and self.percentage_to_perturbate <= 100
-        ), f"'percentage_to_perturbate' should be in the range 0..100. Received {self.percentage_to_perturbate}"
+            0 <= self.percentage_to_perturb and self.percentage_to_perturb <= 100
+        ), f"'percentage_to_perturb' should be in the range 0..100. Received {self.percentage_to_perturb}"
 
     def prepare(self):
         super().prepare()
         self.random_generator = new_random_generator(sub_seed="CopyWithPerturbation")
 
     def process_value(self, value: Any) -> Any:
-        perturbate = (
-            self.random_generator.randint(1, 100) <= self.percentage_to_perturbate
-        )
-        if not perturbate:
+        perturb = self.random_generator.randint(1, 100) <= self.percentage_to_perturb
+        if not perturb:
             return value
 
         if value in self.select_from:
-            # 80% of cases, return a decent class, otherwise, perturbate the value itself as follows
+            # 80% of cases, return a decent class, otherwise, perturb the value itself as follows
             if self.random_generator.random() < 0.8:
                 return self.random_generator.choice(self.select_from)
 
@@ -963,7 +974,16 @@ class CopyFields(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        return value
+        return copy.deepcopy(value)
+
+
+class GetItemByIndex(FieldOperator):
+    """Get from the item list by the index in the field."""
+
+    items_list: List[Any]
+
+    def process_value(self, value: Any) -> Any:
+        return self.items_list[value]
 
 
 class AddID(StreamInstanceOperator):
@@ -1387,7 +1407,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             else:
                 # content of 'field' is a list and process_every_value == True: add one occurrence on behalf of each individual value
                 counter.update(instance[self.field])
-        # here counter counts occurrences of individual values, or tupples.
+        # here counter counts occurrences of individual values, or tuples.
         values_and_counts = counter.most_common()
         if self.overall_top_frequency_percent < 100:
             top_frequency = (
@@ -1596,6 +1616,16 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
+        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
+        # for further metrics' processing, instead of just modifying the score field.
+        # Here we keep all the fields besides the score, and restore them after the metric finishes.
+        first_instance = stream.peek()
+        keys_to_restore = set(first_instance.keys()).difference({"score"})
+        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = CopyFields(
+            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
+        )(multi_stream)
+
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(
@@ -1605,8 +1635,15 @@ class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
 
-            stream = metric(MultiStream({"tmp": stream}))["tmp"]
+            multi_stream = metric(multi_stream)
+            multi_stream = CopyFields(
+                field_to_field={f"{k}_orig": k for k in keys_to_restore}
+            )(multi_stream)
 
+        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
+            multi_stream
+        )
+        stream = multi_stream["tmp"]
         yield from stream
 
 
@@ -1867,3 +1904,40 @@ class ExtractZipFile(SideEffectOperator):
     def process(self):
         with zipfile.ZipFile(self.zip_file) as zf:
             zf.extractall(self.target_dir)
+
+
+class DuplicateInstances(SingleStreamOperator):
+    """Operator which duplicates each instance in stream a given number of times.
+
+    Attributes:
+        num_duplications (int): How many times each instance should be duplicated (1 means no duplication).
+        duplication_index_field (Optional[str]):
+            If given, then additional field with specified name is added to each duplicated instance,
+            which contains id of a given duplication. Defaults to None, so no field is added.
+    """
+
+    num_duplications: int
+    duplication_index_field: Optional[str] = None
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for instance in stream:
+            for idx in range(self.num_duplications):
+                duplicate = deepcopy(instance)
+                if self.duplication_index_field:
+                    duplicate.update({self.duplication_index_field: idx})
+                yield duplicate
+
+    def verify(self):
+        if not isinstance(self.num_duplications, int) or self.num_duplications < 1:
+            raise ValueError(
+                f"num_duplications must be an integer equal to or greater than 1. "
+                f"Got: {self.num_duplications}."
+            )
+
+        if self.duplication_index_field is not None and not isinstance(
+            self.duplication_index_field, str
+        ):
+            raise ValueError(
+                f"If given, duplication_index_field must be a string. "
+                f"Got: {self.duplication_index_field}"
+            )

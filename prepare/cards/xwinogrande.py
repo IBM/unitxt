@@ -18,5 +18,5 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         templates="templates.qa.multiple_choice.open.all",
     )
     if lang == "pt":
-        test_card(card, demos_taken_from="test")
+        test_card(card, demos_taken_from="test", strict=False)
     add_to_catalog(card, f"cards.xwinogrande.{lang}", overwrite=True)

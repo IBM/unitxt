@@ -1,6 +1,6 @@
 {
     "type": "input_output_template",
-    "input_format": "Text: {text}",
+    "input_format": "{text_type}: {text}",
     "output_format": "{label}",
     "target_prefix": "The {type_of_class} is ",
     "instruction": "Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.",

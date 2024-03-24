@@ -1,13 +1,11 @@
+.. _adding_dataset:
+
 .. note::
 
-   To use this tutorial, you need to install `unitxt` with the following command:
-
-   .. code-block:: bash
-
-      pip install unitxt
+   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =================
-Adding Datasets
+Adding Datasets ✨
 =================
 
 This guide will assist you in adding or using your new dataset in unitxt.
@@ -53,7 +51,7 @@ If a cataloged task fits your use case, call it by name:
 
 .. code-block:: python
 
-    task='tasks.tanslation.directed',
+    task='tasks.translation.directed',
 
 
 The Preprocessing pipeline
@@ -92,8 +90,14 @@ For custom operators, refer to the :ref:`adding operator guide <adding_operator>
 The Template
 ----------------
 
+
+
 Templates convert data points into a model-friendly textual form.
 If using a predefined task, choose from the corresponding templates available in the catalog's :ref:`Templates section <catalog.templates>`.
+
+.. note::
+
+   Use the :ref:`comprehnisve guide on templates  <adding_template>` for more templates features.
 
 Alternively define your custom templates:
 
@@ -113,7 +117,7 @@ Testing your card
 Once your card is ready you can test it:
 
 .. code-block:: python
-    
+
         from unitxt.card import TaskCard
         from unitxt.loaders import LoadHF
         from unitxt.operators import CopyFields, AddFields

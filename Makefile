@@ -24,7 +24,12 @@ docs: docs-html
 test-docs: docs clear-docs
 
 format:
-	bash $(DIR)/utils/format
+	ruff check . --fix
+	ruff format .
+
+pre-commit:
+	pre-commit install
+	pre-commit run --all-files
 
 # command: make version={new_version} new-version
 new-version:
@@ -58,3 +63,21 @@ metric:
 build:
 	format
 	pypi
+
+# command: make tag_name=${TAG_NAME} metric-service-build
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-build
+# Use the unitxt dir as the build context for docker, so the entire codebase
+# can be copied into the image. This way the latest code changes are integrated into
+# the image, without requiring a formal unitxt release.
+metric-service-build:
+	cd $(DIR) && docker build --tag $(tag_name) --file $(DIR)/src/unitxt/service/metrics/Dockerfile .
+
+# command: make tag_name=${TAG_NAME} metric-service-run-bash
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-run-bash
+metric-service-run-bash:
+	docker run -it $(tag_name) /bin/bash
+
+# command: make tag_name=${TAG_NAME} metric-service-run
+# example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-run
+metric-service-run:
+	docker run -p 8000:8000 --memory=20g $(tag_name)

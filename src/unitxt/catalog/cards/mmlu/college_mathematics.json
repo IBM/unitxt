@@ -9,7 +9,7 @@
         {
             "type": "rename_splits",
             "mapper": {
-                "auxiliary_train": "train"
+                "dev": "train"
             }
         },
         {

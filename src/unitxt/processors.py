@@ -1,8 +1,9 @@
 import json
 import re
-from typing import Any
+from difflib import get_close_matches
+from typing import Any, Dict
 
-from .operators import FieldOperator
+from .operators import FieldOperator, InstanceFieldOperator
 
 
 class ToString(FieldOperator):
@@ -15,9 +16,20 @@ class ToStringStripped(FieldOperator):
         return str(text).strip()
 
 
-class ToListByComma(FieldOperator):
+class Split(FieldOperator):
+    delimiter: str = " "
+    strip_every_element: bool = False
+
     def process_value(self, text: Any) -> Any:
-        return [x.strip() for x in text.split(",")]
+        return [
+            x.strip() if self.strip_every_element else x
+            for x in text.split(self.delimiter)
+        ]
+
+
+class ToListByComma(Split):
+    delimiter = ","
+    strip_every_element = True
 
 
 class RegexParser(FieldOperator):
@@ -70,10 +82,10 @@ class DictOfListsToPairs(FieldOperator):
 
 class TakeFirstNonEmptyLine(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        splitted = str(text).strip().split("\n")
-        if len(splitted) == 0:
+        parts = str(text).strip().split("\n")
+        if len(parts) == 0:
             return ""
-        return splitted[0].strip()
+        return parts[0].strip()
 
 
 class ConvertToBoolean(FieldOperator):
@@ -101,6 +113,43 @@ class LowerCase(FieldOperator):
         return text.lower()
 
 
+class Capitalize(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return text.capitalize()
+
+
+class GetStringAfter(FieldOperator):
+    substring: str
+
+    def process_value(self, text: Any) -> Any:
+        return text.split(self.substring, 1)[-1].strip()
+
+
+class MatchClosestOption(InstanceFieldOperator):
+    options_field: str = "options"
+
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+        options = instance["task_data"][self.options_field]
+        return get_close_matches(value, options, n=1, cutoff=0.0)[0]
+
+
+def process_instance_value(self, value, instance):
+    options = instance[self.options_field]
+    # Get the closest match; n=1 returns the single closest match
+    closest_match = get_close_matches(value, options, n=1, cutoff=0)
+    return closest_match[0] if closest_match else None
+
+
+class Substring(FieldOperator):
+    begin: int = 0
+    end: int = None
+
+    def process_value(self, text: Any) -> Any:
+        if self.end is None:
+            return text[self.begin :]
+        return text[self.begin : self.end]
+
+
 class FirstCharacter(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\s*(\w)", text)
@@ -111,7 +160,7 @@ class FirstCharacter(FieldOperator):
 
 class TakeFirstWord(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        match = re.search(r"[\w]+", text)
+        match = re.search(r"([-]*[0-9]+(\.([0-9]+))*)|([\w]+)", text)
         if match:
             return text[match.start() : match.end()]
         return ""
@@ -124,6 +173,21 @@ class YesNoToInt(FieldOperator):
         if text == "no":
             return "0"
         return text
+
+
+class YesToOneElseZero(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text == "yes":
+            return "1"
+        return "0"
+
+
+class StrToFloatFormat(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        try:
+            return str(float(text))
+        except Exception:
+            return str(text)
 
 
 class ToYesOrNone(FieldOperator):

@@ -5,9 +5,6 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Summarize the following {document_type}: {document}.",
         output_format="{summary}",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-        ],
     ),
     "templates.summarization.abstractive.full",
     overwrite=True,
@@ -41,9 +38,6 @@ add_to_catalog(
     InputOutputTemplate(
         input_format="Write a succinct summary of the following {document_type}: {document}.",
         output_format="{summary}",
-        postprocessors=[
-            "processors.take_first_non_empty_line",
-        ],
     ),
     "templates.summarization.abstractive.write_succinct",
     overwrite=True,
@@ -100,6 +94,18 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    InputOutputTemplate(
+        instruction="Summarize the following {document_type}.",
+        input_format="{document_type}:\n{document}.",
+        target_prefix="Summary:\n",
+        output_format="{summary}",
+        title_fields=["document_type"],
+    ),
+    "templates.summarization.abstractive.title",
+    overwrite=True,
+)
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.summarization.abstractive.formal",
@@ -111,6 +117,7 @@ add_to_catalog(
             "templates.summarization.abstractive.one_sentence",
             "templates.summarization.abstractive.passive",
             "templates.summarization.abstractive.write_succinct",
+            "templates.summarization.abstractive.title",
         ]
     ),
     "templates.summarization.abstractive.all",

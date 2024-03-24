@@ -124,3 +124,8 @@ def nested_tuple_to_string(nested_tuple: tuple) -> str:
         else:
             result.append(str(item))
     return "_".join(result)
+
+
+def is_made_of_sub_strings(string, sub_strings):
+    pattern = "^(" + "|".join(map(re.escape, sub_strings)) + ")+$"
+    return bool(re.match(pattern, string))

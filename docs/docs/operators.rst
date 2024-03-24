@@ -1,8 +1,8 @@
-Operators
-=========
+Operators List
+==============
 
 This library provides various operators for stream processing.
 
-:py:obj:`operators`
+.. include:: ../unitxt.operators.rst
+   :start-line: 10
 
-Here, we will discuss the usage and functionality of the operators module.

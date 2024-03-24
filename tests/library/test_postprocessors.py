@@ -1,6 +1,7 @@
 from typing import Any, List
 
 from src.unitxt.artifact import fetch_artifact
+from src.unitxt.processors import MatchClosestOption, Substring
 from src.unitxt.test_utils.operators import check_operator
 from tests.utils import UnitxtTestCase
 
@@ -30,6 +31,72 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_lower_case(self):
+        parser, _ = fetch_artifact("processors.lower_case")
+        inputs = [
+            "correct",
+            "Not Sure",
+            "TRUE",
+        ]
+        targets = ["correct", "not sure", "true"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_capitalize(self):
+        parser, _ = fetch_artifact("processors.capitalize")
+        inputs = [
+            "correct",
+            "Not Sure",
+            "TRUE",
+            "wORD",
+        ]
+        targets = ["Correct", "Not sure", "True", "Word"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_substring(self):
+        inputs = [
+            {"a": "correct"},
+            {"a": "Not Sure"},
+            {"a": "longer input"},
+            {"a": "x"},
+        ]
+        targets1 = [
+            {"a": "correct", "b": "or"},
+            {"a": "Not Sure", "b": "ot"},
+            {"a": "longer input", "b": "on"},
+            {"a": "x", "b": ""},
+        ]
+        targets2 = [
+            {"a": "correct", "b": "orrect"},
+            {"a": "Not Sure", "b": "ot Sure"},
+            {"a": "longer input", "b": "onger input"},
+            {"a": "x", "b": ""},
+        ]
+
+        check_operator(
+            operator=Substring(field="a", to_field="b", begin=1, end=3),
+            inputs=inputs,
+            targets=targets1,
+            tester=self,
+        )
+        check_operator(
+            operator=Substring(field="a", to_field="b", begin=1),
+            inputs=inputs,
+            targets=targets2,
+            tester=self,
+        )
+
     def test_to_span_label_pairs(self):
         parser, _ = fetch_artifact("processors.to_span_label_pairs")
         inputs = [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG", "None"]
@@ -54,6 +121,52 @@ class TestPostProcessors(UnitxtTestCase):
             operator=parser,
             inputs=list_to_stream_with_prediction_and_references(inputs),
             targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_select_closest_option(self):
+        inputs = [
+            {
+                "prediction": "option2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "chase3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+        ]
+
+        targets = [
+            {
+                "prediction": "option1",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "cheese3",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+            {
+                "prediction": "choice2",
+                "task_data": {"options": ["option1", "choice2", "cheese3"]},
+            },
+        ]
+
+        check_operator(
+            operator=MatchClosestOption(field="prediction"),
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 
@@ -102,6 +215,34 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_predictions_yes_1_else_0(self):
+        parser, _ = fetch_artifact("processors.predictions_yes_1_else_0")
+        inputs = ["yes", "no", "yaa"]
+        targets = [
+            {"references": ["yes"], "prediction": "1"},
+            {"references": ["no"], "prediction": "0"},
+            {"references": ["yaa"], "prediction": "0"},
+        ]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=targets,
+            tester=self,
+        )
+
+    def test_str_to_float_format(self):
+        parser, _ = fetch_artifact("processors.str_to_float_format")
+        inputs = ["-2.4", "5", "5a"]
+        targets = ["-2.4", "5.0", "5a"]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
     def test_stance_to_pro_con(self):
         parser, _ = fetch_artifact("processors.stance_to_pro_con")
         inputs = ["positive", "negative", "suggestion", "neutral", "nothing"]
@@ -142,6 +283,17 @@ class TestPostProcessors(UnitxtTestCase):
             operator=parser,
             inputs=list_to_stream_with_prediction_and_references(inputs),
             targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_load_json_from_predictions(self):
+        parser, _ = fetch_artifact("processors.load_json_from_predictions")
+        inputs = [{"prediction": '{"yes":0.46}', "references": '{"yes":0.46}'}]
+        targets = [{"prediction": {"yes": 0.46}, "references": '{"yes":0.46}'}]
+        check_operator(
+            operator=parser,
+            inputs=inputs,
+            targets=targets,
             tester=self,
         )
 

@@ -7,8 +7,11 @@ from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
+from .collections_operators import __file__ as _
 from .dataclass import __file__ as _
 from .dataset_utils import get_dataset_artifact
+from .deprecation_utils import __file__ as _
+from .dialog_operators import __file__ as _
 from .dict_utils import __file__ as _
 from .eval_utils import __file__ as _
 from .file_utils import __file__ as _
@@ -32,6 +35,7 @@ from .recipe import __file__ as _
 from .register import __file__ as _
 from .schema import __file__ as _
 from .settings_utils import get_constants
+from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
