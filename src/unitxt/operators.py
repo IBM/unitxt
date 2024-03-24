@@ -35,7 +35,6 @@ General Operaotrs List:
 import collections
 import copy
 import operator
-import os
 import uuid
 import zipfile
 from abc import abstractmethod
@@ -418,8 +417,6 @@ class InstanceFieldOperator(StreamInstanceOperator):
                 raise ValueError(
                     f"Failed to process '{from_field}' from {instance} due to : {e}"
                 ) from e
-            if is_subpath(from_field, to_field) or is_subpath(to_field, from_field):
-                dict_delete(instance, from_field)
             dict_set(
                 instance,
                 to_field,
@@ -471,18 +468,7 @@ class RenameFields(FieldOperator):
             if (not is_subpath(from_field, to_field)) and (
                 not is_subpath(to_field, from_field)
             ):
-                dict_delete(res, from_field)
-                if self.use_query:
-                    from_field_components = list(
-                        os.path.normpath(from_field).split(os.path.sep)
-                    )
-                    while len(from_field_components) > 1:
-                        from_field_components.pop()
-                        parent = dict_get(res, os.path.sep.join(from_field_components))
-                        if isinstance(parent, dict) and not parent:
-                            dict_delete(res, os.path.sep.join(from_field_components))
-                        else:
-                            break
+                dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
 
@@ -1480,10 +1466,6 @@ class RemoveValues(FieldOperator):
 
     def verify(self):
         super().verify()
-        if self.process_every_value:
-            raise ValueError(
-                "'process_every_value=True' is not supported in RemoveValues operator"
-            )
 
         if not isinstance(self.unallowed_values, list):
             raise ValueError(
@@ -1712,7 +1694,7 @@ class EncodeLabels(StreamInstanceOperator):
         {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
-        Note: dpath is applied here, and hence, fields that are lists, should be included in
+        Note: qpath is applied here, and hence, fields that are lists, should be included in
         input 'fields' with the appendix "/*"  as in the above example.
 
     """
@@ -1728,14 +1710,21 @@ class EncodeLabels(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         for field_name in self.fields:
             values = dict_get(instance, field_name, use_dpath=True)
+            values_was_a_list = isinstance(values, list)
             if not isinstance(values, list):
                 values = [values]
             for value in values:
                 if value not in self.encoder:
                     self.encoder[value] = len(self.encoder)
             new_values = [self.encoder[value] for value in values]
+            if not values_was_a_list:
+                new_values = new_values[0]
             dict_set(
-                instance, field_name, new_values, use_dpath=True, set_multiple=True
+                instance,
+                field_name,
+                new_values,
+                use_dpath=True,
+                set_multiple="*" in field_name,
             )
 
         return instance
