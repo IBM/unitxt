@@ -365,37 +365,48 @@ for metric_name, catalog_name in [
     add_to_catalog(metric, catalog_name, overwrite=True)
 
 
-context_relevance = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        CopyFields(field_to_field=[("contexts", "references")]),
-        CopyFields(
-            field_to_field=[("question", "prediction")],
-        ),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-)
-add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
+for new_catalog_name_suffix, base_catalog_name in [
+    ("", "metrics.perplexity_q.flan_t5_small"),
+    ("_mistral", "metrics.perplexity_q.Mistral_7B_Instruct_v2"),
+]:
+    context_relevance = MetricPipeline(
+        main_score="perplexity",
+        preprocess_steps=[
+            CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+            CopyFields(
+                field_to_field=[("question", "prediction")],
+            ),
+        ],
+        metric=base_catalog_name,
+    )
+    add_to_catalog(
+        context_relevance,
+        f"metrics.rag.context_relevance{new_catalog_name_suffix}",
+        overwrite=True,
+    )
 
-context_perplexity = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        CopyFields(field_to_field=[("contexts", "references")]),
-        CopyFields(
-            field_to_field=[("question", "prediction")],
-        ),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-    postpreprocess_steps=[
-        CopyFields(
-            field_to_field=[
-                ("score/instance/reference_scores", "score/instance/score")
-            ],
-        )
-    ],
-)
-add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
-
+    context_perplexity = MetricPipeline(
+        main_score="score",
+        preprocess_steps=[
+            CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+            CopyFields(
+                field_to_field=[("question", "prediction")],
+            ),
+        ],
+        metric=base_catalog_name,
+        postpreprocess_steps=[
+            CopyFields(
+                field_to_field=[
+                    ("score/instance/reference_scores", "score/instance/score")
+                ],
+            )
+        ],
+    )
+    add_to_catalog(
+        context_perplexity,
+        f"metrics.rag.context_perplexity{new_catalog_name_suffix}",
+        overwrite=True,
+    )
 
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),

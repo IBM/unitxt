@@ -1,0 +1,39 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "contexts",
+                    "references"
+                ]
+            ],
+            "use_query": true
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "question",
+                    "prediction"
+                ]
+            ],
+            "use_query": true
+        }
+    ],
+    "metric": "metrics.perplexity_q.Mistral_7B_Instruct_v2",
+    "postpreprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "score/instance/reference_scores",
+                    "score/instance/score"
+                ]
+            ],
+            "use_query": true
+        }
+    ]
+}

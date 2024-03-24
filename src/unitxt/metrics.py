@@ -2170,7 +2170,11 @@ class Perplexity(BulkInstanceMetric):
         targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
-                sources.append(f"{self.perplexity_prompt} {instance_reference}")
+                if "%s" in self.perplexity_prompt:
+                    source = self.perplexity_prompt % instance_reference
+                else:
+                    source = f"{self.perplexity_prompt} {instance_reference}"
+                sources.append(source)
                 targets.append(prediction)
 
         from transformers import AutoConfig
@@ -2217,6 +2221,8 @@ class Perplexity(BulkInstanceMetric):
                 self.model_class().from_pretrained(self.model_name).to(self.device)
             )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            if self.tokenizer.pad_token_id is None:
+                self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
         def compute_lm(
             self, source: List[str], target: List[str], batch_size: int
