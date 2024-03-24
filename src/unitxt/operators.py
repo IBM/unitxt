@@ -1682,20 +1682,18 @@ class Shuffle(PagedStreamOperator):
 class EncodeLabels(StreamInstanceOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
 
-    Encoding is determined by a str->int map that is built on the go, as different values are
-    first encountered in the stream, either as list members or as values in single-value fields.
+    Encoding is determined by a str->int map that is built on the go, as different primitive (not lists)
+    values are first encountered in the stream, either as list members or as (primitive) values in single-value fields.
 
     Args:
         fields (List[str]): The fields to encode together.
 
     Example: applying
-        EncodeLabels(fields = ["a", "b/*"])
+        EncodeLabels(fields = ["a", "b"])
         on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
         {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
         output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
 
-        Note: qpath is applied here, and hence, fields that are lists, should be included in
-        input 'fields' with the appendix "/*"  as in the above example.
 
     """
 
@@ -1705,26 +1703,24 @@ class EncodeLabels(StreamInstanceOperator):
         self.encoder = {}
         return super()._process_multi_stream(multi_stream)
 
+    def encode_value(self, value: Any) -> Any:
+        if isinstance(value, list):
+            return [self.encode_value(val) for val in value]
+        if value not in self.encoder:
+            self.encoder[value] = len(self.encoder)
+        return self.encoder[value]
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name in self.fields:
             values = dict_get(instance, field_name, use_dpath=True)
-            values_was_a_list = isinstance(values, list)
-            if not isinstance(values, list):
-                values = [values]
-            for value in values:
-                if value not in self.encoder:
-                    self.encoder[value] = len(self.encoder)
-            new_values = [self.encoder[value] for value in values]
-            if not values_was_a_list:
-                new_values = new_values[0]
+            new_values = self.encode_value(values)
             dict_set(
                 instance,
                 field_name,
                 new_values,
                 use_dpath=True,
-                set_multiple="*" in field_name,
             )
 
         return instance

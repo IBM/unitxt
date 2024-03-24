@@ -2040,7 +2040,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            operator=EncodeLabels(fields=["prediction", "references"]),
             inputs=inputs,
             targets=targets,
             tester=self,
