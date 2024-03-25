@@ -3,8 +3,9 @@ from src.unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "source_language", "target_language"],
-        outputs=["translation"],
+        inputs={"text": "str", "source_language": "str", "target_language": "str"},
+        outputs={"translation": "str"},
+        prediction_type="Any",
         metrics=["metrics.normalized_sacrebleu"],
     ),
     "tasks.translation.directed",

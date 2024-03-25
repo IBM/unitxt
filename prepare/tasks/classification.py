@@ -3,8 +3,9 @@ from src.unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type", "class"],
-        outputs=["class", "label"],
+        inputs={"text": "str", "text_type": "str", "class": "str"},
+        outputs={"class": "str", "label": "str"},
+        prediction_type="str",
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.f1_macro_multi_label",
@@ -18,8 +19,14 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type", "classes", "type_of_classes"],
-        outputs=["labels"],
+        inputs={
+            "text": "str",
+            "text_type": "str",
+            "classes": "List[str]",
+            "type_of_classes": "str",
+        },
+        outputs={"labels": "List[str]"},
+        prediction_type="str",
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.accuracy",
@@ -33,8 +40,14 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type", "classes", "type_of_class"],
-        outputs=["label"],
+        inputs={
+            "text": "str",
+            "text_type": "str",
+            "classes": "List[str]",
+            "type_of_class": "str",
+        },
+        outputs={"label": "str"},
+        prediction_type="str",
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],
     ),
@@ -44,15 +57,16 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=[
-            "text_a",
-            "text_a_type",
-            "text_b",
-            "text_b_type",
-            "classes",
-            "type_of_relation",
-        ],
-        outputs=["label"],
+        inputs={
+            "text_a": "str",
+            "text_a_type": "str",
+            "text_b": "str",
+            "text_b_type": "str",
+            "classes": "List[str]",
+            "type_of_relation": "str",
+        },
+        outputs={"label": "str"},
+        prediction_type="str",
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text_a", "text_b"],
     ),
