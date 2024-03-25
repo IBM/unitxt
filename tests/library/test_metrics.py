@@ -33,6 +33,7 @@ from src.unitxt.metrics import (
     GroupMeanTokenOverlap,
     KendallTauMetric,
     LlamaIndexCorrectness,
+    MaxAccuracy,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -163,6 +164,39 @@ class TestMetrics(UnitxtTestCase):
         expected_global_result = {
             "accuracy": 1 / 3,
             "score": 1 / 3,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
+    def test_accuracy_max_aggregation(self):
+        metric = MaxAccuracy()
+
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "accuracy": 1,
+            "score": 1,
             "score_name": "accuracy",
         }
 
