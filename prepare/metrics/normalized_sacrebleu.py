@@ -51,6 +51,8 @@ metric = MetricPipeline(
     ),
 )
 
+### ENGLISH
+
 predictions = ["hello there general kenobi", "on our way to ankh morpork"]
 references = [
     ["hello there general kenobi", "hello there !"],
@@ -105,6 +107,9 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+
+### JAPANESE
+
 predictions = [
     "他の専門家たちと同様に、彼は糖尿病を完治できるかどうかについては懐疑的であり、これらの調査結果はすでにI型糖尿病を患っている人々には何の関連性もないことを指摘しています。"
 ]
@@ -114,6 +119,7 @@ references = [
     ]
 ]
 task_data = [{"target_language": "ja"}]
+
 instance_targets = [
     {
         "bp": 1.0,
@@ -127,6 +133,7 @@ instance_targets = [
         "totals": [57, 56, 55, 54],
     },
 ]
+
 
 global_target = {
     "bp": 1.0,
@@ -149,5 +156,88 @@ outputs = test_metric(
     task_data=task_data,
 )
 
+### ARABIC
+
+predictions = ["لى يسارك ، بر ماركت."]
+references = [["على ، ستمر سوبر ماركت."]]
+task_data = [{"target_language": "ar", "tokenize": "intl"}]
+instance_targets = [
+    {
+        "counts": [3, 1, 0, 0],
+        "totals": [6, 5, 4, 3],
+        "precisions": [0.5, 0.2, 0.12, 0.08],
+        "bp": 1.0,
+        "sys_len": 6,
+        "ref_len": 6,
+        "sacrebleu": 0.18,
+        "score": 0.18,
+        "score_name": "sacrebleu",
+    }
+]
+
+global_target = {
+    "counts": [3, 1, 0, 0],
+    "totals": [6, 5, 4, 3],
+    "precisions": [0.5, 0.2, 0.12, 0.08],
+    "bp": 1.0,
+    "sys_len": 6,
+    "ref_len": 6,
+    "sacrebleu": 0.18,
+    "score": 0.18,
+    "score_name": "sacrebleu",
+}
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+    task_data=task_data,
+)
+
+### KOREAN
+
+predictions = ["이게에 신을 살 거예요"]
+references = [
+    ["이 가게에서 신발을 살 거예요", "이 가에서 신발살 거예요"],
+]
+task_data = [{"target_language": "ko", "tokenize": "intl"}]
+
+instance_targets = [
+    {
+        "counts": [2, 1, 0, 0],
+        "totals": [4, 3, 2, 1],
+        "precisions": [0.5, 0.33, 0.25, 0.25],
+        "bp": 1.0,
+        "sys_len": 4,
+        "ref_len": 4,
+        "sacrebleu": 0.32,
+        "score": 0.32,
+        "score_name": "sacrebleu",
+    }
+]
+
+global_target = {
+    "counts": [2, 1, 0, 0],
+    "totals": [4, 3, 2, 1],
+    "precisions": [0.5, 0.33, 0.25, 0.25],
+    "bp": 1.0,
+    "sys_len": 4,
+    "ref_len": 4,
+    "sacrebleu": 0.32,
+    "score": 0.32,
+    "score_name": "sacrebleu",
+}
+
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+    task_data=task_data,
+)
 
 add_to_catalog(metric, "metrics.normalized_sacrebleu", overwrite=True)
