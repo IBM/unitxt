@@ -9,7 +9,7 @@ predictions = [
     [("Amir", "Person"), ("Yaron", "Person")],
     [("Ran", "Person"), ("Yonatan", "Person")],
 ]
-references = [[("Yaron", "Person"), ("Ran", "Person")], [("Yonatan", "Person")]]
+references = [[[("Yaron", "Person"), ("Ran", "Person")]], [[("Yonatan", "Person")]]]
 # precision = 1/2, recall 1/2
 # Precision = 1/2, Recall = 1/1,
 # total precision = 2/4, recall = 2/3
@@ -67,7 +67,7 @@ outputs = test_metric(
 
 # 1.1 simple case
 predictions = [[("Amir", "Person"), ("Yaron", "Person")]]
-references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
+references = [[[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]]
 # Precision = 1/2, Recall = 1/3, F1 = 2 * 1/2 * 1/3 / (1/2 + 1/3) = 0.4
 instance_targets = [
     {
@@ -105,7 +105,7 @@ outputs = test_metric(
 )
 # 1.2 more then one instance of an element
 predictions = [[("Amir", "Person"), ("Yaron", "Person"), ("Yaron", "Person")]]
-references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
+references = [[[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]]
 # Precision = 1/3, Recall = 1/3, F1 = 2 * 1/3 * 1/3 / (1/3 + 1/3) = 0.333333
 instance_targets = [
     {
@@ -143,7 +143,7 @@ outputs = test_metric(
 )
 # 1.3 class with no predictions
 predictions = [[]]
-references = [[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]
+references = [[[("Yaron", "Person"), ("Ran", "Person"), ("Yonatan", "Person")]]]
 # Precision = 0/0=(by def for prediction)=0, Recall = 0/3, F1 = 2 * 1 * 0 / (1 + 0) = 0
 instance_targets = [
     {
@@ -194,12 +194,14 @@ predictions = [
 ]
 references = [
     [
-        ("Amir", "Person"),
-        ("Yaron", "Person"),
-        ("Dalia", "Person"),
-        ("Naftali", "Person"),
-        ("Ramat-Gan", "Location"),
-        ("Givataaim", "Location"),
+        [
+            ("Amir", "Person"),
+            ("Yaron", "Person"),
+            ("Dalia", "Person"),
+            ("Naftali", "Person"),
+            ("Ramat-Gan", "Location"),
+            ("Givataaim", "Location"),
+        ]
     ]
 ]
 # Person: Precision = 3/3, Recall = 3/4, F1 = 2 * 1 * 0.75 / (1 + 0.75) = 0.8571
@@ -258,10 +260,12 @@ predictions = [
 ]
 references = [
     [
-        ("a", "B"),
-        ("b", "B"),
-        ("c", "C"),
-        ("d", "D"),
+        [
+            ("a", "B"),
+            ("b", "B"),
+            ("c", "C"),
+            ("d", "D"),
+        ]
     ]
 ]
 
@@ -313,7 +317,9 @@ predictions = [
 ]
 references = [
     [
-        ("b", "B"),
+        [
+            ("b", "B"),
+        ]
     ]
 ]
 

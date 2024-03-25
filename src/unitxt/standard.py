@@ -1,15 +1,11 @@
 from typing import List
 
 from .card import TaskCard
-from .dataclass import Field, InternalField, OptionalField
+from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SourceSequentialOperator, StreamingOperator
-from .operators import (
-    Augmentor,
-    NullAugmentor,
-    StreamRefiner,
-)
+from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -33,6 +29,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     template: Template = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
+    metrics: List[str] = NonPositionalField(default=None)
+    postprocessors: List[str] = NonPositionalField(default=None)
 
     loader_limit: int = None
 
@@ -67,7 +65,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
-                    "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers."
+                    "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
             if self.demos_pool_size < self.num_demos:
                 raise ValueError(
@@ -111,9 +109,31 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.steps.append(self.test_refiner)
 
+    def prepare_metrics_and_postprocessors(self):
+        if self.postprocessors is None:
+            postprocessors = self.template.get_postprocessors()
+        else:
+            postprocessors = self.postprocessors
+
+        if self.metrics is None:
+            metrics = self.card.task.metrics
+        else:
+            metrics = self.metrics
+        return metrics, postprocessors
+
     def prepare(self):
         self.steps = [
             self.card.loader,
+            AddFields(
+                fields={
+                    "recipe_metadata": {
+                        "card": self.card,
+                        "template": self.template,
+                        "system_prompt": self.system_prompt,
+                        "format": self.format,
+                    }
+                }
+            ),
         ]
 
         if self.loader_limit:
@@ -167,12 +187,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.augmentor.augment_model_input:
             self.steps.append(self.augmentor)
 
-        postprocessors = self.template.get_postprocessors()
+        metrics, postprocessors = self.prepare_metrics_and_postprocessors()
 
         self.steps.append(
             ToUnitxtGroup(
                 group="unitxt",
-                metrics=self.card.task.metrics,
+                metrics=metrics,
                 postprocessors=postprocessors,
             )
         )
@@ -216,6 +236,8 @@ class StandardRecipe(StandardRecipeWithIndexes):
         system_prompt (SystemPrompt, optional): SystemPrompt object to be used for the recipe.
         loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
+        metrics (List[str]): list of catalog metrics to use with this recipe.
+        postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.

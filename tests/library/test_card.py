@@ -45,7 +45,7 @@ card = TaskCard(
 
 class TestCard(UnitxtTestCase):
     def test_test_card(self):
-        # Avoid loading in main namespace to becuase test_ prefix confuses unitest discovery
+        # Avoid loading in main namespace to because test_ prefix confuses unitest discovery
         from src.unitxt.test_utils.card import test_card
 
         test_card(card)

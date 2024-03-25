@@ -24,8 +24,8 @@ jobs:
     - run: pip install -r requirements/tests.rqr
     - run: pip install coverage[toml]
 
-    - name: Generate Report
-      run:  coverage run --omit=*/preperation -m unittest discover -s tests/library -p "test_*.py"
+    - name: Run Tests
+      run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2

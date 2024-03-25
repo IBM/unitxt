@@ -1,10 +1,12 @@
 import random as python_random
 
 from src.unitxt.random_utils import (
-    __default_seed__,
     new_random_generator,
 )
+from src.unitxt.settings_utils import get_settings
 from tests.utils import UnitxtTestCase
+
+settings = get_settings()
 
 
 def randomize(sub_seed: str):
@@ -18,7 +20,7 @@ class TestRandomUtils(UnitxtTestCase):
     def test_default_seed(self):
         a = randomize(sub_seed="42")
         b = randomize(sub_seed="43")
-        c = randomize(sub_seed=str(__default_seed__))
+        c = randomize(sub_seed=str(settings.seed))
         self.assertNotEqual(a, b)
         self.assertEqual(a, c)
 

@@ -1,14 +1,20 @@
-"""This section describes unitxt operators for tabular data.
+"""This section describes unitxt operators for structured data.
 
-These operators are specialized in handling tabular data.
-Input table format is assumed as:
+These operators are specialized in handling structured data like tables.
+For tables, expected input format is:
 {
   "header": ["col1", "col2"],
   "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
 }
 
+For triples, expected input format is:
+[[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
+
+For key-value pairs, expected input format is:
+{"key1": "value1", "key2": value2, "key3": "value3"}
 ------------------------
 """
+import json
 import random
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -18,6 +24,8 @@ from typing import (
     List,
     Optional,
 )
+
+import pandas as pd
 
 from .dict_utils import dict_get
 from .operators import FieldOperator, StreamInstanceOperator
@@ -35,12 +43,10 @@ class SerializeTable(ABC, FieldOperator):
         pass
 
     # method to process table header
-    @abstractmethod
     def process_header(self, header: List):
         pass
 
     # method to process a table row
-    @abstractmethod
     def process_row(self, row: List, row_index: int):
         pass
 
@@ -138,6 +144,80 @@ class SerializeTableAsMarkdown(SerializeTable):
         row_str = ""
         row_str += "|{}|\n".format("|".join(str(cell) for cell in row))
         return row_str
+
+
+class SerializeTableAsDFLoader(SerializeTable):
+    """DFLoader Table Serializer.
+
+    Pandas dataframe based code snippet format serializer.
+    Format(Sample):
+    pd.DataFrame({
+        "name" : ["Alex", "Diana", "Donald"],
+        "age" : [26, 34, 39]
+    },
+    index=[0,1,2])
+    """
+
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.serialize_table(table_content=table_input)
+
+    # main method that serializes a table.
+    # table_content must be in the presribed input format.
+    def serialize_table(self, table_content: Dict) -> str:
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Create a pandas DataFrame
+        df = pd.DataFrame(rows, columns=header)
+
+        # Generate output string in the desired format
+        data_dict = df.to_dict(orient="list")
+
+        return (
+            "pd.DataFrame({\n"
+            + json.dumps(data_dict)
+            + "},\nindex="
+            + str(list(range(len(rows))))
+            + ")"
+        )
+
+
+class SerializeTableAsJson(SerializeTable):
+    """JSON Table Serializer.
+
+    Json format based serializer.
+    Format(Sample):
+    {
+        "0":{"name":"Alex","age":26},
+        "1":{"name":"Diana","age":34},
+        "2":{"name":"Donald","age":39}
+    }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.serialize_table(table_content=table_input)
+
+    # main method that serializes a table.
+    # table_content must be in the presribed input format.
+    def serialize_table(self, table_content: Dict) -> str:
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Generate output dictionary
+        output_dict = {}
+        for i, row in enumerate(rows):
+            output_dict[i] = {header[j]: value for j, value in enumerate(row)}
+
+        # Convert dictionary to JSON string
+        return json.dumps(output_dict)
 
 
 # truncate cell value to maximum allowed length
@@ -362,3 +442,110 @@ class ListToKeyValPairs(StreamInstanceOperator):
         instance[self.to_field] = output_dict
 
         return instance
+
+
+class ConvertTableColNamesToSequential(FieldOperator):
+    """Replaces actual table column names with static sequential names like col_0, col_1,...
+
+    Sample input:
+    {
+        "header": ["name", "age"],
+        "rows": [["Alex", 21], ["Donald", 34]]
+    }
+    Sample output:
+    {
+        "header": ["col_0", "col_1"],
+        "rows": [["Alex", 21], ["Donald", 34]]
+    }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.replace_header(table_content=table_input)
+
+    # replaces header with sequential column names
+    def replace_header(self, table_content: Dict) -> str:
+        # Extract header from the dictionary
+        header = table_content.get("header", [])
+
+        assert header, "Input table missing header"
+
+        new_header = ["col_" + str(i) for i in range(len(header))]
+        table_content["header"] = new_header
+
+        return table_content
+
+
+class ShuffleTableRows(FieldOperator):
+    """Shuffles the input table rows randomly.
+
+    Sample Input:
+    {
+        "header": ["name", "age"],
+        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+    }
+
+    Sample Output:
+    {
+        "header": ["name", "age"],
+        "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
+    }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.shuffle_rows(table_content=table_input)
+
+    # shuffles table rows randomly
+    def shuffle_rows(self, table_content: Dict) -> str:
+        # extract header & rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+        assert header and rows, "Incorrect input table format"
+
+        # shuffle rows
+        random.shuffle(rows)
+        table_content["rows"] = rows
+
+        return table_content
+
+
+class ShuffleTableColumns(FieldOperator):
+    """Shuffles the table columns randomly.
+
+    Sample Input:
+    {
+        "header": ["name", "age"],
+        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+    }
+
+    Sample Output:
+    {
+        "header": ["age", "name"],
+        "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
+    }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.shuffle_columns(table_content=table_input)
+
+    # shuffles table columns randomly
+    def shuffle_columns(self, table_content: Dict) -> str:
+        # extract header & rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+        assert header and rows, "Incorrect input table format"
+
+        # shuffle the indices first
+        indices = list(range(len(header)))
+        random.shuffle(indices)  #
+
+        # shuffle the header & rows based on that indices
+        shuffled_header = [header[i] for i in indices]
+        shuffled_rows = [[row[i] for i in indices] for row in rows]
+
+        table_content["header"] = shuffled_header
+        table_content["rows"] = shuffled_rows
+
+        return table_content

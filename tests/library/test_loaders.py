@@ -68,6 +68,28 @@ class TestLoaders(UnitxtTestCase):
                 ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
+    def test_load_csv_with_pandas_args(self):
+        # Using a context for the temporary directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            files = {}
+            dfs = {}
+
+            for file in ["train", "test"]:
+                path = os.path.join(tmp_dir, file + ".tsv")  # Adding a file extension
+                df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
+                dfs[file] = df
+                df.to_csv(path, index=False, sep="\t")
+                files[file] = path
+
+            loader = LoadCSV(files=files, sep="\t")
+            ms = loader()
+
+            for file in ["train", "test"]:
+                for saved_instance, loaded_instance in zip(
+                    dfs[file].iterrows(), ms[file]
+                ):
+                    self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+
     def test_load_from_ibm_cos(self):
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"

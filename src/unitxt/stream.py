@@ -139,7 +139,7 @@ class MultiStream(dict):
         Args:
             generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
-            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.
@@ -166,7 +166,7 @@ class MultiStream(dict):
         Args:
             iterables (Dict[str, Iterable]): A dictionary of iterables.
             caching (bool, optional): Whether the data should be cached or not. Defaults to False.
-            copying (bool, optional): Whether the data should be copyied or not. Defaults to False.
+            copying (bool, optional): Whether the data should be copied or not. Defaults to False.
 
         Returns:
             MultiStream: A MultiStream object.

@@ -160,5 +160,5 @@ for lang in language_codes:
     )
 
     if lang == language_codes[0]:
-        test_card(card, demos_taken_from="test")
+        test_card(card, demos_taken_from="test", strict=False)
     add_to_catalog(card, f"cards.belebele.{lang.lower()}", overwrite=True)

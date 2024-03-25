@@ -1,0 +1,11 @@
+{
+    "type": "multi_reference_template",
+    "instruction": "Answer the question based on the information provided in the {context_type} given below. The answer should be a single word or a number or a short phrase of few words.",
+    "input_format": "{context_type}:\n{context}\nQuestion:\n{question}",
+    "output_format": "{answer}",
+    "target_prefix": "Answer:\n",
+    "references_field": "answers",
+    "title_fields": [
+        "context_type"
+    ]
+}

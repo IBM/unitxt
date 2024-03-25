@@ -64,7 +64,7 @@ def create_sentence_classification_card(
     templates: Union[TemplatesList, TemplatesDict] = None,
 ) -> TaskCard:
     # TODO labels should be deduced by default
-    assert len(inputs) == 1, f"expected only 1 column as input but recieved {inputs}"
+    assert len(inputs) == 1, f"expected only 1 column as input but received {inputs}"
     sentence_col = "sentence1"
     preprocess_steps += [
         *add_classification_choices(label_name, label2string),

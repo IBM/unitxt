@@ -12,7 +12,7 @@ class TestHfCache(UnitxtTestCase):
             self.assertEqual(get_directory_size(tmp_dir), 0)
 
             def gen():
-                for i in range(100000):  # must be big or else hf wont cache
+                for i in range(100000):  # must be big or else hf won't cache
                     yield {"x": i}
 
             ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
@@ -27,7 +27,7 @@ class TestHfCache(UnitxtTestCase):
             self.assertEqual(get_directory_size(tmp_dir), 0)
 
             def gen():
-                for i in range(100000):  # must be big or else hf wont cache
+                for i in range(100000):  # must be big or else hf won't cache
                     yield {"x": i}
 
             ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
