@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
@@ -14,10 +14,10 @@ class FormTask(Tasker, StreamInstanceOperator):
     """FormTask packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
-        inputs (Dict[str, Any] | List[str]):
+        inputs (Union[Dict[str, Any], List[str]]):
             Dictionary with string names of instance input fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
-        outputs (Dict[str, Any] | List[str]):
+        outputs (Union[Dict[str, Any], List[str]]):
             Dictionary with string names of instance output fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
         metrics (List[str]): List of names of metrics to be used in the task.
@@ -31,8 +31,8 @@ class FormTask(Tasker, StreamInstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    inputs: Dict[str, Any] | List[str]
-    outputs: Dict[str, Any] | List[str]
+    inputs: Union[Dict[str, Any], List[str]]
+    outputs: Union[Dict[str, Any], List[str]]
     metrics: List[str]
     prediction_type: Optional[Any] = None
     augmentable_inputs: List[str] = []
