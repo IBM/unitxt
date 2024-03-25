@@ -61,3 +61,13 @@ class TestSettings(UnitxtTestCase):
         settings.test_env = "text_env"
         os.environ[settings.test_env_key] = "not_text_env"
         self.assertEqual(settings.test_env, "not_text_env")
+
+    def test_bool_env_var(self):
+        settings = Settings()
+        settings.test_bool_var = (bool, True)
+        os.environ[settings.test_bool_var_key] = "False"
+        self.assertEqual(settings.test_bool_var, False)
+
+        os.environ[settings.test_bool_var_key] = "TRUE"
+        with self.assertRaises(AssertionError):
+            _ = settings.test_bool_var
