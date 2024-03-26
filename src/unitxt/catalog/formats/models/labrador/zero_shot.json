@@ -1,4 +1,4 @@
 {
     "type": "system_format",
-    "model_input_format": "<|system|>\n{system_prompt}\n<|user|>\n{source}\n<|assistant|>\n{target_prefix}"
+    "model_input_format": "<|system|>\n{system_prompt}\n<|user|>\n{instruction}\n{source}\n<|assistant|>\n{target_prefix}"
 }
