@@ -6,7 +6,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "split",
+            "type": "split_strip",
             "delimiter": " ",
             "field_to_field": {
                 "slots": "labels",
