@@ -25,4 +25,3 @@ format = SystemFormat(
 )
 
 add_to_catalog(format, "formats.models.labrador.few_shot", overwrite=True)
-
