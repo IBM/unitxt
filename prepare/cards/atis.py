@@ -121,7 +121,7 @@ card = TaskCard(
         AddFields(
             fields={
                 "text_type": "text",
-                "class_type": "entitiy type",
+                "class_type": "entity type",
                 "classes": classes,
             }
         ),

@@ -12,7 +12,7 @@ from .artifact import (
     Artifactories,
     Artifactory,
     get_artifactory_name_and_args,
-    reset_artifacts_cache,
+    reset_artifacts_json_cache,
 )
 from .logging_utils import get_logger
 from .settings_utils import get_constants
@@ -128,7 +128,7 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
-    reset_artifacts_cache()
+    reset_artifacts_json_cache()
     if catalog is None:
         if catalog_path is None:
             catalog_path = constants.default_catalog_path

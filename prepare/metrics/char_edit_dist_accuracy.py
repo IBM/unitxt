@@ -7,7 +7,7 @@ metric = CharEditDistanceAccuracy()
 predictions = ["this is the prediction", "there is an other sample"]
 references = [["this is the reference"], ["there is another sample"]]
 
-# First sample:   p[re]diction - edit distance (8), max len ingnoring whitespace (19)  accuracy = 1 - 8/19 = 0.578
+# First sample:   p[re]diction - edit distance (8), max len ignoring whitespace (19)  accuracy = 1 - 8/19 = 0.578
 # Second samlple: [an other] [another] - edit distance ignoring white space(0), max len ignoring whitespace (19)     accuracy = 1 - 0/19 = 1
 instance_targets = [
     {

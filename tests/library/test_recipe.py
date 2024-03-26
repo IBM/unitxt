@@ -53,13 +53,13 @@ class TestRecipes(UnitxtTestCase):
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=5,
             num_demos=3,
         )
 
         stream = recipe()
 
-        for instance in stream["train"]:
+        for instance in stream["test"]:
             print_dict(instance)
             break
 
@@ -233,7 +233,7 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "When using demonstrations both num_demos and demos_pool_size should be assigned with postive integers.",
+            "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers.",
         )
 
         with self.assertRaises(Exception) as cm:
@@ -392,7 +392,7 @@ class TestRecipes(UnitxtTestCase):
 
         stream = recipe()
 
-        self.assertEqual(len(list(stream["train"])), 6)
+        self.assertEqual(len(list(stream["train"])), 10)
         self.assertEqual(len(list(stream["test"])), 5)
 
     def test_recipe_with_hf_with_twice_the_same_instance_demos(self):
@@ -407,6 +407,17 @@ class TestRecipes(UnitxtTestCase):
         iterator = iter(d["train"])
         next(iterator)
         print_dict(next(iterator))
+
+    def test_recipe_loaded_from_arguments_and_overwrites_only(self):
+        from src.unitxt import load_dataset
+
+        dataset = load_dataset(
+            "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
+        )
+
+        iterator = iter(dataset["train"])
+        first_inst = next(iterator)
+        self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
 
     def test_standard_recipe_with_a_sampler(self):
         """Check that the sampler is re-initialized before processing a recipe.

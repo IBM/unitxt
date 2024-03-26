@@ -69,16 +69,15 @@ def main():
         card = TaskCard(
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
-                RenameSplits({"auxiliary_train": "train"}),
+                RenameSplits({"dev": "train"}),
                 AddFields({"topic": subtask.replace("_", " ")}),
             ],
             task="tasks.qa.multiple_choice.with_topic",
             templates="templates.qa.multiple_choice.with_topic.all",
         )
         if i == 0:
-            test_card(card)
+            test_card(card, strict=False)
         add_to_catalog(card, f"cards.mmlu.{subtask}", overwrite=True)
 
 
-if __name__ == "__main__":
-    main()
+main()

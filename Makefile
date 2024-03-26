@@ -67,7 +67,7 @@ build:
 # command: make tag_name=${TAG_NAME} metric-service-build
 # example: make tag_name=unitxt-service-metric:b1v0.1 metric-service-build
 # Use the unitxt dir as the build context for docker, so the entire codebase
-# can be copied into the image. This way the latest code changes are intergrated into
+# can be copied into the image. This way the latest code changes are integrated into
 # the image, without requiring a formal unitxt release.
 metric-service-build:
 	cd $(DIR) && docker build --tag $(tag_name) --file $(DIR)/src/unitxt/service/metrics/Dockerfile .

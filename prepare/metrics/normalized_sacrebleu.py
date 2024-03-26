@@ -44,6 +44,7 @@ metric = MetricPipeline(
     metric=HuggingfaceMetric(
         hf_metric_name="sacrebleu",
         hf_main_score="score",
+        prediction_type="str",
         main_score="sacrebleu",
         scale=100.0,
         scaled_fields=["sacrebleu", "precisions"],

@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "capitalize",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "capitalize",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

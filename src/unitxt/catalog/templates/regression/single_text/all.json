@@ -1,6 +1,7 @@
 {
     "type": "templates_list",
     "items": [
-        "templates.regression.single_text.simple"
+        "templates.regression.single_text.simple",
+        "templates.regression.single_text.title"
     ]
 }

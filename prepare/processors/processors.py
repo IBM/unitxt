@@ -3,16 +3,22 @@ from src.unitxt.logging_utils import get_logger
 from src.unitxt.operator import SequentialOperator
 from src.unitxt.operators import RemoveValues
 from src.unitxt.processors import (
+    Capitalize,
     ConvertToBoolean,
     FirstCharacter,
+    GetStringAfter,
     LowerCase,
     LowerCaseTillPunc,
+    MatchClosestOption,
     StanceToProCon,
     StringOrNotString,
+    StrToFloatFormat,
+    Substring,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
     ToYesOrNone,
     YesNoToInt,
+    YesToOneElseZero,
 )
 
 logger = get_logger()
@@ -68,6 +74,42 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            Capitalize(field="prediction", process_every_value=False),
+            Capitalize(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.capitalize",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            Substring(field="prediction", process_every_value=False),
+            Substring(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.substring",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            GetStringAfter(
+                substring=":", field="prediction", process_every_value=False
+            ),
+            GetStringAfter(substring=":", field="references", process_every_value=True),
+        ]
+    ),
+    "processors.get_string_after_colon",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             StringOrNotString(
                 string="toxic", field="prediction", process_every_value=False
             ),
@@ -116,11 +158,32 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
+            StrToFloatFormat(field="prediction", process_every_value=False),
+            StrToFloatFormat(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.str_to_float_format",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
             ToYesOrNone(field="prediction", process_every_value=False),
             ToYesOrNone(field="references", process_every_value=True),
         ]
     ),
     "processors.to_yes_or_none",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            YesToOneElseZero(field="prediction", process_every_value=False),
+        ]
+    ),
+    "processors.predictions_yes_1_else_0",
     overwrite=True,
 )
 
@@ -165,7 +228,7 @@ add_to_catalog(
                 process_every_value=False,
             ),
             RemoveValues(
-                field="references/*",
+                field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
                 use_query=True,
@@ -173,5 +236,22 @@ add_to_catalog(
         ]
     ),
     "processors.remove_none_from_list",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            MatchClosestOption(
+                field="prediction",
+            ),
+            MatchClosestOption(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.match_closest_option",
     overwrite=True,
 )
