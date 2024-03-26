@@ -423,32 +423,32 @@ class MultiLabelTemplate(InputOutputTemplate):
         return super().outputs_to_target_and_references({self.labels_field: labels_str})
 
 
-class NoResponseTemplate(InputOutputTemplate):
-    response_field: str = "reference_answers"
-    do_response_field: str = "is_answerable_label"
-    no_response_string: str = "No response."
+# class NoResponseTemplate(InputOutputTemplate):
+#     response_field: str = "reference_answers"
+#     do_response_field: str = "is_answerable_label"
+#     no_response_string: str = "No response."
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        do_response = outputs[self.do_response_field]
-        assert isinstance(
-            do_response, bool
-        ), f"NoResponseTemplate.do_response_field must lead to bool, got  '{self.do_response_field}':{do_response} ({do_response.__class__.__name__})."
+#     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+#         do_response = outputs[self.do_response_field]
+#         assert isinstance(
+#             do_response, bool
+#         ), f"NoResponseTemplate.do_response_field must lead to bool, got  '{self.do_response_field}':{do_response} ({do_response.__class__.__name__})."
 
-        if do_response:
-            target = outputs[self.response_field]
-        else:
-            target = self.no_response_string
+#         if do_response:
+#             target = outputs[self.response_field]
+#         else:
+#             target = self.no_response_string
 
-        return super().outputs_to_target_and_references({self.response_field: target})
+#         return super().outputs_to_target_and_references({self.response_field: target})
 
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        result = super().process(instance, stream_name)
-        result["outputs"]["response_field"] = self.response_field
-        result["outputs"]["do_response_field"] = self.do_response_field
-        result["outputs"]["no_response_string"] = self.no_response_string
-        return result
+#     def process(
+#         self, instance: Dict[str, Any], stream_name: Optional[str] = None
+#     ) -> Dict[str, Any]:
+#         result = super().process(instance, stream_name)
+#         result["outputs"]["response_field"] = self.response_field
+#         result["outputs"]["do_response_field"] = self.do_response_field
+#         result["outputs"]["no_response_string"] = self.no_response_string
+#         return result
 
 
 class MultiReferenceTemplate(InputOutputTemplate):

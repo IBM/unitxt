@@ -133,18 +133,18 @@ class MatchClosestOption(InstanceFieldOperator):
         return get_close_matches(value, options, n=1, cutoff=0.0)[0]
 
 
-class DetectNoResponse(InstanceFieldOperator):
-    no_response_string_field: str = "no_response_string"
+# class DetectNoResponse(InstanceFieldOperator):
+#     no_response_string_field: str = "no_response_string"
 
-    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
-        no_response_string = instance["task_data"][self.no_response_string_field]
-        response_detected = not (value == no_response_string)
-        return {
-            instance["task_data"]["response_field"]: instance["task_data"][
-                instance["task_data"]["response_field"]
-            ],
-            instance["task_data"]["do_response_field"]: response_detected,
-        }
+#     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
+#         no_response_string = instance["task_data"][self.no_response_string_field]
+#         response_detected = not (value == no_response_string)
+#         return {
+#             instance["task_data"]["response_field"]: instance["task_data"][
+#                 instance["task_data"]["response_field"]
+#             ],
+#             instance["task_data"]["do_response_field"]: response_detected,
+#         }
 
 
 class Substring(FieldOperator):
