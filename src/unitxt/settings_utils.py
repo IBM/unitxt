@@ -71,12 +71,8 @@ class Settings:
         env_value = os.getenv(key_name)
 
         if env_value is not None:
-            if key in self._types and self._types[key] == bool:
-                assert env_value in {"True", "False"}, (
-                    f"unitxt boolean environment variables must be set to either 'True' or 'False', "
-                    f"current value: {key_name}={env_value}"
-                )
-                env_value = env_value == "True"
+            if key in self._types:
+                env_value = cast_to_type(env_value, self._types[key])
             return env_value
 
         if key in self._settings:

@@ -69,5 +69,5 @@ class TestSettings(UnitxtTestCase):
         self.assertEqual(settings.test_bool_var, False)
 
         os.environ[settings.test_bool_var_key] = "TRUE"
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             _ = settings.test_bool_var
