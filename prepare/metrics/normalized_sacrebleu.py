@@ -13,14 +13,14 @@ language_to_tokenizer = {
     "Spanish": None,
     "Portuguese": None,
     "Arabic": "intl",
-    "Korean": "intl",
+    "Korean": "ko-mecab",
     "fr": None,
     "de": None,
     "es": None,
     "pt": None,
     "en": None,
     "ar": "intl",
-    "ko": "intl",
+    "ko": "ko-mecab",
     "japanese": "ja-mecab",
     "Japanese": "ja-mecab",
     "ja": "ja-mecab",
@@ -202,7 +202,7 @@ predictions = ["이게에 신을 살 거예요"]
 references = [
     ["이 가게에서 신발을 살 거예요", "이 가에서 신발살 거예요"],
 ]
-task_data = [{"target_language": "ko", "tokenize": "intl"}]
+task_data = [{"target_language": "ko", "tokenize": "ko-mecab"}]
 
 instance_targets = [
     {
