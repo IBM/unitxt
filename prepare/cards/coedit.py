@@ -1,13 +1,13 @@
-from unitxt import add_to_catalog
-from unitxt.card import TaskCard
-from unitxt.loaders import LoadHF
-from unitxt.operators import (
+from src.unitxt import add_to_catalog
+from src.unitxt.card import TaskCard
+from src.unitxt.loaders import LoadHF
+from src.unitxt.operators import (
     ExecuteExpression,
     FilterByCondition,
     ListFieldValues,
     RenameFields,
 )
-from unitxt.test_utils.card import test_card
+from src.unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="grammarly/coedit", streaming=True),
