@@ -58,6 +58,16 @@ def nan_mean(x):
         return np.nanmean(x)
 
 
+def nan_max(x):
+    with warnings.catch_warnings():
+        # final mean should be mean of scores, ignoring NaN, hence nanmax
+        # but if the group function values is NaN for ALL values, nanmean throws a
+        # RuntimeWarning that it is calculating the mean of an empty slice (with no non-Nans)
+        # this is the desired behavior, but we want to avoid the warning here
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        return np.nanmax(x)
+
+
 class UpdateStream(StreamInstanceOperator):
     update: dict
 
@@ -226,6 +236,18 @@ class MetricWithConfidenceInterval(Metric):
             score_name: score field names to compute the mean for.
         """
         return nan_mean(
+            [instance["score"]["instance"][score_name] for instance in instances]
+        )
+
+    @staticmethod
+    def max_item_scores(instances: List[dict], score_name: str):
+        """Calculate max of a set of instance scores (given by score_name), omitting NaN values.
+
+        Args:
+            instances: list of dicts of each instance's instance scores.
+            score_name: score field names to compute the mean for.
+        """
+        return nan_max(
             [instance["score"]["instance"][score_name] for instance in instances]
         )
 
@@ -625,7 +647,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     # if subgroup_column is not None, a column by the specified name will be required in task_data
     subgroup_column = None
     implemented_reductions: List[str] = field(
-        default_factory=lambda: ["mean", "group_mean"]
+        default_factory=lambda: ["mean", "group_mean", "max"]
     )
 
     @property
@@ -739,12 +761,19 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             field_name_full_prefix = ""
             # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = self.average_item_scores
+            aggregation_function = None
             if reduction_type == "mean":
+                aggregation_function = self.average_item_scores
+                reduction_fields = list(set(reduction_params))
+                # no group reduction, so resample instances individually
+                scores_to_resample = instances
+            elif reduction_type == "max":
+                aggregation_function = self.max_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
                 scores_to_resample = instances
             elif reduction_type == "group_mean":
+                aggregation_function = self.average_item_scores
                 self._validate_group_mean_reduction(instances=instances)
                 reduction_fields = (
                     [self.main_score]
@@ -941,6 +970,12 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class MaxAccuracy(Accuracy):
+    """Calculate the maximal accuracy over all instances as the global score."""
+
+    reduction_map = {"max": ["accuracy"]}
+
+
 class UnsortedListExactMatch(InstanceMetric):
     reduction_map = {"mean": ["unsorted_list_exact_match"]}
     main_score = "unsorted_list_exact_match"
@@ -988,7 +1023,15 @@ class MetricPipeline(MultiStreamOperator, Metric):
         self.metric.disable_confidence_interval_calculation()
 
     def verify(self):
-        assert self.main_score is not None, "main_score is not set"
+        assert (
+            self.metric is not None
+        ), f"'metric' is not set in {self.get_metric_name()}"
+        assert (
+            self.main_score is not None
+        ), f"'main_score' is not set in {self.get_metric_name()}"
+        assert isinstance(
+            self.metric, Metric
+        ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
 
     def prepare(self):
         super().prepare()

@@ -67,9 +67,12 @@ class Settings:
             actual_key = key[:-4]  # Remove the "_key" suffix
             return self.environment_variable_key_name(actual_key)
 
-        env_value = os.getenv(self.environment_variable_key_name(key))
+        key_name = self.environment_variable_key_name(key)
+        env_value = os.getenv(key_name)
 
         if env_value is not None:
+            if key in self._types:
+                env_value = cast_to_type(env_value, self._types[key])
             return env_value
 
         if key in self._settings:

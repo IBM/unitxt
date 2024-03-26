@@ -6,7 +6,7 @@ from unittest.mock import patch
 import ibm_boto3
 import pandas as pd
 
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF
+from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF, MultipleSourceLoader
 from src.unitxt.logging_utils import get_logger
 from tests.utils import UnitxtTestCase
 
@@ -186,3 +186,43 @@ class TestLoaders(UnitxtTestCase):
             list(dataset.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
         self.assertEqual(dataset["test"][0]["language"], "eng")
+
+    def test_multiple_source_loader(self):
+        # Using a context for the temporary directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            files = {}
+            dfs = {}
+
+            for file in ["train", "test"]:
+                path = os.path.join(tmp_dir, file + ".csv")  # Adding a file extension
+                if file == "train":
+                    df = pd.DataFrame({"x": ["train_1", "train_2"]})
+                else:
+                    df = pd.DataFrame({"x": ["test_1", "test_2", "test_3"]})
+                dfs[file] = df
+                df.to_csv(path, index=False)
+                files[file] = path
+
+            loader = MultipleSourceLoader(
+                sources=[
+                    LoadCSV(files={"train": files["train"]}),
+                    LoadCSV(files={"test": files["test"]}),
+                ]
+            )
+            ms = loader()
+
+            for file in ["train", "test"]:
+                assert len(dfs[file]) == len(list(ms[file]))
+                for saved_instance, loaded_instance in zip(
+                    dfs[file].iterrows(), ms[file]
+                ):
+                    self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+
+            loader = MultipleSourceLoader(
+                sources=[
+                    LoadCSV(files={"test": files["train"]}),
+                    LoadCSV(files={"test": files["test"]}),
+                ]
+            )
+            ms = loader()
+            assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
