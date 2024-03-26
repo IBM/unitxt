@@ -67,9 +67,16 @@ class Settings:
             actual_key = key[:-4]  # Remove the "_key" suffix
             return self.environment_variable_key_name(actual_key)
 
-        env_value = os.getenv(self.environment_variable_key_name(key))
+        key_name = self.environment_variable_key_name(key)
+        env_value = os.getenv(key_name)
 
         if env_value is not None:
+            if key in self._types and self._types[key] == bool:
+                assert env_value in {"True", "False"}, (
+                    f"unitxt boolean environment variables must be set to either 'True' or 'False', "
+                    f"current value: {key_name}={env_value}"
+                )
+                env_value = env_value == "True"
             return env_value
 
         if key in self._settings:
