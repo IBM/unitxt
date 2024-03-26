@@ -14,6 +14,40 @@ class Format(StreamInstanceOperator):
     pass
 
 
+class WWoInstructionWWoFewShotDynamicFormat(Format):
+    r"""Select format according to the existence of few shots, and instruction.
+
+    Args:
+        few_shot_format (Format): The selected format for the case of few shots without instruction.
+        few_shot_with_instruction_format (Format) The selected format for the case of few shots with instruction.
+        zero_shot_format (Format) The selected format for the case of zero shot without instruction.
+        zero_shot_with_instruction_format (Format) The selected format for the case of zero shot with instruction.
+
+    """
+
+    few_shot_format: Format
+    few_shot_with_instruction_format: Format
+    zero_shot_format: Format
+    zero_shot_with_instruction_format: Format
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        has_instruction = "instruction" in instance and len(instance["instruction"]) > 0
+        has_demos = "demos" in instance and len(instance["demos"]) > 0
+        if has_demos:
+            if has_instruction:
+                format = self.few_shot_with_instruction_format
+            else:
+                format = self.few_shot_format
+        else:
+            if has_instruction:
+                format = self.zero_shot_with_instruction_format
+            else:
+                format = self.zero_shot_format
+        return format.process_instance(instance)
+
+
 class SystemFormat(Format):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
