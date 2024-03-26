@@ -34,6 +34,7 @@ from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
 from .dataclass import InternalField, OptionalField
+from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
@@ -449,3 +450,26 @@ class LoadFromIBMCloud(Loader):
             )
 
         return MultiStream.from_iterables(dataset)
+
+
+class MultipleSourceLoader(Loader):
+    """Allow loading data from multiple sources.
+
+    Examples:
+    1) Loading the train split from Huggingface hub and the test set from a local file:
+
+    MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
+
+    2) Loading a test set combined from two files
+
+    MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
+
+
+    """
+
+    sources: List[Loader]
+
+    def process(self):
+        return FixedFusion(
+            origins=self.sources, max_instances_per_origin=self.get_limit()
+        ).process()

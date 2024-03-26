@@ -53,7 +53,10 @@ class FixedFusion(BaseFusion):
 
     def fusion_generator(self, split) -> Generator:
         for origin in self.origins:
-            iterator = iter(origin()[split])
+            multi_stream = origin()
+            if split not in multi_stream:
+                continue
+            iterator = iter(multi_stream[split])
             if self.max_instances_per_origin is not None:
                 for _ in range(self.max_instances_per_origin):
                     try:
