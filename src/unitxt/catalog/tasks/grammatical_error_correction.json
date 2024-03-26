@@ -1,0 +1,13 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "original_text"
+    ],
+    "outputs": [
+        "corrected_texts"
+    ],
+    "metrics": [
+        "metrics.char_edit_dist_accuracy",
+        "metrics.rouge"
+    ]
+}
