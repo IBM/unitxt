@@ -101,3 +101,4 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 ignore-words-list = 'rouge,ot,ans'
 check-filenames = true
 check-hidden = false
+skip = 'prepare/cards/trec.py'
