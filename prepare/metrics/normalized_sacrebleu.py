@@ -206,28 +206,28 @@ task_data = [{"target_language": "ko", "tokenize": "ko-mecab"}]
 
 instance_targets = [
     {
-        "counts": [2, 1, 0, 0],
-        "totals": [4, 3, 2, 1],
-        "precisions": [0.5, 0.33, 0.25, 0.25],
         "bp": 1.0,
-        "sys_len": 4,
-        "ref_len": 4,
-        "sacrebleu": 0.32,
-        "score": 0.32,
+        "counts": [4, 3, 2, 1],
+        "precisions": [0.57, 0.5, 0.4, 0.25],
+        "ref_len": 7,
+        "sacrebleu": 0.41,
+        "score": 0.41,
         "score_name": "sacrebleu",
+        "sys_len": 7,
+        "totals": [7, 6, 5, 4],
     }
 ]
 
 global_target = {
-    "counts": [2, 1, 0, 0],
-    "totals": [4, 3, 2, 1],
-    "precisions": [0.5, 0.33, 0.25, 0.25],
     "bp": 1.0,
-    "sys_len": 4,
-    "ref_len": 4,
-    "sacrebleu": 0.32,
-    "score": 0.32,
+    "counts": [4, 3, 2, 1],
+    "precisions": [0.57, 0.5, 0.4, 0.25],
+    "ref_len": 7,
+    "sacrebleu": 0.41,
+    "score": 0.41,
     "score_name": "sacrebleu",
+    "sys_len": 7,
+    "totals": [7, 6, 5, 4],
 }
 
 

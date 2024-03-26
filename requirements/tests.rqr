@@ -7,7 +7,7 @@ httpretty~=1.1.4
 editdistance
 rouge-score
 nltk
-sacrebleu
+sacrebleu[ko]
 scikit-learn
 jiwer
 conllu
