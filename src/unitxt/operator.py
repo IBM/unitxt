@@ -1,7 +1,7 @@
 import re
 from abc import abstractmethod
 from dataclasses import field
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
@@ -14,9 +14,8 @@ class Operator(Artifact):
 
 
 class PackageRequirementsMixin(Artifact):
-    _requirements_list: List[str] = InternalField(default_factory=list)
-    _requirements_installation_instructions: Dict[str, str] = InternalField(
-        default_factory=dict
+    _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
+        default_factory=list
     )
 
     def verify(self):
@@ -26,15 +25,15 @@ class PackageRequirementsMixin(Artifact):
     def check_missing_requirements(self, requirements=None):
         if requirements is None:
             requirements = self._requirements_list
+        if isinstance(requirements, List):
+            requirements = {package: "" for package in requirements}
+
         missing_packages = []
         installation_instructions = []
-        for package in requirements:
+        for package, installation_instruction in requirements.items():
             if not is_module_available(package):
                 missing_packages.append(package)
-                if package in self._requirements_installation_instructions:
-                    installation_instructions.append(
-                        self._requirements_installation_instructions[package]
-                    )
+                installation_instructions.append(installation_instruction)
         if missing_packages:
             raise MissingRequirementsError(
                 self.__class__.__name__, missing_packages, installation_instructions

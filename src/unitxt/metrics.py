@@ -3332,8 +3332,7 @@ class NormalizedSacrebleu(HuggingfaceMetric):
     scale = 100.0
     scaled_fields = ["sacrebleu", "precisions"]
     hf_additional_input_fields_pass_one_value = ["tokenize"]
-    _requirements_list = ["mecab_ko", "mecab_ko_dic"]
-    _requirements_installation_instructions = {
+    _requirements_list = {
         "mecab_ko": KO_ERROR_MESSAGE,
         "mecab_ko_dic": KO_ERROR_MESSAGE,
     }
