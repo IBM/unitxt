@@ -2,7 +2,7 @@ from src.unitxt.catalog import add_to_catalog
 from src.unitxt.formats import SystemFormat
 
 format = SystemFormat(
-    model_input_format="<|system|>\n{system_prompt}\n<|user|>\n{source}\n<|assistant|>\n{target_prefix}",
+    model_input_format="<|system|>\n{system_prompt}\n<|user|>\n{instruction}\n{source}\n<|assistant|>\n{target_prefix}",
 )
 
 add_to_catalog(format, "formats.models.labrador.zero_shot", overwrite=True)

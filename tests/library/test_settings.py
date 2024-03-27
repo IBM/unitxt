@@ -62,12 +62,21 @@ class TestSettings(UnitxtTestCase):
         os.environ[settings.test_env_key] = "not_text_env"
         self.assertEqual(settings.test_env, "not_text_env")
 
-    def test_bool_env_var(self):
+    def test_env_var_typing(self):
         settings = Settings()
         settings.test_bool_var = (bool, True)
+        settings.test_int_var = (int, 5)
+        settings.test_float_var = (float, 0.7)
+
         os.environ[settings.test_bool_var_key] = "False"
         self.assertEqual(settings.test_bool_var, False)
 
         os.environ[settings.test_bool_var_key] = "TRUE"
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             _ = settings.test_bool_var
+
+        os.environ[settings.test_int_var_key] = "12"
+        self.assertEqual(settings.test_int_var, 12)
+
+        os.environ[settings.test_float_var_key] = "5.82"
+        self.assertEqual(settings.test_float_var, 5.82)
