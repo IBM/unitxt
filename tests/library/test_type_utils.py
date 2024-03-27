@@ -1,6 +1,8 @@
 import typing
 
 from src.unitxt.type_utils import (
+    infer_type,
+    infer_type_string,
     isoftype,
     issubtype,
     parse_type_string,
@@ -132,6 +134,60 @@ class TestAssertTyping(UnitxtTestCase):
         )
         self.assertEqual(
             parse_type_string("Optional[List[str]]"), typing.Optional[typing.List[str]]
+        )
+
+    def test_encode_basic_types(self):
+        self.assertEqual(infer_type_string(7), "int")
+        self.assertEqual(infer_type_string("hello"), "str")
+        self.assertEqual(infer_type_string(2.5), "float")
+        self.assertEqual(infer_type_string(True), "bool")
+
+    def test_enode_generic_types(self):
+        self.assertEqual(infer_type_string([1, 2]), "List[int]")
+        self.assertEqual(infer_type_string([]), "List[Any]")
+        self.assertEqual(infer_type_string([[], [7]]), "List[List[int]]")
+        self.assertEqual(
+            infer_type_string([[], [7], ["seven"]]), "List[Union[List[int],List[str]]]"
+        )
+        self.assertEqual(
+            infer_type_string([[], 7, "seven"]), "List[Union[List[Any],int,str]]"
+        )
+        self.assertEqual(infer_type_string([[], 7, True]), "List[Union[List[Any],int]]")
+        self.assertEqual(infer_type_string({"how_much": 7}), "Dict[str,int]")
+        self.assertEqual(infer_type_string((7, "what seven")), "Tuple[int,str]")
+        self.assertEqual(
+            infer_type_string([(2, 3, "four"), (6, 7, "eight")]),
+            "List[Tuple[int,int,str]]",
+        )
+        obj = [(2, 3, "four"), (6, 7, "eight", 9)]
+        # tuples of different length do not go into same type
+        self.assertEqual(
+            "List[Union[Tuple[int,int,str,int],Tuple[int,int,str]]]",
+            infer_type_string(obj),
+        )
+
+    def test_encode_nested_generic_types(self):
+        obj = []
+        # no type specified for the string element.
+        self.assertEqual("List[Any]", infer_type_string(obj))
+        obj = [[]]
+        # no type specified for the string element.
+        self.assertEqual("List[List[Any]]", infer_type_string(obj))
+        obj = [[], [8, 9]]
+        # one of the sublists does specifies a type, and this applies to its sister sublist.
+        self.assertEqual("List[List[int]]", infer_type_string(obj))
+        obj = ["who am I", 6, {"number 1 is": False}, []]
+        self.assertTrue(isoftype(obj, infer_type(obj)))
+        obj = [
+            ["who am I", 6, {"number 1 is": False}, []],
+            [{"empty": [], "number 1 is": [1]}, [99], ["hello"]],
+        ]
+        self.assertTrue(isoftype(obj, infer_type(obj)))
+        obj = ["who am I", 6, {"number 1 is": False}, ([], "empty", 7)]
+        self.assertTrue(isoftype(obj, infer_type(obj)))
+        self.assertEqual(infer_type_string([{"how_much": 7}]), "List[Dict[str,int]]")
+        self.assertEqual(
+            infer_type_string({"how many": [77, 88]}), "Dict[str,List[int]]"
         )
 
     def test_parse_union_type(self):
