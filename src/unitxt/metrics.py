@@ -16,7 +16,7 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
-from .dataclass import InternalField, OptionalField
+from .dataclass import AbstractField, InternalField, OptionalField
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -79,11 +79,7 @@ class UpdateStream(StreamInstanceOperator):
 
 
 class Metric(Artifact):
-    @property
-    @abstractmethod
-    def main_score(self):
-        pass
-
+    main_score: str = AbstractField()
     # Override 'prediction_type' with the expected type of predictions
     # and references.  Example: "List[str]", "List[Dict]"", "string".
     # If left with default None, a warning will be displayed.
@@ -650,10 +646,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: ["mean", "group_mean", "max"]
     )
 
-    @property
-    @abstractmethod
-    def reduction_map(self) -> dict:
-        pass
+    reduction_map: Dict[str, List[str]] = AbstractField()
 
     def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
@@ -3325,3 +3318,30 @@ class BinaryMaxAccuracy(GlobalMetric):
                 best_thr = thr
 
         return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
+
+
+KO_ERROR_MESSAGE = """
+
+Additional dependencies required. To install them, run:
+`pip install "sacrebleu[ko]"`.
+
+For MacOS: If error on 'mecab-config' show up during installation ], one should run:
+
+`brew install mecab`
+`pip install "sacrebleu[ko]"`
+
+"""
+
+
+class NormalizedSacrebleu(HuggingfaceMetric):
+    hf_metric_name = "sacrebleu"
+    hf_main_score = "score"
+    prediction_type = "str"
+    main_score = "sacrebleu"
+    scale = 100.0
+    scaled_fields = ["sacrebleu", "precisions"]
+    hf_additional_input_fields_pass_one_value = ["tokenize"]
+    _requirements_list = {
+        "mecab_ko": KO_ERROR_MESSAGE,
+        "mecab_ko_dic": KO_ERROR_MESSAGE,
+    }
