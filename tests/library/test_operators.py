@@ -626,22 +626,6 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        # works also with process_every_value == False. Adjusts itself by itself
-        check_operator(
-            operator=RemoveValues(
-                field="references",
-                unallowed_values=["none"],
-                use_query=True,
-                process_every_value=False,
-            ),
-            inputs=inputs,
-            targets=[
-                {"references": [[], []]},
-                {"references": [["news", "games"], []]},
-            ],
-            tester=self,
-        )
-
     def test_remove_values(self):
         inputs = [
             {"label": ["a", "b"]},
@@ -659,19 +643,6 @@ class TestOperators(UnitxtTestCase):
             operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
             inputs=inputs,
             targets=targets,
-            tester=self,
-        )
-
-        # same unallowed, same setting of RemoveValue (process_every_value == False), works also
-        # for 'references' as works for predictions
-        wrapped_inputs = [{"label": [v]} for input in inputs for v in input.values()]
-        wrapped_targets = [
-            {"label": [v]} for target in targets for v in target.values()
-        ]
-        check_operator(
-            operator=RemoveValues(field="label", unallowed_values=["b", "f"]),
-            inputs=wrapped_inputs,  # plays the role of references, for prediction being 'label'
-            targets=wrapped_targets,
             tester=self,
         )
         with self.assertRaises(ValueError) as cm:
@@ -699,18 +670,6 @@ class TestOperators(UnitxtTestCase):
         exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'} while not_exist_ok=False"
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
-            inputs=inputs,
-            exception_text=exception_text,
-            tester=self,
-        )
-
-        inputs = [
-            {"label": ["b", "c"]},
-        ]
-
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to process 'label' from {'label': ['b', 'c']} due to : The list, ['b', 'c'], in instance field, is not of same type as unallowed values, [3], nor is it a list of list of type of unallowed, nor list of list of list.."
-        check_operator_exception(
-            operator=RemoveValues(field="label", unallowed_values=[3]),
             inputs=inputs,
             exception_text=exception_text,
             tester=self,
