@@ -3315,7 +3315,7 @@ KO_ERROR_MESSAGE = """
 
 Additional dependencies required. To install them, run:
 `pip install "sacrebleu[ko]"`.
-bre
+
 For MacOS: If error on 'mecab-config' show up during installation ], one should run:
 
 `brew install mecab`
