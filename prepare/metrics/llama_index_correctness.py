@@ -46,12 +46,13 @@ outputs = test_metric(
 )
 
 # GPT model to catalog
-model_name = "gpt-3.5-turbo"
-model_name_normalized = model_name.replace(".", "_").replace("-", "_")
-metric = LlamaIndexCorrectness(model_name=model_name)
+model_names = ["gpt-3.5-turbo", "mock"]
+for model_name in model_names:
+    model_name_normalized = model_name.replace(".", "_").replace("-", "_")
+    metric = LlamaIndexCorrectness(model_name=model_name)
 
-add_to_catalog(
-    metric,
-    f"metrics.rag.correctness.llama_index_by_{model_name_normalized}",
-    overwrite=True,
-)
+    add_to_catalog(
+        metric,
+        f"metrics.rag.correctness.llama_index_by_{model_name_normalized}",
+        overwrite=True,
+    )
