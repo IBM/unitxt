@@ -1,0 +1,40 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "grammarly/coedit",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "task": "gec"
+            },
+            "condition": "eq"
+        },
+        "splitters.small_no_test",
+        {
+            "type": "execute_expression",
+            "expression": "': '.join(src.split(': ')[1:])",
+            "to_field": "src"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "src": "original_text"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "tgt"
+            ],
+            "to_field": "corrected_texts"
+        }
+    ],
+    "task": "tasks.grammatical_error_correction",
+    "templates": [
+        "templates.grammatical_error_correction.simple"
+    ]
+}
