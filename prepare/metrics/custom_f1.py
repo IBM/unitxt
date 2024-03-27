@@ -358,4 +358,71 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+
+class NERWithoutClassReporting(NER):
+    report_per_group_scores = False
+
+
+metric_without_class_reporting = NERWithoutClassReporting()
+# 1.4 multi classes multi examples
+predictions = [
+    [
+        ("Dalia", "Person"),
+        ("Amir", "Person"),
+        ("Yaron", "Person"),
+        ("Ramat-Gan", "Location"),
+        ("Ramat-Gan", "Location"),
+        ("IBM", "Org"),
+        ("CIA", "Org"),
+        ("FBI", "Org"),
+    ]
+]
+references = [
+    [
+        [
+            ("Amir", "Person"),
+            ("Yaron", "Person"),
+            ("Dalia", "Person"),
+            ("Naftali", "Person"),
+            ("Ramat-Gan", "Location"),
+            ("Givataaim", "Location"),
+        ]
+    ]
+]
+# Person: Precision = 3/3, Recall = 3/4, F1 = 2 * 1 * 0.75 / (1 + 0.75) = 0.8571
+# Location: Precision = 1/2, Recall = 1/2, F1 = 0.5
+# Org (OOD): Precision = 0/3, Recall = 0/0 = 1(!), F1 = 0
+instance_targets = [
+    {
+        "recall_micro": 0.67,
+        "recall_macro": 0.62,
+        "precision_micro": 0.5,
+        "precision_macro": 0.75,  # Only on indomain classes
+        "f1_macro": 0.68,
+        "in_classes_support": 0.62,
+        "f1_micro": 0.57,
+        "score": 0.57,
+        "score_name": "f1_micro",
+    },
+]
+global_target = {
+    "recall_micro": 0.67,
+    "recall_macro": 0.62,
+    "precision_micro": 0.5,
+    "precision_macro": 0.75,
+    "f1_macro": 0.68,
+    "in_classes_support": 0.62,
+    "f1_micro": 0.57,
+    "score": 0.57,
+    "score_name": "f1_micro",
+}
+
+outputs = test_metric(
+    metric=metric_without_class_reporting,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
 add_to_catalog(metric, "metrics.ner", overwrite=True)
