@@ -1,6 +1,7 @@
 import collections.abc
 import io
 import itertools
+import re
 import typing
 
 from .utils import safe_eval
@@ -73,16 +74,41 @@ def infer_type_string(obj: typing.Any) -> str:
 
     """
 
+    def consume_arg(args_list: str) -> typing.Tuple[str, str]:
+        first_word = re.search(r"^(List\[|Dict\[|Union\[|Tuple\[)", args_list)
+        if not first_word:
+            first_word = re.search(r"^(str|bool|int|float|Any)", args_list)
+            assert first_word, "parsing error"
+            return first_word.group(), args_list[first_word.span()[1] :]
+        arg_to_ret = first_word.group()
+        args_list = args_list[first_word.span()[1] :]
+        arg, args_list = consume_arg(args_list)
+        arg_to_ret += arg
+        while args_list.startswith(","):
+            arg, args_list = consume_arg(args_list[1:])
+            arg_to_ret = arg_to_ret + "," + arg
+        assert args_list.startswith("]"), "parsing error"
+        return arg_to_ret + "]", args_list[1:]
+
+    def find_args_in(args: str) -> typing.List[str]:
+        to_ret = []
+        while len(args) > 0:
+            arg, args = consume_arg(args)
+            to_ret.append(arg)
+            if args.startswith(","):
+                args = args[1:]
+        return to_ret
+
     def is_covered_by(left: str, right: str) -> bool:
         if left == right:
             return True
         if left.startswith("Union["):
             return all(
-                is_covered_by(left_el, right) for left_el in left[6:-1].split(",")
+                is_covered_by(left_el, right) for left_el in find_args_in(left[6:-1])
             )
         if right.startswith("Union["):
             return any(
-                is_covered_by(left, right_el) for right_el in right[6:-1].split(",")
+                is_covered_by(left, right_el) for right_el in find_args_in(right[6:-1])
             )
         if left.startswith("List[") and right.startswith("List["):
             return is_covered_by(
@@ -118,7 +144,6 @@ def infer_type_string(obj: typing.Any) -> str:
         # type of that list needs to be the union of the types of its elements.
         # if all elements have same type -- this is the type to write in List[type]
         # if not -- we write List[Union[type1, type2,...]].
-        #
 
         for right_el in right:
             if is_covered_by(right_el, left):
