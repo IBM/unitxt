@@ -12,7 +12,6 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-import pytrec_eval
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -3211,7 +3210,11 @@ class BinaryMaxAccuracy(GlobalMetric):
 ######################
 # RerankRecallMetric #
 
+
 def pytrec_eval_at_k(results, qrels, at_k, metric_name):
+    import pandas as pd
+    import pytrec_eval
+
     metric = {}
 
     for k in at_k:
@@ -3252,6 +3255,7 @@ class RerankRecall(GlobalMetric):
     at_k selects the value of k used to compute recall.
 
     """
+
     main_score = "recall_at_5"
     query_id_field: str = "query_id"
     passage_id_field: str = "passage_id"
@@ -3260,7 +3264,7 @@ class RerankRecall(GlobalMetric):
     # This doesn't seem to make sense
     n_resamples = None
 
-    _requirements_list: List[str] = ["pytrec_eval"]
+    _requirements_list: List[str] = ["pandas", "pytrec_eval"]
 
     def compute(
         self,
@@ -3271,16 +3275,16 @@ class RerankRecall(GlobalMetric):
         # Collect relevance score and ref per query/passage pair
         results = {}
         qrels = {}
-        for ref, pred, task_data in zip(references, predictions, task_data):
-            qid = task_data[self.query_id_field]
-            pid = task_data[self.passage_id_field]
+        for ref, pred, data in zip(references, predictions, task_data):
+            qid = data[self.query_id_field]
+            pid = data[self.passage_id_field]
             if qid not in results:
                 results[qid] = {}
                 qrels[qid] = {}
             # Convert string-wrapped float to regular float
             try:
                 results[qid][pid] = float(pred)
-            except ValueError as e:
+            except ValueError:
                 # Card testing feeds nonnumeric values in, so catch that.
                 results[qid][pid] = np.nan
 
@@ -3294,4 +3298,3 @@ class RerankRecall(GlobalMetric):
         return {
             f"recall_at_{i}": float(scores[f"recall_{i}"].mean()) for i in self.at_k
         }
-    
