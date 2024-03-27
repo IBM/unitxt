@@ -7,7 +7,8 @@ httpretty~=1.1.4
 editdistance
 rouge-score
 nltk
-sacrebleu
+mecab-python3
+sacrebleu[ko]
 scikit-learn
 jiwer
 conllu
