@@ -1,7 +1,7 @@
 import re
 from abc import abstractmethod
 from dataclasses import field
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
@@ -14,7 +14,18 @@ class Operator(Artifact):
 
 
 class PackageRequirementsMixin(Artifact):
-    _requirements_list: List[str] = InternalField(default_factory=list)
+    """Base class used to automatically check for the existence of required python dependencies for an artifact (e.g. Operator or Metric).
+
+    The _requirement list is either a list of required packages
+    (e.g. ["torch","sentence_transformers"]) or a dictionary between required packages
+    and detailed installation instructions on how how to install each package.
+    (e.g. {"torch" : "Install Torch using `pip install torch`", "sentence_transformers" : Install Sentence Transformers using `pip install sentence-transformers`})
+    Note that the package names should be specified as they are used in the python import statement for the package.
+    """
+
+    _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
+        default_factory=list
+    )
 
     def verify(self):
         super().verify()
@@ -23,19 +34,30 @@ class PackageRequirementsMixin(Artifact):
     def check_missing_requirements(self, requirements=None):
         if requirements is None:
             requirements = self._requirements_list
+        if isinstance(requirements, List):
+            requirements = {package: "" for package in requirements}
+
         missing_packages = []
-        for package in requirements:
+        installation_instructions = []
+        for package, installation_instruction in requirements.items():
             if not is_module_available(package):
                 missing_packages.append(package)
+                installation_instructions.append(installation_instruction)
         if missing_packages:
-            raise MissingRequirementsError(self.__class__.__name__, missing_packages)
+            raise MissingRequirementsError(
+                self.__class__.__name__, missing_packages, installation_instructions
+            )
 
 
 class MissingRequirementsError(Exception):
-    def __init__(self, class_name, missing_packages):
+    def __init__(self, class_name, missing_packages, installation_instructions):
         self.class_name = class_name
         self.missing_packages = missing_packages
-        self.message = f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}"
+        self.installation_instruction = installation_instructions
+        self.message = (
+            f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}. "
+            + "\n".join(self.installation_instruction)
+        )
         super().__init__(self.message)
 
 
