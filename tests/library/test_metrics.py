@@ -34,6 +34,7 @@ from src.unitxt.metrics import (
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    NormalizedSacrebleu,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -697,6 +698,24 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         global_target = 0.81649658092772
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_normalized_sacrebleu(self):
+        metric = NormalizedSacrebleu()
+        predictions = ["hello there general kenobi", "foo bar foobar"]
+        references = [
+            ["hello there general kenobi", "hello there !"],
+            ["foo bar foobar", "foo bar foobar"],
+        ]
+        task_data = [{"tokenize": None}, {"tokenize": None}]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        global_target = 1.0
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_llama_index_correctness(self):
