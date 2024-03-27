@@ -14,6 +14,15 @@ class Operator(Artifact):
 
 
 class PackageRequirementsMixin(Artifact):
+    """Base class used to automatically check for the existence of required python dependencies for an artifact (e.g. Operator or Metric).
+
+    The _requirement list is either a list of required packages
+    (e.g. ["torch","sentence_transformers"]) or a dictionary between required packages
+    and detailed installation instructions on how how to install each package.
+    (e.g. {"torch" : "Install Torch using `pip install torch`", "sentence_transformers" : Install Sentence Transformers using `pip install sentence-transformers`})
+    Note that the package names should be specified as they are used in the python import statement for the package.
+    """
+
     _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
         default_factory=list
     )
