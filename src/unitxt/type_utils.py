@@ -44,6 +44,138 @@ def parse_type_string(type_string: str) -> typing.Any:
     return safe_eval(type_string, safe_context, safe_tokens)
 
 
+def encode_type_of_obj(obj: typing.Any) -> str:
+    """Encodes the type of a given object into a string.
+
+    Args:
+        obj:Any
+
+    Returns:
+        a string representation of the type of the object. e.g. 'str', 'List[int]', 'Dict[str, Any]'
+
+    formal definition of the returned string:
+    Type -> basic | List[Type] | Dict[Type, Type] | Union[Type (, Type)* | Tuple[Type (,Type)*]
+    basic -> bool,str,int,float,Any
+    no spaces at all.
+
+    """
+
+    def is_covered_by(left: str, right: str) -> bool:
+        if left == right:
+            return True
+        if left.startswith("Union["):
+            return all(
+                is_covered_by(left_el, right) for left_el in left[6:-1].split(",")
+            )
+        if right.startswith("Union["):
+            return any(
+                is_covered_by(left, right_el) for right_el in right[6:-1].split(",")
+            )
+        if left.startswith("List[") and right.startswith("List["):
+            return is_covered_by(
+                left[5:-1], right[5:-1]
+            )  # un-wrap the leading List[  and the trailing ]
+        if left.startswith("Dict[") and right.startswith("Dict["):
+            return is_covered_by(
+                left[5 : left.find(",")], right[5 : right.find(",")]
+            ) and is_covered_by(
+                left[1 + left.find(",") : -1], right[1 + right.find(",") : -1]
+            )
+        if left.startswith("Tuple[") and right.startswith("Tuple["):
+            if left.count(",") != right.count(","):
+                return False
+            return all(
+                is_covered_by(left_el, right_el)
+                for (left_el, right_el) in zip(
+                    left[6:-1].split(","), right[6:-1].split(",")
+                )
+            )
+        if left == "bool" and right == "int":
+            return True
+        if right == "Any":
+            return True
+
+        return False
+
+    def merge_into(left: str, right: typing.List[str]) -> typing.List[str]:
+        # merge the set of types from left into the set of types from right, yielding a set that
+        # covers both. None of the input sets contain Union as main element. Union may reside inside
+        # List, or Dict, or Tuple.
+        # This is needed when building a parent List, e.g. from its elements, and the
+        # type of that list needs to be the union of the types of its elements.
+        # if all elements have same type -- this is the type to write in List[type]
+        # if not -- we write List[Union[type1, type2,...]].
+        #
+
+        if not any(is_covered_by(left, right_el) for right_el in right):
+            right.append(left)
+        return right
+
+    def encode_a_list_of_type_names(list_of_type_names: typing.List[str]) -> str:
+        # The type_names in the input are the set of names of all the elements of one list object,
+        # or all the keys of one dict object, or all the val thereof, or all the type names of a specific position
+        # in a tuple object The result should be a name of a type that covers them all.
+        # So if, for example, the input contains both 'bool' and 'int', then 'int' suffices to cover both.
+        # 'Any' can not show as a type_name of a basic (sub)object, but 'List[Any]' can show for an element of
+        # a list object, an element that is an empty list. In such a case, if there are other elements in the input
+        # that are more specific, e.g. 'List[str]' we should take the latter, and discard 'List[Any]' in order to get
+        # a meaningful result: as narrow as possible but covers all.
+        #
+        to_ret = []
+        for type_name in list_of_type_names:
+            merge_into(type_name, to_ret)
+
+        if len(to_ret) == 1:
+            return to_ret[0]
+        to_ret.sort()
+        ans = "Union["
+        for typ in to_ret[:-1]:
+            ans += typ + ","
+        return ans + to_ret[-1] + "]"
+
+    basic_types = [bool, int, str, float]
+    names_of_basic_types = ["bool", "int", "str", "float"]
+    # bool should show before int, because bool is subtype of int
+
+    for basic_type, name_of_basic_type in zip(basic_types, names_of_basic_types):
+        if isinstance(obj, basic_type):
+            return name_of_basic_type
+    if isinstance(obj, list):
+        included_types = set()
+        for list_el in obj:
+            included_types.add(encode_type_of_obj(list_el))
+        included_types = list(included_types)
+        if len(included_types) == 0:
+            return "List[Any]"
+        return "List[" + encode_a_list_of_type_names(included_types) + "]"
+    if isinstance(obj, dict):
+        if len(obj) == 0:
+            return "Dict[Any,Any]"
+        included_key_types = set()
+        included_val_types = set()
+        for k, v in obj.items():
+            included_key_types.add(encode_type_of_obj(k))
+            included_val_types.add(encode_type_of_obj(v))
+        included_key_types = list(included_key_types)
+        included_val_types = list(included_val_types)
+        return (
+            "Dict["
+            + encode_a_list_of_type_names(included_key_types)
+            + ","
+            + encode_a_list_of_type_names(included_val_types)
+            + "]"
+        )
+    if isinstance(obj, tuple):
+        if len(obj) == 0:
+            return "Tuple[Any]"
+        to_ret = "Tuple["
+        for sub_tup in obj[:-1]:
+            to_ret += encode_type_of_obj(sub_tup) + ","
+        return to_ret + encode_type_of_obj(obj[-1]) + "]"
+
+    return "Any"
+
+
 def isoftype(object, type):
     """Checks if an object is of a certain typing type, including nested types.
 

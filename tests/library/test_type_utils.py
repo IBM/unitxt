@@ -1,6 +1,7 @@
 import typing
 
 from src.unitxt.type_utils import (
+    encode_type_of_obj,
     isoftype,
     issubtype,
     parse_type_string,
@@ -132,6 +133,28 @@ class TestAssertTyping(UnitxtTestCase):
         )
         self.assertEqual(
             parse_type_string("Optional[List[str]]"), typing.Optional[typing.List[str]]
+        )
+
+    def test_encode_basic_types(self):
+        self.assertEqual(encode_type_of_obj(7), "int")
+        self.assertEqual(encode_type_of_obj("hello"), "str")
+        self.assertEqual(encode_type_of_obj(2.5), "float")
+        self.assertEqual(encode_type_of_obj(True), "bool")
+
+    def test_enode_generic_types(self):
+        self.assertEqual(encode_type_of_obj([1, 2]), "List[int]")
+        self.assertEqual(encode_type_of_obj([]), "List[Any]")
+        self.assertEqual(encode_type_of_obj({"how_much": 7}), "Dict[str,int]")
+        self.assertEqual(encode_type_of_obj((7, "what seven")), "Tuple[int,str]")
+
+    def test_encode_nested_generic_types(self):
+        obj = ["who am I", 6, {"number 1 is": False}, []]
+        self.assertTrue(isoftype(obj, parse_type_string(encode_type_of_obj(obj))))
+        obj = ["who am I", 6, {"number 1 is": False}, ([], "empty", 7)]
+        self.assertTrue(isoftype(obj, parse_type_string(encode_type_of_obj(obj))))
+        self.assertEqual(encode_type_of_obj([{"how_much": 7}]), "List[Dict[str,int]]")
+        self.assertEqual(
+            encode_type_of_obj({"how many": [77, 88]}), "Dict[str,List[int]]"
         )
 
     def test_parse_union_type(self):
