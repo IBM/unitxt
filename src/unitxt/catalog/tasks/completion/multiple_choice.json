@@ -6,7 +6,7 @@
         "choices": "List[str]"
     },
     "outputs": {
-        "answer": "str",
+        "answer": "int",
         "choices": "List[str]"
     },
     "prediction_type": "Any",

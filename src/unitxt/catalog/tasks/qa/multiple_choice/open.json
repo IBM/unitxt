@@ -5,10 +5,10 @@
         "choices": "List[str]"
     },
     "outputs": {
-        "answer": "str",
+        "answer": "Union[int,str]",
         "choices": "List[str]"
     },
-    "prediction_type": "Any",
+    "prediction_type": "str",
     "metrics": [
         "metrics.accuracy"
     ]

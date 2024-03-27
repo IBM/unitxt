@@ -4,7 +4,7 @@ from src.unitxt.catalog import add_to_catalog
 add_to_catalog(
     FormTask(
         inputs={"text": "str", "text_type": "str", "class": "str"},
-        outputs={"class": "str", "label": "str"},
+        outputs={"class": "str", "label": "List[str]"},
         prediction_type="str",
         metrics=[
             "metrics.f1_micro_multi_label",

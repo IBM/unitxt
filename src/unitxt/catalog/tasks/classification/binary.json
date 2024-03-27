@@ -7,7 +7,7 @@
     },
     "outputs": {
         "class": "str",
-        "label": "str"
+        "label": "List[str]"
     },
     "prediction_type": "str",
     "metrics": [

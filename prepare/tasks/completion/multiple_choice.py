@@ -4,7 +4,7 @@ from src.unitxt.catalog import add_to_catalog
 add_to_catalog(
     FormTask(
         inputs={"context": "str", "context_type": "str", "choices": "List[str]"},
-        outputs={"answer": "str", "choices": "List[str]"},
+        outputs={"answer": "int", "choices": "List[str]"},
         prediction_type="Any",
         metrics=["metrics.accuracy"],
     ),
@@ -27,7 +27,7 @@ add_to_catalog(
     FormTask(
         inputs={"context": "str", "context_type": "str", "completion_type": "str"},
         outputs={"completion": "str"},
-        prediction_type="Any",
+        prediction_type="Dict[str,Any]",
         metrics=["metrics.squad"],
     ),
     "tasks.completion.extractive",

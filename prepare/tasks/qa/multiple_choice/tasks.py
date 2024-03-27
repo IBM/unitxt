@@ -9,8 +9,8 @@ add_to_catalog(
             "question": "str",
             "choices": "List[str]",
         },
-        outputs={"answer": "str", "choices": "List[str]"},
-        prediction_type="Any",
+        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context",
@@ -21,8 +21,8 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs={"topic": "str", "question": "str", "choices": "List[str]"},
-        outputs={"answer": "str", "choices": "List[str]"},
-        prediction_type="Any",
+        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_topic",
@@ -32,8 +32,8 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs={"question": "str", "choices": "List[str]"},
-        outputs={"answer": "str", "choices": "List[str]"},
-        prediction_type="Any",
+        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.open",
@@ -49,8 +49,8 @@ add_to_catalog(
             "question": "str",
             "choices": "List[str]",
         },
-        outputs={"answer": "str", "choices": "List[str]"},
-        prediction_type="Any",
+        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context.with_topic",

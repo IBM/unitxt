@@ -1,5 +1,3 @@
-from typing import List
-
 from src.unitxt.task import FormTask, MultipleChoiceTask
 from src.unitxt.test_utils.operators import apply_operator
 from tests.utils import UnitxtTestCase
@@ -56,8 +54,8 @@ class TestTasks(UnitxtTestCase):
 
     def test_task_metrics_type_checking(self):
         operator = FormTask(
-            inputs={"input": str},
-            outputs={"label": str},
+            inputs={"input": "str"},
+            outputs={"label": "str"},
             prediction_type="str",
             metrics=["metrics.wer", "metrics.rouge", "metrics.roc_auc"],
         )
@@ -65,13 +63,18 @@ class TestTasks(UnitxtTestCase):
         operator.check_metrics_type()
 
         operator.prediction_type = "Dict"
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             operator.check_metrics_type()
+        self.assertEqual(
+            str(e.exception),
+            "Given prediction type 'typing.Dict' and metric 'metrics.wer' prediction type "
+            "'<class 'str'>' are different.",
+        )
 
     def test_task_instance_value_type_checking(self):
         operator = FormTask(
-            inputs={"input1": List[str], "input2": "Tuple[str]"},
-            outputs={"label": int},
+            inputs={"input1": "List[str]", "input2": "Tuple[str]"},
+            outputs={"label": "int"},
             prediction_type="Any",
             metrics=["metrics.accuracy"],
         )
@@ -99,5 +102,10 @@ class TestTasks(UnitxtTestCase):
             self.assertDictEqual(output, target)
 
         inputs[0].update({"input1": "Test"})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             apply_operator(operator, inputs)
+        self.assertEqual(
+            str(e.exception),
+            "Error processing instance '0' from stream 'test' in FormTask due to: "
+            "Passed inputs value Test under key input1 is not of required type typing.List[str].",
+        )

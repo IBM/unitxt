@@ -14,16 +14,16 @@ class FormTask(Tasker, StreamInstanceOperator):
     """FormTask packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
-        inputs (Union[Dict[str, Any], List[str]]):
+        inputs (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance input fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
-        outputs (Union[Dict[str, Any], List[str]]):
+        outputs (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance output fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
         metrics (List[str]): List of names of metrics to be used in the task.
-        prediction_type (Optional[Any]):
+        prediction_type (Optional[str]):
             Need to be consistent with all used metrics. Defaults to None, which means that it will
-            be inferred based on prediction type of specified metrics.
+            be set to Any.
 
     The output instance contains three fields:
         "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
@@ -31,29 +31,28 @@ class FormTask(Tasker, StreamInstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    inputs: Union[Dict[str, Any], List[str]]
-    outputs: Union[Dict[str, Any], List[str]]
+    inputs: Union[Dict[str, str], List[str]]
+    outputs: Union[Dict[str, str], List[str]]
     metrics: List[str]
-    prediction_type: Optional[Any] = None
+    prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
 
     @staticmethod
-    def process_type(data_type: Any) -> Any:
-        if isinstance(data_type, str):
-            data_type = data_type.replace("typing.", "")
-            return parse_type_string(data_type)
-        return data_type
+    def get_prediction_type(type_string: str) -> Any:
+        type_string = type_string.replace("typing.", "")
+        return parse_type_string(type_string)
 
     def verify(self):
         for io_type in ["inputs", "outputs"]:
             data = self.inputs if io_type == "inputs" else self.outputs
-            if not isinstance(data, Dict):
+            if not isoftype(data, Dict[str, str]):
                 get_logger().warning(
-                    f"'{io_type}' should be a dict of field names and their types, instead only "
-                    f"'{data}' was passed. All types will be assumed to be 'Any'. In future version "
-                    f"of unitxt this will raise an exception."
+                    f"'{io_type}' field of Task should be a dictionary of field names and their types. "
+                    f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
+                    f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
+                    f"will raise an exception."
                 )
-                data = {key: Any for key in data}
+                data = {key: "Any" for key in data}
                 if io_type == "inputs":
                     self.inputs = data
                 else:
@@ -61,12 +60,12 @@ class FormTask(Tasker, StreamInstanceOperator):
 
         if not self.prediction_type:
             get_logger().warning(
-                "'prediction_type' was not passed. It must be compatible with used metrics. "
-                "Trying to infer `prediction_type` based on specified metrics. In future "
-                "version of unitxt this will raise an exception."
+                "'prediction_type' was not set in Task. It is used to check the output of "
+                "template post processors is compatible with the expected input of the metrics. "
+                "Setting `prediction_type` to 'Any' (no checking is done). In future version "
+                "of unitxt this will raise an exception."
             )
-            sample_metric = fetch_artifact(self.metrics[0])[0]
-            self.prediction_type = sample_metric.get_prediction_type()
+            self.prediction_type = "Any"
 
         for augmentable_input in self.augmentable_inputs:
             assert (
@@ -74,15 +73,11 @@ class FormTask(Tasker, StreamInstanceOperator):
             ), f"augmentable_input f{augmentable_input} is not part of {self.inputs}"
 
     def check_metrics_type(self) -> None:
+        prediction_type = self.get_prediction_type(self.prediction_type)
         for metric_name in self.metrics:
             metric = fetch_artifact(metric_name)[0]
             metric_prediction_type = metric.get_prediction_type()
 
-            if self.prediction_type == metric_prediction_type:
-                continue
-
-            prediction_type = self.process_type(self.prediction_type)
-            metric_prediction_type = self.process_type(metric_prediction_type)
             if (
                 prediction_type == metric_prediction_type
                 or prediction_type == Any
@@ -95,26 +90,32 @@ class FormTask(Tasker, StreamInstanceOperator):
                 f"prediction type '{metric_prediction_type}' are different."
             )
 
-    def access_instance_value(
-        self, instance: Dict[str, Any], key: str, io_type: Literal["inputs", "outputs"]
-    ) -> Any:
+    def get_input_value(self, instance: Dict[str, Any], key: str) -> Any:
         try:
             return instance[key]
         except KeyError as e:
-            io = self.inputs if io_type == "inputs" else self.outputs
             raise KeyError(
-                f"Unexpected FormTask {io_type} column names ({[k for k in io if k not in instance]}). "
-                f"The available {io_type} names: {list(instance.keys())}"
+                f"Unexpected Task 'inputs' names: {[k for k in self.inputs if k not in instance]}."
+                f"The available names: {list(instance.keys())}."
+            ) from e
+
+    def get_output_value(self, instance: Dict[str, Any], key: str) -> Any:
+        try:
+            return instance[key]
+        except KeyError as e:
+            raise KeyError(
+                f"Unexpected Task 'outputs' names: {[k for k in self.outputs if k not in instance]}."
+                f"The available names: {list(instance.keys())}."
             ) from e
 
     def check_instance_value_type(
         self,
         value: Any,
-        data_type: Any,
+        data_type: str,
         value_name: str,
         io_type: Literal["inputs", "outputs"],
     ) -> Any:
-        data_type = self.process_type(data_type)
+        data_type = self.get_prediction_type(data_type)
 
         if isoftype(value, data_type):
             return value
@@ -131,7 +132,10 @@ class FormTask(Tasker, StreamInstanceOperator):
 
         inputs = {
             key: self.check_instance_value_type(
-                self.access_instance_value(instance, key, "inputs"),
+                self.get_input_value(
+                    instance,
+                    key,
+                ),
                 data_type,
                 key,
                 "inputs",
@@ -140,7 +144,7 @@ class FormTask(Tasker, StreamInstanceOperator):
         }
         outputs = {
             key: self.check_instance_value_type(
-                self.access_instance_value(instance, key, "outputs"),
+                self.get_output_value(instance, key),
                 data_type,
                 key,
                 "outputs",

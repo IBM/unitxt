@@ -4,7 +4,7 @@
         "question": "str"
     },
     "outputs": {
-        "answers": "str"
+        "answers": "List[str]"
     },
     "prediction_type": "str",
     "metrics": [
