@@ -45,18 +45,6 @@
         }
     ],
     "metric": {
-        "type": "huggingface_metric",
-        "hf_metric_name": "sacrebleu",
-        "hf_main_score": "score",
-        "prediction_type": "str",
-        "main_score": "sacrebleu",
-        "scale": 100.0,
-        "scaled_fields": [
-            "sacrebleu",
-            "precisions"
-        ],
-        "hf_additional_input_fields_pass_one_value": [
-            "tokenize"
-        ]
+        "type": "normalized_sacrebleu"
     }
 }

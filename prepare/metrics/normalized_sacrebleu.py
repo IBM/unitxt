@@ -1,7 +1,5 @@
-from importlib import util
-
 from src.unitxt import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.metrics import MetricPipeline, NormalizedSacrebleu
 from src.unitxt.operators import CopyFields, MapInstanceValues
 from src.unitxt.test_utils.metrics import test_metric
 
@@ -43,15 +41,7 @@ metric = MetricPipeline(
             use_query=True,
         ),
     ],
-    metric=HuggingfaceMetric(
-        hf_metric_name="sacrebleu",
-        hf_main_score="score",
-        prediction_type="str",
-        main_score="sacrebleu",
-        scale=100.0,
-        scaled_fields=["sacrebleu", "precisions"],
-        hf_additional_input_fields_pass_one_value=["tokenize"],
-    ),
+    metric=NormalizedSacrebleu(),
 )
 
 ### ENGLISH
@@ -281,21 +271,6 @@ global_target = {
     "sacrebleu_ci_low": 0.41,
     "sacrebleu_ci_high": 1.0,
 }
-
-KO_ERROR_MESSAGE = """
-
-Additional dependencies required. To install them, run:
-`pip install "sacrebleu[ko]"`.
-bre
-For MacOS: If error on 'mecab-config' show up during installation ], one should run:
-
-`brew install mecab`
-`pip install "sacrebleu[ko]"`
-
-"""
-if None in [util.find_spec("mecab_ko_dic"), util.find_spec("mecab_ko")]:
-    raise ImportError(KO_ERROR_MESSAGE)
-
 
 outputs = test_metric(
     metric=metric,

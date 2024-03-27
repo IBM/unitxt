@@ -3309,3 +3309,31 @@ class BinaryMaxAccuracy(GlobalMetric):
                 best_thr = thr
 
         return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
+
+
+KO_ERROR_MESSAGE = """
+
+Additional dependencies required. To install them, run:
+`pip install "sacrebleu[ko]"`.
+bre
+For MacOS: If error on 'mecab-config' show up during installation ], one should run:
+
+`brew install mecab`
+`pip install "sacrebleu[ko]"`
+
+"""
+
+
+class NormalizedSacrebleu(HuggingfaceMetric):
+    hf_metric_name = "sacrebleu"
+    hf_main_score = "score"
+    prediction_type = "str"
+    main_score = "sacrebleu"
+    scale = 100.0
+    scaled_fields = ["sacrebleu", "precisions"]
+    hf_additional_input_fields_pass_one_value = ["tokenize"]
+    _requirements_list = ["mecab_ko", "mecab_ko_dic"]
+    _requirements_installation_instructions = {
+        "mecab_ko": KO_ERROR_MESSAGE,
+        "mecab_ko_dic": KO_ERROR_MESSAGE,
+    }

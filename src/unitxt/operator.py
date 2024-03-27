@@ -15,6 +15,9 @@ class Operator(Artifact):
 
 class PackageRequirementsMixin(Artifact):
     _requirements_list: List[str] = InternalField(default_factory=list)
+    _requirements_installation_instructions: Dict[str, str] = InternalField(
+        default_factory=dict
+    )
 
     def verify(self):
         super().verify()
@@ -24,18 +27,29 @@ class PackageRequirementsMixin(Artifact):
         if requirements is None:
             requirements = self._requirements_list
         missing_packages = []
+        installation_instructions = []
         for package in requirements:
             if not is_module_available(package):
                 missing_packages.append(package)
+                if package in self._requirements_installation_instructions:
+                    installation_instructions.append(
+                        self._requirements_installation_instructions[package]
+                    )
         if missing_packages:
-            raise MissingRequirementsError(self.__class__.__name__, missing_packages)
+            raise MissingRequirementsError(
+                self.__class__.__name__, missing_packages, installation_instructions
+            )
 
 
 class MissingRequirementsError(Exception):
-    def __init__(self, class_name, missing_packages):
+    def __init__(self, class_name, missing_packages, installation_instructions):
         self.class_name = class_name
         self.missing_packages = missing_packages
-        self.message = f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}"
+        self.installation_instruction = installation_instructions
+        self.message = (
+            f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}. "
+            + "\n".join(self.installation_instruction)
+        )
         super().__init__(self.message)
 
 
