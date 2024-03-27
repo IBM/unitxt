@@ -78,7 +78,7 @@ from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import Stream
 from .text_utils import nested_tuple_to_string
-from .type_utils import isoftype
+from .type_utils import encode_type_of_obj, isoftype, parse_type_string
 from .utils import flatten_dict
 
 settings = get_settings()
@@ -1464,18 +1464,33 @@ class RemoveValues(FieldOperator):
 
     unallowed_values: List[Any]
 
-    def verify(self):
-        super().verify()
-
+    def prepare(self):
+        super().prepare()
         if not isinstance(self.unallowed_values, list):
             raise ValueError(
                 f"The unallowed_values is not a list but '{self.unallowed_values}'"
             )
+        self.type_of_unallowed_values = parse_type_string(
+            encode_type_of_obj(self.unallowed_values)
+        )
+
+    def clear_the_list(self, list_val: List[Any]) -> List[Any]:
+        # list_val must be a list
+        if not isinstance(list_val, list):
+            raise ValueError("Could not compare against unallowed")
+        if isoftype(list_val, self.type_of_unallowed_values):
+            return [e for e in list_val if e not in self.unallowed_values]
+        return [self.clear_the_list(list_el) for list_el in list_val]
 
     def process_value(self, value: Any) -> Any:
         if not isinstance(value, list):
             raise ValueError(f"The value in field is not a list but '{value}'")
-        return [e for e in value if e not in self.unallowed_values]
+        try:
+            return self.clear_the_list(value)
+        except Exception as e:
+            raise ValueError(
+                f"The list, {value}, in instance field, is not of same type as unallowed values, {self.unallowed_values}, nor is it a list of list of type of unallowed, nor list of list of list.."
+            ) from e
 
 
 class Unique(SingleStreamReducer):
