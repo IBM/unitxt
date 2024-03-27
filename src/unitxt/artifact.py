@@ -111,11 +111,16 @@ class MissingArtifactTypeError(ValueError):
 
 
 class Artifact(Dataclass):
-    type: str = Field(default=None, final=True, init=False)
-
     _class_register = {}
 
-    artifact_identifier: str = InternalField(default=None, required=False)
+    type: str = Field(default=None, final=True, init=False)
+    __description__: str = InternalField(
+        default=None, required=False, also_positional=False
+    )
+    __tags__: Dict[str, str] = InternalField(
+        default_factory=dict, required=False, also_positional=False
+    )
+    __id__: str = InternalField(default=None, required=False, also_positional=False)
 
     @classmethod
     def is_artifact_dict(cls, d):
@@ -211,7 +216,7 @@ class Artifact(Dataclass):
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
-        new_artifact.artifact_identifier = artifact_identifier
+        new_artifact.__id__ = artifact_identifier
         return new_artifact
 
     def prepare(self):

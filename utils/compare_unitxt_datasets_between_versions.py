@@ -100,7 +100,7 @@ def create_recipes_params_file(results_dir, catalogs, compare_catalogs):
                 {
                     "card": card,
                     "template": random.choice(
-                        [e.artifact_identifier for e in card_obj.templates.items]
+                        [e.__id__ for e in card_obj.templates.items]
                     ),
                     "augmentor": random.choice(type2artifacts["augmentors"]),
                     "system_prompt": random.choice(type2artifacts["system_prompts"]),
