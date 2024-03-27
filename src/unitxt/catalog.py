@@ -105,7 +105,7 @@ class GithubCatalog(LocalCatalog):
         response = requests.get(url)
         data = response.json()
         new_artifact = Artifact.from_dict(data, overwrite_args=overwrite_args)
-        new_artifact.artifact_identifier = artifact_identifier
+        new_artifact.__id__ = artifact_identifier
         return new_artifact
 
     def __contains__(self, artifact_identifier: str):

@@ -78,7 +78,7 @@ def as_remote_metric(metric):
         )
     else:
         raise ValueError(
-            f"Unexpected remote metric type {type(metric)} for the metric named '{metric.artifact_identifier}'. "
+            f"Unexpected remote metric type {type(metric)} for the metric named '{metric.__id__}'. "
             f"Remotely executed metrics should be MetricPipeline objects."
         )
     return metric
