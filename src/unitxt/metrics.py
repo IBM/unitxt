@@ -1606,8 +1606,8 @@ class CustomF1(GlobalMetric):
     prediction_type = "Any"
     single_reference_per_prediction = True
     groups = None
-    zero_division = 0.0
-    report_per_group_scores = True
+    zero_division: float = 0.0
+    report_per_group_scores: bool = True
 
     @abstractmethod
     def get_element_group(self, element, additional_input):
