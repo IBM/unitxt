@@ -16,7 +16,7 @@ class ToStringStripped(FieldOperator):
         return str(text).strip()
 
 
-class Split(FieldOperator):
+class SplitStrip(FieldOperator):
     delimiter: str = " "
     strip_every_element: bool = False
 
@@ -27,7 +27,7 @@ class Split(FieldOperator):
         ]
 
 
-class ToListByComma(Split):
+class ToListByComma(SplitStrip):
     delimiter = ","
     strip_every_element = True
 
