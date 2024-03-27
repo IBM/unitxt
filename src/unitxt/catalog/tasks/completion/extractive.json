@@ -1,13 +1,14 @@
 {
     "type": "form_task",
-    "inputs": [
-        "context",
-        "context_type",
-        "completion_type"
-    ],
-    "outputs": [
-        "completion"
-    ],
+    "inputs": {
+        "context": "str",
+        "context_type": "str",
+        "completion_type": "str"
+    },
+    "outputs": {
+        "completion": "str"
+    },
+    "prediction_type": "Dict[str,Any]",
     "metrics": [
         "metrics.squad"
     ]

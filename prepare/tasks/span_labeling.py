@@ -3,8 +3,19 @@ from src.unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type", "class_type", "classes"],
-        outputs=["text", "spans_starts", "spans_ends", "labels"],
+        inputs={
+            "text": "str",
+            "text_type": "str",
+            "class_type": "str",
+            "classes": "List[str]",
+        },
+        outputs={
+            "text": "List[str]",
+            "spans_starts": "List[str]",
+            "spans_ends": "List[str]",
+            "labels": "List[str]",
+        },
+        prediction_type="List[Tuple[str,str]]",
         metrics=[
             "metrics.ner",
         ],
