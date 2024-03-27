@@ -991,10 +991,9 @@ class TestMetrics(UnitxtTestCase):
         )
 
         perplexity_question_mistral = Perplexity(
-            model_name="mistralai/Mistral-7B-Instruct-v0.2",
-            perplexity_prompt="<s>[INST] Generate a question based on the given content: %s [/INST]",
+            model_name="google/flan-t5-small",
+            perplexity_prompt="Generate a question based on the given content: %s",
         )
-        first_instance_target = 0.0
         outputs = apply_metric(
             metric=perplexity_question_mistral,
             predictions=prediction,
