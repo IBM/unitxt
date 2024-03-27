@@ -44,7 +44,11 @@ def parse_type_string(type_string: str) -> typing.Any:
     return safe_eval(type_string, safe_context, safe_tokens)
 
 
-def encode_type_of_obj(obj: typing.Any) -> str:
+def infer_type(obj) -> typing.Any:
+    return parse_type_string(infer_type_string(obj))
+
+
+def infer_type_string(obj: typing.Any) -> str:
     """Encodes the type of a given object into a string.
 
     Args:
@@ -57,6 +61,15 @@ def encode_type_of_obj(obj: typing.Any) -> str:
     Type -> basic | List[Type] | Dict[Type, Type] | Union[Type (, Type)* | Tuple[Type (,Type)*]
     basic -> bool,str,int,float,Any
     no spaces at all.
+
+    Examples:
+        infer_type_string({"how_much": 7}) returns "Dict[str,int]"
+        infer_type_string([1, 2]) returns "List[int]"
+        infer_type_string([]) returns "List[Any]")    no contents to list to indicate any type
+        infer_type_string([[], [7]]) returns "List[List[int]]"  type of parent list indicated by the type
+                of the non-empty child list. The empty child list is indeed, by default, also of that type
+                of the non-empty child.
+        infer_type_string([[], 7, True]) returns "List[Union[List[Any],int]]"   because bool is also an int
 
     """
 
@@ -92,12 +105,12 @@ def encode_type_of_obj(obj: typing.Any) -> str:
             )
         if left == "bool" and right == "int":
             return True
-        if right == "Any":
+        if left == "Any":
             return True
 
         return False
 
-    def merge_into(left: str, right: typing.List[str]) -> typing.List[str]:
+    def merge_into(left: str, right: typing.List[str]):
         # merge the set of types from left into the set of types from right, yielding a set that
         # covers both. None of the input sets contain Union as main element. Union may reside inside
         # List, or Dict, or Tuple.
@@ -107,9 +120,13 @@ def encode_type_of_obj(obj: typing.Any) -> str:
         # if not -- we write List[Union[type1, type2,...]].
         #
 
+        for right_el in right:
+            if is_covered_by(right_el, left):
+                right.remove(right_el)
+                right.append(left)
+                return
         if not any(is_covered_by(left, right_el) for right_el in right):
             right.append(left)
-        return right
 
     def encode_a_list_of_type_names(list_of_type_names: typing.List[str]) -> str:
         # The type_names in the input are the set of names of all the elements of one list object,
@@ -143,7 +160,7 @@ def encode_type_of_obj(obj: typing.Any) -> str:
     if isinstance(obj, list):
         included_types = set()
         for list_el in obj:
-            included_types.add(encode_type_of_obj(list_el))
+            included_types.add(infer_type_string(list_el))
         included_types = list(included_types)
         if len(included_types) == 0:
             return "List[Any]"
@@ -154,8 +171,8 @@ def encode_type_of_obj(obj: typing.Any) -> str:
         included_key_types = set()
         included_val_types = set()
         for k, v in obj.items():
-            included_key_types.add(encode_type_of_obj(k))
-            included_val_types.add(encode_type_of_obj(v))
+            included_key_types.add(infer_type_string(k))
+            included_val_types.add(infer_type_string(v))
         included_key_types = list(included_key_types)
         included_val_types = list(included_val_types)
         return (
@@ -170,8 +187,8 @@ def encode_type_of_obj(obj: typing.Any) -> str:
             return "Tuple[Any]"
         to_ret = "Tuple["
         for sub_tup in obj[:-1]:
-            to_ret += encode_type_of_obj(sub_tup) + ","
-        return to_ret + encode_type_of_obj(obj[-1]) + "]"
+            to_ret += infer_type_string(sub_tup) + ","
+        return to_ret + infer_type_string(obj[-1]) + "]"
 
     return "Any"
 
