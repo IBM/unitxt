@@ -5,7 +5,7 @@ add_to_catalog(
     FormTask(
         inputs={"text": "str", "text_type": "str", "class": "str"},
         outputs={"class": "str", "label": "List[str]"},
-        prediction_type="str",
+        prediction_type="List[str]",
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.f1_macro_multi_label",
@@ -26,7 +26,7 @@ add_to_catalog(
             "type_of_classes": "str",
         },
         outputs={"labels": "List[str]"},
-        prediction_type="str",
+        prediction_type="List[str]",
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.accuracy",
@@ -46,7 +46,7 @@ add_to_catalog(
             "classes": "List[str]",
             "type_of_class": "str",
         },
-        outputs={"label": "str"},
+        outputs={"label": "List[str]"},
         prediction_type="str",
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],

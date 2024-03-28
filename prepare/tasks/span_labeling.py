@@ -10,9 +10,9 @@ add_to_catalog(
             "classes": "List[str]",
         },
         outputs={
-            "text": "List[str]",
-            "spans_starts": "List[str]",
-            "spans_ends": "List[str]",
+            "text": "str",
+            "spans_starts": "List[int]",
+            "spans_ends": "List[int]",
             "labels": "List[str]",
         },
         prediction_type="List[Tuple[str,str]]",

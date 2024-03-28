@@ -9,7 +9,7 @@
     "outputs": {
         "labels": "List[str]"
     },
-    "prediction_type": "str",
+    "prediction_type": "List[str]",
     "metrics": [
         "metrics.f1_micro_multi_label",
         "metrics.accuracy",
