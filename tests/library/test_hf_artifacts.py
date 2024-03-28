@@ -2,7 +2,11 @@ from datasets import load_dataset
 from evaluate import load
 
 from src import unitxt
-from src.unitxt.hf_utils import get_missing_imports
+from src.unitxt.hf_utils import (
+    UnitxtVersionsConflictError,
+    _verify_versions,
+    get_missing_imports,
+)
 from tests.utils import UnitxtTestCase
 
 
@@ -36,3 +40,7 @@ class HFTests(UnitxtTestCase):
 
     def test_metric_load(self):
         load(unitxt.metric_file)
+
+    def test_version_conflicts(self):
+        with self.assertRaises(UnitxtVersionsConflictError):
+            _verify_versions("test", "0.0.0", "1.1.1")
