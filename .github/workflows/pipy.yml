@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
-      url: https://pypi.org/p/fast-fit
+      url: https://pypi.org/p/unitxt
     permissions:
       id-token: write
     steps:
