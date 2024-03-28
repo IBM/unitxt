@@ -60,9 +60,7 @@ global_target = {
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(
-            field_to_field=[("task_data/context", "references")], use_query=True
-        ),
+        CopyFields(field_to_field=[("task_data/context", "references")]),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=metrics["metrics.token_overlap"],
@@ -76,7 +74,6 @@ metric = MetricPipeline(
                     "score/global/precision_overlap_with_context",
                 ),
             ],
-            use_query=True,
         ),
     ],
 )
@@ -244,10 +241,9 @@ for metric_name, catalog_name in [
     metric = MetricPipeline(
         main_score="score",
         preprocess_steps=[
-            CopyFields(field_to_field=[("context_ids", "prediction")], use_query=True),
+            CopyFields(field_to_field=[("context_ids", "prediction")]),
             CopyFields(
                 field_to_field=[("ground_truths_context_ids", "references")],
-                use_query=True,
             ),
         ],
         metric=f"metrics.{metric_name}",
@@ -258,10 +254,9 @@ for metric_name, catalog_name in [
 context_relevance = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
-        CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+        CopyFields(field_to_field=[("contexts", "references")]),
         CopyFields(
             field_to_field=[("question", "prediction")],
-            use_query=True,
         ),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
@@ -271,10 +266,9 @@ add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=Tru
 context_perplexity = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+        CopyFields(field_to_field=[("contexts", "references")]),
         CopyFields(
             field_to_field=[("question", "prediction")],
-            use_query=True,
         ),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
@@ -283,7 +277,6 @@ context_perplexity = MetricPipeline(
             field_to_field=[
                 ("score/instance/reference_scores", "score/instance/score")
             ],
-            use_query=True,
         )
     ],
 )
@@ -298,10 +291,9 @@ for new_catalog_name, base_catalog_name in [
     metric = MetricPipeline(
         main_score="precision",
         preprocess_steps=[
-            CopyFields(field_to_field=[("contexts", "references")], use_query=True),
+            CopyFields(field_to_field=[("contexts", "references")]),
             CopyFields(
                 field_to_field=[("answer", "prediction")],
-                use_query=True,
             ),
         ],
         metric=base_catalog_name,
@@ -316,12 +308,9 @@ for new_catalog_name, base_catalog_name in [
     metric = MetricPipeline(
         main_score="recall",
         preprocess_steps=[
-            CopyFields(
-                field_to_field=[("ground_truths", "references")], use_query=True
-            ),
+            CopyFields(field_to_field=[("ground_truths", "references")]),
             CopyFields(
                 field_to_field=[("answer", "prediction")],
-                use_query=True,
             ),
         ],
         metric=base_catalog_name,
@@ -331,10 +320,9 @@ for new_catalog_name, base_catalog_name in [
 answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
-        CopyFields(field_to_field=[("question", "references")], use_query=True),
+        CopyFields(field_to_field=[("question", "references")]),
         CopyFields(
             field_to_field=[("answer", "prediction")],
-            use_query=True,
         ),
         # This metric compares the answer (as the prediction) to the question (as the reference).
         # We have to wrap the question by a list (otherwise it will be a string),

@@ -6,7 +6,7 @@ card = TaskCard(
     loader=LoadHF(path="squad"),
     preprocess_steps=[
         "splitters.small_no_test",
-        CopyFields(field_to_field=[["answers/text", "answers"]], use_query=True),
+        CopyFields(field_to_field=[["answers/text", "answers"]]),
         AddFields({"context_type": "passage"}),
     ],
     task="tasks.qa.with_context.extractive",

@@ -250,7 +250,6 @@ class TruncateTableCells(StreamInstanceOperator):
     max_length: int = 15
     table: str = None
     text_output: Optional[str] = None
-    use_query: bool = False
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -427,7 +426,6 @@ class ListToKeyValPairs(StreamInstanceOperator):
 
     fields: List[str]
     to_field: str
-    use_query: bool = False
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None

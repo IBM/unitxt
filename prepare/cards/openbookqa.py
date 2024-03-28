@@ -8,7 +8,6 @@ card = TaskCard(
     preprocess_steps=[
         RenameFields(
             field_to_field={"choices/text": "choices_text", "choices/label": "labels"},
-            use_query=True,
         ),
         RenameFields(
             field_to_field={"choices_text": "choices", "question_stem": "question"},

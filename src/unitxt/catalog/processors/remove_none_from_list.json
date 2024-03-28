@@ -15,8 +15,7 @@
             "unallowed_values": [
                 "none"
             ],
-            "process_every_value": false,
-            "use_query": true
+            "process_every_value": false
         }
     ]
 }

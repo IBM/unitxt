@@ -442,7 +442,6 @@ def dict_set(
     dic: dict,
     query: str,
     value: Any,
-    use_dpath=True,
     not_exist_ok=True,
     set_multiple=False,
 ):
@@ -452,7 +451,7 @@ def dict_set(
         raise ValueError(
             f"set_multiple == True, and yet value, {value}, is not a list or '*' is not in query '{query}'"
         )
-    if not use_dpath or "/" not in query:
+    if "/" not in query:
         if query.strip() in dic or not_exist_ok:
             dic[query] = value
             return
@@ -460,7 +459,7 @@ def dict_set(
             f"not_exist_ok=False and the single component query '{query}' is not a key in dic {dic}"
         )
 
-    # use_dpath and "/" in query
+    # "/" in query
     components = validate_query_and_break_to_components(query)
     fixed_parameters = {
         "query": components,

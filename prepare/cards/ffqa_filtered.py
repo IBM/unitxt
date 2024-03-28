@@ -86,7 +86,6 @@ def add_card(split: str):
                     "conversations/0/tok_len": "inputs_len",
                     "conversations/1/value": "answer",
                 },
-                use_query=True,
             ),
             ListFieldValues(fields=["answer"], to_field="answers"),
             FilterByCondition(

@@ -337,9 +337,7 @@ class TestStructDataOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=ListToKeyValPairs(
-                fields=["keys", "values"], to_field="kvpairs", use_query=True
-            ),
+            operator=ListToKeyValPairs(fields=["keys", "values"], to_field="kvpairs"),
             inputs=inputs,
             targets=targets,
             tester=self,

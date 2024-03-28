@@ -267,7 +267,6 @@
                 "spans/*/end": "spans_ends",
                 "spans/*/label": "labels"
             },
-            "use_query": true,
             "get_default": [],
             "not_exist_ok": true
         },
