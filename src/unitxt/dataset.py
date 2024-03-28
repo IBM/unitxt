@@ -18,7 +18,7 @@ from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
-from .hf_utils import __file__ as _
+from .hf_utils import UnitxtVersionsConflictError
 from .instructions import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import get_logger
@@ -71,8 +71,8 @@ class Dataset(datasets.GeneratorBasedBuilder):
 
                 installed_package_constants = installed_get_constants()
                 if installed_package_constants.version != self.VERSION:
-                    raise ValueError(
-                        f"Located installed unitxt version {installed_get_constants.version} that is different then unitxt dataset version {self.VERSION}. Please make sure the installed version is identical to the dataset version."
+                    raise UnitxtVersionsConflictError(
+                        "dataset", self.VERSION, installed_package_constants.version
                     )
                 from unitxt.dataset_utils import (
                     get_dataset_artifact as get_dataset_artifact_installed,
