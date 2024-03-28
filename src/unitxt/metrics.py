@@ -156,8 +156,8 @@ class Metric(Artifact):
         return self._parsed_prediction_type
 
     def get_metric_name(self):
-        if self.artifact_identifier is not None:
-            return self.artifact_identifier
+        if self.__id__ is not None:
+            return self.__id__
         return self.__class__.__name__
 
     def consume_stream(self, stream: Stream):
@@ -2582,7 +2582,7 @@ class RemoteMetric(SingleStreamOperator, Metric):
         )  # To avoid unintentional changes to the catalog contents
         metric_pipeline.metric = RemoteMetric(
             main_score=local_inner_metric.main_score,
-            metric_name=local_inner_metric.artifact_identifier,
+            metric_name=local_inner_metric.__id__,
             endpoint=remote_metrics_endpoint,
         )
         return metric_pipeline

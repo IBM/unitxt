@@ -407,7 +407,7 @@ add_to_catalog(
             [
                 "templates.qa.multiple_choice.with_context.lm_eval_harness",
                 *[
-                    i.artifact_identifier
+                    i.__id__
                     for i in fetch_artifact(
                         "templates.qa.multiple_choice.with_context.no_intro.all"
                     )[0].items
@@ -429,7 +429,7 @@ add_to_catalog(
                 "templates.qa.multiple_choice.with_context.with_topic.mmlu",
                 "templates.qa.multiple_choice.with_context.with_topic.helm",
                 *[
-                    i.artifact_identifier
+                    i.__id__
                     for i in fetch_artifact(
                         "templates.qa.multiple_choice.with_context.with_topic.all"
                     )[0].items
@@ -452,7 +452,7 @@ add_to_catalog(
                 "templates.qa.multiple_choice.with_topic.mmlu",
                 "templates.qa.multiple_choice.with_topic.helm",
                 *[
-                    i.artifact_identifier
+                    i.__id__
                     for i in fetch_artifact(
                         "templates.qa.multiple_choice.with_topic.all"
                     )[0].items
