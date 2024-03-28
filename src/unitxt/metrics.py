@@ -1606,7 +1606,8 @@ class CustomF1(GlobalMetric):
     prediction_type = "Any"
     single_reference_per_prediction = True
     groups = None
-    zero_division = 0.0
+    zero_division: float = 0.0
+    report_per_group_scores: bool = True
 
     @abstractmethod
     def get_element_group(self, element, additional_input):
@@ -1737,6 +1738,35 @@ class CustomF1(GlobalMetric):
                 num_of_unknown_class_predictions += pd
 
         result = f1_result
+        self.add_macro_scores(f1_result, recall_result, precision_result, result)
+        self.add_in_class_support_scores(
+            num_of_unknown_class_predictions, pd_total, result
+        )
+        self.add_micro_scores(rd_total, rn_total, pd_total, pn_total, result)
+        if not self.report_per_group_scores:
+            for group in groups:
+                del result[f"f1_{group}"]
+        return result
+
+    def add_micro_scores(self, rd_total, rn_total, pd_total, pn_total, result):
+        result["f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
+        result["recall_micro"] = self.recall(pn_total, pd_total, rn_total, rd_total)
+        result["precision_micro"] = self.precision(
+            pn_total, pd_total, rn_total, rd_total
+        )
+
+    def add_in_class_support_scores(
+        self, num_of_unknown_class_predictions, pd_total, result
+    ):
+        amount_of_predictions = pd_total
+        if amount_of_predictions == 0:
+            result["in_classes_support"] = 1.0
+        else:
+            result["in_classes_support"] = (
+                1.0 - num_of_unknown_class_predictions / amount_of_predictions
+            )
+
+    def add_macro_scores(self, f1_result, recall_result, precision_result, result):
         try:
             result["f1_macro"] = sum(f1_result.values()) / len(result.keys())
             result["recall_macro"] = sum(recall_result.values()) / len(
@@ -1749,20 +1779,6 @@ class CustomF1(GlobalMetric):
             result["f1_macro"] = self.zero_division
             result["recall_macro"] = self.zero_division
             result["precision_macro"] = self.zero_division
-
-        amount_of_predictions = pd_total
-        if amount_of_predictions == 0:
-            result["in_classes_support"] = 1.0
-        else:
-            result["in_classes_support"] = (
-                1.0 - num_of_unknown_class_predictions / amount_of_predictions
-            )
-        result["f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
-        result["recall_micro"] = self.recall(pn_total, pd_total, rn_total, rd_total)
-        result["precision_micro"] = self.precision(
-            pn_total, pd_total, rn_total, rd_total
-        )
-        return result
 
 
 class NER(CustomF1):
@@ -3302,3 +3318,30 @@ class BinaryMaxAccuracy(GlobalMetric):
                 best_thr = thr
 
         return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
+
+
+KO_ERROR_MESSAGE = """
+
+Additional dependencies required. To install them, run:
+`pip install "sacrebleu[ko]"`.
+
+For MacOS: If error on 'mecab-config' show up during installation ], one should run:
+
+`brew install mecab`
+`pip install "sacrebleu[ko]"`
+
+"""
+
+
+class NormalizedSacrebleu(HuggingfaceMetric):
+    hf_metric_name = "sacrebleu"
+    hf_main_score = "score"
+    prediction_type = "str"
+    main_score = "sacrebleu"
+    scale = 100.0
+    scaled_fields = ["sacrebleu", "precisions"]
+    hf_additional_input_fields_pass_one_value = ["tokenize"]
+    _requirements_list = {
+        "mecab_ko": KO_ERROR_MESSAGE,
+        "mecab_ko_dic": KO_ERROR_MESSAGE,
+    }
