@@ -1,0 +1,5 @@
+{
+    "type": "system_format",
+    "demo_format": "[EX Q]: {source}\n[EX A]: {target_prefix}{target}\n\n",
+    "model_input_format": "{instruction}\n\n{demos}[EX Q]: {source}\n[EX A]: {target_prefix}"
+}
