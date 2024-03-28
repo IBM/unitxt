@@ -1,6 +1,6 @@
 import json
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .collections import ListCollection
 from .dataclass import NonPositionalField
@@ -393,14 +393,22 @@ class KeyValTemplate(Template):
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
-    quantum: float = 0.1
+    quantum: Union[float, int] = 0.1  # Now supports both int and float
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
-        quantized_outputs = {
-            key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
-            for key, value in outputs.items()
-        }
+        if isinstance(self.quantum, int):
+            # When quantum is an int, format quantized values as ints
+            quantized_outputs = {
+                key: f"{int(round(value / self.quantum) * self.quantum)}"
+                for key, value in outputs.items()
+            }
+        else:
+            # When quantum is a float, format quantized values with precision based on quantum
+            quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
+            quantized_outputs = {
+                key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
+                for key, value in outputs.items()
+            }
         return super().outputs_to_target_and_references(quantized_outputs)
 
 
