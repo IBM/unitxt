@@ -1,9 +1,8 @@
 name: Release new version HuggingFace Hub
 
 on:
-  push:
-    tags:
-     - '*'
+  release:
+    types: [created]
 
 jobs:
   push-to-hf-hub:
