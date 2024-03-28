@@ -156,8 +156,8 @@ class Metric(Artifact):
         return self._parsed_prediction_type
 
     def get_metric_name(self):
-        if self.artifact_identifier is not None:
-            return self.artifact_identifier
+        if self.__id__ is not None:
+            return self.__id__
         return self.__class__.__name__
 
     def consume_stream(self, stream: Stream):
@@ -1606,7 +1606,8 @@ class CustomF1(GlobalMetric):
     prediction_type = "Any"
     single_reference_per_prediction = True
     groups = None
-    zero_division = 0.0
+    zero_division: float = 0.0
+    report_per_group_scores: bool = True
 
     @abstractmethod
     def get_element_group(self, element, additional_input):
@@ -1737,6 +1738,35 @@ class CustomF1(GlobalMetric):
                 num_of_unknown_class_predictions += pd
 
         result = f1_result
+        self.add_macro_scores(f1_result, recall_result, precision_result, result)
+        self.add_in_class_support_scores(
+            num_of_unknown_class_predictions, pd_total, result
+        )
+        self.add_micro_scores(rd_total, rn_total, pd_total, pn_total, result)
+        if not self.report_per_group_scores:
+            for group in groups:
+                del result[f"f1_{group}"]
+        return result
+
+    def add_micro_scores(self, rd_total, rn_total, pd_total, pn_total, result):
+        result["f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
+        result["recall_micro"] = self.recall(pn_total, pd_total, rn_total, rd_total)
+        result["precision_micro"] = self.precision(
+            pn_total, pd_total, rn_total, rd_total
+        )
+
+    def add_in_class_support_scores(
+        self, num_of_unknown_class_predictions, pd_total, result
+    ):
+        amount_of_predictions = pd_total
+        if amount_of_predictions == 0:
+            result["in_classes_support"] = 1.0
+        else:
+            result["in_classes_support"] = (
+                1.0 - num_of_unknown_class_predictions / amount_of_predictions
+            )
+
+    def add_macro_scores(self, f1_result, recall_result, precision_result, result):
         try:
             result["f1_macro"] = sum(f1_result.values()) / len(result.keys())
             result["recall_macro"] = sum(recall_result.values()) / len(
@@ -1749,20 +1779,6 @@ class CustomF1(GlobalMetric):
             result["f1_macro"] = self.zero_division
             result["recall_macro"] = self.zero_division
             result["precision_macro"] = self.zero_division
-
-        amount_of_predictions = pd_total
-        if amount_of_predictions == 0:
-            result["in_classes_support"] = 1.0
-        else:
-            result["in_classes_support"] = (
-                1.0 - num_of_unknown_class_predictions / amount_of_predictions
-            )
-        result["f1_micro"] = self.f1(pn_total, pd_total, rn_total, rd_total)
-        result["recall_micro"] = self.recall(pn_total, pd_total, rn_total, rd_total)
-        result["precision_micro"] = self.precision(
-            pn_total, pd_total, rn_total, rd_total
-        )
-        return result
 
 
 class NER(CustomF1):
@@ -2566,7 +2582,7 @@ class RemoteMetric(SingleStreamOperator, Metric):
         )  # To avoid unintentional changes to the catalog contents
         metric_pipeline.metric = RemoteMetric(
             main_score=local_inner_metric.main_score,
-            metric_name=local_inner_metric.artifact_identifier,
+            metric_name=local_inner_metric.__id__,
             endpoint=remote_metrics_endpoint,
         )
         return metric_pipeline
