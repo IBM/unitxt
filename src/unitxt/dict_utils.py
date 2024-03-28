@@ -372,12 +372,6 @@ def dict_get(
                 raise ValueError(
                     f'query "{query}" did not match any item in dict: {dic}'
                 )
-            if isinstance(values, list) and len(values) == 0:
-                if not_exist_ok:
-                    return default
-                raise ValueError(
-                    f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
-                )
 
             return values
 
