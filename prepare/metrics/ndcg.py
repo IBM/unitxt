@@ -1,17 +1,17 @@
 import numpy as np
 
 from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CastFields, CopyFields
+from src.unitxt.blocks import CastFields
 from src.unitxt.metrics import NDCG, MetricPipeline
 from src.unitxt.test_utils.metrics import test_metric
 
 # Normalized Discounted Cumulative Gain
 metric = MetricPipeline(
     main_score="nDCG",
+    single_reference_per_prediction=True,
     preprocess_steps=[
-        CopyFields(field_to_field=[("references/0", "references")], use_query=True),
         CastFields(
-            fields={"prediction": "float", "references": "float"},
+            fields={"prediction": "float", "references/0": "float"},
             failure_defaults={"prediction": None},
             use_nested_query=True,
         ),

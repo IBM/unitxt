@@ -1,0 +1,6 @@
+{
+    "type": "input_output_template",
+    "instruction": "Write the best {completion_type} to the {context_type}.",
+    "input_format": "{context}",
+    "output_format": "{completion}"
+}

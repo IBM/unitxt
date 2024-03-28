@@ -7,11 +7,11 @@ metric = MAP()
 predictions = [["a", "b", "c", "d", "e", "f"], ["g", "r", "u"], ["a", "b"], [], ["c"]]
 
 references = [
-    ["c", "d"],  # third hit
-    ["g"],  # first hit
-    [],  # no hit
-    ["a"],  # no hit
-    ["b"],
+    [["c", "d"]],  # third hit
+    [["g"]],  # first hit
+    [[]],  # no hit
+    [["a"]],  # no hit
+    [["b"]],
 ]  # no hit
 
 instance_targets = [

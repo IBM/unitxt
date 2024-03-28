@@ -1,6 +1,11 @@
 import typing
 
-from src.unitxt.type_utils import isoftype, issubtype, to_float_or_default
+from src.unitxt.type_utils import (
+    isoftype,
+    issubtype,
+    parse_type_string,
+    to_float_or_default,
+)
 from tests.utils import UnitxtTestCase
 
 
@@ -102,3 +107,49 @@ class TestAssertTyping(UnitxtTestCase):
         self.assertEqual(to_float_or_default("a", 0), 0)
         with self.assertRaises(ValueError):
             to_float_or_default("a", None)
+
+    def test_parse_basic_types(self):
+        self.assertEqual(parse_type_string("int"), int)
+        self.assertEqual(parse_type_string("str"), str)
+        self.assertEqual(parse_type_string("float"), float)
+        self.assertEqual(parse_type_string("bool"), bool)
+
+    def test_parse_generic_types(self):
+        self.assertEqual(parse_type_string("List[int]"), typing.List[int])
+        self.assertEqual(parse_type_string("List[int,]"), typing.List[int])
+        self.assertEqual(parse_type_string("Dict[str, int]"), typing.Dict[str, int])
+        self.assertEqual(parse_type_string("Tuple[int, str]"), typing.Tuple[int, str])
+        self.assertEqual(parse_type_string("Optional[str]"), typing.Optional[str])
+
+    def test_parse_nested_generic_types(self):
+        self.assertEqual(
+            parse_type_string("List[Dict[str, int]]"),
+            typing.List[typing.Dict[str, int]],
+        )
+        self.assertEqual(
+            parse_type_string("Dict[str, List[int]]"),
+            typing.Dict[str, typing.List[int]],
+        )
+        self.assertEqual(
+            parse_type_string("Optional[List[str]]"), typing.Optional[typing.List[str]]
+        )
+
+    def test_parse_union_type(self):
+        self.assertEqual(parse_type_string("Union[int, str]"), typing.Union[int, str])
+        self.assertEqual(
+            parse_type_string("Union[int, List[str]]"),
+            typing.Union[int, typing.List[str]],
+        )
+
+    # Adding tests designed to fail
+    def test_parse_invalid_syntax(self):
+        with self.assertRaises(SyntaxError):
+            parse_type_string("List[int,,]")
+
+    def test_parse_unsupported_type(self):
+        with self.assertRaises(ValueError):
+            parse_type_string("Set[int]")
+
+    def test_parse_malformed_string(self):
+        with self.assertRaises(TypeError):
+            parse_type_string("List[[int]]")

@@ -33,12 +33,13 @@ from src.unitxt.metrics import (
     GroupMeanTokenOverlap,
     KendallTauMetric,
     LlamaIndexCorrectness,
+    MaxAccuracy,
+    NormalizedSacrebleu,
     PrecisionBinary,
     RecallBinary,
     RerankRecall,
     RocAuc,
     Rouge,
-    Squad,
     TokenOverlap,
     UnsortedListExactMatch,
 )
@@ -185,23 +186,38 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
-    def test_squad(self):
-        metric = Squad()
-        predictions = ["1976", "Beyonce", "climate change"]
-        references = [["1976"], ["Beyoncé and Bruno Mars"], ["climate change"]]
-        instance_targets = [
-            {"exact_match": 100.0, "f1": 100.0, "score": 100.0, "score_name": "f1"},
-            {"exact_match": 0.0, "f1": 0.0, "score": 0.0, "score_name": "f1"},
-            {"exact_match": 100.0, "f1": 100.0, "score": 100.0, "score_name": "f1"},
-        ]
-        global_target = 100 * 2 / 3
+    def test_accuracy_max_aggregation(self):
+        metric = MaxAccuracy()
+
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        expected_global_result = {
+            "accuracy": 1,
+            "score": 1,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+        ]
         for output, target in zip(outputs, instance_targets):
-            self.assertEqual(output["score"]["instance"], target)
+            self.assertDictEqual(output["score"]["instance"], target)
 
     def test_f1_micro(self):
         metric = F1Micro()
@@ -215,6 +231,58 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_errors(self):
+        metric = F1Micro()
+
+        references = [["cat"]]
+        predictions = [None]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Each prediction is expected to be of type 'str' in F1Micro metric. Received prediction of type <class 'NoneType'>: None",
+        )
+
+        references = [["cat"], "dog"]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            # disable validationd done in apply_metric
+            apply_metric(
+                metric=metric,
+                predictions=predictions,
+                references=references,
+                perform_validations_in_apply_metric=False,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "Expecting a list of references for each prediction in F1Micro metric. Received reference of type <class 'str'>: dog",
+        )
+
+        references = [["cat", "dog"], ["dog"]]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Expecting a list with a single reference per prediction in F1Micro metric. Received a list with multiple references: ['cat', 'dog']",
+        )
+        references = [[["cat", "dog"]], ["dog"]]
+        predictions = ["cat", "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Each reference is expected to be of type 'str' in F1Micro metric. Received reference of type <class 'list'>: ['cat', 'dog']",
+        )
+        references = [["cat"], ["dog"]]
+        predictions = [["cat", "dog"], "dog"]
+        with self.assertRaises(ValueError) as cm:
+            apply_metric(metric=metric, predictions=predictions, references=references)
+        self.assertEqual(
+            str(cm.exception),
+            "Each prediction is expected to be of type 'str' in F1Micro metric. Received prediction of type <class 'list'>: ['cat', 'dog']",
+        )
 
     def test_f1_binary(self):
         metric = F1Binary()
@@ -456,7 +524,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Each reference is expected to be a list of strings in F1 multi label metric. Received reference: 'A B'",
+            "Each reference is expected to be of type 'List[str]' in F1MicroMultiLabel metric. Received reference of type <class 'str'>: A B",
         )
 
         references2 = [["A", "B"], ["BC", "D"], ["C"], ["123"]]
@@ -466,7 +534,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Only a single reference per prediction is allowed in F1 multi label metric. Received reference: ['A', 'B']",
+            "Expecting a list with a single reference per prediction in F1MicroMultiLabel metric. Received a list with multiple references: ['A', 'B']",
         )
 
         references3 = [[["A"]], [["BC"]], [["C"]], [["123"]]]  # OK references
@@ -476,7 +544,7 @@ class TestMetrics(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Each prediction is expected to be a list of strings in F1 multi label metric. Received prediction: '[13, 23, 234]'",
+            "Each prediction is expected to be of type 'List[str]' in F1MicroMultiLabel metric. Received prediction of type <class 'list'>: [13, 23, 234]",
         )
 
     def test_f1_macro_multilabel_with_nones(self):
@@ -492,13 +560,6 @@ class TestMetrics(UnitxtTestCase):
 
         references = [[[]]]
         predictions = [["x", "y"]]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        self.assertTrue(isnan(outputs[0]["score"]["global"]["score"]))
-
-        references = [[[]]]
-        predictions = [[], "x", "y"]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -638,6 +699,24 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         global_target = 0.81649658092772
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_normalized_sacrebleu(self):
+        metric = NormalizedSacrebleu()
+        predictions = ["hello there general kenobi", "foo bar foobar"]
+        references = [
+            ["hello there general kenobi", "hello there !"],
+            ["foo bar foobar", "foo bar foobar"],
+        ]
+        task_data = [{"tokenize": None}, {"tokenize": None}]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        global_target = 1.0
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_llama_index_correctness(self):

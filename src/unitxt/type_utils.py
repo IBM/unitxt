@@ -3,6 +3,46 @@ import io
 import itertools
 import typing
 
+from .utils import safe_eval
+
+
+def parse_type_string(type_string: str) -> typing.Any:
+    """Parses a string representing a Python type hint and evaluates it to return the corresponding type object.
+
+    This function uses a safe evaluation context
+    to mitigate the risks of executing arbitrary code.
+
+    Args:
+        type_string (str): A string representation of a Python type hint. Examples include
+                           'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
+
+    Returns:
+        typing.Any: The Python type object corresponding to the given type string.
+
+    Raises:
+        ValueError: If the type string contains elements not allowed in the safe context
+                    or tokens list.
+
+    The function uses a predefined safe context with common types from the `typing` module
+    and basic Python data types. It also defines a list of safe tokens that are allowed
+    in the type string.
+    """
+    safe_context = {
+        "Any": typing.Any,
+        "List": typing.List,
+        "Dict": typing.Dict,
+        "Tuple": typing.Tuple,
+        "Union": typing.Union,
+        "int": int,
+        "str": str,
+        "float": float,
+        "bool": bool,
+        "Optional": typing.Optional,
+    }
+
+    safe_tokens = ["[", "]", ",", " "]
+    return safe_eval(type_string, safe_context, safe_tokens)
+
 
 def isoftype(object, type):
     """Checks if an object is of a certain typing type, including nested types.

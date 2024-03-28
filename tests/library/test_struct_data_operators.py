@@ -1,5 +1,3 @@
-import unittest
-
 from src.unitxt.struct_data_operators import (
     ConvertTableColNamesToSequential,
     ListToKeyValPairs,
@@ -19,9 +17,10 @@ from src.unitxt.struct_data_operators import (
 from src.unitxt.test_utils.operators import (
     check_operator,
 )
+from tests.utils import UnitxtTestCase
 
 
-class TestStructDataOperators(unittest.TestCase):
+class TestStructDataOperators(UnitxtTestCase):
     """Tests for tabular data processing operators."""
 
     def test_serializetable_markdown(self):

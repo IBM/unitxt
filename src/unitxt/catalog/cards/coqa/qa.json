@@ -1,0 +1,66 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "stanfordnlp/coqa"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "story"
+            }
+        },
+        {
+            "type": "zip_field_values",
+            "fields": [
+                "questions",
+                "answers/input_text"
+            ],
+            "to_field": "dialog",
+            "use_query": true
+        },
+        {
+            "type": "dictify",
+            "field": "dialog",
+            "with_keys": [
+                "user",
+                "system"
+            ],
+            "process_every_value": true
+        },
+        {
+            "type": "duplicate_by_sub_lists",
+            "field": "dialog"
+        },
+        {
+            "type": "get",
+            "field": "dialog",
+            "item": -1,
+            "to_field": "last_turn"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "last_turn/user": "question",
+                "last_turn/system": "answer"
+            },
+            "use_query": true
+        },
+        {
+            "type": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        },
+        {
+            "type": "serialize_dialog",
+            "field": "dialog",
+            "to_field": "context",
+            "context_field": "story"
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive",
+    "templates": "templates.qa.with_context.all"
+}

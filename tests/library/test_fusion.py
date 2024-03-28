@@ -24,6 +24,28 @@ class TestFusion(UnitxtTestCase):
 
         check_operator(operator, inputs=None, targets=targets, tester=self)
 
+    def compare_stream(self, stream, expected_stream):
+        self.assertEqual(len(stream), len(expected_stream))
+        for input_dict, output_dict in zip(stream, expected_stream):
+            self.assertDictEqual(input_dict, output_dict)
+
+    def test_nonoverlapping_splits_fusion(self):
+        operator = FixedFusion(
+            origins=[
+                IterableSource({"train": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
+                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
+            ],
+        )
+
+        output_multi_stream = operator()
+        self.assertListEqual(sorted(output_multi_stream.keys()), ["test", "train"])
+        self.compare_stream(
+            list(output_multi_stream["train"]), [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]
+        )
+        self.compare_stream(
+            list(output_multi_stream["test"]), [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]
+        )
+
     def test_bounded_fixed_fusion(self):
         operator = FixedFusion(
             origins=[

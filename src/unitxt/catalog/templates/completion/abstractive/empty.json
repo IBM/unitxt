@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "input_format": "{context}",
+    "output_format": "{completion}"
+}

@@ -14,6 +14,9 @@ metrics = {
     "metrics.bert_score.deberta_xlarge_mnli": BertScore(
         model_name="microsoft/deberta-xlarge-mnli"
     ),
+    "metrics.bert_score.distilbert_base_uncased": BertScore(
+        model_name="distilbert-base-uncased"
+    ),
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
     ),
@@ -124,6 +127,40 @@ test_metric(
     global_target=global_target,
 )
 
+metric = metrics["metrics.bert_score.distilbert_base_uncased"]
+predictions = ["hello there general dude", "foo bar foobar"]
+references = [
+    ["hello there general kenobi", "hello there!"],
+    ["foo bar foobar", "foo bar"],
+]
+instance_targets = [
+    {"f1": 0.85, "precision": 0.91, "recall": 0.86, "score": 0.85, "score_name": "f1"},
+    {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
+]
+
+global_target = {
+    "f1": 0.93,
+    "f1_ci_high": 1.0,
+    "f1_ci_low": 0.85,
+    "precision": 0.95,
+    "precision_ci_high": 1.0,
+    "precision_ci_low": 0.91,
+    "recall": 0.93,
+    "recall_ci_high": 1.0,
+    "recall_ci_low": 0.86,
+    "score": 0.93,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.85,
+    "score_name": "f1",
+}
+
+test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
 
 metric = metrics["metrics.sentence_bert.mpnet_base_v2"]
 predictions = ["hello there general dude", "foo bar foobar"]

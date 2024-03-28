@@ -1,6 +1,6 @@
 from src.unitxt.blocks import AddFields, AddID, CopyFields
 from src.unitxt.catalog import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from src.unitxt.metrics import MetricPipeline, Squad
 from src.unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
@@ -34,12 +34,7 @@ metric = MetricPipeline(
             use_query=True,
         ),
     ],
-    metric=HuggingfaceMetric(
-        hf_metric_name="squad",
-        main_score="f1",
-        scale=100.0,
-        scaled_fields=["f1", "exact_match"],
-    ),
+    metric=Squad(),
 )
 
 predictions = ["1976", "Beyoncé and", "climate change"]

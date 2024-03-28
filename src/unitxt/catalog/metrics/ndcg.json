@@ -1,22 +1,13 @@
 {
     "type": "metric_pipeline",
     "main_score": "nDCG",
+    "single_reference_per_prediction": true,
     "preprocess_steps": [
-        {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "references/0",
-                    "references"
-                ]
-            ],
-            "use_query": true
-        },
         {
             "type": "cast_fields",
             "fields": {
                 "prediction": "float",
-                "references": "float"
+                "references/0": "float"
             },
             "failure_defaults": {
                 "prediction": null

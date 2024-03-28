@@ -575,27 +575,14 @@ class TestOperators(UnitxtTestCase):
 
     def test_remove_none(self):
         inputs = [
-            {"references": [["none"]]},
-            {"references": [["news", "games"]]},
+            {"references": [["none"], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
         ]
 
         targets = [
-            {"references": [[]]},
-            {"references": [["news", "games"]]},
+            {"references": [[], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
         ]
-
-        with self.assertRaises(ValueError):
-            check_operator(
-                operator=RemoveValues(
-                    field="references/*",
-                    unallowed_values=["none"],
-                    process_every_value=False,
-                    use_query=True,
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
 
         check_operator(
             operator=RemoveValues(
@@ -606,6 +593,36 @@ class TestOperators(UnitxtTestCase):
             ),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references/1",
+                unallowed_values=["none"],
+                process_every_value=False,
+                use_query=True,
+            ),
+            inputs=inputs,
+            targets=[
+                {"references": [["none"], []]},
+                {"references": [["news", "games"], []]},
+            ],
+            tester=self,
+        )
+
+        check_operator(
+            operator=RemoveValues(
+                field="references",
+                unallowed_values=["none"],
+                use_query=True,
+                process_every_value=True,
+            ),
+            inputs=inputs,
+            targets=[
+                {"references": [[], []]},
+                {"references": [["news", "games"], []]},
+            ],
             tester=self,
         )
 
@@ -639,19 +656,19 @@ class TestOperators(UnitxtTestCase):
             str(cm.exception), "The unallowed_values is not a list but '3'"
         )
 
-        with self.assertRaises(ValueError) as cm:
-            check_operator(
-                operator=RemoveValues(
-                    field="label", unallowed_values=["3"], process_every_value=True
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "'process_every_value=True' is not supported in RemoveValues operator",
-        )
+        # with self.assertRaises(ValueError) as cm:
+        #     check_operator(
+        #         operator=RemoveValues(
+        #             field="label", unallowed_values=["3"], process_every_value=True
+        #         ),
+        #         inputs=inputs,
+        #         targets=targets,
+        #         tester=self,
+        #     )
+        # self.assertEqual(
+        #     str(cm.exception),
+        #     "'process_every_value=True' is not supported in RemoveValues operator",
+        # )
 
         inputs = [
             {"label": "b"},
@@ -664,7 +681,7 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'} while not_exist_ok=False"
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
@@ -2434,6 +2451,28 @@ class TestOperators(UnitxtTestCase):
 
         check_operator(
             operator=DuplicateInstances(num_duplications=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_duplicate_instance_added_field(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 3, "b": 4},
+        ]
+
+        targets = [
+            {"a": 1, "b": 2, "duplication_id": 0},
+            {"a": 1, "b": 2, "duplication_id": 1},
+            {"a": 3, "b": 4, "duplication_id": 0},
+            {"a": 3, "b": 4, "duplication_id": 1},
+        ]
+
+        check_operator(
+            operator=DuplicateInstances(
+                num_duplications=2, duplication_index_field="duplication_id"
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,

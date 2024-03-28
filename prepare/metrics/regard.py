@@ -8,6 +8,10 @@ metric = HuggingfaceMetric(
     hf_main_score="score",
     scale=1.0,
     n_resamples=None,
+    # Regard passes task data in the legacy way using references
+    # instead of using the 'task_data' parameters, so prediction
+    # type and reference type are different
+    prediction_type="Any",
 )
 
 predictions = [

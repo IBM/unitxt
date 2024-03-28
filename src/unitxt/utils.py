@@ -4,6 +4,8 @@ from typing import Any, Dict
 
 import pkg_resources
 
+from .text_utils import is_made_of_sub_strings
+
 
 class Singleton(type):
     _instances = {}
@@ -82,3 +84,32 @@ def is_module_available(module_name):
         return True
     except ImportError:
         return False
+
+
+def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
+    """Evaluates a given expression in a restricted environment, allowing only specified tokens and context variables.
+
+    Args:
+        expression (str): The expression to evaluate.
+        context (dict): A dictionary mapping variable names to their values, which
+                        can be used in the expression.
+        allowed_tokens (list): A list of strings representing allowed tokens (such as
+                               operators, function names, etc.) that can be used in the expression.
+
+    Returns:
+        any: The result of evaluating the expression.
+
+    Raises:
+        ValueError: If the expression contains tokens not in the allowed list or context keys.
+
+    Note:
+        This function should be used carefully, as it employs `eval`, which can
+        execute arbitrary code. The function attempts to mitigate security risks
+        by restricting the available tokens and not exposing built-in functions.
+    """
+    allowd_sub_strings = list(context.keys()) + allowed_tokens
+    if is_made_of_sub_strings(expression, allowd_sub_strings):
+        return eval(expression, {"__builtins__": {}}, context)
+    raise ValueError(
+        f"The expression '{expression}' can not be evaluated because it contains tokens outside the allowed list of {allowd_sub_strings}."
+    )

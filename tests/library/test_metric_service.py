@@ -1,6 +1,5 @@
 import json
 import os
-import unittest
 
 import httpretty
 
@@ -12,9 +11,10 @@ from src.unitxt.metric_utils import (
 )
 from src.unitxt.metrics import RemoteMetric
 from src.unitxt.test_utils.metrics import test_metric
+from tests.utils import UnitxtTestCase
 
 
-class TestMetricsServiceClientConfig(unittest.TestCase):
+class TestMetricsServiceClientConfig(UnitxtTestCase):
     def test_defined_remote_metrics(self):
         expected_remote_metrics = [
             "metrics.rag.context_relevance",
@@ -62,7 +62,7 @@ class TestMetricsServiceClientConfig(unittest.TestCase):
             get_remote_metrics_names()
 
 
-class TestRemoteMetrics(unittest.TestCase):
+class TestRemoteMetrics(UnitxtTestCase):
     @httpretty.activate(verbose=True)
     def test_remote_service_with_valid_response(self):
         """Test RemoteService with a mocked response that contains the expected response values."""

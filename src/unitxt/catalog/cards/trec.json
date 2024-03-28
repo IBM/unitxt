@@ -1,0 +1,145 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "trec"
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[85%]",
+                "validation": "train[15%]",
+                "test": "test"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "fine_label": "label"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "Abbreviation: Abbreviation.",
+                    "1": "Abbreviation: Expression abbreviated.",
+                    "2": "Entity: Animal.",
+                    "3": "Entity: Organ of body.",
+                    "4": "Entity: Color.",
+                    "5": "Entity: Invention, book and other creative piece.",
+                    "6": "Entity: Currency name.",
+                    "7": "Entity: Disease and medicine.",
+                    "8": "Entity: Event.",
+                    "9": "Entity: Food.",
+                    "10": "Entity: Musical instrument.",
+                    "11": "Entity: Language.",
+                    "12": "Entity: Letter like a-z.",
+                    "13": "Entity: Other entity.",
+                    "14": "Entity: Plant.",
+                    "15": "Entity: Product.",
+                    "16": "Entity: Religion.",
+                    "17": "Entity: Sport.",
+                    "18": "Entity: Element and substance.",
+                    "19": "Entity: Symbols and sign.",
+                    "20": "Entity: Techniques and method.",
+                    "21": "Entity: Equivalent term.",
+                    "22": "Entity: Vehicle.",
+                    "23": "Entity: Word with a special property.",
+                    "24": "Description: Definition of something.",
+                    "25": "Description: Description of something.",
+                    "26": "Description: Manner of an action.",
+                    "27": "Description: Reason.",
+                    "28": "Human: Group or organization of persons.",
+                    "29": "Human: Individual.",
+                    "30": "Human: Title of a person.",
+                    "31": "Human: Description of a person.",
+                    "32": "Location: City.",
+                    "33": "Location: Country.",
+                    "34": "Location: Mountain.",
+                    "35": "Location: Other location.",
+                    "36": "Location: State.",
+                    "37": "Numeric: Postcode or other code.",
+                    "38": "Numeric: Number of something.",
+                    "39": "Numeric: Date.",
+                    "40": "Numeric: Distance, linear measure.",
+                    "41": "Numeric: Price.",
+                    "42": "Numeric: Order, rank.",
+                    "43": "Numeric: Other number.",
+                    "44": "Numeric: Lasting time of something",
+                    "45": "Numeric: Percent, fraction.",
+                    "46": "Numeric: Speed.",
+                    "47": "Numeric: Temperature.",
+                    "48": "Numeric: Size, area and volume.",
+                    "49": "Numeric: Weight."
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "classes": [
+                    "Abbreviation: Abbreviation.",
+                    "Abbreviation: Expression abbreviated.",
+                    "Entity: Animal.",
+                    "Entity: Organ of body.",
+                    "Entity: Color.",
+                    "Entity: Invention, book and other creative piece.",
+                    "Entity: Currency name.",
+                    "Entity: Disease and medicine.",
+                    "Entity: Event.",
+                    "Entity: Food.",
+                    "Entity: Musical instrument.",
+                    "Entity: Language.",
+                    "Entity: Letter like a-z.",
+                    "Entity: Other entity.",
+                    "Entity: Plant.",
+                    "Entity: Product.",
+                    "Entity: Religion.",
+                    "Entity: Sport.",
+                    "Entity: Element and substance.",
+                    "Entity: Symbols and sign.",
+                    "Entity: Techniques and method.",
+                    "Entity: Equivalent term.",
+                    "Entity: Vehicle.",
+                    "Entity: Word with a special property.",
+                    "Description: Definition of something.",
+                    "Description: Description of something.",
+                    "Description: Manner of an action.",
+                    "Description: Reason.",
+                    "Human: Group or organization of persons.",
+                    "Human: Individual.",
+                    "Human: Title of a person.",
+                    "Human: Description of a person.",
+                    "Location: City.",
+                    "Location: Country.",
+                    "Location: Mountain.",
+                    "Location: Other location.",
+                    "Location: State.",
+                    "Numeric: Postcode or other code.",
+                    "Numeric: Number of something.",
+                    "Numeric: Date.",
+                    "Numeric: Distance, linear measure.",
+                    "Numeric: Price.",
+                    "Numeric: Order, rank.",
+                    "Numeric: Other number.",
+                    "Numeric: Lasting time of something",
+                    "Numeric: Percent, fraction.",
+                    "Numeric: Speed.",
+                    "Numeric: Temperature.",
+                    "Numeric: Size, area and volume.",
+                    "Numeric: Weight."
+                ],
+                "text_type": "utterance",
+                "type_of_class": "intent"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all"
+}

@@ -1,7 +1,5 @@
 datasets>=2.16.0
 evaluate
-mecab-python3
 absl-py
-dpath
 ipadic
 scipy

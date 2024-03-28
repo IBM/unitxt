@@ -34,6 +34,7 @@ from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
 from .dataclass import InternalField, OptionalField
+from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
@@ -203,8 +204,9 @@ class LoadCSV(Loader):
     files: Dict[str, str]
     chunksize: int = 1000
     _cache = InternalField(default_factory=dict)
-    loader_limit: int = None
+    loader_limit: Optional[int] = None
     streaming: bool = True
+    sep: str = ","
 
     def stream_csv(self, file):
         if self.get_limit() is not None:
@@ -214,7 +216,7 @@ class LoadCSV(Loader):
             chunksize = self.chunksize
 
         row_count = 0
-        for chunk in pd.read_csv(file, chunksize=chunksize):
+        for chunk in pd.read_csv(file, chunksize=chunksize, sep=self.sep):
             for _, row in chunk.iterrows():
                 if self.get_limit() is not None and row_count >= self.get_limit():
                     return
@@ -225,9 +227,9 @@ class LoadCSV(Loader):
         if file not in self._cache:
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                self._cache[file] = pd.read_csv(file, nrows=self.get_limit()).to_dict(
-                    "records"
-                )
+                self._cache[file] = pd.read_csv(
+                    file, nrows=self.get_limit(), sep=self.sep
+                ).to_dict("records")
             else:
                 self._cache[file] = pd.read_csv(file).to_dict("records")
 
@@ -448,3 +450,26 @@ class LoadFromIBMCloud(Loader):
             )
 
         return MultiStream.from_iterables(dataset)
+
+
+class MultipleSourceLoader(Loader):
+    """Allow loading data from multiple sources.
+
+    Examples:
+    1) Loading the train split from Huggingface hub and the test set from a local file:
+
+    MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
+
+    2) Loading a test set combined from two files
+
+    MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
+
+
+    """
+
+    sources: List[Loader]
+
+    def process(self):
+        return FixedFusion(
+            origins=self.sources, max_instances_per_origin=self.get_limit()
+        ).process()
