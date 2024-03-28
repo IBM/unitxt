@@ -467,6 +467,7 @@ def dict_set(
     dic: dict,
     query: str,
     value: Any,
+    use_dpath=True,
     not_exist_ok=True,
     set_multiple=False,
 ):  # sets dic to its new value
