@@ -28,3 +28,17 @@ class UnitxtVersionsConflictError(ValueError):
         if compare_versions(hf_unitxt_version, installed_unitxt_version) == -1:
             msg = f"Located installed unitxt version {installed_unitxt_version} that is newer then unitxt {error_in} version {hf_unitxt_version}. Please force-reload the {error_in} or downgrade unitxt to {error_in} version or uninstall unitxt to avoid conflicts."
         super().__init__(msg)
+
+
+def get_installed_version():
+    from unitxt.settings_utils import get_constants as installed_get_constants
+
+    return installed_get_constants().version
+
+
+def verify_versions_compatibility(hf_asset_type, hf_asset_version):
+    installed_version = get_installed_version()
+    if installed_version != hf_asset_version:
+        raise UnitxtVersionsConflictError(
+            hf_asset_type, hf_asset_version, installed_version
+        )
