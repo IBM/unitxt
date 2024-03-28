@@ -46,7 +46,7 @@ add_to_catalog(
             "classes": "List[str]",
             "type_of_class": "str",
         },
-        outputs={"label": "List[str]"},
+        outputs={"label": "str"},
         prediction_type="str",
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],

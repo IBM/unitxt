@@ -6,8 +6,8 @@
         "sentiment_class": "str"
     },
     "outputs": {
-        "spans_starts": "List[str]",
-        "spans_ends": "List[str]",
+        "spans_starts": "List[int]",
+        "spans_ends": "List[int]",
         "text": "List[str]",
         "labels": "List[str]"
     },

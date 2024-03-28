@@ -5,8 +5,8 @@ add_to_catalog(
     FormTask(
         inputs={"text": "str", "text_type": "str", "sentiment_class": "str"},
         outputs={
-            "spans_starts": "List[str]",
-            "spans_ends": "List[str]",
+            "spans_starts": "List[int]",
+            "spans_ends": "List[int]",
             "text": "List[str]",
             "labels": "List[str]",
         },
@@ -22,8 +22,8 @@ add_to_catalog(
     FormTask(
         inputs={"text": "str", "text_type": "str"},
         outputs={
-            "spans_starts": "List[str]",
-            "spans_ends": "List[str]",
+            "spans_starts": "List[int]",
+            "spans_ends": "List[int]",
             "text": "List[str]",
             "labels": "List[str]",
         },

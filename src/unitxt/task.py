@@ -86,8 +86,8 @@ class FormTask(Tasker, StreamInstanceOperator):
                 continue
 
             raise ValueError(
-                f"Given prediction type '{prediction_type}' and metric '{metric_name}' "
-                f"prediction type '{metric_prediction_type}' are different."
+                f"The task's prediction type ({prediction_type}) and '{metric_name}' "
+                f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
     def get_input_value(self, instance: Dict[str, Any], key: str) -> Any:
@@ -112,7 +112,7 @@ class FormTask(Tasker, StreamInstanceOperator):
         self,
         value: Any,
         data_type: str,
-        value_name: str,
+        field_name: str,
         io_type: Literal["inputs", "outputs"],
     ) -> Any:
         data_type = self.get_prediction_type(data_type)
@@ -121,8 +121,8 @@ class FormTask(Tasker, StreamInstanceOperator):
             return value
 
         raise ValueError(
-            f"Passed {io_type} value {value} under key {value_name} is not of required "
-            f"type {data_type}."
+            f"Passed {io_type} value '{value}' of field {field_name} is not of required "
+            f"type ({data_type})."
         )
 
     def process(

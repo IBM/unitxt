@@ -5,7 +5,7 @@ add_to_catalog(
     FormTask(
         inputs={"context": "str", "context_type": "str", "question": "str"},
         outputs={"answers": "List[str]"},
-        prediction_type="Any",
+        prediction_type="str",
         metrics=["metrics.squad"],
     ),
     "tasks.qa.with_context.extractive",
