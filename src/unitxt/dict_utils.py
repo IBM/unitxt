@@ -379,7 +379,7 @@ def dict_get(
             if not_exist_ok:
                 return default
             raise ValueError(
-                f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
+                f'query "{query}" did not match any item in dict: {dic}'
             ) from e
 
     if query.strip() in dic:
@@ -388,9 +388,7 @@ def dict_get(
     if not_exist_ok:
         return default
 
-    raise ValueError(
-        f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
-    )
+    raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
 
 
 # dict_set sets a value, 'value', which by itself, can be a dict or list or scalar, into 'dic', to become the value of

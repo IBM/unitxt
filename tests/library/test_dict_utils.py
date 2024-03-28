@@ -16,6 +16,9 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_get(dic, "d/2")
         self.assertEqual(dict_get(dic, "f", use_dpath=True), [])
+        self.assertEqual(dict_get(dic, "f/0", use_dpath=True, not_exist_ok=True), None)
+        with self.assertRaises(ValueError):
+            dict_get(dic, "f/0")
 
     def test_nested_get(self):
         dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
