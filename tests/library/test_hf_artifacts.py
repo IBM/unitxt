@@ -4,8 +4,8 @@ from evaluate import load
 from src import unitxt
 from src.unitxt.hf_utils import (
     UnitxtVersionsConflictError,
+    _verify_versions,
     get_missing_imports,
-    verify_versions_compatibility,
 )
 from tests.utils import UnitxtTestCase
 
@@ -41,10 +41,6 @@ class HFTests(UnitxtTestCase):
     def test_metric_load(self):
         load(unitxt.metric_file)
 
-    def test_version_conflicts_lower(self):
+    def test_version_conflicts(self):
         with self.assertRaises(UnitxtVersionsConflictError):
-            verify_versions_compatibility("test", "0.0.0")
-
-    def test_version_conflicts_higher(self):
-        with self.assertRaises(UnitxtVersionsConflictError):
-            verify_versions_compatibility("test", "10000000000.0.0")
+            _verify_versions("test", "0.0.0", "1.1.1")

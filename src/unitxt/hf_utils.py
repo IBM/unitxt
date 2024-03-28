@@ -37,7 +37,10 @@ def get_installed_version():
 
 
 def verify_versions_compatibility(hf_asset_type, hf_asset_version):
-    installed_version = get_installed_version()
+    _verify_versions(hf_asset_type, get_installed_version(), hf_asset_version)
+
+
+def _verify_versions(hf_asset_type, installed_version, hf_asset_version):
     if installed_version != hf_asset_version:
         raise UnitxtVersionsConflictError(
             hf_asset_type, hf_asset_version, installed_version
