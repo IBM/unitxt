@@ -37,7 +37,6 @@ from src.unitxt.metrics import (
     NormalizedSacrebleu,
     PrecisionBinary,
     RecallBinary,
-    RerankRecall,
     RocAuc,
     Rouge,
     TokenOverlap,

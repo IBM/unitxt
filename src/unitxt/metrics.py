@@ -3396,6 +3396,7 @@ class RerankRecall(GlobalMetric):
             f"recall_at_{i}": float(scores[f"recall_{i}"].mean()) for i in self.at_k
         }
 
+
 KO_ERROR_MESSAGE = """
 
 Additional dependencies required. To install them, run:
@@ -3421,4 +3422,3 @@ class NormalizedSacrebleu(HuggingfaceMetric):
         "mecab_ko": KO_ERROR_MESSAGE,
         "mecab_ko_dic": KO_ERROR_MESSAGE,
     }
-
