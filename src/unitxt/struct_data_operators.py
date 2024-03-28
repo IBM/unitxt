@@ -255,11 +255,11 @@ class TruncateTableCells(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        table = dict_get(instance, self.table, use_dpath=self.use_query)
+        table = dict_get(instance, self.table)
 
         answers = []
         if self.text_output is not None:
-            answers = dict_get(instance, self.text_output, use_dpath=self.use_query)
+            answers = dict_get(instance, self.text_output)
 
         self.truncate_table(table_content=table, answers=answers)
 
@@ -337,7 +337,7 @@ class SerializeTableRowAsText(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         linearized_str = ""
         for field in self.fields:
-            value = dict_get(instance, field, use_dpath=False)
+            value = dict_get(instance, field)
             if self.max_cell_length is not None:
                 truncated_value = truncate_cell(value, self.max_cell_length)
                 if truncated_value is not None:
@@ -367,7 +367,7 @@ class SerializeTableRowAsList(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         linearized_str = ""
         for field in self.fields:
-            value = dict_get(instance, field, use_dpath=False)
+            value = dict_get(instance, field)
             if self.max_cell_length is not None:
                 truncated_value = truncate_cell(value, self.max_cell_length)
                 if truncated_value is not None:
@@ -432,8 +432,8 @@ class ListToKeyValPairs(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        keylist = dict_get(instance, self.fields[0], use_dpath=self.use_query)
-        valuelist = dict_get(instance, self.fields[1], use_dpath=self.use_query)
+        keylist = dict_get(instance, self.fields[0])
+        valuelist = dict_get(instance, self.fields[1])
 
         output_dict = {}
         for key, value in zip(keylist, valuelist):

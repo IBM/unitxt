@@ -15,38 +15,32 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual(dict_get(dic, "d/8", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "d/2")
-        self.assertEqual(dict_get(dic, "f", use_dpath=True), [])
-        self.assertEqual(dict_get(dic, "f/0", use_dpath=True, not_exist_ok=True), None)
+        self.assertEqual(dict_get(dic, "f"), [])
+        self.assertEqual(dict_get(dic, "f/0", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "f/0")
 
     def test_nested_get(self):
         dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
-        self.assertEqual(dict_get(dic, "a/b", use_dpath=True), 1)
-        self.assertEqual(dict_get(dic, "a/c", use_dpath=True), 2)
-        self.assertEqual(dict_get(dic, "a/d", use_dpath=True, not_exist_ok=True), None)
+        self.assertEqual(dict_get(dic, "a/b"), 1)
+        self.assertEqual(dict_get(dic, "a/c"), 2)
+        self.assertEqual(dict_get(dic, "a/d", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
-            dict_get(dic, "a/d", use_dpath=True)
-        self.assertEqual(dict_get(dic, "a/f", use_dpath=True), [3, 4])
-        self.assertEqual(dict_get(dic, "a/g", use_dpath=True), [])
+            dict_get(dic, "a/d")
+        self.assertEqual(dict_get(dic, "a/f"), [3, 4])
+        self.assertEqual(dict_get(dic, "a/g"), [])
 
     def test_query_get(self):
         dic = {"a": [{"b": 1}, {"b": 2}]}
-        self.assertEqual(dict_get(dic, "a/*/b", use_dpath=True), [1, 2])
+        self.assertEqual(dict_get(dic, "a/*/b"), [1, 2])
         dic = {"a": [{"b": 1}, {"b": 2}], "c": [{"b": 3}, {"b": 4}]}
-        self.assertEqual(dict_get(dic, "*/1/b", use_dpath=True), [2, 4])
+        self.assertEqual(dict_get(dic, "*/1/b"), [2, 4])
         dic = {"references": ["r1", "r2", "r3"]}
-        self.assertEqual(
-            dict_get(dic, "references/*", use_dpath=True), ["r1", "r2", "r3"]
-        )
-        self.assertEqual(
-            dict_get(dic, "references/", use_dpath=True), ["r1", "r2", "r3"]
-        )
-        self.assertEqual(
-            dict_get(dic, "references", use_dpath=True), ["r1", "r2", "r3"]
-        )
+        self.assertEqual(dict_get(dic, "references/*"), ["r1", "r2", "r3"])
+        self.assertEqual(dict_get(dic, "references/"), ["r1", "r2", "r3"])
+        self.assertEqual(dict_get(dic, "references"), ["r1", "r2", "r3"])
         with self.assertRaises(ValueError):
-            dict_get(dic, "references+#/^!", use_dpath=True)
+            dict_get(dic, "references+#/^!")
 
     def test_query_delete(self):
         dic = {"a": [{"b": 1}, {"b": 2, "c": 3}]}
@@ -110,8 +104,8 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_delete(dic, "a/2/3")
 
-        self.assertEqual("i", dict_get(dic, "a/0/0/0/0", use_dpath=True))
-        self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0", use_dpath=True))
+        self.assertEqual("i", dict_get(dic, "a/0/0/0/0"))
+        self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0"))
         with self.assertRaises(ValueError):
             dict_get(dic, "a/0/0/0/*/0")
 

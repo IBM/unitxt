@@ -175,7 +175,7 @@ class MapInstanceValues(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
-            value = dict_get(instance, key, use_dpath=self.use_query)
+            value = dict_get(instance, key)
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
@@ -397,7 +397,6 @@ class InstanceFieldOperator(StreamInstanceOperator):
                 old_value = dict_get(
                     instance,
                     from_field,
-                    use_dpath=self.use_query,
                     default=self.get_default,
                     not_exist_ok=self.not_exist_ok,
                 )
@@ -539,7 +538,6 @@ class Augmentor(StreamInstanceOperator):
                 old_value = dict_get(
                     instance,
                     field_name,
-                    use_dpath=True,
                     default="",
                     not_exist_ok=False,
                 )
@@ -816,7 +814,7 @@ class ListFieldValues(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         values = []
         for field_name in self.fields:
-            values.append(dict_get(instance, field_name, use_dpath=self.use_query))
+            values.append(dict_get(instance, field_name))
         instance[self.to_field] = values
         return instance
 
@@ -843,7 +841,7 @@ class ZipFieldValues(StreamInstanceOperator):
     ) -> Dict[str, Any]:
         values = []
         for field_name in self.fields:
-            values.append(dict_get(instance, field_name, use_dpath=self.use_query))
+            values.append(dict_get(instance, field_name))
         if self.longest:
             zipped = zip_longest(*values)
         else:
@@ -863,8 +861,8 @@ class IndexOf(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        lst = dict_get(instance, self.search_in, use_dpath=self.use_query)
-        item = dict_get(instance, self.index_of, use_dpath=self.use_query)
+        lst = dict_get(instance, self.search_in)
+        item = dict_get(instance, self.index_of)
         instance[self.to_field] = lst.index(item)
         return instance
 
@@ -884,8 +882,8 @@ class TakeByField(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        value = dict_get(instance, self.field, use_dpath=self.use_query)
-        index_value = dict_get(instance, self.index, use_dpath=self.use_query)
+        value = dict_get(instance, self.field)
+        index_value = dict_get(instance, self.index)
         instance[self.to_field] = value[index_value]
         return instance
 
@@ -1031,7 +1029,7 @@ class CastFields(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
-            value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
+            value = dict_get(instance, field_name)
             if self.process_every_value:
                 assert isinstance(
                     value, list
@@ -1709,7 +1707,7 @@ class EncodeLabels(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name in self.fields:
-            values = dict_get(instance, field_name, use_dpath=True)
+            values = dict_get(instance, field_name)
             values_was_a_list = isinstance(values, list)
             if not isinstance(values, list):
                 values = [values]
@@ -1781,9 +1779,7 @@ class DeterministicBalancer(StreamRefiner):
     fields: List[str]
 
     def signature(self, instance):
-        return str(
-            tuple(dict_get(instance, field, use_dpath=True) for field in self.fields)
-        )
+        return str(tuple(dict_get(instance, field) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         counter = collections.Counter()
@@ -1837,7 +1833,7 @@ class LengthBalancer(DeterministicBalancer):
     def signature(self, instance):
         total_len = 0
         for field_name in self.fields:
-            total_len += len(dict_get(instance, field_name, use_dpath=True))
+            total_len += len(dict_get(instance, field_name))
         for i, val in enumerate(self.segments_boundaries):
             if total_len < val:
                 return i

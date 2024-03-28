@@ -358,12 +358,13 @@ def set_values(
 def dict_get(
     dic: dict,
     query: str,
-    use_dpath: bool = True,
     not_exist_ok: bool = False,
     default: Any = None,
 ):
-    if use_dpath and "/" in query:
-        components = validate_query_and_break_to_components(query)
+    if len(query.strip()) == 0:
+        raise ValueError(f"Can not process the empty query received: '{query}'.")
+    components = validate_query_and_break_to_components(query)
+    if len(components) > 1:
         try:
             success, values = get_values(dic, components, -1 * len(components))
             if not success:
@@ -382,8 +383,9 @@ def dict_get(
                 f'query "{query}" did not match any item in dict: {dic}'
             ) from e
 
-    if query.strip() in dic:
-        return dic[query.strip()]
+    # len(components) == 1
+    if components[0] in dic:
+        return dic[components[0]]
 
     if not_exist_ok:
         return default
