@@ -4,24 +4,31 @@ from tests.utils import UnitxtTestCase
 
 class TestDictUtils(UnitxtTestCase):
     def test_simple_get(self):
-        dic = {"a": 1, "b": 2, "d": [3, 4]}
+        dic = {"a": 1, "b": 2, "d": [3, 4], "f": []}
         self.assertEqual(dict_get(dic, "a"), 1)
         self.assertEqual(dict_get(dic, "b"), 2)
         self.assertEqual(dict_get(dic, "c", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "c")
+        self.assertEqual(dict_get(dic, "d"), [3, 4])
         self.assertEqual(dict_get(dic, "d/1"), 4)
         self.assertEqual(dict_get(dic, "d/8", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "d/2")
+        self.assertEqual(dict_get(dic, "f", use_dpath=True), [])
+        self.assertEqual(dict_get(dic, "f/0", use_dpath=True, not_exist_ok=True), None)
+        with self.assertRaises(ValueError):
+            dict_get(dic, "f/0")
 
     def test_nested_get(self):
-        dic = {"a": {"b": 1, "c": 2}}
+        dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
         self.assertEqual(dict_get(dic, "a/b", use_dpath=True), 1)
         self.assertEqual(dict_get(dic, "a/c", use_dpath=True), 2)
         self.assertEqual(dict_get(dic, "a/d", use_dpath=True, not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "a/d", use_dpath=True)
+        self.assertEqual(dict_get(dic, "a/f", use_dpath=True), [3, 4])
+        self.assertEqual(dict_get(dic, "a/g", use_dpath=True), [])
 
     def test_query_get(self):
         dic = {"a": [{"b": 1}, {"b": 2}]}
