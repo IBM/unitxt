@@ -4,7 +4,7 @@ from src.unitxt.operators import (
     AddFields,
     CopyFields,
 )
-from src.unitxt.processors import Split
+from src.unitxt.processors import SplitStrip
 from src.unitxt.span_lableing_operators import IobExtractor
 from src.unitxt.test_utils.card import test_card
 
@@ -95,7 +95,7 @@ card = TaskCard(
         path="tuetschek/atis",
     ),
     preprocess_steps=[
-        Split(
+        SplitStrip(
             delimiter=" ",
             field_to_field={
                 "slots": "labels",

@@ -32,7 +32,7 @@ add_to_catalog(
 
 add_to_catalog(
     InputOutputTemplate(  # based on "templates.classification.multi_class.default_no_instruction",
-        input_format="{text_type}: {text}",
+        input_format="{text_type}:\n{text}",
         output_format="{label}",
         target_prefix="{type_of_class}:\n",
         instruction="Classify the {type_of_class} of the following {text_type} to one of these options: {classes}.",
@@ -45,6 +45,7 @@ add_to_catalog(
     "templates.classification.multi_class.title",
     overwrite=True,
 )
+
 
 add_to_catalog(
     InputOutputTemplate(

@@ -18,7 +18,7 @@ from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
-from .hf_utils import __file__ as _
+from .hf_utils import verify_versions_compatibility
 from .instructions import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import __file__ as _
@@ -39,6 +39,7 @@ from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
+from .string_operators import __file__ as _
 from .struct_data_operators import __file__ as _
 from .system_prompts import __file__ as _
 from .task import __file__ as _
@@ -74,13 +75,7 @@ class Metric(evaluate.Metric):
         split_name: str = "all",
     ):
         if is_package_installed("unitxt"):
-            from unitxt.settings_utils import get_constants as installed_get_constants
-
-            installed_package_constants = installed_get_constants()
-            if installed_package_constants.version != self.VERSION:
-                raise ValueError(
-                    f"Located installed unitxt version {installed_get_constants.version} that is different then unitxt metric version {self.VERSION}. Please make sure the installed version is identical to the dataset version."
-                )
+            verify_versions_compatibility("metric", self.VERSION)
 
             from unitxt.metric_utils import _compute as _compute_installed
 
