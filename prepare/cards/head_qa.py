@@ -7,7 +7,6 @@ from src.unitxt.blocks import (
     RenameFields,
     TaskCard,
 )
-from src.unitxt.operators import ListFieldValues
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "head_qa"
@@ -25,7 +24,6 @@ for subset in get_dataset_config_names(dataset_name):
         loader=LoadHF(path=f"{dataset_name}", name=subset),
         preprocess_steps=[
             RenameFields(field_to_field={"qtext": "text", "category": "label"}),
-            ListFieldValues(fields=["label"], to_field="label"),  # TODO do we need it?
             AddFields(
                 fields={
                     "classes": categories,

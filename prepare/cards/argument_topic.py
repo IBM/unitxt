@@ -1,6 +1,5 @@
 from src.unitxt import add_to_catalog
 from src.unitxt.blocks import AddFields, LoadHF, TaskCard
-from src.unitxt.operators import ListFieldValues
 from src.unitxt.test_utils.card import test_card
 
 dataset_name = "argument_topic"
@@ -82,7 +81,6 @@ class_names = [
 card = TaskCard(
     loader=LoadHF(path="ibm/argument_quality_ranking_30k", name=f"{dataset_name}"),
     preprocess_steps=[
-        ListFieldValues(fields=["label"], to_field="label"),
         AddFields(
             fields={
                 "classes": class_names,
