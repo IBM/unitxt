@@ -450,7 +450,7 @@ def dict_set(
         not isinstance(value, list) or len(value) == 0 or "*" not in query
     ):
         raise ValueError(
-            f"set_multiple == True, and yet value, {value}, is not a list or '*' is not in query '{query}'"
+            f"set_multiple == True, but can not tell what or where to break up: either value, {value}, is not a list of len > 0, or '*' is not in query '{query}'"
         )
     if "/" not in query:
         if query.strip() in dic or not_exist_ok:

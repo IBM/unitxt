@@ -4,7 +4,15 @@ from tests.utils import UnitxtTestCase
 
 class TestDictUtils(UnitxtTestCase):
     def test_simple_get(self):
-        dic = {"a": 1, "b": 2, "d": [3, 4], "f": []}
+        dic = {
+            "a": 1,
+            "b": 2,
+            "d": [3, 4],
+            "f": [],
+            "g": [[]],
+            "h": [[[]]],
+            "i": [[], []],
+        }
         self.assertEqual(dict_get(dic, "a"), 1)
         self.assertEqual(dict_get(dic, "b"), 2)
         self.assertEqual(dict_get(dic, "c", not_exist_ok=True), None)
@@ -16,9 +24,20 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_get(dic, "d/2")
         self.assertEqual(dict_get(dic, "f"), [])
+        self.assertEqual(dict_get(dic, "f/*"), [])
         self.assertEqual(dict_get(dic, "f/0", not_exist_ok=True), None)
         with self.assertRaises(ValueError):
             dict_get(dic, "f/0")
+        with self.assertRaises(ValueError):
+            dict_get(dic, "f/*/*")
+        self.assertEqual(dict_get(dic, "g/"), [[]])
+        self.assertEqual(dict_get(dic, "g/*"), [[]])
+        self.assertEqual(dict_get(dic, "g/*/*"), [[]])
+        self.assertEqual(dict_get(dic, "g/0"), [])
+        with self.assertRaises(ValueError):
+            dict_get(dic, "g/*/*/*")
+        self.assertEqual(dict_get(dic, "g/*/*"), dict_get(dic, "h/0"))
+        self.assertEqual(dict_get(dic, "i/0"), dict_get(dic, "i/1"))
 
     def test_nested_get(self):
         dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
@@ -54,12 +73,30 @@ class TestDictUtils(UnitxtTestCase):
 
     def test_query_delete(self):
         dic = {"a": [{"b": 1}, {"b": 2, "c": 3}]}
+        dict_delete(dic, "a/*/b")
+        self.assertEqual({"a": [{}, {"c": 3}]}, dic)
+        dic = {"a": [{"b": 1}, {"b": 2, "c": 3}], "d": 4}
         dict_delete(dic, "a/*/b", remove_empty_ancestors=True)
-        self.assertEqual({"a": [{"c": 3}]}, dic)
+        self.assertEqual({"a": [{"c": 3}], "d": 4}, dic)
+        dict_delete(dic, "a/*/c", remove_empty_ancestors=True)
+        self.assertEqual({"d": 4}, dic)
+        dic = {
+            "a": [
+                {"b": 1},
+                {"b": 2, "c": 3},
+                {"b": 20, "c": 30},
+                {"d": 2, "c": 5},
+                {"b": 200, "c": 300},
+            ]
+        }
+        dict_delete(dic, "a/*/b", remove_empty_ancestors=True)
+        self.assertEqual(
+            {"a": [{"c": 3}, {"c": 30}, {"d": 2, "c": 5}, {"c": 300}]}, dic
+        )
 
         dic = {"references": ["r1", "r2", "r3"]}
-        dict_delete(dic, "references/*")
-        self.assertEqual({"references": []}, dic)
+        dict_delete(dic, "references")
+        self.assertEqual({}, dic)
 
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references/*", remove_empty_ancestors=True)

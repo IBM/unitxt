@@ -2022,12 +2022,14 @@ class TestOperators(UnitxtTestCase):
             {"prediction": "red", "references": ["red", "blue"]},
             {"prediction": "blue", "references": ["blue"]},
             {"prediction": "green", "references": ["red"]},
+            {"prediction": "", "references": ["red"]},
         ]
 
         targets = [
             {"prediction": 0, "references": [0, 1]},
             {"prediction": 1, "references": [1]},
             {"prediction": 2, "references": [0]},
+            {"prediction": 3, "references": [0]},
         ]
 
         check_operator(
@@ -2035,6 +2037,17 @@ class TestOperators(UnitxtTestCase):
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+        inputs = [
+            {"prediction": "green", "references": []},
+        ]
+        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: set_multiple == True, but can not tell what or where to break up: either value, [], is not a list of len > 0, or '*' is not in query 'references/*'"
+        check_operator_exception(
+            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            inputs=inputs,
+            tester=self,
+            exception_text=exception_text,
         )
 
     def test_join_str(self):
