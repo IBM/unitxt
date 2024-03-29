@@ -67,8 +67,8 @@ class TestTasks(UnitxtTestCase):
             operator.check_metrics_type()
         self.assertEqual(
             str(e.exception),
-            "Given prediction type 'typing.Dict' and metric 'metrics.wer' prediction type "
-            "'<class 'str'>' are different.",
+            "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
+            "(<class 'str'>) are different.",
         )
 
     def test_task_instance_value_type_checking(self):
@@ -107,5 +107,5 @@ class TestTasks(UnitxtTestCase):
         self.assertEqual(
             str(e.exception),
             "Error processing instance '0' from stream 'test' in FormTask due to: "
-            "Passed inputs value Test under key input1 is not of required type typing.List[str].",
+            "Passed inputs value 'Test' of field input1 is not of required type (typing.List[str]).",
         )
