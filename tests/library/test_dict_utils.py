@@ -28,7 +28,17 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_get(dic, "a/d")
         self.assertEqual(dict_get(dic, "a/f"), [3, 4])
+        self.assertEqual(dict_get(dic, "a/f/0"), 3)
+        self.assertEqual(dict_get(dic, "a/f/1"), 4)
+        self.assertEqual(dict_get(dic, "a/f/*"), [3, 4])
+        with self.assertRaises(ValueError):
+            dict_get(dic, "a/f/2")
+        with self.assertRaises(ValueError):
+            dict_get(dic, "a/f/1/m")
         self.assertEqual(dict_get(dic, "a/g"), [])
+        self.assertEqual(dict_get(dic, "a/g/*"), [])
+        with self.assertRaises(ValueError):
+            dict_get(dic, "a/g/0")
 
     def test_query_get(self):
         dic = {"a": [{"b": 1}, {"b": 2}]}
@@ -58,6 +68,8 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references/*")
         self.assertEqual({"references": []}, dic)
+        dict_delete(dic, "references")
+        self.assertEqual({}, dic)
 
         dic = {"references": ["r1", "r2", "r3"]}
         dict_delete(dic, "references/")
@@ -150,9 +162,12 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(dic, {"a": [{"b": 3}, {"b": 4}]})
         dict_set(dic, "a/*/b", [3, 4], set_multiple=False)
         self.assertDictEqual(dic, {"a": [{"b": [3, 4]}, {"b": [3, 4]}]})
-
+        dict_set(dic, "a/0/c", [])
+        self.assertDictEqual({"a": [{"b": [3, 4], "c": []}, {"b": [3, 4]}]}, dic)
         dict_set(dic, "a/0/b/c/*/d", [5, 6], set_multiple=False)
-        self.assertDictEqual(dic, {"a": [{"b": {"c": [{"d": [5, 6]}]}}, {"b": [3, 4]}]})
+        self.assertDictEqual(
+            dic, {"a": [{"b": {"c": [{"d": [5, 6]}]}, "c": []}, {"b": [3, 4]}]}
+        )
 
         dict_set(dic, "a/0/c/d/*/e/*/f", [7, 8], set_multiple=True)
         # breaks up just one, smoothly

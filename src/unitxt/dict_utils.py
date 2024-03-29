@@ -233,7 +233,8 @@ def get_values(
             except:
                 continue
 
-        return (len(to_ret) > 0, to_ret)
+        return (len(to_ret) > 0 or index_into_query == -1, to_ret)
+        # when * is the last component, it refers to 'all the contents' of an empty list being current_element.
     # next_component is indx or name, current_element must be a list or a dict
     if indx.match(component):
         component = int(component)
