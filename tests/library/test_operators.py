@@ -2023,6 +2023,7 @@ class TestOperators(UnitxtTestCase):
             {"prediction": "blue", "references": ["blue"]},
             {"prediction": "green", "references": ["red"]},
             {"prediction": "", "references": ["red"]},
+            {"prediction": "green", "references": []},
         ]
 
         targets = [
@@ -2030,6 +2031,7 @@ class TestOperators(UnitxtTestCase):
             {"prediction": 1, "references": [1]},
             {"prediction": 2, "references": [0]},
             {"prediction": 3, "references": [0]},
+            {"prediction": 2, "references": []},
         ]
 
         check_operator(
@@ -2039,12 +2041,10 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        inputs = [
-            {"prediction": "green", "references": []},
-        ]
-        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: set_multiple == True, but can not tell what or where to break up: either value, [], is not a list of len > 0, or '*' is not in query 'references/*'"
+        inputs = [{"prediction": "red", "references": "blue"}]
+        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict: {'prediction': 'red', 'references': 'blue'}"
         check_operator_exception(
-            operator=EncodeLabels(fields=["prediction", "references/*"]),
+            operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,
             tester=self,
             exception_text=exception_text,

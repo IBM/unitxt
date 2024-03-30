@@ -1703,7 +1703,10 @@ class EncodeLabels(StreamInstanceOperator):
                 instance,
                 field_name,
                 new_values,
-                set_multiple="*" in field_name,
+                not_exist_ok=False,  # the values to encode where just taken from there
+                set_multiple="*" in field_name
+                and isinstance(new_values, list)
+                and len(new_values) > 0,
             )
 
         return instance

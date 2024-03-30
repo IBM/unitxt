@@ -12,6 +12,9 @@ class TestDictUtils(UnitxtTestCase):
             "g": [[]],
             "h": [[[]]],
             "i": [[], []],
+            "j": {},
+            "k": [{}, {}],
+            "l": [{"l1": 100}, {"l2": 200}],
         }
         self.assertEqual(dict_get(dic, "a"), 1)
         self.assertEqual(dict_get(dic, "b"), 2)
@@ -38,6 +41,17 @@ class TestDictUtils(UnitxtTestCase):
             dict_get(dic, "g/*/*/*")
         self.assertEqual(dict_get(dic, "g/*/*"), dict_get(dic, "h/0"))
         self.assertEqual(dict_get(dic, "i/0"), dict_get(dic, "i/1"))
+        self.assertEqual({}, dict_get(dic, "j"))
+        self.assertEqual([], dict_get(dic, "j/*"))
+        self.assertEqual([{}, {}], dict_get(dic, "k"))
+        self.assertEqual([{}, {}], dict_get(dic, "k/*"))
+        self.assertEqual([[], []], dict_get(dic, "k/*/*"))
+        with self.assertRaises(ValueError):
+            dict_get(dic, "k/*/*/*")
+        self.assertEqual([{"l1": 100}, {"l2": 200}], dict_get(dic, "l/*"))
+        self.assertEqual([[100], [200]], dict_get(dic, "l/*/*"))
+        with self.assertRaises(ValueError):
+            dict_get(dic, "l/*/*/*")
 
     def test_nested_get(self):
         dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
@@ -72,6 +86,15 @@ class TestDictUtils(UnitxtTestCase):
             dict_get(dic, "references+#/^!")
 
     def test_query_delete(self):
+        dic = None
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "path")
+        dic = 7
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "path")
+        dic = {"a": 1, "b": 2, "c": 3}
+        dict_delete(dic, "a")
+        self.assertDictEqual({"b": 2, "c": 3}, dic)
         dic = {"a": [{"b": 1}, {"b": 2, "c": 3}]}
         dict_delete(dic, "a/*/b")
         self.assertEqual({"a": [{}, {"c": 3}]}, dic)
@@ -133,6 +156,15 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual({"references": ["r2", "r3"]}, dic)
         with self.assertRaises(ValueError):
             dict_delete(dic, "references+#/^!", remove_empty_ancestors=True)
+        dict_delete(dic, "*")
+        self.assertEqual({}, dic)
+        dic = {"references": [{"r11": 1, "r12": 2}, "r2", "r3"]}
+        with self.assertRaises(ValueError):
+            dict_delete(dic, "")
+        dic = {"references": [{"r11": 1, "r12": 2}, "r2", "r3"]}
+        dict_delete(dic, "*", remove_empty_ancestors=True)
+        self.assertEqual({}, dic)
+
         with self.assertRaises(ValueError):
             dict_delete(dic, "", remove_empty_ancestors=True)
 
@@ -181,6 +213,13 @@ class TestDictUtils(UnitxtTestCase):
             dict_set(dic, "c", 5, not_exist_ok=False)
         dict_set(dic, "c", 5)
         self.assertDictEqual(dic, {"a": 3, "b": 4, "c": 5})
+        dict_set(dic, "", {"a": 6, "b": 8})
+        self.assertDictEqual({"a": 6, "b": 8}, dic)
+        dic = [1, 2, 3]
+        dict_set(dic, "", [])
+        self.assertEqual([], dic)
+        with self.assertRaises(ValueError):
+            dict_set(None, "path", {"a": 6, "b": 8}, not_exist_ok=False)
 
     def test_nested_set(self):
         dic = {"a": {"b": 1, "c": 2}}
@@ -205,20 +244,20 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(
             dic, {"a": [{"b": {"c": [{"d": [5, 6]}]}, "c": []}, {"b": [3, 4]}]}
         )
+        # sort keys toward breakup per set_multiple
+        dic = {"c": 3, "a": 1, "b": 2}
+        dict_set(dic, "*", [10, 20, 30], set_multiple=True)
+        self.assertDictEqual({"a": 10, "b": 20, "c": 30}, dic)
 
         dict_set(dic, "a/0/c/d/*/e/*/f", [7, 8], set_multiple=True)
         # breaks up just one, smoothly
         self.assertDictEqual(
-            dic,
             {
-                "a": [
-                    {
-                        "b": {"c": [{"d": [5, 6]}]},
-                        "c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]},
-                    },
-                    {"b": [3, 4]},
-                ]
+                "c": 30,
+                "a": [{"c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]}}],
+                "b": 20,
             },
+            dic,
         )
 
         dic = {"c": [{"b": 3}, {"b": 4}], "a": [{"b": 1}, {"b": 2}]}
@@ -227,6 +266,7 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(
             dic, {"a": [{"b": 1}, {"b": 5}], "c": [{"b": 3}, {"b": 6}]}
         )
+
         with self.assertRaises(ValueError):
             # lengths do not match for dict with set_multiple, so not success, and not_exist_ok = False, so raises
             dict_set(
