@@ -8,7 +8,7 @@ from src.unitxt.test_utils.metrics import test_metric
 metric = MetricPipeline(
     main_score="spearmanr",
     preprocess_steps=[
-        CopyFields(field_to_field=[("references/0", "references")], use_query=True),
+        CopyFields(field_to_field=[("references/0", "references")]),
         CastFields(
             fields={"prediction": "float", "references": "float"},
             failure_defaults={"prediction": 0.0},

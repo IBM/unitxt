@@ -1047,7 +1047,6 @@ class MetricPipeline(MultiStreamOperator, Metric):
                 [f"score/instance/{self.main_score}", "score/instance/score"],
                 [f"score/global/{self.main_score}", "score/global/score"],
             ],
-            use_query=True,
         )
 
     def process(self, multi_stream: MultiStream) -> MultiStream:

@@ -9,8 +9,7 @@
                     "task_data/context",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "list_field_values",
@@ -39,8 +38,7 @@
                     "score/global/precision",
                     "score/global/precision_overlap_with_context"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ]
 }

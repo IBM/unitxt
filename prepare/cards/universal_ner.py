@@ -66,7 +66,6 @@ for sub_task in sub_tasks:
                     "spans/*/end": "spans_ends",
                     "spans/*/label": "labels",
                 },
-                use_query=True,
                 get_default=[],
                 not_exist_ok=True,
             ),

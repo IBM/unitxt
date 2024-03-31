@@ -23,8 +23,8 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         AddFields({"input_label": {}}),
-        CopyFields(field_to_field=[("prompts/0", "first_prompt")], use_query=True),
-        CopyFields(field_to_field=[("wikipedia/0", "first_wiki")], use_query=True),
+        CopyFields(field_to_field=[("prompts/0", "first_prompt")]),
+        CopyFields(field_to_field=[("wikipedia/0", "first_wiki")]),
         FilterByCondition(values={"domain": ["race", "gender"]}, condition="in"),
         Shuffle(page_size=10000),
         CopyFields(
@@ -33,7 +33,6 @@ card = TaskCard(
                 "category": "input_label/category",
                 "first_wiki": "input_label/wiki",
             },
-            use_query=True,
         ),
         Apply("input_label", function=json.dumps, to_field="input_label"),
     ],

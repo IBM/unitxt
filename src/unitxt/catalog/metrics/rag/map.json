@@ -9,8 +9,7 @@
                     "context_ids",
                     "prediction"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "copy_fields",
@@ -19,8 +18,7 @@
                     "ground_truths_context_ids",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ],
     "metric": "metrics.map"

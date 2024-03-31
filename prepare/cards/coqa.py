@@ -13,14 +13,12 @@ card = TaskCard(
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",
-            use_query=True,
         ),
         Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
         DuplicateBySubLists(field="dialog"),
         Get(field="dialog", item=-1, to_field="last_turn"),
         CopyFields(
             field_to_field={"last_turn/user": "question", "last_turn/system": "answer"},
-            use_query=True,
         ),
         Wrap(
             field="answer",
@@ -48,7 +46,6 @@ card = TaskCard(
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",
-            use_query=True,
         ),
         Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
         DuplicateBySubLists(field="dialog"),
