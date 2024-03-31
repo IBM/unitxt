@@ -278,8 +278,8 @@ def set_values(
 
     if current_element is None and not fixed_parameters["generate_if_not_exists"]:
         return (False, None)
-    component = fixed_parameters["query"][index_into_query]
 
+    component = fixed_parameters["query"][index_into_query]
     if component == "*":
         if current_element is not None and set_multiple:
             if isinstance(current_element, dict) and len(current_element) != len(value):
@@ -291,13 +291,14 @@ def set_values(
                     return (False, None)
                 # current_element must be a list, extend current_element to the length needed
                 current_element.extend([None] * (len(value) - len(current_element)))
-        if current_element is None:
+        if current_element is None or current_element == []:
             current_element = [None] * (
                 len(value)
                 if set_multiple
-                else 1
-                if (not isinstance(value, list) or len(value) > 0)
-                else 0
+                else value is None
+                or not isinstance(value, list)
+                or len(value) > 0
+                or index_into_query < -1
             )
         # now current_element is of size suiting value
         if isinstance(current_element, dict):
@@ -322,7 +323,10 @@ def set_values(
 
             except:
                 continue
-        return (any_success or len(keys) == 0, current_element)
+        return (
+            any_success or (len(keys) == 0 and index_into_query == -1),
+            current_element,
+        )
 
     # component is an index into a list or a key into a dictionary
     if indx.match(component):
@@ -467,7 +471,7 @@ def dict_set(
     if query.strip() == "":
         # change the whole input dic, as dic indeed matches ""
         if isinstance(dic, dict):
-            if not isinstance(value, dict):
+            if value is None or not isinstance(value, dict):
                 raise ValueError(
                     f"Through an empty query, trying to set a whole new value, {value}, to the whole of dic, {dic}, but value is not a dict"
                 )
@@ -476,7 +480,7 @@ def dict_set(
             return
 
         if isinstance(dic, list):
-            if not isinstance(value, list):
+            if value is None or not isinstance(value, list):
                 raise ValueError(
                     f"Through an empty query, trying to set a whole new value, {value}, to the whole of dic, {dic}, but value is not a list"
                 )
@@ -485,7 +489,7 @@ def dict_set(
             return
 
     if set_multiple:
-        if not isinstance(value, list) or len(value) == 0:
+        if value is None or not isinstance(value, list) or len(value) == 0:
             raise ValueError(
                 f"set_multiple=True, but value, {value}, can not be broken up, as either it is not a list or it is an empty list"
             )

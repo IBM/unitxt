@@ -103,6 +103,11 @@ class TestDictUtils(UnitxtTestCase):
         self.assertEqual({"a": [{"c": 3}], "d": 4}, dic)
         dict_delete(dic, "a/*/c", remove_empty_ancestors=True)
         self.assertEqual({"d": 4}, dic)
+        dict_delete(dic, "d", remove_empty_ancestors=True)
+        self.assertEqual({}, dic)
+        dic = {"c": {"d": {"e": 4}}}
+        dict_delete(dic, "c/d/e", remove_empty_ancestors=True)
+        self.assertEqual({}, dic)
         dic = {
             "a": [
                 {"b": 1},
@@ -260,6 +265,19 @@ class TestDictUtils(UnitxtTestCase):
             dic,
         )
 
+        dict_set(dic, "a/1/c/d/*/e/*/f/*/h", [])
+        self.assertDictEqual(
+            {
+                "c": 30,
+                "a": [
+                    {"c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]}},
+                    {"c": {"d": [{"e": [{"f": [{"h": []}]}]}]}},
+                ],
+                "b": 20,
+            },
+            dic,
+        )
+
         dic = {"c": [{"b": 3}, {"b": 4}], "a": [{"b": 1}, {"b": 2}]}
         dict_set(dic, "*/1/b", [5, 6], set_multiple=True)
         # ordered paths alphabetically before assigning
@@ -311,6 +329,26 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"a": {"b": []}}
         dict_set(dic, "a/b/2/c", [3, 4])
         self.assertDictEqual(dic, {"a": {"b": [None, None, {"c": [3, 4]}]}})
+
+        dic = {"a": {"b": []}}
+        dict_set(dic, "c", None)
+        self.assertDictEqual({"a": {"b": []}, "c": None}, dic)
+        dict_set(dic, "d/e/*/f/*", None)
+        self.assertDictEqual(
+            {"a": {"b": []}, "c": None, "d": {"e": [{"f": [None]}]}}, dic
+        )
+        dict_set(dic, "d/e/*/f/", None)
+        self.assertDictEqual(
+            {"a": {"b": []}, "c": None, "d": {"e": [{"f": [None]}]}}, dic
+        )
+        dict_set(dic, "d/e/*/f", None)
+        self.assertDictEqual(
+            {"a": {"b": []}, "c": None, "d": {"e": [{"f": None}]}}, dic
+        )
+        dict_set(dic, "a/b/*", 5)
+        self.assertDictEqual(
+            {"a": {"b": [5]}, "c": None, "d": {"e": [{"f": None}]}}, dic
+        )
 
         dic = {"a": {"b": []}}
         with self.assertRaises(ValueError):
