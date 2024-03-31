@@ -1447,12 +1447,14 @@ class Rouge(HuggingfaceMetric):
 
 
 # Computes char edit distance, ignoring whitespace
-class CharEditDistanceAccuracy(InstanceMetric):
-    reduction_map = {"mean": ["char_edit_dist_accuracy"]}
-    main_score = "char_edit_dist_accuracy"
-    ci_scores = ["char_edit_dist_accuracy"]
+class CharEditDistance(InstanceMetric):
+    main_score = "char_edit_distance"
+    reduction_map = {"mean": [main_score]}
+    ci_scores = [main_score]
     prediction_type = "str"
     single_reference_per_prediction = True
+
+    accuracy_metric = False
 
     _requirements_list: List[str] = ["editdistance"]
 
@@ -1467,9 +1469,21 @@ class CharEditDistanceAccuracy(InstanceMetric):
         formatted_reference = "".join(references[0].split())
         max_length = max(len(formatted_reference), len(formatted_prediction))
         if max_length == 0:
-            return {"char_edit_dist_accuracy": 0.0}
+            return {self.main_score: 0.0}
         edit_dist = self.eval(formatted_reference, formatted_prediction)
-        return {"char_edit_dist_accuracy": (1 - edit_dist / max_length)}
+        if self.accuracy_metric:
+            score = 1 - edit_dist / max_length
+        else:
+            score = edit_dist
+        return {self.main_score: score}
+
+
+class CharEditDistanceAccuracy(CharEditDistance):
+    main_score = "char_edit_dist_accuracy"
+    reduction_map = {"mean": [main_score]}
+    ci_scores = [main_score]
+
+    accuracy_metric = True
 
 
 class Wer(HuggingfaceMetric):
