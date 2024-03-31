@@ -903,6 +903,27 @@ class TestMetrics(UnitxtTestCase):
                 task_data=GROUPED_INSTANCE_ADDL_INPUTS,
             )
 
+    def test_run_metric_with_different_fields(self):
+        metric = Accuracy(reference_field="my_field")
+        outputs = apply_metric(
+            metric=metric,
+            predictions=["A"],
+            references=[["B"]],
+            task_data=[{"my_field": "A"}],
+        )
+        target = 1.0
+        self.assertEqual(outputs[0]["score"]["global"]["score"], target)
+
+        metric = Accuracy(prediction_field="my_field")
+        outputs = apply_metric(
+            metric=metric,
+            predictions=["A"],
+            references=[["B"]],
+            task_data=[{"my_field": "B"}],
+        )
+        target = 1.0
+        self.assertEqual(outputs[0]["score"]["global"]["score"], target)
+
 
 class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):

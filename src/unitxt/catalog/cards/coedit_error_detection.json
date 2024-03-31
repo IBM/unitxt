@@ -1,0 +1,57 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "grammarly/coedit",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "task": "gec"
+            },
+            "condition": "eq"
+        },
+        "splitters.small_no_test",
+        {
+            "type": "execute_expression",
+            "expression": "': '.join(src.split(': ')[1:])",
+            "to_field": "src"
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "tgt",
+                "src"
+            ],
+            "to_field": "correct_and_incorrect"
+        },
+        {
+            "type": "duplicate_by_list",
+            "field": "correct_and_incorrect",
+            "to_field": "text"
+        },
+        {
+            "type": "index_of",
+            "index_of": "text",
+            "search_in": "correct_and_incorrect",
+            "to_field": "label"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "class": "Grammatically incorrect",
+                "text_type": "text"
+            }
+        },
+        {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        }
+    ],
+    "task": "tasks.classification.binary[metrics=[metrics.accuracy,metrics.f1_binary,metrics.precision_binary,metrics.recall_binary]]",
+    "templates": [
+        "templates.grammatical_error_detection.yes_no"
+    ]
+}
