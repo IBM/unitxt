@@ -54,6 +54,9 @@ class TestDictUtils(UnitxtTestCase):
             dict_get(dic, "l/*/*/*")
 
     def test_nested_get(self):
+        dic = {"x/y": 3}
+        self.assertEqual(dict_get(dic, "x/y"), 3)
+
         dic = {"a": {"b": 1, "c": 2, "f": [3, 4], "g": []}}
         self.assertEqual(dict_get(dic, "a/b"), 1)
         self.assertEqual(dict_get(dic, "a/c"), 2)
@@ -95,6 +98,10 @@ class TestDictUtils(UnitxtTestCase):
         dic = {"a": 1, "b": 2, "c": 3}
         dict_delete(dic, "a")
         self.assertDictEqual({"b": 2, "c": 3}, dic)
+        dic = {"x/y": 1, "b": 2, "c": 3}
+        dict_delete(dic, "x/y")
+        self.assertDictEqual({"b": 2, "c": 3}, dic)
+
         dic = {"a": [{"b": 1}, {"b": 2, "c": 3}]}
         dict_delete(dic, "a/*/b")
         self.assertEqual({"a": [{}, {"c": 3}]}, dic)
@@ -220,6 +227,10 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(dic, {"a": 3, "b": 4, "c": 5})
         dict_set(dic, "", {"a": 6, "b": 8})
         self.assertDictEqual({"a": 6, "b": 8}, dic)
+        dic = {"x/y": 1, "b": 2}
+        dict_set(dic, "x/y", 3)
+        self.assertDictEqual(dic, {"x/y": 3, "b": 2})
+
         dic = [1, 2, 3]
         dict_set(dic, "", [])
         self.assertEqual([], dic)

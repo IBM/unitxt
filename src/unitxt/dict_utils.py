@@ -191,6 +191,10 @@ def dict_delete(
             "Query is an empty string, implying the deletion of dic as a whole. This can not be done via this function call."
         )
 
+    if isinstance(dic, dict) and query.strip() in dic:
+        dic.pop(query.strip())
+        return
+
     qpath = validate_query_and_break_to_components(query)
 
     try:
@@ -381,6 +385,9 @@ def dict_get(
     if len(query.strip()) == 0:
         return dic
 
+    if dic is not None and isinstance(dic, dict) and query.strip() in dic:
+        return dic[query.strip()]
+
     components = validate_query_and_break_to_components(query)
     if len(components) > 1:
         try:
@@ -465,7 +472,7 @@ def dict_set(
 ):  # sets dic to its new value
     if dic is None or not isinstance(dic, (list, dict)):
         raise ValueError(
-            f"Can not change dic that is either None or not a dict nor list. Got dic = {dic}"
+            f"Can not change dic that is either None or not a dict nor a list. Got dic = {dic}"
         )
 
     if query.strip() == "":
@@ -487,6 +494,10 @@ def dict_set(
             dic.clear()
             dic.extend(value)
             return
+
+    if isinstance(dic, dict) and query.strip() in dic:
+        dic[query.strip()] = value
+        return
 
     if set_multiple:
         if value is None or not isinstance(value, list) or len(value) == 0:
