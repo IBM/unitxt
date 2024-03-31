@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Any, Dict, List, Union
 
 from datasets import DatasetDict
@@ -28,3 +29,12 @@ def load_dataset(dataset_query: str) -> DatasetDict:
 
 def evaluate(predictions, data) -> List[Dict[str, Any]]:
     return _compute(predictions=predictions, references=data)
+
+
+@lru_cache
+def _get_produce_with_cache(recipe_query):
+    return get_dataset_artifact(recipe_query).produce
+
+
+def produce(instance, recipe_query):
+    return _get_produce_with_cache(recipe_query)(instance)

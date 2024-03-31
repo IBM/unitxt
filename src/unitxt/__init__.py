@@ -1,6 +1,6 @@
 import random
 
-from .api import evaluate, load, load_dataset
+from .api import evaluate, load, load_dataset, produce
 from .catalog import add_to_catalog, get_from_catalog
 from .logging_utils import get_logger
 from .register import register_all_artifacts, register_local_catalog
