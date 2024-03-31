@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import functools
+import warnings
 from abc import ABCMeta
 from inspect import Parameter, Signature
 from typing import Any, final
@@ -395,6 +396,8 @@ class Dataclass(metaclass=DataclassMeta):
 
         Checks for abstract fields when an instance is created.
         """
+        from .settings_utils import get_constants as installed_get_constants
+
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
         _init_positional_fields_names = [
@@ -447,6 +450,11 @@ class Dataclass(metaclass=DataclassMeta):
                 raise UnexpectedArgumentError(
                     f"Too many positional arguments {unexpected_argv} for class {self.__class__.__name__}.\nShould be only {len(_init_positional_fields_names)} positional arguments: {', '.join(_init_positional_fields_names)}"
                 )
+
+            for k, v in installed_get_constants().deprecated_fields_warns.items():
+                if k in unexpected_kwargs:
+                    unexpected_kwargs.pop(k)
+                    warnings.warn(v, DeprecationWarning, stacklevel=2)
 
             if len(unexpected_kwargs) > 0:
                 raise UnexpectedArgumentError(
