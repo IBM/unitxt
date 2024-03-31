@@ -16,7 +16,7 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
-from .dataclass import AbstractField, InternalField, OptionalField
+from .dataclass import AbstractField, InternalField, NonPositionalField, OptionalField
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -648,6 +648,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
     reduction_map: Dict[str, List[str]] = AbstractField()
 
+    reference_field: str = NonPositionalField(default="references")
+    prediction_field: str = NonPositionalField(default="prediction")
+
     def _validate_group_mean_reduction(self, instances: List[dict]):
         """Ensure that group_mean reduction_map is properly formatted.
 
@@ -827,10 +830,21 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
-            refs, pred = instance["references"], instance["prediction"]
+            task_data = instance["task_data"] if "task_data" in instance else {}
+
+            if self.reference_field == "references":
+                refs = instance["references"]
+            else:
+                refs = task_data[self.reference_field]
+                if not isinstance(refs, list):
+                    refs = [refs]
+            if self.prediction_field == "prediction":
+                pred = instance["prediction"]
+            else:
+                pred = task_data[self.prediction_field]
+
             self._validate_prediction(pred)
             self._validate_reference(refs)
-            task_data = instance["task_data"] if "task_data" in instance else {}
 
             instance_score = self.compute(
                 references=refs, prediction=pred, task_data=task_data
