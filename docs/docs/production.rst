@@ -36,9 +36,9 @@ Then you can produce that model-ready data with the `produce` function:
 
   from unitxt import produce
 
-  result = produce(instance, recipe)
+  result = produce([instance], recipe)
 
-Then you have the production ready instance in the result. If you `print(instance["source"])` you will get:
+Then you have the production ready instance in the result. If you `print(result[0]["source"])` you will get:
 
 .. code-block::
 

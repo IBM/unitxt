@@ -36,5 +36,11 @@ def _get_produce_with_cache(recipe_query):
     return get_dataset_artifact(recipe_query).produce
 
 
-def produce(instance, recipe_query):
-    return _get_produce_with_cache(recipe_query)(instance)
+def produce(instance_or_instances, recipe_query):
+    is_list = isinstance(instance_or_instances, list)
+    if not is_list:
+        instance_or_instances = [instance_or_instances]
+    result = _get_produce_with_cache(recipe_query)(instance_or_instances)
+    if not is_list:
+        result = result[0]
+    return result

@@ -73,13 +73,15 @@ class TestRecipes(UnitxtTestCase):
         )
 
         result = recipe.produce(
-            {
-                "question": "what?",
-                "choices": ["yes", "not", "maybe"],
-                "answer": "maybe",
-                "topic": "testing",
-            }
-        )
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "answer": "maybe",
+                    "topic": "testing",
+                }
+            ]
+        )[0]
 
         target = {
             "metrics": ["metrics.accuracy"],
@@ -104,13 +106,15 @@ class TestRecipes(UnitxtTestCase):
         )
 
         result = recipe.produce(
-            {
-                "question": "what?",
-                "choices": ["yes", "not", "maybe"],
-                "answer": "maybe",
-                "topic": "testing",
-            }
-        )
+            [
+                {
+                    "question": "what?",
+                    "choices": ["yes", "not", "maybe"],
+                    "answer": "maybe",
+                    "topic": "testing",
+                }
+            ]
+        )[0]
 
         target = {
             "metrics": ["metrics.accuracy"],
