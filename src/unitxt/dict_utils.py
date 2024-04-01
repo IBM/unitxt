@@ -385,7 +385,10 @@ def dict_get(
     if len(query.strip()) == 0:
         return dic
 
-    if dic is not None and isinstance(dic, dict) and query.strip() in dic:
+    if dic is None:
+        raise ValueError("Can not get any value from a dic that is None")
+
+    if isinstance(dic, dict) and query.strip() in dic:
         return dic[query.strip()]
 
     components = validate_query_and_break_to_components(query)
