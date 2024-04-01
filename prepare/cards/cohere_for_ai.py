@@ -52,7 +52,12 @@ for subset in subsets:
         )
 
         test_card(card_for_test, debug=False, strict=False)
-        add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
+        add_to_catalog(
+            card,
+            f"cards.cohere_for_ai.{subset}.{lang}",
+            overwrite=True,
+            catalog_path="src/unitxt/catalog",
+        )
 
 ########################  to remove once done ############################
 # logger = get_logger()
