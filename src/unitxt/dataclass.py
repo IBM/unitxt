@@ -4,7 +4,7 @@ import functools
 import warnings
 from abc import ABCMeta
 from inspect import Parameter, Signature
-from typing import Any, final
+from typing import Any, Dict, final
 
 _FIELDS = "__fields__"
 
@@ -38,9 +38,9 @@ class Field:
     abstract: bool = False
     required: bool = False
     deprecated: bool = False
-    deprecation_msg: str = "Field is deprecated"
     internal: bool = False
     origin_cls: type = None
+    metadata: Dict[str, str] = dataclasses.field(default_factory=dict)
 
     def get_default(self):
         if self.default_factory is not None:
@@ -421,7 +421,9 @@ class Dataclass(metaclass=DataclassMeta):
 
         _init_deprecated_fields = [field for field in _init_fields if field.deprecated]
         for dep_field in _init_deprecated_fields:
-            warnings.warn(dep_field.deprecation_msg, DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                dep_field.metadata["deprecation_msg"], DeprecationWarning, stacklevel=2
+            )
 
         for name in _init_positional_fields_names[: len(argv)]:
             if name in kwargs:

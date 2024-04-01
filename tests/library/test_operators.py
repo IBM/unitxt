@@ -1939,7 +1939,7 @@ class TestOperators(UnitxtTestCase):
         with self.assertWarns(DeprecationWarning) as dw:
             RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
             self.assertEqual(
-                "Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic.",
+                "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
                 dw.warnings[0].message.args[0],
             )
 
