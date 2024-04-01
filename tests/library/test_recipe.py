@@ -125,7 +125,7 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(result, target)
 
     def test_standard_recipe_with_indexes_with_catalog(self):
-        recipe = StandardRecipeWithIndexes(
+        recipe = StandardRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template_card_index=0,

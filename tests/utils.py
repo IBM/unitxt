@@ -18,6 +18,7 @@ class UnitxtTestCase(unittest.TestCase):
         unitxt.settings.global_loader_limit = 300
         unitxt.settings.max_log_message_size = 10000
         register_local_catalog_for_tests()
+        cls.maxDiff = None
 
 
 class UnitxtCatalogPreparationTestCase(unittest.TestCase):
@@ -29,3 +30,4 @@ class UnitxtCatalogPreparationTestCase(unittest.TestCase):
         unitxt.settings.global_loader_limit = 300
         unitxt.settings.max_log_message_size = 1000
         register_local_catalog_for_tests()
+        cls.maxDiff = None
