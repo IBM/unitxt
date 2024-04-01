@@ -9,7 +9,7 @@ AUGMENTABLE_STR = "augmentable_inputs"
 LOADER_LIMIT_STR = "loader_limit"
 PROMPT_SOURCE_STR = "source"
 PROMPT_METRICS_STR = "metrics"
-PROPT_TARGET_STR = "target"
+PROMPT_TARGET_STR = "target"
 DEMOS_POOL_SIZE = 10
 PROMPT_SAMPLE_SIZE = 5
 MAX_NEW_TOKENS = 30
@@ -30,7 +30,7 @@ scores = metric.compute(predictions=predictions,references=dataset)
 
 [print(item) for item in scores[0]['score']['global'].items()]
 """
-HEADER_VISBLE = True
+HEADER_VISIBLE = True
 INTRO_TXT = """
 # Data Preparation and Evaluation for Generative AI
 
