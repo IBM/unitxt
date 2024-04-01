@@ -37,6 +37,8 @@ class Field:
     final: bool = False
     abstract: bool = False
     required: bool = False
+    deprecated: bool = False
+    deprecation_msg: str = "Field is deprecated"
     internal: bool = False
     origin_cls: type = None
 
@@ -50,6 +52,12 @@ class Field:
 class FinalField(Field):
     def __post_init__(self):
         self.final = True
+
+
+@dataclasses.dataclass
+class DeprecatedField(Field):
+    def __post_init__(self):
+        self.deprecated = True
 
 
 @dataclasses.dataclass
@@ -230,6 +238,10 @@ def required_fields(cls):
     return [field for field in fields(cls) if field.required]
 
 
+def deprecated_fields(cls):
+    return [field for field in fields(cls) if field.deprecated]
+
+
 def abstract_fields(cls):
     return [field for field in fields(cls) if field.abstract]
 
@@ -240,6 +252,10 @@ def is_abstract_field(field):
 
 def is_final_field(field):
     return field.final
+
+
+def is_deprecated_field(field):
+    return field.deprecated
 
 
 def get_field_default(field):
@@ -395,14 +411,17 @@ class Dataclass(metaclass=DataclassMeta):
         """Initialize fields based on kwargs.
 
         Checks for abstract fields when an instance is created.
+        Warn when a deprecated is used
         """
-        from .settings_utils import get_constants as installed_get_constants
-
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
         _init_positional_fields_names = [
             field.name for field in _init_fields if field.also_positional
         ]
+
+        _init_deprecated_fields = [field for field in _init_fields if field.deprecated]
+        for dep_field in _init_deprecated_fields:
+            warnings.warn(dep_field.deprecation_msg, DeprecationWarning, stacklevel=2)
 
         for name in _init_positional_fields_names[: len(argv)]:
             if name in kwargs:
@@ -450,11 +469,6 @@ class Dataclass(metaclass=DataclassMeta):
                 raise UnexpectedArgumentError(
                     f"Too many positional arguments {unexpected_argv} for class {self.__class__.__name__}.\nShould be only {len(_init_positional_fields_names)} positional arguments: {', '.join(_init_positional_fields_names)}"
                 )
-
-            for k, v in installed_get_constants().deprecated_fields_warns.items():
-                if k in unexpected_kwargs:
-                    unexpected_kwargs.pop(k)
-                    warnings.warn(v, DeprecationWarning, stacklevel=2)
 
             if len(unexpected_kwargs) > 0:
                 raise UnexpectedArgumentError(

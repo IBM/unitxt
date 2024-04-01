@@ -162,9 +162,6 @@ if Constants.is_uninitilized():
     ]
     constants.codebase_url = "https://github.com/IBM/unitxt"
     constants.website_url = "https://www.unitxt.org"
-    constants.deprecated_fields_warns = {
-        "use_query": "Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
-    }
 
 
 def get_settings():

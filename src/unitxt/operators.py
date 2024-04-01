@@ -58,7 +58,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField, OptionalField
+from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -227,6 +227,7 @@ class AddFields(StreamInstanceOperator):
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
+             Use '/' to access inner fields
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
@@ -246,6 +247,9 @@ class AddFields(StreamInstanceOperator):
     """
 
     fields: Dict[str, object]
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
     use_deepcopy: bool = False
 
     def process(
@@ -301,6 +305,9 @@ class InstanceFieldOperator(StreamInstanceOperator):
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
@@ -795,6 +802,9 @@ class ListFieldValues(StreamInstanceOperator):
 
     fields: List[str]
     to_field: str
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -821,6 +831,9 @@ class ZipFieldValues(StreamInstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -842,6 +855,9 @@ class IndexOf(StreamInstanceOperator):
     search_in: str
     index_of: str
     to_field: str
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -858,6 +874,9 @@ class TakeByField(StreamInstanceOperator):
     field: str
     index: str
     to_field: str = None
+    use_query: bool = DeprecatedField(
+        deprecation_msg="Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic."
+    )
 
     def prepare(self):
         if self.to_field is None:

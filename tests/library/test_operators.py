@@ -1936,6 +1936,13 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+        with self.assertWarns(DeprecationWarning) as dw:
+            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            self.assertEqual(
+                "Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic.",
+                dw.warnings[0].message.args[0],
+            )
+
     def test_add(self):
         check_operator(
             operator=AddConstant(field_to_field=[["a", "b"]], add=5),
@@ -2049,13 +2056,6 @@ class TestOperators(UnitxtTestCase):
             tester=self,
             exception_text=exception_text,
         )
-
-        with self.assertWarns(DeprecationWarning) as dw:
-            EncodeLabels(fields=["prediction", "references/*"], use_query=True)
-            self.assertEqual(
-                "Flag 'use_query' is deprecated. dict_utils parses to (one or more) components any input query that as a whole is not a field in the input dic.",
-                dw.warnings[0].message.args[0],
-            )
 
     def test_join_str(self):
         inputs = [
