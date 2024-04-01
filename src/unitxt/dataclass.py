@@ -1,9 +1,10 @@
 import copy
 import dataclasses
 import functools
+import warnings
 from abc import ABCMeta
 from inspect import Parameter, Signature
-from typing import Any, final
+from typing import Any, Dict, final
 
 _FIELDS = "__fields__"
 
@@ -36,8 +37,10 @@ class Field:
     final: bool = False
     abstract: bool = False
     required: bool = False
+    deprecated: bool = False
     internal: bool = False
     origin_cls: type = None
+    metadata: Dict[str, str] = dataclasses.field(default_factory=dict)
 
     def get_default(self):
         if self.default_factory is not None:
@@ -49,6 +52,12 @@ class Field:
 class FinalField(Field):
     def __post_init__(self):
         self.final = True
+
+
+@dataclasses.dataclass
+class DeprecatedField(Field):
+    def __post_init__(self):
+        self.deprecated = True
 
 
 @dataclasses.dataclass
@@ -229,6 +238,10 @@ def required_fields(cls):
     return [field for field in fields(cls) if field.required]
 
 
+def deprecated_fields(cls):
+    return [field for field in fields(cls) if field.deprecated]
+
+
 def abstract_fields(cls):
     return [field for field in fields(cls) if field.abstract]
 
@@ -239,6 +252,10 @@ def is_abstract_field(field):
 
 def is_final_field(field):
     return field.final
+
+
+def is_deprecated_field(field):
+    return field.deprecated
 
 
 def get_field_default(field):
@@ -394,12 +411,19 @@ class Dataclass(metaclass=DataclassMeta):
         """Initialize fields based on kwargs.
 
         Checks for abstract fields when an instance is created.
+        Warn when a deprecated is used
         """
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
         _init_positional_fields_names = [
             field.name for field in _init_fields if field.also_positional
         ]
+
+        _init_deprecated_fields = [field for field in _init_fields if field.deprecated]
+        for dep_field in _init_deprecated_fields:
+            warnings.warn(
+                dep_field.metadata["deprecation_msg"], DeprecationWarning, stacklevel=2
+            )
 
         for name in _init_positional_fields_names[: len(argv)]:
             if name in kwargs:

@@ -1936,6 +1936,13 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+        with self.assertWarns(DeprecationWarning) as dw:
+            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            self.assertEqual(
+                "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
+                dw.warnings[0].message.args[0],
+            )
+
     def test_add(self):
         check_operator(
             operator=AddConstant(field_to_field=[["a", "b"]], add=5),
