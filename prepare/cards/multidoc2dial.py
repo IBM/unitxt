@@ -18,7 +18,6 @@ card_abstractive = TaskCard(
     preprocess_steps=[
         RenameFields(
             field_to_field={"answers/text/0": "relevant_context"},
-            use_query=True,
         ),
         ListFieldValues(fields=["utterance"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
@@ -33,7 +32,6 @@ card_extractive = TaskCard(
     preprocess_steps=[
         RenameFields(
             field_to_field={"answers/text/0": "relevant_context"},
-            use_query=True,
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),

@@ -38,7 +38,7 @@ class SerializeDialog(InstanceFieldOperator):
     context_field: Optional[str] = None
     context_seperator: str = " "
 
-    def standartize_format(self, demo_format):
+    def standardize_format(self, demo_format):
         turn_format = demo_format.replace("{source}", "{user}")
         turn_format = turn_format.replace("{target}", "{system}")
         return turn_format.replace("{target_prefix}", "")
@@ -67,10 +67,10 @@ class SerializeDialog(InstanceFieldOperator):
             if self.format is None
             else self.format
         )
-        return self.standartize_format(general_format.demo_format)
+        return self.standardize_format(general_format.demo_format)
 
     def process_instance_value(
-        self, structred_dialog: List[Dict[str, str]], instance: Dict[str, Any]
+        self, structured_dialog: List[Dict[str, str]], instance: Dict[str, Any]
     ):
         dialog = (
             ""
@@ -78,9 +78,9 @@ class SerializeDialog(InstanceFieldOperator):
             else instance[self.context_field] + self.context_seperator
         )
         general_turn_format = self.get_general_turn_format(instance)
-        for i, turn in enumerate(structred_dialog):
+        for i, turn in enumerate(structured_dialog):
             turn_format = self.get_turn_format(
-                general_turn_format, i, len(structred_dialog)
+                general_turn_format, i, len(structured_dialog)
             )
             dialog += turn_format.format(**turn)
         if self.last_response_to_field is not None:

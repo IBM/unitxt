@@ -9,8 +9,7 @@
                     "contexts",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "copy_fields",
@@ -19,8 +18,7 @@
                     "answer",
                     "prediction"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ],
     "metric": "metrics.token_overlap"

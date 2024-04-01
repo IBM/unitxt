@@ -24,14 +24,12 @@ metric = MetricPipeline(
                 ["id", "prediction_template/id"],
                 ["id", "reference_template/id"],
             ],
-            use_query=True,
         ),
         CopyFields(
             field_to_field=[
                 ["reference_template", "references"],
                 ["prediction_template", "prediction"],
             ],
-            use_query=True,
         ),
     ],
     metric=Squad(),

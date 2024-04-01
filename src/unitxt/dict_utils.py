@@ -178,16 +178,24 @@ def dict_delete(
 ):
     # We remove from dic the value from each and every element lead to by a path matching the query.
     # If remove_empty_ancestors=True, and the removal of any such value leaves its containing element (list or dict)
-    # within dic empty -- remove that element as well, and continue recursively
+    # within dic empty -- remove that element as well, and continue recursively, but stop one step before deleting dic
+    # altogether, even if became {}. If successful, changes dic into its new shape
+
+    if dic is None or not isinstance(dic, (list, dict)):
+        raise ValueError(
+            f"dic {dic} is either None or not a list nor a dict. Can not delete from it."
+        )
+
+    if len(query) == 0:
+        raise ValueError(
+            "Query is an empty string, implying the deletion of dic as a whole. This can not be done via this function call."
+        )
+
+    if isinstance(dic, dict) and query.strip() in dic:
+        dic.pop(query.strip())
+        return
+
     qpath = validate_query_and_break_to_components(query)
-    if len(qpath) == 1:
-        if qpath[0] in dic:
-            dic.pop(qpath[0])
-            return
-        if not not_exist_ok:
-            raise ValueError(
-                f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary"
-            )
 
     try:
         success, new_val = delete_values(
@@ -196,10 +204,17 @@ def dict_delete(
             index_into_query=(-1) * len(qpath),
             remove_empty_ancestors=remove_empty_ancestors,
         )
-        if not success and not not_exist_ok:
+
+        if success:
+            if new_val == {}:
+                dic.clear()
+            return
+
+        if not not_exist_ok:
             raise ValueError(
-                f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary"
+                f"An attempt to delete from dictionary {dic}, an element {query}, that does not exist in the dictionary, while not_exist_ok=False"
             )
+
     except Exception as e:
         raise ValueError(f"query {query} matches no path in dictionary {dic}") from e
 
@@ -233,7 +248,8 @@ def get_values(
             except:
                 continue
 
-        return (len(to_ret) > 0, to_ret)
+        return (len(to_ret) > 0 or index_into_query == -1, to_ret)
+        # when * is the last component, it refers to 'all the contents' of an empty list being current_element.
     # next_component is indx or name, current_element must be a list or a dict
     if indx.match(component):
         component = int(component)
@@ -261,15 +277,15 @@ def set_values(
         return (True, value)  # matched query all along!
 
     # current_element should be a list or dict: a containing element
-    if current_element and not isinstance(current_element, (list, dict)):
+    if current_element is not None and not isinstance(current_element, (list, dict)):
         current_element = None  # give it a chance to become what is needed, if allowed
 
-    if not current_element and not fixed_parameters["generate_if_not_exists"]:
+    if current_element is None and not fixed_parameters["generate_if_not_exists"]:
         return (False, None)
-    component = fixed_parameters["query"][index_into_query]
 
+    component = fixed_parameters["query"][index_into_query]
     if component == "*":
-        if current_element and set_multiple:
+        if current_element is not None and set_multiple:
             if isinstance(current_element, dict) and len(current_element) != len(value):
                 return (False, None)
             if isinstance(current_element, list) and len(current_element) > len(value):
@@ -279,8 +295,15 @@ def set_values(
                     return (False, None)
                 # current_element must be a list, extend current_element to the length needed
                 current_element.extend([None] * (len(value) - len(current_element)))
-        if not current_element:
-            current_element = [None] * (len(value) if set_multiple else 1)
+        if current_element is None or current_element == []:
+            current_element = [None] * (
+                len(value)
+                if set_multiple
+                else value is None
+                or not isinstance(value, list)
+                or len(value) > 0
+                or index_into_query < -1
+            )
         # now current_element is of size suiting value
         if isinstance(current_element, dict):
             keys = sorted(current_element.keys())
@@ -304,31 +327,29 @@ def set_values(
 
             except:
                 continue
-        return (any_success, current_element)
+        return (
+            any_success or (len(keys) == 0 and index_into_query == -1),
+            current_element,
+        )
 
     # component is an index into a list or a key into a dictionary
     if indx.match(component):
-        if current_element and not isinstance(current_element, list):
+        if current_element is None or not isinstance(current_element, list):
             if not fixed_parameters["generate_if_not_exists"]:
                 return (False, None)
             current_element = []
+        # current_element is a list
         component = int(component)
-        if (
-            current_element and component >= len(current_element)
-        ) or not current_element:
+        if component >= len(current_element):
             if not fixed_parameters["generate_if_not_exists"]:
                 return (False, None)
             # extend current_element to the length needed
-            if not current_element:
-                current_element = []
             current_element.extend([None] * (component + 1 - len(current_element)))
         next_current_element = current_element[component]
     else:  # component is a key into a dictionary
-        if current_element and not isinstance(current_element, dict):
+        if current_element is None or not isinstance(current_element, dict):
             if not fixed_parameters["generate_if_not_exists"]:
                 return (False, None)
-            current_element = {}
-        if not current_element:
             current_element = {}
         if (
             component not in current_element
@@ -358,12 +379,17 @@ def set_values(
 def dict_get(
     dic: dict,
     query: str,
-    use_dpath: bool = True,
     not_exist_ok: bool = False,
     default: Any = None,
 ):
-    if use_dpath and "/" in query:
-        components = validate_query_and_break_to_components(query)
+    if len(query.strip()) == 0:
+        return dic
+
+    if dic is not None and isinstance(dic, dict) and query.strip() in dic:
+        return dic[query.strip()]
+
+    components = validate_query_and_break_to_components(query)
+    if len(components) > 1:
         try:
             success, values = get_values(dic, components, -1 * len(components))
             if not success:
@@ -372,12 +398,6 @@ def dict_get(
                 raise ValueError(
                     f'query "{query}" did not match any item in dict: {dic}'
                 )
-            if isinstance(values, list) and len(values) == 0:
-                if not_exist_ok:
-                    return default
-                raise ValueError(
-                    f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
-                )
 
             return values
 
@@ -385,18 +405,17 @@ def dict_get(
             if not_exist_ok:
                 return default
             raise ValueError(
-                f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
+                f'query "{query}" did not match any item in dict: {dic}'
             ) from e
 
-    if query.strip() in dic:
-        return dic[query.strip()]
+    # len(components) == 1
+    if components[0] in dic:
+        return dic[components[0]]
 
     if not_exist_ok:
         return default
 
-    raise ValueError(
-        f'query "{query}" did not match any item in dict: {dic} while not_exist_ok=False'
-    )
+    raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
 
 
 # dict_set sets a value, 'value', which by itself, can be a dict or list or scalar, into 'dic', to become the value of
@@ -448,25 +467,44 @@ def dict_set(
     dic: dict,
     query: str,
     value: Any,
-    use_dpath=True,
     not_exist_ok=True,
     set_multiple=False,
-):
-    if set_multiple and (
-        not isinstance(value, list) or len(value) == 0 or "*" not in query
-    ):
+):  # sets dic to its new value
+    if dic is None or not isinstance(dic, (list, dict)):
         raise ValueError(
-            f"set_multiple == True, and yet value, {value}, is not a list or '*' is not in query '{query}'"
-        )
-    if not use_dpath or "/" not in query:
-        if query.strip() in dic or not_exist_ok:
-            dic[query] = value
-            return
-        raise ValueError(
-            f"not_exist_ok=False and the single component query '{query}' is not a key in dic {dic}"
+            f"Can not change dic that is either None or not a dict nor a list. Got dic = {dic}"
         )
 
-    # use_dpath and "/" in query
+    if query.strip() == "":
+        # change the whole input dic, as dic indeed matches ""
+        if isinstance(dic, dict):
+            if value is None or not isinstance(value, dict):
+                raise ValueError(
+                    f"Through an empty query, trying to set a whole new value, {value}, to the whole of dic, {dic}, but value is not a dict"
+                )
+            dic.clear()
+            dic.update(value)
+            return
+
+        if isinstance(dic, list):
+            if value is None or not isinstance(value, list):
+                raise ValueError(
+                    f"Through an empty query, trying to set a whole new value, {value}, to the whole of dic, {dic}, but value is not a list"
+                )
+            dic.clear()
+            dic.extend(value)
+            return
+
+    if isinstance(dic, dict) and query.strip() in dic:
+        dic[query.strip()] = value
+        return
+
+    if set_multiple:
+        if value is None or not isinstance(value, list) or len(value) == 0:
+            raise ValueError(
+                f"set_multiple=True, but value, {value}, can not be broken up, as either it is not a list or it is an empty list"
+            )
+
     components = validate_query_and_break_to_components(query)
     fixed_parameters = {
         "query": components,

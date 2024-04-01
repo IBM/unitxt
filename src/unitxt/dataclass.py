@@ -111,7 +111,7 @@ class UnexpectedArgumentError(TypeError):
     pass
 
 
-standart_variables = dir(object)
+standard_variables = dir(object)
 
 
 def is_possible_field(field_name, field_value):
@@ -125,7 +125,7 @@ def is_possible_field(field_name, field_value):
         bool: True if the name-value pair can represent a field, False otherwise.
     """
     return (
-        field_name not in standart_variables
+        field_name not in standard_variables
         and not field_name.startswith("__")
         and not callable(field_value)
     )

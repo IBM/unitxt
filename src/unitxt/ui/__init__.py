@@ -15,7 +15,7 @@ def launch(demo_settings=None):
 
 
 def launch_without_header(demo_settings=None):
-    new_settings = {"HEADER_VISBLE": False}
+    new_settings = {"HEADER_VISIBLE": False}
     if demo_settings is not None:
         new_settings = {**new_settings, **demo_settings}
     launch(new_settings)

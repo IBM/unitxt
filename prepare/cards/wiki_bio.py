@@ -17,7 +17,6 @@ card = TaskCard(
         ListToKeyValPairs(
             fields=["input_text/table/column_header", "input_text/table/content"],
             to_field="kvpairs",
-            use_query=True,
         ),
         SerializeKeyValPairs(field_to_field=[["kvpairs", "input"]]),
         RenameFields(field_to_field={"target_text": "output"}),

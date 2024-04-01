@@ -14,13 +14,6 @@
             }
         },
         {
-            "type": "list_field_values",
-            "fields": [
-                "label"
-            ],
-            "to_field": "label"
-        },
-        {
             "type": "add_fields",
             "fields": {
                 "classes": [

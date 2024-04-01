@@ -11,8 +11,7 @@
                 "conversations/0/value": "inputs",
                 "conversations/0/tok_len": "inputs_len",
                 "conversations/1/value": "answer"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "list_field_values",

@@ -19,10 +19,7 @@ for lang in langs:
         loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
         preprocess_steps=[
             Apply("METADATA", function=json.loads, to_field="metadata"),
-            CopyFields(
-                field_to_field=[("metadata/language", "extracted_language")],
-                use_query=True,
-            ),
+            CopyFields(field_to_field=[("metadata/language", "extracted_language")]),
             FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix(
