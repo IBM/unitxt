@@ -41,7 +41,7 @@ for subset in subsets:
         from copy import deepcopy
 
         card_for_test = deepcopy(card)
-        from unitxt.blocks import (
+        from src.unitxt.blocks import (
             FormTask,
         )
 
