@@ -911,11 +911,11 @@ class TestOperators(UnitxtTestCase):
         outputs_2 = list(outputs["test_2"])
         self.assertEqual(len(outputs_2), 2)
 
-        for input_dict, ouput_dict in zip(inputs, outputs_1):
-            self.assertDictEqual(input_dict, ouput_dict)
+        for input_dict, output_dict in zip(inputs, outputs_1):
+            self.assertDictEqual(input_dict, output_dict)
 
-        for input_dict, ouput_dict in zip(inputs[1:], outputs_2):
-            self.assertDictEqual(input_dict, ouput_dict)
+        for input_dict, output_dict in zip(inputs[1:], outputs_2):
+            self.assertDictEqual(input_dict, output_dict)
 
     def test_merge(self):
         # Test with default params

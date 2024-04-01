@@ -2,7 +2,7 @@ let element = document.createElement('script');
 element.type = 'module';
 element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
 element.onload = function() {
-    console.log('Succesfuly loaded: ' + element.src);
+    console.log('Successfully loaded: ' + element.src);
     function handleLoadComplete() {
         console.log("Embedded space has finished rendering");
         const loadingElement = document.querySelector(".gradio-loading");

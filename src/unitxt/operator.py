@@ -509,7 +509,7 @@ class SourceSequentialOperator(SequentialOperator):
         return multi_stream
 
 
-class SequentialOperatorInitilizer(SequentialOperator):
+class SequentialOperatorInitializer(SequentialOperator):
     """A class representing a sequential operator initializer in the streaming system.
 
     A sequential operator initializer is a type of `SequntialOperator` that starts with a stream initializer operator. The first operator in its list of steps is a `StreamInitializerOperator`, which generates the initial `MultiStream` based on the provided arguments and keyword arguments.
@@ -521,11 +521,11 @@ class SequentialOperatorInitilizer(SequentialOperator):
     def process(self, *args, **kwargs) -> MultiStream:
         assert (
             self.num_steps() > 0
-        ), "Calling process on a SequentialOperatorInitilizer without any steps"
+        ), "Calling process on a SequentialOperatorInitializer without any steps"
 
         assert isinstance(
             self.steps[0], StreamInitializerOperator
-        ), "The first step in a SequentialOperatorInitilizer must be a StreamInitializerOperator"
+        ), "The first step in a SequentialOperatorInitializer must be a StreamInitializerOperator"
         multi_stream = self.steps[0](*args, **kwargs)
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
