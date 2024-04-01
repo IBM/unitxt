@@ -32,7 +32,6 @@ The rest of this section is dedicated for general operators.
 General Operaotrs List:
 ------------------------
 """
-import collections
 import copy
 import operator
 import uuid
@@ -58,7 +57,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField, OptionalField
+from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -227,6 +226,7 @@ class AddFields(StreamInstanceOperator):
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
+             Use '/' to access inner fields
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
@@ -246,6 +246,12 @@ class AddFields(StreamInstanceOperator):
     """
 
     fields: Dict[str, object]
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
     use_deepcopy: bool = False
 
     def process(
@@ -301,6 +307,12 @@ class InstanceFieldOperator(StreamInstanceOperator):
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
@@ -795,6 +807,12 @@ class ListFieldValues(StreamInstanceOperator):
 
     fields: List[str]
     to_field: str
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -821,6 +839,12 @@ class ZipFieldValues(StreamInstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -842,6 +866,12 @@ class IndexOf(StreamInstanceOperator):
     search_in: str
     index_of: str
     to_field: str
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -858,6 +888,12 @@ class TakeByField(StreamInstanceOperator):
     field: str
     index: str
     to_field: str = None
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def prepare(self):
         if self.to_field is None:
@@ -1766,7 +1802,7 @@ class DeterministicBalancer(StreamRefiner):
         return str(tuple(dict_get(instance, field) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        counter = collections.Counter()
+        counter = Counter()
 
         for instance in stream:
             counter[self.signature(instance)] += 1
@@ -1782,7 +1818,7 @@ class DeterministicBalancer(StreamRefiner):
                 lowest_count, self.max_instances // len(counter)
             )
 
-        counter = collections.Counter()
+        counter = Counter()
 
         for instance in stream:
             sign = self.signature(instance)
