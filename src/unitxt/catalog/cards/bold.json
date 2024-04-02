@@ -24,8 +24,7 @@
                     "prompts/0",
                     "first_prompt"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "copy_fields",
@@ -34,8 +33,7 @@
                     "wikipedia/0",
                     "first_wiki"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "filter_by_condition",
@@ -57,8 +55,7 @@
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",
                 "first_wiki": "input_label/wiki"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "apply",

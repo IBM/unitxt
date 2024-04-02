@@ -26,6 +26,7 @@ test-docs: docs clear-docs
 format:
 	ruff check . --fix
 	ruff format .
+	codespell --toml pyproject.toml 
 
 pre-commit:
 	pre-commit install

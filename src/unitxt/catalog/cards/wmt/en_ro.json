@@ -18,8 +18,7 @@
                     "translation/ro",
                     "translation"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "add_fields",

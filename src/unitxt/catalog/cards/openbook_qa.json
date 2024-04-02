@@ -10,8 +10,7 @@
             "field_to_field": {
                 "choices/text": "choices_text",
                 "choices/label": "labels"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "rename_fields",

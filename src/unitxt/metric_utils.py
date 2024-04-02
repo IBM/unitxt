@@ -6,7 +6,7 @@ from datasets import Features, Value
 from .dataclass import Dataclass
 from .operator import (
     MultiStreamOperator,
-    SequentialOperatorInitilizer,
+    SequentialOperatorInitializer,
     StreamInitializerOperator,
 )
 from .operators import (
@@ -24,7 +24,7 @@ from .stream import MultiStream, Stream
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
-    def aggegate_results(self, multi_stream: MultiStream):
+    def aggregate_results(self, multi_stream: MultiStream):
         scores = []
         for stream in multi_stream.values():
             instance = stream.peek()
@@ -58,7 +58,7 @@ class MultiStreamScoreMean(MultiStreamOperator):
                 )
             return MultiStream(result)
 
-        mean_score = self.aggegate_results(multi_stream)
+        mean_score = self.aggregate_results(multi_stream)
         result = {}
         for stream_name, stream in multi_stream.items():
             result[stream_name] = Stream(
@@ -92,7 +92,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 # lists, and are converted to a dictionary.
 
 
-class MetricRecipe(SequentialOperatorInitilizer):
+class MetricRecipe(SequentialOperatorInitializer):
     calc_confidence_intervals: bool = True
 
     def prepare(self):

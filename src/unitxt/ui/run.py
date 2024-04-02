@@ -104,7 +104,7 @@ def run_unitxt(
         )
         selected_prompt = prompts_list[index]
         prompt_text = selected_prompt[config.PROMPT_SOURCE_STR]
-        prompt_target = selected_prompt[config.PROPT_TARGET_STR]
+        prompt_target = selected_prompt[config.PROMPT_TARGET_STR]
         command = build_command(prompt_args, with_prediction=run_model)
     except Exception as e:
         logger.info("An exception occurred:\n%s", traceback.format_exc())
@@ -168,7 +168,7 @@ def display_json_button(element: str):
 demo = gr.Blocks()
 
 with demo:
-    if config.HEADER_VISBLE:
+    if config.HEADER_VISIBLE:
         with gr.Row():
             # LOGO
             logo = gr.Image(
@@ -294,7 +294,7 @@ with demo:
                     element_name = gr.Text(label="Selected Item:", visible=False)
                     json_viewer = gr.Json(value=None, visible=False)
 
-    if config.HEADER_VISBLE:
+    if config.HEADER_VISIBLE:
         acknowledgement = gr.Markdown(config.ACK_TEXT)
     # INVISIBLE ELEMENTS FOR VALUE STORAGE
     run_model = gr.Checkbox(value=False, visible=False)

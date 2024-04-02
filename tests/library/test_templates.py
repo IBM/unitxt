@@ -338,11 +338,11 @@ class TestTemplates(UnitxtTestCase):
             label_field="labels",
         )
 
-        proccessed_input_to_inputs = {
+        processed_input_to_inputs = {
             "Is text_a of news?": {"text": "text_a", "class": ["news"]},
             "Is text_b of news?": {"text": "text_b", "class": ["news"]},
         }
-        for expected_processed_input, inputs in proccessed_input_to_inputs.items():
+        for expected_processed_input, inputs in processed_input_to_inputs.items():
             processed = template.inputs_to_source(inputs)
             self.assertEqual(expected_processed_input, processed)
 

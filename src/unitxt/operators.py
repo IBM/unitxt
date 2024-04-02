@@ -32,7 +32,6 @@ The rest of this section is dedicated for general operators.
 General Operaotrs List:
 ------------------------
 """
-import collections
 import copy
 import operator
 import uuid
@@ -58,7 +57,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import NonPositionalField, OptionalField
+from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     MultiStream,
@@ -157,7 +156,6 @@ class MapInstanceValues(StreamInstanceOperator):
 
     mappers: Dict[str, Dict[str, str]]
     strict: bool = True
-    use_query: bool = False
     process_every_value: bool = False
 
     def verify(self):
@@ -175,7 +173,7 @@ class MapInstanceValues(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for key, mapper in self.mappers.items():
-            value = dict_get(instance, key, use_dpath=self.use_query)
+            value = dict_get(instance, key)
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
@@ -190,7 +188,6 @@ class MapInstanceValues(StreamInstanceOperator):
                     instance,
                     key,
                     value,
-                    use_dpath=self.use_query,
                 )
 
         return instance
@@ -229,7 +226,7 @@ class AddFields(StreamInstanceOperator):
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance.
-        use_query (bool) : Use '/' to access inner fields
+             Use '/' to access inner fields
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
@@ -249,21 +246,21 @@ class AddFields(StreamInstanceOperator):
     """
 
     fields: Dict[str, object]
-    use_query: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
     use_deepcopy: bool = False
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        if self.use_query:
-            for key, value in self.fields.items():
-                if self.use_deepcopy:
-                    value = deepcopy(value)
-                dict_set(instance, key, value, use_dpath=self.use_query)
-        else:
+        for key, value in self.fields.items():
             if self.use_deepcopy:
-                self.fields = deepcopy(self.fields)
-            instance.update(self.fields)
+                value = deepcopy(value)
+            dict_set(instance, key, value)
         return instance
 
 
@@ -302,17 +299,21 @@ class InstanceFieldOperator(StreamInstanceOperator):
           The operator throws an AssertionError in either of these cases.
           field_to_field defaults to None
         process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
-        use_query (bool): Whether to use dpath style queries. Defaults to False.
 
         Note: if 'field' and 'to_field' (or both members of a pair in 'field_to_field') are equal (or share a common
-        prefix if 'use_query'=True), then the result of the operation is saved within 'field'
+        prefix if 'field' and 'to_field' contain a /), then the result of the operation is saved within 'field'
     """
 
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
     process_every_value: bool = False
-    use_query: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
 
@@ -397,7 +398,6 @@ class InstanceFieldOperator(StreamInstanceOperator):
                 old_value = dict_get(
                     instance,
                     from_field,
-                    use_dpath=self.use_query,
                     default=self.get_default,
                     not_exist_ok=self.not_exist_ok,
                 )
@@ -421,7 +421,6 @@ class InstanceFieldOperator(StreamInstanceOperator):
                 instance,
                 to_field,
                 new_value,
-                use_dpath=self.use_query,
                 not_exist_ok=True,
             )
         return instance
@@ -439,20 +438,20 @@ class FieldOperator(InstanceFieldOperator):
 class RenameFields(FieldOperator):
     """Renames fields.
 
-    Move value from one field to another, potentially, if 'use_query'=True, from one branch into another.
-    Remove the from field, potentially part of it in case of use_query.
+    Move value from one field to another, potentially, if field name contains a /, from one branch into another.
+    Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
         RenameFields(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"}, use_query=True)
+        RenameFields(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"}, use_query=True)
+        RenameFields(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True)
+        RenameFields(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -539,7 +538,6 @@ class Augmentor(StreamInstanceOperator):
                 old_value = dict_get(
                     instance,
                     field_name,
-                    use_dpath=True,
                     default="",
                     not_exist_ok=False,
                 )
@@ -552,7 +550,7 @@ class Augmentor(StreamInstanceOperator):
                 raise RuntimeError(
                     f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
                 ) from e
-            dict_set(instance, field_name, new_value, use_dpath=True, not_exist_ok=True)
+            dict_set(instance, field_name, new_value, not_exist_ok=True)
         return instance
 
 
@@ -809,14 +807,19 @@ class ListFieldValues(StreamInstanceOperator):
 
     fields: List[str]
     to_field: str
-    use_query: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         values = []
         for field_name in self.fields:
-            values.append(dict_get(instance, field_name, use_dpath=self.use_query))
+            values.append(dict_get(instance, field_name))
         instance[self.to_field] = values
         return instance
 
@@ -836,14 +839,19 @@ class ZipFieldValues(StreamInstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
-    use_query: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         values = []
         for field_name in self.fields:
-            values.append(dict_get(instance, field_name, use_dpath=self.use_query))
+            values.append(dict_get(instance, field_name))
         if self.longest:
             zipped = zip_longest(*values)
         else:
@@ -858,13 +866,18 @@ class IndexOf(StreamInstanceOperator):
     search_in: str
     index_of: str
     to_field: str
-    use_query: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        lst = dict_get(instance, self.search_in, use_dpath=self.use_query)
-        item = dict_get(instance, self.index_of, use_dpath=self.use_query)
+        lst = dict_get(instance, self.search_in)
+        item = dict_get(instance, self.index_of)
         instance[self.to_field] = lst.index(item)
         return instance
 
@@ -875,7 +888,12 @@ class TakeByField(StreamInstanceOperator):
     field: str
     index: str
     to_field: str = None
-    use_query: bool = False
+    use_query: bool = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
+            "Please remove this field from your code."
+        }
+    )
 
     def prepare(self):
         if self.to_field is None:
@@ -884,8 +902,8 @@ class TakeByField(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        value = dict_get(instance, self.field, use_dpath=self.use_query)
-        index_value = dict_get(instance, self.index, use_dpath=self.use_query)
+        value = dict_get(instance, self.field)
+        index_value = dict_get(instance, self.index)
         instance[self.to_field] = value[index_value]
         return instance
 
@@ -943,7 +961,6 @@ class CopyFields(FieldOperator):
 
     Args (of parent class):
         field_to_field (Union[List[List], Dict[str, str]]): A list of lists, where each sublist contains the source field and the destination field, or a dictionary mapping source fields to destination fields.
-        use_query (bool): Whether to use dpath for accessing fields. Defaults to False.
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
@@ -952,8 +969,8 @@ class CopyFields(FieldOperator):
         CopyField(field_to_field={"a": "c"} would yield
         {"a": 2, "b": 3, "c": 2}
 
-        with use_query=True, we can also copy inside the field:
-        CopyFields(field_to_field={"a/0": "a"}, use_query=True)
+        with field names containing / , we can also copy inside the field:
+        CopyFields(field_to_field={"a/0": "a"})
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
@@ -1031,7 +1048,7 @@ class CastFields(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name, type in self.fields.items():
-            value = dict_get(instance, field_name, use_dpath=self.use_nested_query)
+            value = dict_get(instance, field_name)
             if self.process_every_value:
                 assert isinstance(
                     value, list
@@ -1039,9 +1056,8 @@ class CastFields(StreamInstanceOperator):
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
-            dict_set(
-                instance, field_name, casted_value, use_dpath=self.use_nested_query
-            )
+
+            dict_set(instance, field_name, casted_value)
         return instance
 
 
@@ -1709,7 +1725,7 @@ class EncodeLabels(StreamInstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         for field_name in self.fields:
-            values = dict_get(instance, field_name, use_dpath=True)
+            values = dict_get(instance, field_name)
             values_was_a_list = isinstance(values, list)
             if not isinstance(values, list):
                 values = [values]
@@ -1723,8 +1739,10 @@ class EncodeLabels(StreamInstanceOperator):
                 instance,
                 field_name,
                 new_values,
-                use_dpath=True,
-                set_multiple="*" in field_name,
+                not_exist_ok=False,  # the values to encode where just taken from there
+                set_multiple="*" in field_name
+                and isinstance(new_values, list)
+                and len(new_values) > 0,
             )
 
         return instance
@@ -1781,12 +1799,10 @@ class DeterministicBalancer(StreamRefiner):
     fields: List[str]
 
     def signature(self, instance):
-        return str(
-            tuple(dict_get(instance, field, use_dpath=True) for field in self.fields)
-        )
+        return str(tuple(dict_get(instance, field) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        counter = collections.Counter()
+        counter = Counter()
 
         for instance in stream:
             counter[self.signature(instance)] += 1
@@ -1802,7 +1818,7 @@ class DeterministicBalancer(StreamRefiner):
                 lowest_count, self.max_instances // len(counter)
             )
 
-        counter = collections.Counter()
+        counter = Counter()
 
         for instance in stream:
             sign = self.signature(instance)
@@ -1837,7 +1853,7 @@ class LengthBalancer(DeterministicBalancer):
     def signature(self, instance):
         total_len = 0
         for field_name in self.fields:
-            total_len += len(dict_get(instance, field_name, use_dpath=True))
+            total_len += len(dict_get(instance, field_name))
         for i, val in enumerate(self.segments_boundaries):
             if total_len < val:
                 return i

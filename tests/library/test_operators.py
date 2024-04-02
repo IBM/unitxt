@@ -589,7 +589,6 @@ class TestOperators(UnitxtTestCase):
                 field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
-                use_query=True,
             ),
             inputs=inputs,
             targets=targets,
@@ -601,7 +600,6 @@ class TestOperators(UnitxtTestCase):
                 field="references/1",
                 unallowed_values=["none"],
                 process_every_value=False,
-                use_query=True,
             ),
             inputs=inputs,
             targets=[
@@ -615,7 +613,6 @@ class TestOperators(UnitxtTestCase):
             operator=RemoveValues(
                 field="references",
                 unallowed_values=["none"],
-                use_query=True,
                 process_every_value=True,
             ),
             inputs=inputs,
@@ -667,7 +664,7 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'} while not_exist_ok=False"
+        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
@@ -769,7 +766,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=AddFields(fields={"a/c": 5}, use_query=True),
+            operator=AddFields(fields={"a/c": 5}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -805,9 +802,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         outputs = check_operator(
-            operator=AddFields(
-                fields={"c/d": alist}, use_deepcopy=True, use_query=True
-            ),
+            operator=AddFields(fields={"c/d": alist}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -916,11 +911,11 @@ class TestOperators(UnitxtTestCase):
         outputs_2 = list(outputs["test_2"])
         self.assertEqual(len(outputs_2), 2)
 
-        for input_dict, ouput_dict in zip(inputs, outputs_1):
-            self.assertDictEqual(input_dict, ouput_dict)
+        for input_dict, output_dict in zip(inputs, outputs_1):
+            self.assertDictEqual(input_dict, output_dict)
 
-        for input_dict, ouput_dict in zip(inputs[1:], outputs_2):
-            self.assertDictEqual(input_dict, ouput_dict)
+        for input_dict, output_dict in zip(inputs[1:], outputs_2):
+            self.assertDictEqual(input_dict, output_dict)
 
     def test_merge(self):
         # Test with default params
@@ -1875,7 +1870,7 @@ class TestOperators(UnitxtTestCase):
 
         # to field is structured:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c/d"}, use_query=True),
+            operator=RenameFields(field_to_field={"b": "c/d"}),
             inputs=inputs,
             targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
             tester=self,
@@ -1883,7 +1878,7 @@ class TestOperators(UnitxtTestCase):
 
         # to field is structured, to stand in place of from field:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "b/d"}, use_query=True),
+            operator=RenameFields(field_to_field={"b": "b/d"}),
             inputs=inputs,
             targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
             tester=self,
@@ -1891,7 +1886,7 @@ class TestOperators(UnitxtTestCase):
 
         # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "b/d"}, use_query=True),
+            operator=RenameFields(field_to_field={"b/c/e": "b/d"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -1905,7 +1900,7 @@ class TestOperators(UnitxtTestCase):
 
         # to field is structured, from field is structured too, different fields:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "g/h"}, use_query=True),
+            operator=RenameFields(field_to_field={"b/c/e": "g/h"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -1919,9 +1914,7 @@ class TestOperators(UnitxtTestCase):
 
         # both from and to field are structured, different only in the middle of the path:
         check_operator(
-            operator=RenameFields(
-                field_to_field={"a/b/c/d": "a/g/c/d"}, use_query=True
-            ),
+            operator=RenameFields(field_to_field={"a/b/c/d": "a/g/c/d"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -1933,9 +1926,7 @@ class TestOperators(UnitxtTestCase):
 
         # both from and to field are structured, different down the path:
         check_operator(
-            operator=RenameFields(
-                field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True
-            ),
+            operator=RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -1944,6 +1935,13 @@ class TestOperators(UnitxtTestCase):
             ],
             tester=self,
         )
+
+        with self.assertWarns(DeprecationWarning) as dw:
+            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            self.assertEqual(
+                "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
+                dw.warnings[0].message.args[0],
+            )
 
     def test_add(self):
         check_operator(
@@ -2005,7 +2003,7 @@ class TestOperators(UnitxtTestCase):
         targets = [{"a": 1}, {"a": 2}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a/0": "a"}, use_query=True),
+            operator=CopyFields(field_to_field={"a/0": "a"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2020,7 +2018,7 @@ class TestOperators(UnitxtTestCase):
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a": "a/x"}, use_query=True),
+            operator=CopyFields(field_to_field={"a": "a/x"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2031,12 +2029,16 @@ class TestOperators(UnitxtTestCase):
             {"prediction": "red", "references": ["red", "blue"]},
             {"prediction": "blue", "references": ["blue"]},
             {"prediction": "green", "references": ["red"]},
+            {"prediction": "", "references": ["red"]},
+            {"prediction": "green", "references": []},
         ]
 
         targets = [
             {"prediction": 0, "references": [0, 1]},
             {"prediction": 1, "references": [1]},
             {"prediction": 2, "references": [0]},
+            {"prediction": 3, "references": [0]},
+            {"prediction": 2, "references": []},
         ]
 
         check_operator(
@@ -2044,6 +2046,15 @@ class TestOperators(UnitxtTestCase):
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+        inputs = [{"prediction": "red", "references": "blue"}]
+        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict: {'prediction': 'red', 'references': 'blue'}"
+        check_operator_exception(
+            operator=EncodeLabels(fields=["references/*", "prediction"]),
+            inputs=inputs,
+            tester=self,
+            exception_text=exception_text,
         )
 
     def test_join_str(self):
@@ -2081,16 +2092,14 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=ZipFieldValues(fields=["a", "b"], to_field="c", use_query=True),
+            operator=ZipFieldValues(fields=["a", "b"], to_field="c"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
         check_operator(
-            operator=ZipFieldValues(
-                fields=["a", "b"], to_field="c", use_query=True, longest=True
-            ),
+            operator=ZipFieldValues(fields=["a", "b"], to_field="c", longest=True),
             inputs=inputs,
             targets=targets_longest,
             tester=self,
@@ -2119,7 +2128,7 @@ class TestOperators(UnitxtTestCase):
         ]
 
         check_operator(
-            operator=TakeByField(field="a", index="b", to_field="c", use_query=True),
+            operator=TakeByField(field="a", index="b", to_field="c"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2127,7 +2136,7 @@ class TestOperators(UnitxtTestCase):
 
         # field plays the role of to_field
         check_operator(
-            operator=TakeByField(field="a", index="b", use_query=True),
+            operator=TakeByField(field="a", index="b"),
             inputs=inputs,
             targets=[{"a": 1, "b": 0}, {"a": 1, "b": "a"}],
             tester=self,

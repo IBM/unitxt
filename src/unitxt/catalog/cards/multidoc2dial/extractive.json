@@ -9,8 +9,7 @@
             "type": "rename_fields",
             "field_to_field": {
                 "answers/text/0": "relevant_context"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "list_field_values",

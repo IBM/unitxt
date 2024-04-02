@@ -10,7 +10,6 @@ card = TaskCard(
                 ["translation/en", "text"],
                 ["translation/de", "translation"],
             ],
-            use_query=True,
         ),
         AddFields(
             fields={

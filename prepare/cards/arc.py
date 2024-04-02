@@ -12,8 +12,7 @@ for subtask in subtasks:
             AddFields({"topic": "science"}),
             RenameFields(field_to_field={"answerKey": "label", "choices": "_choices"}),
             CopyFields(
-                field_to_field={"_choices/text": "choices", "_choices/label": "labels"},
-                use_query=True,
+                field_to_field={"_choices/text": "choices", "_choices/label": "labels"}
             ),
             IndexOf(search_in="labels", index_of="label", to_field="answer"),
         ],

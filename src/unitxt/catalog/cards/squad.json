@@ -13,8 +13,7 @@
                     "answers/text",
                     "answers"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "add_fields",

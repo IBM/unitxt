@@ -113,18 +113,18 @@ templates = {
 template_handels = []
 
 for template_type, template_type_groups in templates.items():
-    for bechmark_name, template_groups in template_type_groups.items():
+    for benchmark_name, template_groups in template_type_groups.items():
         for language, input_format in template_groups.items():
             template = MultipleChoiceTemplate(
                 input_format=input_format,
                 target_field="answer",
                 choices_seperator="\n",
                 target_choice_format=" {choice_numeral}"
-                if "lm_eval_harness" in bechmark_name
+                if "lm_eval_harness" in benchmark_name
                 else "{choice_numeral}",
                 postprocessors=["processors.first_character"],
             )
-            template_handle = f"templates.qa.multiple_choice.{template_type}.{language}.{bechmark_name}".replace(
+            template_handle = f"templates.qa.multiple_choice.{template_type}.{language}.{benchmark_name}".replace(
                 ".en", ""
             )
             add_to_catalog(

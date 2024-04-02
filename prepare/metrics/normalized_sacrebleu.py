@@ -31,14 +31,12 @@ metric = MetricPipeline(
     preprocess_steps=[
         CopyFields(
             field_to_field=[("task_data/target_language", "task_data/tokenize")],
-            use_query=True,
             not_exist_ok=True,
             get_default="en",
         ),
         MapInstanceValues(
             mappers={"task_data/tokenize": language_to_tokenizer},
             strict=True,
-            use_query=True,
         ),
     ],
     metric=NormalizedSacrebleu(),

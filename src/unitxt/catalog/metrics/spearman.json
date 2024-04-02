@@ -9,8 +9,7 @@
                     "references/0",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "cast_fields",
