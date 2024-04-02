@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
 from .operator import StreamInstanceOperator
-from .type_utils import isoftype, parse_type_string
+from .type_utils import isoftype, parse_type_string, verify_required_schema
 
 
 class Tasker:
@@ -37,11 +37,6 @@ class FormTask(Tasker, StreamInstanceOperator):
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
 
-    @staticmethod
-    def get_prediction_type(type_string: str) -> Any:
-        type_string = type_string.replace("typing.", "")
-        return parse_type_string(type_string)
-
     def verify(self):
         for io_type in ["inputs", "outputs"]:
             data = self.inputs if io_type == "inputs" else self.outputs
@@ -67,13 +62,15 @@ class FormTask(Tasker, StreamInstanceOperator):
             )
             self.prediction_type = "Any"
 
+        self.check_metrics_type()
+
         for augmentable_input in self.augmentable_inputs:
             assert (
                 augmentable_input in self.inputs
             ), f"augmentable_input f{augmentable_input} is not part of {self.inputs}"
 
     def check_metrics_type(self) -> None:
-        prediction_type = self.get_prediction_type(self.prediction_type)
+        prediction_type = parse_type_string(self.prediction_type)
         for metric_name in self.metrics:
             metric = fetch_artifact(metric_name)[0]
             metric_prediction_type = metric.get_prediction_type()
@@ -90,67 +87,14 @@ class FormTask(Tasker, StreamInstanceOperator):
                 f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
-    def get_input_value(self, instance: Dict[str, Any], key: str) -> Any:
-        try:
-            return instance[key]
-        except KeyError as e:
-            raise KeyError(
-                f"Unexpected Task 'inputs' names: {[k for k in self.inputs if k not in instance]}."
-                f"The available names: {list(instance.keys())}."
-            ) from e
-
-    def get_output_value(self, instance: Dict[str, Any], key: str) -> Any:
-        try:
-            return instance[key]
-        except KeyError as e:
-            raise KeyError(
-                f"Unexpected Task 'outputs' names: {[k for k in self.outputs if k not in instance]}."
-                f"The available names: {list(instance.keys())}."
-            ) from e
-
-    def check_instance_value_type(
-        self,
-        value: Any,
-        data_type: str,
-        field_name: str,
-        io_type: Literal["inputs", "outputs"],
-    ) -> Any:
-        data_type = self.get_prediction_type(data_type)
-
-        if isoftype(value, data_type):
-            return value
-
-        raise ValueError(
-            f"Passed {io_type} value '{value}' of field {field_name} is not of required "
-            f"type ({data_type})."
-        )
-
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        self.check_metrics_type()
+        verify_required_schema(self.inputs, instance)
+        verify_required_schema(self.outputs, instance)
 
-        inputs = {
-            key: self.check_instance_value_type(
-                self.get_input_value(
-                    instance,
-                    key,
-                ),
-                data_type,
-                key,
-                "inputs",
-            )
-            for key, data_type in self.inputs.items()
-        }
-        outputs = {
-            key: self.check_instance_value_type(
-                self.get_output_value(instance, key),
-                data_type,
-                key,
-                "outputs",
-            )
-            for key, data_type in self.outputs.items()
-        }
+        inputs = {key: instance[key] for key in self.inputs.keys()}
+        outputs = {key: instance[key] for key in self.outputs.keys()}
 
         return {
             "inputs": inputs,
