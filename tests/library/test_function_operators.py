@@ -26,7 +26,7 @@ class TestFunctionOperators(UnitxtTestCase):
         operator = SequentialOperator(
             [
                 Apply(function=dict, to_field="t"),
-                CopyFields(field_to_field={"a": "t/a", "b": "t/b"}, use_query=True),
+                CopyFields(field_to_field={"a": "t/a", "b": "t/b"}),
                 Apply("t", function=json.dumps, to_field="t"),
             ]
         )

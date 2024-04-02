@@ -26,8 +26,7 @@
             "field_to_field": {
                 "input": "input_label/input",
                 "label": "input_label/label"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "apply",

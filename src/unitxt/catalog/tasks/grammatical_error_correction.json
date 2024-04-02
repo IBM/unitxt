@@ -8,6 +8,7 @@
     ],
     "metrics": [
         "metrics.char_edit_dist_accuracy",
-        "metrics.rouge"
+        "metrics.rouge",
+        "metrics.char_edit_distance[reference_field=original_text]"
     ]
 }

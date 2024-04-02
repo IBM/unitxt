@@ -12,8 +12,11 @@ from src.unitxt.dataclass import (
     RequiredField,
     RequiredFieldError,
     UnexpectedArgumentError,
+    class_fields,
     fields,
     fields_names,
+    is_abstract_field,
+    is_final_field,
 )
 from tests.utils import UnitxtTestCase
 
@@ -281,6 +284,15 @@ class TestDataclass(UnitxtTestCase):
 
         with self.assertRaises(UnexpectedArgumentError):
             Dummy(b=2)
+
+    def test_class_fields(self):
+        class Dummy(Dataclass):
+            a: int
+
+        obj = Dummy(7)
+        self.assertEqual("a", class_fields(obj)[0].name)
+        self.assertEqual(False, is_final_field(class_fields(obj)[0]))
+        self.assertEqual(False, is_abstract_field(class_fields(obj)[0]))
 
     def test_non_positional_fields(self):
         class Dummy(Dataclass):

@@ -71,7 +71,6 @@ For example, prepare the dataset for translation task:
                 ["translation/en", "text"],
                 ["translation/de", "translation"],
             ],
-            use_query=True,
         ),
         AddFields( # add new fields required by the task schema
             fields={
@@ -131,7 +130,6 @@ Once your card is ready you can test it:
                         ["translation/en", "text"],
                         ["translation/de", "translation"],
                     ],
-                    use_query=True,
                 ),
                 AddFields( # add new fields required by the task schema
                     fields={

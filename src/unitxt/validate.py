@@ -21,7 +21,7 @@ class ValidateSchema(Validator, StreamInstanceOperator):
         assert self.schema is not None, "Schema must be specified"
 
     def verify_first_instance(self, instance):
-        for std_field in self.standart_fields:
+        for std_field in self.standard_fields:
             assert (
                 std_field in instance
             ), f'Field "{std_field}" is missing in the first instance'
@@ -47,5 +47,5 @@ class StandardSchema(Features):
         )
 
 
-class ValidateStandartSchema:
+class ValidateStandardSchema:
     schema: Features = field(default_factory=StandardSchema)

@@ -231,13 +231,13 @@ def random_mix_generator(
     new_stream_name, new_stream_sources, stream_routing, input_streams
 ):
     for old_stream_name in new_stream_sources:
-        optinal_streams, weights = stream_routing[old_stream_name]
+        optional_streams, weights = stream_routing[old_stream_name]
         random_generator = new_random_generator(sub_seed=old_stream_name)
         assert (
             old_stream_name in input_streams
         ), f"'{old_stream_name}' split not found.  Possibles options: {input_streams.keys()}"
         for item in input_streams[old_stream_name]:
-            choice = random_generator.choices(optinal_streams, weights=weights, k=1)[0]
+            choice = random_generator.choices(optional_streams, weights=weights, k=1)[0]
             if choice == new_stream_name:
                 yield item
 

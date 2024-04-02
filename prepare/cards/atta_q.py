@@ -19,8 +19,7 @@ card = TaskCard(
         Shuffle(page_size=2800),
         AddFields({"input_label": {}}),
         CopyFields(
-            field_to_field={"input": "input_label/input", "label": "input_label/label"},
-            use_query=True,
+            field_to_field={"input": "input_label/input", "label": "input_label/label"}
         ),
         Apply("input_label", function=json.dumps, to_field="input_label"),
     ],

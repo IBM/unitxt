@@ -24,8 +24,7 @@
             "field_to_field": {
                 "_choices/text": "choices",
                 "_choices/label": "labels"
-            },
-            "use_query": true
+            }
         },
         {
             "type": "index_of",

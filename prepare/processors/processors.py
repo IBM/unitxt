@@ -231,7 +231,6 @@ add_to_catalog(
                 field="references/0",
                 unallowed_values=["none"],
                 process_every_value=False,
-                use_query=True,
             ),
         ]
     ),

@@ -1,0 +1,12 @@
+{
+    "type": "input_output_template",
+    "instruction": "You are given a text. Does this text contain any grammatical errors or spelling mistakes? Answer only \"Yes\" or \"No\".\n",
+    "input_format": "Text: {text}",
+    "output_format": "{label}",
+    "target_prefix": "Answer: ",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.yes_no_to_int"
+    ]
+}

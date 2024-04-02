@@ -98,7 +98,8 @@ convention = "google"
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
 
 [tool.codespell]
-ignore-words-list = 'rouge,ot,ans'
+ignore-words-list = 'rouge,ot,ans,nd'
 check-filenames = true
 check-hidden = false
-skip = 'prepare/cards/trec.py'
+regex = "([A-Z]?[a-z]+|[A-Z]+(?![a-z])|_[a-z]+)"
+skip = '*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*egg-info*,*/logs/*'

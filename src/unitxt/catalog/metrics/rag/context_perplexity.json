@@ -9,8 +9,7 @@
                     "contexts",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "copy_fields",
@@ -19,8 +18,7 @@
                     "question",
                     "prediction"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
@@ -32,8 +30,7 @@
                     "score/instance/reference_scores",
                     "score/instance/score"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ]
 }

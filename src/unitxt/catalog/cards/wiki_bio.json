@@ -19,8 +19,7 @@
                 "input_text/table/column_header",
                 "input_text/table/content"
             ],
-            "to_field": "kvpairs",
-            "use_query": true
+            "to_field": "kvpairs"
         },
         {
             "type": "serialize_key_val_pairs",

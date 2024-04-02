@@ -18,8 +18,7 @@
                     "translation/fr",
                     "translation"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "add_fields",

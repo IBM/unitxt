@@ -107,9 +107,9 @@ def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
         execute arbitrary code. The function attempts to mitigate security risks
         by restricting the available tokens and not exposing built-in functions.
     """
-    allowd_sub_strings = list(context.keys()) + allowed_tokens
-    if is_made_of_sub_strings(expression, allowd_sub_strings):
+    allowed_sub_strings = list(context.keys()) + allowed_tokens
+    if is_made_of_sub_strings(expression, allowed_sub_strings):
         return eval(expression, {"__builtins__": {}}, context)
     raise ValueError(
-        f"The expression '{expression}' can not be evaluated because it contains tokens outside the allowed list of {allowd_sub_strings}."
+        f"The expression '{expression}' can not be evaluated because it contains tokens outside the allowed list of {allowed_sub_strings}."
     )

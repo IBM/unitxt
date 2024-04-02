@@ -34,12 +34,30 @@ for subset in subsets:
                 ),
                 ListFieldValues(fields=["answers"], to_field="answers"),
             ],
-            task="tasks.qa.open",  # [metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
+            task="tasks.qa.open[metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
             templates="templates.qa.open.all",
         )
 
-        test_card(card, debug=False, strict=False)
-        add_to_catalog(card, f"cards.cohere_for_ai.{subset}.{lang}", overwrite=True)
+        from copy import deepcopy
+
+        card_for_test = deepcopy(card)
+        from src.unitxt.blocks import (
+            FormTask,
+        )
+
+        card_for_test.task = FormTask(
+            inputs=["question"],
+            outputs=["answers"],
+            metrics=["metrics.rag.correctness.llama_index_by_mock"],
+        )
+
+        test_card(card_for_test, debug=False, strict=False)
+        add_to_catalog(
+            card,
+            f"cards.cohere_for_ai.{subset}.{lang}",
+            overwrite=True,
+            catalog_path="src/unitxt/catalog",
+        )
 
 ########################  to remove once done ############################
 # logger = get_logger()

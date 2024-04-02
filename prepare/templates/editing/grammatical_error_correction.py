@@ -3,7 +3,7 @@ from src.unitxt.templates import MultiReferenceTemplate
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Make the minimal amount of changes to correct grammar and spelling errors in the following text.",
+        instruction="Make the minimal amount of changes to correct grammar and spelling errors in the following text.\n",
         input_format="Original text: {original_text}",
         references_field="corrected_texts",
         target_prefix="Corrected text: ",
