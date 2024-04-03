@@ -1,3 +1,4 @@
+import re
 from typing import (
     Any,
     Dict,
@@ -12,6 +13,16 @@ from .type_utils import isoftype
 
 class Format(StreamInstanceOperator):
     pass
+
+
+def process_slash_n_chars(output):
+    has_slash_n_slash_n = True
+    while has_slash_n_slash_n:
+        new_output = output.replace("\\N\\N", "\\N")
+        has_slash_n_slash_n = output != new_output
+        output = new_output
+    output = re.sub(r"^\\N", "", output)
+    return output.replace("\n\\N", "\n").replace("\\N", "\n")
 
 
 class SystemFormat(Format):
@@ -143,5 +154,6 @@ class SystemFormat(Format):
             target_prefix=target_prefix,
             **self.format_args,
         )
+        output = process_slash_n_chars(output)
         instance["source"] = output
         return instance

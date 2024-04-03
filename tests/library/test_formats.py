@@ -334,3 +334,19 @@ class TestFormats(UnitxtTestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_format_with_slash_n(self):
+        # no demos
+        instance = {
+            "source": "bla bla bla",
+            "target": "negative",
+            "references": ["negative"],
+            "inputs": {},
+            "instruction": "inst inst inst",
+        }
+        system_format = SystemFormat(
+            model_input_format="\\N{instruction}\n{source}\\N{instruction}\n\\N{instruction}\n\\N\\N{source}\\N\\N\\N{instruction}",
+        )
+        result = system_format.process(instance)
+        target = "inst inst inst\nbla bla bla\ninst inst inst\ninst inst inst\nbla bla bla\ninst inst inst"
+        self.assertEqual(result["source"], target)
