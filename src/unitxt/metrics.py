@@ -3347,6 +3347,99 @@ class BinaryMaxAccuracy(GlobalMetric):
         return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
 
 
+######################
+# RerankRecallMetric #
+
+
+def pytrec_eval_at_k(results, qrels, at_k, metric_name):
+    import pandas as pd
+    import pytrec_eval
+
+    metric = {}
+
+    for k in at_k:
+        metric[f"{metric_name}@{k}"] = 0.0
+
+    metric_string = f"{metric_name}." + ",".join([str(k) for k in at_k])
+    # print('metric_string = ', metric_string)
+    evaluator = pytrec_eval.RelevanceEvaluator(
+        qrels, {"ndcg", metric_string}
+    )  # {map_string, ndcg_string, recall_string, precision_string})
+    scores = evaluator.evaluate(results)
+    scores = pd.DataFrame(scores).transpose()
+
+    keys = []
+    column_map = {}
+    for k in at_k:
+        keys.append(f"{metric_name}_{k}")
+        column_map[f"{metric_name}_{k}"] = k
+    scores[keys].rename(columns=column_map)
+
+    return scores
+
+
+class RerankRecall(GlobalMetric):
+    """RerankRecall: measures the quality of reranking with respect to ground truth ranking scores.
+
+    This metric measures ranking performance across a dataset.  The
+    references for a query will have a score of 1 for the gold passage
+    and 0 for all other passages.  The model returns scores in [0,1]
+    for each passage,query pair.  This metric measures recall at k by
+    testing that the predicted score for the gold passage,query pair
+    is at least the k'th highest for all passages for that query.  A
+    query receives 1 if so, and 0 if not.  The 1's and 0's are
+    averaged across the dataset.
+
+    query_id_field selects the field containing the query id for an instance.
+    passage_id_field selects the field containing the passage id for an instance.
+    at_k selects the value of k used to compute recall.
+
+    """
+
+    main_score = "recall_at_5"
+    query_id_field: str = "query_id"
+    passage_id_field: str = "passage_id"
+    at_k: List[int] = [1, 2, 5]
+
+    # This doesn't seem to make sense
+    n_resamples = None
+
+    _requirements_list: List[str] = ["pandas", "pytrec_eval"]
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ):
+        # Collect relevance score and ref per query/passage pair
+        results = {}
+        qrels = {}
+        for ref, pred, data in zip(references, predictions, task_data):
+            qid = data[self.query_id_field]
+            pid = data[self.passage_id_field]
+            if qid not in results:
+                results[qid] = {}
+                qrels[qid] = {}
+            # Convert string-wrapped float to regular float
+            try:
+                results[qid][pid] = float(pred)
+            except ValueError:
+                # Card testing feeds nonnumeric values in, so catch that.
+                results[qid][pid] = np.nan
+
+            # There's always a single reference per pid/qid pair
+            qrels[qid][pid] = int(ref[0])
+
+        # Compute recall @ 5
+        scores = pytrec_eval_at_k(results, qrels, self.at_k, "recall")
+        # print(scores.describe())
+        # pytrec returns numpy float32
+        return {
+            f"recall_at_{i}": float(scores[f"recall_{i}"].mean()) for i in self.at_k
+        }
+
+
 KO_ERROR_MESSAGE = """
 
 Additional dependencies required. To install them, run:

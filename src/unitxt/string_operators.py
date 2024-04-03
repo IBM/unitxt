@@ -15,3 +15,16 @@ class Join(FieldOperator):
 
     def process_value(self, value: List[str]) -> str:
         return self.by.join(value)
+
+
+class Strip(FieldOperator):
+    def process_value(self, value: str) -> str:
+        return value.strip()
+
+
+class Replace(FieldOperator):
+    old: str
+    new: str
+
+    def process_value(self, value: str) -> str:
+        return value.replace(self.old, self.new)

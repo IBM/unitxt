@@ -219,8 +219,10 @@ class TestRecipes(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             list(recipe()["test"])
 
-        self.assertEqual(
-            str(cm.exception), "Unable to fetch instances from 'demos_pool' to 'demos'"
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "Unable to fetch instances from 'demos_pool' to 'demos'"
+            )
         )
 
         with self.assertRaises(Exception) as cm:

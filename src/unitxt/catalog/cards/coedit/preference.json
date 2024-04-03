@@ -1,0 +1,64 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "grammarly/coedit",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        "splitters.small_no_test",
+        {
+            "type": "split",
+            "field": "src",
+            "by": ": "
+        },
+        {
+            "type": "slice",
+            "field": "src",
+            "start": 1
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "src/0": "instruction"
+            }
+        },
+        {
+            "type": "join",
+            "field": "src",
+            "by": ": "
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "tgt",
+                "src"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "shuffle_field_values",
+            "field": "choices"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "output_type": "sentence",
+                "input_type": "sentence"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "src": "input",
+                "tgt": "output_choice"
+            }
+        }
+    ],
+    "task": "tasks.evaluation.preference",
+    "templates": "templates.evaluation.preference.all"
+}

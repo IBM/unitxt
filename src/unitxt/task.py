@@ -67,7 +67,7 @@ class FormTask(Tasker, StreamInstanceOperator):
         for augmentable_input in self.augmentable_inputs:
             assert (
                 augmentable_input in self.inputs
-            ), f"augmentable_input f{augmentable_input} is not part of {self.inputs}"
+            ), f"augmentable_input {augmentable_input} is not part of {self.inputs}"
 
     def check_metrics_type(self) -> None:
         prediction_type = parse_type_string(self.prediction_type)
