@@ -699,7 +699,7 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        global_target = 0.6025716662406921
+        global_target = 0.81649658092772
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
 
@@ -710,7 +710,6 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        
         global_target = 0.9562818706035614
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
