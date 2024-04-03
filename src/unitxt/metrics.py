@@ -1976,6 +1976,38 @@ class Reward(BulkInstanceMetric):
         return self.pipe(inputs, batch_size=self.batch_size)
 
 
+class Detector(BulkInstanceMetric):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    batch_size: int = 32
+
+    prediction_type = "str"
+
+    model_name: str
+
+    _requirements_list: List[str] = ["transformers", "torch"]
+
+    def prepare(self):
+        super().prepare()
+        import torch
+        from transformers import pipeline
+
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.pipe = pipeline(
+            "text-classification", model=self.model_name, device=device
+        )
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> List[Dict[str, Any]]:
+        # compute the metric
+        # add function_to_apply="none" to disable sigmoid
+        return self.pipe(predictions, batch_size=self.batch_size)
+
+
 class LlamaIndexCorrectness(InstanceMetric):
     """LlamaIndex based metric class for evaluating correctness."""
 

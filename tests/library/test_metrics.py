@@ -7,6 +7,7 @@ from src.unitxt.metrics import (
     BinaryAccuracy,
     BinaryMaxAccuracy,
     BinaryMaxF1,
+    Detector,
     F1Binary,
     F1Macro,
     F1MacroMultiLabel,
@@ -700,6 +701,18 @@ class TestMetrics(UnitxtTestCase):
         )
         global_target = 0.81649658092772
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_detector(self):
+        metric = Detector(model_name="MilaNLProc/bert-base-uncased-ear-misogyny")
+        predictions = ["I hate women.", "I do not hate women."]
+        references = [["I hate women."], ["I do not hate women."]]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 0.9562818706035614
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["score"], places=4
+        )
 
     def test_normalized_sacrebleu(self):
         metric = NormalizedSacrebleu()
