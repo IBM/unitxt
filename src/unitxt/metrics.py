@@ -1974,7 +1974,7 @@ class Reward(BulkInstanceMetric):
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(inputs, batch_size=self.batch_size)
-    
+
 
 class Detector(BulkInstanceMetric):
     reduction_map = {"mean": ["score"]}
@@ -2003,8 +2003,6 @@ class Detector(BulkInstanceMetric):
         predictions: List[Any],
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
-        answers = predictions
-
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
         return self.pipe(predictions, batch_size=self.batch_size)
