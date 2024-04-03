@@ -1,0 +1,91 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "grammarly/coedit",
+        "streaming": true,
+        "filtering_lambda": "lambda x: x['task'] in ['gec', 'simplification', 'coherence', 'neutralize']"
+    },
+    "preprocess_steps": [
+        {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        "splitters.small_no_test",
+        {
+            "type": "split",
+            "field": "src",
+            "by": ": "
+        },
+        {
+            "type": "slice",
+            "field": "src",
+            "start": 1
+        },
+        {
+            "type": "join",
+            "field": "src",
+            "by": ": "
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "tgt",
+                "src"
+            ],
+            "to_field": "choices_texts"
+        },
+        {
+            "type": "shuffle_field_values",
+            "field": "choices_texts"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "task": "required_attribute"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "required_attribute": {
+                    "gec": "grammatically correct",
+                    "simplification": "simple",
+                    "coherence": "coherent",
+                    "neutralize": "neutral"
+                }
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "task": "attribute_type"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "attribute_type": {
+                    "gec": "gramaticity",
+                    "simplification": "simplicity",
+                    "coherence": "coherence",
+                    "neutralize": "neutrality"
+                }
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "choices_text_type": "sentences"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "tgt": "choice"
+            }
+        }
+    ],
+    "task": "tasks.selection.by_attribute",
+    "templates": "templates.selection.by_attribute.all"
+}

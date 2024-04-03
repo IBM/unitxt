@@ -1,0 +1,75 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "Anthropic/hh-rlhf"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_dev",
+        {
+            "type": "strip",
+            "field": "chosen"
+        },
+        {
+            "type": "replace",
+            "field": "chosen",
+            "old": "\n\n",
+            "new": "\n"
+        },
+        {
+            "type": "split",
+            "field": "chosen",
+            "by": "\nAssistant:"
+        },
+        {
+            "type": "get",
+            "field": "chosen",
+            "item": -1,
+            "to_field": "output_choice"
+        },
+        {
+            "type": "slice",
+            "field": "chosen",
+            "stop": -1
+        },
+        {
+            "type": "join",
+            "field": "chosen",
+            "by": "\nAssistant:",
+            "to_field": "input"
+        },
+        {
+            "type": "split",
+            "field": "rejected",
+            "by": "\nAssistant:"
+        },
+        {
+            "type": "get",
+            "field": "rejected",
+            "item": -1,
+            "to_field": "output_rejected"
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "output_choice",
+                "output_rejected"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "type": "shuffle_field_values",
+            "field": "choices"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "input_type": "dialog",
+                "output_type": "response",
+                "instruction": "Respond the following dialog in an helpful and harmfull way."
+            }
+        }
+    ],
+    "task": "tasks.evaluation.preference",
+    "templates": "templates.evaluation.preference.all"
+}

@@ -1,0 +1,17 @@
+{
+    "type": "multiple_choice_template",
+    "instruction": "Which of the {choices_text_type} is the most {required_attribute}, please respond with: {numerals}.",
+    "input_format": "{choices_text_type}:\n{choices_texts}",
+    "target_prefix": "Most {required_attribute}:\n",
+    "target_field": "choice",
+    "choices_field": "choices_texts",
+    "choices_seperator": "\n",
+    "postprocessors": [
+        "processors.to_string_stripped",
+        "processors.first_character"
+    ],
+    "shuffle_choices": true,
+    "title_fields": [
+        "choices_text_type"
+    ]
+}

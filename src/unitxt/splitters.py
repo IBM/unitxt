@@ -290,5 +290,5 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
             return instance
         except Exception as e:
             raise Exception(
-                f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}'"
+                f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
             ) from e
