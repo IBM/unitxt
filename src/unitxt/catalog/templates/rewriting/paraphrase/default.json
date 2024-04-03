@@ -1,0 +1,10 @@
+{
+    "type": "input_output_template",
+    "instruction": "Rewrite the given {text_type} differently.",
+    "input_format": "{text_type}: {input_text}",
+    "target_prefix": "Paraphrase: ",
+    "output_format": "{output_text}",
+    "title_fields": [
+        "text_type"
+    ]
+}

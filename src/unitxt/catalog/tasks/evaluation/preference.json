@@ -1,0 +1,21 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "input",
+        "input_type",
+        "output_type",
+        "choices",
+        "instruction"
+    ],
+    "outputs": [
+        "choices",
+        "output_choice"
+    ],
+    "metrics": [
+        "metrics.accuracy"
+    ],
+    "augmentable_inputs": [
+        "input",
+        "instruction"
+    ]
+}
