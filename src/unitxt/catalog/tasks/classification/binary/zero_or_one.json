@@ -1,0 +1,20 @@
+{
+    "type": "form_task",
+    "inputs": {
+        "text": "str",
+        "text_type": "str",
+        "class": "str"
+    },
+    "outputs": {
+        "class": "str",
+        "label": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.accuracy",
+        "metrics.f1_binary"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
+}

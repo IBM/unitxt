@@ -19,6 +19,21 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
+        inputs={"text": "str", "text_type": "str", "class": "str"},
+        outputs={"class": "str", "label": "str"},
+        prediction_type="str",
+        metrics=[
+            "metrics.accuracy",
+            "metrics.f1_binary",
+        ],
+        augmentable_inputs=["text"],
+    ),
+    "tasks.classification.binary.zero_or_one",
+    overwrite=True,
+)
+
+add_to_catalog(
+    FormTask(
         inputs={
             "text": "str",
             "text_type": "str",
