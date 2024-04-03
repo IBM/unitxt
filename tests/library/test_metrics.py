@@ -710,8 +710,7 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        print(outputs, '\n\n')
-        print(outputs[0]["score"]["global"]["score"])
+        
         global_target = 0.9562818706035614
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
