@@ -706,7 +706,7 @@ class TestMetrics(UnitxtTestCase):
     def test_detector(self):
         metric = Detector(model_name = "MilaNLProc/bert-base-uncased-ear-misogyny")
         predictions = ["I hate women.", "I do not hate women."]
-        references = [["I hate you."], ["I love you."]]
+        references = [["I hate women."], ["I do not hate women."]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
