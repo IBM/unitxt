@@ -45,13 +45,14 @@ def compare_versions(version1, version2):
     return 0
 
 
-def depraction_wrapper(obj, version, alt_text):
+def depraction_wrapper(obj, version, alt_text, custom_name=None):
     """A wrapper function for deprecation handling, issuing warnings or errors based on version comparison.
 
     Args:
         obj (callable): The object to be wrapped, typically a function or class method.
         version (str): The version at which the object becomes deprecated.
         alt_text (str): Additional text to display, usually suggests an alternative.
+        custom_name (str, optional): Name to be displayed other than the object's name.
 
     Returns:
         callable: A wrapped version of the original object that checks for deprecation.
@@ -59,23 +60,23 @@ def depraction_wrapper(obj, version, alt_text):
 
     @functools.wraps(obj)
     def wrapper(*args, **kwargs):
+        name = custom_name if custom_name is not None else obj.__name__
         if constants.version < version:
-            warnings.warn(
-                f"{obj.__name__} is deprecated.", DeprecationWarning, stacklevel=2
-            )
+            warnings.warn(f"{name} is deprecated.", DeprecationWarning, stacklevel=2)
         elif constants.version >= version:
-            raise DeprecationError(f"{obj.__name__} is no longer supported.{alt_text}")
+            raise DeprecationError(f"{name} is no longer supported.{alt_text}")
         return obj(*args, **kwargs)
 
     return wrapper
 
 
-def deprecation(version, alternative=None):
+def deprecation(version, alternative=None, custom_name=None):
     """Decorator for marking functions or class methods as deprecated.
 
     Args:
         version (str): The version at which the function or method becomes deprecated.
         alternative (str, optional): Suggested alternative to the deprecated functionality.
+        custom_name (str, optional): Name to be displayed other than the object's name.
 
     Returns:
         callable: A decorator that can be applied to functions or class methods.
@@ -89,6 +90,6 @@ def deprecation(version, alternative=None):
             func = obj.__init__
         else:
             raise ValueError("Unsupported object type for deprecation.")
-        return depraction_wrapper(func, version, alt_text)
+        return depraction_wrapper(func, version, alt_text, custom_name)
 
     return decorator

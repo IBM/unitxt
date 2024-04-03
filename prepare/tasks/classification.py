@@ -20,7 +20,7 @@ add_to_catalog(
 add_to_catalog(
     FormTask(
         inputs={"text": "str", "text_type": "str", "class": "str"},
-        outputs={"class": "str", "label": "str"},
+        outputs={"class": "str", "label": "int"},
         prediction_type="str",
         metrics=[
             "metrics.accuracy",

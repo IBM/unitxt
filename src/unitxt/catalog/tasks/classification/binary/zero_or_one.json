@@ -7,7 +7,7 @@
     },
     "outputs": {
         "class": "str",
-        "label": "str"
+        "label": "int"
     },
     "prediction_type": "str",
     "metrics": [
