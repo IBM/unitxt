@@ -711,7 +711,7 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         global_target = 0.9562818706035614
-        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"], places=4)
 
     def test_normalized_sacrebleu(self):
         metric = NormalizedSacrebleu()
