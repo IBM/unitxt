@@ -3,21 +3,25 @@
     "loader": {
         "type": "load_hf",
         "path": "grammarly/coedit",
-        "streaming": true
+        "streaming": true,
+        "filtering_lambda": "lambda x: x['task'] == 'gec'"
     },
     "preprocess_steps": [
-        {
-            "type": "filter_by_condition",
-            "values": {
-                "task": "gec"
-            },
-            "condition": "eq"
-        },
         "splitters.small_no_test",
         {
-            "type": "execute_expression",
-            "expression": "': '.join(src.split(': ')[1:])",
-            "to_field": "src"
+            "type": "split",
+            "field": "src",
+            "by": ": "
+        },
+        {
+            "type": "slice",
+            "field": "src",
+            "start": 1
+        },
+        {
+            "type": "join",
+            "field": "src",
+            "by": ": "
         },
         {
             "type": "list_field_values",

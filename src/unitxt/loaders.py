@@ -123,6 +123,7 @@ class LoadHF(Loader):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
+                    raise e
 
             if self.filtering_lambda is not None:
                 dataset = self.filtered_load(dataset)

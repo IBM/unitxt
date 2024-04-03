@@ -1,0 +1,34 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "openai/summarize_from_feedback",
+        "name": "comparisons"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "info/post": "input",
+                "summaries/*/text": "choices"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "choice": "output_choice"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "input_type": "post",
+                "output_type": "summary",
+                "instruction": "Summarize the following post"
+            }
+        }
+    ],
+    "task": "tasks.evaluation.preference",
+    "templates": "templates.evaluation.preference.all"
+}

@@ -4,7 +4,7 @@
         "type": "load_hf",
         "path": "grammarly/coedit",
         "streaming": true,
-        "filtering_lambda": "lambda x: x['task'] == 'gec'"
+        "filtering_lambda": "lambda x: x['task'] == 'paraphrase'"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
@@ -24,21 +24,19 @@
             "by": ": "
         },
         {
-            "type": "rename_fields",
-            "field_to_field": {
-                "src": "original_text"
+            "type": "add_fields",
+            "fields": {
+                "text_type": "sentence"
             }
         },
         {
-            "type": "list_field_values",
-            "fields": [
-                "tgt"
-            ],
-            "to_field": "corrected_texts"
+            "type": "rename_fields",
+            "field_to_field": {
+                "tgt": "output_text",
+                "src": "input_text"
+            }
         }
     ],
-    "task": "tasks.grammatical_error_correction",
-    "templates": [
-        "templates.grammatical_error_correction.simple"
-    ]
+    "task": "tasks.rewriting.paraphrase",
+    "templates": "templates.rewriting.paraphrase.all"
 }
