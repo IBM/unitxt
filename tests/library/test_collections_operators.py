@@ -1,4 +1,5 @@
 from src.unitxt.collections_operators import (
+    Chunk,
     Dictify,
     DuplicateByList,
     DuplicateBySubLists,
@@ -104,4 +105,10 @@ class TestCollectionsOperators(UnitxtTestCase):
 
         targets = [{"x": [0]}, {"x": [0, 1]}, {"x": [0, 1, 2]}, {"x": [3]}]
 
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_chunk(self):
+        operator = Chunk(field="x", size=2)
+        inputs = [{"x": [0, 1, 2]}, {"x": [0, 1]}, {"x": [3]}]
+        targets = [{"x": [[0, 1], [2]]}, {"x": [[0, 1]]}, {"x": [[3]]}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)

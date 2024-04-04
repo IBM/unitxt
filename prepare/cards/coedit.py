@@ -32,7 +32,7 @@ gec_card = TaskCard(
         ListFieldValues(fields=["tgt"], to_field="corrected_texts"),
     ],
     task="tasks.grammatical_error_correction",
-    templates=["templates.grammatical_error_correction.simple"],
+    templates="templates.grammatical_error_correction.all",
 )
 
 error_detection_metrics = [
@@ -68,7 +68,7 @@ error_detection_card = TaskCard(
         Shuffle(page_size=sys.maxsize),
     ],
     task=f"tasks.classification.binary[metrics=[{','.join(error_detection_metrics)}]]",
-    templates=["templates.grammatical_error_detection.yes_no"],
+    templates="templates.grammatical_error_detection.all",
 )
 
 
