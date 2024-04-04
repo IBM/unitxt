@@ -14,6 +14,12 @@ metrics = {
     "metrics.bert_score.deberta_xlarge_mnli": BertScore(
         model_name="microsoft/deberta-xlarge-mnli"
     ),
+    "metrics.bert_score.deberta_large_mnli": BertScore(
+        model_name="microsoft/deberta-large-mnli"
+    ),
+    "metrics.bert_score.deberta_base_mnli": BertScore(
+        model_name="microsoft/deberta-base-mnli"
+    ),
     "metrics.bert_score.distilbert_base_uncased": BertScore(
         model_name="distilbert-base-uncased"
     ),
@@ -286,7 +292,7 @@ add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=T
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
     ("metrics.rag.k_precision", "metrics.token_overlap"),
-    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_xlarge_mnli"),
+    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_large_mnli"),
 ]:
     metric = MetricPipeline(
         main_score="precision",
@@ -303,7 +309,7 @@ for new_catalog_name, base_catalog_name in [
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.answer_correctness", "metrics.token_overlap"),
     ("metrics.rag.recall", "metrics.token_overlap"),
-    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_xlarge_mnli"),
+    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_large_mnli"),
 ]:
     metric = MetricPipeline(
         main_score="recall",
