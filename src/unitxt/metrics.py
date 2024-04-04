@@ -1880,6 +1880,8 @@ class BertScore(HuggingfaceBulkMetric):
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
 
+    prediction_type = "str"
+
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
