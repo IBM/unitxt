@@ -15,12 +15,6 @@ class Format(StreamInstanceOperator):
     pass
 
 
-def fix_match(match):
-    if match.group(1):
-        return match.group(1) + "\n"
-    return ""
-
-
 def apply_capital_new_line_notation(text: str) -> str:
     r"""Transforms a given string by applying the Capital New Line Notation.
 
