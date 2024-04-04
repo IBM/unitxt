@@ -31,11 +31,11 @@ https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919f
 
 ### 🦄 Currently on Unitxt Catalog
 
-![NLP Tasks](https://img.shields.io/badge/NLP_tasks-22-blue)
-![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-423-blue)
-![Templates](https://img.shields.io/badge/Templates-204-blue)
-![Formats](https://img.shields.io/badge/Formats-13-blue)
-![Metrics](https://img.shields.io/badge/Metrics-79-blue)
+![NLP Tasks](https://img.shields.io/badge/NLP_tasks-29-blue)
+![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-435-blue)
+![Templates](https://img.shields.io/badge/Templates-218-blue)
+![Formats](https://img.shields.io/badge/Formats-15-blue)
+![Metrics](https://img.shields.io/badge/Metrics-84-blue)
 
 ### 🦄 Run Unitxt Exploration Dashboard
 
