@@ -32,6 +32,15 @@ class Wrap(FieldOperator):
         }
 
 
+class Chunk(FieldOperator):
+    size: int
+
+    def process_value(self, collection: Any) -> Any:
+        return [
+            collection[i : i + self.size] for i in range(0, len(collection), self.size)
+        ]
+
+
 class Slice(FieldOperator):
     start: Optional[int] = None
     stop: Optional[int] = None
