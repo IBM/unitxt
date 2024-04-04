@@ -38,7 +38,5 @@
         }
     ],
     "task": "tasks.grammatical_error_correction",
-    "templates": [
-        "templates.grammatical_error_correction.simple"
-    ]
+    "templates": "templates.grammatical_error_correction.all"
 }
