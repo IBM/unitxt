@@ -149,7 +149,7 @@ if Constants.is_uninitilized():
     constants.dataset_url = "unitxt/data"
     constants.metric_url = "unitxt/metric"
     constants.version = version
-    constants.catalog_hirarchy_sep = "."
+    constants.catalog_hierarchy_sep = "."
     constants.env_local_catalogs_paths_sep = ":"
     constants.non_registered_files = [
         "__init__.py",

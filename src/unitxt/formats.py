@@ -1,3 +1,4 @@
+import re
 from typing import (
     Any,
     Dict,
@@ -14,8 +15,50 @@ class Format(StreamInstanceOperator):
     pass
 
 
+def apply_capital_new_line_notation(text: str) -> str:
+    r"""Transforms a given string by applying the Capital New Line Notation.
+
+    The Capital New Line Notation (\N) is designed to manage newline behavior in a string efficiently.
+    This custom notation aims to consolidate multiple newline characters (\n) into a single newline under
+    specific conditions, with tailored handling based on whether there's preceding text. The function
+    distinguishes between two primary scenarios:
+
+    1. If there's text (referred to as a prefix) followed by any number of \n characters and then one or
+    more \N, the entire sequence is replaced with a single \n. This effectively simplifies multiple
+    newlines and notation characters into a single newline when there's preceding text.
+    2. If the string starts with \n characters followed by \N without any text before this sequence, or if
+    \N is at the very beginning of the string, the sequence is completely removed. This case is
+    applicable when the notation should not introduce any newlines due to the absence of preceding text.
+
+    Args:
+        text (str): The input string to be transformed, potentially containing the Capital New Line Notation
+                        (\N) mixed with actual newline characters (\n).
+
+    Returns:
+        str: The string after applying the Capital New Line Notation rules, which either consolidates multiple
+            newlines and notation characters into a single newline when text precedes them, or removes the
+            notation and any preceding newlines entirely if no text is present before the notation.
+
+    Examples:
+        >>> apply_capital_new_line_notation("Hello World\\n\\n\N")
+        'Hello World\\n'
+
+        >>> apply_capital_new_line_notation("\\n\\n\NGoodbye World")
+        'Goodbye World'
+
+        >>> apply_capital_new_line_notation("\N")
+        ''
+    """
+    # If sequence of \N or \n that ends with \N has no characters before delete it
+    text = re.sub(r"^(?:\n|\\N)*\\N", "", text)
+    # Replace every sequence of \N or \n that ends with \N with \n
+    return re.sub(r"[\n(\\N)]*(\\N)+", r"\n", text)
+
+
 class SystemFormat(Format):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
+
+    Important: formats can use '\N' notations that means new-line if no new-line before and no empty string before.
 
     SystemFormat expects the input instance to contain:
     1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task independent opening text.
@@ -107,7 +150,6 @@ class SystemFormat(Format):
             instance=instance, field_name="system_prompt"
         )
 
-        # pop "system_prompt", "instruction", and "target_prefix" from instance
         if "target_prefix" in instance:
             instance.pop("target_prefix")
         if "instruction" in instance:
@@ -122,7 +164,6 @@ class SystemFormat(Format):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            # pop demos from instance
             instance.pop(self.demos_field)
 
         demos_string = ""
@@ -143,5 +184,6 @@ class SystemFormat(Format):
             target_prefix=target_prefix,
             **self.format_args,
         )
+        output = apply_capital_new_line_notation(output)
         instance["source"] = output
         return instance

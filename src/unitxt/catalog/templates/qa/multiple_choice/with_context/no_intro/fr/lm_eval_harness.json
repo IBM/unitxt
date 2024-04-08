@@ -2,7 +2,7 @@
     "type": "multiple_choice_template",
     "input_format": "{context}\n{question}.\n{choices}\nRéponse:",
     "target_field": "answer",
-    "choices_seperator": "\n",
+    "choices_separator": "\n",
     "target_choice_format": " {choice_numeral}",
     "postprocessors": [
         "processors.first_character"

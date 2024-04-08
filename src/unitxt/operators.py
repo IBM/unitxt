@@ -1833,7 +1833,7 @@ class LengthBalancer(DeterministicBalancer):
     Args:
         segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
         into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
-        beyond, namely, the length of segments_boudaries)
+        beyond, namely, the length of segments_boundaries)
 
         fields (Optional, List[str])
 
