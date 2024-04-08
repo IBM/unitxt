@@ -1,6 +1,7 @@
 import typing
 
 from src.unitxt.type_utils import (
+    format_type_string,
     infer_type,
     infer_type_string,
     isoftype,
@@ -261,3 +262,15 @@ class TestAssertTyping(UnitxtTestCase):
     def test_parse_malformed_string(self):
         with self.assertRaises(TypeError):
             parse_type_string("List[[int]]")
+
+    def test_format_type_string(self):
+        self.assertEqual(
+            format_type_string(
+                "typing.Tuple[int,float,int|list[int|dict[str,int|float]]]"
+            ),
+            "Tuple[int,float,Union[int,List[Union[int,Dict[str,Union[int,float]]]]]]",
+        )
+        self.assertEqual(
+            parse_type_string("tuple[int, str, typing.List[int | float]]"),
+            typing.Tuple[int, str, typing.List[typing.Union[int, float]]],
+        )
