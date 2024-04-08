@@ -1,3 +1,4 @@
+import unitxt
 from datasets import load_dataset
 from evaluate import load
 from unitxt.hf_utils import (
@@ -6,7 +7,6 @@ from unitxt.hf_utils import (
     get_missing_imports,
 )
 
-from src import unitxt
 from tests.utils import UnitxtTestCase
 
 

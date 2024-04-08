@@ -1,9 +1,9 @@
 import evaluate
+import unitxt
 from datasets import load_dataset
 from datasets import load_dataset as load_dataset_hf
 from unitxt.text_utils import print_dict
 
-from src import unitxt
 from tests.utils import UnitxtTestCase
 
 
@@ -18,12 +18,11 @@ class TestExamples(UnitxtTestCase):
         self.assertTrue(True)
 
     def test_add_metric_to_catalog(self):
+        import unitxt
         from unitxt.blocks import ToString
         from unitxt.catalog import add_to_catalog
         from unitxt.metrics import Accuracy
         from unitxt.text_utils import print_dict
-
-        from src import unitxt
 
         add_to_catalog(
             ToString(field="TBD"), "processors.example.to_string", overwrite=True
@@ -167,9 +166,8 @@ class TestExamples(UnitxtTestCase):
 
     def test_evaluate(self):
         import evaluate
+        import unitxt
         from unitxt.text_utils import print_dict
-
-        from src import unitxt
 
         dataset = unitxt.load_dataset("card=cards.wnli,template_card_index=0")
 

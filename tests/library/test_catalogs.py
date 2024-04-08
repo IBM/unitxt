@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 
+import unitxt
 from unitxt import add_to_catalog
 from unitxt.artifact import Artifact, Artifactories
 from unitxt.register import (
@@ -10,7 +11,6 @@ from unitxt.register import (
     unregister_local_catalog,
 )
 
-from src import unitxt
 from tests.utils import UnitxtTestCase
 
 

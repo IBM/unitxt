@@ -44,3 +44,14 @@ repos:
         exclude: .*/(metric|dataset|hf_utils)\.py$
         # Optional: Specify types or exclude files
         types: [python]
+
+  - repo: local
+    hooks:
+      - id: enforce-library-imports
+        name: Enforce Library Imports
+        entry: python utils/enforce_library_imports.py
+        language: system
+        # Adjust the files pattern to match your needs
+        exclude: (^src/.*\.py$)|utils/enforce_library_imports.py|utils/enforce_relative_imports.py
+        # Optional: Specify types or exclude files
+        types: [python]
