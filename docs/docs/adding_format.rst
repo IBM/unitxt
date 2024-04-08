@@ -1,4 +1,4 @@
-.. _adding_fromat:
+.. _adding_format:
 
 .. note::
 

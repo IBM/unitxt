@@ -7,7 +7,7 @@ add_to_catalog(
         input_format="Instruction:\n{instruction}\n{input_type}:\n{input}\nResponses:\n{choices}",
         target_prefix="{output_type}:\n",
         target_field="output_choice",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
         shuffle_choices=True,
         title_fields=["input_type", "output_type"],

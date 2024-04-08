@@ -37,7 +37,7 @@ class LocalCatalog(Catalog):
         assert (
             artifact_identifier.strip()
         ), "artifact_identifier should not be an empty string."
-        parts = artifact_identifier.split(constants.catalog_hirarchy_sep)
+        parts = artifact_identifier.split(constants.catalog_hierarchy_sep)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
@@ -116,7 +116,7 @@ class GithubCatalog(LocalCatalog):
 
 def verify_legal_catalog_name(name):
     assert re.match(
-        r"^[\w" + constants.catalog_hirarchy_sep + "]+$", name
+        r"^[\w" + constants.catalog_hierarchy_sep + "]+$", name
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 

@@ -1,4 +1,5 @@
-from src.unitxt.formats import apply_capital_new_line_notation
+from unitxt.formats import apply_capital_new_line_notation
+
 from tests.utils import UnitxtTestCase
 
 
