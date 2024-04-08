@@ -2736,7 +2736,7 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
         self.assertEqual(instance["source"], target)
 
-    def test_model_input_formater_without_demonstrations_or_instruction(self):
+    def test_model_input_formatter_without_demonstrations_or_instruction(self):
         instance = {"source": "1+1", "target": "2", "inputs": {}}
         target = """User:1+1
 Agent:"""

@@ -4,7 +4,7 @@
     "input_format": "Question:\n{question}\nChoices:\n{choices}",
     "target_prefix": "Answer:\n",
     "target_field": "answer",
-    "choices_seperator": "\n",
+    "choices_separator": "\n",
     "postprocessors": [
         "processors.to_string_stripped",
         "processors.first_character"

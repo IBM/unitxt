@@ -8,7 +8,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    KeyValTemplate(pairs_seperator="\n", use_keys_for_outputs=True),
+    KeyValTemplate(pairs_separator="\n", use_keys_for_outputs=True),
     "templates.key_val_with_new_lines",
     overwrite=True,
 )

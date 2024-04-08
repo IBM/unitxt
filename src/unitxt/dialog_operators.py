@@ -36,7 +36,7 @@ class SerializeDialog(InstanceFieldOperator):
     format: Optional[SystemFormat] = None
     last_response_to_field: Optional[str] = None
     context_field: Optional[str] = None
-    context_seperator: str = " "
+    context_separator: str = " "
 
     def standardize_format(self, demo_format):
         turn_format = demo_format.replace("{source}", "{user}")
@@ -49,7 +49,7 @@ class SerializeDialog(InstanceFieldOperator):
     def slice_last_turn(self, turn_format):
         return turn_format[: turn_format.index("{system}") + len("{system}")]
 
-    def slice_last_reponse(self, turn_format):
+    def slice_last_response(self, turn_format):
         return turn_format[: turn_format.index("{user}") + len("{user}")]
 
     def get_turn_format(self, turn_format, step, length):
@@ -58,7 +58,7 @@ class SerializeDialog(InstanceFieldOperator):
         if step == length - 1:
             turn_format = self.slice_last_turn(turn_format)
             if self.last_response_to_field is not None:
-                turn_format = self.slice_last_reponse(turn_format)
+                turn_format = self.slice_last_response(turn_format)
         return turn_format
 
     def get_general_turn_format(self, instance):
@@ -75,7 +75,7 @@ class SerializeDialog(InstanceFieldOperator):
         dialog = (
             ""
             if self.context_field is None
-            else instance[self.context_field] + self.context_seperator
+            else instance[self.context_field] + self.context_separator
         )
         general_turn_format = self.get_general_turn_format(instance)
         for i, turn in enumerate(structured_dialog):
