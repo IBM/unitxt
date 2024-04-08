@@ -4,10 +4,11 @@ import os
 import time
 from datetime import timedelta
 
-from src.unitxt.loaders import MissingKaggleCredentialsError
-from src.unitxt.logging_utils import get_logger
-from src.unitxt.settings_utils import get_constants
-from src.unitxt.text_utils import print_dict
+from unitxt.loaders import MissingKaggleCredentialsError
+from unitxt.logging_utils import get_logger
+from unitxt.settings_utils import get_constants
+from unitxt.text_utils import print_dict
+
 from tests.utils import UnitxtCatalogPreparationTestCase
 
 logger = get_logger()

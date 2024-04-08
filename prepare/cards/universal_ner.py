@@ -1,13 +1,13 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import LoadHF, TaskCard
-from src.unitxt.operators import (
+from unitxt import add_to_catalog
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.operators import (
     AddFields,
     CopyFields,
     GetItemByIndex,
     RenameFields,
 )
-from src.unitxt.span_lableing_operators import IobExtractor
-from src.unitxt.test_utils.card import test_card
+from unitxt.span_lableing_operators import IobExtractor
+from unitxt.test_utils.card import test_card
 
 sub_tasks = [
     "ceb_gja",

@@ -5,8 +5,8 @@ import os
 import shutil
 from pathlib import Path
 
-from src.unitxt import get_logger
-from src.unitxt.settings_utils import get_constants
+from unitxt import get_logger
+from unitxt.settings_utils import get_constants
 
 logger = get_logger()
 constants = get_constants()

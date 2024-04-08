@@ -1,9 +1,9 @@
-from src.unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
-from src.unitxt.card import TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.prepare_utils.card_types import add_classification_choices
-from src.unitxt.task import FormTask
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
+from unitxt.card import TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.prepare_utils.card_types import add_classification_choices
+from unitxt.task import FormTask
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="super_glue", name="wsc"),

@@ -1,9 +1,9 @@
 import unittest
 
 from datasets import load_dataset
+from unitxt.logging_utils import get_logger
 
 from src import unitxt
-from src.unitxt.logging_utils import get_logger
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()

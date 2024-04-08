@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.system_prompts import TextualSystemPrompt
+from unitxt.catalog import add_to_catalog
+from unitxt.system_prompts import TextualSystemPrompt
 
 system_prompt = TextualSystemPrompt("")
 

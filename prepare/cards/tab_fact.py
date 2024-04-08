@@ -1,4 +1,4 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
@@ -6,8 +6,8 @@ from src.unitxt.blocks import (
     SerializeTableAsIndexedRowMajor,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.test_utils.card import test_card
 
 # Set unitxt.settings.allow_unverified_code=True or environment variable: UNITXT_ALLOW_UNVERIFIED_CODE to True
 

@@ -1,9 +1,10 @@
-from src.unitxt.artifact import (
+from unitxt.artifact import (
     Artifact,
     MissingArtifactTypeError,
     UnrecognizedArtifactTypeError,
 )
-from src.unitxt.logging_utils import get_logger
+from unitxt.logging_utils import get_logger
+
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()

@@ -1,14 +1,14 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     FormTask,
     InputOutputTemplate,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from src.unitxt.operators import ExecuteExpression
-from src.unitxt.settings_utils import get_settings
-from src.unitxt.test_utils.card import test_card
+from unitxt.operators import ExecuteExpression
+from unitxt.settings_utils import get_settings
+from unitxt.test_utils.card import test_card
 
 settings = get_settings()
 orig_settings = settings.allow_unverified_code

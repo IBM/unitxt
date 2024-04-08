@@ -1,6 +1,6 @@
 import typing
 
-from src.unitxt.type_utils import (
+from unitxt.type_utils import (
     infer_type,
     infer_type_string,
     isoftype,
@@ -8,6 +8,7 @@ from src.unitxt.type_utils import (
     parse_type_string,
     to_float_or_default,
 )
+
 from tests.utils import UnitxtTestCase
 
 

@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import SystemFormat
+from unitxt.catalog import add_to_catalog
+from unitxt.formats import SystemFormat
 
 add_to_catalog(
     SystemFormat(

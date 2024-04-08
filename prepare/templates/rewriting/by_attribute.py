@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
+from unitxt import add_to_catalog
+from unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(

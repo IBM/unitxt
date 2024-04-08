@@ -3,8 +3,7 @@ import sys
 from ast import literal_eval
 
 import pandas as pd
-
-from src.unitxt.eval_utils import evaluate
+from unitxt.eval_utils import evaluate
 
 if __name__ == "__main__":
     df = pd.read_csv(

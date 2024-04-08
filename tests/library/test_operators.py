@@ -2,8 +2,8 @@ import json
 from collections import Counter
 from typing import Any, Dict
 
-from src.unitxt.formats import SystemFormat
-from src.unitxt.operators import (
+from unitxt.formats import SystemFormat
+from unitxt.operators import (
     AddConstant,
     AddFields,
     Apply,
@@ -48,13 +48,14 @@ from src.unitxt.operators import (
     Unique,
     ZipFieldValues,
 )
-from src.unitxt.stream import MultiStream
-from src.unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
-from src.unitxt.test_utils.operators import (
+from unitxt.stream import MultiStream
+from unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
+from unitxt.test_utils.operators import (
     apply_operator,
     check_operator,
     check_operator_exception,
 )
+
 from tests.utils import UnitxtTestCase
 
 

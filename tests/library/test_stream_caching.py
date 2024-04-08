@@ -1,9 +1,10 @@
 import copy
 import time
 
-from src.unitxt.operators import Apply
-from src.unitxt.stream import Stream
-from src.unitxt.test_utils.operators import apply_operator
+from unitxt.operators import Apply
+from unitxt.stream import Stream
+from unitxt.test_utils.operators import apply_operator
+
 from tests.utils import UnitxtTestCase
 
 

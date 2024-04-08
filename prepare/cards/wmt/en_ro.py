@@ -1,6 +1,6 @@
-from src.unitxt.blocks import AddFields, CopyFields, LoadHF, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import AddFields, CopyFields, LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="wmt16", name="ro-en", streaming=True),

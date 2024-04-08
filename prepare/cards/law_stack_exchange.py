@@ -1,13 +1,13 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     RenameFields,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.operators import JoinStr, ListFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.operators import JoinStr, ListFieldValues
+from unitxt.test_utils.card import test_card
 
 dataset_name = "law_stack_exchange"
 

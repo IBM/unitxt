@@ -1,4 +1,4 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
@@ -8,6 +8,7 @@ from src.unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
+
 from tests.utils import UnitxtTestCase
 
 card = TaskCard(
@@ -46,6 +47,6 @@ card = TaskCard(
 class TestCard(UnitxtTestCase):
     def test_test_card(self):
         # Avoid loading in main namespace to because test_ prefix confuses unitest discovery
-        from src.unitxt.test_utils.card import test_card
+        from unitxt.test_utils.card import test_card
 
         test_card(card)

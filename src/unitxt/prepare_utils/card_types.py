@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional, Union
 
-from src.unitxt.card import TaskCard
-from src.unitxt.loaders import Loader
-from src.unitxt.operator import StreamingOperator
-from src.unitxt.operators import AddFields, MapInstanceValues, RenameFields
-from src.unitxt.task import FormTask
-from src.unitxt.templates import TemplatesDict, TemplatesList
+from ..card import TaskCard
+from ..loaders import Loader
+from ..operator import StreamingOperator
+from ..operators import AddFields, MapInstanceValues, RenameFields
+from ..task import FormTask
+from ..templates import TemplatesDict, TemplatesList
 
 
 def add_classification_choices(label_name, label2string):

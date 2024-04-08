@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.templates import MultiReferenceTemplate, TemplatesList
+from unitxt import add_to_catalog
+from unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
     MultiReferenceTemplate(

@@ -1,14 +1,14 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     MapInstanceValues,
     RenameFields,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.loaders import LoadFromSklearn
-from src.unitxt.operators import FilterByCondition
-from src.unitxt.test_utils.card import test_card
+from unitxt.loaders import LoadFromSklearn
+from unitxt.operators import FilterByCondition
+from unitxt.test_utils.card import test_card
 
 map_labels = {
     "alt.atheism": "atheism",

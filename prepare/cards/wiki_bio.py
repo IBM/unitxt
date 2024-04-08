@@ -1,4 +1,4 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     ListToKeyValPairs,
     LoadHF,
@@ -7,8 +7,8 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="wiki_bio"),

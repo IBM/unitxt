@@ -1,4 +1,5 @@
-from src.unitxt.dataset_utils import parse
+from unitxt.dataset_utils import parse
+
 from tests.utils import UnitxtTestCase
 
 

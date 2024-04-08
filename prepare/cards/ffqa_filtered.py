@@ -1,17 +1,17 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import (
     AddFields,
     CopyFields,
     ExecuteExpression,
     FilterByCondition,
     ListFieldValues,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 """Filtered version of the WikiQA-Free_Form_QA dataset.
 If you would like to use the full dataset, please copy and modify this card as ffqa.py.

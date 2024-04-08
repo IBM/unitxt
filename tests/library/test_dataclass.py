@@ -1,6 +1,6 @@
 from dataclasses import field
 
-from src.unitxt.dataclass import (
+from unitxt.dataclass import (
     AbstractField,
     AbstractFieldError,
     Dataclass,
@@ -18,6 +18,7 @@ from src.unitxt.dataclass import (
     is_abstract_field,
     is_final_field,
 )
+
 from tests.utils import UnitxtTestCase
 
 

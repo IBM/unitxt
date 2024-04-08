@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt.catalog import add_to_catalog
+from unitxt.metrics import (
     BinaryMaxF1,
     F1Binary,
     F1Macro,
