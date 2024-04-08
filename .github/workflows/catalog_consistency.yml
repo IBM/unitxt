@@ -22,10 +22,9 @@ jobs:
          cache: 'pip' # caching pip dependencies
      - run: pip install -r requirements/base.rqr
      - run: pip install -r requirements/tests.rqr
-     - run: pip install -e .
 
+     - name: Install Unitxt From Source
+       run: pip install -e .
 
-     - name: Set PYTHONPATH environment variable
-       run: echo "PYTHONPATH=$(pwd)/src:$PYTHONPATH" >> $GITHUB_ENV
      - name: Run Tests
        run: python utils/prepare_all_artifacts.py
