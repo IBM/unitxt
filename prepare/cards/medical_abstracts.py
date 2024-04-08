@@ -1,13 +1,13 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     MapInstanceValues,
     RenameFields,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.loaders import LoadCSV
-from src.unitxt.test_utils.card import test_card
+from unitxt.loaders import LoadCSV
+from unitxt.test_utils.card import test_card
 
 dataset_name = "medical_abstracts"
 

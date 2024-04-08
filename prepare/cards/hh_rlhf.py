@@ -1,12 +1,12 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     LoadHF,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.collections_operators import Get, Slice
-from src.unitxt.operators import AddFields, ListFieldValues, ShuffleFieldValues
-from src.unitxt.string_operators import Join, Replace, Split, Strip
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.collections_operators import Get, Slice
+from unitxt.operators import AddFields, ListFieldValues, ShuffleFieldValues
+from unitxt.string_operators import Join, Replace, Split, Strip
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="Anthropic/hh-rlhf"),

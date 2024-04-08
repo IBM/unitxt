@@ -1,7 +1,8 @@
-from src.unitxt.formats import SystemFormat
-from src.unitxt.test_utils.operators import (
+from unitxt.formats import SystemFormat
+from unitxt.test_utils.operators import (
     check_operator,
 )
+
 from tests.utils import UnitxtTestCase
 
 

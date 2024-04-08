@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt import add_to_catalog
+from unitxt.metrics import (
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
     FixedGroupAbsvalNormCohensHParaphraseStringContainment,
     FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
@@ -20,7 +20,7 @@ from src.unitxt.metrics import (
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
 )
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_metric
 
 predictions = [
     "A B",

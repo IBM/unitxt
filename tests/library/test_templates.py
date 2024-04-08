@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from src.unitxt.templates import (
+from unitxt.templates import (
     InputOutputReferenceTemplate,
     InputOutputTemplate,
     KeyValTemplate,
@@ -14,9 +14,10 @@ from src.unitxt.templates import (
     TemplatesDict,
     YesNoTemplate,
 )
-from src.unitxt.test_utils.operators import (
+from unitxt.test_utils.operators import (
     check_operator,
 )
+
 from tests.utils import UnitxtTestCase
 
 

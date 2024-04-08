@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import SystemFormat
+from unitxt.catalog import add_to_catalog
+from unitxt.formats import SystemFormat
 
 # see: https://huggingface.co/blog/llama2#how-to-prompt-llama-2
 # <s>[INST] <<SYS>>

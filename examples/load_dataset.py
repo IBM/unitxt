@@ -1,6 +1,5 @@
 from datasets import load_dataset
-
-from src.unitxt.text_utils import print_dict
+from unitxt.text_utils import print_dict
 
 dataset = load_dataset(
     "unitxt/data",

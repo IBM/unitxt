@@ -1,6 +1,6 @@
-from src.unitxt import load
-from src.unitxt.artifact import Artifact
-from src.unitxt.blocks import (
+from unitxt import load
+from unitxt.artifact import Artifact
+from unitxt.blocks import (
     AddFields,
     FormTask,
     InputOutputTemplate,
@@ -9,9 +9,9 @@ from src.unitxt.blocks import (
     SequentialRecipe,
     SplitRandomMix,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import SystemFormat
-from src.unitxt.text_utils import print_dict
+from unitxt.catalog import add_to_catalog
+from unitxt.formats import SystemFormat
+from unitxt.text_utils import print_dict
 
 recipe = SequentialRecipe(
     steps=[

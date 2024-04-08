@@ -1,4 +1,4 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadFromKaggle,
     MapInstanceValues,
@@ -7,9 +7,9 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ExtractFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import ExtractFieldValues
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadFromKaggle(

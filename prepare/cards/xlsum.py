@@ -1,13 +1,12 @@
 from datasets import get_dataset_config_names
-
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     RenameFields,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.test_utils.card import test_card
 
 configs = get_dataset_config_names("GEM/xlsum")  # the languages
 # now configs is the list of all languages showing in the dataset

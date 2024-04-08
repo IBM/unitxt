@@ -2,14 +2,15 @@ import json
 import os
 import tempfile
 
-from src import unitxt
-from src.unitxt import add_to_catalog
-from src.unitxt.artifact import Artifact, Artifactories
-from src.unitxt.register import (
+import unitxt
+from unitxt import add_to_catalog
+from unitxt.artifact import Artifact, Artifactories
+from unitxt.register import (
     _reset_env_local_catalogs,
     register_local_catalog,
     unregister_local_catalog,
 )
+
 from tests.utils import UnitxtTestCase
 
 

@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
+from unitxt.catalog import add_to_catalog
+from unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 add_to_catalog(
     MultipleChoiceTemplate(

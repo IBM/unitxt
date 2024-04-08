@@ -1,4 +1,5 @@
-from src.unitxt.collections import DictCollection, ListCollection
+from unitxt.collections import DictCollection, ListCollection
+
 from tests.utils import UnitxtTestCase
 
 

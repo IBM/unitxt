@@ -1,8 +1,9 @@
 import tempfile
 import unittest
 
-from src.unitxt.stream import MultiStream, Stream
-from src.unitxt.test_utils.storage import get_directory_size
+from unitxt.stream import MultiStream, Stream
+from unitxt.test_utils.storage import get_directory_size
+
 from tests.utils import UnitxtTestCase
 
 

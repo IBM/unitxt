@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.operators import NullAugmentor
+from unitxt import add_to_catalog
+from unitxt.operators import NullAugmentor
 
 operator = NullAugmentor()
 

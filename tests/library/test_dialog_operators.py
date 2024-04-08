@@ -1,5 +1,6 @@
-from src.unitxt.dialog_operators import SerializeDialog
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.dialog_operators import SerializeDialog
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

@@ -1,7 +1,7 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.logging_utils import get_logger
-from src.unitxt.operator import SequentialOperator
-from src.unitxt.processors import (
+from unitxt import add_to_catalog
+from unitxt.logging_utils import get_logger
+from unitxt.operator import SequentialOperator
+from unitxt.processors import (
     DictOfListsToPairs,
     ListToEmptyEntitiesTuples,
     LoadJson,

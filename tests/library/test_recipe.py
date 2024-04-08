@@ -2,12 +2,13 @@ import collections
 import copy
 import re
 
-from src.unitxt import dataset_file
-from src.unitxt.artifact import fetch_artifact
-from src.unitxt.formats import SystemFormat
-from src.unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
-from src.unitxt.templates import InputOutputTemplate
-from src.unitxt.text_utils import print_dict
+from unitxt import dataset_file
+from unitxt.artifact import fetch_artifact
+from unitxt.formats import SystemFormat
+from unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
+from unitxt.templates import InputOutputTemplate
+from unitxt.text_utils import print_dict
+
 from tests.utils import UnitxtTestCase
 
 
@@ -411,7 +412,7 @@ class TestRecipes(UnitxtTestCase):
         print_dict(next(iterator))
 
     def test_recipe_loaded_from_arguments_and_overwrites_only(self):
-        from src.unitxt import load_dataset
+        from unitxt import load_dataset
 
         dataset = load_dataset(
             "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"

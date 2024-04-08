@@ -32,6 +32,11 @@ indent-width = 4
 target-version = "py38"
 
 [tool.ruff.lint.per-file-ignores]
+"src/*" = ["TID252"]
+".github/*" = ["TID251"]
+".vscode/*" = ["TID251"]
+"tests/*" = ["TID251"]
+"utils/*" = ["TID251"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
@@ -59,13 +64,14 @@ extend-select = [
   "C", # mccabe
   "R", # flake8-rst-docstrings
   "T", # flake8-typing-imports
+  "TID25", #
   "W", # pycodestyle-wordlist
-  "M", # flake8-mypy
+  "RUF100", # flake8-mypy
   "I", # isort
   "G", # flake8-bugbear
   "N", # PEP8 Naming
   "Q", # flake8-quotes
-  "RUF" # ruff
+  "RUF", # ruff
 ]
 ignore = ["E501", "E203", "E722", "D101", "D102", "D103", "D100", "D104", "D105", "D106", "D107", "RUF012", "G004"]
 
@@ -96,6 +102,10 @@ convention = "google"
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"src".msg = "Use unitxt outside src/ and relative imports inside src/ and install unitxt from source with `pip install -e '.[dev]'`."
 
 [tool.codespell]
 ignore-words-list = 'rouge,ot,ans,nd'

@@ -1,4 +1,5 @@
-from src.unitxt.dict_utils import dict_delete, dict_get, dict_set
+from unitxt.dict_utils import dict_delete, dict_get, dict_set
+
 from tests.utils import UnitxtTestCase
 
 

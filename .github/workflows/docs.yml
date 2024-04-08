@@ -25,7 +25,7 @@ jobs:
 
       - name: Install package
         run: |
-          pip install .
+          pip install -e .
 
       - name: Print Python Path
         run: python -c "import sys; print(sys.path)"

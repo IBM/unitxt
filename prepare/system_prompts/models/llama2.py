@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.system_prompts import TextualSystemPrompt
+from unitxt.catalog import add_to_catalog
+from unitxt.system_prompts import TextualSystemPrompt
 
 # see: https://huggingface.co/blog/llama2#how-to-prompt-llama-2
 

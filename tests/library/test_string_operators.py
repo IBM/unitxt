@@ -1,5 +1,6 @@
-from src.unitxt.string_operators import Join, RegexSplit, Split, TokensSplit
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.string_operators import Join, RegexSplit, Split, TokensSplit
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

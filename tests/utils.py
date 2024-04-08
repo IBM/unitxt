@@ -1,9 +1,9 @@
 import unittest
 
-from src import unitxt
-from src.unitxt.logging_utils import enable_explicit_format, get_logger
-from src.unitxt.settings_utils import get_settings
-from src.unitxt.test_utils.catalog import register_local_catalog_for_tests
+import unitxt
+from unitxt.logging_utils import enable_explicit_format, get_logger
+from unitxt.settings_utils import get_settings
+from unitxt.test_utils.catalog import register_local_catalog_for_tests
 
 settings = get_settings()
 logger = get_logger()

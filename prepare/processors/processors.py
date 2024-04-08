@@ -1,8 +1,8 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.logging_utils import get_logger
-from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import RemoveValues
-from src.unitxt.processors import (
+from unitxt import add_to_catalog
+from unitxt.logging_utils import get_logger
+from unitxt.operator import SequentialOperator
+from unitxt.operators import RemoveValues
+from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     FirstCharacter,

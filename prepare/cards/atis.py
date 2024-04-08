@@ -1,12 +1,12 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import LoadHF, TaskCard
-from src.unitxt.operators import (
+from unitxt import add_to_catalog
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.operators import (
     AddFields,
     CopyFields,
 )
-from src.unitxt.processors import SplitStrip
-from src.unitxt.span_lableing_operators import IobExtractor
-from src.unitxt.test_utils.card import test_card
+from unitxt.processors import SplitStrip
+from unitxt.span_lableing_operators import IobExtractor
+from unitxt.test_utils.card import test_card
 
 classes = [
     "aircraft_code",

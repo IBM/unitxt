@@ -1,10 +1,10 @@
 import sys
 
-from src.unitxt import add_to_catalog
-from src.unitxt.card import TaskCard
-from src.unitxt.collections_operators import DuplicateByList, Slice
-from src.unitxt.loaders import LoadHF
-from src.unitxt.operators import (
+from unitxt import add_to_catalog
+from unitxt.card import TaskCard
+from unitxt.collections_operators import DuplicateByList, Slice
+from unitxt.loaders import LoadHF
+from unitxt.operators import (
     AddFields,
     CopyFields,
     IndexOf,
@@ -14,8 +14,8 @@ from src.unitxt.operators import (
     Shuffle,
     ShuffleFieldValues,
 )
-from src.unitxt.string_operators import Join, Split
-from src.unitxt.test_utils.card import test_card
+from unitxt.string_operators import Join, Split
+from unitxt.test_utils.card import test_card
 
 gec_card = TaskCard(
     loader=LoadHF(

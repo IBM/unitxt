@@ -1,8 +1,9 @@
 from typing import Any, List
 
-from src.unitxt.artifact import fetch_artifact
-from src.unitxt.processors import MatchClosestOption, Substring
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.artifact import fetch_artifact
+from unitxt.processors import MatchClosestOption, Substring
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

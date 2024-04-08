@@ -1,15 +1,15 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import (
     CastFields,
     MapInstanceValues,
     RenameFields,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="google/boolq"),

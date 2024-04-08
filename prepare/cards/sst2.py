@@ -1,7 +1,7 @@
-from src.unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import AddFields, ExtractFieldValues, RenameFields
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import AddFields, ExtractFieldValues, RenameFields
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="sst2"),

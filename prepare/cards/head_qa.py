@@ -1,13 +1,12 @@
 from datasets import get_dataset_config_names
-
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     RenameFields,
     TaskCard,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 dataset_name = "head_qa"
 

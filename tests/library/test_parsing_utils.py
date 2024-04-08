@@ -1,7 +1,8 @@
-from src.unitxt.parsing_utils import (
+from unitxt.parsing_utils import (
     parse_key_equals_value_string_to_dict,
     separate_inside_and_outside_square_brackets,
 )
+
 from tests.utils import UnitxtTestCase
 
 

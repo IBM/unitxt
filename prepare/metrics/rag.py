@@ -1,13 +1,13 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt import add_to_catalog
+from unitxt.metrics import (
     BertScore,
     MetricPipeline,
     Reward,
     SentenceBert,
     TokenOverlap,
 )
-from src.unitxt.operators import CopyFields, ListFieldValues
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.operators import CopyFields, ListFieldValues
+from unitxt.test_utils.metrics import test_metric
 
 metrics = {
     "metrics.token_overlap": TokenOverlap(),

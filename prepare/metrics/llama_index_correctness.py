@@ -1,8 +1,8 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt import add_to_catalog
+from unitxt.metrics import (
     LlamaIndexCorrectness,
 )
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_metric
 
 # Test with mock
 model_name = "mock"
