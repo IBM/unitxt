@@ -1,12 +1,12 @@
+import unitxt
 from datasets import load_dataset
 from evaluate import load
-
-from src import unitxt
-from src.unitxt.hf_utils import (
+from unitxt.hf_utils import (
     UnitxtVersionsConflictError,
     _verify_versions,
     get_missing_imports,
 )
+
 from tests.utils import UnitxtTestCase
 
 

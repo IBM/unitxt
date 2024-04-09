@@ -1,7 +1,7 @@
 import sys
 
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
@@ -9,8 +9,8 @@ from src.unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.operators import Shuffle
-from src.unitxt.test_utils.card import test_card
+from unitxt.operators import Shuffle
+from unitxt.test_utils.card import test_card
 
 dataset_name = "dbpedia_14"
 

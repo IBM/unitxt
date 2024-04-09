@@ -1,9 +1,9 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import LoadHF, TaskCard
-from src.unitxt.operators import AddFields, MapInstanceValues, RenameFields, Shuffle
-from src.unitxt.splitters import SplitRandomMix
-from src.unitxt.templates import InputOutputTemplate, TemplatesList
-from src.unitxt.test_utils.card import test_card
+from unitxt import add_to_catalog
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.operators import AddFields, MapInstanceValues, RenameFields, Shuffle
+from unitxt.splitters import SplitRandomMix
+from unitxt.templates import InputOutputTemplate, TemplatesList
+from unitxt.test_utils.card import test_card
 
 """ In order to use this card, you must have a HF login token.
 First, sign up for an account on the HF portal and accept the terms and conditions related to the toxigen dataset.

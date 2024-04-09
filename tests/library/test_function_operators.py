@@ -1,8 +1,9 @@
 import json
 
-from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import Apply, CopyFields
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.operator import SequentialOperator
+from unitxt.operators import Apply, CopyFields
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

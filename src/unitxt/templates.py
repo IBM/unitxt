@@ -157,7 +157,7 @@ class MultipleChoiceTemplate(Template):
     target_prefix: str = ""
     choices_field: str = "choices"
     target_field: str = "label"
-    choices_seperator: str = ", "
+    choices_separator: str = ", "
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
     enumerator: str = "capitals"
@@ -217,7 +217,7 @@ class MultipleChoiceTemplate(Template):
         return {
             "numerals": self.inputs_to_numerals(inputs),
             **inputs,
-            self.choices_field: self.choices_seperator.join(choices),
+            self.choices_field: self.choices_separator.join(choices),
         }
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
@@ -358,10 +358,10 @@ class KeyValTemplate(Template):
     Args specify with what separators to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
     """
 
-    pairs_seperator: str = ", "
-    key_val_seperator: str = ": "
+    pairs_separator: str = ", "
+    key_val_separator: str = ": "
     use_keys_for_inputs: bool = True
-    outputs_key_val_seperator: str = ": "
+    outputs_key_val_separator: str = ": "
     use_keys_for_outputs: bool = False
 
     def process_dict(
@@ -377,16 +377,16 @@ class KeyValTemplate(Template):
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
         return self.process_dict(
             inputs,
-            key_val_sep=self.key_val_seperator,
-            pairs_sep=self.pairs_seperator,
+            key_val_sep=self.key_val_separator,
+            pairs_sep=self.pairs_separator,
             use_keys=self.use_keys_for_inputs,
         )
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
         target = self.process_dict(
             outputs,
-            key_val_sep=self.key_val_seperator,
-            pairs_sep=self.pairs_seperator,
+            key_val_sep=self.key_val_separator,
+            pairs_sep=self.pairs_separator,
             use_keys=self.use_keys_for_outputs,
         )
         return target, [target]
@@ -414,7 +414,7 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
-    labels_seprator: str = ", "
+    labels_separator: str = ", "
     postprocessors: List[str] = ["processors.to_list_by_comma"]
     output_format: str = "{labels}"
     empty_label: str = "None"
@@ -427,7 +427,7 @@ class MultiLabelTemplate(InputOutputTemplate):
             )
         if len(labels) == 0:
             labels = [self.empty_label]
-        labels_str = self.labels_seprator.join(labels)
+        labels_str = self.labels_separator.join(labels)
         return super().outputs_to_target_and_references({self.labels_field: labels_str})
 
 
@@ -485,8 +485,8 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
     def outputs_to_target_and_references(
         self, outputs: Dict[str, object]
     ) -> Dict[str, object]:
-        span_lables_pairs = self.extract_span_label_pairs(outputs)
-        targets = self.span_label_pairs_to_targets(span_lables_pairs)
+        span_labels_pairs = self.extract_span_label_pairs(outputs)
+        targets = self.span_label_pairs_to_targets(span_labels_pairs)
         return super().outputs_to_target_and_references({"labels": targets})
 
     @abstractmethod

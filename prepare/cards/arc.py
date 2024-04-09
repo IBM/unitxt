@@ -1,7 +1,7 @@
-from src.unitxt.blocks import AddFields, LoadHF, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import CopyFields, IndexOf, RenameFields
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import CopyFields, IndexOf, RenameFields
+from unitxt.test_utils.card import test_card
 
 subtasks = ["ARC-Challenge", "ARC-Easy"]
 

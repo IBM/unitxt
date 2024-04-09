@@ -1,6 +1,7 @@
-from src.unitxt.fusion import FixedFusion, WeightedFusion
-from src.unitxt.operators import IterableSource
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.fusion import FixedFusion, WeightedFusion
+from unitxt.operators import IterableSource
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

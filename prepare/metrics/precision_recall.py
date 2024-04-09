@@ -1,13 +1,12 @@
 from numpy import NaN
-
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt import add_to_catalog
+from unitxt.metrics import (
     PrecisionMacroMultiLabel,
     PrecisionMicroMultiLabel,
     RecallMacroMultiLabel,
     RecallMicroMultiLabel,
 )
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_metric
 
 precision_micro_metric = PrecisionMicroMultiLabel()
 precision_macro_metric = PrecisionMacroMultiLabel()

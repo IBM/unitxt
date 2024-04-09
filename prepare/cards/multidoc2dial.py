@@ -1,13 +1,13 @@
-from src.unitxt.blocks import LoadHF, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import (
     AddFields,
     ExecuteExpression,
     ListFieldValues,
     RenameFields,
 )
-from src.unitxt.settings_utils import get_settings
-from src.unitxt.test_utils.card import test_card
+from unitxt.settings_utils import get_settings
+from unitxt.test_utils.card import test_card
 
 settings = get_settings()
 orig_settings = settings.allow_unverified_code

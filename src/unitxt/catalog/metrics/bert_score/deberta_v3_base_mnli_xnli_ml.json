@@ -1,0 +1,5 @@
+{
+    "type": "bert_score",
+    "model_name": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+    "model_layer": 10
+}

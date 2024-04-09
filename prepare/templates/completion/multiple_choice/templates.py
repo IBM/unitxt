@@ -1,11 +1,11 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
+from unitxt.catalog import add_to_catalog
+from unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 add_to_catalog(
     MultipleChoiceTemplate(
         input_format="{context}",
         target_field="answer",
-        choices_seperator="",
+        choices_separator="",
         source_choice_format="{choice_text}",
         target_choice_format="{choice_text}",
     ),
@@ -26,7 +26,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.enumerated",
@@ -39,7 +39,7 @@ add_to_catalog(
         input_format="Context: {context}...\nChoices:\n{choices}",
         target_prefix="Answer: ",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.completion.multiple_choice.standard",
@@ -52,7 +52,7 @@ add_to_catalog(
         input_format="{context_type}: {context}\nChoices:\n{choices}",
         target_prefix="Answer: ",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         title_fields=["context_type"],
         postprocessors=["processors.first_character"],
     ),

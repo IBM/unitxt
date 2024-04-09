@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.task import FormTask
+from unitxt import add_to_catalog
+from unitxt.task import FormTask
 
 add_to_catalog(
     FormTask(

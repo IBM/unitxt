@@ -1,4 +1,4 @@
-from src.unitxt.collections_operators import (
+from unitxt.collections_operators import (
     Chunk,
     Dictify,
     DuplicateByList,
@@ -7,7 +7,8 @@ from src.unitxt.collections_operators import (
     Slice,
     Wrap,
 )
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

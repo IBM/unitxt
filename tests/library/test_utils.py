@@ -1,4 +1,5 @@
-from src.unitxt.utils import is_module_available, is_package_installed
+from unitxt.utils import is_module_available, is_package_installed
+
 from tests.utils import UnitxtTestCase
 
 

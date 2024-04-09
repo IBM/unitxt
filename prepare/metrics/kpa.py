@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import KPA
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.metrics import KPA
+from unitxt.test_utils.metrics import test_metric
 
 predictions = ["yes", "yes", "none", "none", "yes"]
 references = [["yes"], ["none"], ["yes"], ["yes"], ["yes"]]

@@ -1,5 +1,6 @@
-from src.unitxt.span_lableing_operators import IobExtractor
-from src.unitxt.test_utils.operators import check_operator
+from unitxt.span_lableing_operators import IobExtractor
+from unitxt.test_utils.operators import check_operator
+
 from tests.utils import UnitxtTestCase
 
 

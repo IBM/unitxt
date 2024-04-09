@@ -1,14 +1,13 @@
 from datasets import load_dataset_builder
-
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 dataset_name = "ag_news"
 

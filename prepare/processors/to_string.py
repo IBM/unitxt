@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import ToString, ToStringStripped
-from src.unitxt.operator import SequentialOperator
+from unitxt import add_to_catalog
+from unitxt.blocks import ToString, ToStringStripped
+from unitxt.operator import SequentialOperator
 
 add_to_catalog(
     SequentialOperator(

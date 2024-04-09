@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.operators import AugmentWhitespace
+from unitxt import add_to_catalog
+from unitxt.operators import AugmentWhitespace
 
 operator = AugmentWhitespace(augment_model_input=True)
 

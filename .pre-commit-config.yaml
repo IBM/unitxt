@@ -1,34 +1,57 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
-  rev: v0.1.6
-  hooks:
-    # Run the linter.
-    - id: ruff
-      args: [ --fix ]
-    # Run the formatter.
-    - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.1.6
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
 
-- repo: https://github.com/ibm/detect-secrets
-  # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
-  # You are encouraged to use static refs such as tags, instead of branch name
-  #
-  # Running "pre-commit autoupdate" automatically updates rev to latest tag
-  rev: 0.13.1+ibm.61.dss
-  hooks:
-    - id: detect-secrets # pragma: whitelist secret
-      # Add options for detect-secrets-hook binary. You can run `detect-secrets-hook --help` to list out all possible options.
-      # You may also run `pre-commit run detect-secrets` to preview the scan result.
-      # when "--baseline" without "--use-all-plugins", pre-commit scan with just plugins in baseline file
-      # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
-      # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
-      args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]
+  - repo: https://github.com/ibm/detect-secrets
+    # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
+    # You are encouraged to use static refs such as tags, instead of branch name
+    #
+    # Running "pre-commit autoupdate" automatically updates rev to latest tag
+    rev: 0.13.1+ibm.61.dss
+    hooks:
+      - id: detect-secrets # pragma: whitelist secret
+        # Add options for detect-secrets-hook binary. You can run `detect-secrets-hook --help` to list out all possible options.
+        # You may also run `pre-commit run detect-secrets` to preview the scan result.
+        # when "--baseline" without "--use-all-plugins", pre-commit scan with just plugins in baseline file
+        # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
+        # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
+        args: [--baseline, .secrets.baseline, --use-all-plugins, --fail-on-unaudited]
 
-- repo: https://github.com/codespell-project/codespell
-  rev: v2.2.6
-  hooks:
-  - id: codespell
-    additional_dependencies:
-      - tomli
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
+
+  - repo: local
+    hooks:
+      - id: enforce-relative-imports
+        name: Enforce Relative Imports
+        entry: python utils/enforce_relative_imports.py
+        language: system
+        # Adjust the files pattern to match your needs
+        files: ^src/.*\.py$
+        exclude: .*/(metric|dataset|hf_utils)\.py$
+        # Optional: Specify types or exclude files
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: enforce-library-imports
+        name: Enforce Library Imports
+        entry: python utils/enforce_library_imports.py
+        language: system
+        # Adjust the files pattern to match your needs
+        exclude: (^src/.*\.py$)|utils/enforce_library_imports.py|utils/enforce_relative_imports.py
+        # Optional: Specify types or exclude files
+        types: [python]

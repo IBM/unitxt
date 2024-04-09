@@ -1,12 +1,12 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     LoadHF,
     RenameFields,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ListFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import ListFieldValues
+from unitxt.test_utils.card import test_card
 
 dataset_name = "CohereForAI/aya_evaluation_suite"
 subsets = ["aya_human_annotated", "dolly_machine_translated", "dolly_human_edited"]
@@ -41,7 +41,7 @@ for subset in subsets:
         from copy import deepcopy
 
         card_for_test = deepcopy(card)
-        from src.unitxt.blocks import (
+        from unitxt.blocks import (
             FormTask,
         )
 

@@ -1,13 +1,13 @@
-from src.unitxt.blocks import LoadHF
-from src.unitxt.card import TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
+from unitxt.blocks import LoadHF
+from unitxt.card import TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import (
     AddFields,
     ListFieldValues,
     MapInstanceValues,
     RenameFields,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="super_glue", name="copa"),

@@ -1,7 +1,8 @@
 import warnings
 from unittest.mock import patch
 
-from src.unitxt.deprecation_utils import DeprecationError, compare_versions, deprecation
+from unitxt.deprecation_utils import DeprecationError, compare_versions, deprecation
+
 from tests.utils import UnitxtTestCase
 
 
@@ -25,7 +26,7 @@ class TestDeprecationUtils(UnitxtTestCase):
         self.assertEqual(compare_versions("1.0.1", "1.0"), 1)
         self.assertEqual(compare_versions("1.0", "1.0.1"), -1)
 
-    @patch("src.unitxt.deprecation_utils.constants", PatchConstants(version="1.0.0"))
+    @patch("unitxt.deprecation_utils.constants", PatchConstants(version="1.0.0"))
     def test_deprecation_warning(self):
         @deprecation("1.1.0")
         def some_deprecated_function():
@@ -37,7 +38,7 @@ class TestDeprecationUtils(UnitxtTestCase):
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
             self.assertEqual(result, "I'm deprecated but not yet obsolete.")
 
-    @patch("src.unitxt.deprecation_utils.constants", PatchConstants(version="2.0.0"))
+    @patch("unitxt.deprecation_utils.constants", PatchConstants(version="2.0.0"))
     def test_deprecation_error(self):
         @deprecation("1.5.0", "use_some_other_function")
         def some_obsolete_function():
@@ -46,7 +47,7 @@ class TestDeprecationUtils(UnitxtTestCase):
         with self.assertRaises(DeprecationError):
             some_obsolete_function()
 
-    @patch("src.unitxt.deprecation_utils.constants", PatchConstants(version="1.0.0"))
+    @patch("unitxt.deprecation_utils.constants", PatchConstants(version="1.0.0"))
     def test_class_deprecation_warning(self):
         @deprecation("2.0.0", alternative="NewClass")
         class DeprecatedClass:
@@ -63,7 +64,7 @@ class TestDeprecationUtils(UnitxtTestCase):
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
             self.assertEqual(result, "method running")
 
-    @patch("src.unitxt.deprecation_utils.constants", PatchConstants(version="3.0.0"))
+    @patch("unitxt.deprecation_utils.constants", PatchConstants(version="3.0.0"))
     def test_class_deprecation_error(self):
         @deprecation("2.0.0", alternative="NewClass")
         class DeprecatedClass:

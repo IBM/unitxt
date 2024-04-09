@@ -1,7 +1,7 @@
 from math import isnan
 
-from src.unitxt.logging_utils import get_logger
-from src.unitxt.metrics import (
+from unitxt.logging_utils import get_logger
+from unitxt.metrics import (
     NER,
     Accuracy,
     BinaryAccuracy,
@@ -44,7 +44,8 @@ from src.unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from src.unitxt.test_utils.metrics import apply_metric
+from unitxt.test_utils.metrics import apply_metric
+
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()

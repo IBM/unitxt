@@ -1,15 +1,15 @@
 import sys
 
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     AddFields,
     RenameFields,
     SplitRandomMix,
     TaskCard,
 )
-from src.unitxt.loaders import LoadFromKaggle
-from src.unitxt.operators import Shuffle
-from src.unitxt.test_utils.card import test_card
+from unitxt.loaders import LoadFromKaggle
+from unitxt.operators import Shuffle
+from unitxt.test_utils.card import test_card
 
 dataset_name = "news_category_classification_headline"
 

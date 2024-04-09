@@ -1,4 +1,5 @@
-from src.unitxt.api import evaluate, load_dataset
+from unitxt.api import evaluate, load_dataset
+
 from tests.utils import UnitxtTestCase
 
 

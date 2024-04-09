@@ -1,15 +1,15 @@
 import json
 
-from src.unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import (
+from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import (
     Apply,
     CopyFields,
     FilterByCondition,
     ListFieldValues,
     RemoveFields,
 )
-from src.unitxt.test_utils.card import test_card
+from unitxt.test_utils.card import test_card
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
 # Counter({'en': 1995, 'de': 2302, 'it': 2210, 'fr': 2156, 'es': 2090, 'ru': 2058, 'nl': 2017, 'pt': 1994})

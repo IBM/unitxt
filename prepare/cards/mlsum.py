@@ -1,13 +1,12 @@
 from datasets import get_dataset_config_names
-
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     RenameFields,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.test_utils.card import test_card
 
 langs = get_dataset_config_names("mlsum")  # the languages
 

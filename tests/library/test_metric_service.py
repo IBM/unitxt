@@ -2,15 +2,15 @@ import json
 import os
 
 import httpretty
-
-from src.unitxt.metric_utils import (
+from unitxt.metric_utils import (
     UNITXT_REMOTE_METRICS,
     UNITXT_REMOTE_METRICS_ENDPOINT,
     get_remote_metrics_endpoint,
     get_remote_metrics_names,
 )
-from src.unitxt.metrics import RemoteMetric
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.metrics import RemoteMetric
+from unitxt.test_utils.metrics import test_metric
+
 from tests.utils import UnitxtTestCase
 
 
