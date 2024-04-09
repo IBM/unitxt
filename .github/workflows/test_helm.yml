@@ -20,6 +20,7 @@ jobs:
           python-version: '3.8'
           cache: 'pip' # caching pip dependencies
       - run: pip install git+https://github.com/stanford-crfm/helm.git
+             pip install evaluate
 
       - name: Test Helm
         run: utils/run_helm.sh

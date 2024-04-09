@@ -9,6 +9,7 @@ First, install HELM from the source repository (this is necessary until the next
 .. code-block:: bash
 
     pip install git+https://github.com/stanford-crfm/helm.git
+    pip install evaluate
 
 Next, define your preferred Unitxt recipe:
 
