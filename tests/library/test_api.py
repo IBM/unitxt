@@ -10,10 +10,10 @@ class TestAPI(UnitxtTestCase):
         )
         instance = {
             "metrics": ["metrics.spearman"],
-            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1 to 5, what is the similarity to this text An air plane is taking off.?\n",
+            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text An air plane is taking off.?\n",
             "target": "5.0",
             "references": ["5.0"],
-            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": "1", "max_value": "5", "attribute_value": 5.0}',
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0}',
             "group": "unitxt",
             "postprocessors": ["processors.to_string_stripped"],
         }
