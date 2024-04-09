@@ -1,10 +1,10 @@
 import sys
 
-from src.unitxt import add_to_catalog
-from src.unitxt.card import TaskCard
-from src.unitxt.collections_operators import DuplicateByList, Slice
-from src.unitxt.loaders import LoadHF
-from src.unitxt.operators import (
+from unitxt import add_to_catalog
+from unitxt.card import TaskCard
+from unitxt.collections_operators import DuplicateByList, Slice
+from unitxt.loaders import LoadHF
+from unitxt.operators import (
     AddFields,
     CopyFields,
     IndexOf,
@@ -14,8 +14,8 @@ from src.unitxt.operators import (
     Shuffle,
     ShuffleFieldValues,
 )
-from src.unitxt.string_operators import Join, Split
-from src.unitxt.test_utils.card import test_card
+from unitxt.string_operators import Join, Split
+from unitxt.test_utils.card import test_card
 
 gec_card = TaskCard(
     loader=LoadHF(
@@ -32,7 +32,7 @@ gec_card = TaskCard(
         ListFieldValues(fields=["tgt"], to_field="corrected_texts"),
     ],
     task="tasks.grammatical_error_correction",
-    templates=["templates.grammatical_error_correction.simple"],
+    templates="templates.grammatical_error_correction.all",
 )
 
 error_detection_metrics = [
@@ -68,7 +68,7 @@ error_detection_card = TaskCard(
         Shuffle(page_size=sys.maxsize),
     ],
     task=f"tasks.classification.binary.zero_or_one[metrics=[{','.join(error_detection_metrics)}]]",
-    templates=["templates.grammatical_error_detection.yes_no"],
+    templates="templates.grammatical_error_detection.all",
 )
 
 

@@ -1,7 +1,7 @@
-from src.unitxt import load
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.standard import StandardRecipe
-from src.unitxt.text_utils import print_dict
+from unitxt import load
+from unitxt.catalog import add_to_catalog
+from unitxt.standard import StandardRecipe
+from unitxt.text_utils import print_dict
 
 recipe = StandardRecipe(
     card="cards.wnli",

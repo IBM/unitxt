@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
+from unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF, MultipleSourceLoader
+from unitxt.logging_utils import get_logger
 
-from src.unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF, MultipleSourceLoader
-from src.unitxt.logging_utils import get_logger
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()

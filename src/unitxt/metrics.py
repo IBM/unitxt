@@ -1879,12 +1879,17 @@ class BertScore(HuggingfaceBulkMetric):
     hf_metric_fields = ["f1", "precision", "recall"]
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
+    model_layer: int = None
+
+    prediction_type = "str"
 
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 16}
+        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 32}
+        if self.model_layer:
+            self.hf_compute_args["num_layers"] = self.model_layer
 
 
 class SentenceBert(BulkInstanceMetric):

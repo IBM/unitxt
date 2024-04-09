@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.templates import MultiReferenceTemplate
+from unitxt import add_to_catalog
+from unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
     MultiReferenceTemplate(
@@ -9,5 +9,15 @@ add_to_catalog(
         target_prefix="Corrected text: ",
     ),
     "templates.grammatical_error_correction.simple",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.grammatical_error_correction.simple",
+        ]
+    ),
+    "templates.grammatical_error_correction.all",
     overwrite=True,
 )

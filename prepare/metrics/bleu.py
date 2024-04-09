@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.metrics import HuggingfaceMetric
+from unitxt.test_utils.metrics import test_metric
 
 metric = HuggingfaceMetric(
     hf_metric_name="bleu", main_score="bleu", scale=1.0, prediction_type="str"

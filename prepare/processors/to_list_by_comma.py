@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.operator import SequentialOperator
-from src.unitxt.processors import ToListByComma
+from unitxt import add_to_catalog
+from unitxt.operator import SequentialOperator
+from unitxt.processors import ToListByComma
 
 add_to_catalog(
     SequentialOperator(

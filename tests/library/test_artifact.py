@@ -1,15 +1,16 @@
-from src.unitxt.artifact import (
+from unitxt.artifact import (
     Artifact,
     fetch_artifact,
     reset_artifacts_json_cache,
 )
-from src.unitxt.catalog import add_to_catalog, get_from_catalog
-from src.unitxt.dataclass import UnexpectedArgumentError
-from src.unitxt.logging_utils import get_logger
-from src.unitxt.operator import SequentialOperator
-from src.unitxt.operators import AddFields, RenameFields
-from src.unitxt.processors import StringOrNotString
-from src.unitxt.test_utils.catalog import temp_catalog
+from unitxt.catalog import add_to_catalog, get_from_catalog
+from unitxt.dataclass import UnexpectedArgumentError
+from unitxt.logging_utils import get_logger
+from unitxt.operator import SequentialOperator
+from unitxt.operators import AddFields, RenameFields
+from unitxt.processors import StringOrNotString
+from unitxt.test_utils.catalog import temp_catalog
+
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()

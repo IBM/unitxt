@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import NER
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.metrics import NER
+from unitxt.test_utils.metrics import test_metric
 
 metric = NER()
 # Test1 single line single class

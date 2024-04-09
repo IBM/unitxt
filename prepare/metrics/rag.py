@@ -1,21 +1,30 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import (
+from unitxt import add_to_catalog
+from unitxt.metrics import (
     BertScore,
     MetricPipeline,
     Reward,
     SentenceBert,
     TokenOverlap,
 )
-from src.unitxt.operators import CopyFields, ListFieldValues
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt.operators import CopyFields, ListFieldValues
+from unitxt.test_utils.metrics import test_metric
 
 metrics = {
     "metrics.token_overlap": TokenOverlap(),
     "metrics.bert_score.deberta_xlarge_mnli": BertScore(
         model_name="microsoft/deberta-xlarge-mnli"
     ),
+    "metrics.bert_score.deberta_large_mnli": BertScore(
+        model_name="microsoft/deberta-large-mnli"
+    ),
+    "metrics.bert_score.deberta_base_mnli": BertScore(
+        model_name="microsoft/deberta-base-mnli"
+    ),
     "metrics.bert_score.distilbert_base_uncased": BertScore(
         model_name="distilbert-base-uncased"
+    ),
+    "metrics.bert_score.deberta_v3_base_mnli_xnli_ml": BertScore(
+        model_name="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli", model_layer=10
     ),
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
@@ -124,6 +133,76 @@ test_metric(
     global_target=global_target,
 )
 
+metric = metrics["metrics.bert_score.deberta_large_mnli"]
+predictions = ["hello there general dude", "foo bar foobar"]
+references = [
+    ["hello there general kenobi", "hello there!"],
+    ["foo bar foobar", "foo bar"],
+]
+instance_targets = [
+    {"f1": 0.73, "precision": 0.83, "recall": 0.79, "score": 0.73, "score_name": "f1"},
+    {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
+]
+
+global_target = {
+    "f1": 0.87,
+    "f1_ci_high": 1.0,
+    "f1_ci_low": 0.73,
+    "precision": 0.92,
+    "precision_ci_high": 1.0,
+    "precision_ci_low": 0.83,
+    "recall": 0.9,
+    "recall_ci_high": 1.0,
+    "recall_ci_low": 0.79,
+    "score": 0.87,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.73,
+    "score_name": "f1",
+}
+
+test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
+metric = metrics["metrics.bert_score.deberta_base_mnli"]
+predictions = ["hello there general dude", "foo bar foobar"]
+references = [
+    ["hello there general kenobi", "hello there!"],
+    ["foo bar foobar", "foo bar"],
+]
+instance_targets = [
+    {"f1": 0.81, "precision": 0.85, "recall": 0.81, "score": 0.81, "score_name": "f1"},
+    {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
+]
+
+global_target = {
+    "f1": 0.9,
+    "f1_ci_high": 1.0,
+    "f1_ci_low": 0.81,
+    "precision": 0.93,
+    "precision_ci_high": 1.0,
+    "precision_ci_low": 0.85,
+    "recall": 0.91,
+    "recall_ci_high": 1.0,
+    "recall_ci_low": 0.81,
+    "score": 0.9,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.81,
+    "score_name": "f1",
+}
+
+test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
 metric = metrics["metrics.bert_score.distilbert_base_uncased"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -148,6 +227,41 @@ global_target = {
     "score": 0.93,
     "score_ci_high": 1.0,
     "score_ci_low": 0.85,
+    "score_name": "f1",
+}
+
+test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
+metric = metrics["metrics.bert_score.deberta_v3_base_mnli_xnli_ml"]
+predictions = ["hello there general dude", "foo bar foobar"]
+references = [
+    ["hello there general kenobi", "hello there!"],
+    ["foo bar foobar", "foo bar"],
+]
+instance_targets = [
+    {"f1": 0.74, "precision": 0.81, "recall": 0.71, "score": 0.74, "score_name": "f1"},
+    {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
+]
+
+global_target = {
+    "f1": 0.87,
+    "f1_ci_high": 1.0,
+    "f1_ci_low": 0.74,
+    "precision": 0.91,
+    "precision_ci_high": 1.0,
+    "precision_ci_low": 0.81,
+    "recall": 0.86,
+    "recall_ci_high": 1.0,
+    "recall_ci_low": 0.71,
+    "score": 0.87,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.74,
     "score_name": "f1",
 }
 
@@ -286,7 +400,11 @@ add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=T
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
     ("metrics.rag.k_precision", "metrics.token_overlap"),
-    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_xlarge_mnli"),
+    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_large_mnli"),
+    (
+        "metrics.rag.bert_k_precision_ml",
+        "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
+    ),
 ]:
     metric = MetricPipeline(
         main_score="precision",
@@ -303,7 +421,8 @@ for new_catalog_name, base_catalog_name in [
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.answer_correctness", "metrics.token_overlap"),
     ("metrics.rag.recall", "metrics.token_overlap"),
-    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_xlarge_mnli"),
+    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_large_mnli"),
+    ("metrics.rag.bert_recall_ml", "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"),
 ]:
     metric = MetricPipeline(
         main_score="recall",

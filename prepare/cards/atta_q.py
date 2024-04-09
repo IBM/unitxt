@@ -1,16 +1,16 @@
 import json
 
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import (
+from unitxt import add_to_catalog
+from unitxt.blocks import (
     FormTask,
     InputOutputTemplate,
     LoadHF,
     TaskCard,
     TemplatesList,
 )
-from src.unitxt.operators import AddFields, Apply, CopyFields, Shuffle
-from src.unitxt.splitters import RenameSplits
-from src.unitxt.test_utils.card import test_card
+from unitxt.operators import AddFields, Apply, CopyFields, Shuffle
+from unitxt.splitters import RenameSplits
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="ibm/AttaQ"),

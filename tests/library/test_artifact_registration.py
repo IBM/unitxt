@@ -1,4 +1,5 @@
-from src.unitxt.artifact import Artifact
+from unitxt.artifact import Artifact
+
 from tests.utils import UnitxtTestCase
 
 

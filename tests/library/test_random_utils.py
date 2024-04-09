@@ -1,9 +1,10 @@
 import random as python_random
 
-from src.unitxt.random_utils import (
+from unitxt.random_utils import (
     new_random_generator,
 )
-from src.unitxt.settings_utils import get_settings
+from unitxt.settings_utils import get_settings
+
 from tests.utils import UnitxtTestCase
 
 settings = get_settings()

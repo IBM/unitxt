@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.splitters import SplitRandomMix
+from unitxt import add_to_catalog
+from unitxt.splitters import SplitRandomMix
 
 add_to_catalog(
     SplitRandomMix(

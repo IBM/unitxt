@@ -1,7 +1,7 @@
-from src.unitxt.blocks import LoadHF, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import IndexOf, RenameFields
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import IndexOf, RenameFields
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="openbookqa"),

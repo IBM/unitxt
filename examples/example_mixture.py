@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog, load_dataset
-from src.unitxt.fusion import WeightedFusion
-from src.unitxt.text_utils import print_dict
+from unitxt import add_to_catalog, load_dataset
+from unitxt.fusion import WeightedFusion
+from unitxt.text_utils import print_dict
 
 fusion = WeightedFusion(
     origins=[

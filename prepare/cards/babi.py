@@ -1,7 +1,7 @@
-from src.unitxt.blocks import AddFields, LoadHF, RenameFields, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ListFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import AddFields, LoadHF, RenameFields, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import ListFieldValues
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="Muennighoff/babi"),

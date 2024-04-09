@@ -1,7 +1,7 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import HuggingfaceMetric, MetricPipeline
-from src.unitxt.operators import CopyFields, MapInstanceValues
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.metrics import HuggingfaceMetric, MetricPipeline
+from unitxt.operators import CopyFields, MapInstanceValues
+from unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="sacrebleu",

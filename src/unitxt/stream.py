@@ -23,7 +23,7 @@ class Stream(Dataclass):
     caching: bool = False
     copying: bool = False
 
-    def _get_initator(self):
+    def _get_initiator(self):
         """Private method to get the correct initiator based on the streaming and caching attributes.
 
         Returns:
@@ -43,7 +43,7 @@ class Stream(Dataclass):
         Returns:
             object: The stream object.
         """
-        return self._get_initator()(self.generator, gen_kwargs=self.gen_kwargs)
+        return self._get_initiator()(self.generator, gen_kwargs=self.gen_kwargs)
 
     def __iter__(self):
         return iter(self._get_stream())

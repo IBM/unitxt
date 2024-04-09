@@ -1,4 +1,4 @@
-from src.unitxt.struct_data_operators import (
+from unitxt.struct_data_operators import (
     ConvertTableColNamesToSequential,
     ListToKeyValPairs,
     SerializeKeyValPairs,
@@ -14,9 +14,10 @@ from src.unitxt.struct_data_operators import (
     TruncateTableCells,
     TruncateTableRows,
 )
-from src.unitxt.test_utils.operators import (
+from unitxt.test_utils.operators import (
     check_operator,
 )
+
 from tests.utils import UnitxtTestCase
 
 

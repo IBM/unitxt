@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.system_prompts import TextualSystemPrompt
+from unitxt.catalog import add_to_catalog
+from unitxt.system_prompts import TextualSystemPrompt
 
 system_prompt = TextualSystemPrompt(
     "<<SYS>>\nあなたは誠実で優秀な日本人のアシスタントです。\n<</SYS>>\n\n"

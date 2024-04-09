@@ -1,13 +1,13 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
     TaskCard,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.splitters import RenameSplits
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.splitters import RenameSplits
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="glue", name="mnli"),

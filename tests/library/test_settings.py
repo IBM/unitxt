@@ -1,6 +1,7 @@
 import os
 
-from src.unitxt.settings_utils import Settings, get_settings
+from unitxt.settings_utils import Settings, get_settings
+
 from tests.utils import UnitxtTestCase
 
 

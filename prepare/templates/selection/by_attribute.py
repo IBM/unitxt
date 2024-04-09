@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
+from unitxt import add_to_catalog
+from unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 add_to_catalog(
     MultipleChoiceTemplate(
@@ -8,7 +8,7 @@ add_to_catalog(
         target_prefix="Most {required_attribute}:\n",
         target_field="choice",
         choices_field="choices_texts",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
         shuffle_choices=True,
         title_fields=["choices_text_type"],

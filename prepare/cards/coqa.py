@@ -1,9 +1,9 @@
-from src.unitxt.blocks import AddFields, LoadHF, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
-from src.unitxt.dialog_operators import SerializeDialog
-from src.unitxt.operators import CopyFields, ZipFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
+from unitxt.dialog_operators import SerializeDialog
+from unitxt.operators import CopyFields, ZipFieldValues
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),

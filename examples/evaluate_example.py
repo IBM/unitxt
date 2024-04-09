@@ -1,8 +1,7 @@
 import evaluate
-
-from src import unitxt
-from src.unitxt import load
-from src.unitxt.text_utils import print_dict
+import unitxt
+from unitxt import load
+from unitxt.text_utils import print_dict
 
 dataset = load("recipes.wnli_3_shot")
 

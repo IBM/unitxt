@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import UnsortedListExactMatch
+from unitxt import add_to_catalog
+from unitxt.metrics import UnsortedListExactMatch
 
 metric = UnsortedListExactMatch()
 

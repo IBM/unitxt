@@ -1,6 +1,6 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.metrics import CharEditDistance, CharEditDistanceAccuracy
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.metrics import CharEditDistance, CharEditDistanceAccuracy
+from unitxt.test_utils.metrics import test_metric
 
 metric = CharEditDistanceAccuracy()
 abs_dist_metric = CharEditDistance()

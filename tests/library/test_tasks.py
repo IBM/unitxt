@@ -1,5 +1,6 @@
-from src.unitxt.task import FormTask, MultipleChoiceTask
-from src.unitxt.test_utils.operators import apply_operator
+from unitxt.task import FormTask, MultipleChoiceTask
+from unitxt.test_utils.operators import apply_operator
+
 from tests.utils import UnitxtTestCase
 
 

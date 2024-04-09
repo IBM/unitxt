@@ -1,8 +1,7 @@
 import pandas as pd
-
-from src.unitxt.artifact import fetch_artifact
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import MultipleChoiceTemplate, TemplatesList
+from unitxt.artifact import fetch_artifact
+from unitxt.catalog import add_to_catalog
+from unitxt.templates import MultipleChoiceTemplate, TemplatesList
 
 templates = {
     "with_topic": {
@@ -110,7 +109,7 @@ templates = {
         },
     },
 }
-template_handels = []
+template_handles = []
 
 for template_type, template_type_groups in templates.items():
     for benchmark_name, template_groups in template_type_groups.items():
@@ -118,7 +117,7 @@ for template_type, template_type_groups in templates.items():
             template = MultipleChoiceTemplate(
                 input_format=input_format,
                 target_field="answer",
-                choices_seperator="\n",
+                choices_separator="\n",
                 target_choice_format=" {choice_numeral}"
                 if "lm_eval_harness" in benchmark_name
                 else "{choice_numeral}",
@@ -133,7 +132,7 @@ for template_type, template_type_groups in templates.items():
                 overwrite=True,
             )
 
-            template_handels.append(
+            template_handles.append(
                 {
                     "handle": template_handle,
                     "template_type": template_type,
@@ -141,10 +140,10 @@ for template_type, template_type_groups in templates.items():
                 }
             )
 
-template_handels = pd.DataFrame(template_handels)
-for template_type in template_handels.template_type.unique():
-    for lang in template_handels.language.unique():
-        template_handle_list = template_handels.query(
+template_handles = pd.DataFrame(template_handles)
+for template_type in template_handles.template_type.unique():
+    for lang in template_handles.language.unique():
+        template_handle_list = template_handles.query(
             f'language=="{lang}" and template_type=="{template_type}"'
         ).handle.tolist()
 
@@ -168,7 +167,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_topic.mmlu",
@@ -180,7 +179,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_context.with_topic.mmlu",
@@ -194,7 +193,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_topic.helm",
@@ -206,7 +205,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_context.with_topic.helm",
@@ -220,7 +219,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.lm_eval_harness",
@@ -233,7 +232,7 @@ add_to_catalog(
         input_format="Question:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
     ),
     "templates.qa.multiple_choice.title",
@@ -246,7 +245,7 @@ add_to_catalog(
         input_format="Question:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
             "processors.take_first_non_empty_line",
@@ -263,7 +262,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_context.lm_eval_harness",
@@ -276,7 +275,7 @@ add_to_catalog(
         input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
         title_fields=["context_type"],
     ),
@@ -290,7 +289,7 @@ add_to_catalog(
         input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
             "processors.take_first_non_empty_line",
@@ -309,7 +308,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_topic.fm_eval",
@@ -321,7 +320,7 @@ add_to_catalog(
     MultipleChoiceTemplate(
         input_format=input_format,
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_context.with_topic.fm_eval",
@@ -334,7 +333,7 @@ add_to_catalog(
         input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
         title_fields=["context_type"],
     ),
@@ -348,7 +347,7 @@ add_to_catalog(
         input_format="{context_type}:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
             "processors.take_first_non_empty_line",
@@ -366,7 +365,7 @@ add_to_catalog(
         input_format="Question:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         postprocessors=["processors.to_string_stripped", "processors.first_character"],
     ),
     "templates.qa.multiple_choice.with_topic.title",
@@ -379,7 +378,7 @@ add_to_catalog(
         input_format="Question:\n{question}\nChoices:\n{choices}",
         target_prefix="Answer:\n",
         target_field="answer",
-        choices_seperator="\n",
+        choices_separator="\n",
         target_choice_format="{choice_numeral}. {choice_text}",
         postprocessors=[
             "processors.take_first_non_empty_line",

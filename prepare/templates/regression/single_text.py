@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.templates import OutputQuantizingTemplate, TemplatesList
+from unitxt.catalog import add_to_catalog
+from unitxt.templates import OutputQuantizingTemplate, TemplatesList
 
 add_to_catalog(
     OutputQuantizingTemplate(

@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.formats import SystemFormat
+from unitxt.catalog import add_to_catalog
+from unitxt.formats import SystemFormat
 
 format = SystemFormat(
     model_input_format="<|system|>\n{system_prompt}\n<|user|>\n{instruction}\n{source}\n<|assistant|>\n{target_prefix}",

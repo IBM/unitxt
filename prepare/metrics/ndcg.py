@@ -1,9 +1,8 @@
 import numpy as np
-
-from src.unitxt import add_to_catalog
-from src.unitxt.blocks import CastFields
-from src.unitxt.metrics import NDCG, MetricPipeline
-from src.unitxt.test_utils.metrics import test_metric
+from unitxt import add_to_catalog
+from unitxt.blocks import CastFields
+from unitxt.metrics import NDCG, MetricPipeline
+from unitxt.test_utils.metrics import test_metric
 
 # Normalized Discounted Cumulative Gain
 metric = MetricPipeline(

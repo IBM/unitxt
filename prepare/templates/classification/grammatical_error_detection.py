@@ -1,5 +1,5 @@
-from src.unitxt import add_to_catalog
-from src.unitxt.templates import InputOutputTemplate
+from unitxt import add_to_catalog
+from unitxt.templates import InputOutputTemplate, TemplatesList
 
 add_to_catalog(
     InputOutputTemplate(
@@ -14,5 +14,15 @@ add_to_catalog(
         ],
     ),
     "templates.grammatical_error_detection.yes_no",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.grammatical_error_detection.yes_no",
+        ]
+    ),
+    "templates.grammatical_error_detection.all",
     overwrite=True,
 )

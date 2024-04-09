@@ -1,5 +1,5 @@
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import DeterministicBalancer, LengthBalancer
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import DeterministicBalancer, LengthBalancer
 
 balancer = DeterministicBalancer(fields=["outputs/label"])
 

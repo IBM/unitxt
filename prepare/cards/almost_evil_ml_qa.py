@@ -1,7 +1,7 @@
-from src.unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import ListFieldValues
-from src.unitxt.test_utils.card import test_card
+from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import ListFieldValues
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),

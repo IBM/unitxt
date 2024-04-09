@@ -1,4 +1,4 @@
-from src.unitxt.blocks import (
+from unitxt.blocks import (
     AddFields,
     InputOutputTemplate,
     LoadHF,
@@ -7,9 +7,9 @@ from src.unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from src.unitxt.catalog import add_to_catalog
-from src.unitxt.operators import Shuffle
-from src.unitxt.test_utils.card import test_card
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import Shuffle
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="ethos", name="binary"),

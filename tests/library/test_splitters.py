@@ -1,6 +1,7 @@
 import copy
 
-from src.unitxt.splitters import DiverseLabelsSampler
+from unitxt.splitters import DiverseLabelsSampler
+
 from tests.utils import UnitxtTestCase
 
 
