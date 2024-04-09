@@ -8,7 +8,7 @@ from .utils import safe_eval
 
 
 def convert_union_type(type_string: str) -> str:
-    """Converts new Python union type hints (valid since Python 3.9) into form compatible with any Python version.
+    """Converts new Python union type hints (valid since Python 3.10) into form compatible with any Python version.
 
     Args:
         type_string (str): A string representation of a Python type hint. Examples include
@@ -89,7 +89,7 @@ def convert_union_type(type_string: str) -> str:
 
 
 def format_type_string(type_string: str) -> str:
-    """Formats a string representing a Python type hint so that it is compatible with any Python version (before or after Python 3.9).
+    """Formats a string representing a Python type hint so that it is compatible with any Python version (before or after Python 3.10).
 
     Args:
         type_string (str): A string representation of a Python type hint. Examples include
@@ -133,7 +133,7 @@ def parse_type_string(type_string: str) -> typing.Any:
                     or tokens list.
 
     The function formats the string first if it represents a new Python type hint
-    (i.e. valid since Python 3.9), which uses: 'list[int]' instead of 'List[int]' etc.
+    (i.e. valid since Python 3.10), which uses: 'list[int]' instead of 'List[int]' etc.
     The function uses a predefined safe context with common types from the `typing` module
     and basic Python data types. It also defines a list of safe tokens that are allowed
     in the type string.
