@@ -3,8 +3,8 @@
     "inputs": {
         "text": "str",
         "attribute_name": "str",
-        "min_value": "str",
-        "max_value": "str"
+        "min_value": "Optional[float]",
+        "max_value": "Optional[float]"
     },
     "outputs": {
         "attribute_value": "float"
