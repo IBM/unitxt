@@ -150,7 +150,7 @@ ibmcos_datasets/
 kaggle.json
 
 src/unitxt/catalog_back/*
-
-
 src/unitxt/catalog/metrics/example/accuracy.json
 src/unitxt/catalog/processors/example/to_string.json
+prod_env/*
+benchmark_output/*

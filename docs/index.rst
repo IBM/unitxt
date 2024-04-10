@@ -183,6 +183,7 @@ Welcome!
    docs/contributors_guide
    docs/saving_and_loading_from_catalog
    docs/production
+   docs/helm
    modules
    catalog
 
