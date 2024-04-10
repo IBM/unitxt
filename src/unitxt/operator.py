@@ -166,6 +166,14 @@ class StreamInitializerOperator(SourceOperator):
         pass
 
 
+def instance_generator(instance):
+    yield instance
+
+
+def stream_single(instance: Dict[str, Any]) -> Stream:
+    return Stream(generator=instance_generator, gen_kwargs={"instance": instance})
+
+
 class MultiStreamOperator(StreamingOperator):
     """A class representing a multi-stream operator in the streaming system.
 
@@ -198,7 +206,7 @@ class MultiStreamOperator(StreamingOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
-        multi_stream = MultiStream({stream_name: [instance]})
+        multi_stream = MultiStream({stream_name: stream_single(instance)})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
 
@@ -269,7 +277,9 @@ class SingleStreamOperator(MultiStreamOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
-        processed_stream = self._process_single_stream([instance], stream_name)
+        processed_stream = self._process_single_stream(
+            stream_single(instance), stream_name
+        )
         return next(iter(processed_stream))
 
 
