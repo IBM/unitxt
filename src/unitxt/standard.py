@@ -161,18 +161,28 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self._demos_pool_cache = None
 
-    def produce(self, task_instances):
-        """Use the recipe in production to produce model ready query from standard task instance."""
+    def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({"__inference__": task_instances})
-        instances = list(self.inference_instance(ms)["__inference__"])
-        iters = {"__inference__": instances}
+        return list(self.inference_instance(ms)["__inference__"])
+
+    def production_demos_pool(self):
         if self.num_demos > 0:
             if self._demos_pool_cache is None:
                 self._demos_pool_cache = list(
                     self.inference_demos()[self.demos_pool_name]
                 )
-            iters[self.demos_pool_name] = self._demos_pool_cache
-        multi_stream = MultiStream.from_iterables(iters)
+            return self._demos_pool_cache
+        return []
+
+    def produce(self, task_instances):
+        """Use the recipe in production to produce model ready query from standard task instance."""
+        self.before_process_multi_stream()
+        multi_stream = MultiStream.from_iterables(
+            {
+                "__inference__": self.production_preprocess(task_instances),
+                self.demos_pool_name: self.production_demos_pool(),
+            }
+        )
         multi_stream = self.inference(multi_stream)
         return list(multi_stream["__inference__"])
 
