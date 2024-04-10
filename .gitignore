@@ -150,3 +150,5 @@ ibmcos_datasets/
 kaggle.json
 
 src/unitxt/catalog_back/*
+prod_env/*
+benchmark_output/*
