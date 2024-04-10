@@ -2,6 +2,12 @@
 Running Unitxt with HELM
 ========================
 
+.. _prompt_format_layout:
+.. image:: ../../assets/helm+unitxt.png
+   :alt: HELM + Unitxt
+   :width: 75%
+   :align: center
+
 Unitxt can be integrated with HELM, enabling you to select and evaluate models from the extensive HELM models catalog with data recipes created by Unitxt.
 
 First, install HELM from the source repository (this is necessary until the next HELM release is available):

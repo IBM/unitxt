@@ -1,12 +1,24 @@
-recipe="card=cards.wnli,template=templates.classification.multi_class.relation.default"
-hf_model="microsoft/phi-1_5"
+recipe="card=cards.sst2,template=templates.classification.multi_class.default,num_demos=1,demos_pool_size=10,loader_limit=100"
+model="microsoft/phi-1_5"
 
-helm-run \
-    --run-entries "unitxt:$recipe,model=$hf_model" \
-    --enable-huggingface-models $hf_model \
-    --max-eval-instances 10 --suite v1
-
-if [ ! -f "benchmark_output/runs/v1/unitxt:card=cards.wnli,template=templates.classification.multi_class.relation.default,model=microsoft_phi-1_5/scenario_state.json" ]; then
+# helm-run \
+#     --run-entries "unitxt:$recipe,model=$model" \
+#     --enable-huggingface-models $model \
+#     --max-eval-instances 1 --suite v1
+# benchmark_output/runs/v1/unitxt:card=cards.sst2,template=templates.classification.multi_class.instruction,loader_limit=100,model=microsoft_phi-1_5/run_spec.json
+model=$(echo "$model" | sed 's/\//_/g')
+results_file="benchmark_output/runs/v1/unitxt:$recipe,model=$model/stats.json"
+if [ ! -f "$results_file" ]; then
   echo "Error: File does not exist." >&2
   exit 1
+fi
+
+
+result=$(python -c "import json; print(next(item['mean'] for item in json.load(open('$results_file')) if item['name']['name'] == 'accuracy'))")
+
+if [[ "$result" == "1.0" ]]; then
+    echo "Success: The results are consistent, mean accuracy is $result as expected."
+else
+    echo "Error: The results are inconsistent, mean accuracy should be 1.0, but got $result."
+    exit 1
 fi
