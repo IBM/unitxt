@@ -54,10 +54,18 @@ def make_content(artifact, label, all_labels):
     type_class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
     catalog_id = label.replace("catalog.", "")
-    result = (
-        f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
-        f"   .. code-block:: json\n\n      "
-    )
+    result = ""
+    if "__description__" in artifact and artifact["__description__"] is not None:
+        result += "\n" + artifact["__description__"] + "\n"
+    if "__tags__" in artifact and artifact["__tags__"] is not None:
+        result += "\nTags: "
+        tags = []
+        for k, v in artifact["__tags__"].items():
+            tags.append(f"``{k}:{v!s}``")
+        result += ",  ".join(tags) + "\n\n"
+    result += f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
+
+    result += "   .. code-block:: json\n\n      "
     result += (
         json.dumps(artifact, sort_keys=True, indent=4, ensure_ascii=False).replace(
             "\n", "\n      "
