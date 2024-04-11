@@ -1164,11 +1164,11 @@ class ApplyOperatorsField(StreamInstanceOperator):
 class FilterByCondition(SingleStreamOperator):
     """Filters a stream, yielding only instances for which the required values follows the required condition operator.
 
-    Raises an error if a required key is missing.
+    Raises an error if a required key/subfield is missing.
 
     Args:
        values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
-       condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
+       condition: the name of the desired condition operator between the key/subfield and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
@@ -1220,15 +1220,17 @@ class FilterByCondition(SingleStreamOperator):
 
     def _is_required(self, instance: dict) -> bool:
         for key, value in self.values.items():
-            if key not in instance:
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
                 raise ValueError(
                     f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
-                )
+                ) from ve
             if self.condition == "in":
-                if instance[key] not in value:
+                if instance_key not in value:
                     return False
             elif self.condition == "not in":
-                if instance[key] in value:
+                if instance_key in value:
                     return False
             else:
                 func = self.condition_to_func[self.condition]
@@ -1236,7 +1238,7 @@ class FilterByCondition(SingleStreamOperator):
                     raise ValueError(
                         f"Function not defined for condition '{self.condition}'"
                     )
-                if not func(instance[key], value):
+                if not func(instance_key, value):
                     return False
         return True
 
