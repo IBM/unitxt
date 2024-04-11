@@ -1,0 +1,8 @@
+{
+    "type": "llm_as_judge",
+    "inference_model": {
+        "type": "pipeline_based_inference_engine",
+        "model_name": "google/flan-t5-large",
+        "max_new_tokens": 32
+    }
+}

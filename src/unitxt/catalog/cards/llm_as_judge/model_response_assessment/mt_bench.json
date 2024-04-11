@@ -1,0 +1,9 @@
+{
+    "type": "task_card",
+    "loader": null,
+    "preprocess_steps": [],
+    "task": "tasks.llm_as_judge.model_response_assessment",
+    "templates": [
+        "templates.llm_as_judge.model_response_assessment.mt_bench"
+    ]
+}
