@@ -20,6 +20,12 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
+    __description__="The WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables.",
+    __tags__={
+        "modality": "table",
+        "urls": {"arxiv": "https://arxiv.org/abs/1508.00305"},
+        "languages": ["english"],
+    },
 )
 
 test_card(card)
