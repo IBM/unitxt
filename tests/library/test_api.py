@@ -1,4 +1,4 @@
-from unitxt.api import evaluate, load_dataset
+from unitxt.api import evaluate, load_dataset, produce
 
 from tests.utils import UnitxtTestCase
 
@@ -39,3 +39,63 @@ class TestAPI(UnitxtTestCase):
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
         self.assertAlmostEqual(results[0]["score"]["global"]["score"], 0.2, 3)
+
+    def test_produce_with_recipe(self):
+        result = produce(
+            {
+                "label": "?",
+                "text_a": "It works perfectly",
+                "text_b": "It works!",
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
+            },
+            "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.premise: Steve follows Fred's example in everything. He influences him hugely., hypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., hypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly, hypothesis: It works!\nThe entailment class is ",
+            "target": "?",
+            "references": ["?"],
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "?"}',
+            "group": "unitxt",
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+        }
+
+        self.assertDictEqual(target, result)
+
+    def test_produce_with_recipe_with_list_of_instances(self):
+        result = produce(
+            [
+                {
+                    "label": "?",
+                    "text_a": "It works perfectly",
+                    "text_b": "It works!",
+                    "classes": ["entailment", "not entailment"],
+                    "type_of_relation": "entailment",
+                    "text_a_type": "premise",
+                    "text_b_type": "hypothesis",
+                }
+            ],
+            "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
+        )[0]
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.premise: Steve follows Fred's example in everything. He influences him hugely., hypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., hypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly, hypothesis: It works!\nThe entailment class is ",
+            "target": "?",
+            "references": ["?"],
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "?"}',
+            "group": "unitxt",
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+        }
+
+        self.assertDictEqual(target, result)
