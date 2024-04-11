@@ -272,6 +272,6 @@ class TestAssertTyping(UnitxtTestCase):
             "Tuple[int,float,Union[int,List[Union[int,Dict[str,Union[int,float]]]]]]",
         )
         self.assertEqual(
-            parse_type_string("tuple[int, str, typing.List[int | float]]"),
-            typing.Tuple[int, str, typing.List[typing.Union[int, float]]],
+            parse_type_string("tuple[int | str | typing.List[int | float]]"),
+            typing.Tuple[typing.Union[int, str, typing.List[typing.Union[int, float]]]],
         )

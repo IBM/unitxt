@@ -11,12 +11,16 @@ def convert_union_type(type_string: str) -> str:
     """Converts new Python union type hints (valid since Python 3.10) into form compatible with any Python version.
 
     Args:
-        type_string (str): A string representation of a Python type hint. Examples include
-                           'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
+        type_string (str): A string representation of a Python type hint. It can be any
+                           valid Python type. Examples include 'List[int|float]', 'str|float|bool',
+                           'Optional[int|float]|Callable[[int], bool]' etc.
 
     Returns:
-        str: A type string which is compatible with typing module. For example
-            'Union[int,float]' instead of 'int|float'.
+        str: A type string with converted union types, which is compatible with typing module.
+             For example:
+             'List[int|float]' -> 'List[Union[int,float]]',
+             'Optional[int|float]|Callable[[int], bool]' -> 'Union[Optional[Union[int,float]],Callable[[int], bool]]'
+             etc.
 
     The function iteratively splits given type string on bitwise or operator which represents
     a union type. Then it iterates over both - left and right - parts and reconstructs the
