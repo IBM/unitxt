@@ -1162,20 +1162,25 @@ class ApplyOperatorsField(StreamInstanceOperator):
 
 
 class FilterByCondition(SingleStreamOperator):
-    """Filters a stream, yielding only instances for which the required values follows the required condition operator.
+    """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator.
 
-    Raises an error if a required key/subfield is missing.
+    Raises an error if a required field name is missing from the input instance.
 
     Args:
-       values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
-       condition: the name of the desired condition operator between the key/subfield and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
+       values (Dict[str, Any]): Field names and respective Values that instances must match according the condition, to be included in the output.
+       condition: the name of the desired condition operator between the specified (sub) field's value  and the provided constant value.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where "a">4
+       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where field "a" contains a value > 4
        FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
        FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
        FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
+       FilterByCondition(values = {"a/b":[4,8]}, condition = "not in") will yield only instances where "a" is
+            a dict in which key "b" is mapped to a value that is neither 4 nor 8
+       FilterByCondition(values = {"a[2]":4}, condition = "le") will yield only instances where "a" is a list whose 3-rd
+            element is <= 4
+
 
     """
 
@@ -1287,6 +1292,8 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
        FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
        FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
        FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
+       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in
+                                        which key 'b' is mapped to a value that is neither 4 nor 8
 
     """
 

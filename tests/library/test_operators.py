@@ -304,20 +304,24 @@ class TestOperators(UnitxtTestCase):
         )
 
     def test_filter_by_condition_ne(self):
-        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        inputs = [
+            {"a": [0, 10], "b": 2},
+            {"a": [2, 20], "b": 3},
+            {"a": [1, 100], "b": 3},
+        ]
 
         targets = [
-            {"a": 2, "b": 3},
+            {"a": [2, 20], "b": 3},
         ]
 
         check_operator(
-            operator=FilterByCondition(values={"a": 1, "b": 2}, condition="ne"),
+            operator=FilterByCondition(values={"a/0": 1, "b": 2}, condition="ne"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         check_operator(
-            operator=FilterByExpression(expression="a != 1 and b != 2"),
+            operator=FilterByExpression(expression="a[0] != 1 and b != 2"),
             inputs=inputs,
             targets=targets,
             tester=self,
