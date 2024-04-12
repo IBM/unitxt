@@ -7,7 +7,14 @@ from abc import abstractmethod
 from copy import deepcopy
 from typing import Dict, List, Optional, Union, final
 
-from .dataclass import AbstractField, Dataclass, Field, InternalField, fields
+from .dataclass import (
+    AbstractField,
+    Dataclass,
+    Field,
+    InternalField,
+    NonPositionalField,
+    fields,
+)
 from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
@@ -114,10 +121,10 @@ class Artifact(Dataclass):
     _class_register = {}
 
     type: str = Field(default=None, final=True, init=False)
-    __description__: str = InternalField(
+    __description__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
-    __tags__: Dict[str, str] = InternalField(
+    __tags__: Dict[str, str] = NonPositionalField(
         default_factory=dict, required=False, also_positional=False
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
