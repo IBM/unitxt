@@ -12,8 +12,9 @@ def convert_union_type(type_string: str) -> str:
 
     Args:
         type_string (str): A string representation of a Python type hint. It can be any
-                           valid Python type. Examples include 'List[int|float]', 'str|float|bool',
-                           'Optional[int|float]|Callable[[int], bool]' etc.
+                           valid Python type, which can be parsed in unitxt; this includes
+                           all types except for Literal. Examples include 'List[int|float]',
+                           'str|float|bool', 'Optional[int|float]|Callable[[int], bool]' etc.
 
     Returns:
         str: A type string with converted union types, which is compatible with typing module.
@@ -96,8 +97,10 @@ def format_type_string(type_string: str) -> str:
     """Formats a string representing a Python type hint so that it is compatible with any Python version (before or after Python 3.10).
 
     Args:
-        type_string (str): A string representation of a Python type hint. Examples include
-                           'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
+        type_string (str): A string representation of a Python type hint. This can be any
+                           valid type, which can be parsed by unitxt. That includes all
+                           types except for Literal. Examples include 'List[int]',
+                           'Dict[str, Any]', 'Optional[List[str]]', etc.
 
     Returns:
         str: A formatted type string.
@@ -107,6 +110,10 @@ def format_type_string(type_string: str) -> str:
     by bitwise or operator into form compatible with typing module, for example:
     'int|float' into 'Union[int,float]'.
     """
+    if "Literal" in type_string:
+        raise ValueError(
+            f"Type hint: {type_string} is not supported by unitxt as it cannot parse Literal."
+        )
     types_map = {
         "list": "List",
         "tuple": "Tuple",

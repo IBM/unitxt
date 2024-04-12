@@ -275,3 +275,9 @@ class TestAssertTyping(UnitxtTestCase):
             parse_type_string("tuple[int | str | typing.List[int | float]]"),
             typing.Tuple[typing.Union[int, str, typing.List[typing.Union[int, float]]]],
         )
+        with self.assertRaises(ValueError) as e:
+            format_type_string('Tuple[int|float,Literal["foo"]]')
+            self.assertEqual(
+                str(e),
+                'Type hint: Tuple[int|float,Literal["foo"]] is not supported by unitxt as it cannot parse Literal.',
+            )
