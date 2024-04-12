@@ -1950,6 +1950,9 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    prediction_type = "str"
+    single_reference_per_prediction = True
+
     _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
