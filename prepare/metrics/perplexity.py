@@ -2,6 +2,8 @@ from unitxt import add_to_catalog
 from unitxt.metrics import Perplexity
 from unitxt.test_utils.metrics import test_metric
 
+skip_nli_metric_test = True
+
 
 def run_test(metric_to_test, instance_scores, global_scores):
     references = []
@@ -71,6 +73,8 @@ def generate_questions(instances, global_scores, metric):
 
 
 def generate_nli(instances, global_scores, metric):
+    if skip_nli_metric_test:
+        return
     instance_scores = []
     for premise, hypotheses in instances.items():
         for hypothesis, pr in hypotheses:

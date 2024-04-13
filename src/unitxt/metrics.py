@@ -2150,21 +2150,9 @@ class Perplexity(BulkInstanceMetric):
     model_name: str
     single_token_mode: bool = False
 
+    lm = None
+
     _requirements_list: List[str] = ["transformers", "torch"]
-
-    def prepare(self):
-        from transformers import AutoConfig
-
-        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
-        self.lm = (
-            self.EncoderDecoderLM(
-                model_name=self.model_name, single_token_mode=self.single_token_mode
-            )
-            if config.is_encoder_decoder is True
-            else self.DecoderOnlyLM(
-                model_name=self.model_name, single_token_mode=self.single_token_mode
-            )
-        )
 
     def compute(
         self,
@@ -2179,6 +2167,20 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after each text X_i_j = P(Y_i|X_i_1), ..., P(Y_i|X_i_n)  for every i.
         """
+        if self.lm is None:
+            from transformers import AutoConfig
+
+            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+            self.lm = (
+                self.EncoderDecoderLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+                if config.is_encoder_decoder is True
+                else self.DecoderOnlyLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+            )
+
         sources = []
         targets = []
         for prediction, instance_references in zip(predictions, references):
