@@ -70,31 +70,55 @@ def generate_questions(instances, global_scores, metric):
     run_test(metric, instance_scores, global_scores)
 
 
+def generate_nli(instances, global_scores, metric):
+    instance_scores = []
+    for premise, hypotheses in instances.items():
+        for hypothesis, pr in hypotheses:
+            instance_scores.append(
+                {"prediction": premise, "references": [hypothesis], "score": pr}
+            )
+    run_test(metric, instance_scores, global_scores)
+
+
 perplexity = Perplexity(
-    model_name="google/flan-t5-small", perplexity_prompt="Complete the given content:"
+    model_name="google/flan-t5-small",
+    source_template="Complete the given content: {reference}",
+    target_template="{prediction}",
 )
 
 perplexity_question = Perplexity(
     model_name="google/flan-t5-small",
-    perplexity_prompt="Generate a question based on the given content:",
+    source_template="Generate a question based on the given content: {reference}",
+    target_template="{prediction}",
 )
 
 perplexity_answer = Perplexity(
     model_name="google/flan-t5-small",
-    perplexity_prompt="Generate an answer based on the given content:",
+    source_template="Generate an answer based on the given content: {reference}",
+    target_template="{prediction}",
 )
 
 perplexity_chat = Perplexity(
     model_name="google/flan-t5-small",
-    perplexity_prompt="Generate a conversation between a user and an agent "
-    "based on the given content:",
+    source_template="Generate a conversation between a user and an agent "
+    "based on the given content: {reference}",
+    target_template="{prediction}",
 )
 
 perplexity_chat_bloom = Perplexity(
     model_name="bigscience/bloom-560M",
-    perplexity_prompt="Generate a conversation between a user and an agent "
-    "based on the given content:",
+    source_template="Generate a conversation between a user and an agent "
+    "based on the given content: {reference}",
+    target_template="{prediction}",
 )
+
+perplexity_nli = Perplexity(
+    model_name="google/t5_xxl_true_nli_mixture",
+    source_template="premise: {prediction} hypothesis: {reference}",
+    target_template="1",
+    single_token_mode=True,
+)
+
 
 generate_completions(
     instances={
@@ -215,6 +239,23 @@ generate_questions(
     metric=perplexity_chat_bloom,
 )
 
+generate_nli(
+    instances={
+        "Einstein is from Germany": [
+            ("Einstein is from Europe", 0.72),
+            ("Einstein is Jewish", 0.0),
+            ("Einstein is from Alaska", 0.0),
+        ],
+        "Roosevelt is from France": [("Roosevelt is from Paris", 0.06)],
+        "Roosevelt is from Paris": [("Roosevelt is from France", 0.67)],
+    },
+    global_scores={
+        "mean": 0.29,
+        "ci_high": 0.57,
+        "ci_low": 0.01,
+    },
+    metric=perplexity_nli,
+)
 
 add_to_catalog(perplexity, "metrics.perplexity.flan_t5_small", overwrite=True)
 add_to_catalog(
@@ -222,3 +263,4 @@ add_to_catalog(
 )
 add_to_catalog(perplexity_answer, "metrics.perplexity_a.flan_t5_small", overwrite=True)
 add_to_catalog(perplexity_chat, "metrics.perplexity_chat.flan_t5_small", overwrite=True)
+add_to_catalog(perplexity_nli, "metrics.perplexity_nli.t5_nli_mixture", overwrite=True)
