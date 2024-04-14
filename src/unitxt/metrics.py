@@ -3395,7 +3395,8 @@ class BinaryMaxAccuracy(GlobalMetric):
         best_thr = current_thr
 
         i = 0
-        while i < len(predictions):
+        while (i < len(predictions)) and (best_acc < len(predictions)):
+            # best_acc can not exceed len(predictions)
             delta = fp[i][2]
             i += 1
             while i < len(predictions) and fp[i][0] <= fp[i - 1][0]:
