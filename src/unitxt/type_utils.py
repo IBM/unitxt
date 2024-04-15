@@ -7,6 +7,129 @@ import typing
 from .utils import safe_eval
 
 
+def convert_union_type(type_string: str) -> str:
+    """Converts Python 3.10 union type hints into form compatible with Python 3.9 version.
+
+    Args:
+        type_string (str): A string representation of a Python type hint. It can be any
+                           valid Python type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int|float]', 'str|float|bool' etc.
+
+    Returns:
+        str: A type string with converted union types, which is compatible with typing module.
+
+    Examples:
+        convert_union_type('List[int|float]') -> 'List[Union[int,float]]'
+        convert_union_type('Optional[int|float]|bool') -> 'Union[Optional[Union[int,float]],bool]'
+
+    The function iteratively splits given type string on bitwise or operator which represents
+    a union type. Then it iterates over both - left and right - parts and reconstructs the
+    string by removing '|' operator and replacing it with 'Union'. It works based on placement
+    of common signs used in types definition: '[', ']', ','.
+    """
+
+    def construct_union_part(string: str, part: typing.Literal["left", "right"]) -> str:
+        length = len(string)
+        type_signs = [
+            (string[i], i) for i in range(length) if string[i] in ["[", "]", ","]
+        ]
+        n_open = len([el for el in type_signs if el[0] == "["])
+        n_close = len([el for el in type_signs if el[0] == "]"])
+
+        if n_open == n_close:
+            # independent types: "int|float", "Tuple[str]|List[str]" etc.
+            return f"Union[{string}," if part == "left" else f"{string}]"
+
+        condition = (
+            type_signs[-1][0] in [",", "["]
+            if part == "left"
+            else type_signs[0][0] in [",", "]"]
+        )
+
+        if condition:
+            # union as a subtype: "Tuple[str,int|float]", "List[str|float,int]" etc.
+            if part == "left":
+                idx = type_signs[-1][1] + 1
+                return f"{string[:idx]}Union[{string[idx:]},"
+
+            idx = type_signs[0][1]
+            return f"{string[:idx]}]{string[idx:]}"
+
+        n_open_encountered = 0
+        n_close_encountered = 0
+        for i in range(length):
+            # complex types: "Dict[str,Tuple[List[int]]|Tuple[List[float]]]" etc.
+            idx = length - 1 - i if part == "left" else i
+            if string[idx] == "[":
+                n_open_encountered += 1
+            if string[idx] == "]":
+                n_close_encountered += 1
+
+            if n_open_encountered > 0 and n_close_encountered > 0:
+                if part == "left":
+                    if (
+                        string[idx] == "," and n_open_encountered == n_close_encountered
+                    ) or (
+                        string[idx] == "[" and n_open_encountered > n_close_encountered
+                    ):
+                        return f"{string[:(idx + 1)]}Union[{string[(idx + 1):]},"
+
+                else:
+                    if string[idx] == "]" and n_open_encountered == n_close_encountered:
+                        return f"{string[:(idx + 1)]}]{string[(idx + 1):]}"
+
+        raise ValueError(
+            f"Could not properly format union types in given type string: {type_string}."
+        )
+
+    union_sign = "|"
+    new_type_string = type_string
+    for _ in range(type_string.count(union_sign)):
+        lhs, rhs = new_type_string.split(union_sign, 1)
+        new_string = construct_union_part(lhs, "left")
+        new_string += construct_union_part(rhs, "right")
+        new_type_string = new_string
+
+    return new_type_string
+
+
+def format_type_string(type_string: str) -> str:
+    """Formats a string representing a valid Python type hint so that it is compatible with Python 3.9 notation.
+
+    Args:
+        type_string (str): A string representation of a Python type hint. This can be any
+                           valid type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
+
+    Returns:
+        str: A formatted type string.
+
+    Examples:
+        format_type_string('list[int | float]') -> 'List[Union[int,float]]'
+        format_type_string('dict[str, Optional[str]]') -> 'Dict[str,Optional[str]]'
+
+    The function formats valid type string (either after or before Python 3.10) into a
+    form compatible with 3.9. This is done by captilizing the first letter of a lower-cased
+    type name and transferring the 'bitwise or operator' into 'Union' notation. The function
+    also removes whitespaces and redundant module name in type names imported from 'typing'
+    module, e.g. 'typing.Tuple' -> 'Tuple'.
+
+    Currently, the capitalization is applied only to types which unitxt allows, i.e.
+    'list', 'dict', 'tuple'. Moreover, the function expects the input to not contain types
+    which contain strings, for example 'Literal'.
+    """
+    types_map = {
+        "list": "List",
+        "tuple": "Tuple",
+        "dict": "Dict",
+        "typing.": "",
+        " ": "",
+    }
+    for old_type, new_type in types_map.items():
+        type_string = type_string.replace(old_type, new_type)
+    return convert_union_type(type_string)
+
+
 def parse_type_string(type_string: str) -> typing.Any:
     """Parses a string representing a Python type hint and evaluates it to return the corresponding type object.
 
@@ -24,6 +147,11 @@ def parse_type_string(type_string: str) -> typing.Any:
         ValueError: If the type string contains elements not allowed in the safe context
                     or tokens list.
 
+    The function formats the string first if it represents a new Python type hint
+    (i.e. valid since Python 3.10), which uses lowercased names for some types and
+    'bitwise or operator' instead of 'Union', for example: 'list[int|float]' instead
+    of 'List[Union[int,float]]' etc.
+
     The function uses a predefined safe context with common types from the `typing` module
     and basic Python data types. It also defines a list of safe tokens that are allowed
     in the type string.
@@ -40,6 +168,8 @@ def parse_type_string(type_string: str) -> typing.Any:
         "bool": bool,
         "Optional": typing.Optional,
     }
+
+    type_string = format_type_string(type_string)
 
     safe_tokens = ["[", "]", ",", " "]
     return safe_eval(type_string, safe_context, safe_tokens)

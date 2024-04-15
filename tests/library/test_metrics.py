@@ -385,6 +385,41 @@ class TestMetrics(UnitxtTestCase):
             "max_accuracy_binary", outputs[0]["score"]["instance"]["score_name"]
         )
 
+        references = [["0"], ["0"], ["0"]]
+        predictions = ["0.3", "0.9", "0.7"]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
+
+        references = [["1"], ["0"], ["0"], ["1"], ["0"], ["0"]]
+        predictions = ["0.7", "0.3", "0.7", "0.8", "0.9", "0.3"]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(2 / 3, outputs[0]["score"]["global"]["score"])
+
+        references = [["1"]]
+        predictions = ["0.7"]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
+
+        references = [["0"]]
+        predictions = ["0.7"]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
+
+        references = [["0"]]
+        predictions = ["1.7"]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
+
     def test_f1_macro(self):
         metric = F1Macro()
         references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
