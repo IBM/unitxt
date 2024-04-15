@@ -1,3 +1,4 @@
+import ast
 import collections.abc
 import io
 import itertools
@@ -15,82 +16,86 @@ def convert_union_type(type_string: str) -> str:
                            valid Python type, which does not contain strings (e.g. 'Literal').
                            Examples include 'List[int|float]', 'str|float|bool' etc.
 
+        Formally, the function depends on the input string adhering to the following rules.
+        Assuming that the input is a valid type hint the function does not check that 'word' is
+        'str', 'bool', 'List' etc. It just depends on the following general structure (spaces ignored):
+        type -> word OR type( | type)* OR word[type( , type)*]
+        word is a sequence of (0 or more) chars, each being any char but: [ ] , |
+        This implies that if any of these 4 chars shows not as a meta char of the input
+        type_string, but inside some constant string (of Literal, for example), the scheme
+        will not work.
+
+        Cases like Literal, that might contain occurrences of the four chars above not as meta chars
+        in the type string, must be handled as special cases by this function, as shown for Literal,
+        as an example. Because 'format_type_string' serves as preprocessing for 'parse_type_string',
+        which has a list of allowed types, of which Literal is not a member, Literal and such are not
+        relevant at all now; and the case is brought here just for an example for future use.
+
+
     Returns:
         str: A type string with converted union types, which is compatible with typing module.
 
     Examples:
         convert_union_type('List[int|float]') -> 'List[Union[int,float]]'
-        convert_union_type('Optional[int|float]|bool') -> 'Union[Optional[Union[int,float]],bool]'
+        convert_union_type('Optional[int|float|bool]') -> 'Optional[Union[int,float,bool]]'
 
-    The function iteratively splits given type string on bitwise or operator which represents
-    a union type. Then it iterates over both - left and right - parts and reconstructs the
-    string by removing '|' operator and replacing it with 'Union'. It works based on placement
-    of common signs used in types definition: '[', ']', ','.
     """
 
-    def construct_union_part(string: str, part: typing.Literal["left", "right"]) -> str:
-        length = len(string)
-        type_signs = [
-            (string[i], i) for i in range(length) if string[i] in ["[", "]", ","]
-        ]
-        n_open = len([el for el in type_signs if el[0] == "["])
-        n_close = len([el for el in type_signs if el[0] == "]"])
+    def consume_literal(string: str) -> str:
+        # identifies the prefix of string that matches a full Literal typing, with all its constants, including
+        # constants that contain [ ] , etc. on which construct_union_part depends.
+        # string starts with the [ that follows 'Literal'
+        candidate_end = string.find("]")
+        while candidate_end != -1:
+            try:
+                ast.literal_eval(string[: candidate_end + 1])
+                break
+            except Exception:
+                candidate_end = string.find("]", candidate_end + 1)
 
-        if n_open == n_close:
-            # independent types: "int|float", "Tuple[str]|List[str]" etc.
-            return f"Union[{string}," if part == "left" else f"{string}]"
+        if candidate_end == -1:
+            raise ValueError("invalid Literal in input type_string")
+        return string[: candidate_end + 1]
 
-        condition = (
-            type_signs[-1][0] in [",", "["]
-            if part == "left"
-            else type_signs[0][0] in [",", "]"]
-        )
+    stack = [""]  # the start of a type
+    input = type_string.strip()
+    next_word = re.compile(r"([^\[\],|]*)([\[\],|]|$)")
+    while len(input) > 0:
+        word = next_word.match(input)
+        input = input[len(word.group(0)) :].strip()
+        stack[-1] += word.group(1)
+        if word.group(2) in ["]", ",", ""]:  # "" for eol:$
+            # top of stack is now complete to a whole type
+            lwt = stack.pop()
+            if (
+                "|" in lwt
+            ):  # the | -s are only at the top level of lwt, not inside any subtype
+                lwt = "Union[" + lwt.replace("|", ",") + "]"
+            lwt += word.group(2)
+            if len(stack) > 0:
+                stack[-1] += lwt
+            else:
+                stack = [lwt]
+            if word.group(2) == ",":
+                stack.append("")  # to start the expected next type
 
-        if condition:
-            # union as a subtype: "Tuple[str,int|float]", "List[str|float,int]" etc.
-            if part == "left":
-                idx = type_signs[-1][1] + 1
-                return f"{string[:idx]}Union[{string[idx:]},"
+        elif word.group(2) in ["|"]:
+            # top of stack is the last whole element(s) to be union-ed,
+            # and more are expected
+            stack[-1] += "|"
 
-            idx = type_signs[0][1]
-            return f"{string[:idx]}]{string[idx:]}"
+        else:  # "["
+            if word.group(1) == "Literal":
+                literal_ops = consume_literal("[" + input)
+                stack[-1] += literal_ops
+                input = input[len(literal_ops) - 1 :]
+            else:
+                stack[-1] += "["
+                stack.append("")
+                # start type (,type)*  inside the []
 
-        n_open_encountered = 0
-        n_close_encountered = 0
-        for i in range(length):
-            # complex types: "Dict[str,Tuple[List[int]]|Tuple[List[float]]]" etc.
-            idx = length - 1 - i if part == "left" else i
-            if string[idx] == "[":
-                n_open_encountered += 1
-            if string[idx] == "]":
-                n_close_encountered += 1
-
-            if n_open_encountered > 0 and n_close_encountered > 0:
-                if part == "left":
-                    if (
-                        string[idx] == "," and n_open_encountered == n_close_encountered
-                    ) or (
-                        string[idx] == "[" and n_open_encountered > n_close_encountered
-                    ):
-                        return f"{string[:(idx + 1)]}Union[{string[(idx + 1):]},"
-
-                else:
-                    if string[idx] == "]" and n_open_encountered == n_close_encountered:
-                        return f"{string[:(idx + 1)]}]{string[(idx + 1):]}"
-
-        raise ValueError(
-            f"Could not properly format union types in given type string: {type_string}."
-        )
-
-    union_sign = "|"
-    new_type_string = type_string
-    for _ in range(type_string.count(union_sign)):
-        lhs, rhs = new_type_string.split(union_sign, 1)
-        new_string = construct_union_part(lhs, "left")
-        new_string += construct_union_part(rhs, "right")
-        new_type_string = new_string
-
-    return new_type_string
+    assert len(stack) == 1
+    return stack[0]
 
 
 def format_type_string(type_string: str) -> str:
