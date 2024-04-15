@@ -453,7 +453,7 @@ answer_reward = MetricPipeline(
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
 
 answer_inference = MetricPipeline(
-    main_score="score",
+    main_score="perplexity",
     preprocess_steps=[
         CopyFields(field_to_field=[("contexts", "references")]),
         CopyFields(
