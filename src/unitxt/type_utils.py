@@ -95,6 +95,8 @@ def convert_union_type(type_string: str) -> str:
                 # start type (,type)*  inside the []
 
     assert len(stack) == 1
+    if "|" in stack[0]:  # these belong to the top level only
+        stack[0] = "Union[" + stack[0].replace("|", ",") + "]"
     return stack[0]
 
 

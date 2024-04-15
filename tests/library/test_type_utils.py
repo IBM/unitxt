@@ -300,3 +300,10 @@ class TestAssertTyping(UnitxtTestCase):
             parse_type_string("tuple[int | str | typing.List[int | float]]"),
             typing.Tuple[typing.Union[int, str, typing.List[typing.Union[int, float]]]],
         )
+
+        self.assertEqual("Union[int,List[int]]", format_type_string("int|List[int]"))
+
+        self.assertEqual(
+            "Union[List[Union[int,float]],Tuple[Union[int,float]]]",
+            format_type_string("List[int|float]|Tuple[int|float]"),
+        )
