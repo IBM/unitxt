@@ -1,30 +1,43 @@
-import copy
 from abc import abstractmethod
-from typing import Generator, List, Optional
+from typing import Dict, Generator, List, Optional, Union
 
 from .dataclass import NonPositionalField
 from .operator import SourceOperator
 from .random_utils import new_random_generator
 from .stream import MultiStream, Stream
+from .type_utils import isoftype
 
 
 class BaseFusion(SourceOperator):
     """BaseFusion operator that combines multiple streams into one.
 
     Args:
-        include_splits: List of splits to include. If None, all splits are included.
+        origins: a dict of named SourceOperators, or a list of such sources
+        include_splits: List of splits to include from each SourceOperator.
+                If None, all splits are included.
     """
 
-    origins: List[SourceOperator]
+    origins: Union[List[SourceOperator], Dict[str, SourceOperator]]
     include_splits: Optional[List[str]] = NonPositionalField(default=None)
 
     @abstractmethod
     def fusion_generator(self, split) -> Generator:
         pass
 
-    def splits(self) -> Generator:
+    def prepare(self):
+        super().prepare()
+        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
+            self.origins, List[SourceOperator]
+        )
+        self.named_origins = (
+            {i: self.origins[i] for i in range(len(self.origins))}
+            if isinstance(self.origins, list)
+            else self.origins
+        )
+
+    def splits(self) -> List[str]:
         splits = []
-        for origin in self.origins:
+        for _, origin in self.named_origins.items():
             for s in origin().keys():
                 if s not in splits:
                     if self.include_splits is None or s in self.include_splits:
@@ -44,15 +57,19 @@ class FixedFusion(BaseFusion):
     """FixedFusion operator that combines multiple streams into one based on a fixed number of examples per task.
 
     Args:
-        origins: List of SourceOperator objects.
+        origins: Dict of named SourceOperator objects, or a list thereof
         examples_per_task: Number of examples per task. If None, all examples are returned.
         splits: List of splits to include. If None, all splits are included.
     """
 
     max_instances_per_origin: Optional[int] = None
 
+    def prepare(self):
+        super().prepare()
+
+    # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
-        for origin in self.origins:
+        for origin_name, origin in self.named_origins.items():
             multi_stream = origin()
             if split not in multi_stream:
                 continue
@@ -60,24 +77,36 @@ class FixedFusion(BaseFusion):
             if self.max_instances_per_origin is not None:
                 for _ in range(self.max_instances_per_origin):
                     try:
-                        yield next(iterator)
+                        instance = next(iterator)
+                        if isinstance(origin_name, int):
+                            yield instance
+                        if "group" in instance:
+                            instance["group"] = origin_name + "/" + instance["group"]
+                        else:
+                            instance["group"] = origin_name
+                        yield instance
                     except StopIteration:
                         break
             else:
-                yield from iterator
+                for instance in iterator:
+                    if "group" in instance:
+                        instance["group"] = origin_name + "/" + instance["group"]
+                    else:
+                        instance["group"] = origin_name
+                    yield instance
 
 
 class WeightedFusion(BaseFusion):
     """Fusion operator that combines multiple streams based.
 
     Args:
-        origins: List of SourceOperator objects.
-        weights: List of weights for each origin.
+        origins: Dict of named of SourceOperator objects, or a list thereof
+        weights: Dict of named of weights for each origin, or a list thereof
         max_total_examples: Total number of examples to return. If None, all examples are returned.
     """
 
-    origins: List[SourceOperator] = None
-    weights: List[float] = None
+    origins: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
+    weights: Union[Dict[str, float], List[float]] = None
     max_total_examples: int = None
 
     def verify(self):
@@ -87,22 +116,47 @@ class WeightedFusion(BaseFusion):
         assert len(self.origins) == len(
             self.weights
         ), "origins and weights must have the same length"
+        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
+            self.origins, List[SourceOperator]
+        )
+        assert isoftype(self.weights, Dict[str, float]) or isoftype(
+            self.weights, List[float]
+        )
+        assert isinstance(self.origins, dict) == isinstance(self.weights, dict)
+
+    def prepare(self):
+        super().prepare()
+        self.named_weights = (
+            {i: self.weights[i] for i in range(len(self.weights))}
+            if isinstance(self.weights, list)
+            else self.weights
+        )
 
     def fusion_generator(self, split) -> Generator:
-        weights = copy.deepcopy(self.weights)
-        iterators = [iter(origin()[split]) for origin in self.origins]
+        iterators = {
+            named_origin: iter(origin()[split])
+            for named_origin, origin in self.named_origins.items()
+        }
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
             self.max_total_examples is None or total_examples <= self.max_total_examples
         ) and len(iterators) > 0:
-            iterator = random_generator.choices(population=iterators, weights=weights)[
-                0
-            ]
+            population = list(iterators.keys())
+            origin_name = random_generator.choices(
+                population=population,
+                weights=[self.named_weights[name] for name in population],
+            )[0]
+            iterator = iterators[origin_name]
             try:
-                yield next(iterator)
+                instance = next(iterator)
+                if isinstance(origin_name, str):
+                    if "group" in instance:
+                        instance["group"] = origin_name + "/" + instance["group"]
+                    else:
+                        instance["group"] = origin_name
                 total_examples += 1
+                yield instance
+
             except StopIteration:
-                index = iterators.index(iterator)
-                iterators.pop(index)
-                weights.pop(index)
+                iterators.pop(origin_name)

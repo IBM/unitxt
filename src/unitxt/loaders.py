@@ -468,7 +468,7 @@ class MultipleSourceLoader(Loader):
 
     """
 
-    sources: List[Loader]
+    sources: Union[Dict[str, Loader], List[Loader]]
 
     def process(self):
         return FixedFusion(
