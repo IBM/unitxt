@@ -8,24 +8,24 @@ from .utils import safe_eval
 
 
 def convert_union_type(type_string: str) -> str:
-    """Converts new Python union type hints (valid since Python 3.10) into form compatible with any Python version.
+    """Converts Python 3.10 union type hints into form compatible with Python 3.9 version.
 
     Args:
         type_string (str): A string representation of a Python type hint. It can be any
-                           valid Python type, which can be parsed in unitxt; this includes
-                           all types except for Literal. Examples include 'List[int|float]',
-                           'str|float|bool', 'Optional[int|float]|Callable[[int], bool]' etc.
+                           valid Python type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int|float]', 'str|float|bool' etc.
 
     Returns:
         str: A type string with converted union types, which is compatible with typing module.
-             For example:
-             'List[int|float]' -> 'List[Union[int,float]]',
-             'Optional[int|float]|Callable[[int], bool]' -> 'Union[Optional[Union[int,float]],Callable[[int], bool]]'
-             etc.
+
+    Examples:
+        convert_union_type('List[int|float]') -> 'List[Union[int,float]]'
+        convert_union_type('Optional[int|float]|bool') -> 'Union[Optional[Union[int,float]],bool]'
 
     The function iteratively splits given type string on bitwise or operator which represents
     a union type. Then it iterates over both - left and right - parts and reconstructs the
-    string by removing '|' operator and replacing it with 'Union'.
+    string by removing '|' operator and replacing it with 'Union'. It works based on placement
+    of common signs used in types definition: '[', ']', ','.
     """
 
     def construct_union_part(string: str, part: typing.Literal["left", "right"]) -> str:
@@ -94,26 +94,30 @@ def convert_union_type(type_string: str) -> str:
 
 
 def format_type_string(type_string: str) -> str:
-    """Formats a string representing a Python type hint so that it is compatible with any Python version (before or after Python 3.10).
+    """Formats a string representing a valid Python type hint so that it is compatible with Python 3.9 notation.
 
     Args:
         type_string (str): A string representation of a Python type hint. This can be any
-                           valid type, which can be parsed by unitxt. That includes all
-                           types except for Literal. Examples include 'List[int]',
-                           'Dict[str, Any]', 'Optional[List[str]]', etc.
+                           valid type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
 
     Returns:
         str: A formatted type string.
 
-    The function converts all type hints into their capitalized versions (if applicable),
-    for example: 'list[int]' into 'List[int]', and also converts union types represented
-    by bitwise or operator into form compatible with typing module, for example:
-    'int|float' into 'Union[int,float]'.
+    Examples:
+        format_type_string('list[int | float]') -> 'List[Union[int,float]]'
+        format_type_string('dict[str, Optional[str]]') -> 'Dict[str,Optional[str]]'
+
+    The function formats valid type string (either after or before Python 3.10) into a
+    form compatible with 3.9. This is done by captilizing the first letter of a lower-cased
+    type name and transferring the 'bitwise or operator' into 'Union' notation. The function
+    also removes whitespaces and redundant module name in type names imported from 'typing'
+    module, e.g. 'typing.Tuple' -> 'Tuple'.
+
+    Currently, the capitalization is applied only to types which unitxt allows, i.e.
+    'list', 'dict', 'tuple'. Moreover, the function expects the input to not contain types
+    which contain strings, for example 'Literal'.
     """
-    if "Literal" in type_string:
-        raise ValueError(
-            f"Type hint: {type_string} is not supported by unitxt as it cannot parse Literal."
-        )
     types_map = {
         "list": "List",
         "tuple": "Tuple",
@@ -144,7 +148,10 @@ def parse_type_string(type_string: str) -> typing.Any:
                     or tokens list.
 
     The function formats the string first if it represents a new Python type hint
-    (i.e. valid since Python 3.10), which uses: 'list[int]' instead of 'List[int]' etc.
+    (i.e. valid since Python 3.10), which uses lowercased names for some types and
+    'bitwise or operator' instead of 'Union', for example: 'list[int|float]' instead
+    of 'List[Union[int,float]]' etc.
+
     The function uses a predefined safe context with common types from the `typing` module
     and basic Python data types. It also defines a list of safe tokens that are allowed
     in the type string.
