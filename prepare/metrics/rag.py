@@ -451,3 +451,15 @@ answer_reward = MetricPipeline(
     metric="metrics.reward.deberta_v3_large_v2",
 )
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
+
+answer_inference = MetricPipeline(
+    main_score="perplexity",
+    preprocess_steps=[
+        CopyFields(field_to_field=[("contexts", "references")]),
+        CopyFields(
+            field_to_field=[("answer", "prediction")],
+        ),
+    ],
+    metric="metrics.perplexity_nli.t5_nli_mixture",
+)
+add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
