@@ -266,54 +266,62 @@ class TestOperators(UnitxtTestCase):
         )
 
     def test_filter_by_values_with_required_values(self):
-        inputs = [{"a": 1, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        inputs = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 2, "b": {"c": 3}},
+            {"a": 1, "b": {"c": 3}},
+        ]
 
         targets = [
-            {"a": 1, "b": 3},
+            {"a": 1, "b": {"c": 3}},
         ]
 
         check_operator(
-            operator=FilterByCondition(values={"a": 1, "b": 3}, condition="eq"),
+            operator=FilterByCondition(values={"a": 1, "b/c": 3}, condition="eq"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         check_operator(
-            operator=FilterByExpression(expression="a == 1 and b == 3"),
+            operator=FilterByExpression(expression="a == 1 and b['c'] == 3"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-        exception_text = "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}"
+        exception_text = "Required filter field ('d') in FilterByCondition is not found in {'a': 1, 'b': {'c': 2}}"
         check_operator_exception(
-            operator=FilterByCondition(values={"c": "5"}, condition="eq"),
+            operator=FilterByCondition(values={"d": "5"}, condition="eq"),
             inputs=inputs,
             exception_text=exception_text,
             tester=self,
         )
         check_operator_exception(
-            operator=FilterByExpression(expression="c == 5"),
+            operator=FilterByExpression(expression="d['e'] == 5"),
             inputs=inputs,
-            exception_text="name 'c' is not defined",
+            exception_text="name 'd' is not defined",
             tester=self,
         )
 
     def test_filter_by_condition_ne(self):
-        inputs = [{"a": 0, "b": 2}, {"a": 2, "b": 3}, {"a": 1, "b": 3}]
+        inputs = [
+            {"a": [0, 10], "b": 2},
+            {"a": [2, 20], "b": 3},
+            {"a": [1, 100], "b": 3},
+        ]
 
         targets = [
-            {"a": 2, "b": 3},
+            {"a": [2, 20], "b": 3},
         ]
 
         check_operator(
-            operator=FilterByCondition(values={"a": 1, "b": 2}, condition="ne"),
+            operator=FilterByCondition(values={"a/0": 1, "b": 2}, condition="ne"),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
         check_operator(
-            operator=FilterByExpression(expression="a != 1 and b != 2"),
+            operator=FilterByExpression(expression="a[0] != 1 and b != 2"),
             inputs=inputs,
             targets=targets,
             tester=self,
