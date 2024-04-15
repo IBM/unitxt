@@ -1,7 +1,7 @@
 {
     "type": "perplexity",
     "model_name": "google/t5_xxl_true_nli_mixture",
-    "source_template": "premise: {prediction} hypothesis: {reference}",
+    "source_template": "premise: {reference} hypothesis: {prediction}",
     "target_template": "1",
     "single_token_mode": true
 }

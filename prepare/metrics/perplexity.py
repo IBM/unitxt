@@ -79,7 +79,7 @@ def generate_nli(instances, global_scores, metric):
     for premise, hypotheses in instances.items():
         for hypothesis, pr in hypotheses:
             instance_scores.append(
-                {"prediction": premise, "references": [hypothesis], "score": pr}
+                {"prediction": hypothesis, "references": [premise], "score": pr}
             )
     run_test(metric, instance_scores, global_scores)
 
@@ -118,7 +118,7 @@ perplexity_chat_bloom = Perplexity(
 
 perplexity_nli = Perplexity(
     model_name="google/t5_xxl_true_nli_mixture",
-    source_template="premise: {prediction} hypothesis: {reference}",
+    source_template="premise: {reference} hypothesis: {prediction}",
     target_template="1",
     single_token_mode=True,
 )
