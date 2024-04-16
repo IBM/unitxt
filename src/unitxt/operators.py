@@ -1162,20 +1162,25 @@ class ApplyOperatorsField(StreamInstanceOperator):
 
 
 class FilterByCondition(SingleStreamOperator):
-    """Filters a stream, yielding only instances for which the required values follows the required condition operator.
+    """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator.
 
-    Raises an error if a required key is missing.
+    Raises an error if a required field name is missing from the input instance.
 
     Args:
-       values (Dict[str, Any]): Values that instances must match using the condition to be included in the output.
-       condition: the name of the desired condition operator between the key and the value in values ("gt", "ge", "lt", "le", "ne", "eq")
+       values (Dict[str, Any]): Field names and respective Values that instances must match according the condition, to be included in the output.
+       condition: the name of the desired condition operator between the specified (sub) field's value  and the provided constant value.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where "a">4
+       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where field "a" contains a value > 4
        FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
        FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
        FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
+       FilterByCondition(values = {"a/b":[4,8]}, condition = "not in") will yield only instances where "a" is
+            a dict in which key "b" is mapped to a value that is neither 4 nor 8
+       FilterByCondition(values = {"a[2]":4}, condition = "le") will yield only instances where "a" is a list whose 3-rd
+            element is <= 4
+
 
     """
 
@@ -1220,15 +1225,17 @@ class FilterByCondition(SingleStreamOperator):
 
     def _is_required(self, instance: dict) -> bool:
         for key, value in self.values.items():
-            if key not in instance:
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
                 raise ValueError(
                     f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
-                )
+                ) from ve
             if self.condition == "in":
-                if instance[key] not in value:
+                if instance_key not in value:
                     return False
             elif self.condition == "not in":
-                if instance[key] in value:
+                if instance_key in value:
                     return False
             else:
                 func = self.condition_to_func[self.condition]
@@ -1236,7 +1243,7 @@ class FilterByCondition(SingleStreamOperator):
                     raise ValueError(
                         f"Function not defined for condition '{self.condition}'"
                     )
-                if not func(instance[key], value):
+                if not func(instance_key, value):
                     return False
         return True
 
@@ -1285,6 +1292,8 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
        FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
        FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
        FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
+       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in
+                                        which key 'b' is mapped to a value that is neither 4 nor 8
 
     """
 

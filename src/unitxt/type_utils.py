@@ -1,3 +1,4 @@
+import ast
 import collections.abc
 import io
 import itertools
@@ -5,6 +6,135 @@ import re
 import typing
 
 from .utils import safe_eval
+
+
+def convert_union_type(type_string: str) -> str:
+    """Converts Python 3.10 union type hints into form compatible with Python 3.9 version.
+
+    Args:
+        type_string (str): A string representation of a Python type hint. It can be any
+                           valid Python type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int|float]', 'str|float|bool' etc.
+
+        Formally, the function depends on the input string adhering to the following rules.
+        Assuming that the input is a valid type hint the function does not check that 'word' is
+        'str', 'bool', 'List' etc. It just depends on the following general structure (spaces ignored):
+        type -> word OR type( | type)* OR word[type( , type)*]
+        word is a sequence of (0 or more) chars, each being any char but: [ ] , |
+        This implies that if any of these 4 chars shows not as a meta char of the input
+        type_string, but inside some constant string (of Literal, for example), the scheme
+        will not work.
+
+        Cases like Literal, that might contain occurrences of the four chars above not as meta chars
+        in the type string, must be handled as special cases by this function, as shown for Literal,
+        as an example. Because 'format_type_string' serves as preprocessing for 'parse_type_string',
+        which has a list of allowed types, of which Literal is not a member, Literal and such are not
+        relevant at all now; and the case is brought here just for an example for future use.
+
+
+    Returns:
+        str: A type string with converted union types, which is compatible with typing module.
+
+    Examples:
+        convert_union_type('List[int|float]') -> 'List[Union[int,float]]'
+        convert_union_type('Optional[int|float|bool]') -> 'Optional[Union[int,float,bool]]'
+
+    """
+
+    def consume_literal(string: str) -> str:
+        # identifies the prefix of string that matches a full Literal typing, with all its constants, including
+        # constants that contain [ ] , etc. on which construct_union_part depends.
+        # string starts with the [ that follows 'Literal'
+        candidate_end = string.find("]")
+        while candidate_end != -1:
+            try:
+                ast.literal_eval(string[: candidate_end + 1])
+                break
+            except Exception:
+                candidate_end = string.find("]", candidate_end + 1)
+
+        if candidate_end == -1:
+            raise ValueError("invalid Literal in input type_string")
+        return string[: candidate_end + 1]
+
+    stack = [""]  # the start of a type
+    input = type_string.strip()
+    next_word = re.compile(r"([^\[\],|]*)([\[\],|]|$)")
+    while len(input) > 0:
+        word = next_word.match(input)
+        input = input[len(word.group(0)) :].strip()
+        stack[-1] += word.group(1)
+        if word.group(2) in ["]", ",", ""]:  # "" for eol:$
+            # top of stack is now complete to a whole type
+            lwt = stack.pop()
+            if (
+                "|" in lwt
+            ):  # the | -s are only at the top level of lwt, not inside any subtype
+                lwt = "Union[" + lwt.replace("|", ",") + "]"
+            lwt += word.group(2)
+            if len(stack) > 0:
+                stack[-1] += lwt
+            else:
+                stack = [lwt]
+            if word.group(2) == ",":
+                stack.append("")  # to start the expected next type
+
+        elif word.group(2) in ["|"]:
+            # top of stack is the last whole element(s) to be union-ed,
+            # and more are expected
+            stack[-1] += "|"
+
+        else:  # "["
+            if word.group(1) == "Literal":
+                literal_ops = consume_literal("[" + input)
+                stack[-1] += literal_ops
+                input = input[len(literal_ops) - 1 :]
+            else:
+                stack[-1] += "["
+                stack.append("")
+                # start type (,type)*  inside the []
+
+    assert len(stack) == 1
+    if "|" in stack[0]:  # these belong to the top level only
+        stack[0] = "Union[" + stack[0].replace("|", ",") + "]"
+    return stack[0]
+
+
+def format_type_string(type_string: str) -> str:
+    """Formats a string representing a valid Python type hint so that it is compatible with Python 3.9 notation.
+
+    Args:
+        type_string (str): A string representation of a Python type hint. This can be any
+                           valid type, which does not contain strings (e.g. 'Literal').
+                           Examples include 'List[int]', 'Dict[str, Any]', 'Optional[List[str]]', etc.
+
+    Returns:
+        str: A formatted type string.
+
+    Examples:
+        format_type_string('list[int | float]') -> 'List[Union[int,float]]'
+        format_type_string('dict[str, Optional[str]]') -> 'Dict[str,Optional[str]]'
+
+    The function formats valid type string (either after or before Python 3.10) into a
+    form compatible with 3.9. This is done by captilizing the first letter of a lower-cased
+    type name and transferring the 'bitwise or operator' into 'Union' notation. The function
+    also removes whitespaces and redundant module name in type names imported from 'typing'
+    module, e.g. 'typing.Tuple' -> 'Tuple'.
+
+    Currently, the capitalization is applied only to types which unitxt allows, i.e.
+    'list', 'dict', 'tuple'. Moreover, the function expects the input to not contain types
+    which contain strings, for example 'Literal'.
+    """
+    types_map = {
+        "list": "List",
+        "tuple": "Tuple",
+        "dict": "Dict",
+        "typing.": "",
+        " ": "",
+    }
+    for old_type, new_type in types_map.items():
+        type_string = type_string.replace(old_type, new_type)
+    return convert_union_type(type_string)
 
 
 def parse_type_string(type_string: str) -> typing.Any:
@@ -24,6 +154,11 @@ def parse_type_string(type_string: str) -> typing.Any:
         ValueError: If the type string contains elements not allowed in the safe context
                     or tokens list.
 
+    The function formats the string first if it represents a new Python type hint
+    (i.e. valid since Python 3.10), which uses lowercased names for some types and
+    'bitwise or operator' instead of 'Union', for example: 'list[int|float]' instead
+    of 'List[Union[int,float]]' etc.
+
     The function uses a predefined safe context with common types from the `typing` module
     and basic Python data types. It also defines a list of safe tokens that are allowed
     in the type string.
@@ -40,6 +175,8 @@ def parse_type_string(type_string: str) -> typing.Any:
         "bool": bool,
         "Optional": typing.Optional,
     }
+
+    type_string = format_type_string(type_string)
 
     safe_tokens = ["[", "]", ",", " "]
     return safe_eval(type_string, safe_context, safe_tokens)
