@@ -59,7 +59,7 @@ def create_predictions_for_ds_and_model(dataset, model):
 def main():
     predictions, dataset = create_predictions_for_ds_and_model(
         dataset="card=cards.almost_evil,template=templates.qa.open.simple,"
-        "metrics=[metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5],"
+        "metrics=[metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template],"
         "system_prompt=system_prompts.empty,max_train_instances=5",
         model="google/flan-t5-base",
     )

@@ -1,14 +1,14 @@
 import unittest
 
 from unitxt import produce
-from unitxt.inference import PipelineBasedInferenceEngine
+from unitxt.inference import HFPipelineBasedInferenceEngine
 
 from tests.utils import UnitxtTestCase
 
 
 class TestInferenceEngine(UnitxtTestCase):
     def test_pipeline_based_inference_engine(self):
-        inference_model = PipelineBasedInferenceEngine(
+        inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"

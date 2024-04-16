@@ -45,14 +45,14 @@ Using LLM as a judge is extremely simple in unitxt. You should simply choose llm
 
     import evaluate
     from datasets import load_dataset
-    from unitxt.inference import PipelineBasedInferenceEngine
+    from unitxt.inference import HFPipelineBasedInferenceEngine
 
     # 1. Create the dataset
     dataset = load_dataset("unitxt/data", "card=cards.almost_evil,template=templates.qa.open.simple,"
-                                          "metrics=[metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5]",
+                                          "metrics=[metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template]",
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
-    inference_model = PipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32)
+    inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32)
     predictions = inference_model.infer(dataset)
     # 3. create a metric and evaluate the results.
     metric = evaluate.load("unitxt/metric")
@@ -60,20 +60,20 @@ Using LLM as a judge is extremely simple in unitxt. You should simply choose llm
 
     [print(item) for item in scores[0]["score"]["global"].items()]
 
-In this case, we used the metric metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5, which uses flan t5
+In this case, we used the metric metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template, which uses flan t5
 as a judge, and it use mt_bench recipe for creating the judging dataset.
 
 In order to create new LLM as a judge metric, you should simply use the LLMAsJudge class. For example, lets see the definition
-of metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5:
+of metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template:
 
 
 .. code-block:: python
 
     from unitxt import add_to_catalog
-    from unitxt.inference import PipelineBasedInferenceEngine
+    from unitxt.inference import HFPipelineBasedInferenceEngine
     from unitxt.llm_as_judge import LLMAsJudge
 
-    inference_model = PipelineBasedInferenceEngine(
+    inference_model = HFPipelineBasedInferenceEngine(
         model_name="google/flan-t5-large", max_new_tokens=32
     )
     recipe = (
@@ -87,7 +87,7 @@ of metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5:
 
     add_to_catalog(
         metric,
-        "metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5",
+        "metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template",
         overwrite=True,
     )
 

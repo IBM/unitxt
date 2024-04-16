@@ -12,7 +12,7 @@ class InferenceEngine(abc.ABC, Artifact):
         pass
 
 
-class PipelineBasedInferenceEngine(Artifact):
+class HFPipelineBasedInferenceEngine(Artifact):
     """Abstract base class for inference."""
 
     model_name: str

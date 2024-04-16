@@ -1,6 +1,6 @@
 from math import isnan
 
-from unitxt.inference import PipelineBasedInferenceEngine
+from unitxt.inference import HFPipelineBasedInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
@@ -1252,7 +1252,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 )
 
     def test_llm_as_judge_metric(self):
-        inference_model = PipelineBasedInferenceEngine(
+        inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
         recipe = (
