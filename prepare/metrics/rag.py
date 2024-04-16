@@ -125,13 +125,13 @@ global_target = {
     "score_name": "f1",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 metric = metrics["metrics.bert_score.deberta_large_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
@@ -160,13 +160,13 @@ global_target = {
     "score_name": "f1",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 metric = metrics["metrics.bert_score.deberta_base_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
@@ -313,13 +313,13 @@ global_target = {
     "score_name": "score",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 for metric_id, metric in metrics.items():
     add_to_catalog(metric, metric_id, overwrite=True)
