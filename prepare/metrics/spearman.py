@@ -12,8 +12,8 @@ metric = MetricPipeline(
     metric=Spearmanr(),
 )
 
-predictions = ["1.0", " 2.0", "1.0"]
-references = [["-1.0"], ["1.0"], ["0.0"]]
+predictions = [1.0, 2.0, 1.0]
+references = [[-1.0], [1.0], [0.0]]
 
 instance_targets = [
     {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},
