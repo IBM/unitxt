@@ -1,14 +1,13 @@
 import abc
 
 from .artifact import Artifact
-from .dataset import Dataset
 
 
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
-    def infer(self, dataset: Dataset):
+    def infer(self, dataset):
         """Perform inference on the input dataset."""
         pass
 
@@ -24,7 +23,7 @@ class PipelineBasedInferenceEngine(Artifact):
 
         self.model = pipeline(model=self.model_name)
 
-    def infer(self, dataset: Dataset):
+    def infer(self, dataset):
         return [
             output["generated_text"]
             for output in self.model(
