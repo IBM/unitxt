@@ -19,7 +19,9 @@ from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .hf_utils import verify_versions_compatibility
+from .inference import __file__ as _
 from .instructions import __file__ as _
+from .llm_as_judge import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import get_logger
 from .metric import __file__ as _
