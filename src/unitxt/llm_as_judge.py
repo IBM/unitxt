@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 import evaluate
 
-from . import produce
+from .api import produce
 from .inference import InferenceEngine
 from .metrics import BulkInstanceMetric
 
