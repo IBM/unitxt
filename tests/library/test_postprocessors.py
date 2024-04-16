@@ -340,3 +340,15 @@ class TestPostProcessors(UnitxtTestCase):
             targets=list_to_stream_with_prediction_and_references(post2_targets),
             tester=self,
         )
+
+    def test_extract_mt_bench_judgment(self):
+        postprocessor, _ = fetch_artifact("processors.extract_mt_bench_judgment")
+        predictions = ["no reason 3.14 [[3]]", "[[6]]", "[[6.2]]", "[[9]] because"]
+        targets = [0.3, 0.6, 0.62, 0.9]
+
+        check_operator(
+            operator=postprocessor,
+            inputs=list_to_stream_with_prediction_and_references(predictions),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )

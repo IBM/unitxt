@@ -42,11 +42,10 @@ def cache_func_in_file(func):
 
 
 def infer_llm(dataset, model):
-    predictions = [
+    return [
         output["generated_text"]
         for output in model(dataset["source"], max_new_tokens=30)
     ]
-    return predictions
 
 
 @cache_func_in_file
@@ -60,14 +59,14 @@ def create_predictions_for_ds_and_model(dataset, model):
 def main():
     predictions, dataset = create_predictions_for_ds_and_model(
         dataset="card=cards.almost_evil,template=templates.qa.open.simple,"
-                "metrics=[metrics.llm_as_judge.model_response_assessment.mt_bench_flan_t5],"
-                "system_prompt=system_prompts.empty,max_train_instances=5",
+        "metrics=[metrics.rag.llm_as_judge.model_response_assessment.mt_bench_flan_t5],"
+        "system_prompt=system_prompts.empty,max_train_instances=5",
         model="google/flan-t5-base",
     )
     metric = evaluate.load("unitxt/metric")
     scores = metric.compute(predictions=predictions, references=dataset)
 
-    [print(item) for item in scores[0]["score"]["global"].items()]
+    [logger.info(item) for item in scores[0]["score"]["global"].items()]
 
 
 if __name__ == "__main__":

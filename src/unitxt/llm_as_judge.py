@@ -1,9 +1,10 @@
-import ast
 from typing import Any, Dict, List
 
-from unitxt import produce
-from unitxt.inference import InferenceEngine, PipelineBasedInferenceEngine
-from unitxt.metrics import BulkInstanceMetric
+import evaluate
+
+from . import produce
+from .inference import InferenceEngine
+from .metrics import BulkInstanceMetric
 
 
 class LLMAsJudge(BulkInstanceMetric):
@@ -24,32 +25,32 @@ class LLMAsJudge(BulkInstanceMetric):
         metric = LlamaIndexCorrectnessMetric()
         scores = metric.compute(references, prediction, additional_inputs)
     """
-    main_score: str = f"llm_as_judge"
+
+    main_score: str = "llm_as_judge"
     reduction_map: Dict[str, List[str]] = {"mean": [main_score]}
     batch_size: int = 32
-    recipe: str = "card=cards.llm_as_judge.model_response_assessment.mt_bench," \
-                  "template=templates.llm_as_judge.model_response_assessment.mt_bench," \
-                  "demos_pool_size=0," \
-                  "num_demos=0"
-
-    inference_model: InferenceEngine = None
+    recipe: str
+    inference_model: InferenceEngine
 
     def prepare(self):
         super().prepare()
-        if self.inference_model is None:
-            self.inference_model = PipelineBasedInferenceEngine(model_name='google/flan-t5-base', max_new_tokens=32)
 
     def compute(
-            self,
-            references: List[List[Any]],
-            predictions: List[Any],
-            task_data: List[Dict],
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
-        instances = [{**task_data_instance, **{'prediction': prediction, 'output': ''}}
-                     for task_data_instance, prediction in zip(task_data, predictions)]
+        instances = [
+            {
+                **task_data_instance,
+                **{"model_output": prediction, "rating_label": "[[5]]"},
+            }
+            for task_data_instance, prediction in zip(task_data, predictions)
+        ]
 
         dataset = produce(instances, self.recipe)
         verdicts = self.inference_model.infer(dataset)
-        # TODO: Convert the verdicts to scores in a standard way (postprocessors?), It should be defined in the recipe (in the card?)
-        eval_verdicts  = [ast.literal_eval(verdict) for verdict in verdicts]
-        return [{self.main_score: verdict[0][0] / 10.0} for verdict in eval_verdicts]
+        meta_metric = evaluate.load("unitxt/metric")
+        meta_scores = meta_metric.compute(predictions=verdicts, references=dataset)
+        return [{self.main_score: instance["prediction"]} for instance in meta_scores]

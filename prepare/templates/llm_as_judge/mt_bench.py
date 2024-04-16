@@ -9,12 +9,12 @@ add_to_catalog(
         " and level of detail of the response. Begin your evaluation by providing a short"
         " explanation. Be as objective as possible. After providing your explanation, you must rate"
         ' the response on a scale of 1 to 10 by strictly following this format: "[[rating]]",'
-        ' for example: "Rating: [[5]]".\n\n',
+        ' for example: "[[5]]".\n\n',
         input_format="[Question]\n{question}\n\n[The Start of Assistant's Answer]"
-        "\n{prediction}\n[The End of Assistant's Answer]",
-        output_format="{output}",
+        "\n{model_output}\n[The End of Assistant's Answer]",
+        output_format="{rating_label}",
         postprocessors=[
-            r'processors.regex_extractor[pattern=r"Rating: \[\[((\d*\.)?\d+)\]\]"]',
+            r"processors.extract_mt_bench_judgment",
         ],
     ),
     "templates.llm_as_judge.model_response_assessment.mt_bench",

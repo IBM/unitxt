@@ -2,10 +2,10 @@
     "type": "form_task",
     "inputs": [
         "question",
-        "prediction"
+        "model_output"
     ],
     "outputs": [
-        "output"
+        "rating_label"
     ],
     "metrics": [
         "metrics.spearman"
