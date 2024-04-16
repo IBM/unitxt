@@ -5,6 +5,7 @@ from unitxt.operators import RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
+    ExtractMtBenchJudgment,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -252,5 +253,22 @@ add_to_catalog(
         ]
     ),
     "processors.match_closest_option",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_judgment",
     overwrite=True,
 )

@@ -1,0 +1,9 @@
+{
+    "type": "task_card",
+    "loader": null,
+    "preprocess_steps": [],
+    "task": "tasks.rag.model_response_assessment",
+    "templates": [
+        "templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template"
+    ]
+}
