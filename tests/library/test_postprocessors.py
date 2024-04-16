@@ -343,8 +343,15 @@ class TestPostProcessors(UnitxtTestCase):
 
     def test_extract_mt_bench_judgment(self):
         postprocessor, _ = fetch_artifact("processors.extract_mt_bench_judgment")
-        predictions = ["no reason 3.14 [[3]]", "[[6]]", "[[6.2]]", "[[9]] because"]
-        targets = [0.3, 0.6, 0.62, 0.9]
+        predictions = [
+            "no reason 3.14 [[3]]",
+            "[[6]]",
+            "[[6.2]]",
+            "[[9]] because",
+            "good",
+            "bad [[x]]",
+        ]
+        targets = [0.3, 0.6, 0.62, 0.9, 0.0, 0.0]
 
         check_operator(
             operator=postprocessor,

@@ -7,6 +7,6 @@ add_to_catalog(
         outputs=["rating_label"],
         metrics=["metrics.spearman"],
     ),
-    "tasks.llm_as_judge.rag.model_response_assessment",
+    "tasks.rag.model_response_assessment",
     overwrite=True,
 )

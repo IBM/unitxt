@@ -27,13 +27,15 @@ class LLMAsJudge(BulkInstanceMetric):
     """
 
     main_score: str = "llm_as_judge"
-    reduction_map: Dict[str, List[str]] = {"mean": [main_score]}
+    reduction_map: Dict[str, List[str]] = None
     batch_size: int = 32
     recipe: str
     inference_model: InferenceEngine
 
     def prepare(self):
         super().prepare()
+        if self.reduction_map is None:
+            self.reduction_map = {"mean": [self.main_score]}
 
     def compute(
         self,

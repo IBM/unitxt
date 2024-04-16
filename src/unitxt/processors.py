@@ -220,6 +220,7 @@ class StringOrNotString(FieldOperator):
 class ExtractMtBenchJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
-        if match:
+        try:
             return float(match.group(1)) / 10
-        raise RuntimeError(f"Failed to extract judgment ([[number]]) from text {text}")
+        except:
+            return 0.0

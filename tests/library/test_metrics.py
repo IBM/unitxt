@@ -1256,8 +1256,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
             model_name="google/flan-t5-small", max_new_tokens=32
         )
         recipe = (
-            "card=cards.llm_as_judge.model_response_assessment.mt_bench,"
-            "template=templates.llm_as_judge.model_response_assessment.mt_bench,"
+            "card=cards.rag.model_response_assessment.llm_as_judge_using_mt_bench_template,"
+            "template=templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template,"
             "demos_pool_size=0,"
             "num_demos=0"
         )
