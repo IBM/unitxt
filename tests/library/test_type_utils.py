@@ -1,6 +1,7 @@
 import typing
 
 from unitxt.type_utils import (
+    format_type_string,
     infer_type,
     infer_type_string,
     isoftype,
@@ -262,3 +263,47 @@ class TestAssertTyping(UnitxtTestCase):
     def test_parse_malformed_string(self):
         with self.assertRaises(TypeError):
             parse_type_string("List[[int]]")
+
+    def test_format_type_string(self):
+        self.assertEqual(
+            "Tuple[int,float,Union[int,List[Union[int,Dict[str,Union[int,float]]]]]]",
+            format_type_string(
+                "typing.Tuple[int,float,int|list[int|dict[str,int|float]]]"
+            ),
+        )
+
+        self.assertEqual(
+            "Optional[Union[int,float,bool]]",
+            format_type_string("typing.Optional[int|float|bool]"),
+        )
+
+        self.assertEqual(
+            "Tuple[Union[int,float,bool,List[Union[str,bool]]],Dict[str,Tuple[Union[bool,[str]]]],[[[int]]]]",
+            format_type_string(
+                "typing.tuple[int|float|bool|list[str|bool], dict[str, tuple[bool|[str]]], [[[int]]]]"
+            ),
+        )
+        self.assertEqual(
+            'Tuple[Union[int,float,Literal["lef[,t","rig],ht"],bool,List[Union[str,bool]]],Dict[str,Tuple[Union[bool,[str]]]],[[[int]]]]',
+            format_type_string(
+                'typing.tuple[int|float|Literal["lef[|t", "rig],ht"]| bool|list[str|bool], dict[str, tuple[bool|[str]]], [[[int]]]]'
+            ),
+        )
+        self.assertEqual(
+            "Tuple[int,Union[float,bool,str],Union[int,List[Union[int,Dict[str,Union[int,float]]]]]]",
+            format_type_string(
+                "typing.Tuple[int,float|bool|str,int|list[int|dict[str,int|float]]]"
+            ),
+        )
+
+        self.assertEqual(
+            parse_type_string("tuple[int | str | typing.List[int | float]]"),
+            typing.Tuple[typing.Union[int, str, typing.List[typing.Union[int, float]]]],
+        )
+
+        self.assertEqual("Union[int,List[int]]", format_type_string("int|List[int]"))
+
+        self.assertEqual(
+            "Union[List[Union[int,float]],Tuple[Union[int,float]]]",
+            format_type_string("List[int|float]|Tuple[int|float]"),
+        )

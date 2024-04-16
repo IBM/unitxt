@@ -1950,6 +1950,9 @@ class Reward(BulkInstanceMetric):
 
     model_name: str
 
+    prediction_type = "str"
+    single_reference_per_prediction = True
+
     _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
@@ -2144,9 +2147,13 @@ class Perplexity(BulkInstanceMetric):
     reduction_map = {"mean": ["perplexity"]}
     prediction_type = "str"
 
-    perplexity_prompt: str
+    source_template: str
+    target_template: str
     batch_size: int = 32
     model_name: str
+    single_token_mode: bool = False
+
+    lm = None
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
@@ -2163,24 +2170,41 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after each text X_i_j = P(Y_i|X_i_1), ..., P(Y_i|X_i_n)  for every i.
         """
+        if self.lm is None:
+            from transformers import AutoConfig
+
+            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+            self.lm = (
+                self.EncoderDecoderLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+                if config.is_encoder_decoder is True
+                else self.DecoderOnlyLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+            )
+
         sources = []
         targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
-                sources.append(f"{self.perplexity_prompt} {instance_reference}")
-                targets.append(prediction)
-
-        from transformers import AutoConfig
-
-        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
-        lm = (
-            self.EncoderDecoderLM(model_name=self.model_name)
-            if config.is_encoder_decoder is True
-            else self.DecoderOnlyLM(model_name=self.model_name)
-        )
+                sources.append(
+                    self.Template.apply(
+                        self.source_template,
+                        prediction=prediction,
+                        reference=instance_reference,
+                    )
+                )
+                targets.append(
+                    self.Template.apply(
+                        self.target_template,
+                        prediction=prediction,
+                        reference=instance_reference,
+                    )
+                )
 
         # compute P(Q|P) and store in queue
-        scores = lm.compute_lm(
+        scores = self.lm.compute_lm(
             source=sources, target=targets, batch_size=self.batch_size
         )
 
@@ -2203,8 +2227,25 @@ class Perplexity(BulkInstanceMetric):
 
         return all_instances_scores
 
+    class Template:
+        regex = re.compile(r"\{(\w+)}")
+
+        @classmethod
+        def apply(cls, template, **kwargs):
+            matches = Perplexity.Template.regex.finditer(template)
+            output = []
+            cursor = 0
+            for match in matches:
+                start = match.start()
+                end = match.end()
+                output.append(template[cursor:start])
+                output.append(kwargs[match.group(1)])
+                cursor = end
+            output.append(template[cursor:])
+            return "".join(output)
+
     class AbstractLM(ABC):
-        def __init__(self, model_name):
+        def __init__(self, model_name, single_token_mode):
             import torch
             from transformers import AutoTokenizer
 
@@ -2214,6 +2255,7 @@ class Perplexity(BulkInstanceMetric):
                 self.model_class().from_pretrained(self.model_name).to(self.device)
             )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.single_token_mode = single_token_mode
 
         def compute_lm(
             self, source: List[str], target: List[str], batch_size: int
@@ -2235,7 +2277,10 @@ class Perplexity(BulkInstanceMetric):
                             batch_source, padding=True, return_tensors="pt"
                         )
                         tokens_target = self.tokenizer(
-                            batch_target, padding=True, return_tensors="pt"
+                            batch_target,
+                            padding=True,
+                            return_tensors="pt",
+                            add_special_tokens=not self.single_token_mode,
                         )
 
                         # compute the logits
@@ -3356,7 +3401,7 @@ class BinaryMaxAccuracy(GlobalMetric):
     def compute(
         self,
         references: List[List[str]],
-        predictions: List[List[str]],
+        predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
         float_predictions = [to_float_or_default(p) for p in predictions]
@@ -3364,24 +3409,53 @@ class BinaryMaxAccuracy(GlobalMetric):
             ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
         ]
 
-        best_thr = -1
-        best_acc = -1
-        for thr in set(float_predictions):
-            new_predictions = [
-                "1" if float_prediction >= thr else "0"
-                for float_prediction in float_predictions
-            ]
-            acc = np.mean(
-                [
-                    [prediction] == reference
-                    for prediction, reference in zip(new_predictions, references)
-                ]
-            )
-            if acc > best_acc:
-                best_acc = acc
-                best_thr = thr
+        # Sticking to the test >= thr, accuracy induced by threshold thr is the number of float predictions
+        # that pass the test (are >= thr) and are paired with reference "1" plus the number of float predictions that
+        # fail the test (are < thr) and are paired with reference "0".
+        # A given threshold thr induces the same partition over the float predictions into passing and failing
+        # as threshold thr' induces, with thr' being the smallest among the ones passing the test of thr.
+        # Hence, we only need to review thresholds being float predictions, plus a threshold being larger than
+        # the largest float predictions, to induce the partition into all-failing , none-passing.
 
-        return {self.main_score: best_acc, "best_thr_max_acc": best_thr}
+        fp = [
+            (float_predictions[i], i, -1 if references[i][0] == "1" else +1)
+            for i in range(len(float_predictions))
+        ]
+        fp.sort()
+        # each triplet above: float-prediction f; f's ordinal position in float_predictions, which is also
+        # a means to obtain distinct triplets; and: the change in number of predictions that the test sends
+        # to the reference they are paired with, a change implied by a move of thr that transfers f
+        # from the set of passing the test to the set of failing it.
+
+        rightmost_thr = 1.0 if fp[-1][0] < 1 else fp[-1][0] + 0.01
+        # trying to be esthetic, have the threshold within [0,1], although this is not a requirement,
+        # and even the float predictions are not guaranteed to be within the range [0,1]
+
+        current_thr = fp[0][0]
+        # partition float_predictions into all-passing, none-failing
+        current_acc = sum(r[0] == "1" for r in references)
+        # number of predictions that thr sends to the reference they are paired with
+
+        best_acc = current_acc
+        best_thr = current_thr
+
+        i = 0
+        while (i < len(predictions)) and (best_acc < len(predictions)):
+            # best_acc can not exceed len(predictions)
+            delta = fp[i][2]
+            i += 1
+            while i < len(predictions) and fp[i][0] <= fp[i - 1][0]:
+                delta += fp[i][2]
+                i += 1
+            current_acc += delta
+            if current_acc > best_acc:
+                best_acc = current_acc
+                best_thr = fp[i][0] if i < len(predictions) else rightmost_thr
+
+        return {
+            self.main_score: float(best_acc) / len(predictions),
+            "best_thr_max_acc": best_thr,
+        }
 
 
 ######################
