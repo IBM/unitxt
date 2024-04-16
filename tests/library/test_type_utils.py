@@ -297,6 +297,7 @@ class TestAssertTyping(UnitxtTestCase):
             str(e.exception).strip('"'),
             "Unexpected field name: 'field_2'. The available "
             "names: ['field_1', 'field_3'].",
+        )
 
     def test_format_type_string(self):
         self.assertEqual(

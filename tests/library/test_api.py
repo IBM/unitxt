@@ -15,7 +15,10 @@ class TestAPI(UnitxtTestCase):
             "references": ["5.0"],
             "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0}',
             "group": "unitxt",
-            "postprocessors": ["processors.take_first_non_empty_line"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.cast_to_float_return_zero_if_failed",
+            ],
         }
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)

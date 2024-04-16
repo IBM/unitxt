@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.operator import SequentialOperator
-from unitxt.operators import RemoveValues
+from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
@@ -252,5 +252,22 @@ add_to_catalog(
         ]
     ),
     "processors.match_closest_option",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": 0.0},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_zero_if_failed",
     overwrite=True,
 )
