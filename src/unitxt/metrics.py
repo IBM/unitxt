@@ -3312,7 +3312,8 @@ class BinaryMaxF1(F1Binary):
 
         best_thr = -1
         best_f1 = -1
-        for thr in set(float_predictions):
+        thrs = {round(fp, 3) for fp in float_predictions}
+        for thr in thrs:
             new_predictions = [
                 "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
