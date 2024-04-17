@@ -5,6 +5,7 @@ from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
+    ExtractMtBenchJudgment,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -255,6 +256,7 @@ add_to_catalog(
     overwrite=True,
 )
 
+
 add_to_catalog(
     SequentialOperator(
         steps=[
@@ -269,5 +271,22 @@ add_to_catalog(
         ]
     ),
     "processors.cast_to_float_return_zero_if_failed",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_judgment",
     overwrite=True,
 )
