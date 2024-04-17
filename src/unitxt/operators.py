@@ -37,7 +37,7 @@ import operator
 import uuid
 import zipfile
 from abc import abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -1558,6 +1558,48 @@ class SplitByValue(MultiStreamOperator):
                 result[filtered_stream_name] = filtered_streams
 
         return MultiStream(result)
+
+
+class SplitByGroup(MultiStreamOperator):
+    """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
+
+    Args:
+        number_of_fusion_generations: int
+
+    the value in field group is of the form "sourcen/sourcenminus1/..." describing the sources in which the instance sat
+    when these were fused, potentially several phases of fusion. the name of the most recent source sits first in this value.
+    (See BaseFusion and its extensions)
+    number_of_fuaion_generations  specifies the length of the prefix by which to split the stream.
+    E.g. for number_of_fusion_generations = 1, only the most recent fusion in creating this multi_stream, affects the splitting.
+    """
+
+    number_of_fusion_generations: int = 1
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        result = defaultdict(list)
+
+        for stream_name, stream in multi_stream.items():
+            for instance in stream:
+                if (
+                    "group" not in instance
+                    or len(instance["group"].split("/"))
+                    < self.number_of_fusion_generations
+                ):
+                    raise ValueError(
+                        f"Field 'group' is missing from instance or contains less than {self.number_of_fusion_generations} fusion generations. instance = {instance}"
+                    )
+                signature = (
+                    stream_name
+                    + "_"
+                    + "_".join(
+                        instance["group"].split("/")[
+                            : self.number_of_fusion_generations
+                        ]
+                    )
+                )
+                result[signature].append(instance)
+
+        return MultiStream.from_iterables(result)
 
 
 class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):

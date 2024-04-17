@@ -1,5 +1,6 @@
 from unitxt.fusion import FixedFusion, WeightedFusion
-from unitxt.operators import IterableSource
+from unitxt.operators import IterableSource, SplitByGroup
+from unitxt.stream import MultiStream
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -30,27 +31,32 @@ class TestFusion(UnitxtTestCase):
         check_operator(operator, inputs=None, targets=targets, tester=self)
 
         # test save past groups
+        origin3 = [{"x": "z1"}, {"x": "z2"}, {"x": "z3"}]
         operator = FixedFusion(
             origins={
                 "targets1": IterableSource({"test": targets}),
-                "origin3": IterableSource(
-                    {"test": [{"x": "z1"}, {"x": "z2"}, {"x": "z3"}]}
-                ),
+                "origin3": IterableSource({"test": origin3}),
             },
         )
 
         targets2 = [
-            {"x": "x1", "group": "targets1", "past_groups": "origin1"},
-            {"x": "x2", "group": "targets1", "past_groups": "origin1"},
-            {"x": "x3", "group": "targets1", "past_groups": "origin1"},
-            {"x": "y1", "group": "targets1", "past_groups": "origin2"},
-            {"x": "y2", "group": "targets1", "past_groups": "origin2"},
-            {"x": "y3", "group": "targets1", "past_groups": "origin2"},
+            {"x": "x1", "group": "targets1/origin1"},
+            {"x": "x2", "group": "targets1/origin1"},
+            {"x": "x3", "group": "targets1/origin1"},
+            {"x": "y1", "group": "targets1/origin2"},
+            {"x": "y2", "group": "targets1/origin2"},
+            {"x": "y3", "group": "targets1/origin2"},
             {"x": "z1", "group": "origin3"},
             {"x": "z2", "group": "origin3"},
             {"x": "z3", "group": "origin3"},
         ]
         check_operator(operator, inputs=None, targets=targets2, tester=self)
+
+        ms = MultiStream.from_iterables({"test": targets2})
+        splitter = SplitByGroup(number_of_fusion_generations=1)
+        split_ms = splitter(ms)
+        self.assertListEqual(list(split_ms["test_targets1"]), targets)
+        self.assertListEqual(list(split_ms["test_origin3"]), origin3)
 
     def compare_stream(self, stream, expected_stream):
         self.assertEqual(len(stream), len(expected_stream))

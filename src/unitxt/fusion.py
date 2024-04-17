@@ -106,7 +106,7 @@ class WeightedFusion(BaseFusion):
     """
 
     origins: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
-    weights: Union[Dict[str, float], List[float]] = None
+    weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
     max_total_examples: int = None
 
     def verify(self):
@@ -119,17 +119,17 @@ class WeightedFusion(BaseFusion):
         assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
             self.origins, List[SourceOperator]
         )
-        assert isoftype(self.weights, Dict[str, float]) or isoftype(
-            self.weights, List[float]
+        assert isoftype(self.weights, Dict[str, Union[int, float]]) or isoftype(
+            self.weights, List[Union[int, float]]
         )
         assert isinstance(self.origins, dict) == isinstance(self.weights, dict)
 
     def prepare(self):
         super().prepare()
         self.named_weights = (
-            {i: self.weights[i] for i in range(len(self.weights))}
+            {i: float(self.weights[i]) for i in range(len(self.weights))}
             if isinstance(self.weights, list)
-            else self.weights
+            else {k: float(v) for (k, v) in self.weights.items()}
         )
 
     def fusion_generator(self, split) -> Generator:
