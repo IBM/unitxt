@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
-from .deprecation_utils import deprecation
 from .logging_utils import get_logger
 from .operator import StreamInstanceOperator
 from .type_utils import isoftype, parse_type_string, verify_required_schema
@@ -88,7 +87,6 @@ class FormTask(Tasker, StreamInstanceOperator):
                 f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
-    @deprecation("1.8.0", alternative="TaskSchema", custom_name="FormTask")
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
