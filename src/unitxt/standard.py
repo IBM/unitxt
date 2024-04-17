@@ -195,6 +195,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             logger.info(f"Loader line limit was set to  {self.loader_limit}")
         self.loading.steps.append(loader)
 
+        # This is required in case loader_limit is not enforced by the loader
+        if self.loader_limit:
+            self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
+
         self.metadata.steps.append(
             AddFields(
                 fields={
