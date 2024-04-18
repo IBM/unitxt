@@ -24,9 +24,9 @@ class UnitxtVersionsConflictError(ValueError):
     def __init__(self, error_in: str, hf_unitxt_version, installed_unitxt_version):
         assert hf_unitxt_version != installed_unitxt_version
         if compare_versions(hf_unitxt_version, installed_unitxt_version) == 1:
-            msg = f"Located installed unitxt version {installed_unitxt_version} that is older then unitxt {error_in} version {hf_unitxt_version}. Please update unitxt package or uninstall it to avoid conflicts."
+            msg = f"Located installed unitxt version {installed_unitxt_version} that is older than unitxt {error_in} version {hf_unitxt_version}. Please update unitxt package or uninstall it to avoid conflicts."
         if compare_versions(hf_unitxt_version, installed_unitxt_version) == -1:
-            msg = f"Located installed unitxt version {installed_unitxt_version} that is newer then unitxt {error_in} version {hf_unitxt_version}. Please force-reload the {error_in} or downgrade unitxt to {error_in} version or uninstall unitxt to avoid conflicts."
+            msg = f"Located installed unitxt version {installed_unitxt_version} that is newer than unitxt {error_in} version {hf_unitxt_version}. Please force-reload the {error_in} or downgrade unitxt to {error_in} version or uninstall unitxt to avoid conflicts."
         super().__init__(msg)
 
 
