@@ -187,6 +187,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         return list(multi_stream["__inference__"])
 
     def prepare(self):
+        # To avoid the Python's mutable default list trap, we set the default value to None
+        # and then set it to an empty list if it is None.
+        if self.card.preprocess_steps is None:
+            self.card.preprocess_steps = []
+
         self.set_pipelines()
 
         loader = self.card.loader

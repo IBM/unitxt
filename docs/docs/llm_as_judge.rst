@@ -15,7 +15,7 @@ Using LLM  As a Judge in unitxt
 ----------------------------
 Using LLM as a judge is extremely simple in unitxt. You should simply choose llm as a judge metric, and unitxt will do the rest...
 
-Unitxt catalogs includes a collection of preexisting LLM as judges that can be used like any other
+The Unitxt catalog includes a collection of preexisting LLM as judges that can be used like any other
 metric.
 
 To specify an LLM as judge metric, you can specify it in the dataset or in the recipe. For example:
