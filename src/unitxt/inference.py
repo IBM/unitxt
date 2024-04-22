@@ -3,8 +3,8 @@ import os
 from dataclasses import dataclass
 from typing import List, Optional, Union
 
-from . import settings
 from .artifact import Artifact
+from .settings_utils import get_settings
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -17,7 +17,7 @@ class InferenceEngine(abc.ABC, Artifact):
 
     @staticmethod
     def _assert_allow_passing_data_to_remote_api(remote_api_label: str):
-        assert settings.allow_passing_data_to_remote_api, (
+        assert get_settings().allow_passing_data_to_remote_api, (
             f"LlmAsJudge metric cannot run send data to remote APIs ({remote_api_label}) when"
             f" unitxt.settings.allow_passing_data_to_remote_api=False."
             f" Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this. "
