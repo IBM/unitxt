@@ -50,7 +50,7 @@ class IbmGenAiInferenceEngineParams:
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
     repetition_penalty: Optional[float] = None
-    stop_sequences: Optional[list[str]] = None
+    stop_sequences: Optional[List[str]] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
