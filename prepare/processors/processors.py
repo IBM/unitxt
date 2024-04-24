@@ -5,6 +5,7 @@ from unitxt.operators import RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
+    ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -252,5 +253,27 @@ add_to_catalog(
         ]
     ),
     "processors.match_closest_option",
+    overwrite=True,
+)
+
+
+double_brackets_regex = r"\[\[(.*?)\]\]"
+parser = ExtractWithRegex(regex=double_brackets_regex, field="TBD")
+example = "A. and also B. And that is why my final answer is [[Yes]]"
+logger.info(parser.process_value(example))
+assert parser.process_value(example) == "Yes"
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractWithRegex(
+                regex=double_brackets_regex,
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.extract_from_double_brackets",
     overwrite=True,
 )
