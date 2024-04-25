@@ -27,7 +27,7 @@ import os
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -474,3 +474,21 @@ class MultipleSourceLoader(Loader):
         return FixedFusion(
             origins=self.sources, max_instances_per_origin=self.get_limit()
         ).process()
+
+
+class LoadDirectory(Loader):
+    data: Dict[str, List[Dict[str, Any]]]
+
+    @staticmethod
+    def yield_instance(instances: List[Dict[str, Any]]) -> Dict[str, Any]:
+        yield from instances
+
+    def process(self) -> MultiStream:
+        return MultiStream(
+            {
+                name: Stream(
+                    generator=self.yield_instance, gen_kwargs={"instances": instances}
+                )
+                for name, instances in self.data.items()
+            }
+        )
