@@ -1709,15 +1709,27 @@ class FeatureGroupedShuffle(Shuffle):
 
     Example is if the dataset consists of questions with paraphrases of it, and each question falls into a topic.
     All paraphrases have the same ID value as the original.
-    In this case, we may want to shuffle on grouping_features = ['question iD'],
+    In this case, we may want to shuffle on grouping_features = ['question ID'],
     to keep the paraphrases and original question together.
     We may also want to group by both 'question ID' and 'topic', if the question IDs are repeated between topics.
-    """
+    In this case, grouping_features = ['question ID', 'topic']
 
-    # list of feature names to use to define the groups
-    # a group is defined by each unique observed combination of data values for features in grouping_features
+    Args:
+        grouping_features (list of strings): list of feature names to use to define the groups.
+            a group is defined by each unique observed combination of data values for features in grouping_features
+        shuffle_within_group (bool): whether to further shuffle the instances within each group block, keeping the block order
+
+    Args (of superclass):
+        page_size (int): The size of each page in the stream. Defaults to 1000.
+            Note: shuffle_by_grouping_features determines the unique groups (unique combinations of values of grouping_features)
+            separately by page (determined by page_size).  If a block of instances in the same group are split
+            into separate pages (either by a page break falling in the group, or the dataset was not sorted by
+            grouping_features), these instances will be shuffled separately and thus the grouping may be
+            broken up by pages.  If the user wants to ensure the shuffle does the grouping and shuffling
+            across all pages, set the page_size to be larger than the dataset size.
+            See outputs_2features_bigpage and outputs_2features_smallpage in test_grouped_shuffle.
+    """
     grouping_features: List[str] = None
-    # whether to further shuffle the instances within each group block, keeping the block order
     shuffle_within_group: bool = False
 
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
