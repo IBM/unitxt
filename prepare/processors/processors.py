@@ -5,8 +5,8 @@ from unitxt.operators import RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
-    ExtractWithRegex,
     ExtractMtBenchJudgment,
+    ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -276,6 +276,7 @@ add_to_catalog(
         ]
     ),
     "processors.extract_from_double_brackets",
+)
 
 add_to_catalog(
     SequentialOperator(
