@@ -2147,9 +2147,13 @@ class Perplexity(BulkInstanceMetric):
     reduction_map = {"mean": ["perplexity"]}
     prediction_type = "str"
 
-    perplexity_prompt: str
+    source_template: str
+    target_template: str
     batch_size: int = 32
     model_name: str
+    single_token_mode: bool = False
+
+    lm = None
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
@@ -2166,28 +2170,41 @@ class Perplexity(BulkInstanceMetric):
 
         :return: the likelihood of generating text Y_i after each text X_i_j = P(Y_i|X_i_1), ..., P(Y_i|X_i_n)  for every i.
         """
+        if self.lm is None:
+            from transformers import AutoConfig
+
+            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+            self.lm = (
+                self.EncoderDecoderLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+                if config.is_encoder_decoder is True
+                else self.DecoderOnlyLM(
+                    model_name=self.model_name, single_token_mode=self.single_token_mode
+                )
+            )
+
         sources = []
         targets = []
         for prediction, instance_references in zip(predictions, references):
             for instance_reference in instance_references:
-                if "%s" in self.perplexity_prompt:
-                    source = self.perplexity_prompt % instance_reference
-                else:
-                    source = f"{self.perplexity_prompt} {instance_reference}"
-                sources.append(source)
-                targets.append(prediction)
-
-        from transformers import AutoConfig
-
-        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
-        lm = (
-            self.EncoderDecoderLM(model_name=self.model_name)
-            if config.is_encoder_decoder is True
-            else self.DecoderOnlyLM(model_name=self.model_name)
-        )
+                sources.append(
+                    self.Template.apply(
+                        self.source_template,
+                        prediction=prediction,
+                        reference=instance_reference,
+                    )
+                )
+                targets.append(
+                    self.Template.apply(
+                        self.target_template,
+                        prediction=prediction,
+                        reference=instance_reference,
+                    )
+                )
 
         # compute P(Q|P) and store in queue
-        scores = lm.compute_lm(
+        scores = self.lm.compute_lm(
             source=sources, target=targets, batch_size=self.batch_size
         )
 
@@ -2210,8 +2227,25 @@ class Perplexity(BulkInstanceMetric):
 
         return all_instances_scores
 
+    class Template:
+        regex = re.compile(r"\{(\w+)}")
+
+        @classmethod
+        def apply(cls, template, **kwargs):
+            matches = Perplexity.Template.regex.finditer(template)
+            output = []
+            cursor = 0
+            for match in matches:
+                start = match.start()
+                end = match.end()
+                output.append(template[cursor:start])
+                output.append(kwargs[match.group(1)])
+                cursor = end
+            output.append(template[cursor:])
+            return "".join(output)
+
     class AbstractLM(ABC):
-        def __init__(self, model_name):
+        def __init__(self, model_name, single_token_mode):
             import torch
             from transformers import AutoTokenizer
 
@@ -2223,6 +2257,7 @@ class Perplexity(BulkInstanceMetric):
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            self.single_token_mode = single_token_mode
 
         def compute_lm(
             self, source: List[str], target: List[str], batch_size: int
@@ -2244,7 +2279,10 @@ class Perplexity(BulkInstanceMetric):
                             batch_source, padding=True, return_tensors="pt"
                         )
                         tokens_target = self.tokenizer(
-                            batch_target, padding=True, return_tensors="pt"
+                            batch_target,
+                            padding=True,
+                            return_tensors="pt",
+                            add_special_tokens=not self.single_token_mode,
                         )
 
                         # compute the logits

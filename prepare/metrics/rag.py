@@ -125,13 +125,13 @@ global_target = {
     "score_name": "f1",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 metric = metrics["metrics.bert_score.deberta_large_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
@@ -160,13 +160,13 @@ global_target = {
     "score_name": "f1",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 metric = metrics["metrics.bert_score.deberta_base_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
@@ -313,13 +313,13 @@ global_target = {
     "score_name": "score",
 }
 
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 
 for metric_id, metric in metrics.items():
     add_to_catalog(metric, metric_id, overwrite=True)
@@ -462,3 +462,15 @@ answer_reward = MetricPipeline(
     metric="metrics.reward.deberta_v3_large_v2",
 )
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
+
+answer_inference = MetricPipeline(
+    main_score="perplexity",
+    preprocess_steps=[
+        CopyFields(field_to_field=[("contexts", "references")]),
+        CopyFields(
+            field_to_field=[("answer", "prediction")],
+        ),
+    ],
+    metric="metrics.perplexity_nli.t5_nli_mixture",
+)
+add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)

@@ -187,6 +187,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         return list(multi_stream["__inference__"])
 
     def prepare(self):
+        # To avoid the Python's mutable default list trap, we set the default value to None
+        # and then set it to an empty list if it is None.
+        if self.card.preprocess_steps is None:
+            self.card.preprocess_steps = []
+
         self.set_pipelines()
 
         loader = self.card.loader
@@ -194,6 +199,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             loader.loader_limit = self.loader_limit
             logger.info(f"Loader line limit was set to  {self.loader_limit}")
         self.loading.steps.append(loader)
+
+        # This is required in case loader_limit is not enforced by the loader
+        if self.loader_limit:
+            self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         self.metadata.steps.append(
             AddFields(

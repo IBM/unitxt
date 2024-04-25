@@ -6,6 +6,7 @@ from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     ExtractWithRegex,
+    ExtractMtBenchJudgment,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -275,5 +276,19 @@ add_to_catalog(
         ]
     ),
     "processors.extract_from_double_brackets",
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_judgment",
     overwrite=True,
 )

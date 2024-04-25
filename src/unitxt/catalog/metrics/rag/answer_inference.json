@@ -1,0 +1,25 @@
+{
+    "type": "metric_pipeline",
+    "main_score": "perplexity",
+    "preprocess_steps": [
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "contexts",
+                    "references"
+                ]
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": [
+                [
+                    "answer",
+                    "prediction"
+                ]
+            ]
+        }
+    ],
+    "metric": "metrics.perplexity_nli.t5_nli_mixture"
+}

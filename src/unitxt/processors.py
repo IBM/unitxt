@@ -223,3 +223,12 @@ class StringOrNotString(FieldOperator):
         if self.string.lower() in text.lower():
             return self.string.lower()
         return text
+
+
+class ExtractMtBenchJudgment(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
+        try:
+            return float(match.group(1)) / 10
+        except:
+            return 0.0
