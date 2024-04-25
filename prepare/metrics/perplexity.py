@@ -306,4 +306,3 @@ add_to_catalog(
     overwrite=True,
 )
 add_to_catalog(perplexity_nli, "metrics.perplexity_nli.t5_nli_mixture", overwrite=True)
-

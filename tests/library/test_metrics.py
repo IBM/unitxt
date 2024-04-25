@@ -1005,6 +1005,7 @@ class TestMetrics(UnitxtTestCase):
             first_instance_target, outputs[0]["score"]["instance"]["score"]
         )
 
+
 class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):
         """Test that when metric.n_resamples is set to None, no confidence intervals are computed."""
