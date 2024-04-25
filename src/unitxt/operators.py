@@ -1730,6 +1730,9 @@ class FeatureGroupedShuffle(Shuffle):
             See outputs_2features_bigpage and outputs_2features_smallpage in test_grouped_shuffle.
     """
 
+    grouping_features: List[str] = None
+    shuffle_within_group: bool = False
+
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
         if self.grouping_features is None:
             super().process(page, stream_name)
