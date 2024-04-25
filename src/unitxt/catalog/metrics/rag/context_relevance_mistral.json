@@ -19,8 +19,7 @@
                     "question",
                     "prediction"
                 ]
-            ],
-            "use_query": true
+            ]
         }
     ],
     "metric": "metrics.perplexity_q.Mistral_7B_Instruct_v2"

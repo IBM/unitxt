@@ -982,24 +982,12 @@ class TestMetrics(UnitxtTestCase):
 
         perplexity_question = Perplexity(
             model_name="google/flan-t5-small",
-            perplexity_prompt="Generate a question based on the given content:",
+            source_template="Generate a question based on the given content: {reference}",
+            target_template="{prediction}",
         )
         first_instance_target = 0.059865921735763
         outputs = apply_metric(
             metric=perplexity_question, predictions=prediction, references=references
-        )
-        self.assertAlmostEqual(
-            first_instance_target, outputs[0]["score"]["instance"]["score"]
-        )
-
-        perplexity_question_mistral = Perplexity(
-            model_name="google/flan-t5-small",
-            perplexity_prompt="Generate a question based on the given content: %s",
-        )
-        outputs = apply_metric(
-            metric=perplexity_question_mistral,
-            predictions=prediction,
-            references=references,
         )
         self.assertAlmostEqual(
             first_instance_target, outputs[0]["score"]["instance"]["score"]

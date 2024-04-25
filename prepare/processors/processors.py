@@ -276,6 +276,7 @@ add_to_catalog(
         ]
     ),
     "processors.extract_from_double_brackets",
+    overwrite=True,
 )
 
 add_to_catalog(
