@@ -38,6 +38,7 @@ from unitxt.metrics import (
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MinAccuracy,
     NormalizedSacrebleu,
     Perplexity,
     PrecisionBinary,
@@ -191,38 +192,37 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
-    def test_accuracy_max_aggregation(self):
-        metric = MaxAccuracy()
-
+    def test_accuracy_max_min_aggregation(self):
         predictions = ["A", "B", "C"]
         references = [["B", "C"], ["A"], ["B", "C"]]
 
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
+        for number, metric in enumerate([MaxAccuracy(), MinAccuracy()]):
+            outputs = apply_metric(
+                metric=metric, predictions=predictions, references=references
+            )
 
-        expected_global_result = {
-            "accuracy": 1,
-            "score": 1,
-            "score_name": "accuracy",
-        }
+            expected_global_result = {
+                "accuracy": 1 if number == 0 else 0,
+                "score": 1 if number == 0 else 0,
+                "score_name": "accuracy",
+            }
 
-        global_result = outputs[0]["score"]["global"].copy()
-        # Only check the keys that are expected, i.e. exist in expected_global_result
-        global_result = {
-            key: value
-            for key, value in global_result.items()
-            if key in expected_global_result
-        }
-        self.assertDictEqual(global_result, expected_global_result)
+            global_result = outputs[0]["score"]["global"].copy()
+            # Only check the keys that are expected, i.e. exist in expected_global_result
+            global_result = {
+                key: value
+                for key, value in global_result.items()
+                if key in expected_global_result
+            }
+            self.assertDictEqual(global_result, expected_global_result)
 
-        instance_targets = [
-            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
-            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
-            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
-        ]
-        for output, target in zip(outputs, instance_targets):
-            self.assertDictEqual(output["score"]["instance"], target)
+            instance_targets = [
+                {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+                {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+                {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+            ]
+            for output, target in zip(outputs, instance_targets):
+                self.assertDictEqual(output["score"]["instance"], target)
 
     def test_f1_micro(self):
         metric = F1Micro()
@@ -923,17 +923,11 @@ class TestMetrics(UnitxtTestCase):
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
-        from dataclasses import field
-        from statistics import mean
-        from typing import List
 
         class NoAggFuncReduction(Accuracy):
-            implemented_reductions: List[str] = field(
-                default_factory=lambda: ["mean", "group_mean", "some_other_func"]
-            )
-            reduction_map = {"some_other_func": {"agg_func": ["mean", mean, False]}}
+            aggregating = {"aggregating_function_name": "unknown"}
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AssertionError):
             # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
             metric = NoAggFuncReduction()
             apply_metric(
@@ -944,7 +938,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoAggFunc(Accuracy):
-            reduction_map = {"group_mean": {"func": ["mean", mean]}}
+            aggregating = 9
 
         with self.assertRaises(AssertionError):
             # should raise error because no "agg_func" field in group_mean
@@ -957,7 +951,10 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoCallableAggFunc(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", "some string", False]}}
+            aggregating = {
+                "aggregating_function_name": "no_callable",
+                "aggregating_function": 9,
+            }
 
         with self.assertRaises(AssertionError):
             # should raise error because second field of agg_func should be callable
@@ -970,7 +967,10 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoBooleanGrouping(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean, 1]}}
+            grouping = {
+                "group_by_field": "task_data/group_id",
+                "ci_samples_from_groups_scores": 12.5,
+            }
 
         with self.assertRaises(AssertionError):
             # should raise error because third field in agg_func is not boolean
@@ -1259,15 +1259,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
             task_data=GROUPED_INSTANCE_ADDL_INPUTS,
         )
         # get first element of reduction_map values
-        reduction_params = next(iter(metric.reduction_map.values()))
-        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
-        group_score_name = "_".join(
-            [
-                prefix,
-                metric.reduction_map["group_mean"]["agg_func"][0],
-                metric.main_score,
-            ]
-        )
+        prefix = metric.prefix
+        group_score_name = prefix + metric.main_score
 
         if expected_global_result is None:
             expected_global_result = {
@@ -1285,7 +1278,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                     score_value,
                     expected_global_result[score_name],
                     places=5,
-                    msg=f"{group_score_name} score mismatch for {metric.__class__.__name__}, got {expected_global_result[score_name]} but expected {score_value}",
+                    msg=f"{score_name} score mismatch for {metric.__class__.__name__}, expected {expected_global_result[score_name]} but got {score_value}",
                 )
             else:
                 # An output score that is not expected
