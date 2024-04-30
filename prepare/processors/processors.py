@@ -6,6 +6,7 @@ from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     ExtractMtBenchJudgment,
+    ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -256,6 +257,27 @@ add_to_catalog(
     overwrite=True,
 )
 
+
+double_brackets_regex = r"\[\[(.*?)\]\]"
+parser = ExtractWithRegex(regex=double_brackets_regex, field="TBD")
+example = "A. and also B. And that is why my final answer is [[Yes]]"
+logger.info(parser.process_value(example))
+assert parser.process_value(example) == "Yes"
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractWithRegex(
+                regex=double_brackets_regex,
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.extract_from_double_brackets",
+    overwrite=True,
+)
 
 add_to_catalog(
     SequentialOperator(
