@@ -22,6 +22,7 @@ from unitxt.operators import (
     ExecuteExpression,
     ExtractFieldValues,
     ExtractMostCommonFieldValues,
+    FeatureGroupedShuffle,
     FieldOperator,
     FilterByCondition,
     FilterByExpression,
@@ -1774,6 +1775,213 @@ class TestOperators(UnitxtTestCase):
         page_2_inputs = inputs[10:]
         page_1_outputs = outputs[:10]
         page_2_outputs = outputs[10:]
+
+        self.assertListEqual(sorted(page_1_inputs), sorted(page_1_outputs))
+        self.assertListEqual(sorted(page_2_inputs), sorted(page_2_outputs))
+
+        inputs_outputs_intersection = set(page_1_inputs).intersection(
+            set(page_2_outputs)
+        )
+        self.assertSetEqual(inputs_outputs_intersection, set())
+
+        inputs_outputs_intersection = set(page_2_inputs).intersection(
+            set(page_1_outputs)
+        )
+        self.assertSetEqual(inputs_outputs_intersection, set())
+
+    def test_grouped_shuffle(self):
+        # 18 questions indexed by "index", but with two grouping features: question, topic
+        inputs = [
+            {
+                "question": 0,
+                "topic": "biology",
+                "type": "original",
+                "text": "salamander",
+                "index": 0,
+            },
+            {
+                "question": 0,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "slmnder",
+                "index": 1,
+            },
+            {
+                "question": 0,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "salmnder",
+                "index": 2,
+            },
+            {
+                "question": 1,
+                "topic": "biology",
+                "type": "original",
+                "text": "triceratops",
+                "index": 3,
+            },
+            {
+                "question": 1,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "trceratps",
+                "index": 4,
+            },
+            {
+                "question": 1,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "tricertp",
+                "index": 5,
+            },
+            {
+                "question": 2,
+                "topic": "biology",
+                "type": "original",
+                "text": "monkey",
+                "index": 6,
+            },
+            {
+                "question": 2,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "mnky",
+                "index": 7,
+            },
+            {
+                "question": 2,
+                "topic": "biology",
+                "type": "misspelling",
+                "text": "monke",
+                "index": 8,
+            },
+            {
+                "question": 0,
+                "topic": "history",
+                "type": "original",
+                "text": "George Washington",
+                "index": 9,
+            },
+            {
+                "question": 0,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Gorg Washingtn",
+                "index": 10,
+            },
+            {
+                "question": 0,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Gregory Washtn",
+                "index": 11,
+            },
+            {
+                "question": 1,
+                "topic": "history",
+                "type": "original",
+                "text": "Marie Curie",
+                "index": 12,
+            },
+            {
+                "question": 1,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Mare Cureu",
+                "index": 13,
+            },
+            {
+                "question": 1,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Mary Curei",
+                "index": 14,
+            },
+            {
+                "question": 2,
+                "topic": "history",
+                "type": "original",
+                "text": "Genghis Khan",
+                "index": 15,
+            },
+            {
+                "question": 2,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Genghz Kanh",
+                "index": 16,
+            },
+            {
+                "question": 2,
+                "topic": "history",
+                "type": "misspelling",
+                "text": "Gengz Kann",
+                "index": 17,
+            },
+        ]
+
+        outputs_1feature = apply_operator(
+            operator=FeatureGroupedShuffle(grouping_features=["topic"], page_size=20),
+            inputs=inputs,
+        )
+        outputs_2features_smallpage = apply_operator(
+            operator=FeatureGroupedShuffle(
+                grouping_features=["question", "topic"], page_size=10
+            ),
+            inputs=inputs,
+        )
+        # set the page size bigger than the list, so that the initial shuffle has access to the full groups for shuffling
+        outputs_2features_bigpage = apply_operator(
+            operator=FeatureGroupedShuffle(
+                grouping_features=["question", "topic"], page_size=20
+            ),
+            inputs=inputs,
+        )
+        outputs_2features_shuffled = apply_operator(
+            operator=FeatureGroupedShuffle(
+                grouping_features=["question", "topic"],
+                shuffle_within_group=True,
+                page_size=20,
+            ),
+            inputs=inputs,
+        )
+
+        output_1feature_indices = [instance["index"] for instance in outputs_1feature]
+        output_2features_indices_smallpage = [
+            instance["index"] for instance in outputs_2features_smallpage
+        ]
+        # with a bigger page, expect to see more mixing across the indices for the full range
+        output_2features_indices_bigpage = [
+            instance["index"] for instance in outputs_2features_bigpage
+        ]
+        output_2features_shuffled_indices = [
+            instance["index"] for instance in outputs_2features_shuffled
+        ]
+
+        # check the expected values
+        self.assertListEqual(
+            output_1feature_indices,
+            [9, 10, 11, 12, 13, 14, 15, 16, 17, 0, 1, 2, 3, 4, 5, 6, 7, 8],
+        )
+        self.assertListEqual(
+            output_2features_indices_smallpage,
+            [9, 6, 7, 8, 3, 4, 5, 0, 1, 2, 12, 13, 14, 10, 11, 15, 16, 17],
+        )
+        self.assertListEqual(
+            output_2features_indices_bigpage,
+            [3, 4, 5, 15, 16, 17, 12, 13, 14, 6, 7, 8, 9, 10, 11, 0, 1, 2],
+        )
+        self.assertListEqual(
+            output_2features_shuffled_indices,
+            [3, 5, 4, 17, 16, 15, 13, 14, 12, 8, 6, 7, 10, 11, 9, 1, 0, 2],
+        )
+
+        # test no mixing between pages:
+        input_indices = [instance["index"] for instance in inputs]
+        page_1_inputs = input_indices[:10]
+        page_2_inputs = input_indices[10:]
+        page_1_outputs = output_2features_indices_smallpage[:10]
+        page_2_outputs = output_2features_indices_smallpage[10:]
 
         self.assertListEqual(sorted(page_1_inputs), sorted(page_1_outputs))
         self.assertListEqual(sorted(page_2_inputs), sorted(page_2_outputs))
