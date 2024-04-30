@@ -96,12 +96,6 @@ perplexity_question = Perplexity(
     target_template="{prediction}",
 )
 
-perplexity_question_mistral = Perplexity(
-    model_name="mistralai/Mistral-7B-Instruct-v0.2",
-    source_template="<s>[INST] Generate a question based on the given content: {reference}[/INST]",
-    target_template="{prediction}",
-)
-
 perplexity_answer = Perplexity(
     model_name="google/flan-t5-small",
     source_template="Generate an answer based on the given content: {reference}",
@@ -175,34 +169,6 @@ generate_questions(
     },
     metric=perplexity_question,
 )
-
-
-generate_questions(
-    instances={
-        "who are we?": [  # prediction
-            ("we are the world", 0.0),  # reference 1
-            ("we are the children", 0.0),  # reference 2
-            ("we are the people", 0.0),  # reference 3
-        ],
-        "what are we saving?": [
-            ("we make a brighter day", 0.0),
-            ("we are making a choice", 0.0),
-            ("we are saving our own lives", 0.0),
-        ],
-        "Which city is the capital of Italy?": [
-            ("The capital of Italy is Milan", 0.0),
-            ("The capital of England is London", 0.0),
-            ("The capital of Spain is Madrid", 0.0),
-        ],
-    },
-    global_scores={
-        "mean": 0.0,
-        "ci_high": 0.0,
-        "ci_low": 0.0,
-    },
-    metric=perplexity_question_mistral,
-)
-
 
 generate_answers(
     instances={
@@ -300,9 +266,4 @@ add_to_catalog(
 )
 add_to_catalog(perplexity_answer, "metrics.perplexity_a.flan_t5_small", overwrite=True)
 add_to_catalog(perplexity_chat, "metrics.perplexity_chat.flan_t5_small", overwrite=True)
-add_to_catalog(
-    perplexity_question_mistral,
-    "metrics.perplexity_q.Mistral_7B_Instruct_v2",
-    overwrite=True,
-)
 add_to_catalog(perplexity_nli, "metrics.perplexity_nli.t5_nli_mixture", overwrite=True)

@@ -1,6 +1,0 @@
-{
-    "type": "perplexity",
-    "model_name": "mistralai/Mistral-7B-Instruct-v0.2",
-    "source_template": "<s>[INST] Generate a question based on the given content: {reference}[/INST]",
-    "target_template": "{prediction}"
-}

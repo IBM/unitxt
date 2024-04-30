@@ -9,8 +9,7 @@
                     "contexts",
                     "references"
                 ]
-            ],
-            "use_query": true
+            ]
         },
         {
             "type": "copy_fields",
