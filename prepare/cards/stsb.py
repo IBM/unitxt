@@ -22,7 +22,7 @@ card = TaskCard(
             }
         ),
         AddFields(
-            fields={"attribute_name": "similarity", "min_value": "1", "max_value": "5"}
+            fields={"attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0}
         ),
     ],
     task="tasks.regression.two_texts",

@@ -3,8 +3,9 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["context", "context_type", "question"],
-        outputs=["answers"],
+        inputs={"context": "str", "context_type": "str", "question": "str"},
+        outputs={"answers": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.squad"],
     ),
     "tasks.qa.with_context.extractive",
@@ -13,8 +14,9 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["context", "context_type", "question"],
-        outputs=["answers"],
+        inputs={"context": "str", "context_type": "str", "question": "str"},
+        outputs={"answers": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.rouge"],
         augmentable_inputs=["context", "question"],
     ),
@@ -24,8 +26,9 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["question"],
-        outputs=["answers"],
+        inputs={"question": "str"},
+        outputs={"answers": "List[str]"},
+        prediction_type="str",
         metrics=["metrics.rouge"],
     ),
     "tasks.qa.open",

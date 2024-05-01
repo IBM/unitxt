@@ -8,6 +8,7 @@ from unitxt.type_utils import (
     issubtype,
     parse_type_string,
     to_float_or_default,
+    verify_required_schema,
 )
 
 from tests.utils import UnitxtTestCase
@@ -263,6 +264,40 @@ class TestAssertTyping(UnitxtTestCase):
     def test_parse_malformed_string(self):
         with self.assertRaises(TypeError):
             parse_type_string("List[[int]]")
+
+    def test_verify_required_schema(self):
+        schema = {
+            "field_1": "Dict[str, float]",
+            "field_2": "int",
+            "field_3": "Tuple[List[str], Optional[str]]",
+        }
+
+        obj = {
+            "field_1": {"a": 5.0, "b": 0.5},
+            "field_2": 1,
+            "field_3": (["a", "b"], None),
+        }
+        verify_required_schema(schema, obj)
+
+        obj_2 = obj.copy()
+        obj_2.update({"field_1": {"a": "b"}})
+        with self.assertRaises(ValueError) as e:
+            verify_required_schema(schema, obj_2)
+        self.assertEqual(
+            str(e.exception),
+            "Passed value '{'a': 'b'}' of field 'field_1' is not "
+            "of required type: (Dict[str, float]).",
+        )
+
+        obj_3 = obj.copy()
+        obj_3.pop("field_2")
+        with self.assertRaises(KeyError) as e:
+            verify_required_schema(schema, obj_3)
+        self.assertEqual(
+            str(e.exception).strip('"'),
+            "Unexpected field name: 'field_2'. The available "
+            "names: ['field_1', 'field_3'].",
+        )
 
     def test_format_type_string(self):
         self.assertEqual(
