@@ -117,13 +117,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     }
 
     def prepare(self):
-        try:
-            from openai import OpenAI
-        except ImportError as e:
-            raise ImportError(
-                "Failed to import openai package. "
-                "Please run 'pip install --upgrade openai'"
-            ) from e
+        from openai import OpenAI
 
         api_key_env_var_name = "OPENAI_API_KEY"
         api_key = os.environ.get(api_key_env_var_name)
