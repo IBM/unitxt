@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Union
 
 from .artifact import Artifact
+from .operator import PackageRequirementsMixin
 from .settings_utils import get_settings
 
 
@@ -24,9 +25,12 @@ class InferenceEngine(abc.ABC, Artifact):
         )
 
 
-class HFPipelineBasedInferenceEngine(InferenceEngine):
+class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     model_name: str
     max_new_tokens: int
+    _requirement = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers"
+    }
 
     def prepare(self):
         from transformers import pipeline
@@ -57,19 +61,16 @@ class IbmGenAiInferenceEngineParams:
     typical_p: Optional[float] = None
 
 
-class IbmGenAiInferenceEngine(InferenceEngine):
+class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "ibm_genai"
     model_name: str
     parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
+    _requirement = {
+        "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
+    }
 
     def prepare(self):
-        try:
-            from genai import Client, Credentials
-        except ImportError as e:
-            raise ImportError(
-                "Failed to import ibm-genai package. "
-                "Please run 'pip install --upgrade ibm-generative-ai'"
-            ) from e
+        from genai import Client, Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
@@ -107,10 +108,13 @@ class OpenAiInferenceEngineParams:
     top_p: Optional[float] = None
 
 
-class OpenAiInferenceEngine(InferenceEngine):
+class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "openai"
     model_name: str
     parameters: OpenAiInferenceEngineParams = OpenAiInferenceEngineParams()
+    _requirement = {
+        "openai": "Install openai package using 'pip install --upgrade openai"
+    }
 
     def prepare(self):
         try:
