@@ -207,6 +207,41 @@ class MetricWithConfidenceInterval(Metric):
     confidence_level: float = 0.95
     ci_scores: List[str] = None
 
+    grouping: dict = None
+    # when grouping is not None, aggregation is done over groups -- splits of the stream of the instance,
+    # and then averaged over the groups aggregated results.
+    # when not None, it must consist of two fields:
+    # "group_by_field" which specifies the field in the instance whose value determines the group to which the instance belongs.
+    # example: "task_data/group_id"
+    # the second field of grouping, "ci_samples_from_groups_scores", is a boolean specifying whether resampling should be
+    # done from the individual groups' scores (True), as if each group is represented by one instance whose score instance
+    # is the group's aggregated score, or from the whole stream (False), where each resample is then split to
+    # groups, the score of which is then computed, and finally averaged with the other groups' scores.
+
+    aggregating: dict = None
+    # How to yield one score, float, from a list of instances: either the whole stream or one group.
+    # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
+    # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
+    # Tyically, to be overridden by the subclasses. If None, then for InstanceMetric - the default of average_item_scores,
+    # and for GlobalMetric -- this is the metric itself.
+    # If not set by subclasses, it is set here to {
+    #     "aggregating_function_name": "mean",
+    #     "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    # }
+
+    subgroup_filtering: dict = (
+        None  # {"subgroup_column": str, "subgroup_types": List[str]}
+    )
+    # The stream-or-group to be aggregated over, is first filtered, maintaining only instances in which the
+    # field specified as "subgroup_column" contain a value that is a member of "subgroup_types".
+    # Useful when the user is only interested in these.
+
+    control_comparison: dict = None  # {"subgroup_column": str, "control_subgroup_types": List[str], "comparison_subgroup_types": List[str], "control_comparison_score_calculator": callable[List[float], List[float] -> float]}
+    # The scores from the instances, of the whole-stream-or-group in which the value sitting in field "subgroup_column"
+    # belongs to "countrol_subgroup_types" are gathered into a list of floats, and similarly for the scores from the
+    # instances that belong to the comparison group, and then these two lists are fed into the callable specified in
+    # "control_comparison_score_calculator", which returns the (global) score for the whole-stream-or-group.
+
     @staticmethod
     def new_random_generator():
         # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
@@ -420,6 +455,111 @@ class MetricWithConfidenceInterval(Metric):
             result[f"{score_name}_ci_low"] = ci.low
             result[f"{score_name}_ci_high"] = ci.high
         return result
+
+    def score_groups_globally(
+        self, instances: List[Dict[str, Any]], score_names: Optional[List[str]] = None
+    ) -> dict:
+        if self.grouping is None:
+            grouped_instances = {"all": instances}
+        else:
+            grouped_instances = defaultdict(list)
+            for instance in instances:
+                try:
+                    group_name = dict_get(instance, self.grouping["group_by_field"])
+                except Exception as e:
+                    raise ValueError(
+                        f"grouping input arg is not None, grouping is to be empoloyed, however instance {instance} does not contain subfield '{self.grouping['group_by_field']}'"
+                    ) from e
+                grouped_instances[group_name].append(instance)
+        # instances are now grouped by task_data/group_id (generally: by self.grouping["by field"]),
+        # if self.grouping is not None, else - all instance make one group named 'all'
+        # continue to calculate the global score for each group (!) first:
+        # build the global score for each group, (potentially the only group called 'all')
+
+        if self.subgroup_filtering:
+            for group_name, group in grouped_instances.items():
+                filtered_group = []
+                for instance in group:
+                    try:
+                        subgroup_type = dict_get(
+                            instance, self.subgroup_filtering["subgroup_column"]
+                        )
+                    except Exception as e:
+                        raise ValueError(
+                            f"subgroup_filtering input arg is not None, however instance {instance} does not contain subfield '{self.subgroup_filtering['subgroup_column']}'"
+                        ) from e
+                    if subgroup_type in self.subgroup_filtering["subgroup_types"]:
+                        filtered_group.append(instance)
+                grouped_instances[group_name] = filtered_group
+
+        # control_comparison: dict = None  #{"subgroup_column": str, "control_subgroup_types": List[str], "comparison_subgroup_types": List[str], "control_comparison_score_calculator": callable[float, float -> float]}
+        if self.control_comparison:
+            subgroup_column = self.control_comparison["subgroup_column"]
+            for group_name, group in grouped_instances.items():
+                control_group = []
+                comparison_group = []
+                for instance in group:
+                    try:
+                        subgroup_type = dict_get(instance, subgroup_column)
+                    except Exception as e:
+                        raise ValueError(
+                            f"control_comparison input arg is not None, however instance {instance} does not contain subfield '{subgroup_column}'"
+                        ) from e
+                    if (
+                        subgroup_type
+                        in self.control_comparison["control_subgroup_types"]
+                    ):
+                        control_group.append(instance)
+                    elif (
+                        subgroup_type
+                        in self.control_comparison["comparison_subgroup_types"]
+                    ):
+                        comparison_group.append(instance)
+                grouped_instances[group_name] = {
+                    "control": control_group,
+                    "comparison": comparison_group,
+                }
+
+        groups_global_scores = {}
+        for group_name, group in grouped_instances.items():
+            groups_global_scores[group_name] = {}
+            if isinstance(self, InstanceMetric):
+                for score_name in score_names:
+                    if isinstance(group, list):  # not split to control and comparison
+                        groups_global_scores[group_name][score_name] = self.aggregating[
+                            "aggregating_function"
+                        ](instances=group, score_name=score_name)
+                    else:
+                        control_scores = [
+                            instance["score"]["instance"][score_name]
+                            for instance in group["control"]
+                        ]
+                        comparison_scores = [
+                            instance["score"]["instance"][score_name]
+                            for instance in group["comparison"]
+                        ]
+                        groups_global_scores[group_name][
+                            score_name
+                        ] = self.control_comparison[
+                            "control_comparison_score_calculator"
+                        ](control_scores, comparison_scores)
+            elif isinstance(self, GlobalMetric):
+                raise ValueError(
+                    "What are you doing here, nowhere in GlobalMetric is this method invoked"
+                )
+            elif isinstance(self, BulkInstanceMetric):
+                raise ValueError(
+                    "What are you doing here, nowhere in BulkInstanceMetric is this method invoked"
+                )
+            else:
+                raise ValueError(
+                    f"Unrecognized extension of MetricWithConfidence: {type(self)}"
+                )
+
+        # for each score_name in score_names, each group now has a score, computed through its subgroups, if applicable.
+        # the score sits in the group's own global_score (only of the group), named score_name (as the name of the score in
+        # the ["score"]["instance"]  section of the instances
+        return groups_global_scores
 
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
@@ -637,21 +777,21 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     User can specify one of these already implemented aggregating function, or introduce a new one
     per their need, and specify it via input argument 'aggregating' as detailed below.
 
-    InstanceMetric facilitates a grouped aggregation:
+    Aggregation can be subject any of the following variations, or both (or none, of course)
+    When grouping input arg is not none, the aggregation is done in a grouped manner:
     The instances are split to groups according to the value sitting in a field whose name is specified
     by the user, typically: "task_data/group_id". Then, the input aggregating function is applied
     to each group separately, yielding group_score for each group, and the global score that is stored in
     each instance of the stream, is the average over these group_score.
     To this end, the user specifies the 'grouping' input argument, as detailed below.
 
-    Facilitating a special variation of aggregation, InstanceMetric offers an easy expression of an aggregation
-    (over the whole stream or each group, in the latter case the final score is averaged over the groups)
-    driven by first (further) splitting the list to be aggregated over (again: the whole stream or a group)
+    Aggregation over the whole stream, or any group (as applicable) can be driven by
+    first (further) splitting the list to be aggregated over (again: the whole stream or a group)
     to sub-lists, by the value sitting in another instance field specified by the user, and then either
     the aggregation is only carried over a specific set of sublists (because the user is only interested in them),
     or first carried over one set of sublists, and then over a second set of these sublists, and the final score
     of the group-or-whole-stream is set to be the ratio between these two results.
-    The expression of such type aggregating functions is detailed below, for input argument 'aggregating'
+    The expression of such type aggregating functions is detailed for input args subgroup_filtering, and control_comparison
 
     Users are encouraged to write an extension of InstanceMetric and add to it any aggregating
     function they see fit, as demonstrated, for example, in class MinAccuracy.
@@ -672,35 +812,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     # going over the respective score_name. if to_score_names is None - a name is computed via backward
     # compatibility -- reflecting the other input args for aggregating.
     to_score_names: List[str] = None
-
-    # when grouping is not None, aggregation is done over groups -- splits of the stream of the instance,
-    # and then averaged over the groups aggregated results.
-    # when not None, it must consist of two fields:
-    # "group_by_field" which specifies the field in the instance whose value determines the group to which the instance belongs.
-    # example: "task_data/group_id"
-    # the second field of grouping, "ci_samples_from_groups_scores", is a boolean specifying whether resampling should be
-    # done from the individual groups' scores (True), as if each group is represented by one instance whose score instance
-    # is the group's aggregated score, or from the whole stream (False), where each resample is then split to
-    # groups, the score of which is then computed, and finally averaged with the other groups' scores.
-    grouping: dict = None
-
-    # how to aggregate over the scores in the instances. Each and every score_name in score_names is aggregated (over
-    # the instances in the stream or group) by this aggregating function.
-    # Potentially, to be overridden by the subclasses.
-    aggregating: dict = None
-    # if not set by subclasses, it is set here to {
-    #     "aggregating_function_name": "mean",
-    #     "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    # }
-
-    # another example: the user specifies a callable that aggregates a list of floats into one float.
-    # also specified is a name of a field, hereafter named subgroup_column, whose value indicates the
-    # sub-list into which each instance (of the stream or group) belongs. Finally, one or two sets of values
-    # of that subgroup_columns are specified, by which one or two sets of instances (from the stream or group)
-    # are identified.  If one set, named the subgroup, the aggregation is only carried over that subgroup (of interest
-    # to the user), and the result of that aggregation becomes the score of the group-or-stream.
-    # If two sets, named control and comparison, the ratio between these two aggregations is set to be the score
-    # of the group-or-stream.
 
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
@@ -762,38 +873,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 self.prefix + score_name for score_name in self.score_names
             ]
         super().prepare()
-
-    def score_groups_globally(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        if self.grouping is None:
-            grouped_instances = {"all": instances}
-        else:
-            grouped_instances = defaultdict(list)
-            for instance in instances:
-                try:
-                    group_name = dict_get(instance, self.grouping["group_by_field"])
-                except Exception as e:
-                    raise ValueError(
-                        f"Reduction type is group_mean, grouping is to be empoloyed, however instance {instance} does not contain subfield '{self.grouping['group_by_field']}'"
-                    ) from e
-                grouped_instances[group_name].append(instance)
-        # instances are now grouped by task_data/group_id (generally: by self.grouping["by field"]),
-        # if self.grouping is not None, else - all instance make one group named 'all'
-        # continue to calculate the global score for each group (!) first:
-        # build the global score for each group, (potentially the only group called 'all')
-        groups_global_scores = {}
-        for group_name, group in grouped_instances.items():
-            groups_global_scores[group_name] = {}
-            for score_name in score_names:
-                groups_global_scores[group_name][score_name] = self.aggregating[
-                    "aggregating_function"
-                ](instances=group, score_name=score_name)
-
-        # for each score_name in score_names, each group now has a score, computed through its subgroups, if applicable.
-        # the score sits in the group's own global_score (only of the group), named score_name (as the name of the score in
-        # the ["score"]["instance"]  section of the instances
-        return groups_global_scores
 
     def average_groups_global_scores(
         self, instances: List[Dict[str, Any]], score_name: str
@@ -892,60 +971,6 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instance["score"]["global"] = global_score
 
         yield from instances
-
-    @staticmethod
-    def prepare_for_subgroup_score(
-        subgroup_column: str, subgroup_types: List[str], score_aggregator: callable
-    ) -> callable:
-        def subgroup_column_score(instances: List[Dict[str, Any]], score_name: str):
-            needed_scores = []
-            for instance in instances:
-                try:
-                    subgroup_value = dict_get(instance, subgroup_column)
-                except ValueError as ve:
-                    raise ValueError(
-                        f"subgroup_column, {subgroup_column}, is specified, but is not found in instance {instance}"
-                    ) from ve
-                if subgroup_value in subgroup_types:
-                    needed_scores.append(instance["score"]["instance"][score_name])
-
-            return score_aggregator(needed_scores) if len(needed_scores) > 0 else np.nan
-
-        return subgroup_column_score
-
-    @staticmethod
-    # score_calculator receives two lists of float scores, named control_subgroup, and comparison_subgroup,
-    # and returns one float from them
-    # the method does not check the mutual exclusion of control_subgroup_types vs comparison_subgroup_types
-    # and arbitrarily append to the control group an instance whose type belong to both (if any such instance)
-    def prepare_for_control_reference_score(
-        subgroup_column: str,
-        control_subgroup_types: List[str],
-        comparison_subgroup_types: List[str],
-        score_calculator: callable,
-    ) -> callable:
-        def subgroup_column_control_comparison_score(
-            instances: List[Dict[str, Any]], score_name: str
-        ):
-            needed_controls = []
-            needed_comparisons = []
-            for instance in instances:
-                try:
-                    subgroup_value = dict_get(instance, subgroup_column)
-                except ValueError as ve:
-                    raise ValueError(
-                        f"subgroup_column, {subgroup_column}, is specified, but is not found in instance {instance}"
-                    ) from ve
-                if subgroup_value in control_subgroup_types:
-                    needed_controls.append(instance["score"]["instance"][score_name])
-                elif subgroup_value in comparison_subgroup_types:
-                    needed_comparisons.append(instance["score"]["instance"][score_name])
-
-            return score_calculator(
-                control_subgroup=needed_controls, comparison_subgroup=needed_comparisons
-            )
-
-        return subgroup_column_control_comparison_score
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
@@ -3138,11 +3163,11 @@ class FixedGroupMeanBaselineAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "mean_baseline",
-        "aggregating_function": InstanceMetric.prepare_for_subgroup_score(
-            subgroup_column="task_data/variant_type",
-            score_aggregator=nan_mean,
-            subgroup_types=["original"],
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    subgroup_filtering = {
+        "subgroup_column": "task_data/variant_type",
+        "subgroup_types": ["original"],
     }
 
 
@@ -3153,11 +3178,11 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "mean_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_subgroup_score(
-            subgroup_column="task_data/variant_type",
-            score_aggregator=nan_mean,
-            subgroup_types=["paraphrase"],
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    subgroup_filtering = {
+        "subgroup_column": "task_data/variant_type",
+        "subgroup_types": ["paraphrase"],
     }
 
 
@@ -3167,13 +3192,14 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
+
     aggregating = {
         "aggregating_function_name": "mean_baseline",
-        "aggregating_function": InstanceMetric.prepare_for_subgroup_score(
-            subgroup_column="task_data/variant_type",
-            score_aggregator=nan_mean,
-            subgroup_types=["original"],
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    subgroup_filtering = {
+        "subgroup_column": "task_data/variant_type",
+        "subgroup_types": ["original"],
     }
 
 
@@ -3184,11 +3210,11 @@ class FixedGroupMeanParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "mean_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_subgroup_score(
-            subgroup_column="task_data/variant_type",
-            score_aggregator=nan_mean,
-            subgroup_types=["paraphrase"],
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    subgroup_filtering = {
+        "subgroup_column": "task_data/variant_type",
+        "subgroup_types": ["paraphrase"],
     }
 
 
@@ -3200,12 +3226,13 @@ class FixedGroupPDRParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "pdr_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=performance_drop_rate,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": performance_drop_rate,
     }
 
 
@@ -3216,12 +3243,13 @@ class FixedGroupPDRParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "pdr_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=performance_drop_rate,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": performance_drop_rate,
     }
 
 
@@ -3241,12 +3269,13 @@ class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "norm_cohens_h_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=normalized_cohens_h,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": normalized_cohens_h,
     }
 
 
@@ -3257,12 +3286,13 @@ class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "norm_cohens_h_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=normalized_cohens_h,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": normalized_cohens_h,
     }
 
 
@@ -3274,12 +3304,13 @@ class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "norm_hedges_g_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=normalized_hedges_g,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": normalized_hedges_g,
     }
 
 
@@ -3290,12 +3321,13 @@ class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "norm_hedges_g_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=normalized_hedges_g,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": normalized_hedges_g,
     }
 
 
@@ -3307,12 +3339,13 @@ class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "absval_norm_cohens_h_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=abs_normalized_cohens_h,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": abs_normalized_cohens_h,
     }
 
 
@@ -3323,12 +3356,13 @@ class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "absval_norm_cohens_h_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=abs_normalized_cohens_h,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": abs_normalized_cohens_h,
     }
 
 
@@ -3339,12 +3373,13 @@ class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
     }
     aggregating = {
         "aggregating_function_name": "absval_norm_hedges_g_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=abs_normalized_hedges_g,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": abs_normalized_hedges_g,
     }
 
 
@@ -3355,12 +3390,13 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
     }
     aggregating = {
         "aggregating_function_name": "absval_norm_hedges_g_paraphrase",
-        "aggregating_function": InstanceMetric.prepare_for_control_reference_score(
-            subgroup_column="task_data/variant_type",
-            control_subgroup_types=["original"],
-            comparison_subgroup_types=["paraphrase"],
-            score_calculator=abs_normalized_hedges_g,
-        ),
+        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    }
+    control_comparison = {
+        "subgroup_column": "task_data/variant_type",
+        "control_subgroup_types": ["original"],
+        "comparison_subgroup_types": ["paraphrase"],
+        "control_comparison_score_calculator": abs_normalized_hedges_g,
     }
 
 
