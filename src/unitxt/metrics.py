@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from statistics import mean
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import evaluate
 import numpy
@@ -217,17 +217,6 @@ class MetricWithConfidenceInterval(Metric):
     # done from the individual groups' scores (True), as if each group is represented by one instance whose score instance
     # is the group's aggregated score, or from the whole stream (False), where each resample is then split to
     # groups, the score of which is then computed, and finally averaged with the other groups' scores.
-
-    aggregating: dict = None
-    # How to yield one score, float, from a list of instances: either the whole stream or one group.
-    # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
-    # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
-    # Tyically, to be overridden by the subclasses. If None, then for InstanceMetric - the default of average_item_scores,
-    # and for GlobalMetric -- this is the metric itself.
-    # If not set by subclasses, it is set here to {
-    #     "aggregating_function_name": "mean",
-    #     "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    # }
 
     subgroup_filtering: dict = (
         None  # {"subgroup_column": str, "subgroup_types": List[str]}
@@ -468,7 +457,7 @@ class MetricWithConfidenceInterval(Metric):
                     group_name = dict_get(instance, self.grouping["group_by_field"])
                 except Exception as e:
                     raise ValueError(
-                        f"grouping input arg is not None, grouping is to be empoloyed, however instance {instance} does not contain subfield '{self.grouping['group_by_field']}'"
+                        f"grouping input arg is not None, grouping is to be empoloyed, however instance {instance} does not contain subfield '{group_name}'"
                     ) from e
                 grouped_instances[group_name].append(instance)
         # instances are now grouped by task_data/group_id (generally: by self.grouping["by field"]),
@@ -522,8 +511,8 @@ class MetricWithConfidenceInterval(Metric):
 
         groups_global_scores = {}
         for group_name, group in grouped_instances.items():
-            groups_global_scores[group_name] = {}
             if isinstance(self, InstanceMetric):
+                groups_global_scores[group_name] = {}
                 for score_name in score_names:
                     if isinstance(group, list):  # not split to control and comparison
                         groups_global_scores[group_name][score_name] = self.aggregating[
@@ -544,12 +533,24 @@ class MetricWithConfidenceInterval(Metric):
                             "control_comparison_score_calculator"
                         ](control_scores, comparison_scores)
             elif isinstance(self, GlobalMetric):
-                raise ValueError(
-                    "What are you doing here, nowhere in GlobalMetric is this method invoked"
-                )
+                if isinstance(group, list):
+                    if len(group) == 0:
+                        groups_global_scores[group_name] = np.nan
+                    else:
+                        predictions, references, task_data, group = self.consume_stream(
+                            group
+                        )
+                        self._validate_references_and_prediction(
+                            references, predictions
+                        )
+                        groups_global_scores[group_name] = self._compute(
+                            references=references,
+                            predictions=predictions,
+                            task_data=task_data,
+                        )
             elif isinstance(self, BulkInstanceMetric):
                 raise ValueError(
-                    "What are you doing here, nowhere in BulkInstanceMetric is this method invoked"
+                    "What are you doing here? nowhere in BulkInstanceMetric is this method invoked"
                 )
             else:
                 raise ValueError(
@@ -560,6 +561,52 @@ class MetricWithConfidenceInterval(Metric):
         # the score sits in the group's own global_score (only of the group), named score_name (as the name of the score in
         # the ["score"]["instance"]  section of the instances
         return groups_global_scores
+
+    # currently: if invoked from InstanceMetric, score_name is not None, and result is float
+    # and if invoked from GlobalMetric, score_name is None, and result is dict
+    def average_groups_global_scores(
+        self, instances: List[Dict[str, Any]], score_name: Optional[str] = None
+    ) -> Union[float, Dict]:
+        groups_global_scores = self.score_groups_globally(
+            instances=instances,
+            score_names=[score_name] if score_name is not None else None,
+        )
+        assert len(groups_global_scores) > 0, "Where have all the groups gone?"
+        if len(groups_global_scores) == 1:
+            return next(iter(groups_global_scores.values()))
+
+        if score_name is not None:
+            return nan_mean(
+                [
+                    groups_global_scores[group_name][score_name]
+                    for group_name in groups_global_scores
+                ]
+            )
+        # score_name is None
+        result = defaultdict(list)
+        # average over the groups. Each group global score there is a dict, being the global_score
+        # computed for the group, or nan (if the group nullified or something).
+        # nan-s are excluded, because typically the averaging is via nan_mean
+        # so hereunder we average over the different fields of the dict, each field separately.
+        # for generatily we prepare a recursive averaging here, because some of the fields in that
+        # global score may have a value being a list (like rouge with use_aggregator = False)
+        for _, group_global_score in groups_global_scores.items():
+            if isinstance(group_global_score, dict):
+                for k, v in group_global_score.items():
+                    if isinstance(v, str):
+                        result[k] = v
+                    else:
+                        result[k].append(v)
+            else:
+                assert np.isnan(
+                    group_global_score
+                ), "group global score should be either a dict or np.nan"
+        for k, v in result.items():
+            if isinstance(v, list):
+                # v should be either a str or a list, either a list of float, or a list of lists of floats
+                result[k] = np.array(result[k])
+                result[k] = np.nanmean(result[k], axis=0)
+        return result
 
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
@@ -627,7 +674,10 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instance["score"]["instance"].update(instance_score)
         self._validate_references_and_prediction(references, predictions)
 
-        result = self._compute(references, predictions, task_data)
+        if self.grouping or self.subgroup_filtering or self.control_comparison:
+            result = self.average_groups_global_scores(instances)
+        else:
+            result = self._compute(references, predictions, task_data)
 
         global_score.update(result)
 
@@ -637,9 +687,9 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         )
         global_score.update(confidence_interval)
 
-        for instance in instances:
-            instance["score"]["global"] = global_score
-            yield instance
+        # all instances link to same global_score dictionary object,
+        # no need to update each individually
+        yield from instances
 
     def _compute(
         self,
@@ -813,6 +863,16 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     # compatibility -- reflecting the other input args for aggregating.
     to_score_names: List[str] = None
 
+    # How to yield one score, float, from a list of instances: either the whole stream or one group.
+    # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
+    # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
+    # Tyically, to be overridden by the subclasses. If None, then for InstanceMetric - the default of average_item_scores,
+    # If not set by subclasses, it is set by InstanceMetric to {
+    #     "aggregating_function_name": "mean",
+    #     "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    # }
+    aggregating: dict = None
+
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
@@ -874,22 +934,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             ]
         super().prepare()
 
-    def average_groups_global_scores(
-        self, instances: List[Dict[str, Any]], score_name: str
-    ) -> float:
-        groups_global_scores = self.score_groups_globally(
-            instances=instances, score_names=[score_name]
-        )
-        return nan_mean(
-            [
-                groups_global_scores[group_name][score_name]
-                for group_name in groups_global_scores
-            ]
-        )
-
     # flake8: noqa: C901
-    # flake8: noqa: C408
-    # flake8: noqa: C416
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
 
@@ -966,10 +1011,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             global_score.update(confidence_interval)
 
-        # finally, update all the instances with the global score now all computed:
-        for instance in instances:
-            instance["score"]["global"] = global_score
-
+        # all instances point to this global_score, so no need to update anything in them
         yield from instances
 
     def compute_instance_scores(

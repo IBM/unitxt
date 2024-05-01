@@ -720,10 +720,72 @@ class TestMetrics(UnitxtTestCase):
         global_target = 5 / 6
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
+    def test_rouge_grouping_and_filtering(self):
+        metric = Rouge()
+        references = [
+            ["hello", "there"],
+            ["general kenobi", "general yoda"],
+            ["general kenobi", "general yoda"],
+            ["general kenobi", "general yoda"],
+            ["lieutenant dan", "lieutenant colonel"],
+        ]
+        predictions = [
+            "hello there",
+            "general kenobi",
+            "general kenobi",
+            "general kenobi",
+            "forrest gump",
+        ]
+        task_data = [
+            {"group_id": "group1"},
+            {"group_id": "group2"},
+            {"group_id": "group2"},
+            {"group_id": "group2"},
+            {"group_id": "group3"},
+        ]
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+
+        self.assertAlmostEqual(
+            ((2 / 3) + 3 + 0) / 5, outputs[0]["score"]["global"]["score"]
+        )
+
+        metric.grouping = {
+            "group_by_field": "task_data/group_id",
+            "ci_samples_from_groups_scores": False,
+        }
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        self.assertAlmostEqual(
+            (1 + (2 / 3) + 0) / 3, outputs[0]["score"]["global"]["score"]
+        )
+
+        metric.subgroup_filtering = {
+            "subgroup_column": "task_data/group_id",
+            "subgroup_types": ["group1", "group2"],
+        }
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        self.assertAlmostEqual(
+            (1 + (2 / 3)) / 2, outputs[0]["score"]["global"]["score"]
+        )
+
     def test_rouge_l(self):
         metric = Rouge(
             n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
-            use_aggregator=False,
+            use_aggregator=False,  # returns lists for scores, not any aggregation thereof
             rouge_types=["rougeL"],
         )
         references = [["hello", "there"], ["general kenobi", "general yoda"]]
