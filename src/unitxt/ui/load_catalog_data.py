@@ -31,7 +31,7 @@ def safe_load_json(file):
 
 def get_templates(template_data):
     def get_from_str(template_str):
-        if template_data.endswith(".all"):
+        if template_str.endswith(".all"):
             template_file = get_file_from_item_name(template_str)
             return set(load_json(template_file)["items"])
         return {template_str}
