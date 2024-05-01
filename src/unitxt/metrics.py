@@ -2255,6 +2255,8 @@ class Perplexity(BulkInstanceMetric):
                 self.model_class().from_pretrained(self.model_name).to(self.device)
             )
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            if self.tokenizer.pad_token_id is None:
+                self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             self.single_token_mode = single_token_mode
 
         def compute_lm(
@@ -3348,7 +3350,8 @@ class BinaryMaxF1(F1Binary):
 
         best_thr = -1
         best_f1 = -1
-        for thr in set(float_predictions):
+        thrs = {round(fp, 3) for fp in float_predictions}
+        for thr in thrs:
             new_predictions = [
                 "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
