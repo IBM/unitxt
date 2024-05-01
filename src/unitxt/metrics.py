@@ -1266,11 +1266,12 @@ class F1Binary(F1):
 
     process_single_instances = False
     main_score = "f1_binary"
-    average = "binary"
+    average = None
     pos_classes = {"1", "1.0", "yes", "true"}
     threshold = 0.5
 
     def get_str_id(self, str):
+        self.id_to_str[int(str)] = str
         return int(str)
 
     def compute(
@@ -1284,7 +1285,11 @@ class F1Binary(F1):
         references = [
             ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
         ]
-        return super().compute(references, predictions, task_data)
+        results = super().compute(references, predictions, task_data)
+        return {
+            self.main_score: results.get(f"{self.metric}_1", np.nan),
+            f"{self.main_score}_neg": results.get(f"{self.metric}_0", np.nan),
+        }
 
 
 class RecallBinary(F1Binary):
@@ -3350,20 +3355,32 @@ class BinaryMaxF1(F1Binary):
 
         best_thr = -1
         best_f1 = -1
+        best_thr_neg = -1
+        best_f1_neg = -1
         thrs = {round(fp, 3) for fp in float_predictions}
         for thr in thrs:
             new_predictions = [
                 "1" if float_prediction >= thr else "0"
                 for float_prediction in float_predictions
             ]
-            f1 = super().compute(references, new_predictions, task_data)[
-                self.main_score
-            ]
+            f1_results = super().compute(references, new_predictions, task_data)
+
+            f1 = f1_results[self.main_score]
             if f1 > best_f1:
                 best_f1 = f1
                 best_thr = thr
 
-        return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+            f1_neg = f1_results[f"{self.main_score}_neg"]
+            if f1_neg > best_f1_neg:
+                best_f1_neg = f1_neg
+                best_thr_neg = thr
+
+        return {
+            self.main_score: best_f1,
+            "best_thr_maxf1": best_thr,
+            f"{self.main_score}_neg": best_f1_neg,
+            "best_thr_maxf1_neg": best_thr_neg,
+        }
 
 
 class BinaryAccuracy(InstanceMetric):

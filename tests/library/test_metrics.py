@@ -295,11 +295,15 @@ class TestMetrics(UnitxtTestCase):
         predictions = ["0.8", "1", "0.2", "0", "0.6", "1"]
 
         global_target = 0.8571428571428
+        global_target_neg = 0.8
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["f1_binary_neg"]
+        )
         self.assertEqual("f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_binary", outputs[0]["score"]["instance"]["score_name"])
 
@@ -309,11 +313,15 @@ class TestMetrics(UnitxtTestCase):
         predictions = ["1", "1", "0", "0", "1", "1"]
 
         global_target = 0.75
+        global_target_neg = 1
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["precision_binary_neg"]
+        )
         self.assertEqual(
             "precision_binary", outputs[0]["score"]["global"]["score_name"]
         )
@@ -327,27 +335,46 @@ class TestMetrics(UnitxtTestCase):
         predictions = ["1", "1", "0", "0", "1", "1"]
 
         global_target = 1
+        global_target_neg = 0.666666666
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["recall_binary_neg"]
+        )
         self.assertEqual("recall_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("recall_binary", outputs[0]["score"]["instance"]["score_name"])
 
     def test_max_f1(self):
         metric = BinaryMaxF1()
-        references = [["1"], ["0"], ["0"]]
-        predictions = ["0.3", "0", "0.7"]
+        references = [["1"], ["0"], ["0"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "0"]
 
         global_target = 0.666666666666
+        global_target_neg = 0.8
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["max_f1_binary_neg"]
+        )
         self.assertEqual("max_f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_max_f1_single_class(self):
+        metric = BinaryMaxF1()
+        references = [["0"], ["0"], ["0"], ["0"]]
+        predictions = ["0.3", "0", "0.7", "0"]
+
+        global_target = -1
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_accuracy_binary(self):
         metric = BinaryAccuracy()
