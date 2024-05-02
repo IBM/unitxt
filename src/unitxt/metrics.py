@@ -1529,7 +1529,7 @@ class Spearmanr(HuggingfaceMetric):
     hf_metric_name = "spearmanr"
     main_score = "spearmanr"
     process_single_instances = False
-    prediction_type = "float"
+    prediction_type = "Union[float, str]"
 
     # Spearmanr references are not list
     def _validate_reference(self, reference):
@@ -1537,6 +1537,16 @@ class Spearmanr(HuggingfaceMetric):
             raise ValueError(
                 f"Each reference is expected to be of type '{self.prediction_type}' in {self.get_metric_name()} metric. Received prediction of type {type(reference)}: {reference}"
             )
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [to_float_or_default(r) for r in references]
+        predictions = [to_float_or_default(p) for p in predictions]
+        return super().compute(references, predictions, task_data)
 
 
 class KendallTauMetric(GlobalMetric):
