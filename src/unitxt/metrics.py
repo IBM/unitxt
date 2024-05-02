@@ -2265,7 +2265,12 @@ class Perplexity(BulkInstanceMetric):
             from transformers import AutoTokenizer
 
             self.model_name = model_name
-            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            if torch.cuda.is_available():
+                self.device = torch.device("cuda:0")
+            elif torch.backends.mps.is_available():
+                self.device = torch.device("mps")
+            else:
+                self.device = torch.device("cpu")
             self.model = (
                 self.model_class().from_pretrained(self.model_name).to(self.device)
             )
