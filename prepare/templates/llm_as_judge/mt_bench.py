@@ -12,7 +12,7 @@ add_to_catalog(
         ' for example: "[[5]]".\n\n',
         input_format="[Question]\n{question}\n\n[The Start of Assistant's Answer]"
         "\n{model_output}\n[The End of Assistant's Answer]",
-        output_format="{rating_label}",
+        output_format="[[{rating_label}]]",
         postprocessors=[
             r"processors.extract_mt_bench_judgment",
         ],
