@@ -8,7 +8,10 @@ add_to_catalog(
                 """.strip(),
         output_format="{attribute_value}",
         quantum=0.2,
-        postprocessors=["processors.take_first_non_empty_line"],
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.cast_to_float_return_zero_if_failed",
+        ],
     ),
     "templates.regression.single_text.simple",
     overwrite=True,
@@ -22,7 +25,10 @@ add_to_catalog(
         target_prefix="{attribute_name}:\n",
         quantum=0.2,
         title_fields=["attribute_name"],
-        postprocessors=["processors.take_first_non_empty_line"],
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.cast_to_float_return_zero_if_failed",
+        ],
     ),
     "templates.regression.single_text.title",
     overwrite=True,
