@@ -5,7 +5,7 @@
         "model_output": "str"
     },
     "outputs": {
-        "rating_label": "int"
+        "rating_label": "float"
     },
     "metrics": [
         "metrics.spearman"
