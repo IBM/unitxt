@@ -3,6 +3,8 @@ import os
 from dataclasses import dataclass
 from typing import List, Optional, Union
 
+from genai.schema import HumanMessage, SystemMessage
+
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
 from .settings_utils import get_settings
@@ -64,7 +66,8 @@ class IbmGenAiInferenceEngineParams:
 class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "ibm_genai"
     model_name: str
-    parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
+    max_new_tokens: int = 256
+    # parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
     _requirement = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
@@ -87,10 +90,51 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
-        genai_params = TextGenerationParameters(**self.parameters.__dict__)
+        genai_params = TextGenerationParameters(max_new_tokens=self.max_new_tokens)
         return list(
             self.client.text.generation.create(
                 model_id=self.model_name,
+                inputs=[instance["source"] for instance in dataset],
+                parameters=genai_params,
+            )
+        )
+
+
+class IbmGenAiChatInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+    label: str = "ibm_genai_chat"
+    model_name: str
+    max_new_tokens: int = 256
+    # parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
+    _requirement = {
+        "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
+    }
+
+    def prepare(self):
+        from genai import Client, Credentials
+
+        api_key_env_var_name = "GENAI_KEY"
+        api_key = os.environ.get(api_key_env_var_name)
+        assert api_key is not None, (
+            f"Error while trying to run IbmGenAiInferenceEngine."
+            f" Please set the environment param '{api_key_env_var_name}'."
+        )
+        api_endpoint = os.environ.get("GENAI_KEY")
+        credentials = Credentials(api_key=api_key, api_endpoint=api_endpoint)
+        self.client = Client(credentials=credentials)
+
+        self._assert_allow_passing_data_to_remote_api(self.label)
+
+    def infer(self, dataset):
+        from genai.schema import TextGenerationParameters
+
+        genai_params = TextGenerationParameters(max_new_tokens=self.max_new_tokens)
+        return list(
+            self.client.text.chat.create(
+                model_id=self.model_name,
+                messages=[
+                    SystemMessage(content=""),
+                    HumanMessage(content="Describe the game Chess?"),
+                ],
                 inputs=[instance["source"] for instance in dataset],
                 parameters=genai_params,
             )
@@ -111,7 +155,8 @@ class OpenAiInferenceEngineParams:
 class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "openai"
     model_name: str
-    parameters: OpenAiInferenceEngineParams = OpenAiInferenceEngineParams()
+    max_tokens: int = 1024
+    # parameters: OpenAiInferenceEngineParams = OpenAiInferenceEngineParams()
     _requirement = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
@@ -143,13 +188,13 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
+                # frequency_penalty=self.parameters.frequency_penalty,
+                # presence_penalty=self.parameters.presence_penalty,
+                # max_tokens=self.parameters.max_tokens,
+                # seed=self.parameters.seed,
+                # stop=self.parameters.stop,
+                # temperature=self.parameters.temperature,
+                # top_p=self.parameters.top_p,
             )
             for instance in dataset
         ]
