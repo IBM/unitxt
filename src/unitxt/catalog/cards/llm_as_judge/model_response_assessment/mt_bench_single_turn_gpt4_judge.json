@@ -1,0 +1,62 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "Asaf-Yehudai/mt_bench_gpt_4_judge_single_score",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "score": "rating_label"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "question",
+            "_argv": [
+                "question"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "question/0": "question"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_output",
+            "_argv": [
+                "model_output"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "model_output/0": "model_output"
+            }
+        }
+    ],
+    "task": "tasks.rag.model_response_assessment",
+    "templates": [
+        "templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template"
+    ]
+}
