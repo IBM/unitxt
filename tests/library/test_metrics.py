@@ -758,6 +758,7 @@ class TestMetrics(UnitxtTestCase):
             "group_by_field": "task_data/group_id",
             "ci_samples_from_groups_scores": False,
         }
+        metric.ci_scores = ["rougeL"]
         outputs = apply_metric(
             metric=metric,
             predictions=predictions,
@@ -766,6 +767,30 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(
             (1 + (2 / 3) + 0) / 3, outputs[0]["score"]["global"]["score"]
+        )
+        self.assertAlmostEqual(
+            0.34900897136393977, outputs[0]["score"]["global"]["rougeL_ci_low"]
+        )
+        self.assertAlmostEqual(
+            0.9333333333333332, outputs[0]["score"]["global"]["rougeL_ci_high"]
+        )
+
+        metric.grouping["ci_samples_from_groups_scores"] = True
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        self.assertAlmostEqual(
+            (1 + (2 / 3) + 0) / 3, outputs[0]["score"]["global"]["score"]
+        )
+        self.assertAlmostEqual(
+            0.0, outputs[0]["score"]["global"]["fixed_group_rougeL_ci_low"]
+        )
+        self.assertAlmostEqual(
+            0.8888888888888888,
+            outputs[0]["score"]["global"]["fixed_group_rougeL_ci_high"],
         )
 
         metric.subgroup_filtering = {
@@ -780,6 +805,13 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertAlmostEqual(
             (1 + (2 / 3)) / 2, outputs[0]["score"]["global"]["score"]
+        )
+        self.assertAlmostEqual(
+            0.6666666666666666,
+            outputs[0]["score"]["global"]["fixed_group_rougeL_ci_low"],
+        )
+        self.assertAlmostEqual(
+            1.0, outputs[0]["score"]["global"]["fixed_group_rougeL_ci_high"]
         )
 
     def test_rouge_l(self):
