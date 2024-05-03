@@ -685,47 +685,49 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         # if grouping is None, the whole stream is treated as a single group
         result = self.average_groups_global_scores(instances=instances)
         global_score.update(result)
+
+        # moving on to ci
         score_name = global_score["score_name"]
-        if self.ci_scores is not None:
-            groups_global_scores = self.score_groups_globally(instances=instances)
-            if (
-                self.grouping
-                and self.grouping["ci_samples_from_groups_scores"]
-                and all(
-                    (
-                        group_score is np.nan
-                        or all(
-                            isinstance(group_score[score_name], float)
-                            for score_name in self.ci_scores
-                        )
+        groups_global_scores = self.score_groups_globally(instances=instances)
+        if (
+            self.ci_scores is not None
+            and self.grouping
+            and self.grouping["ci_samples_from_groups_scores"]
+            and all(
+                (
+                    group_score is np.nan
+                    or all(
+                        isinstance(group_score[score_name], float)
+                        for score_name in self.ci_scores
                     )
-                    for group_score in groups_global_scores.values()
                 )
-            ):
-                # a dict having just the "score" field, and in it -- just the "instance" section,
-                # and in that section: all the score_names whose values is the aggregation over that group.
-                # then sample from them, aggregating, over each sample, by simple average.
-                # can be done only over scores that are simple float. if a list of float (as with rouge with use_aggregator = False)
-                # can not then sort the sample by order of their scores, because their scores are lists, and not single float
-                # in the following exclude groups that score to np.nan because they are empty, rather than a dict
-                to_sample_from = [
-                    {"score": {"instance": groups_global_scores[group_name]}}
-                    for group_name in groups_global_scores.keys()
-                    if isinstance(groups_global_scores[group_name], dict)
-                ]
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=to_sample_from,
-                    score_names=list(set(self.ci_scores)),
-                    ci_score_prefix="fixed_group_",
-                    aggregation_func=self.average_item_scores,
-                )
-            else:
-                # todo: change to enable the CI employ the grouped version, and not the
-                # bare metric._compute
-                confidence_interval = self.compute_global_confidence_intervals(
-                    references, predictions, task_data, score_name
-                )
-            global_score.update(confidence_interval)
+                for group_score in groups_global_scores.values()
+            )
+        ):
+            # a dict having just the "score" field, and in it -- just the "instance" section,
+            # and in that section: all the score_names whose values is the aggregation over that group.
+            # then sample from them, aggregating, over each sample, by simple average.
+            # can be done only over scores that are simple float. if a list of float (as with rouge with use_aggregator = False)
+            # can not then sort the sample by order of their scores, because their scores are lists, and not single float
+            # in the following exclude groups that score to np.nan because they are empty, rather than a dict
+            to_sample_from = [
+                {"score": {"instance": groups_global_scores[group_name]}}
+                for group_name in groups_global_scores.keys()
+                if isinstance(groups_global_scores[group_name], dict)
+            ]
+            confidence_interval = self.score_based_confidence_interval(
+                instances=to_sample_from,
+                score_names=list(set(self.ci_scores)),
+                ci_score_prefix="fixed_group_",
+                aggregation_func=self.average_item_scores,
+            )
+        else:
+            # todo: change to enable the CI employ the grouped version, and not the
+            # bare metric._compute
+            confidence_interval = self.compute_global_confidence_intervals(
+                references, predictions, task_data, score_name
+            )
+        global_score.update(confidence_interval)
 
         # all instances link to same global_score dictionary object,
         # no need to update each individually
