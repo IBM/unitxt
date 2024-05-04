@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 import evaluate
 
 from .api import produce
-from .inference import InferenceEngine
+from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 
 
@@ -36,6 +36,21 @@ class LLMAsJudge(BulkInstanceMetric):
         super().prepare()
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
+
+        if isinstance(self.inference_model, OpenAiInferenceEngine):
+            if "format=" in self.recipe:
+                raise ValueError(
+                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                    "not support formatting. Please remove the format definition from the recipe"
+                    " (OpenAi Chat API take care of the formatting automatically)."
+                )
+            if "system_prompt=" in self.recipe:
+                raise ValueError(
+                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                    "not support system prompt. Please remove the system_prompt definition from the recipe"
+                    " (Current implementation of Unitxt does not support this."
+                    " Support will be added in future updates)."
+                )
 
     def compute(
         self,
