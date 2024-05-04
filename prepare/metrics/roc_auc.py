@@ -5,8 +5,8 @@ from unitxt.test_utils.metrics import test_metric
 
 metric = RocAuc()
 
-predictions = ["0.2", "0.8", "1.0"]
-references = [["1.0"], ["0.0"], ["1.0"]]
+predictions = [0.2, 0.8, 1.0]
+references = [[1.0], [0.0], [1.0]]
 
 instance_targets = [{"roc_auc": np.nan, "score": np.nan, "score_name": "roc_auc"}] * 3
 global_targets = {
