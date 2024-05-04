@@ -1,3 +1,4 @@
+import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.operator import SequentialOperator
@@ -293,6 +294,23 @@ add_to_catalog(
         ]
     ),
     "processors.cast_to_float_return_zero_if_failed",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": np.nan},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_nan_if_failed",
     overwrite=True,
 )
 
