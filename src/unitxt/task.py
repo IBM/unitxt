@@ -3,7 +3,13 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
 from .operator import StreamInstanceOperator
-from .type_utils import isoftype, parse_type_string, verify_required_schema
+from .type_utils import (
+    get_args,
+    get_origin,
+    isoftype,
+    parse_type_string,
+    verify_required_schema,
+)
 
 
 class Tasker:
@@ -79,6 +85,10 @@ class FormTask(Tasker, StreamInstanceOperator):
                 prediction_type == metric_prediction_type
                 or prediction_type == Any
                 or metric_prediction_type == Any
+                or (
+                    get_origin(metric_prediction_type) is Union
+                    and prediction_type in get_args(metric_prediction_type)
+                )
             ):
                 continue
 
