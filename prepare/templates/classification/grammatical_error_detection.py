@@ -11,6 +11,7 @@ add_to_catalog(
             "processors.take_first_word",
             "processors.lower_case",
             "processors.yes_no_to_int",
+            "processors.cast_to_float_return_nan_if_failed",
         ],
     ),
     "templates.grammatical_error_detection.yes_no",
