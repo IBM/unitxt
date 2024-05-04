@@ -769,10 +769,10 @@ class TestMetrics(UnitxtTestCase):
             (1 + (2 / 3) + 0) / 3, outputs[0]["score"]["global"]["score"]
         )
         self.assertAlmostEqual(
-            0.34900897136393977, outputs[0]["score"]["global"]["rougeL_ci_low"]
+            0.37875517762310357, outputs[0]["score"]["global"]["rougeL_ci_low"]
         )
         self.assertAlmostEqual(
-            0.9333333333333332, outputs[0]["score"]["global"]["rougeL_ci_high"]
+            0.8809773478805832, outputs[0]["score"]["global"]["rougeL_ci_high"]
         )
 
         metric.grouping["ci_samples_from_groups_scores"] = True

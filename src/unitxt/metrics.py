@@ -403,12 +403,19 @@ class MetricWithConfidenceInterval(Metric):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
             def metric(sample_refs, sample_preds, sample_task_data):
+                insts = [
+                    {
+                        "references": sample_ref,
+                        "prediction": sample_pred,
+                        "task_data": sample_taskd,
+                    }
+                    for (sample_ref, sample_pred, sample_taskd) in zip(
+                        sample_refs, sample_preds, sample_task_data
+                    )
+                ]
                 try:
-                    return self._compute(
-                        references=sample_refs,
-                        predictions=sample_preds,
-                        task_data=sample_task_data,
-                    )["score"]
+                    to_ret = self.average_groups_global_scores(instances=insts)
+                    return to_ret["score"]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
@@ -682,7 +689,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instance["score"]["instance"].update(instance_score)
         self._validate_references_and_prediction(references, predictions)
 
-        # if grouping is None, the whole stream is treated as a single group
+        # When grouping is None, the whole stream is treated as a single group
         result = self.average_groups_global_scores(instances=instances)
         global_score.update(result)
 
@@ -704,12 +711,17 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 for group_score in groups_global_scores.values()
             )
         ):
-            # a dict having just the "score" field, and in it -- just the "instance" section,
-            # and in that section: all the score_names whose values is the aggregation over that group.
-            # then sample from them, aggregating, over each sample, by simple average.
-            # can be done only over scores that are simple float. if a list of float (as with rouge with use_aggregator = False)
-            # can not then sort the sample by order of their scores, because their scores are lists, and not single float
-            # in the following exclude groups that score to np.nan because they are empty, rather than a dict
+            # From each group score, generate one dict having just the "score" field, and in it -- just the "instance" section,
+            # being the groups own global scores: all the score_names the value of each is the result of applying metric
+            # over the instances of that group.
+            # Then, sample from these instances, then yield a score for each sample by a simple average of these instances' scores
+            # (independent of metric, which was only relevant for the group's own global score), via np.nanmean, axis=0,
+            # and finally, per the CI's roadmap, sort the samples' scores, and returun the percentiles of both ends.
+            # To this end, the sample's score needs to be a float (to be sortable with its 'colleagues'), and to this end
+            # (going backward on np.nanmean, axis=0), the score in each group's own global score needs to be a float and not
+            # a list of floats (as is the case, for example with rouge with use_aggregator = False).
+            #
+            # The following excludes groups that score to np.nan because they are empty(due to filtering), rather than a dict
             to_sample_from = [
                 {"score": {"instance": groups_global_scores[group_name]}}
                 for group_name in groups_global_scores.keys()
@@ -722,8 +734,6 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 aggregation_func=self.average_item_scores,
             )
         else:
-            # todo: change to enable the CI employ the grouped version, and not the
-            # bare metric._compute
             confidence_interval = self.compute_global_confidence_intervals(
                 references, predictions, task_data, score_name
             )
