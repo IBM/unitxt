@@ -3,7 +3,7 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs={"question": "str", "model_output": "str", "reference": "str"},
+        inputs={"question": "str", "model_output": "str", "reference_answer": "str"},
         outputs={"rating_label": "float"},
         metrics=["metrics.spearman"],
     ),
