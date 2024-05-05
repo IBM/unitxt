@@ -156,7 +156,7 @@ class ChatTemplate(InputOutputTemplate):
     system_role_label: str
     dialog_field: str
     turns_separator: str = "\n\n"
-    label_separator: str = ""
+    label_separator: str = " "
 
     def process_dialog(
         self, dialog: List[Tuple[Literal["user", "assistant", "system"], str]]
@@ -168,11 +168,11 @@ class ChatTemplate(InputOutputTemplate):
             (turn_type, turn_text) = turn
             turns_separator = "" if i == 0 else self.turns_separator
             if turn_type == "user":
-                dialog_str += f"{turns_separator}{self.user_role_label} {self.label_separator}{turn_text}"
+                dialog_str += f"{turns_separator}{self.user_role_label}{self.label_separator}{turn_text}"
             elif turn_type == "assistant":
-                dialog_str += f"{turns_separator}{self.assistant_role_label} {self.label_separator}{turn_text}"
+                dialog_str += f"{turns_separator}{self.assistant_role_label}{self.label_separator}{turn_text}"
             elif turn_type == "system":
-                dialog_str += f"{turns_separator}{self.system_role_label} {self.label_separator}{turn_text}"
+                dialog_str += f"{turns_separator}{self.system_role_label}{self.label_separator}{turn_text}"
         return dialog_str
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
