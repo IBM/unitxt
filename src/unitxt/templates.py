@@ -1,6 +1,6 @@
 import json
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from .collections import ListCollection
 from .dataclass import NonPositionalField
@@ -148,6 +148,37 @@ class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
             outputs, "output", self.reference, "reference", serialize=True
         )
         return target, [reference]
+
+
+class ChatTemplate(InputOutputTemplate):
+    user_role_label: str
+    assistant_role_label: str
+    system_role_label: str
+    dialog_field: str
+    turns_separator: str = "\n\n"
+    label_separator: str = ""
+
+    def process_dialog(
+        self, dialog: List[Tuple[Literal["user", "assistant", "system"], str]]
+    ):
+        # TODO: update isoftype method to support Literal verification
+        assert isoftype(dialog, List[Tuple[str, str]])
+        dialog_str = ""
+        for i, turn in enumerate(dialog):
+            (turn_type, turn_text) = turn
+            turns_separator = "" if i == 0 else self.turns_separator
+            if turn_type == "user":
+                dialog_str += f"{turns_separator}{self.user_role_label}:{self.label_separator}{turn_text}"
+            elif turn_type == "assistant":
+                dialog_str += f"{turns_separator}{self.assistant_role_label}:{self.label_separator}{turn_text}"
+            elif turn_type == "system":
+                dialog_str += f"{turns_separator}{self.system_role_label}:{self.label_separator}{turn_text}"
+        return dialog
+
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        inputs[self.dialog_field] = self.process_dialog(inputs[self.dialog_field])
+
+        return super().inputs_to_source(inputs)
 
 
 class MultipleChoiceTemplate(Template):
