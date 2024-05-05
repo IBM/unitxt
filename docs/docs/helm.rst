@@ -10,12 +10,11 @@ Running Unitxt with HELM
 
 Unitxt can be integrated with :ref:`HELM <https://github.com/stanford-crfm/helm/>`, enabling you to select and evaluate models from the extensive HELM models catalog with data recipes created by Unitxt.
 
-First, install HELM from the source repository (this is necessary until the next HELM release is available):
+First, install HELM at version v0.5.0 or later:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/stanford-crfm/helm.git
-    pip install evaluate
+    pip install --upgrade 'crfm-helm[unitxt]>=0.5.0'
 
 Next, define your preferred Unitxt recipe:
 
