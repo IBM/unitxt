@@ -16,3 +16,5 @@ llama-index-core
 llama-index-llms-openai
 pytrec-eval
 SentencePiece
+openai
+ibm-generative-ai
