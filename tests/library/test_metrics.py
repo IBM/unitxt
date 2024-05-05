@@ -39,6 +39,7 @@ from unitxt.metrics import (
     LlamaIndexCorrectness,
     MaxAccuracy,
     NormalizedSacrebleu,
+    Perplexity,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -974,6 +975,23 @@ class TestMetrics(UnitxtTestCase):
         )
         target = 1.0
         self.assertEqual(outputs[0]["score"]["global"]["score"], target)
+
+    def test_perplexity(self):
+        prediction = ["who are we?"]
+        references = [["we are the world"]]
+
+        perplexity_question = Perplexity(
+            model_name="google/flan-t5-small",
+            source_template="Generate a question based on the given content: {reference}",
+            target_template="{prediction}",
+        )
+        first_instance_target = 0.059865921735763
+        outputs = apply_metric(
+            metric=perplexity_question, predictions=prediction, references=references
+        )
+        self.assertAlmostEqual(
+            first_instance_target, outputs[0]["score"]["instance"]["score"]
+        )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):

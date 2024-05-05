@@ -144,7 +144,6 @@ generate_completions(
     },
 )
 
-
 generate_questions(
     instances={
         "who are we?": [  # prediction

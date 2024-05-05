@@ -1,14 +1,15 @@
 {
     "type": "form_task",
-    "inputs": [
-        "text",
-        "text_type",
-        "classes",
-        "type_of_classes"
-    ],
-    "outputs": [
-        "labels"
-    ],
+    "inputs": {
+        "text": "str",
+        "text_type": "str",
+        "classes": "List[str]",
+        "type_of_classes": "str"
+    },
+    "outputs": {
+        "labels": "List[str]"
+    },
+    "prediction_type": "List[str]",
     "metrics": [
         "metrics.f1_micro_multi_label",
         "metrics.accuracy",

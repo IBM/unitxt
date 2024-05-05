@@ -46,6 +46,14 @@ class RegexParser(FieldOperator):
         return re.findall(self.regex, text)
 
 
+class ExtractWithRegex(RegexParser):
+    def process_value(self, text: Any) -> Any:
+        matches = super().process_value(text)
+        if matches:
+            return matches[0]
+        return ""
+
+
 class LoadJson(FieldOperator):
     def process_value(self, text: Any) -> Any:
         try:
