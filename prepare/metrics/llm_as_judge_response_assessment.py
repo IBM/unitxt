@@ -1,10 +1,10 @@
 from unitxt import add_to_catalog
 from unitxt.inference import (
+    HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 
-"""
 inference_model = HFPipelineBasedInferenceEngine(
     model_name="google/flan-t5-large", max_new_tokens=32
 )
@@ -25,7 +25,7 @@ add_to_catalog(
     "metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template",
     overwrite=True,
 )
-"""
+
 
 model_list = ["meta-llama/llama-3-8b-instruct", "meta-llama/llama-3-70b-instruct"]
 
