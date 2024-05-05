@@ -8,7 +8,7 @@ add_to_catalog(
         user_role_label="### User:",
         system_role_label="### System:",
         turns_separator="\n\n",
-        label_separator="",
+        label_separator="\n",
         instruction="Please act as an impartial judge and evaluate the quality of the response"
         " provided by an AI assistant to the user question displayed below. Your evaluation should"
         " consider factors such as the helpfulness, relevance, accuracy, depth, creativity, "
