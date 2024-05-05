@@ -878,6 +878,19 @@ class TestMetrics(UnitxtTestCase):
         global_target = [1.0, 1.0, 1.0, 2 / 3, 0.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["rougeL"])
 
+        metric.subgroup_filtering = {
+            "subgroup_column": "task_data/group_id",
+            "subgroup_types": ["group1", "group2"],
+        }
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        global_target = [1.0, 1.0, 1.0, 2 / 3]
+        self.assertListEqual(global_target, outputs[0]["score"]["global"]["rougeL"])
+
     def test_token_overlap(self):
         metric = TokenOverlap()
         predictions = ["hello there general dude", "foo bar foobar"]
