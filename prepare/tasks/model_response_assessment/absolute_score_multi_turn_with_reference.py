@@ -3,7 +3,10 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs={"dialog": "List[Tuple[str, str]]", "reference_answer": "str"},
+        inputs={
+            "dialog": "List[Tuple[str, str]]",
+            "reference_dialog": "List[Tuple[str, str]]",
+        },
         outputs={"rating_label": "float"},
         metrics=["metrics.spearman"],
     ),
