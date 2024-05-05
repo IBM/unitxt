@@ -17,6 +17,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_judgment",
         ],
     ),
-    "templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template",
+    "templates.model_response_assessment.mt_bench_absolute_score_single_turn",
     overwrite=True,
 )

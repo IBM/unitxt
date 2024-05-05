@@ -31,6 +31,6 @@ card = TaskCard(
 test_card(card, demos_taken_from="test", strict=False)
 add_to_catalog(
     card,
-    "cards.llm_as_judge.model_response_assessment.mt_bench_single_turn_gpt4_judge",
+    "cards.llm_as_judge.model_response_assessment.mt_bench_first_turn_only_gpt4_judge_single_score",
     overwrite=True,
 )
