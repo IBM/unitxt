@@ -19,8 +19,7 @@ jobs:
         with:
           python-version: '3.8'
           cache: 'pip' # caching pip dependencies
-      - run: pip install git+https://github.com/stanford-crfm/helm.git
-             pip install evaluate
+      - run: pip install --upgrade 'crfm-helm[unitxt]>=0.5.0'
 
       - name: Test Helm
         run: utils/run_helm.sh
