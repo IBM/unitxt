@@ -67,7 +67,7 @@ error_detection_card = TaskCard(
         ),
         Shuffle(page_size=sys.maxsize),
     ],
-    task=f"tasks.classification.binary[metrics=[{','.join(error_detection_metrics)}]]",
+    task=f"tasks.classification.binary.zero_or_one[metrics=[{','.join(error_detection_metrics)}]]",
     templates="templates.grammatical_error_detection.all",
 )
 

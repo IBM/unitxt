@@ -1,0 +1,21 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "cast_fields",
+            "fields": {
+                "prediction": "float"
+            },
+            "failure_defaults": {
+                "prediction": 0.0
+            }
+        },
+        {
+            "type": "cast_fields",
+            "fields": {
+                "references": "float"
+            },
+            "process_every_value": true
+        }
+    ]
+}

@@ -10,17 +10,6 @@
                     "references"
                 ]
             ]
-        },
-        {
-            "type": "cast_fields",
-            "fields": {
-                "prediction": "float",
-                "references": "float"
-            },
-            "failure_defaults": {
-                "prediction": 0.0
-            },
-            "use_nested_query": true
         }
     ],
     "metric": {

@@ -6,7 +6,7 @@ from tests.utils import UnitxtTestCase
 
 class TestEvalUtils(UnitxtTestCase):
     df = pd.DataFrame(
-        [["1", ["0"]], ["0", ["1"]], ["0", ["0"]]], columns=["prediction", "references"]
+        [[1.0, [0.0]], [0.0, [1.0]], [0.0, [0.0]]], columns=["prediction", "references"]
     )
     metrics = ["metrics.accuracy", "metrics.spearman"]
 

@@ -137,7 +137,7 @@ class InputOutputTemplate(Template):
         return target, references
 
 
-class InputOutputReferenceTemplate(InputOutputTemplate):
+class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
     reference: str
 
     def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:

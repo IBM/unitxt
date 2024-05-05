@@ -26,8 +26,8 @@
             "type": "add_fields",
             "fields": {
                 "attribute_name": "similarity",
-                "min_value": "1",
-                "max_value": "5"
+                "min_value": 1.0,
+                "max_value": 5.0
             }
         }
     ],

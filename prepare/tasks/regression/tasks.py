@@ -3,8 +3,14 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "attribute_name", "min_value", "max_value"],
-        outputs=["attribute_value"],
+        inputs={
+            "text": "str",
+            "attribute_name": "str",
+            "min_value": "Optional[float]",
+            "max_value": "Optional[float]",
+        },
+        outputs={"attribute_value": "float"},
+        prediction_type="Any",
         metrics=["metrics.spearman"],
         augmentable_inputs=["text"],
     ),
@@ -14,8 +20,15 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["text1", "text2", "attribute_name", "min_value", "max_value"],
-        outputs=["attribute_value"],
+        inputs={
+            "text1": "str",
+            "text2": "str",
+            "attribute_name": "str",
+            "min_value": "Optional[float]",
+            "max_value": "Optional[float]",
+        },
+        outputs={"attribute_value": "float"},
+        prediction_type="Any",
         metrics=["metrics.spearman"],
         augmentable_inputs=["text1", "text2"],
     ),

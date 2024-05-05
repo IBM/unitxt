@@ -1,8 +1,8 @@
 from typing import Dict, List, Tuple
 
 from unitxt.templates import (
-    InputOutputReferenceTemplate,
     InputOutputTemplate,
+    InputOutputTemplateWithCustomTarget,
     KeyValTemplate,
     MultiLabelTemplate,
     MultipleChoiceTemplate,
@@ -276,7 +276,7 @@ class TestTemplates(UnitxtTestCase):
         )
 
     def test_input_output_reference_template_and_standard_template(self):
-        template = InputOutputReferenceTemplate(
+        template = InputOutputTemplateWithCustomTarget(
             input_format="This is my text:'{text}'",
             output_format="{label}",
             instruction="Classify sentiment into: {labels}.\n",

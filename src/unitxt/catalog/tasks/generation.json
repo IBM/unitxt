@@ -1,13 +1,14 @@
 {
     "type": "form_task",
-    "inputs": [
-        "input",
-        "type_of_input",
-        "type_of_output"
-    ],
-    "outputs": [
-        "output"
-    ],
+    "inputs": {
+        "input": "str",
+        "type_of_input": "str",
+        "type_of_output": "str"
+    },
+    "outputs": {
+        "output": "str"
+    },
+    "prediction_type": "str",
     "metrics": [
         "metrics.normalized_sacrebleu"
     ],
