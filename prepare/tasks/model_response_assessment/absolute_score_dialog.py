@@ -7,6 +7,6 @@ add_to_catalog(
         outputs={"rating_label": "float"},
         metrics=["metrics.spearman"],
     ),
-    "tasks.rag.model_response_assessment_chat",
+    "tasks.model_response_assessment.absolute_score_dialog",
     overwrite=True,
 )
