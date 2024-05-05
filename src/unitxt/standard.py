@@ -187,6 +187,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         return list(multi_stream["__inference__"])
 
     def prepare(self):
+        # To avoid the Python's mutable default list trap, we set the default value to None
+        # and then set it to an empty list if it is None.
+        if self.card.preprocess_steps is None:
+            self.card.preprocess_steps = []
+
         self.set_pipelines()
 
         loader = self.card.loader
@@ -194,6 +199,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             loader.loader_limit = self.loader_limit
             logger.info(f"Loader line limit was set to  {self.loader_limit}")
         self.loading.steps.append(loader)
+
+        # This is required in case loader_limit is not enforced by the loader
+        if self.loader_limit:
+            self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         self.metadata.steps.append(
             AddFields(
@@ -216,7 +225,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
-        if self.demos_pool_size is not None:
+        if self.num_demos > 0:
             self.processing.steps.append(
                 CreateDemosPool(
                     from_split=self.demos_taken_from,
@@ -225,8 +234,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     remove_targets_from_source_split=self.demos_removed_from_data,
                 )
             )
-
-        if self.num_demos > 0:
             if self.sampler is None:
                 if self.card.sampler is None:
                     raise ValueError(

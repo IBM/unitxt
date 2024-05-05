@@ -44,6 +44,7 @@ target-version = "py38"
 "tests/library/test_loaders.py" = ["N802", "N803"]
 "tests/library/test_dataclass.py" = ["F811"]
 "src/unitxt/validate.py" = ["B024"]
+"src/unitxt/standard.py" = ["C901"]
 "src/unitxt/type_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]

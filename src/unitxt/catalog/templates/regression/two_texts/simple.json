@@ -4,6 +4,7 @@
     "output_format": "{attribute_value}",
     "quantum": 0.2,
     "postprocessors": [
-        "processors.take_first_non_empty_line"
+        "processors.take_first_non_empty_line",
+        "processors.cast_to_float_return_zero_if_failed"
     ]
 }

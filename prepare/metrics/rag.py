@@ -396,7 +396,6 @@ context_perplexity = MetricPipeline(
 )
 add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
 
-
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
     ("metrics.rag.k_precision", "metrics.token_overlap"),
