@@ -58,7 +58,7 @@ class TestTasks(UnitxtTestCase):
             inputs={"input": "str"},
             outputs={"label": "str"},
             prediction_type="str",
-            metrics=["metrics.wer", "metrics.rouge", "metrics.roc_auc"],
+            metrics=["metrics.wer", "metrics.rouge"],
         )
 
         operator.check_metrics_type()

@@ -9,7 +9,7 @@
         "class": "str",
         "label": "int"
     },
-    "prediction_type": "str",
+    "prediction_type": "float",
     "metrics": [
         "metrics.accuracy",
         "metrics.f1_binary"
