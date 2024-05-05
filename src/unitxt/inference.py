@@ -1,9 +1,7 @@
 import abc
 import os
-from dataclasses import dataclass
-from typing import List, Optional, Union
-
-from genai.schema import HumanMessage, SystemMessage
+from dataclasses import field
+from typing import List, Literal, Optional, Union
 
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
@@ -49,9 +47,8 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         ]
 
 
-@dataclass()
-class IbmGenAiInferenceEngineParams:
-    decoding_method: str = None
+class IbmGenAiInferenceEngineParams(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
     max_new_tokens: Optional[int] = None
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
@@ -66,8 +63,9 @@ class IbmGenAiInferenceEngineParams:
 class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "ibm_genai"
     model_name: str
-    max_new_tokens: int = 256
-    # parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
+    parameters: IbmGenAiInferenceEngineParams = field(
+        default_factory=IbmGenAiInferenceEngineParams
+    )
     _requirement = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
@@ -90,7 +88,19 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
-        genai_params = TextGenerationParameters(max_new_tokens=self.max_new_tokens)
+        genai_params = TextGenerationParameters(
+            max_new_tokens=self.parameters.max_new_tokens,
+            min_new_tokens=self.parameters.min_new_tokens,
+            random_seed=self.parameters.random_seed,
+            repetition_penalty=self.parameters.repetition_penalty,
+            stop_sequences=self.parameters.stop_sequences,
+            temperature=self.parameters.temperature,
+            top_p=self.parameters.top_p,
+            top_k=self.parameters.top_k,
+            typical_p=self.parameters.typical_p,
+            decoding_method=self.parameters.decoding_method,
+        )
+
         return list(
             self.client.text.generation.create(
                 model_id=self.model_name,
@@ -100,49 +110,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         )
 
 
-class IbmGenAiChatInferenceEngine(InferenceEngine, PackageRequirementsMixin):
-    label: str = "ibm_genai_chat"
-    model_name: str
-    max_new_tokens: int = 256
-    # parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
-    _requirement = {
-        "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
-    }
-
-    def prepare(self):
-        from genai import Client, Credentials
-
-        api_key_env_var_name = "GENAI_KEY"
-        api_key = os.environ.get(api_key_env_var_name)
-        assert api_key is not None, (
-            f"Error while trying to run IbmGenAiInferenceEngine."
-            f" Please set the environment param '{api_key_env_var_name}'."
-        )
-        api_endpoint = os.environ.get("GENAI_KEY")
-        credentials = Credentials(api_key=api_key, api_endpoint=api_endpoint)
-        self.client = Client(credentials=credentials)
-
-        self._assert_allow_passing_data_to_remote_api(self.label)
-
-    def infer(self, dataset):
-        from genai.schema import TextGenerationParameters
-
-        genai_params = TextGenerationParameters(max_new_tokens=self.max_new_tokens)
-        return list(
-            self.client.text.chat.create(
-                model_id=self.model_name,
-                messages=[
-                    SystemMessage(content=""),
-                    HumanMessage(content="Describe the game Chess?"),
-                ],
-                inputs=[instance["source"] for instance in dataset],
-                parameters=genai_params,
-            )
-        )
-
-
-@dataclass
-class OpenAiInferenceEngineParams:
+class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
@@ -155,8 +123,9 @@ class OpenAiInferenceEngineParams:
 class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "openai"
     model_name: str
-    max_tokens: int = 1024
-    # parameters: OpenAiInferenceEngineParams = OpenAiInferenceEngineParams()
+    parameters: OpenAiInferenceEngineParams = field(
+        default_factory=OpenAiInferenceEngineParams
+    )
     _requirement = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
@@ -188,13 +157,13 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                     }
                 ],
                 model=self.model_name,
-                # frequency_penalty=self.parameters.frequency_penalty,
-                # presence_penalty=self.parameters.presence_penalty,
-                # max_tokens=self.parameters.max_tokens,
-                # seed=self.parameters.seed,
-                # stop=self.parameters.stop,
-                # temperature=self.parameters.temperature,
-                # top_p=self.parameters.top_p,
+                frequency_penalty=self.parameters.frequency_penalty,
+                presence_penalty=self.parameters.presence_penalty,
+                max_tokens=self.parameters.max_tokens,
+                seed=self.parameters.seed,
+                stop=self.parameters.stop,
+                temperature=self.parameters.temperature,
+                top_p=self.parameters.top_p,
             )
             for instance in dataset
         ]
