@@ -22,15 +22,15 @@ card = TaskCard(
         Apply("model_output", function=ast.literal_eval, to_field="model_output"),
         CopyFields(field_to_field={"model_output/0": "model_output"}),
     ],
-    task="tasks.rag.model_response_assessment",
+    task="tasks.model_response_assessment.absolute_score_single_turn",
     templates=[
-        "templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template"
+        "templates.model_response_assessment.mt_bench_absolute_score_single_turn"
     ],
 )
 
 test_card(card, demos_taken_from="test", strict=False)
 add_to_catalog(
     card,
-    "cards.llm_as_judge.model_response_assessment.mt_bench_first_turn_only_gpt4_judge_single_score",
+    "cards.model_response_assessment.mt_bench_absolute_score_first_turn_only_gpt4_judge",
     overwrite=True,
 )

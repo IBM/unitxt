@@ -1,0 +1,55 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "Asaf-Yehudai/mt_bench_gpt_4_judge_single_score",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 2
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "score": "rating_label"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_input",
+            "_argv": [
+                "model_input"
+            ]
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_output",
+            "_argv": [
+                "model_output"
+            ]
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "model_output",
+            "to_field": "dialog"
+        }
+    ],
+    "task": "tasks.model_response_assessment.absolute_score_dialog",
+    "templates": [
+        "templates.model_response_assessment.mt_bench_absolute_score_dialog"
+    ]
+}
