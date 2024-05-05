@@ -816,7 +816,9 @@ class TestMetrics(UnitxtTestCase):
 
     def test_rouge_l(self):
         metric = Rouge(
-            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
+            n_resamples=None,
+            # disable confidence interval calculation which fails for this metric configuration,
+            # since "score" is not a float, but a list of floats
             use_aggregator=False,  # returns lists for scores, not any aggregation thereof
             rouge_types=["rougeL"],
         )
@@ -827,6 +829,54 @@ class TestMetrics(UnitxtTestCase):
         )
         global_target = [2 / 3, 1.0]
         self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_rouge_l_grouping(self):
+        metric = Rouge(
+            n_resamples=None,
+            # disable confidence interval calculation which fails for this metric configuration,
+            # since "score" is not a float, but a list of floats
+            use_aggregator=False,  # returns lists for scores, not any aggregation thereof
+            rouge_types=["rougeL"],
+        )
+        references = [
+            ["general kenobi", "general yoda"],
+            ["hello", "there"],
+            ["general kenobi", "general yoda"],
+            ["lieutenant dan", "lieutenant colonel"],
+            ["general kenobi", "general yoda"],
+        ]
+        predictions = [
+            "general kenobi",
+            "hello there",
+            "general kenobi",
+            "forrest gump",
+            "general kenobi",
+        ]
+        task_data = [
+            {"group_id": "group1"},
+            {"group_id": "group2"},
+            {"group_id": "group1"},
+            {"group_id": "group3"},
+            {"group_id": "group1"},
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = [1.0, 2 / 3, 1.0, 0.0, 1.0]
+        self.assertListEqual(global_target, outputs[0]["score"]["global"]["rougeL"])
+
+        metric.grouping = {
+            "group_by_field": "task_data/group_id",
+            "ci_samples_from_groups_scores": False,
+        }
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        global_target = [1.0, 1.0, 1.0, 2 / 3, 0.0]
+        self.assertListEqual(global_target, outputs[0]["score"]["global"]["rougeL"])
 
     def test_token_overlap(self):
         metric = TokenOverlap()

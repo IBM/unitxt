@@ -222,9 +222,11 @@ class MetricWithConfidenceInterval(Metric):
     # "group_by_field" which specifies the field in the instance whose value determines the group to which the instance belongs.
     # example: "task_data/group_id"
     # the second field of grouping, "ci_samples_from_groups_scores", is a boolean specifying whether resampling should be
-    # done from the individual groups' scores (True), as if each group is represented by one instance whose score instance
-    # is the group's aggregated score, or from the whole stream (False), where each resample is then split to
-    # groups, the score of which is then computed, and finally averaged with the other groups' scores.
+    # done from the individual groups' scores (True), as if each group is represented by one instance whose
+    # instance["score"]["instance"][score_name] is the group's aggregated score for score_name,
+    # Or from the whole stream (False), where each resample is then split to
+    # groups, the score of which is then computed, and finally averaged with the other groups' scores, as done
+    # here for the original whole stream.
 
     subgroup_filtering: dict = (
         None  # {"subgroup_column": str, "subgroup_types": List[str]}
@@ -599,28 +601,34 @@ class MetricWithConfidenceInterval(Metric):
             )
         # score_name is None
         result = defaultdict(list)
-        # average over the groups. Each group global score there is a dict, being the global_score
-        # computed for the group, or nan (if the group nullified or something).
+        # Average over the groups. Each group's global score is a dict, being the global_score
+        # computed for the group (as if it were a stream), or nan (if the group nullified or something).
         # nan-s are excluded, because typically the averaging is via nan_mean
         # so hereunder we average over the different fields of the dict, each field separately.
-        # for generatily we prepare a recursive averaging here, because some of the fields in that
-        # global score may have a value being a list (like rouge with use_aggregator = False)
+        # We prepare for a score being a string (and expected to be the same for all groups, like
+        # "score_name"), a float (which we average) or a list (which we concatenate, like the lists
+        # that rouge returns for use_aggregator=False)
+        fields_to_average = set()
         for _, group_global_score in groups_global_scores.items():
             if isinstance(group_global_score, dict):
                 for k, v in group_global_score.items():
                     if isinstance(v, str):
                         result[k] = v
-                    else:
+                    elif isinstance(v, float):
+                        fields_to_average.add(k)
                         result[k].append(v)
+                    else:
+                        assert isoftype(
+                            v, List[float]
+                        ), f"unexpected type of score {v} in group's score field {k}"
+                        result[k].extend(v)
             else:
                 assert np.isnan(
                     group_global_score
                 ), "group global score should be either a dict or np.nan"
         for k, v in result.items():
-            if isinstance(v, list):
-                # v should be either a str or a list, either a list of float, or a list of lists of floats
-                result[k] = np.array(result[k])
-                result[k] = np.nanmean(result[k], axis=0)
+            if k in fields_to_average:
+                result[k] = np.nanmean(v)
         return result
 
 
