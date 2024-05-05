@@ -8,6 +8,6 @@
             "max_new_tokens": 252
         }
     },
-    "recipe": "card=cards.rag.model_response_assessment.llm_as_judge_metric_absolute_score_single_turn,template=templates.model_response_assessment.mt_bench_absolute_score_single_turn,demos_pool_size=0,num_demos=0",
+    "recipe": "card=cards.rag.model_response_assessment.llm_as_judge_metric_absolute_score_single_turn,template=templates.model_response_assessment.mt_bench_absolute_score_single_turn,format=formats.llama3_chat,demos_pool_size=0,num_demos=0",
     "main_score": "llm_as_judge_metric_absolute_score_single_turn_mt_bench_template_using_llama_3_8b_instruct_on_ibm_genai"
 }
