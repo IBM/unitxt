@@ -9,37 +9,220 @@
 Adding Metrics ✨
 =====================================
 
-In this section we will add brand new stream operators and metrics
-to use in our processing pipelines.
+Unitxt support a large collection of built in metrics, from classifical ones such as 
+rouge, bleu, f1 to embedding based score like SentenceBert and Bert score, as well as 
+llm as judges using local or API based models.   
 
+You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
+In this section we will understand Unitxt metrics and learn how to add new metrics.
 
-Adding a new metric
+Metric Inputs
 -------------------
 
-Create a new class that extends the `Metric` or any other :ref:`Metric <metrics>` class.
+Unitxt metrics receive three inputs for each instance:
+
+1. Prediction.  The prediction passed to the metric is not the raw textual prediction
+returned by the model, but rather the processed prediction, after applying the post processors
+defined by the template.  The role of the template's post processor is to convert the output
+of the model to the required type of the metrics.  For example, a spearman metric expects a float 
+prediction.  A post processor in the template will cast the string input to a float, and return NaN
+if the string can not be converted to a float.  Another example, a multi-label f1 expects a list of 
+string class names as predictions.   The post processor may convert the string output into a list
+(e.g. by splitting using a separator).
+
+2. References (optional).  This is a list of gold references, from the same type of the prediction.
+For example, in multi-label f1, it is the correct list of string class labels.
+The references are created by the template and converted to the the right type by the template's post processors.
+
+3. Task data (optional) - all the input and output fields of a task as a dictionary. 
+The input fields can be used to create reference-less metrics. 
+
+
+
+In the rest of the section, we will assume we want to create a new metric for the 
+task of calculating of the sum of integers (see  :ref:`adding task <task>`.)
+
+It's important that all processing will be done in the template's post processor and not in the metric,
+because different templates may require different processing.  For example, one template may request
+the model response as a number (e.g. "35") or request a model response in words (e.g. "thirty five").
+The metric should receive a single integer.
+
+Metric Outputs
+---------------
+
+By default, each metric calculates the scores on each instance separately and then on all the instances together.
+The output of the metrics is a nested dictionary per instance.
+
+
+The scores calculated on instance [i] alone is found in results[i]["score"]["instance"]. 
+The global scores over all instances is found in results[i]["score"]["global"]. 
+
+A metric could return multiple scores, but it should always return a field called `score` with the main score of the metric,
+and `score_name` which the name of the score. 
+
+For example, the score list for an instance could be:
+
+    {
+        "sum_accuracy_approximate": 0.0,
+        "score": 1.0,
+        "score_name": "sum_accuracy_approximate"
+    }
+
+The global scores are calculated over all instances.  
+
+Metrics can also calculate confidence intervals of score.
+This gives you an assessment of the inherient noise in the scores.  When you compare runs on same data, check if their confidence 
+intervals overlap. If so, the difference may not be statistically significant. 
+
+    {
+        "sum_accuracy_approximate": 0.67,
+        "score": 0.67,
+        "score_name": "sum_accuracy_approximate",
+        "sum_accuracy_approximate_ci_low": 0.53,
+        "sum_accuracy_approximate_ci_high": 0.83,
+        "score_ci_low": 0.53,
+        "score_ci_high": 0.83,
+    } 
+
+
+Metric Base Classes 
+------------
+
+Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics.
+
+InstanceMetric - Class for metrics for which the global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
+Some examples of instance metrics are Accuracy, TokenOverlap, CharEditDistance.
+
+BulkInstanceMetric - Similar to InstanceMetric , it is for metrics that can be calculated by aggregating the instance scores.  However,
+due to implementation efficiently reasons, it's better to run them in bulk, especially when using LLMs.
+Some examples of bulk instance metrics are SentenceBert,  Reward.
+
+GlobalMetric - Class for metrics for which the global score must be calculated over all the instance together.
+Some examples of global metrics are f1, Spearman, Kendall Tau.  Note that by default global metrics are executed once per instance 
+to generate per instance scores, and then once again over all instances together.  
+
+
+Adding a New Instance metric
+----------------------------
+
+    Assume we want to create a referenceless metric for the task for adding two numbers.   
+    It will take the processed prediction of the task (an integer) and compare to the sum of the 
+    two task input fields `num1` and `num2`.  It can be configure with a `relative_tolerance`  for 
+    approximate comparison.  
+
 
     .. code-block:: python
 
-        class Accuracy(SingleReferenceInstanceMetric):
-            reduction_map = {"mean": ["accuracy"]}
-            main_score = "accuracy"
+        class SumAccuracy(InstanceMetric):
+    
+            main_score = "sum_accuracy" # name of the main score
+            reduction_map = {"mean": ["sum_accuracy"]} # defines that the global score is a mean of the instance scores
+            ci_scores = ["sum_accuracy"] # define that confidence internal should be calculated on the score
+            prediction_type = "int"      # the metric expect the prediction as an int
 
-            def compute(self, reference, prediction: str) -> dict:
-                return {"accuracy": float(str(reference) == str(prediction))}
+            # Relation tolerance for errors by default it is 0, but can be changed for approximate comparison
+            relative_tolerance : float = 0
 
-Other base classes for metrics are: `InstanceMetric`, `GlobalMetric`.
-
+            def compute(
+                self, references: List[int], prediction: int, task_data: List[Dict]
+            ) -> dict:
+                actual_sum = task_data["num1"] + task_data["num2"]
+                isclose_enough =  isclose(actual_sum, prediction, rel_tol=self.relative_tolerance)
+                result = { self.main_score : 1.0 if isclose_enough else 0.0}
+                return result
+            
 To test our metric work as expected we can use unitxt built in
 testing suit:
 
     .. code-block:: python
 
-        from unitxt.test_utils.metrics import test_metric
+        `#
+        # Test SumAccuracy metric and add to catalog
+        # 
 
-        metric = Accuracy()
+        from unitxt_extension_example.metrics import SumAccuracy
+        metric = SumAccuracy()
 
-        predictions = ['positive', 'negative']
-        references = [['positive'], ['positive']]
-        target = {'accuracy': 0.5}
+        predictions = [3, 799 , 50]
+        references = [[5],[800],[50]]
+        task_data = [{"num1" : 2, "num2" : 3}, {"num1" : 300, "num2" : 500}, {"num1" : -25, "num2" : 75}]
+        instance_targets = [
+            {"sum_accuracy": 0.0, "score": 0.0, "score_name": "sum_accuracy"},
+            {"sum_accuracy": 0.0, "score": 0.0, "score_name": "sum_accuracy"},
+            {"sum_accuracy": 1.0, "score": 1.0, "score_name": "sum_accuracy"},
+        ]
 
-        print(test_metric(metric, predictions, references, target)) # True
+        global_target = {
+            "sum_accuracy": 0.33,
+            "score": 0.33,
+            "score_name": "sum_accuracy",
+            "sum_accuracy_ci_low": 0.0,
+            "sum_accuracy_ci_high": 1.0,
+            "score_ci_low": 0.0,
+            "score_ci_high": 1.0,
+        }
+
+        outputs = test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+            task_data=task_data
+        )
+
+        add_to_catalog(metric, "metrics.sum_accuracy")
+`
+Adding a Global Metric
+----------------------------
+
+Adding a Hugginface metric
+----------------------------
+
+Using Metric Pipelines
+----------------------
+
+Unitxt metrics must be compatible with the task they are used with.  However, sometime there is an implementation
+of a metric that performs the needed calculations buts expects different inputs. 
+The MetricPipeline is a way to adapt an existing metric to a new task.
+For example, the TokenOverlap metric takes string input prediction and string references and calculates
+the token overlap between them.   If we want to reuse it, in a Retrieval Augmented Generation task to measure the token 
+overlap between the predictions and the context, we can define a MetricPipeline to copy the `context`` field of the task 
+to the `references` field.  Then it runs the existing metric. Finally, it renames the scores to more meaningful names.
+
+.. code-block:: python
+
+        metric = MetricPipeline(
+            main_score="score",
+            preprocess_steps=[
+                CopyFields(field_to_field=[("task_data/context", "references")]),
+                ListFieldValues(fields=["references"], to_field="references"),
+            ],
+            metric=metrics["metrics.token_overlap"],
+            postpreprocess_steps=[
+                RenameFields(
+                    field_to_field=[
+                        ("score/global/f1", "score/global/f1_overlap_with_context"),
+                        ("score/global/recall", "score/global/recall_overlap_with_context"),
+                        (
+                            "score/global/precision",
+                            "score/global/precision_overlap_with_context",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
+
+
+Advanced topics
+---------------
+
+1. Calculating confidence internals for global metricscan be costly , if each invocation of the metric takes a long time.
+To avoid calculating confidence internals for global metrics set `n_resamples = 0`.
+
+2. Unitxt calculates instance results in global metrics to allow viewing the output on a single instancs.  
+This can help ensure metric behavior is correct, because it can be checked on single instance.
+However, sometimes it does not make sense because the global metric assumes a minimum amount of instances.  
+This can be disabled by setting `process_single_instances = False`.
+
