@@ -495,16 +495,5 @@ class LoadFromDictionary(Loader):
 
     data: Dict[str, List[Dict[str, Any]]]
 
-    @staticmethod
-    def yield_instance(instances: List[Dict[str, Any]]) -> Dict[str, Any]:
-        yield from instances
-
     def process(self) -> MultiStream:
-        return MultiStream(
-            {
-                name: Stream(
-                    generator=self.yield_instance, gen_kwargs={"instances": instances}
-                )
-                for name, instances in self.data.items()
-            }
-        )
+        return MultiStream.from_iterables(self.data)
