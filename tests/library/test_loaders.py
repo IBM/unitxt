@@ -233,7 +233,7 @@ class TestLoaders(UnitxtTestCase):
             ms = loader()
             assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
 
-    def test_load_from_directory(self):
+    def test_load_from_dictionary(self):
         data = {
             "train": [
                 {"input": "Input1", "output": "Result1"},
