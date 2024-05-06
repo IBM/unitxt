@@ -1,0 +1,86 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "reference": "[]"
+            },
+            "condition": "ne"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "score": "rating",
+                "category": "group",
+                "reference": "reference_answer",
+                "model_output": "model_answer"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "question",
+            "_argv": [
+                "question"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "question/0": "question"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_answer",
+            "_argv": [
+                "model_answer"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "model_answer/0": "model_answer"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "reference_answer",
+            "_argv": [
+                "reference_answer"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "reference_answer/0": "reference_answer"
+            }
+        }
+    ],
+    "task": "tasks.model_response_assessment.model_rating_with_reference_single_turn",
+    "templates": [
+        "templates.model_response_assessment.mt_bench_model_rating_with_reference_single_turn"
+    ]
+}
