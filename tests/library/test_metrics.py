@@ -39,6 +39,7 @@ from unitxt.metrics import (
     LlamaIndexCorrectness,
     MaxAccuracy,
     NormalizedSacrebleu,
+    Perplexity,
     PrecisionBinary,
     RecallBinary,
     RocAuc,
@@ -290,29 +291,37 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_binary(self):
         metric = F1Binary()
-        references = [["1"], ["0"], ["0"], ["0"], ["Yes"], ["1"]]
-        predictions = ["0.8", "1", "0.2", "0", "0.6", "1"]
+        references = [[1], [0], [0], [0], [1], [1]]
+        predictions = [0.8, 1, 0.2, 0, 0.6, 1]
 
         global_target = 0.8571428571428
+        global_target_neg = 0.8
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["f1_binary_neg"]
+        )
         self.assertEqual("f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_binary", outputs[0]["score"]["instance"]["score_name"])
 
     def test_precision_binary(self):
         metric = PrecisionBinary()
-        references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
+        references = [[1], [0], [0], [0.0], [1.0], [1]]
+        predictions = [0.9, 0.6, 0, 0.2, 1, 0.8]
 
         global_target = 0.75
+        global_target_neg = 1
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["precision_binary_neg"]
+        )
         self.assertEqual(
             "precision_binary", outputs[0]["score"]["global"]["score_name"]
         )
@@ -322,36 +331,55 @@ class TestMetrics(UnitxtTestCase):
 
     def test_recall_binary(self):
         metric = RecallBinary()
-        references = [["1"], ["0"], ["0"], ["0"], ["1"], ["1"]]
-        predictions = ["1", "1", "0", "0", "1", "1"]
+        references = [[1], [0], [0], [0], [1], [1]]
+        predictions = [0.9, 0.6, 0, 0.2, 1, 0.8]
 
         global_target = 1
+        global_target_neg = 0.666666666
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["recall_binary_neg"]
+        )
         self.assertEqual("recall_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("recall_binary", outputs[0]["score"]["instance"]["score_name"])
 
     def test_max_f1(self):
         metric = BinaryMaxF1()
-        references = [["1"], ["0"], ["0"]]
-        predictions = ["0.3", "0", "0.7"]
+        references = [[1], [0], [0], [0]]
+        predictions = [0.3, 0, 0.7, 0]
 
         global_target = 0.666666666666
+        global_target_neg = 0.8
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
 
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_neg, outputs[0]["score"]["global"]["max_f1_binary_neg"]
+        )
         self.assertEqual("max_f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("max_f1_binary", outputs[0]["score"]["instance"]["score_name"])
 
+    def test_max_f1_single_class(self):
+        metric = BinaryMaxF1()
+        references = [[0], [0], [0], [0]]
+        predictions = [0.3, 0, 0.7, 0]
+
+        global_target = 0.0
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
     def test_accuracy_binary(self):
         metric = BinaryAccuracy()
-        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
-        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+        references = [[1], [0], [0], [1], [0]]
+        predictions = [0.3, 0, 0.7, 1.0, 0.2]
 
         expected_global_result = {
             "accuracy_binary": 3 / 5,
@@ -371,8 +399,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_binary_max_accuracy(self):
         metric = BinaryMaxAccuracy()
-        references = [["1"], ["0"], ["0"], ["1"], ["0"]]
-        predictions = ["0.3", "0", "0.7", "1.0", "0.2"]
+        references = [[1], [0], [0], [1], [0]]
+        predictions = [0.3, 0, 0.7, 1.0, 0.2]
 
         global_target = 0.8
         outputs = apply_metric(
@@ -387,36 +415,36 @@ class TestMetrics(UnitxtTestCase):
             "max_accuracy_binary", outputs[0]["score"]["instance"]["score_name"]
         )
 
-        references = [["0"], ["0"], ["0"]]
-        predictions = ["0.3", "0.9", "0.7"]
+        references = [[0], [0], [0]]
+        predictions = [0.3, 0.9, 0.7]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
 
-        references = [["1"], ["0"], ["0"], ["1"], ["0"], ["0"]]
-        predictions = ["0.7", "0.3", "0.7", "0.8", "0.9", "0.3"]
+        references = [[1], [0], [0], [1], [0], [0]]
+        predictions = [0.7, 0.3, 0.7, 0.8, 0.9, 0.3]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(2 / 3, outputs[0]["score"]["global"]["score"])
 
-        references = [["1"]]
-        predictions = ["0.7"]
+        references = [[1]]
+        predictions = [0.7]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
 
-        references = [["0"]]
-        predictions = ["0.7"]
+        references = [[0]]
+        predictions = [0.7]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(1.0, outputs[0]["score"]["global"]["score"])
 
-        references = [["0"]]
-        predictions = ["1.7"]
+        references = [[0]]
+        predictions = [1.7]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -722,8 +750,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_roc_auc(self):
         metric = RocAuc()
-        predictions = ["0.2", "0.8", "1.0"]
-        references = [["1.0"], ["0.0"], ["1.0"]]
+        predictions = [0.2, 0.8, 1.0]
+        references = [[1.0], [0.0], [1.0]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -732,8 +760,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_kendalltau(self):
         metric = KendallTauMetric()
-        predictions = ["1.0", "2.0", "1.0"]
-        references = [["-1.0"], ["1.0"], ["0.0"]]
+        predictions = [1.0, 2.0, 1.0]
+        references = [[-1.0], [1.0], [0.0]]
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
@@ -974,6 +1002,23 @@ class TestMetrics(UnitxtTestCase):
         )
         target = 1.0
         self.assertEqual(outputs[0]["score"]["global"]["score"], target)
+
+    def test_perplexity(self):
+        prediction = ["who are we?"]
+        references = [["we are the world"]]
+
+        perplexity_question = Perplexity(
+            model_name="google/flan-t5-small",
+            source_template="Generate a question based on the given content: {reference}",
+            target_template="{prediction}",
+        )
+        first_instance_target = 0.059865921735763
+        outputs = apply_metric(
+            metric=perplexity_question, predictions=prediction, references=references
+        )
+        self.assertAlmostEqual(
+            first_instance_target, outputs[0]["score"]["instance"]["score"]
+        )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):

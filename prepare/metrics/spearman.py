@@ -1,6 +1,6 @@
 import numpy as np
 from unitxt import add_to_catalog
-from unitxt.blocks import CastFields, CopyFields
+from unitxt.blocks import CopyFields
 from unitxt.metrics import MetricPipeline, Spearmanr
 from unitxt.test_utils.metrics import test_metric
 
@@ -8,17 +8,12 @@ metric = MetricPipeline(
     main_score="spearmanr",
     preprocess_steps=[
         CopyFields(field_to_field=[("references/0", "references")]),
-        CastFields(
-            fields={"prediction": "float", "references": "float"},
-            failure_defaults={"prediction": 0.0},
-            use_nested_query=True,
-        ),
     ],
     metric=Spearmanr(),
 )
 
-predictions = ["1.0", " 2.0", "1.0"]
-references = [["-1.0"], ["1.0"], ["0.0"]]
+predictions = [1.0, 2.0, 1.0]
+references = [[-1.0], [1.0], [0.0]]
 
 instance_targets = [
     {"spearmanr": np.nan, "score": np.nan, "score_name": "spearmanr"},

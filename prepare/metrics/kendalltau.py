@@ -5,8 +5,8 @@ from unitxt.test_utils.metrics import test_metric
 
 metric = KendallTauMetric()
 
-predictions = ["1.0", "2.0", "1.0"]
-references = [["-1.0"], ["1.0"], ["0.0"]]
+predictions = [1.0, 2.0, 1.0]
+references = [[-1.0], [1.0], [0.0]]
 
 instance_targets = [
     {

@@ -15,7 +15,10 @@ add_to_catalog(
         input_format="Sentence 1: {text1} Sentence 2: {text2}",
         output_format="{attribute_value}",
         quantum=1,
-        postprocessors=["processors.take_first_non_empty_line"],
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.cast_to_float_return_zero_if_failed",
+        ],
     ),
     "templates.regression.two_texts.similarity.flan",
     overwrite=True,

@@ -1,11 +1,13 @@
+import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.operator import SequentialOperator
-from unitxt.operators import RemoveValues
+from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     ExtractMtBenchJudgment,
+    ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
     LowerCase,
@@ -256,6 +258,61 @@ add_to_catalog(
     overwrite=True,
 )
 
+
+double_brackets_regex = r"\[\[(.*?)\]\]"
+parser = ExtractWithRegex(regex=double_brackets_regex, field="TBD")
+example = "A. and also B. And that is why my final answer is [[Yes]]"
+logger.info(parser.process_value(example))
+assert parser.process_value(example) == "Yes"
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractWithRegex(
+                regex=double_brackets_regex,
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.extract_from_double_brackets",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": 0.0},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_zero_if_failed",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": np.nan},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_nan_if_failed",
+    overwrite=True,
+)
 
 add_to_catalog(
     SequentialOperator(

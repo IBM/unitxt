@@ -3,8 +3,14 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type", "sentiment_class"],
-        outputs=["spans_starts", "spans_ends", "text", "labels"],
+        inputs={"text": "str", "text_type": "str", "sentiment_class": "str"},
+        outputs={
+            "spans_starts": "List[int]",
+            "spans_ends": "List[int]",
+            "text": "List[str]",
+            "labels": "List[str]",
+        },
+        prediction_type="List[Tuple[str,str]]",
         metrics=["metrics.ner"],
         augmentable_inputs=["text"],
     ),
@@ -14,8 +20,14 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs=["text", "text_type"],
-        outputs=["spans_starts", "spans_ends", "text", "labels"],
+        inputs={"text": "str", "text_type": "str"},
+        outputs={
+            "spans_starts": "List[int]",
+            "spans_ends": "List[int]",
+            "text": "List[str]",
+            "labels": "List[str]",
+        },
+        prediction_type="List[Tuple[str,str]]",
         metrics=["metrics.ner"],
         augmentable_inputs=["text"],
     ),

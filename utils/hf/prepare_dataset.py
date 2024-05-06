@@ -1,5 +1,7 @@
 import glob
 import os
+import shutil
+import tempfile
 
 from huggingface_hub import HfApi
 
@@ -9,20 +11,23 @@ api = HfApi(token=os.environ["HUGGINGFACE_HUB_TOKEN"])
 
 print("Uploading files from src/unitxt/ to hf:unitxt/data")
 
-for file in files:
-    file_name = os.path.basename(file)
+with tempfile.TemporaryDirectory() as temp_dir:
+    for file in files:
+        file_name = os.path.basename(file)
 
-    if file_name == "__init__.py":
-        continue
+        if file_name == "__init__.py":
+            continue
 
-    if file_name == "dataset.py":
-        file_name = "data.py"
+        if file_name == "dataset.py":
+            file_name = "data.py"
 
-    print(f"  - {file_name}")
+        shutil.copy(file, os.path.join(temp_dir, file_name))
 
-    api.upload_file(
-        path_or_fileobj=file,
-        path_in_repo=file_name,
+        print(f"  - {file_name}")
+
+    api.upload_folder(
+        folder_path=temp_dir,
+        delete_patterns="*.py",  # delete any unused python files
         repo_id="unitxt/data",
         repo_type="dataset",
     )

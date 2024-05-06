@@ -3,17 +3,16 @@
     "inputs": {
         "text": "str",
         "text_type": "str",
-        "classes": "List[str]",
-        "type_of_class": "str"
+        "class": "str"
     },
     "outputs": {
-        "label": "str"
+        "class": "str",
+        "label": "int"
     },
-    "prediction_type": "str",
+    "prediction_type": "float",
     "metrics": [
-        "metrics.f1_micro",
         "metrics.accuracy",
-        "metrics.f1_macro"
+        "metrics.f1_binary"
     ],
     "augmentable_inputs": [
         "text"

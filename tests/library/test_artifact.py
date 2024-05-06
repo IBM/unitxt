@@ -68,11 +68,9 @@ class TestArtifact(UnitxtTestCase):
             self.assertEqual(artifact.steps[0].string, "no")
 
     def test_artifact_loading_with_overwrite_args_list(self):
-        artifact_identifier = (
-            "tasks.classification.binary[metrics=[metrics.rouge, metrics.accuracy]]"
-        )
+        artifact_identifier = "tasks.classification.binary.zero_or_one[metrics=[metrics.roc_auc, metrics.accuracy]]"
         artifact, _ = fetch_artifact(artifact_identifier)
-        self.assertEqual(artifact.metrics, ["metrics.rouge", "metrics.accuracy"])
+        self.assertEqual(artifact.metrics, ["metrics.roc_auc", "metrics.accuracy"])
 
     def test_artifact_loading_with_overwrite_args_dict(self):
         with temp_catalog() as catalog_path:
