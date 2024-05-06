@@ -1166,7 +1166,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.hf_metric_name, experiment_id=str(uuid.uuid4()))
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
 
     def compute(
         self,
@@ -1337,7 +1339,9 @@ class F1MultiLabel(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load(self.metric, "multilabel", experiment_id=str(uuid.uuid4()))
+        self._metric = evaluate.load(
+            self.metric, "multilabel", experiment_id=str(uuid.uuid4())
+        )
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
