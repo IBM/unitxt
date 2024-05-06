@@ -225,7 +225,7 @@ class StringOrNotString(FieldOperator):
         return text
 
 
-class ExtractMtBenchJudgment(FieldOperator):
+class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
         try:

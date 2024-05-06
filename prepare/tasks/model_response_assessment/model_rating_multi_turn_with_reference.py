@@ -7,9 +7,9 @@ add_to_catalog(
             "dialog": "List[Tuple[str, str]]",
             "reference_dialog": "List[Tuple[str, str]]",
         },
-        outputs={"rating_label": "float"},
+        outputs={"rating": "float"},
         metrics=["metrics.spearman"],
     ),
-    "tasks.model_response_assessment.absolute_score_multi_turn_with_reference",
+    "tasks.model_response_assessment.model_rating_multi_turn_with_reference",
     overwrite=True,
 )

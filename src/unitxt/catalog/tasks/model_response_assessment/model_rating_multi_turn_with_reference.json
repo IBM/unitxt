@@ -5,7 +5,7 @@
         "reference_dialog": "List[Tuple[str, str]]"
     },
     "outputs": {
-        "rating_label": "float"
+        "rating": "float"
     },
     "metrics": [
         "metrics.spearman"

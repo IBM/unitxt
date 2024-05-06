@@ -6,7 +6,7 @@ add_to_catalog(
         dialog_fields=[
             DialogFieldsData(
                 dialog_field="dialog",
-                assistant_role_label="### ### Reference answer:",
+                assistant_role_label="### Assistant A:",
                 user_role_label="### User:",
                 system_role_label="### System:",
             ),
@@ -23,11 +23,11 @@ add_to_catalog(
         input_format="<|The Start of Assistant A's Conversation with User|>\n\n"
         "{dialog}\n\n"
         "<|The End of Assistant A's Conversation with User|>",
-        output_format="[[{rating_label}]]",
+        output_format="[[{rating}]]",
         postprocessors=[
-            r"processors.extract_mt_bench_judgment",
+            r"processors.extract_mt_bench_rating_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_absolute_score_multi_turn",
+    "templates.model_response_assessment.mt_bench_model_rating_multi_turn",
     overwrite=True,
 )

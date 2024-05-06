@@ -1,10 +1,12 @@
 {
     "type": "form_task",
     "inputs": {
-        "dialog": "List[Tuple[str, str]]"
+        "question": "str",
+        "model_answer": "str",
+        "reference_answer": "str"
     },
     "outputs": {
-        "rating_label": "float"
+        "rating": "float"
     },
     "metrics": [
         "metrics.spearman"

@@ -2,11 +2,10 @@
     "type": "form_task",
     "inputs": {
         "question": "str",
-        "model_answer": "str",
-        "reference_answer": "str"
+        "model_answer": "str"
     },
     "outputs": {
-        "rating_label": "float"
+        "rating": "float"
     },
     "metrics": [
         "metrics.spearman"

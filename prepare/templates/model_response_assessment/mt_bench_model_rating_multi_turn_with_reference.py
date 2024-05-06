@@ -5,13 +5,13 @@ add_to_catalog(
     ChatTemplate(
         dialog_fields=[
             DialogFieldsData(
-                dialog_field="dialog",
-                assistant_role_label="### ### Reference answer:",
+                dialog_field="reference_dialog",
+                assistant_role_label="### Reference answer:",
                 user_role_label="### User:",
                 system_role_label="### System:",
             ),
             DialogFieldsData(
-                dialog_field="reference_dialog",
+                dialog_field="dialog",
                 assistant_role_label="### Assistant A:",
                 user_role_label="### User:",
                 system_role_label="### System:",
@@ -38,6 +38,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_absolute_score_single_turn_with_reference",
+    "templates.model_response_assessment.mt_bench_model_rating_multi_turn_with_reference",
     overwrite=True,
 )
