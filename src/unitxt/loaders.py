@@ -476,7 +476,23 @@ class MultipleSourceLoader(Loader):
         ).process()
 
 
-class LoadDirectory(Loader):
+class LoadFromDictionary(Loader):
+    """Allows loading data from dictionary of constants.
+
+    The loader can be used, for example, when debugging or working with small datasets.
+
+    Attributes:
+        data (Dict[str, List[Dict[str, Any]]]): a dictionary of constants from which the data will be loaded
+
+    Examples:
+        data = {
+            "train": {"input": "SomeInput1", "output": "SomeResult1"},
+            "test": {"input": "SomeInput2", "output": "SomeResult2"},
+        }
+        loader = LoadFromDictionary(data=data)
+        multi_stream = loader.process()
+    """
+
     data: Dict[str, List[Dict[str, Any]]]
 
     @staticmethod

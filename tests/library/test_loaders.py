@@ -7,7 +7,7 @@ import ibm_boto3
 import pandas as pd
 from unitxt.loaders import (
     LoadCSV,
-    LoadDirectory,
+    LoadFromDictionary,
     LoadFromIBMCloud,
     LoadHF,
     MultipleSourceLoader,
@@ -243,9 +243,9 @@ class TestLoaders(UnitxtTestCase):
                 {"input": "Input3", "output": "Result3"},
             ],
         }
-        loader = LoadDirectory(data=data)
+        loader = LoadFromDictionary(data=data)
         streams = loader.process()
 
-        for data_type, instances in data.items():
-            for instance, stream in zip(instances, streams[data_type]):
-                self.assertEqual(instance, stream)
+        for split, instances in data.items():
+            for original_instance, stream_instance in zip(instances, streams[split]):
+                self.assertEqual(original_instance, stream_instance)
