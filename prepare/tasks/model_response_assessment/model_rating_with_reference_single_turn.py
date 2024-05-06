@@ -7,6 +7,6 @@ add_to_catalog(
         outputs={"rating": "float"},
         metrics=["metrics.spearman"],
     ),
-    "tasks.model_response_assessment.model_rating_single_turn_with_reference",
+    "tasks.model_response_assessment.model_rating_with_reference_single_turn",
     overwrite=True,
 )

@@ -33,11 +33,11 @@ add_to_catalog(
         "<|The Start of Assistant A's Conversation with User|>\n\n"
         "{dialog}\n\n"
         "<|The End of Assistant A's Conversation with User|>",
-        output_format="[[{rating_label}]]",
+        output_format="[[{rating}]]",
         postprocessors=[
-            r"processors.extract_mt_bench_judgment",
+            r"processors.extract_mt_bench_rating_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_rating_multi_turn_with_reference",
+    "templates.model_response_assessment.mt_bench_model_rating_with_reference_multi_turn",
     overwrite=True,
 )
