@@ -1,7 +1,8 @@
 import json
 from abc import abstractmethod
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .operator import StreamInstanceOperator
@@ -150,34 +151,45 @@ class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
         return target, [reference]
 
 
-class ChatTemplate(InputOutputTemplate):
+class DialogFieldsData(Artifact):
     user_role_label: str
     assistant_role_label: str
     system_role_label: str
     dialog_field: str
+
+
+class ChatTemplate(InputOutputTemplate):
+    dialog_fields: List[DialogFieldsData]
     turns_separator: str = "\n\n"
     label_separator: str = " "
 
-    def process_dialog(
-        self, dialog: List[Tuple[Literal["user", "assistant", "system"], str]]
-    ):
-        # TODO: update isoftype method to support Literal verification
-        assert isoftype(dialog, List[Tuple[str, str]])
-        dialog_str = ""
-        for i, turn in enumerate(dialog):
-            (turn_type, turn_text) = turn
-            turns_separator = "" if i == 0 else self.turns_separator
-            if turn_type == "user":
-                dialog_str += f"{turns_separator}{self.user_role_label}{self.label_separator}{turn_text}"
-            elif turn_type == "assistant":
-                dialog_str += f"{turns_separator}{self.assistant_role_label}{self.label_separator}{turn_text}"
-            elif turn_type == "system":
-                dialog_str += f"{turns_separator}{self.system_role_label}{self.label_separator}{turn_text}"
-        return dialog_str
+    def process_dialog(self, inputs: Dict[str, object]):
+        for dialog_fields in self.dialog_fields:
+            dialog = inputs[dialog_fields.dialog_field]
+            # TODO: update isoftype method to support Literal verification and check
+            #  it's List[Tuple[Literal["user", "assistant", "system"], str]] (Issue #799)
+            assert isoftype(dialog, List[Tuple[str, str]])
+
+            user_role_label = dialog_fields.user_role_label
+            assistant_role_label = dialog_fields.assistant_role_label
+            system_role_label = dialog_fields.system_role_label
+
+            dialog_str = ""
+            for i, turn in enumerate(dialog):
+                (turn_type, turn_text) = turn
+                turns_separator = "" if i == 0 else self.turns_separator
+                if turn_type == "user":
+                    dialog_str += f"{turns_separator}{user_role_label}{self.label_separator}{turn_text}"
+                elif turn_type == "assistant":
+                    dialog_str += f"{turns_separator}{assistant_role_label}{self.label_separator}{turn_text}"
+                elif turn_type == "system":
+                    dialog_str += f"{turns_separator}{system_role_label}{self.label_separator}{turn_text}"
+
+            inputs[dialog_fields.dialog_field] = dialog_str
+        return inputs
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        inputs[self.dialog_field] = self.process_dialog(inputs[self.dialog_field])
-
+        inputs = self.process_dialog(inputs)
         return super().inputs_to_source(inputs)
 
 

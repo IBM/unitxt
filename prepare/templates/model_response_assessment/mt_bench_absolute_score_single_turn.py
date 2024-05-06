@@ -3,7 +3,7 @@ from unitxt.templates import InputOutputTemplate
 
 add_to_catalog(
     InputOutputTemplate(
-        instruction="[Instruction]\nPlease act as an impartial judge and evaluate the quality of the response provided"
+        instruction="Please act as an impartial judge and evaluate the quality of the response provided"
         " by an AI assistant to the user question displayed below. Your evaluation should consider"
         " factors such as the helpfulness, relevance, accuracy, depth, creativity, and level of"
         " detail of the response. Begin your evaluation by providing a short explanation. Be as"
