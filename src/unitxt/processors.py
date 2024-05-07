@@ -236,7 +236,7 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
+        match = re.search(r"\[\[([^\]]+)\]\]", text)
         try:
             return str(match.group(1))
         except:
