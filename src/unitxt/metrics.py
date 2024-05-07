@@ -29,7 +29,7 @@ from .operators import CopyFields
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
-from .type_utils import isoftype, parse_type_string, to_float_or_default
+from .type_utils import isoftype, parse_type_string
 
 logger = get_logger()
 settings = get_settings()
@@ -977,6 +977,40 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class JaccardIndex(InstanceMetric):
+    reduction_map = {"mean": ["jaccard_index"]}
+    main_score = "jaccard_index"
+    ci_scores = ["jaccard_index"]
+
+    prediction_type = "Any"  # string representation is compared
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        if not isinstance(prediction, set):
+            prediction = set(prediction)
+        references = [set(reference) for reference in references]
+
+        result = {
+            self.main_score: max(
+                [
+                    float(
+                        (len(reference.intersection(prediction)))
+                        / (
+                            len(reference)
+                            + len(prediction)
+                            - len(reference.intersection(prediction))
+                        )
+                    )
+                    for reference in references
+                ]
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class MaxAccuracy(Accuracy):
     """Calculate the maximal accuracy over all instances as the global score."""
 
@@ -1166,7 +1200,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        self.metric = evaluate.load(self.hf_metric_name)
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
 
     def compute(
         self,
@@ -1213,7 +1249,7 @@ class F1(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load(self.metric)
+        self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
@@ -1261,17 +1297,28 @@ class F1Micro(F1):
     average = "micro"
 
 
-class F1Binary(F1):
+class F1Binary(GlobalMetric):
     """Calculate f1 for a binary task, using 0.5 as the threshold in the case of float predictions."""
 
     process_single_instances = False
     main_score = "f1_binary"
-    average = "binary"
-    pos_classes = {"1", "1.0", "yes", "true"}
+    average = None
     threshold = 0.5
+    prediction_type = "Union[float, int]"
+    _metric = None
+    metric = "f1"
+    single_reference_per_prediction = True
 
-    def get_str_id(self, str):
-        return int(str)
+    def prepare(self):
+        super().prepare()
+        self._metric = evaluate.load(self.metric)
+
+    def _validate_reference(self, reference):
+        super()._validate_reference(reference)
+        assert reference[0] in [
+            0,
+            1,
+        ], f"all references of {self.main_score} must by 0 or 1"
 
     def compute(
         self,
@@ -1279,12 +1326,21 @@ class F1Binary(F1):
         predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
-        predictions_floats = [to_float_or_default(p) for p in predictions]
-        predictions = [str(int(p > self.threshold)) for p in predictions_floats]
-        references = [
-            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
-        ]
-        return super().compute(references, predictions, task_data)
+        flattened_int_references = [int(r[0]) for r in references]
+        int_predictions = [int(p > self.threshold) for p in predictions]
+
+        result = self._metric.compute(
+            references=flattened_int_references,
+            predictions=int_predictions,
+            labels=[0, 1],
+            average=self.average,
+        )
+        if isinstance(result[self.metric], numpy.ndarray):
+            return {
+                self.main_score: result[self.metric][1],
+                f"{self.main_score}_neg": result[self.metric][0],
+            }
+        return {self.main_score: result[self.metric]}
 
 
 class RecallBinary(F1Binary):
@@ -1317,7 +1373,9 @@ class F1MultiLabel(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load(self.metric, "multilabel")
+        self._metric = evaluate.load(
+            self.metric, "multilabel", experiment_id=str(uuid.uuid4())
+        )
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -1538,7 +1596,7 @@ class KendallTauMetric(GlobalMetric):
     main_score = "kendalltau_b"
     variant = "b"
     process_single_instances = False
-    prediction_type = "str"
+    prediction_type = "float"
 
     _requirements_list: List[str] = ["scipy"]
 
@@ -1555,8 +1613,6 @@ class KendallTauMetric(GlobalMetric):
     ) -> dict:
         if isinstance(references[0], list):
             references = [reference[0] for reference in references]
-        references = [to_float_or_default(r) for r in references]
-        predictions = [to_float_or_default(p) for p in predictions]
 
         kendall_results = self.kendalltau(references, predictions, variant=self.variant)
         corr = kendall_results.correlation
@@ -1602,7 +1658,7 @@ class RocAuc(GlobalMetric):
     process_single_instances = False
     _requirements_list: List[str] = ["sklearn"]
     single_reference_per_prediction = True
-    prediction_type = "str"
+    prediction_type = "float"
 
     def prepare(self):
         from sklearn import metrics
@@ -1618,8 +1674,6 @@ class RocAuc(GlobalMetric):
     ) -> dict:
         if isinstance(references[0], list):
             references = [reference[0] for reference in references]
-        references = [to_float_or_default(r) for r in references]
-        predictions = [to_float_or_default(p) for p in predictions]
 
         false_positive_rates, true_positive_rates, _ = self.roc_curve(
             y_true=references, y_score=predictions
@@ -3337,33 +3391,42 @@ class BinaryMaxF1(F1Binary):
     """Calculate the maximal F1 and the decision threshold that achieves it for a binary task with float predictions."""
 
     main_score = "max_f1_binary"
-    prediction_type = str
     single_reference_per_prediction = True
 
     def compute(
         self,
-        references: List[List[str]],
-        predictions: List[List[str]],
+        references: List[List[float]],
+        predictions: List[List[float]],
         task_data: List[Dict],
     ) -> dict:
-        float_predictions = [to_float_or_default(p) for p in predictions]
-
         best_thr = -1
         best_f1 = -1
-        thrs = {round(fp, 3) for fp in float_predictions}
+        best_thr_neg = -1
+        best_f1_neg = -1
+        thrs = {round(fp, 3) for fp in predictions}
         for thr in thrs:
             new_predictions = [
-                "1" if float_prediction >= thr else "0"
-                for float_prediction in float_predictions
+                1.0 if float_prediction >= thr else 0.0
+                for float_prediction in predictions
             ]
-            f1 = super().compute(references, new_predictions, task_data)[
-                self.main_score
-            ]
+            f1_results = super().compute(references, new_predictions, task_data)
+
+            f1 = f1_results[self.main_score]
             if f1 > best_f1:
                 best_f1 = f1
                 best_thr = thr
 
-        return {self.main_score: best_f1, "best_thr_maxf1": best_thr}
+            f1_neg = f1_results[f"{self.main_score}_neg"]
+            if f1_neg > best_f1_neg:
+                best_f1_neg = f1_neg
+                best_thr_neg = thr
+
+        return {
+            self.main_score: best_f1,
+            "best_thr_maxf1": best_thr,
+            f"{self.main_score}_neg": best_f1_neg,
+            "best_thr_maxf1_neg": best_thr_neg,
+        }
 
 
 class BinaryAccuracy(InstanceMetric):
@@ -3372,20 +3435,25 @@ class BinaryAccuracy(InstanceMetric):
     reduction_map = {"mean": ["accuracy_binary"]}
     main_score = "accuracy_binary"
     ci_scores = ["accuracy_binary"]
-    pos_classes = {"1", "1.0", "yes", "true"}
     threshold = 0.5
 
-    prediction_type = "str"
+    prediction_type = "Union[float,int]"
     single_reference_per_prediction = True
 
-    def compute(
-        self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
-        float_prediction = to_float_or_default(prediction)
-        prediction = str(int(float_prediction > self.threshold))
-        references = ["1"] if references[0].lower() in self.pos_classes else ["0"]
+    def _validate_reference(self, reference):
+        super()._validate_reference(reference)
+        assert reference[0] in [
+            0,
+            1,
+        ], f"all references of {self.main_score} must by 0 or 1"
 
-        result = {self.main_score: float([prediction] == references)}
+    def compute(
+        self, references: List[float], prediction: float, task_data: List[Dict]
+    ) -> dict:
+        prediction = int(prediction > self.threshold)
+        reference = int(references[0])
+
+        result = {self.main_score: float(prediction == reference)}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
@@ -3396,9 +3464,7 @@ class BinaryMaxAccuracy(GlobalMetric):
 
     process_single_instances = False
     main_score = "max_accuracy_binary"
-    pos_classes = {"1", "1.0", "yes", "true"}
-
-    prediction_type = "str"
+    prediction_type = "Union[float,int]"
     single_reference_per_prediction = True
 
     def compute(
@@ -3407,10 +3473,7 @@ class BinaryMaxAccuracy(GlobalMetric):
         predictions: List[str],
         task_data: List[Dict],
     ) -> dict:
-        float_predictions = [to_float_or_default(p) for p in predictions]
-        references = [
-            ["1"] if r[0].lower() in self.pos_classes else ["0"] for r in references
-        ]
+        references = [[int(r[0])] for r in references]
 
         # Sticking to the test >= thr, accuracy induced by threshold thr is the number of float predictions
         # that pass the test (are >= thr) and are paired with reference "1" plus the number of float predictions that
@@ -3421,8 +3484,8 @@ class BinaryMaxAccuracy(GlobalMetric):
         # the largest float predictions, to induce the partition into all-failing , none-passing.
 
         fp = [
-            (float_predictions[i], i, -1 if references[i][0] == "1" else +1)
-            for i in range(len(float_predictions))
+            (predictions[i], i, -1 if references[i][0] == 1 else +1)
+            for i in range(len(predictions))
         ]
         fp.sort()
         # each triplet above: float-prediction f; f's ordinal position in float_predictions, which is also
@@ -3436,7 +3499,7 @@ class BinaryMaxAccuracy(GlobalMetric):
 
         current_thr = fp[0][0]
         # partition float_predictions into all-passing, none-failing
-        current_acc = sum(r[0] == "1" for r in references)
+        current_acc = sum(r[0] == 1 for r in references)
         # number of predictions that thr sends to the reference they are paired with
 
         best_acc = current_acc

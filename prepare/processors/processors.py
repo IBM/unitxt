@@ -1,3 +1,4 @@
+import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.operator import SequentialOperator
@@ -13,6 +14,7 @@ from unitxt.processors import (
     LowerCase,
     LowerCaseTillPunc,
     MatchClosestOption,
+    RegexParser,
     StanceToProCon,
     StringOrNotString,
     StrToFloatFormat,
@@ -297,6 +299,22 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": np.nan},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_nan_if_failed",
+    overwrite=True,
+)
 
 add_to_catalog(
     SequentialOperator(
@@ -327,5 +345,11 @@ add_to_catalog(
         ]
     ),
     "processors.extract_mt_bench_label_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    RegexParser(field="prediction", regex=".+", process_every_value=False),
+    "processors.regex_parser_from_prediction",
     overwrite=True,
 )

@@ -27,7 +27,7 @@ import os
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -474,3 +474,26 @@ class MultipleSourceLoader(Loader):
         return FixedFusion(
             origins=self.sources, max_instances_per_origin=self.get_limit()
         ).process()
+
+
+class LoadFromDictionary(Loader):
+    """Allows loading data from dictionary of constants.
+
+    The loader can be used, for example, when debugging or working with small datasets.
+
+    Attributes:
+        data (Dict[str, List[Dict[str, Any]]]): a dictionary of constants from which the data will be loaded
+
+    Examples:
+        data = {
+            "train": {"input": "SomeInput1", "output": "SomeResult1"},
+            "test": {"input": "SomeInput2", "output": "SomeResult2"},
+        }
+        loader = LoadFromDictionary(data=data)
+        multi_stream = loader.process()
+    """
+
+    data: Dict[str, List[Dict[str, Any]]]
+
+    def process(self) -> MultiStream:
+        return MultiStream.from_iterables(self.data)

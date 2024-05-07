@@ -30,5 +30,4 @@ with tempfile.TemporaryDirectory() as temp_dir:
         delete_patterns="*.py",  # delete any unused python files
         repo_id="unitxt/data",
         repo_type="dataset",
-        run_as_future=True,
     )
