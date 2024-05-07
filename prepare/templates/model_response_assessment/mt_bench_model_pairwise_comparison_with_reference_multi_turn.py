@@ -45,7 +45,7 @@ add_to_catalog(
         "<|The Start of Assistant B's Conversation with User|>\n\n"
         "{model_b_dialog}\n\n"
         "<|The End of Assistant B's Conversation with User|>",
-        output_format="[[{rating}]]",
+        output_format="[[{winner}]]",
         postprocessors=[
             r"processors.extract_mt_bench_label_judgment",
         ],
