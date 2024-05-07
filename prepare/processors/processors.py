@@ -13,6 +13,7 @@ from unitxt.processors import (
     LowerCase,
     LowerCaseTillPunc,
     MatchClosestOption,
+    RegexParser,
     StanceToProCon,
     StringOrNotString,
     StrToFloatFormat,
@@ -327,5 +328,11 @@ add_to_catalog(
         ]
     ),
     "processors.extract_mt_bench_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    RegexParser(field="prediction", regex=".+", process_every_value=False),
+    "processors.regex_parser_from_prediction",
     overwrite=True,
 )

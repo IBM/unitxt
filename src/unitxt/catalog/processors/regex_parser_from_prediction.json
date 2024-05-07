@@ -1,0 +1,6 @@
+{
+    "type": "regex_parser",
+    "field": "prediction",
+    "regex": ".+",
+    "process_every_value": false
+}

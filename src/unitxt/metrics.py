@@ -977,6 +977,40 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class JaccardIndex(InstanceMetric):
+    reduction_map = {"mean": ["jaccard_index"]}
+    main_score = "jaccard_index"
+    ci_scores = ["jaccard_index"]
+
+    prediction_type = "Any"  # string representation is compared
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        if not isinstance(prediction, set):
+            prediction = set(prediction)
+        references = [set(reference) for reference in references]
+
+        result = {
+            self.main_score: max(
+                [
+                    float(
+                        (len(reference.intersection(prediction)))
+                        / (
+                            len(reference)
+                            + len(prediction)
+                            - len(reference.intersection(prediction))
+                        )
+                    )
+                    for reference in references
+                ]
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class MaxAccuracy(Accuracy):
     """Calculate the maximal accuracy over all instances as the global score."""
 

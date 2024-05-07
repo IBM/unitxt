@@ -12,3 +12,13 @@ add_to_catalog(
     "processors.to_list_by_comma",
     overwrite=True,
 )
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ToListByComma(field="references", process_every_value=True),
+        ]
+    ),
+    "processors.to_list_by_comma_from_references",
+    overwrite=True,
+)
