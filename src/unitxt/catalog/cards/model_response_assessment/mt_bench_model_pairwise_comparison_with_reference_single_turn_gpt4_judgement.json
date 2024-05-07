@@ -24,7 +24,7 @@
             "values": {
                 "reference": "[]"
             },
-            "condition": "eq"
+            "condition": "ne"
         },
         {
             "type": "filter_by_condition",
@@ -61,6 +61,7 @@
                 "model_input": "question",
                 "model_1_output": "model_a_answer",
                 "model_2_output": "model_b_answer",
+                "reference": "reference_answer",
                 "category": "group"
             }
         },
@@ -105,10 +106,24 @@
             "field_to_field": {
                 "model_b_answer/0": "model_b_answer"
             }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "reference_answer",
+            "_argv": [
+                "reference_answer"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "reference_answer/0": "reference_answer"
+            }
         }
     ],
-    "task": "tasks.model_response_assessment.model_pairwise_comparison_single_turn",
+    "task": "tasks.model_response_assessment.model_pairwise_comparison_with_reference_single_turn",
     "templates": [
-        "templates.model_response_assessment.mt_bench_model_pairwise_comparison_single_turn"
+        "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_single_turn"
     ]
 }

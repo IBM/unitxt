@@ -15,7 +15,7 @@
         {
             "type": "filter_by_condition",
             "values": {
-                "turn": 1
+                "turn": 2
             },
             "condition": "eq"
         },
@@ -24,7 +24,7 @@
             "values": {
                 "reference": "[]"
             },
-            "condition": "eq"
+            "condition": "ne"
         },
         {
             "type": "filter_by_condition",
@@ -58,57 +58,62 @@
         {
             "type": "rename_fields",
             "field_to_field": {
-                "model_input": "question",
-                "model_1_output": "model_a_answer",
-                "model_2_output": "model_b_answer",
                 "category": "group"
             }
         },
         {
             "type": "apply",
             "function": "ast.literal_eval",
-            "to_field": "question",
+            "to_field": "model_input",
             "_argv": [
-                "question"
+                "model_input"
             ]
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
         },
         {
             "type": "apply",
             "function": "ast.literal_eval",
-            "to_field": "model_a_answer",
+            "to_field": "model_1_output",
             "_argv": [
-                "model_a_answer"
+                "model_1_output"
             ]
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "model_a_answer/0": "model_a_answer"
-            }
         },
         {
             "type": "apply",
             "function": "ast.literal_eval",
-            "to_field": "model_b_answer",
+            "to_field": "model_2_output",
             "_argv": [
-                "model_b_answer"
+                "model_2_output"
             ]
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "model_b_answer/0": "model_b_answer"
-            }
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "reference",
+            "_argv": [
+                "reference"
+            ]
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "model_1_output",
+            "to_field": "model_a_dialog"
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "model_2_output",
+            "to_field": "model_b_dialog"
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "reference",
+            "to_field": "reference_dialog"
         }
     ],
-    "task": "tasks.model_response_assessment.model_pairwise_comparison_single_turn",
+    "task": "tasks.model_response_assessment.model_pairwise_comparison_with_reference_multi_turn",
     "templates": [
-        "templates.model_response_assessment.mt_bench_model_pairwise_comparison_single_turn"
+        "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_multi_turn"
     ]
 }
