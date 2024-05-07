@@ -1,0 +1,55 @@
+from unitxt.catalog import add_to_catalog
+from unitxt.templates import ChatTemplate, DialogFieldsData
+
+add_to_catalog(
+    ChatTemplate(
+        dialog_fields=[
+            DialogFieldsData(
+                dialog_field="reference_dialog",
+                assistant_role_label="### Reference answer:",
+                user_role_label="### User:",
+                system_role_label="### System:",
+            ),
+            DialogFieldsData(
+                dialog_field="model_a_dialog",
+                assistant_role_label="### Assistant A:",
+                user_role_label="### User:",
+                system_role_label="### System:",
+            ),
+            DialogFieldsData(
+                dialog_field="model_b_dialog",
+                assistant_role_label="### Assistant B:",
+                user_role_label="### User:",
+                system_role_label="### System:",
+            ),
+        ],
+        turns_separator="\n\n",
+        label_separator="\n",
+        instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
+        " assistants to the user questions. Your evaluation should consider correctness and helpfulness."
+        " You will be given reference answers, the assistant A's answers, the assistant B's answers."
+        " Your job is to determine which assistant provides correct and helpful answers to the second"
+        " user question. Begin your evaluation by comparing both assistants' answers with the reference"
+        " answers. Identify and correct any mistakes. Avoid any position biases and ensure that the order"
+        " in which the responses were presented does not influence your decision. Do not allow the length"
+        " of the responses to influence your evaluation. Do not favor certain names of the assistants."
+        " Be as objective as possible. After providing your explanation, output your final verdict by"
+        ' strictly following this format: "[[A]]" if assistant A is better, "[[B]]" if assistant B is'
+        ' better, and "[[C]]" for a tie.',
+        input_format="<|The Start of Reference Answer|>\n\n"
+        "{reference_dialog}\n\n"
+        "<|The End of Reference Answer|>\n\n\n"
+        "<|The Start of Assistant A's Conversation with User|>\n\n"
+        "{model_a_dialog}\n\n"
+        "<|The End of Assistant A's Conversation with User|>\n\n\n"
+        "<|The Start of Assistant B's Conversation with User|>\n\n"
+        "{model_b_dialog}\n\n"
+        "<|The End of Assistant B's Conversation with User|>",
+        output_format="[[{rating}]]",
+        postprocessors=[
+            r"processors.extract_mt_bench_label_judgment",
+        ],
+    ),
+    "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_multi_turn",
+    overwrite=True,
+)
