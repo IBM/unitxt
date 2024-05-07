@@ -1,0 +1,93 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "reference": "[]"
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "model_a_answer",
+                "model_2_output": "model_b_answer",
+                "category": "group"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "question",
+            "_argv": [
+                "question"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "question/0": "question"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_a_answer",
+            "_argv": [
+                "model_a_answer"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "model_a_answer/0": "model_a_answer"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "model_b_answer",
+            "_argv": [
+                "model_b_answer"
+            ]
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "model_b_answer/0": "model_b_answer"
+            }
+        },
+        {
+            "type": "apply",
+            "function": "builtins.str",
+            "to_field": "winner",
+            "_argv": [
+                "winner"
+            ]
+        }
+    ],
+    "task": "tasks.model_response_assessment.model_pairwise_comparison_single_turn",
+    "templates": [
+        "templates.model_response_assessment.mt_bench_model_pairwise_comparison_single_turn"
+    ]
+}
