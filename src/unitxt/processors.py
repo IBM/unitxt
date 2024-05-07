@@ -232,3 +232,12 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
             return float(match.group(1)) / 10
         except:
             return 0.0
+
+
+class ExtractMtBenchLabelJudgment(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
+        try:
+            return str(match.group(1))
+        except:
+            return "None"
