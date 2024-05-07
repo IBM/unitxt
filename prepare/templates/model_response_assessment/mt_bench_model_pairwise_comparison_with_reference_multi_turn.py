@@ -35,7 +35,7 @@ add_to_catalog(
         " of the responses to influence your evaluation. Do not favor certain names of the assistants."
         " Be as objective as possible. After providing your explanation, output your final verdict by"
         ' strictly following this format: "[[A]]" if assistant A is better, "[[B]]" if assistant B is'
-        ' better, and "[[C]]" for a tie.',
+        ' better, and "[[C]]" for a tie.\n\n',
         input_format="<|The Start of Reference Answer|>\n\n"
         "{reference_dialog}\n\n"
         "<|The End of Reference Answer|>\n\n\n"

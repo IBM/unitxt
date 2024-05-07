@@ -13,7 +13,7 @@ add_to_catalog(
         " influence your evaluation. Do not favor certain names of the assistants. Be as objective as"
         " possible. After providing your explanation, output your final verdict by strictly following"
         ' this format: "[[A]]" if assistant A is better, "[[B]]" if assistant B is better,'
-        ' and "[[C]]" for a tie.',
+        ' and "[[C]]" for a tie.\n\n',
         input_format="[User Question]\n{question}\n\n"
         "[The Start of Assistant A's Answer]\n{model_a_answer}\n[The End of Assistant A's Answer]\n\n"
         "[The Start of Assistant B's Answer]\n{model_b_answer}\n[The End of Assistant B's Answer]",
