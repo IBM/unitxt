@@ -1,0 +1,18 @@
+{
+    "type": "form_task",
+    "inputs": {
+        "question": "str",
+        "model_a_answer": "str",
+        "model_b_answer": "str",
+        "reference_answer": "str",
+        "model_a_label": "str",
+        "model_b_label": "str",
+        "tie_label": "str"
+    },
+    "outputs": {
+        "winner": "str"
+    },
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}
