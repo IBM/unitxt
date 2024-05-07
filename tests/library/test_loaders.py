@@ -5,7 +5,13 @@ from unittest.mock import patch
 
 import ibm_boto3
 import pandas as pd
-from unitxt.loaders import LoadCSV, LoadFromIBMCloud, LoadHF, MultipleSourceLoader
+from unitxt.loaders import (
+    LoadCSV,
+    LoadFromDictionary,
+    LoadFromIBMCloud,
+    LoadHF,
+    MultipleSourceLoader,
+)
 from unitxt.logging_utils import get_logger
 
 from tests.utils import UnitxtTestCase
@@ -226,3 +232,20 @@ class TestLoaders(UnitxtTestCase):
             )
             ms = loader()
             assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
+
+    def test_load_from_dictionary(self):
+        data = {
+            "train": [
+                {"input": "Input1", "output": "Result1"},
+                {"input": "Input2", "output": "Result2"},
+            ],
+            "test": [
+                {"input": "Input3", "output": "Result3"},
+            ],
+        }
+        loader = LoadFromDictionary(data=data)
+        streams = loader.process()
+
+        for split, instances in data.items():
+            for original_instance, stream_instance in zip(instances, streams[split]):
+                self.assertEqual(original_instance, stream_instance)
