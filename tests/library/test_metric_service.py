@@ -2,9 +2,12 @@ import json
 import os
 
 import httpretty
+from unitxt.loaders import LoadFromDictionary
 from unitxt.metric_utils import (
     UNITXT_REMOTE_METRICS,
+    UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION,
     UNITXT_REMOTE_METRICS_ENDPOINT,
+    get_remote_metrics_data_classification,
     get_remote_metrics_endpoint,
     get_remote_metrics_names,
 )
@@ -21,13 +24,37 @@ class TestMetricsServiceClientConfig(UnitxtTestCase):
             "metrics.rag.bert_k_precision",
         ]
         expected_remote_metrics_endpoint = "http://127.0.0.1:8000/compute"
+        expected_data_classification = {
+            "metrics.rag.context_relevance": ["public"],
+            "metrics.rag.bert_k_precision": ["propriety", "pii"],
+        }
         os.environ[UNITXT_REMOTE_METRICS] = json.dumps(expected_remote_metrics)
         os.environ[UNITXT_REMOTE_METRICS_ENDPOINT] = expected_remote_metrics_endpoint
+        os.environ[UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION] = json.dumps(
+            expected_data_classification
+        )
 
         remote_metrics = get_remote_metrics_names()
         self.assertListEqual(remote_metrics, expected_remote_metrics)
+
         remote_metrics_endpoint = get_remote_metrics_endpoint()
         self.assertEqual(remote_metrics_endpoint, expected_remote_metrics_endpoint)
+
+        data_classification_0 = get_remote_metrics_data_classification(
+            expected_remote_metrics[0]
+        )
+        self.assertEqual(
+            data_classification_0,
+            expected_data_classification[expected_remote_metrics[0]],
+        )
+
+        data_classification_1 = get_remote_metrics_data_classification(
+            expected_remote_metrics[1]
+        )
+        self.assertEqual(
+            data_classification_1,
+            expected_data_classification[expected_remote_metrics[1]],
+        )
 
     def test_no_remote_metrics(self):
         if UNITXT_REMOTE_METRICS in os.environ:
@@ -60,6 +87,19 @@ class TestMetricsServiceClientConfig(UnitxtTestCase):
 
         with self.assertRaises(RuntimeError):
             get_remote_metrics_names()
+
+    def test_misconfigured_remote_metrics_data_classification(self):
+        metric = "metrics.rag.context_relevance"
+        wrong_remote_metrics_data_classification = {
+            metric: "public",
+        }
+
+        os.environ[UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION] = json.dumps(
+            wrong_remote_metrics_data_classification
+        )
+
+        with self.assertRaises(RuntimeError):
+            get_remote_metrics_data_classification(metric)
 
 
 class TestRemoteMetrics(UnitxtTestCase):
@@ -136,3 +176,29 @@ class TestRemoteMetrics(UnitxtTestCase):
             instance_targets=instance_targets,
             global_target=global_target,
         )
+
+    def test_remote_metrics_data_classification(self):
+        metric_name = "metrics.rag.context_relevance"
+        os.environ[UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION] = json.dumps(
+            {metric_name: ["public"]},
+        )
+        data_classification = get_remote_metrics_data_classification(metric_name)
+        metric = RemoteMetric(
+            metric_name=metric_name,
+            endpoint="",
+            allowed_data_classification=data_classification,
+        )
+        data = {
+            "train": [{"references": "Reference", "prediction": "Prediction"}],
+        }
+
+        loader = LoadFromDictionary(data=data, data_classification=["public"])
+        streams = loader.process()
+        instances = metric.consume_stream(streams["train"])[-1]
+        metric.check_allowed_data_classification(instances)
+
+        loader = LoadFromDictionary(data=data, data_classification=["pii"])
+        streams = loader.process()
+        instances = metric.consume_stream(streams["train"])[-1]
+        with self.assertRaises(ValueError):
+            metric.check_allowed_data_classification(instances)

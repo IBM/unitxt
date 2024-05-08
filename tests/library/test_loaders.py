@@ -57,15 +57,19 @@ class TestLoaders(UnitxtTestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             files = {}
             dfs = {}
+            data_classification = ["public"]
 
             for file in ["train", "test"]:
                 path = os.path.join(tmp_dir, file + ".csv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
-                dfs[file] = df
                 df.to_csv(path, index=False)
+                df["data_classification"] = [
+                    data_classification for _ in range(len(df))
+                ]
+                dfs[file] = df
                 files[file] = path
 
-            loader = LoadCSV(files=files)
+            loader = LoadCSV(files=files, data_classification=data_classification)
             ms = loader()
 
             for file in ["train", "test"]:
@@ -79,15 +83,21 @@ class TestLoaders(UnitxtTestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             files = {}
             dfs = {}
+            data_classification = ["pii", "propriety"]
 
             for file in ["train", "test"]:
                 path = os.path.join(tmp_dir, file + ".tsv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
-                dfs[file] = df
                 df.to_csv(path, index=False, sep="\t")
+                df["data_classification"] = [
+                    data_classification for _ in range(len(df))
+                ]
+                dfs[file] = df
                 files[file] = path
 
-            loader = LoadCSV(files=files, sep="\t")
+            loader = LoadCSV(
+                files=files, sep="\t", data_classification=data_classification
+            )
             ms = loader()
 
             for file in ["train", "test"]:
@@ -114,6 +124,7 @@ class TestLoaders(UnitxtTestCase):
                     data_dir="DUMMY_DATA_DIR",
                     data_files=data_files,
                     loader_limit=loader_limit,
+                    data_classification=["public"],
                 )
                 with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
                     ms = loader()
@@ -122,7 +133,10 @@ class TestLoaders(UnitxtTestCase):
                         self.assertEqual(len(ds["test"]), 2)
                     else:
                         self.assertEqual(len(ds["test"]), loader_limit)
-                    self.assertEqual(ds["test"][0], {"a": 1, "b": 2})
+                    self.assertEqual(
+                        ds["test"][0],
+                        {"a": 1, "b": 2, "data_classification": ["public"]},
+                    )
 
     def test_load_from_HF_compressed(self):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
@@ -157,6 +171,14 @@ class TestLoaders(UnitxtTestCase):
         self.assertEqual(
             dataset["train"][0]["sentence"],
             "hide new secretions from the parental units ",
+        )
+        self.assertEqual(
+            dataset["train"][0]["data_classification"],
+            None,
+        )
+        self.assertEqual(
+            dataset["test"][0]["data_classification"],
+            None,
         )
         assert set(dataset.keys()) == {
             "train",
@@ -205,8 +227,9 @@ class TestLoaders(UnitxtTestCase):
                     df = pd.DataFrame({"x": ["train_1", "train_2"]})
                 else:
                     df = pd.DataFrame({"x": ["test_1", "test_2", "test_3"]})
-                dfs[file] = df
                 df.to_csv(path, index=False)
+                df["data_classification"] = [None] * len(df)
+                dfs[file] = df
                 files[file] = path
 
             loader = MultipleSourceLoader(
@@ -248,4 +271,5 @@ class TestLoaders(UnitxtTestCase):
 
         for split, instances in data.items():
             for original_instance, stream_instance in zip(instances, streams[split]):
+                original_instance["data_classification"] = None
                 self.assertEqual(original_instance, stream_instance)
