@@ -1,3 +1,4 @@
+import ast
 import re
 import string
 import uuid
@@ -12,6 +13,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
+from fuzzywuzzy import fuzz
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -30,8 +32,6 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import isoftype, parse_type_string
-from fuzzywuzzy import fuzz
-import ast
 
 logger = get_logger()
 settings = get_settings()
@@ -3645,30 +3645,29 @@ class NormalizedSacrebleu(HuggingfaceMetric):
         "mecab_ko_dic": KO_ERROR_MESSAGE,
     }
 
+
 class CustomF1Fuzzy(CustomF1):
-    
-    def calculate_groups_ratio_fuzzy(self, actual_group, total_group): 
-        tmp=[]
+    def calculate_groups_ratio_fuzzy(self, actual_group, total_group):
+        tmp = []
         for actual_key in actual_group.keys():
             max_score = self.fuzz_ratio
             best_total_key = None
-            
-            for total_key in total_group.keys():
-                tuple_ac = ast.literal_eval(actual_key)
-                typle_to = ast.literal_eval(total_key)
 
-                if tuple_ac[1] == typle_to[1]: #checking if key matches
-                    score = fuzz.ratio(tuple_ac[0], typle_to[0])
+            for total_key in total_group.keys():
+                tup_ac = ast.literal_eval(actual_key)
+                tup_to = ast.literal_eval(total_key)
+
+                if tup_ac[1] == tup_to[1]:
+                    score = fuzz.ratio(tup_ac[0], tup_to[0])
                     if score > max_score:
-                        #print(tuple_ac[0], typle_to[0])
                         max_score = score
                         best_total_key = total_key
-            
+
             if best_total_key is not None:
                 tmp.append(min(actual_group[actual_key], total_group[best_total_key]))
-            else :
+            else:
                 tmp.append(min(actual_group[actual_key], 0))
-        return sum(tmp) , sum(actual_group.values())
+        return sum(tmp), sum(actual_group.values())
 
     def compute(
         self,
@@ -3750,14 +3749,13 @@ class CustomF1Fuzzy(CustomF1):
                 del result[f"f1_{group}"]
         return result
 
+
 class FuzzyNer(CustomF1Fuzzy):
     prediction_type = "List[Tuple[str,str]]"
     fuzz_ratio = 75
-
 
     def get_element_group(self, element, additional_input):
         return element[1]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
-     
