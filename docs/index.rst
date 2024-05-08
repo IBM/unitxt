@@ -165,7 +165,6 @@ Welcome!
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Contents:
 
    docs/introduction
    docs/demo
