@@ -3647,7 +3647,7 @@ class NormalizedSacrebleu(HuggingfaceMetric):
 
 
 class CustomF1Fuzzy(CustomF1):
-    def calculate_groups_ratio_fuzzy(self, actual_group, total_group):
+    def calculate_groups_ratio(self, actual_group, total_group):
         tmp = []
         for actual_key in actual_group.keys():
             max_score = self.fuzz_ratio
@@ -3668,86 +3668,6 @@ class CustomF1Fuzzy(CustomF1):
             else:
                 tmp.append(min(actual_group[actual_key], 0))
         return sum(tmp), sum(actual_group.values())
-
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> dict:
-        references = [element[0] for element in references]
-
-        if self.groups is None:
-            groups = self.get_groups(references, task_data)
-        else:
-            groups = self.groups
-        groups_statistics = {}
-        for references_batch, predictions_batch, additional_input in zip(
-            references, predictions, task_data
-        ):
-            grouped_references = self.group_elements(references_batch, additional_input)
-            grouped_predictions = self.group_elements(
-                predictions_batch, additional_input
-            )
-            all_groups = set(grouped_references.keys()).union(
-                grouped_predictions.keys()
-            )
-            for group in all_groups:
-                if group not in groups_statistics:
-                    groups_statistics[group] = {
-                        "precision_numerator": 0,
-                        "precision_denominator": 0,
-                        "recall_numerator": 0,
-                        "recall_denominator": 0,
-                    }
-                references_by_group = grouped_references.get(group, Counter([]))
-                predictions_by_group = grouped_predictions.get(group, Counter([]))
-                pn, pd = self.calculate_groups_ratio_fuzzy(
-                    actual_group=predictions_by_group, total_group=references_by_group
-                )
-                rn, rd = self.calculate_groups_ratio_fuzzy(
-                    actual_group=references_by_group, total_group=predictions_by_group
-                )
-                groups_statistics[group]["precision_numerator"] += pn
-                groups_statistics[group]["precision_denominator"] += pd
-                groups_statistics[group]["recall_numerator"] += rn
-                groups_statistics[group]["recall_denominator"] += rd
-
-        num_of_unknown_class_predictions = 0
-        pn_total = pd_total = rn_total = rd_total = 0
-        f1_result = {}
-        recall_result = {}
-        precision_result = {}
-        for group in groups_statistics.keys():
-            pn, pd, rn, rd = (
-                groups_statistics[group]["precision_numerator"],
-                groups_statistics[group]["precision_denominator"],
-                groups_statistics[group]["recall_numerator"],
-                groups_statistics[group]["recall_denominator"],
-            )
-            pn_total, pd_total, rn_total, rd_total = (
-                pn_total + pn,
-                pd_total + pd,
-                rn_total + rn,
-                rd_total + rd,
-            )
-            if group in groups:
-                f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
-                recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
-                precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
-            else:
-                num_of_unknown_class_predictions += pd
-
-        result = f1_result
-        self.add_macro_scores(f1_result, recall_result, precision_result, result)
-        self.add_in_class_support_scores(
-            num_of_unknown_class_predictions, pd_total, result
-        )
-        self.add_micro_scores(rd_total, rn_total, pd_total, pn_total, result)
-        if not self.report_per_group_scores:
-            for group in groups:
-                del result[f"f1_{group}"]
-        return result
 
 
 class FuzzyNer(CustomF1Fuzzy):
