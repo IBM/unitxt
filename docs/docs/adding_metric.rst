@@ -98,17 +98,17 @@ Metric Base Classes
 Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics.
 
 **InstanceMetric** - Class for metrics for which the global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
-Some examples of instance metrics are Accuracy, TokenOverlap, CharEditDistance.
+Some examples of instance metrics are `Accuracy`, `TokenOverlap`, `CharEditDistance`.
 
 **BulkInstanceMetric** - Similar to InstanceMetric , it is for metrics that can be calculated by aggregating the instance scores.  However,
 due to implementation efficiently reasons, it's better to run them in bulk, especially when using LLMs.
-Some examples of bulk instance metrics are SentenceBert,  Reward.
+Some examples of bulk instance metrics are `SentenceBert`,  `Reward`.
 
 **GlobalMetric** - Class for metrics for which the global score must be calculated over all the instance together.
-Some examples of global metrics are f1, Spearman, Kendall Tau.
+Some examples of global metrics are `F1`, `Spearman`, `Kendall Tau`.
 
 .. note::
-    Note that by default global metrics are also executed once per instance as list (of size one),
+    By default global metrics are also executed once per instance as list (of size one),
     to generate per instance scores that are useful for debugging and sanity checks.
 
 Adding a New Instance metric
