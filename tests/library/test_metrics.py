@@ -200,7 +200,6 @@ class TestMetrics(UnitxtTestCase):
             outputs = apply_metric(
                 metric=metric, predictions=predictions, references=references
             )
-
             expected_global_result = {
                 "accuracy": 1 if number == 0 else 0,
                 "score": 1 if number == 0 else 0,
@@ -214,7 +213,7 @@ class TestMetrics(UnitxtTestCase):
                 for key, value in global_result.items()
                 if key in expected_global_result
             }
-            self.assertDictEqual(global_result, expected_global_result)
+            self.assertDictEqual(expected_global_result, global_result)
 
             instance_targets = [
                 {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
@@ -222,7 +221,7 @@ class TestMetrics(UnitxtTestCase):
                 {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
             ]
             for output, target in zip(outputs, instance_targets):
-                self.assertDictEqual(output["score"]["instance"], target)
+                self.assertDictEqual(target, output["score"]["instance"])
 
     def test_f1_micro(self):
         metric = F1Micro()
@@ -1082,7 +1081,7 @@ class TestMetrics(UnitxtTestCase):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
 
         class NoAggFuncReduction(Accuracy):
-            aggregating = {"aggregating_function_name": "unknown"}
+            aggregating_function = ""
 
         with self.assertRaises(AssertionError):
             # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
@@ -1095,7 +1094,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoAggFunc(Accuracy):
-            aggregating = 9
+            aggregating_function = 9
 
         with self.assertRaises(AssertionError):
             # should raise error because no "agg_func" field in group_mean
@@ -1108,10 +1107,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoCallableAggFunc(Accuracy):
-            aggregating = {
-                "aggregating_function_name": "no_callable",
-                "aggregating_function": 9,
-            }
+            aggregating_function = "not_callable"
 
         with self.assertRaises(AssertionError):
             # should raise error because second field of agg_func should be callable

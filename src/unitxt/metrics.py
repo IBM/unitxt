@@ -532,9 +532,11 @@ class MetricWithConfidenceInterval(Metric):
                 groups_global_scores[group_name] = {}
                 for score_name in score_names:
                     if isinstance(group, list):  # not split to control and comparison
-                        groups_global_scores[group_name][score_name] = self.aggregating[
-                            "aggregating_function"
-                        ](instances=group, score_name=score_name)
+                        groups_global_scores[group_name][
+                            score_name
+                        ] = self.aggregating_function(
+                            instances=group, score_name=score_name
+                        )
                     else:  # split to control and comparison
                         control_scores = [
                             instance["score"]["instance"][score_name]
@@ -626,6 +628,19 @@ class MetricWithConfidenceInterval(Metric):
             if k in fields_to_average:
                 result[k] = np.nanmean(v)
         return result
+
+    # for InstanceMetric and BulkInstanceMetric
+    def prepare_scorenames_aggregating(self):
+        if self.score_names is None:
+            assert (
+                self.main_score is not None
+            ), "both score_names and main_score are None"
+            self.score_names = [self.main_score]
+
+        if self.aggregating_function_name is None:
+            self.aggregating_function_name = "mean"
+        if self.aggregating_function is None:
+            self.aggregating_function = MetricWithConfidenceInterval.average_item_scores
 
 
 class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
@@ -782,21 +797,15 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
-    aggregating: dict = None
+    # same args as for InstanceMetric
     score_names: List[str] = None
+    aggregating_function_name: str = None
+    aggregating_function: callable = None
 
     def prepare(self):
-        if self.score_names is None:
-            self.score_names = [self.main_score]
-        if self.aggregating is None:
-            self.aggregating = {
-                "aggregating_function_name": "mean",
-                "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-            }
-
-        super().prepare()
         if self.main_score is None:
             self.main_score = "f1"
+        super().prepare_scorenames_aggregating()
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
@@ -927,29 +936,24 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     # compatibility -- reflecting the other input args for aggregating.
     to_score_names: List[str] = None
 
-    # How to yield one score, float, from a list of instances: either the whole stream or one group.
+    # How to yield one score, float, for each score_name in score_names, from a list of instances: either the whole stream or one group.
     # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
     # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
-    # Tyically, to be overridden by the subclasses. If None, then for InstanceMetric - the default of average_item_scores,
-    # If not set by subclasses, it is set by InstanceMetric to {
-    #     "aggregating_function_name": "mean",
-    #     "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
+    # Tyically, aggregating is to be overridden by the subclasses. If None, and not set by subclasses, then for InstanceMetric -
+    # the defaults set are:
+    #     aggregating_function_name: "mean",
+    #     aggregating_function: MetricWithConfidenceInterval.average_item_scores,
     # }
-    aggregating: dict = None
+    aggregating_function_name: str = None
+    aggregating_function: callable = None
 
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
     def verify(self):
-        assert isinstance(self.aggregating, dict), "aggregating must be a dict"
-        assert len(self.aggregating) == 2, "aggregating must consist of two fields"
-        assert (
-            "aggregating_function_name" in self.aggregating
-            and "aggregating_function" in self.aggregating
-        ), "aggregating must contain both fields: 'aggregating_function_name' and 'aggregating_function'"
         assert callable(
-            self.aggregating["aggregating_function"]
-        ), "self.aggregating['aggregating_function'] must be a callable"
+            self.aggregating_function
+        ), "arg aggregating_function must be a callable"
 
         if self.grouping is not None:
             assert isinstance(
@@ -975,28 +979,20 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         ), "'score_names' and 'to_score_names' must have the same length"
 
     def prepare(self):
-        if self.aggregating is None:
-            self.aggregating = {
-                "aggregating_function_name": "mean",
-                "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-            }
-
-        if self.score_names is None:
-            self.score_names = [self.main_score]
+        self.prepare_scorenames_aggregating()
         self.prefix = ""
         if self.to_score_names is None:
             if self.grouping is not None:
                 self.prefix = "group_"
                 if self.grouping["ci_samples_from_groups_scores"]:
                     self.prefix = "fixed_group_"
-                self.prefix += self.aggregating["aggregating_function_name"]
+                self.prefix += self.aggregating_function_name
                 self.prefix += "_"
                 # for backward compatibility, only when grouping do we note the aggregation function name
                 # we suggest to always add it
             self.to_score_names = [
                 self.prefix + score_name for score_name in self.score_names
             ]
-        super().prepare()
 
     # flake8: noqa: C901
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -1054,7 +1050,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     instances=instances,
                     score_names=list(set(self.ci_scores)),
                     ci_score_prefix=self.prefix,
-                    aggregation_func=self.aggregating["aggregating_function"]
+                    aggregation_func=self.aggregating_function
                     if self.grouping is None
                     else self.average_groups_global_scores,
                 )
@@ -1124,10 +1120,11 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
 
 class Accuracy(InstanceMetric):
-    grouping = None
-    score_names = ["accuracy"]
     main_score = "accuracy"
     ci_scores = ["accuracy"]
+
+    def prepare(self):
+        super().prepare()
 
     prediction_type = "Any"  # string representation is compared
 
@@ -1181,14 +1178,17 @@ class JaccardIndex(InstanceMetric):
 class MaxAccuracy(Accuracy):
     """Calculate the maximal accuracy over all instances as the global score."""
 
-    aggregating = {
-        "aggregating_function_name": "max",
-        "aggregating_function": MetricWithConfidenceInterval.max_item_scores,
-    }
+    aggregating_function_name = "max"
+
+    def prepare(self):
+        self.aggregating_function = MetricWithConfidenceInterval.max_item_scores
+        super().prepare()
 
 
 class MinAccuracy(Accuracy):
     """Calculate the minimal accuracy over all instances as the global score."""
+
+    aggregating_function_name = "min"
 
     def min_item_score(self, instances: List[Dict[str, Any]], score_name: str) -> float:
         raw_scores = [
@@ -1200,10 +1200,7 @@ class MinAccuracy(Accuracy):
         return np.min(non_nan_raw_scores)
 
     def prepare(self):
-        self.aggregating = {
-            "aggregating_function_name": "min",
-            "aggregating_function": self.min_item_score,
-        }
+        self.aggregating_function = self.min_item_score
         super().prepare()
 
 
@@ -2259,7 +2256,6 @@ class LlamaIndexCorrectness(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
     prediction_type: str = "str"
-    aggregating: dict = None
 
     openai_models: List[str] = ["gpt-3.5-turbo"]
     # anthropic_models is here for the sake of documentation for future models:
@@ -2845,7 +2841,6 @@ class MAP(RetrievalMetric):
 class RetrievalAtK(RetrievalMetric):
     k_list: List[int]
     main_score: str = None
-    aggregating: dict = None
 
     def prepare(self):
         self.main_score = self.score_name("match", self.k_list[0])
@@ -3264,10 +3259,7 @@ class FixedGroupMeanBaselineAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "mean_baseline",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "mean_baseline"
     subgroup_filtering = {
         "subgroup_column": "task_data/variant_type",
         "subgroup_types": ["original"],
@@ -3279,10 +3271,7 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "mean_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "mean_paraphrase"
     subgroup_filtering = {
         "subgroup_column": "task_data/variant_type",
         "subgroup_types": ["paraphrase"],
@@ -3296,10 +3285,7 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
         "ci_samples_from_groups_scores": True,
     }
 
-    aggregating = {
-        "aggregating_function_name": "mean_baseline",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "mean_baseline"
     subgroup_filtering = {
         "subgroup_column": "task_data/variant_type",
         "subgroup_types": ["original"],
@@ -3311,10 +3297,7 @@ class FixedGroupMeanParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "mean_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "mean_paraphrase"
     subgroup_filtering = {
         "subgroup_column": "task_data/variant_type",
         "subgroup_types": ["paraphrase"],
@@ -3327,10 +3310,7 @@ class FixedGroupPDRParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "pdr_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "pdr_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3344,10 +3324,7 @@ class FixedGroupPDRParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "pdr_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "pdr_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3370,10 +3347,7 @@ class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "norm_cohens_h_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "norm_cohens_h_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3387,10 +3361,7 @@ class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "norm_cohens_h_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "norm_cohens_h_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3405,10 +3376,7 @@ class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "norm_hedges_g_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "norm_hedges_g_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3422,10 +3390,7 @@ class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "norm_hedges_g_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "norm_hedges_g_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3440,10 +3405,7 @@ class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "absval_norm_cohens_h_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "absval_norm_cohens_h_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3457,10 +3419,7 @@ class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "absval_norm_cohens_h_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "absval_norm_cohens_h_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3474,10 +3433,7 @@ class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "absval_norm_hedges_g_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "absval_norm_hedges_g_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3491,10 +3447,7 @@ class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
         "group_by_field": "task_data/group_id",
         "ci_samples_from_groups_scores": True,
     }
-    aggregating = {
-        "aggregating_function_name": "absval_norm_hedges_g_paraphrase",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "absval_norm_hedges_g_paraphrase"
     control_comparison = {
         "subgroup_column": "task_data/variant_type",
         "control_subgroup_types": ["original"],
@@ -3556,10 +3509,7 @@ class BinaryAccuracy(InstanceMetric):
 
     prediction_type = "Union[float,int]"
     single_reference_per_prediction = True
-    aggregating = {
-        "aggregating_function_name": "mean",
-        "aggregating_function": MetricWithConfidenceInterval.average_item_scores,
-    }
+    aggregating_function_name = "mean"
 
     def _validate_reference(self, reference):
         super()._validate_reference(reference)
