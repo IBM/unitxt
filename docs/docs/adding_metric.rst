@@ -114,10 +114,14 @@ Some examples of global metrics are `F1`, `Spearman`, `Kendall Tau`.
 Adding a New Instance metric
 ----------------------------
 
-    Assume we want to create a referenceless metric for the task for adding two numbers.
+    Assume we want to create a referenceless metric for the task of adding two numbers.
     It will take the processed prediction of the task (an integer) and compare to the sum of the
-    two task input fields `num1` and `num2`.  It can be configure with a `relative_tolerance`  for
-    approximate comparison.
+    two task input fields `num1` and `num2`.  It will check, for each instance,
+    how close the predicted sum is to the actual sum.
+    The metric can be configured with a `relative_tolerance` threshold for approximate comparison.
+    If the difference between the prediction and actual result is smaller than the `relative_tolerance`
+    threshold, the instance score is 1. Otherwise, the instance result is 0.
+    The global accuracy result is the mean of the instance scores.
 
 
     .. code-block:: python
