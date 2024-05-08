@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =================
-Adding Datasets ✨
+Datasets ✨
 =================
 
 This guide will assist you in adding or using your new dataset in unitxt.
@@ -23,15 +23,15 @@ The Task
 ---------
 
 When we "add a dataset", we are actually adding data for a particiular NLP task such translation, sentiment classification, question answering, summarization, etc.
-In fact, the same dataset can be used for multiple NLP tasks. For example, a dataset with question and answer pairs, can be used for both 
-question answering and question generation.  Similarly, a dataset with corresponding English and French sentences, can be used for 
+In fact, the same dataset can be used for multiple NLP tasks. For example, a dataset with question and answer pairs, can be used for both
+question answering and question generation.  Similarly, a dataset with corresponding English and French sentences, can be used for
 an Engish to French translation task or for a French to English translation task.
 
 The Task schema is a formal definition of the NLP task , including its inputs, outputs, and default evaluation metrics.
 
-The `inputs` of the task are a set of fields that are used by to format the textual input to the model.  
+The `inputs` of the task are a set of fields that are used by to format the textual input to the model.
 The `output` of the task are a set of fields that are used by to format the textual expected output from the model (gold references)
-The `metrics` of the task are a set of default metrics to be used to evaluate the outputs of the model. 
+The `metrics` of the task are a set of default metrics to be used to evaluate the outputs of the model.
 
 While language models generate textual predictions, many times the metrics evaluate on a different datatypes.  For example,
 spearman correlation is evaluated on numeric predictions vs numeric reference, and multi-label F1 is evaluated on a list of string class name prediction_type
@@ -39,14 +39,14 @@ vs a reference list of string classes.  The `prediction_type`` of the task defin
 
 Note that the the Task does not perform any verbalization or formatting of the task input and output fields - this is the responsibility of the Template.
 
-In our example, we will formalize a translation task between `source_language` and a `target_language`. 
+In our example, we will formalize a translation task between `source_language` and a `target_language`.
 The text to translate is in the field `text` and the reference answer in the `translation` field.
 We will use the `bleu`` metric for a reference based evaluation.
 
 .. code-block:: python
 
     task=FormTask(
-        inputs= { "text" : "str", "source_language" : "str", "target_language" : "str"}, 
+        inputs= { "text" : "str", "source_language" : "str", "target_language" : "str"},
         outputs= {"translation" : "str"},
         prediction_type="str",
         metrics=["metrics.bleu"],
@@ -63,7 +63,7 @@ If a cataloged task fits your use case, you can reference it by name:
 Loading the Dataset
 ---------------------
 
-To load data from an external source, use a we use a loader. 
+To load data from an external source, use a we use a loader.
 For example, to load the `wmt16` translation dataset from the HuggingFace hub:
 
 .. code-block:: python
@@ -114,7 +114,7 @@ For example taking the input fields `text` ,  `source_language` and `target_lang
 
 The template also verbalizes the output fields as gold references.  In Unitxt , references are the expected textual outputs of the model.
 In this example, the `translation` field is taken, as is, as a gold reference.
-However, in other cases , the output field may undergo some transformations. 
+However, in other cases , the output field may undergo some transformations.
 
 If using a predefined task, you can choose from the corresponding templates available in the catalog's :ref:`Templates section <catalog.templates>`.
 
@@ -137,7 +137,7 @@ Alternatively you can define your custom templates:
 Testing your card
 -------------------
 
-Once your card is ready you can test it.  Here we use standard translation templates from 
+Once your card is ready you can test it.  Here we use standard translation templates from
 the Unitxt catalog.
 
 .. code-block:: python
@@ -170,11 +170,11 @@ the Unitxt catalog.
         test_card(card)
 
 The test_card function generates the dataset using all templates defined in the card with in context learning mode and one demonstration.
-It prints out 3 examples from the test fold, and runs the metrics defined on the datasets on 
-(1) randomly generated text 
-(2) text which is equal to one of the references. 
+It prints out 3 examples from the test fold, and runs the metrics defined on the datasets on
+(1) randomly generated text
+(2) text which is equal to one of the references.
 
-Most metrics should return a low score (near 0) on random data and a score of 1 when the data is equal to the references. 
+Most metrics should return a low score (near 0) on random data and a score of 1 when the data is equal to the references.
 Errors/warnings are printed if it's not the case.
 
 Adding to the catalog

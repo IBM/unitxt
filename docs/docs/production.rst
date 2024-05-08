@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Using in production
+Using in Production
 =====================================
 
 Unitxt can be used to process data in production. First define a recipe:
