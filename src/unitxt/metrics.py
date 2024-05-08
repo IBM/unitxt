@@ -3751,9 +3751,8 @@ class CustomF1Fuzzy(CustomF1):
 
 
 class FuzzyNer(CustomF1Fuzzy):
-    def __init__(self, fuzz_ratio=75):
-        self.prediction_type = "List[Tuple[str,str]]"
-        self.fuzz_ratio = fuzz_ratio
+    prediction_type = "List[Tuple[str,str]]"
+    fuzz_ratio = 75
 
     def get_element_group(self, element, additional_input):
         return element[1]
