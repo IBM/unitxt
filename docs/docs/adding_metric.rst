@@ -105,11 +105,14 @@ to generate per instance scores, and then once again over all instances together
 Adding a New Instance metric
 ----------------------------
 
-    Assume we want to create a referenceless metric for the task for adding two numbers.   
+    Assume we want to create a referenceless metric for the task of adding two numbers.   
     It will take the processed prediction of the task (an integer) and compare to the sum of the 
-    two task input fields `num1` and `num2`.  It can be configure with a `relative_tolerance`  for 
-    approximate comparison.  
-
+    two task input fields `num1` and `num2`.  It will check, for each instance,
+    how close the predicted sum is to the actual sum.
+    The metric can be configured with a `relative_tolerance` threshold for approximate comparison.  
+    If the difference between the prediction and actual result is smaller than the `relative_tolerance` 
+    threshold, the instance score is 1. Otherwise, the instance result is 0.
+    The global accuracy result is the mean of the instance scores.  
 
     .. code-block:: python
 
@@ -176,8 +179,62 @@ testing suit:
 Adding a Global Metric
 ----------------------------
 
-Adding a Hugginface metric
-----------------------------
+Now let's consider a global reference based metric that checks if accuracy depends on the magnitude of the results.
+For example, is more accurate when the result is 1 digits vs 5 digits.
+To check this, we will see if there is a correlation between the number of digits in the reference value and the the accuracy.
+This is a global metric because it performs the calculation over all the instance predictions and references together.
+
+.. code-block:: python
+
+        
+        class SensitivityToNumericMagnitude(GlobalMetric):
+        """
+        SensitiveToNumericMagnitude is a reference-based metric that calculates if accuracy depends
+        on the numeric magnitude of the reference value.  It receives integer prediction values and integer reference values
+        and calculates the correlation between the number of digits in the reference values and the accuracy
+        (whether predictions=references).
+
+        The score is negative (up to -1), if predictions tend to be less accurate when reference values are larger.
+        The score is close to 0, if the magnitude of the reference answer does not correlate with accuracy.
+        The score is positive (up to 1), if predictions tend to be less accurate when reference values are smaller.  
+
+        In most realistic cases, the score is likely to be zer or negative.
+
+        """
+        prediction_type = "int"  
+        main_score="sensitivity_to_numeric_magnitude"
+        single_reference_per_prediction = True  # validates only one reference is passed per prediction
+      
+        def compute(
+            self, references: List[List[int]], predictions: List[int], task_data: List[Dict]
+        ) -> dict:
+            import scipy.stats as stats # Note the local import to ensure import is required only if metric is actually used
+            magnitude = [ len(str(abs(reference[0]))) for reference in references ]
+            accuracy = [ reference[0] == prediction  for (reference, prediction) in zip(references, predictions) ]
+            spearman_coeff, p_value =  stats.spearmanr(magnitude, accuracy)
+            result = { self.main_score :  spearman_coeff }
+            return result
+
+
+
+1. Calculating confidence internals for global metricscan be costly if each invocation of the metric takes a long time.
+To avoid calculating confidence internals for global metrics set `n_resamples = 0`.
+
+2. Unitxt calculates instance results in global metrics to allow viewing the output on a single instances.  
+This can help ensure metric behavior is correct, because it can be checked on single instance.
+However, sometimes it does not make sense because the global metric assumes a minimum amount of instances.  
+The per instance calculations can be disabled by setting `process_single_instances = False`.
+
+Managing Metric Dependencies 
+--------------------
+
+If a metric depends on an external package (beyond the unitxt dependencies),
+use of `_requirements_list` allows validating the package is installed  and provide instructions to the users if it is not.
+
+  _requirements_list = { "sentence_transformers" : "Please install sentence_transformers using  'pip install -U sentence-transformers'" } 
+
+To ensure the package is imported only if the metric is actually used, include the import inside the relevant methods and not in global scope of the file.
+
 
 Using Metric Pipelines
 ----------------------
@@ -214,15 +271,21 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
         )
         add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
 
+Adding a Hugginface metric
+----------------------------
 
-Advanced topics
----------------
+Unitxt provides a simple way to wrap existing Huggingface without the need to write code.
+This is done using the predefined HuggingfaceMetric class.
 
-1. Calculating confidence internals for global metricscan be costly , if each invocation of the metric takes a long time.
-To avoid calculating confidence internals for global metrics set `n_resamples = 0`.
+.. code-block:: python
+    metric = HuggingfaceMetric(
+        hf_metric_name="bleu",  # The name of the metric in huggingface
+        main_score="bleu",      # The main score
+        prediction_type="str"   # The type of the prediction and references (note that by default references are a list of the prediction_type)
+    )
+    add_to_catalog(metric, "metrics.bleu", overwrite=True)
 
-2. Unitxt calculates instance results in global metrics to allow viewing the output on a single instancs.  
-This can help ensure metric behavior is correct, because it can be checked on single instance.
-However, sometimes it does not make sense because the global metric assumes a minimum amount of instances.  
-This can be disabled by setting `process_single_instances = False`.
+Note that Huggingface metrics are independent the tasks they are used for, and receive arbitrary types of predictions, references, and additional
+parameters.  It may be need to map between unitxt task values and types to the corresponding interface of the metric, using
+the MetricPipeline described in the previous section.
 
