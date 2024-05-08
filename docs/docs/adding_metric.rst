@@ -220,15 +220,22 @@ This is a global metric because it performs the calculation over all the instanc
             result = { self.main_score :  spearman_coeff }
             return result
 
+Adding a Hugginface metric
+----------------------------
 
+Unitxt provides a simple way to wrap existing Huggingface without the need to write code.
+This is done using the predefined HuggingfaceMetric class.
 
-1. Calculating confidence internals for global metricscan be costly if each invocation of the metric takes a long time.
-To avoid calculating confidence internals for global metrics set `n_resamples = 0`.
-
-2. Unitxt calculates instance results in global metrics to allow viewing the output on a single instances.
-This can help ensure metric behavior is correct, because it can be checked on single instance.
-However, sometimes it does not make sense because the global metric assumes a minimum amount of instances.
-The per instance calculations can be disabled by setting `process_single_instances = False`.
+.. code-block:: python
+    metric = HuggingfaceMetric(
+        hf_metric_name="bleu",  # The name of the metric in huggingface
+        main_score="bleu",      # The main score
+        prediction_type="str"   # The type of the prediction and references (note that by default references are a list of the prediction_type)
+    )
+    add_to_catalog(metric, "metrics.bleu", overwrite=True)
+Note that Huggingface metrics are independent the tasks they are used for, and receive arbitrary types of predictions, references, and additional
+parameters.  It may be need to map between unitxt task values and types to the corresponding interface of the metric, using
+the MetricPipeline described in the previous section.
 
 Managing Metric Dependencies
 --------------------
