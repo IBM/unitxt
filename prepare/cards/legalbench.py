@@ -1,0 +1,77 @@
+from unitxt.blocks import LoadHF, TaskCard
+from unitxt.catalog import add_to_catalog
+from unitxt.operators import AddFields, RenameFields
+from unitxt.test_utils.card import test_card
+
+# from https://raw.githubusercontent.com/HazyResearch/legalbench/main/helm_prompt_settings.jsonl
+field_ordering, instructions, label_keys, output_nouns, _ = [
+    {
+        "abercrombie": [["Description", "text"]],
+        # "corporate_lobbying": [
+        #     ["Official title of bill", "bill_title"],
+        #     ["Official summary of bill", "bill_summary"],
+        #     ["Company name", "company_name"],
+        #     ["Company business description", "company_description"],
+        # ],
+        "international_citizenship_questions": [["Question", "question"]],
+        "function_of_decision_section": [["Text", "Paragraph"]],
+        "proa": [["Statute", "text"]],
+    },
+    {
+        "abercrombie": "A mark is generic if it is the common name for the product. A mark is descriptive if it describes a purpose, nature, or attribute of the product. A mark is suggestive if it suggests or implies a quality or characteristic of the product. A mark is arbitrary if it is a real English word that has no relation to the product. A mark is fanciful if it is an invented word. Label the type of mark for the following products.",
+        # "corporate_lobbying": "You are a lobbyist analyzing Congressional bills for their impacts on companies. Given the title and summary of the bill, plus information on the company from its 10K SEC filing, it is your job to determine if a bill is at least somewhat relevant to a company in terms of whether it could impact the company's bottom-line if it was enacted (by saying Yes or No).",
+        "international_citizenship_questions": "Answer the following questions considering the state of international law on January 1st, 2020. Answer Yes or No.",
+        "function_of_decision_section": "Classify the following text using the following definitions.\n\n- Facts: The paragraph describes the factual background that led up to the present lawsuit.\n- Procedural History: The paragraph describes the course of litigation that led to the current proceeding before the court.\n- Issue: The paragraph describes the legal or factual issue that must be resolved by the court.\n- Rule: The paragraph describes a rule of law relevant to resolving the issue.\n- Analysis: The paragraph analyzes the legal issue by applying the relevant legal principles to the facts of the present dispute.\n- Conclusion: The paragraph presents a conclusion of the court.\n- Decree: The paragraph constitutes a decree resolving the dispute.",
+        "proa": "A private right of action is when a regular person, a private citizen, is legally entitled to enforce their rights under a given statute. Does the clause specify a private right of action? Answer Yes or No.",
+    },
+    {
+        "abercrombie": "answer",
+        # "corporate_lobbying": "answer",
+        "international_citizenship_questions": "answer",
+        "function_of_decision_section": "answer",
+        "proa": "answer",
+    },
+    {
+        "abercrombie": "Type",
+        # "corporate_lobbying": "Label",
+        "international_citizenship_questions": "Answer",
+        "function_of_decision_section": "Function",
+        "proa": "Answer",
+    },
+    {
+        "abercrombie": 5,
+        # "corporate_lobbying": 0,
+        "international_citizenship_questions": 5,
+        "function_of_decision_section": 5,
+        "proa": 5,
+    },
+]
+
+
+# 'Classify the following {text_type} on whether it is related to {class}. Answer "Yes" or "No".\n{text}\n'
+
+sub_tasks = list(field_ordering.keys())
+sub_task = sub_tasks[4]
+
+card = TaskCard(
+    loader=LoadHF(path="nguha/legalbench", name=sub_task),
+    preprocess_steps=[
+        AddFields(
+            fields={
+                # "we have the text field"
+                # "class": label_keys[sub_task],
+                "text_type": field_ordering[sub_task][0][1],
+                # "label":
+            }
+        ),
+        RenameFields(field_to_field={"labels": "class"}),
+        # This is still needed for YesNoTemplates, which does not handle empty labels
+        # MapInstanceValues(mappers={"labels": {"[]": ["none"]}}, strict=False),
+        # RenameFields(field_to_field={"labels": "label"}),
+    ],
+    task="tasks.classification.binary",
+    templates="",
+)
+
+test_card(card, debug=True)
+add_to_catalog(card, "cards.sst2", overwrite=True)
