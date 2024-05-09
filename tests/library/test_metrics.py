@@ -1021,6 +1021,41 @@ class TestMetrics(UnitxtTestCase):
             first_instance_target, outputs[0]["score"]["instance"]["score"]
         )
 
+    def test_fuzzyner(self):
+        metric = FuzzyNer()
+        predictions = [
+            [
+                ("jar htaras", "Person"),
+                ("Marathahalli", "Location"),
+                ("IBM", "Org"),
+            ]
+        ]
+        references = [
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ]
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 1.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Person"]
+        )
+        global_target = 0.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Location"]
+        )
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
 
 class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):
@@ -1433,35 +1468,3 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
-
-
-def test_fuzzyner(self):
-    metric = FuzzyNer()
-    predictions = [
-        [
-            ("jar htaras", "Person"),
-            ("Marathahalli", "Location"),
-            ("IBM", "Org"),
-        ]
-    ]
-    references = [
-        [
-            [
-                ("jar htaras", "Person"),
-                ("Marathahalli ring road", "Location"),
-            ]
-        ]
-    ]
-    outputs = apply_metric(
-        metric=metric, predictions=predictions, references=references
-    )
-    global_target = 1.0
-    self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["f1_Person"])
-    global_target = 0.0
-    self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["f1_Location"])
-    metric.report_per_group_scores = False
-    outputs = apply_metric(
-        metric=metric, predictions=predictions, references=references
-    )
-    self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
-    self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
