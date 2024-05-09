@@ -16,6 +16,5 @@
     "augmentable_inputs": [
         "contexts",
         "question"
-    ],
-    "prediction_type": "str"
+    ]
 }
