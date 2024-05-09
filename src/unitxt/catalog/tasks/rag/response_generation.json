@@ -1,0 +1,20 @@
+{
+    "type": "form_task",
+    "inputs": [
+        "contexts",
+        "contexts_ids",
+        "question"
+    ],
+    "outputs": [
+        "reference_answers"
+    ],
+    "metrics": [
+        "metrics.rag.response_generation.correctness.token_overlap",
+        "metrics.rag.response_generation.faithfullness.token_overlap",
+        "metrics.rag.response_generation.correctness.bert_score.deberta_large_mnli"
+    ],
+    "augmentable_inputs": [
+        "contexts",
+        "question"
+    ]
+}
