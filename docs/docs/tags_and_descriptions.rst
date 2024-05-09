@@ -1,9 +1,5 @@
 .. _tags_and_descriptions:
 
-.. note::
-
-   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
-
 =====================================
 Tags and Descriptions
 =====================================
