@@ -1,5 +1,6 @@
 import json
 from abc import abstractmethod
+from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .artifact import Artifact
@@ -151,6 +152,53 @@ class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
         return target, [reference]
 
 
+class PairwiseChoiceTemplate(InputOutputTemplate):
+    """PairwiseChoiceTemplate.
+
+    choice_1_field: str
+    choice_2_field: str
+    answer_field: str
+    choice_1_label: str
+    choice_2_label: str
+    choice_tie_label: str
+
+    shuffle: 50% of the time:
+     1) The values of choice_1_field and choice_2_field will be swapped.
+     2) If the values of answer_field is choice_1_label, set it to choice_2_label.
+         Else if the values of answer_field is choice_2_label, set it to choice_1_label.
+         Else if the value of answer_field is choice_tie_label, do nothing.
+
+    """
+
+    choice_1_field: str
+    choice_2_field: str
+    answer_field: str
+    choice_1_label: str
+    choice_2_label: str
+    choice_tie_label: str
+
+    def shuffle_values(self, inputs: Dict[str, object]):
+        outcome = random()  # A float between 0 and 1
+        if outcome <= 0.5:
+            choice_1_value = inputs[self.choice_1_field]
+            choice_2_value = inputs[self.choice_2_field]
+
+            inputs[self.choice_1_field] = choice_2_value
+            inputs[self.choice_2_field] = choice_1_value
+
+            answer = inputs[self.answer_field]
+            if answer == self.choice_1_label:
+                inputs[self.answer_field] = self.choice_2_label
+            elif answer == self.choice_2_label:
+                inputs[self.answer_field] = self.choice_1_label
+
+        return inputs
+
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        inputs = self.shuffle_values(inputs)
+        return super().inputs_to_source(inputs)
+
+
 class DialogFieldsData(Artifact):
     user_role_label: str
     assistant_role_label: str
@@ -158,7 +206,7 @@ class DialogFieldsData(Artifact):
     dialog_field: str
 
 
-class ChatTemplate(InputOutputTemplate):
+class DialogTemplate(InputOutputTemplate):
     dialog_fields: List[DialogFieldsData]
     turns_separator: str = "\n\n"
     label_separator: str = " "
@@ -191,6 +239,15 @@ class ChatTemplate(InputOutputTemplate):
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
         inputs = self.process_dialog(inputs)
         return super().inputs_to_source(inputs)
+
+
+class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
+    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+        # First, process the inputs with ChatTemplate's method
+        inputs = DialogTemplate.process_dialog(self, inputs)
+
+        # Now, process the inputs with PairwiseChoiceTemplate's method
+        return PairwiseChoiceTemplate.inputs_to_source(self, inputs)
 
 
 class MultipleChoiceTemplate(Template):
