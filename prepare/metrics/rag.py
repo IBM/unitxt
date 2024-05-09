@@ -462,3 +462,45 @@ answer_inference = MetricPipeline(
     metric="metrics.perplexity_nli.t5_nli_mixture",
 )
 add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
+
+
+from unitxt.metrics import (
+    CopyFields,
+    MetricPipeline,
+)
+
+for axis, base_metric, main_score in [
+        ("correctness", "token_overlap", "f1"),
+        ("correctness", "bert_score.deberta_large_mnli", "recall"),
+        ("correctness", "bert_score.deberta_v3_base_mnli_xnli_ml", "recall"),
+        ("faithfullness", "token_overlap", "precision"),
+    ]:
+
+    preprocess_steps = (
+        [
+            CopyFields(field_to_field=[("task_data/contexts", "references")]),
+        ]
+        if axis == "faithfullness"
+        else []
+    )
+
+    metric = MetricPipeline(
+        main_score=main_score,
+        preprocess_steps=preprocess_steps,
+        postpreprocess_steps=[
+            CopyFields(
+                field_to_field={
+                    "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
+                    "score/instance/recall": f"score/instance/{axis}_recall_{base_metric}",
+                    "score/instance/precision": f"score/instance/{axis}_precision_{base_metric}",
+                    "score/global/f1": f"score/global/{axis}_f1_{base_metric}",
+                    "score/global/recall": f"score/global/{axis}_recall_{base_metric}",
+                    "score/global/precision": f"score/global/{axis}_precision_{base_metric}",
+                },
+                not_exist_ok=True,
+            ),
+        ],
+        metric=f"metrics.{base_metric}",
+    )
+
+    add_to_catalog(metric, f"metrics.rag.response_generation.{axis}.{base_metric}")
