@@ -51,4 +51,5 @@ test_card(
 add_to_catalog(
     card,
     "cards.rag.response_generation.clapnq",
+    overwrite=True,
 )
