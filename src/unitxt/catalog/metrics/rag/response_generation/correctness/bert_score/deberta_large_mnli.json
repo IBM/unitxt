@@ -16,5 +16,6 @@
             "not_exist_ok": true
         }
     ],
-    "metric": "metrics.bert_score.deberta_large_mnli"
+    "metric": "metrics.bert_score.deberta_large_mnli",
+    "prediction_type": "str"
 }

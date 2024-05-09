@@ -26,5 +26,6 @@
             "not_exist_ok": true
         }
     ],
-    "metric": "metrics.token_overlap"
+    "metric": "metrics.token_overlap",
+    "prediction_type": "str"
 }
