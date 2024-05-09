@@ -1,13 +1,13 @@
 {
     "type": "form_task",
-    "inputs": [
-        "contexts",
-        "contexts_ids",
-        "question"
-    ],
-    "outputs": [
-        "reference_answers"
-    ],
+    "inputs": {
+        "contexts": "List[str]",
+        "contexts_ids": "List[int]",
+        "question": "str"
+    },
+    "outputs": {
+        "reference_answers": "List[str]"
+    },
     "metrics": [
         "metrics.rag.response_generation.correctness.token_overlap",
         "metrics.rag.response_generation.faithfullness.token_overlap",
@@ -16,5 +16,6 @@
     "augmentable_inputs": [
         "contexts",
         "question"
-    ]
+    ],
+    "prediction_type": "str"
 }
