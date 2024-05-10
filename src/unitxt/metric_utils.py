@@ -1,9 +1,12 @@
 import json
+from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Optional
 
 from datasets import Features, Value
+from numpy import nanmean  # to not spread one np.nan all over
 
 from .dataclass import Dataclass
+from .dict_utils import dict_set
 from .operator import (
     MultiStreamOperator,
     SequentialOperatorInitializer,
@@ -15,7 +18,7 @@ from .operators import (
     ApplyOperatorsField,
     FlattenInstances,
     MergeStreams,
-    SplitByValue,
+    SplitByGroup,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
@@ -24,48 +27,52 @@ from .stream import MultiStream, Stream
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
-    def aggregate_results(self, multi_stream: MultiStream):
-        scores = []
-        for stream in multi_stream.values():
-            instance = stream.peek()
-            scores.append(instance["score"]["global"]["score"])
-
-        from statistics import mean
-
-        return mean(scores)
-
-    def spread_results(self, stream: Stream, score: float):
-        for instance in stream:
-            instance["score"]["global"]["groups_mean_score"] = score
-            yield instance
-
-    def spread_results_one_stream(self, stream: Stream):
-        for instance in stream:
-            instance["score"]["global"]["groups_mean_score"] = instance["score"][
-                "global"
-            ]["score"]
-            yield instance
+    def update_intermediate_level_scores(self, level: dict) -> float:
+        # starting with one level below the whole-ms-global-score (which will be updated
+        # by the accumulated scores[] of aggregate_results)
+        if "score" in level:
+            return level[
+                "score"
+            ]  # the global score of the stream participating in this MultiStream
+        sub_scores = []
+        for key in level:
+            if isinstance(level[key], dict):
+                sub_scores.append(self.update_intermediate_level_scores(level[key]))
+        mean_own_groups_score = nanmean(sub_scores)
+        level.update({"own_groups_mean_score": mean_own_groups_score})
+        return mean_own_groups_score
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        result = {}
-
-        # optimization in to avoid double calculation of metrics
-        # when aggregating results, if there is only one stream.
-        if len(multi_stream) == 1:
-            for stream_name, stream in multi_stream.items():
-                result[stream_name] = Stream(
-                    self.spread_results_one_stream, gen_kwargs={"stream": stream}
-                )
-            return MultiStream(result)
-
-        mean_score = self.aggregate_results(multi_stream)
-        result = {}
+        # each stream went through Metric which is a single-stream-operator , and ended up with all
+        # its instance["score"]["global"] linking to the same single dict object.
+        # Here we first generate a new nested version, and then update
+        # each stream's global score with the new version
+        scores = []
+        global_score = {}
         for stream_name, stream in multi_stream.items():
-            result[stream_name] = Stream(
-                self.spread_results, gen_kwargs={"stream": stream, "score": mean_score}
+            instance = stream.peek()
+            dict_set(
+                dic=global_score,
+                query=stream_name.split("~")[-1],
+                value=deepcopy(instance["score"]["global"]),
+                not_exist_ok=True,
             )
+            scores.append(instance["score"]["global"]["score"])
 
-        return MultiStream(result)
+        self.update_intermediate_level_scores(global_score)
+        global_score["all_groups_mean_score"] = nanmean(scores)
+
+        # update the global_score object for each stream. Recall that all instances in each stream link all
+        # to same python dict object
+        for _, stream in multi_stream.items():
+            try:
+                instance = stream.peek()
+            except Exception:
+                # stream is empty, continue to next stream
+                continue
+            instance["score"]["global"].update(global_score)
+
+        return MultiStream(multi_stream)
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
@@ -94,6 +101,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 class MetricRecipe(SequentialOperatorInitializer):
     calc_confidence_intervals: bool = True
+    number_of_fusion_generations: int = 2
 
     def prepare(self):
         register_all_artifacts()
@@ -107,7 +115,10 @@ class MetricRecipe(SequentialOperatorInitializer):
             ApplyOperatorsField(
                 operators_field="postprocessors",
             ),
-            SplitByValue(["group"]),
+            SplitByGroup(
+                field_name_of_group="group",
+                number_of_fusion_generations=self.number_of_fusion_generations,
+            ),
             ApplyMetric(
                 "metrics",
                 calc_confidence_intervals=self.calc_confidence_intervals,

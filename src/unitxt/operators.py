@@ -1571,8 +1571,10 @@ class SplitByGroup(MultiStreamOperator):
     (See BaseFusion and its extensions)
     number_of_fuaion_generations  specifies the length of the prefix by which to split the stream.
     E.g. for number_of_fusion_generations = 1, only the most recent fusion in creating this multi_stream, affects the splitting.
+    For number_of_fusion_generations = -1, take the whole history written in this field, ignoring number of generations.
     """
 
+    field_name_of_group: str = "group"
     number_of_fusion_generations: int = 1
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -1580,21 +1582,23 @@ class SplitByGroup(MultiStreamOperator):
 
         for stream_name, stream in multi_stream.items():
             for instance in stream:
-                if (
-                    "group" not in instance
-                    or len(instance["group"].split("/"))
-                    < self.number_of_fusion_generations
-                ):
+                if self.field_name_of_group not in instance:
                     raise ValueError(
-                        f"Field 'group' is missing from instance or contains less than {self.number_of_fusion_generations} fusion generations. instance = {instance}"
+                        f"Field {self.field_name_of_group} is missing from instance {instance}"
                     )
                 signature = (
                     stream_name
-                    + "_"
-                    + "_".join(
-                        instance["group"].split("/")[
-                            : self.number_of_fusion_generations
-                        ]
+                    + "~"  #  a sign that does not show within group values
+                    + (
+                        "/".join(
+                            instance[self.field_name_of_group].split("/")[
+                                : self.number_of_fusion_generations
+                            ]
+                        )
+                        if self.number_of_fusion_generations >= 0
+                        # for values with a smaller number of generations - take up to their last generation
+                        else instance[self.field_name_of_group]
+                        # for each instance - take all its generations
                     )
                 )
                 result[signature].append(instance)

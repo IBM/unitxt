@@ -468,11 +468,11 @@ class MultipleSourceLoader(Loader):
 
     """
 
-    sources: Union[Dict[str, Loader], List[Loader]]
+    sources: List[Loader]
 
     def process(self):
         return FixedFusion(
-            origins=self.sources, max_instances_per_origin=self.get_limit()
+            origins=self.sources, max_instances_per_origin_split=self.get_limit()
         ).process()
 
 

@@ -9,11 +9,12 @@ from .type_utils import isoftype
 
 
 class BaseFusion(SourceOperator):
-    """BaseFusion operator that combines multiple streams into one.
+    """BaseFusion operator that combines multiple multistreams into one.
 
     Args:
-        origins: a dict of named SourceOperators, or a list of such sources
-        include_splits: List of splits to include from each SourceOperator.
+        origins: a dict of named SourceOperator objects (each to yield a MultiStream) or a list thereof,
+          each is specified along with its input, so can generate a MultiStream
+        include_splits: List of splits to include from each input MultiStream.
                 If None, all splits are included.
     """
 
@@ -25,20 +26,19 @@ class BaseFusion(SourceOperator):
         pass
 
     def prepare(self):
-        super().prepare()
         assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
             self.origins, List[SourceOperator]
         )
         self.named_origins = (
-            {i: self.origins[i] for i in range(len(self.origins))}
+            {i: self.origins[i]() for i in range(len(self.origins))}
             if isinstance(self.origins, list)
-            else self.origins
+            else {name: origin() for name, origin in self.origins.items()}
         )
 
     def splits(self) -> List[str]:
         splits = []
         for _, origin in self.named_origins.items():
-            for s in origin().keys():
+            for s in origin.keys():
                 if s not in splits:
                     if self.include_splits is None or s in self.include_splits:
                         splits.append(s)
@@ -54,15 +54,17 @@ class BaseFusion(SourceOperator):
 
 
 class FixedFusion(BaseFusion):
-    """FixedFusion operator that combines multiple streams into one based on a fixed number of examples per task.
+    """FixedFusion operator that combines multiple multistreams into one, limiting the number of instances taken from each split of each input multistream.
 
     Args:
-        origins: Dict of named SourceOperator objects, or a list thereof
-        examples_per_task: Number of examples per task. If None, all examples are returned.
-        splits: List of splits to include. If None, all splits are included.
+        origins: Dict of named SourceOperator objects (each to yield a MultiStream), or a list thereof
+        splits: List of splits (stream_names) to include, over all input multistreams. If None, all splits are included.
+        max_instances_per_origin_split: Number of instances to take from each input split of each input multistream.
+            If None, all instances of each split (that is specified in include_splits) are included in the result.
+
     """
 
-    max_instances_per_origin: Optional[int] = None
+    max_instances_per_origin_split: Optional[int] = None
 
     def prepare(self):
         super().prepare()
@@ -70,42 +72,36 @@ class FixedFusion(BaseFusion):
     # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
         for origin_name, origin in self.named_origins.items():
-            multi_stream = origin()
-            if split not in multi_stream:
+            if split not in origin:
                 continue
-            iterator = iter(multi_stream[split])
-            if self.max_instances_per_origin is not None:
-                for _ in range(self.max_instances_per_origin):
-                    try:
-                        instance = next(iterator)
-                        if isinstance(origin_name, int):
-                            yield instance
-                        if "group" in instance:
-                            instance["group"] = origin_name + "/" + instance["group"]
-                        else:
-                            instance["group"] = origin_name
-                        yield instance
-                    except StopIteration:
-                        break
-            else:
-                for instance in iterator:
+            emitted_from_this_split = 0
+            for instance in origin[split]:
+                if (
+                    self.max_instances_per_origin_split is not None
+                    and emitted_from_this_split >= self.max_instances_per_origin_split
+                ):
+                    break
+                if isinstance(origin_name, str):
+                    # named origins, not anonymous, record in instance
                     if "group" in instance:
                         instance["group"] = origin_name + "/" + instance["group"]
                     else:
                         instance["group"] = origin_name
-                    yield instance
+                emitted_from_this_split += 1
+                yield instance
 
 
 class WeightedFusion(BaseFusion):
-    """Fusion operator that combines multiple streams based.
+    """Fusion operator that combines multiple MultiStream-s.
 
     Args:
-        origins: Dict of named of SourceOperator objects, or a list thereof
-        weights: Dict of named of weights for each origin, or a list thereof
-        max_total_examples: Total number of examples to return. If None, all examples are returned.
+        origins: Dict of named MultiStream objects, or a list thereof
+        weights: Dict of named weights for each origin, or a list thereof
+        max_total_examples: Total number of instances to return per returned split.
+            If None, all instances are returned
     """
 
-    origins: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
+    origins: Union[Dict[str, MultiStream], List[MultiStream]] = None
     weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
     max_total_examples: int = None
 
@@ -134,13 +130,13 @@ class WeightedFusion(BaseFusion):
 
     def fusion_generator(self, split) -> Generator:
         iterators = {
-            named_origin: iter(origin()[split])
+            named_origin: iter(origin[split])
             for named_origin, origin in self.named_origins.items()
         }
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
-            self.max_total_examples is None or total_examples <= self.max_total_examples
+            self.max_total_examples is None or total_examples < self.max_total_examples
         ) and len(iterators) > 0:
             population = list(iterators.keys())
             origin_name = random_generator.choices(

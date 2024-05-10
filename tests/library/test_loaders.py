@@ -210,30 +210,27 @@ class TestLoaders(UnitxtTestCase):
                 files[file] = path
 
             loader = MultipleSourceLoader(
-                sources={
-                    "loadCSV_train": LoadCSV(files={"train": files["train"]}),
-                    "loadCSV_test": LoadCSV(files={"test": files["test"]}),
-                }
+                sources=[
+                    LoadCSV(files={"train": files["train"]}),
+                    LoadCSV(files={"test": files["test"]}),
+                ]
             )
             ms = loader()
-
             for file in ["train", "test"]:
                 assert len(dfs[file]) == len(list(ms[file]))
                 for saved_instance, loaded_instance in zip(
                     dfs[file].iterrows(), ms[file]
                 ):
-                    loaded_instance.pop("group")
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
             loader = MultipleSourceLoader(
-                sources={
-                    "loadCSV_train": LoadCSV(files={"train": files["train"]}),
-                    "loadCSV_test": LoadCSV(files={"test": files["test"]}),
-                }
+                sources=[
+                    LoadCSV(files={"test": files["train"]}),
+                    LoadCSV(files={"test": files["test"]}),
+                ]
             )
             ms = loader()
-            assert len(dfs["test"]) == len(list(ms["test"]))
-            assert len(dfs["train"]) == len(list(ms["train"]))
+            assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
 
     def test_load_from_dictionary(self):
         data = {
