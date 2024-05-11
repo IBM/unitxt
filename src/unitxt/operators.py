@@ -1560,7 +1560,7 @@ class SplitByValue(MultiStreamOperator):
         return MultiStream(result)
 
 
-class SplitByGroup(MultiStreamOperator):
+class SplitByNestedGroup(MultiStreamOperator):
     """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
 
     Args:

@@ -3,7 +3,7 @@ from typing import Dict, List
 from unitxt.fusion import FixedFusion
 from unitxt.metric_utils import MultiStreamScoreMean
 from unitxt.metrics import Rouge
-from unitxt.operators import IterableSource, MergeStreams, SplitByGroup
+from unitxt.operators import IterableSource, MergeStreams, SplitByNestedGroup
 
 from tests.utils import UnitxtTestCase
 
@@ -62,7 +62,7 @@ class TestMetricUtils(UnitxtTestCase):
             }
         )()
         # and split the fused halves back into two named halves:
-        split_ms_fused_two_halves = SplitByGroup(number_of_fusion_generations=1)(
+        split_ms_fused_two_halves = SplitByNestedGroup(number_of_fusion_generations=1)(
             ms_fused_two_halves
         )
         self.assertSetEqual(
@@ -149,7 +149,9 @@ class TestMetricUtils(UnitxtTestCase):
         self.assertEqual(next(iter(ms_all_four_quarters.keys())), "test")
 
         # split by group, down to quarters, and score each quarter separately
-        split_ms = SplitByGroup(number_of_fusion_generations=2)(ms_all_four_quarters)
+        split_ms = SplitByNestedGroup(number_of_fusion_generations=2)(
+            ms_all_four_quarters
+        )
         scored_split_ms = metric(split_ms)
         # now smear, generating the grouped-nested, detailed global score
         mean_scored_split_ms = MultiStreamScoreMean()(scored_split_ms)

@@ -18,7 +18,7 @@ from .operators import (
     ApplyOperatorsField,
     FlattenInstances,
     MergeStreams,
-    SplitByGroup,
+    SplitByNestedGroup,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
@@ -144,7 +144,7 @@ class MetricRecipe(SequentialOperatorInitializer):
             ApplyOperatorsField(
                 operators_field="postprocessors",
             ),
-            SplitByGroup(
+            SplitByNestedGroup(
                 field_name_of_group="group",
                 number_of_fusion_generations=self.number_of_fusion_generations,
             ),
