@@ -1714,7 +1714,7 @@ class MergeStreams(MultiStreamOperator):
     add_origin_stream_name: bool = True
     origin_stream_name_field_name: str = "origin"
 
-    def merge(self, multi_stream):
+    def merge(self, multi_stream) -> Generator:
         for stream_name, stream in multi_stream.items():
             if self.streams_to_merge is None or stream_name in self.streams_to_merge:
                 for instance in stream:

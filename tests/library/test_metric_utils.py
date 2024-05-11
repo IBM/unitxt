@@ -206,7 +206,7 @@ class TestMetricUtils(UnitxtTestCase):
         )
         # and finally - merge all 4 streams into one stream, named 'all',
         # the original stream-names are maintained in each instance["origin"]
-        merged_mean_scored = MergeStreams()(mean_scored_split_ms)
+        merged_mean_scored = MergeStreams()(res)
         outputs = list(merged_mean_scored["all"])
         self.assertIn(
             outputs[0]["origin"],

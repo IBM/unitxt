@@ -28,12 +28,14 @@ from .stream import MultiStream, Stream
 
 class MultiStreamScoreMean(MultiStreamOperator):
     def update_intermediate_level_scores(self, level: dict) -> float:
-        # starting with one level below the whole-ms-global-score (which will be updated
+        # starting with the whole-ms-global-score (which will be updated
         # by the accumulated scores[] of aggregate_results)
+        # here we update the intermediate levels of the nested global score
+        # with averaging into each node's "own_groups_mean_score" the "score",
+        # or "own_groups_mean_score" of its chldren
         if "score" in level:
-            return level[
-                "score"
-            ]  # the global score of the stream participating in this MultiStream
+            return level["score"]
+            # the global score of the stream participating in this MultiStream
         sub_scores = []
         for key in level:
             if isinstance(level[key], dict):
@@ -49,8 +51,27 @@ class MultiStreamScoreMean(MultiStreamOperator):
         # each stream's global score with the new version
         scores = []
         global_score = {}
+        first_instances = {}
+        iterators = {}
+
+        def never_peek_twice_generator(
+            stream_name: str, first_instances: dict, iterators: dict
+        ):
+            while True:
+                if stream_name in first_instances:
+                    yield first_instances.pop(stream_name)
+                try:
+                    yield next(iterators[stream_name])
+                except StopIteration:
+                    return
+
         for stream_name, stream in multi_stream.items():
-            instance = stream.peek()
+            iterators[stream_name] = iter(stream)
+            try:
+                first_instances[stream_name] = next(iterators[stream_name])
+            except StopIteration:
+                continue  # an empty stream, goto next stream
+            instance = first_instances[stream_name]
             dict_set(
                 dic=global_score,
                 query=stream_name.split("~")[-1],
@@ -64,15 +85,23 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
         # update the global_score object for each stream. Recall that all instances in each stream link all
         # to same python dict object
-        for _, stream in multi_stream.items():
-            try:
-                instance = stream.peek()
-            except Exception:
-                # stream is empty, continue to next stream
-                continue
+        for stream_name in multi_stream.keys():
+            instance = first_instances[stream_name]
             instance["score"]["global"].update(global_score)
 
-        return MultiStream(multi_stream)
+        return MultiStream(
+            {
+                stream_name: Stream(
+                    never_peek_twice_generator,
+                    gen_kwargs={
+                        "stream_name": stream_name,
+                        "first_instances": first_instances,
+                        "iterators": iterators,
+                    },
+                )
+                for stream_name in multi_stream.keys()
+            }
+        )
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
