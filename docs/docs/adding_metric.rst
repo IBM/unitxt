@@ -50,12 +50,11 @@ The metric should receive a single integer.
 Metric Outputs
 ---------------
 
-By default, each metric calculates the scores on each instance separately and then on all the instances together.
+By default, each metric provides scores for each instance separately and global scores over all instances together.
 The output of the metrics is a nested dictionary per instance.
-
-
-The scores calculated on instance [i] alone is found in results[i]["score"]["instance"]. 
-The global scores over all instances is found in results[i]["score"]["global"]. 
+The scores calculated on instance `i` by itself are found in `results[i]["score"]["instance"]`. 
+The global scores calculated over all instances are found in `results[i]["score"]["global"]`. 
+Note the global scores are the same in all instances, so usually `results[0]["score"]["global"]` is used to get the global scores.
 
 A metric could return multiple scores, but it should always return a field called `score` with the main score of the metric,
 and `score_name` which the name of the score. 
@@ -70,7 +69,8 @@ For example, the score list for an instance could be:
 
 The global scores are calculated over all instances.  
 
-Metrics can also calculate confidence intervals of score.
+
+Metrics can also calculate confidence intervals for the global scores.
 This gives you an assessment of the inherient noise in the scores.  When you compare runs on same data, check if their confidence 
 intervals overlap. If so, the difference may not be statistically significant. 
 
@@ -88,18 +88,30 @@ intervals overlap. If so, the difference may not be statistically significant.
 Metric Base Classes 
 ------------
 
-Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics.
+As described in the previous section, a metric generate a set of scores per instance (called `instance` scores),
+and a set of scores over all instances (called `global` scores).
 
-InstanceMetric - Class for metrics for which the global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
-Some examples of instance metrics are Accuracy, TokenOverlap, CharEditDistance.
+Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics, depending on how the
+scores are calculated.
 
-BulkInstanceMetric - Similar to InstanceMetric , it is for metrics that can be calculated by aggregating the instance scores.  However,
-due to implementation efficiently reasons, it's better to run them in bulk, especially when using LLMs.
-Some examples of bulk instance metrics are SentenceBert,  Reward.
+InstanceMetric - Class for metrics in which the global scores are be calculated by aggregating the instance scores.
+Typically, the global score is the average of all instance scores.  InstanceMetric first evaluates each instance separately,
+and then aggregate the instances score.   Some examples of instance metrics are Accuracy, TokenOverlap, CharEditDistance.  
 
-GlobalMetric - Class for metrics for which the global score must be calculated over all the instance together.
+BulkInstanceMetric - Similar to InstanceMetric , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
+due to implementation efficiently reasons, it's better to run them in bulk (for example, when using LLMs during score calculations).
+BulkInstanceMetric runs on a batch of instances each time, but then aggregate the instance scores as before.
+Some examples of bulk instance metrics are SentenceBert, Reward.
+
+GlobalMetric - Class for metrics for which the global scores must be calculated over all the instances together.
 Some examples of global metrics are f1, Spearman, Kendall Tau.  Note that by default global metrics are executed once per instance 
-to generate per instance scores, and then once again over all instances together.  
+to generate per instance scores, and then once again over all instances together.   So if there are 100 instances, 
+it will first be called 100 times , each on a single instance, and then one time on all 100 instances.  
+
+Instance scores of GlobalMetrics are useful for error-analysis. Consider f1 score, for example. 
+It can be calculated only on all instances together. Yet it is useful to report the score of every instance
+so you can see that good instances get f1 score of 1 and bad ones get 0.
+
 
 
 Adding a New Instance metric
@@ -175,7 +187,7 @@ testing suit:
         )
 
         add_to_catalog(metric, "metrics.sum_accuracy")
-`
+
 Adding a Global Metric
 ----------------------------
 
@@ -278,14 +290,29 @@ Unitxt provides a simple way to wrap existing Huggingface without the need to wr
 This is done using the predefined HuggingfaceMetric class.
 
 .. code-block:: python
+
     metric = HuggingfaceMetric(
         hf_metric_name="bleu",  # The name of the metric in huggingface
-        main_score="bleu",      # The main score
+        main_score="bleu",      # The main score (assumes the metric returns this score name)
         prediction_type="str"   # The type of the prediction and references (note that by default references are a list of the prediction_type)
     )
     add_to_catalog(metric, "metrics.bleu", overwrite=True)
 
+By default, the HuggingfaceMetric wrapper passes the only the `predictions` and `references` fields to 
+the metrics.  You can also pass fields from the task_data inputs, by specifying `hf_additional_input_fields`.
+For example:
+
+ 
+.. code-block:: python
+
+    metric = HuggingfaceMetric(
+        ...
+        hf_additional_input_fields_pass = ["num1","num2"], # passes the task's num1 and num2 fields 
+        ...
+        
+     )    
+
 Note that Huggingface metrics are independent the tasks they are used for, and receive arbitrary types of predictions, references, and additional
-parameters.  It may be need to map between unitxt task values and types to the corresponding interface of the metric, using
-the MetricPipeline described in the previous section.
+parameters.  It may be need to map between unitxt field names, values and types to the corresponding interface of the metric, using
+the MetricPipeline described in the previous section.   
 
