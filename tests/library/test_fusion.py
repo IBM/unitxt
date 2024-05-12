@@ -8,22 +8,48 @@ from tests.utils import UnitxtTestCase
 class TestFusion(UnitxtTestCase):
     def test_unbounded_fixed_fusion(self):
         operator = FixedFusion(
-            origins=[
-                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
+            origins={
+                "origin1": IterableSource(
+                    {"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
+                ),
+                "origin2": IterableSource(
+                    {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
+                ),
+            },
         )
 
         targets = [
-            {"x": "x1"},
-            {"x": "x2"},
-            {"x": "x3"},
-            {"x": "y1"},
-            {"x": "y2"},
-            {"x": "y3"},
+            {"x": "x1", "group": "origin1"},
+            {"x": "x2", "group": "origin1"},
+            {"x": "x3", "group": "origin1"},
+            {"x": "y1", "group": "origin2"},
+            {"x": "y2", "group": "origin2"},
+            {"x": "y3", "group": "origin2"},
         ]
 
         check_operator(operator, inputs=None, targets=targets, tester=self)
+
+        # test the saving of past groups
+        origin3 = [{"x": "z1"}, {"x": "z2"}, {"x": "z3"}]
+        operator = FixedFusion(
+            origins={
+                "targets1": IterableSource({"test": targets}),
+                "origin3": IterableSource({"test": origin3}),
+            },
+        )
+
+        targets2 = [
+            {"x": "x1", "group": "targets1/origin1"},
+            {"x": "x2", "group": "targets1/origin1"},
+            {"x": "x3", "group": "targets1/origin1"},
+            {"x": "y1", "group": "targets1/origin2"},
+            {"x": "y2", "group": "targets1/origin2"},
+            {"x": "y3", "group": "targets1/origin2"},
+            {"x": "z1", "group": "origin3"},
+            {"x": "z2", "group": "origin3"},
+            {"x": "z3", "group": "origin3"},
+        ]
+        check_operator(operator, inputs=None, targets=targets2, tester=self)
 
     def compare_stream(self, stream, expected_stream):
         self.assertEqual(len(stream), len(expected_stream))
@@ -32,75 +58,100 @@ class TestFusion(UnitxtTestCase):
 
     def test_nonoverlapping_splits_fusion(self):
         operator = FixedFusion(
-            origins=[
-                IterableSource({"train": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
+            origins={
+                "origin_train": IterableSource(
+                    {"train": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
+                ),
+                "origin_test": IterableSource(
+                    {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
+                ),
+            },
         )
 
         output_multi_stream = operator()
         self.assertListEqual(sorted(output_multi_stream.keys()), ["test", "train"])
         self.compare_stream(
-            list(output_multi_stream["train"]), [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]
+            list(output_multi_stream["train"]),
+            [
+                {"x": "x1", "group": "origin_train"},
+                {"x": "x2", "group": "origin_train"},
+                {"x": "x3", "group": "origin_train"},
+            ],
         )
         self.compare_stream(
-            list(output_multi_stream["test"]), [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]
+            list(output_multi_stream["test"]),
+            [
+                {"x": "y1", "group": "origin_test"},
+                {"x": "y2", "group": "origin_test"},
+                {"x": "y3", "group": "origin_test"},
+            ],
         )
 
     def test_bounded_fixed_fusion(self):
-        operator = FixedFusion(
-            origins=[
-                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
-            max_instances_per_origin=2,
+        fixed_fusion = FixedFusion(
+            origins={
+                "origin1": IterableSource(
+                    {"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
+                ),
+                "origin2": IterableSource(
+                    {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
+                ),
+            },
+            max_instances_per_origin_split=2,
         )
-
         targets = [
-            {"x": "x1"},
-            {"x": "x2"},
-            {"x": "y1"},
-            {"x": "y2"},
+            {"x": "x1", "group": "origin1"},
+            {"x": "x2", "group": "origin1"},
+            {"x": "y1", "group": "origin2"},
+            {"x": "y2", "group": "origin2"},
         ]
-
-        check_operator(operator, inputs=None, targets=targets, tester=self)
+        outputs = fixed_fusion()
+        self.compare_stream(targets, list(outputs["test"]))
 
     def test_over_bounded_fixed_fusion(self):
         operator = FixedFusion(
-            origins=[
-                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
-            max_instances_per_origin=10,
+            origins={
+                "origin1": IterableSource(
+                    {"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
+                ),
+                "origin2": IterableSource(
+                    {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
+                ),
+            },
+            max_instances_per_origin_split=10,
         )
 
         targets = [
-            {"x": "x1"},
-            {"x": "x2"},
-            {"x": "x3"},
-            {"x": "y1"},
-            {"x": "y2"},
-            {"x": "y3"},
+            {"x": "x1", "group": "origin1"},
+            {"x": "x2", "group": "origin1"},
+            {"x": "x3", "group": "origin1"},
+            {"x": "y1", "group": "origin2"},
+            {"x": "y2", "group": "origin2"},
+            {"x": "y3", "group": "origin2"},
         ]
 
         check_operator(operator, inputs=None, targets=targets, tester=self)
 
     def test_unbounded_weighted_fusion(self):
         operator = WeightedFusion(
-            origins=[
-                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
-            weights=[1, 1],
+            origins={
+                "origin1": IterableSource(
+                    {"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
+                ),
+                "origin2": IterableSource(
+                    {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
+                ),
+            },
+            weights={"origin1": 1, "origin2": 1},
         )
 
         targets = [
-            {"x": "x1"},
-            {"x": "x2"},
-            {"x": "x3"},
-            {"x": "y1"},
-            {"x": "y2"},
-            {"x": "y3"},
+            {"x": "x1", "group": "origin1"},
+            {"x": "x2", "group": "origin1"},
+            {"x": "x3", "group": "origin1"},
+            {"x": "y1", "group": "origin2"},
+            {"x": "y2", "group": "origin2"},
+            {"x": "y3", "group": "origin2"},
         ]
 
         check_operator(
@@ -109,23 +160,146 @@ class TestFusion(UnitxtTestCase):
 
     def test_over_bounded_weighted_fusion(self):
         operator = WeightedFusion(
-            origins=[
-                IterableSource({"test": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}),
-                IterableSource({"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}),
-            ],
-            weights=[1, 1],
-            max_total_examples=10,
+            origins={
+                "origin1": IterableSource(
+                    {
+                        "test": [
+                            {"x": "x1"},
+                            {"x": "x2"},
+                            {"x": "x3"},
+                            {"x": "x4"},
+                            {"x": "x5"},
+                        ],
+                        "train": [
+                            {"a": "x1"},
+                            {"a": "x2"},
+                            {"a": "x3"},
+                            {"a": "x4"},
+                            {"a": "x5"},
+                        ],
+                    }
+                ),
+                "origin2": IterableSource(
+                    {
+                        "test": [
+                            {"x": "y1"},
+                            {"x": "y2"},
+                            {"x": "y3"},
+                            {"x": "y4"},
+                            {"x": "y5"},
+                        ],
+                        "train": [
+                            {"b": "y1"},
+                            {"b": "y2"},
+                            {"b": "y3"},
+                            {"b": "y4"},
+                            {"b": "y5"},
+                        ],
+                    }
+                ),
+            },
+            weights={"origin1": 1, "origin2": 2},
+            max_total_examples=3,
         )
+
+        res = operator()
+        targets = {
+            "test": [
+                {"x": "y1", "group": "origin2"},
+                {"x": "x1", "group": "origin1"},
+                {"x": "y2", "group": "origin2"},
+            ],
+            "train": [
+                {"a": "x1", "group": "origin1"},
+                {"b": "y1", "group": "origin2"},
+                {"b": "y2", "group": "origin2"},
+            ],
+        }
+        for key in res:
+            self.compare_stream(targets[key], list(res[key]))
+
+        operator = WeightedFusion(
+            origins={
+                "origin1": IterableSource(
+                    {
+                        "test": [
+                            {"x": "x1"},
+                            {"x": "x2"},
+                            {"x": "x3"},
+                            {"x": "x4"},
+                            {"x": "x5"},
+                        ],
+                        "train": [
+                            {"a": "x1"},
+                            {"a": "x2"},
+                            {"a": "x3"},
+                            {"a": "x4"},
+                            {"a": "x5"},
+                        ],
+                    }
+                ),
+                "origin2": IterableSource(
+                    {
+                        "test": [
+                            {"x": "y1"},
+                            {"x": "y2"},
+                            {"x": "y3"},
+                            {"x": "y4"},
+                            {"x": "y5"},
+                        ],
+                        "train": [
+                            {"b": "y1"},
+                            {"b": "y2"},
+                            {"b": "y3"},
+                            {"b": "y4"},
+                            {"b": "y5"},
+                        ],
+                    }
+                ),
+            },
+            weights={"origin1": 2, "origin2": 1},
+            max_total_examples=20,
+        )
+
+        res = operator()
+        targets = {
+            "test": [
+                {"x": "y1", "group": "origin2"},
+                {"x": "x1", "group": "origin1"},
+                {"x": "y2", "group": "origin2"},
+                {"x": "x2", "group": "origin1"},
+                {"x": "x3", "group": "origin1"},
+                {"x": "x4", "group": "origin1"},
+                {"x": "x5", "group": "origin1"},
+                {"x": "y3", "group": "origin2"},
+                {"x": "y4", "group": "origin2"},
+                {"x": "y5", "group": "origin2"},
+            ],
+            "train": [
+                {"a": "x1", "group": "origin1"},
+                {"b": "y1", "group": "origin2"},
+                {"a": "x2", "group": "origin1"},
+                {"a": "x3", "group": "origin1"},
+                {"a": "x4", "group": "origin1"},
+                {"a": "x5", "group": "origin1"},
+                {"b": "y2", "group": "origin2"},
+                {"b": "y3", "group": "origin2"},
+                {"b": "y4", "group": "origin2"},
+                {"b": "y5", "group": "origin2"},
+            ],
+        }
+        for key in res:
+            self.compare_stream(targets[key], list(res[key]))
 
         targets = [
-            {"x": "x1"},
-            {"x": "x2"},
-            {"x": "x3"},
-            {"x": "y1"},
-            {"x": "y2"},
-            {"x": "y3"},
+            {"x": "x1", "group": "origin1"},
+            {"x": "x2", "group": "origin1"},
+            {"x": "x3", "group": "origin1"},
+            {"x": "y1", "group": "origin2"},
+            {"x": "y2", "group": "origin2"},
+            {"x": "y3", "group": "origin2"},
         ]
 
-        check_operator(
-            operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x"
-        )
+        # check_operator(
+        # operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x"
+        # )

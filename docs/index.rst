@@ -163,27 +163,20 @@ Welcome!
 --------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
-   :caption: Contents:
 
    docs/introduction
    docs/demo
    docs/no_installation_usage
    docs/installation
    docs/components
-   docs/adding_dataset
-   docs/adding_task
-   docs/adding_template
-   docs/adding_format
-   docs/adding_operator
-   docs/adding_metric
+   docs/tutorials
    docs/backend
    docs/operators
-   docs/contributors_guide
    docs/saving_and_loading_from_catalog
    docs/production
    docs/helm
-   modules
+   documentation
    catalog
 

@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-LLM As a Judge Metrics✨
+LLM As a Judge Metrics ✨
 =====================================
 
 In this section you learn how to use LLM as judge metric by unitxt. LLM as a judge is a method for evaluation the

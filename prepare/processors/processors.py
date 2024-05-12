@@ -11,6 +11,7 @@ from unitxt.processors import (
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
+    LiteralEval,
     LowerCase,
     LowerCaseTillPunc,
     MatchClosestOption,
@@ -351,5 +352,11 @@ add_to_catalog(
 add_to_catalog(
     RegexParser(field="prediction", regex=".+", process_every_value=False),
     "processors.regex_parser_from_prediction",
+    overwrite=True,
+)
+
+add_to_catalog(
+    LiteralEval(field="prediction", process_every_value=False),
+    "processors.literal_eval",
     overwrite=True,
 )

@@ -1,7 +1,7 @@
 .. _using_catalog:
 
 =====================================
-Saving and Loading from the Catalog
+Save/Load from Catalog
 =====================================
 
 The Unitxt catalog serves as a repository for people to share their processing tools. This includes templates, formats, operators, and other Unitxt assets. These can be shared through a local catalog located in a directory on the local filesystem or via a directory in a GitHub repository.
