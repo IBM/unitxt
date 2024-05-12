@@ -46,6 +46,8 @@ class MultiStreamScoreMean(MultiStreamOperator):
     leading down to leaves) a field named "score" whose value is set to be the mean of the values
     sitting in field "score" of its immediate children nodes, and a field named "score_name" whose
     value is set to be "group_mean".
+
+    When the input multistream consists of one single stream, it is returned as is, mainly for backward compatibility.
     """
 
     def update_intermediate_level_scores(self, level: dict) -> float:
@@ -62,8 +64,11 @@ class MultiStreamScoreMean(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         # each stream went through Metric which is a single-stream-operator , and ended up with all
         # its instance["score"]["global"] linking to the same single dict object.
-        # Here we first generate a new nested version, and then update
+        # Here we first generate a new, nested version, for the whole-ms-global_score, and then update
         # each stream's global score with the new version
+        # but if only one stream in the multistream - we return it as is
+        if len(multi_stream) == 1:
+            return multi_stream
         global_score = {}
         first_instances = {}
         iterators = {}
