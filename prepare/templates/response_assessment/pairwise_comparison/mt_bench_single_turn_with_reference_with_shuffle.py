@@ -3,11 +3,11 @@ from unitxt.templates import PairwiseChoiceTemplate
 
 add_to_catalog(
     PairwiseChoiceTemplate(
-        choice_1_field="answer_a",
-        choice_2_field="answer_b",
+        choice_a_field="answer_a",
+        choice_b_field="answer_b",
         answer_field="winner",
-        choice_1_label="A",
-        choice_2_label="B",
+        choice_a_label="A",
+        choice_b_label="B",
         choice_tie_label="C",
         shuffle=True,
         instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
@@ -30,6 +30,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_label_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_single_turn_with_shuffle",
+    "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_reference_with_shuffle",
     overwrite=True,
 )

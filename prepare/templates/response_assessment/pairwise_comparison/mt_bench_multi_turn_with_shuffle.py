@@ -19,11 +19,11 @@ add_to_catalog(
         ],
         turns_separator="\n\n",
         label_separator="\n",
-        choice_1_field="dialog_a",
-        choice_2_field="dialog_b",
+        choice_a_field="dialog_a",
+        choice_b_field="dialog_b",
         answer_field="winner",
-        choice_1_label="A",
-        choice_2_label="B",
+        choice_a_label="A",
+        choice_b_label="B",
         choice_tie_label="C",
         shuffle=True,
         instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
@@ -49,6 +49,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_label_judgment",
         ],
     ),
-    "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_reference_with_shuffle",
+    "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_shuffle",
     overwrite=True,
 )
