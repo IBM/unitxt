@@ -50,11 +50,10 @@ class Template(StreamInstanceOperator):
         )
         return instruction, target_prefix
 
-    def preprocess_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return inputs
-
-    def preprocess_outputs(self, outputs: Dict[str, Any]) -> Dict[str, Any]:
-        return outputs
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        return inputs, outputs
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -68,9 +67,8 @@ class Template(StreamInstanceOperator):
                 return instance
 
         inputs = instance.get("inputs")
-        inputs = self.preprocess_inputs(inputs)
         outputs = instance.get("outputs")
-        outputs = self.preprocess_outputs(outputs)
+        inputs, outputs = self.preprocess_inputs_and_outputs(inputs, outputs)
 
         self.set_titles(inputs)
         source = self.inputs_to_source(inputs)
@@ -191,19 +189,19 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
     choice_tie_label: str
     shuffle: bool
 
-    def verbalize_answer_field(self, inputs: Dict[str, object]):
-        answer = inputs[self.answer_field]
+    def verbalize_answer_field(self, outputs: Dict[str, object]):
+        answer = outputs[self.answer_field]
         assert answer in ["choice_a", "choice_b", "tie"]
         if answer == "choice_a":
-            inputs[self.answer_field] = self.choice_a_field
+            outputs[self.answer_field] = self.choice_a_label
         elif answer == "choice_b":
-            inputs[self.answer_field] = self.choice_b_field
+            outputs[self.answer_field] = self.choice_b_label
         else:
-            inputs[self.answer_field] = self.choice_tie_label
+            outputs[self.answer_field] = self.choice_tie_label
 
-        return inputs
+        return outputs
 
-    def shuffle_values(self, inputs: Dict[str, object]):
+    def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
         outcome = random()  # A float between 0 and 1
         if outcome <= 0.5:
             choice_a_value = inputs[self.choice_a_field]
@@ -212,22 +210,25 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
             inputs[self.choice_a_field] = choice_a_value
             inputs[self.choice_b_field] = choice_b_value
 
-            answer = inputs[self.answer_field]
+            answer = outputs[self.answer_field]
             assert answer in [
                 self.choice_a_label,
                 self.choice_b_label,
                 self.choice_tie_label,
             ]
             if answer == self.choice_a_label:
-                inputs[self.answer_field] = self.choice_b_label
+                outputs[self.answer_field] = self.choice_b_label
             elif answer == self.choice_b_label:
-                inputs[self.answer_field] = self.choice_a_label
+                outputs[self.answer_field] = self.choice_a_label
 
-        return inputs
+        return inputs, outputs
 
-    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        inputs = self.verbalize_answer_field(inputs)
-        return self.shuffle_values(inputs)
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        outputs = self.verbalize_answer_field(outputs)
+        inputs, outputs = self.shuffle_values(inputs, outputs)
+        return inputs, outputs
 
 
 class DialogFieldsData(Artifact):
@@ -267,14 +268,22 @@ class DialogTemplate(InputOutputTemplate):
             inputs[dialog_fields.dialog_field] = dialog_str
         return inputs
 
-    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        return self.process_dialog(inputs)
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        return self.process_dialog(inputs), outputs
 
 
 class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
-    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
-        inputs = DialogTemplate.preprocess_inputs(self, inputs)
-        return PairwiseChoiceTemplate.preprocess_inputs(self, inputs)
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        inputs, outputs = DialogTemplate.preprocess_inputs_and_outputs(
+            self, inputs, outputs
+        )
+        return PairwiseChoiceTemplate.preprocess_inputs_and_outputs(
+            self, inputs, outputs
+        )
 
 
 class MultipleChoiceTemplate(Template):
