@@ -1,3 +1,4 @@
+import ast
 import json
 import re
 from difflib import get_close_matches
@@ -241,3 +242,8 @@ class ExtractMtBenchLabelJudgment(FieldOperator):
             return str(match.group(1))
         except:
             return "None"
+
+
+class LiteralEval(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return ast.literal_eval(text.strip())
