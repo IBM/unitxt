@@ -9,24 +9,18 @@ model_and_format_list = [
     {"model_id": "meta-llama/llama-3-8b-instruct", "format": "formats.llama3_chat"},
     {"model_id": "meta-llama/llama-3-70b-instruct", "format": "formats.llama3_chat"},
 ]
+
 card_and_template_list = [
     {
-        "card": "cards.rag.model_response_assessment.model_rating_single_turn",
-        "template": "templates.model_response_assessment.mt_bench_model_rating_single_turn",
+        "card": "cards.dynamic_cards_for_llm_judges.pairwise_comparison.single_turn",
+        "template": "templates.response_assessment.pairwise_comparison.mt_bench_single_turn",
     },
     {
-        "card": "cards.rag.model_response_assessment.model_rating_with_reference_single_turn",
-        "template": "templates.model_response_assessment.mt_bench_model_rating_with_reference_single_turn",
-    },
-    {
-        "card": "cards.rag.model_response_assessment.model_rating_multi_turn",
-        "template": "templates.model_response_assessment.mt_bench_model_rating_multi_turn",
-    },
-    {
-        "card": "cards.rag.model_response_assessment.model_rating_with_reference_multi_turn",
-        "template": "templates.model_response_assessment.mt_bench_model_rating_with_reference_multi_turn",
+        "card": "cards.dynamic_cards_for_llm_judges.pairwise_comparison.single_turn_with_reference",
+        "template": "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_reference",
     },
 ]
+
 gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=252)
 
 for model_and_format_dict in model_and_format_list:
@@ -47,14 +41,16 @@ for model_and_format_dict in model_and_format_list:
             "num_demos=0"
         )
         model_label = model_id.split("/")[1].replace("-", "_")
-        card_label = card.split(".")[-1]
-        metric_label = f"llm_as_judge_{card_label}_{model_label}_ibm_genai"
+        model_label = f"{model_label}_ibm_genai"
+        template_label = template.split(".")[-1]
+        metric_label = f"{model_label}_template_{template_label}"
         metric = LLMAsJudge(
             inference_model=inference_model, recipe=recipe, main_score=metric_label
         )
 
+        card_subtask = card.split(".")[-1:]
         add_to_catalog(
             metric,
-            f"metrics.rag.model_response_assessment.{metric_label}",
+            f"metrics.llm_as_judge.pairwise_comparison.{model_label}_template_{template_label}",
             overwrite=True,
         )

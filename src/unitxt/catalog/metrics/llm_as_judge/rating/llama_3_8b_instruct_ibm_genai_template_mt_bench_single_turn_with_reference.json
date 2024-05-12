@@ -1,0 +1,13 @@
+{
+    "type": "llm_as_judge",
+    "inference_model": {
+        "type": "ibm_gen_ai_inference_engine",
+        "model_name": "meta-llama/llama-3-8b-instruct",
+        "parameters": {
+            "type": "ibm_gen_ai_inference_engine_params",
+            "max_new_tokens": 252
+        }
+    },
+    "recipe": "card=cards.dynamic_cards_for_llm_judges.rating.single_turn_with_reference,template=templates.response_assessment.rating.mt_bench_single_turn_with_reference,format=formats.llama3_chat,demos_pool_size=0,num_demos=0",
+    "main_score": "llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn_with_reference"
+}
