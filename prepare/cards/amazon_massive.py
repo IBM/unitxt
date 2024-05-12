@@ -37,7 +37,20 @@ for lang in langs:
         ],
         task="tasks.classification.multi_class",
         templates="templates.classification.multi_class.all",
+        __description__=(
+            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations"
+            "for the Natural Language Understanding tasks of intent prediction and slot annotation."
+            "Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing"
+            "the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
+        ),
+        __tags__={
+            "urls": {
+                "homepage": "https://github.com/alexa/massive",
+                "acm": "https://aclanthology.org/2020.emnlp-main.588",
+            }
+        },
     )
+
     if lang == langs[0]:
         test_card(card, debug=False)
     filename = lang.replace("-", "_")

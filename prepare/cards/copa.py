@@ -27,6 +27,26 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
+    __description__=(
+        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after"
+        "GLUE with a new set of more difficult language understanding tasks, improved"
+        "resources, and a new public leaderboard."
+        "The Choice Of Plausible Alternatives (COPA, Roemmele et al., 2011) dataset is a causal"
+        "reasoning task in which a system is given a premise sentence and two possible alternatives. The"
+        "system must choose the alternative which has the more plausible causal relationship with the premise."
+        "The method used for the construction of the alternatives ensures that the task requires causal reasoning"
+        "to solve. Examples either deal with alternative possible causes or alternative possible effects of the"
+        "premise sentence, accompanied by a simple question disambiguating between the two instance"
+        "types for the model. All examples are handcrafted and focus on topics from online blogs and a"
+        "photography-related encyclopedia. Following the recommendation of the authors, we evaluate using"
+        "accuracy."
+    ),
+    __tags__={
+        "urls": {
+            "arxiv": "arXiv:1905.00537",
+            "homepage": "http://people.ict.usc.edu/~gordon/copa.html",
+        }
+    },
 )
 
 test_card(card, strict=False)

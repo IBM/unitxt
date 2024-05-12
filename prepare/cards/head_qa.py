@@ -33,6 +33,18 @@ for subset in get_dataset_config_names(dataset_name):
         ],
         task="tasks.classification.multi_class",
         templates="templates.classification.multi_class.all",
+        __description__=(
+            "HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to access a specialized position in the"
+            "Spanish healthcare system, and are challenging even for highly specialized humans. They are designed by the Ministerio"
+            "de Sanidad, Consumo y Bienestar Social."
+            "The dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology."
+        ),
+        __tags__={
+            "urls": {
+                "acl": "https://www.aclweb.org/anthology/P19-1092",
+                "homepage": "https://aghie.github.io/head-qa/",
+            }
+        },
     )
     test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

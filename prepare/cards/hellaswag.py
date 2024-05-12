@@ -20,6 +20,13 @@ card = TaskCard(
     ],
     task="tasks.completion.multiple_choice",
     templates="templates.completion.multiple_choice.all",
+    __description__=(
+        "HellaSwag: Can a Machine Really Finish Your Sentence? is a new dataset for commonsense NLI."
+        "A paper was published at ACL2019."
+    ),
+    __tags__={
+        "urls": {"acl": "2019", "homepage": "https://rowanzellers.com/hellaswag/"}
+    },
 )
 # We disable strict checking because garbage predictions (when using the post processor
 # that takes the first letter) is sometimes right and yields a non zero score.

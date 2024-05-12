@@ -40,6 +40,17 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __description__=(
+        "BANKING77 dataset provides a very fine-grained set of intents in a banking domain."
+        "It comprises 13,083 customer service queries labeled with 77 intents."
+        "It focuses on fine-grained single-domain intent detection."
+    ),
+    __tags__={
+        "urls": {
+            "homepage": "https://github.com/PolyAI-LDN/task-specific-datasets",
+            "arxiv": "https://arxiv.org/abs/2003.04807",
+        }
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)
