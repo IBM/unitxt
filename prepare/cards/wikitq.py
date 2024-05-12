@@ -25,6 +25,7 @@ card = TaskCard(
         "modality": "table",
         "urls": {"arxiv": "https://arxiv.org/abs/1508.00305"},
         "languages": ["english"],
+        "domain": "wikipedia",
     },
 )
 
