@@ -6,40 +6,43 @@
 
 
 =====================================
-Adding Metrics ✨
+Metrics ✨
 =====================================
 
-Unitxt support a large collection of built in metrics, from classifical ones such as 
-rouge, bleu, f1 to embedding based score like SentenceBert and Bert score, as well as 
-llm as judges using local or API based models.   
+Unitxt support a large collection of built in metrics, from classifical ones such as
+rouge, bleu, f1 to embedding based score like SentenceBert and Bert score, as well as
+llm as judges using local or API based models.
 
-You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
-In this section we will understand Unitxt metrics and learn how to add new metrics.
+.. note::
+
+    You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
+    In this section we will understand Unitxt metrics and learn how to add new metrics.
+
 
 Metric Inputs
 -------------------
 
 Unitxt metrics receive three inputs for each instance:
 
-1. Prediction.  The prediction passed to the metric is not the raw textual prediction
+1. **Prediction** (`prediction`):  The prediction passed to the metric is not the raw textual prediction
 returned by the model, but rather the processed prediction, after applying the post processors
 defined by the template.  The role of the template's post processor is to convert the output
-of the model to the required type of the metrics.  For example, a spearman metric expects a float 
+of the model to the required type of the metrics.  For example, a spearman metric expects a float
 prediction.  A post processor in the template will cast the string input to a float, and return NaN
-if the string can not be converted to a float.  Another example, a multi-label f1 expects a list of 
+if the string can not be converted to a float.  Another example, a multi-label f1 expects a list of
 string class names as predictions.   The post processor may convert the string output into a list
 (e.g. by splitting using a separator).
 
-2. References (optional).  This is a list of gold references, from the same type of the prediction.
+2. **References** (`references` - optional):  This is a list of gold references, from the same type of the prediction.
 For example, in multi-label f1, it is the correct list of string class labels.
 The references are created by the template and converted to the the right type by the template's post processors.
 
-3. Task data (optional) - all the input and output fields of a task as a dictionary. 
-The input fields can be used to create reference-less metrics. 
+3. **Task data** (`task_data` - optional) - all the input and output fields of a task as a dictionary.
+The input fields can be used to create reference-less metrics.
 
 
 
-In the rest of the section, we will assume we want to create a new metric for the 
+In the rest of the section, we will assume we want to create a new metric for the
 task of calculating of the sum of integers (see  :ref:`adding task <task>`.)
 
 It's important that all processing will be done in the template's post processor and not in the metric,
@@ -52,41 +55,45 @@ Metric Outputs
 
 By default, each metric provides scores for each instance separately and global scores over all instances together.
 The output of the metrics is a nested dictionary per instance.
+
 The scores calculated on instance `i` by itself are found in `results[i]["score"]["instance"]`. 
 The global scores calculated over all instances are found in `results[i]["score"]["global"]`. 
 Note the global scores are the same in all instances, so usually `results[0]["score"]["global"]` is used to get the global scores.
 
 A metric could return multiple scores, but it should always return a field called `score` with the main score of the metric,
-and `score_name` which the name of the score. 
+and `score_name` which the name of the score.
 
 For example, the score list for an instance could be:
 
-    {
-        "sum_accuracy_approximate": 0.0,
-        "score": 1.0,
-        "score_name": "sum_accuracy_approximate"
-    }
+    .. code-block:: python
 
-The global scores are calculated over all instances.  
+        {
+            "sum_accuracy_approximate": 0.0,
+            "score": 1.0,
+            "score_name": "sum_accuracy_approximate"
+        }
 
+The global scores are calculated over all instances.
 
 Metrics can also calculate confidence intervals for the global scores.
 This gives you an assessment of the inherient noise in the scores.  When you compare runs on same data, check if their confidence 
 intervals overlap. If so, the difference may not be statistically significant. 
 
-    {
-        "sum_accuracy_approximate": 0.67,
-        "score": 0.67,
-        "score_name": "sum_accuracy_approximate",
-        "sum_accuracy_approximate_ci_low": 0.53,
-        "sum_accuracy_approximate_ci_high": 0.83,
-        "score_ci_low": 0.53,
-        "score_ci_high": 0.83,
-    } 
+    .. code-block:: python
+
+        {
+            "sum_accuracy_approximate": 0.67,
+            "score": 0.67,
+            "score_name": "sum_accuracy_approximate",
+            "sum_accuracy_approximate_ci_low": 0.53,
+            "sum_accuracy_approximate_ci_high": 0.83,
+            "score_ci_low": 0.53,
+            "score_ci_high": 0.83,
+        }
 
 
-Metric Base Classes 
-------------
+Metric Base Classes
+-------------------
 
 As described in the previous section, a metric generate a set of scores per instance (called `instance` scores),
 and a set of scores over all instances (called `global` scores).
@@ -113,6 +120,9 @@ It can be calculated only on all instances together. Yet it is useful to report 
 so you can see that good instances get f1 score of 1 and bad ones get 0.
 
 
+.. note::
+    By default global metrics are also executed once per instance as list (of size one),
+    to generate per instance scores that are useful for debugging and sanity checks.
 
 Adding a New Instance metric
 ----------------------------
@@ -129,7 +139,7 @@ Adding a New Instance metric
     .. code-block:: python
 
         class SumAccuracy(InstanceMetric):
-    
+
             main_score = "sum_accuracy" # name of the main score
             reduction_map = {"mean": ["sum_accuracy"]} # defines that the global score is a mean of the instance scores
             ci_scores = ["sum_accuracy"] # define that confidence internal should be calculated on the score
@@ -145,15 +155,15 @@ Adding a New Instance metric
                 isclose_enough =  isclose(actual_sum, prediction, rel_tol=self.relative_tolerance)
                 result = { self.main_score : 1.0 if isclose_enough else 0.0}
                 return result
-            
+
 To test our metric work as expected we can use unitxt built in
 testing suit:
 
     .. code-block:: python
 
-        `#
+        #
         # Test SumAccuracy metric and add to catalog
-        # 
+        #
 
         from unitxt_extension_example.metrics import SumAccuracy
         metric = SumAccuracy()
@@ -196,9 +206,8 @@ For example, is more accurate when the result is 1 digits vs 5 digits.
 To check this, we will see if there is a correlation between the number of digits in the reference value and the the accuracy.
 This is a global metric because it performs the calculation over all the instance predictions and references together.
 
-.. code-block:: python
+    .. code-block:: python
 
-        
         class SensitivityToNumericMagnitude(GlobalMetric):
         """
         SensitiveToNumericMagnitude is a reference-based metric that calculates if accuracy depends
@@ -237,26 +246,27 @@ This can help ensure metric behavior is correct, because it can be checked on si
 However, sometimes it does not make sense because the global metric assumes a minimum amount of instances.  
 The per instance calculations can be disabled by setting `process_single_instances = False`.
 
-Managing Metric Dependencies 
+Managing Metric Dependencies
 --------------------
 
 If a metric depends on an external package (beyond the unitxt dependencies),
 use of `_requirements_list` allows validating the package is installed  and provide instructions to the users if it is not.
 
-  _requirements_list = { "sentence_transformers" : "Please install sentence_transformers using  'pip install -U sentence-transformers'" } 
+.. code-block:: python
+
+    _requirements_list = { "sentence_transformers" : "Please install sentence_transformers using  'pip install -U sentence-transformers'" }
 
 To ensure the package is imported only if the metric is actually used, include the import inside the relevant methods and not in global scope of the file.
-
 
 Using Metric Pipelines
 ----------------------
 
 Unitxt metrics must be compatible with the task they are used with.  However, sometime there is an implementation
-of a metric that performs the needed calculations buts expects different inputs. 
+of a metric that performs the needed calculations buts expects different inputs.
 The MetricPipeline is a way to adapt an existing metric to a new task.
 For example, the TokenOverlap metric takes string input prediction and string references and calculates
-the token overlap between them.   If we want to reuse it, in a Retrieval Augmented Generation task to measure the token 
-overlap between the predictions and the context, we can define a MetricPipeline to copy the `context`` field of the task 
+the token overlap between them.   If we want to reuse it, in a Retrieval Augmented Generation task to measure the token
+overlap between the predictions and the context, we can define a MetricPipeline to copy the `context`` field of the task
 to the `references` field.  Then it runs the existing metric. Finally, it renames the scores to more meaningful names.
 
 .. code-block:: python
@@ -302,8 +312,7 @@ By default, the HuggingfaceMetric wrapper passes the only the `predictions` and 
 the metrics.  You can also pass fields from the task_data inputs, by specifying `hf_additional_input_fields`.
 For example:
 
- 
-.. code-block:: python
+ .. code-block:: python
 
     metric = HuggingfaceMetric(
         ...
@@ -312,7 +321,23 @@ For example:
         
      )    
 
+In the above example, the `num1` and `num2`fields are passed as lists of values to the metric
+(each element in the list corresponds to an instance).  If you want to pass a scalar (single) value to the metric
+you can use:
+
+.. code-block:: python
+
+    metric = HuggingfaceMetric(
+        ...
+        hf_additional_input_fields_pass_one_value=["tokenize"],
+        ...
+     )   
+   
+
+This assumes the field has the same value is in all instances.
+
+
 Note that Huggingface metrics are independent the tasks they are used for, and receive arbitrary types of predictions, references, and additional
 parameters.  It may be need to map between unitxt field names, values and types to the corresponding interface of the metric, using
-the MetricPipeline described in the previous section.   
+the `MetricPipeline` described in the previous section.   
 
