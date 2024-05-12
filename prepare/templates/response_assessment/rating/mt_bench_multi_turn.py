@@ -1,8 +1,8 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import ChatTemplate, DialogFieldsData
+from unitxt.templates import DialogFieldsData, DialogTemplate
 
 add_to_catalog(
-    ChatTemplate(
+    DialogTemplate(
         dialog_fields=[
             DialogFieldsData(
                 dialog_field="dialog",

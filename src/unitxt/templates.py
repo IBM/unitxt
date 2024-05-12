@@ -50,6 +50,12 @@ class Template(StreamInstanceOperator):
         )
         return instruction, target_prefix
 
+    def preprocess_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return inputs
+
+    def preprocess_outputs(self, outputs: Dict[str, Any]) -> Dict[str, Any]:
+        return outputs
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -62,10 +68,11 @@ class Template(StreamInstanceOperator):
                 return instance
 
         inputs = instance.get("inputs")
+        inputs = self.preprocess_inputs(inputs)
         outputs = instance.get("outputs")
+        outputs = self.preprocess_outputs(outputs)
 
         self.set_titles(inputs)
-
         source = self.inputs_to_source(inputs)
         instruction, target_prefix = self.inputs_to_instruction_and_target_prefix(
             inputs
@@ -155,48 +162,72 @@ class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
 class PairwiseChoiceTemplate(InputOutputTemplate):
     """PairwiseChoiceTemplate.
 
-    choice_1_field: str
-    choice_2_field: str
-    answer_field: str
-    choice_1_label: str
-    choice_2_label: str
-    choice_tie_label: str
+    Requirements:
+     The answer field value should be of type Literal["choice_a", "choice_b", "tie"]
+
+    Args:
+         choice_a_field (str): The field which contains choice_a value
+         choice_b_field (str): The field which contains choice_b value
+         answer_field (str): The field which contains the answer value.
+           Should be of type Literal["choice_1", "choice_2", "tie"]
+         choice_a_label (str): The label of choice A answer as it is verbalized in the template.
+         choice_b_label (str): The label of choice B answer as it is verbalized in the template.
+         choice_tie_label (str): The label of a tie answer as it should be verbalized in the template.
+         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
-     1) The values of choice_1_field and choice_2_field will be swapped.
-     2) If the values of answer_field is choice_1_label, set it to choice_2_label.
-         Else if the values of answer_field is choice_2_label, set it to choice_1_label.
+     1) The values of choice_a_field and choice_b_field will be swapped.
+     2) If the values of answer_field is choice_a_label, set it to choice_b_label.
+         Else if the values of answer_field is choice_b_label, set it to choice_a_label.
          Else if the value of answer_field is choice_tie_label, do nothing.
 
     """
 
-    choice_1_field: str
-    choice_2_field: str
+    choice_a_field: str
+    choice_b_field: str
     answer_field: str
-    choice_1_label: str
-    choice_2_label: str
+    choice_a_label: str
+    choice_b_label: str
     choice_tie_label: str
+    shuffle: bool
+
+    def verbalize_answer_field(self, inputs: Dict[str, object]):
+        answer = inputs[self.answer_field]
+        assert answer in ["choice_a", "choice_b", "tie"]
+        if answer == "choice_a":
+            inputs[self.answer_field] = self.choice_a_field
+        elif answer == "choice_b":
+            inputs[self.answer_field] = self.choice_b_field
+        else:
+            inputs[self.answer_field] = self.choice_tie_label
+
+        return inputs
 
     def shuffle_values(self, inputs: Dict[str, object]):
         outcome = random()  # A float between 0 and 1
         if outcome <= 0.5:
-            choice_1_value = inputs[self.choice_1_field]
-            choice_2_value = inputs[self.choice_2_field]
+            choice_a_value = inputs[self.choice_a_field]
+            choice_b_value = inputs[self.choice_b_field]
 
-            inputs[self.choice_1_field] = choice_2_value
-            inputs[self.choice_2_field] = choice_1_value
+            inputs[self.choice_a_field] = choice_a_value
+            inputs[self.choice_b_field] = choice_b_value
 
             answer = inputs[self.answer_field]
-            if answer == self.choice_1_label:
-                inputs[self.answer_field] = self.choice_2_label
-            elif answer == self.choice_2_label:
-                inputs[self.answer_field] = self.choice_1_label
+            assert answer in [
+                self.choice_a_label,
+                self.choice_b_label,
+                self.choice_tie_label,
+            ]
+            if answer == self.choice_a_label:
+                inputs[self.answer_field] = self.choice_b_label
+            elif answer == self.choice_b_label:
+                inputs[self.answer_field] = self.choice_a_label
 
         return inputs
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        inputs = self.shuffle_values(inputs)
-        return super().inputs_to_source(inputs)
+    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
+        inputs = self.verbalize_answer_field(inputs)
+        return self.shuffle_values(inputs)
 
 
 class DialogFieldsData(Artifact):
@@ -236,18 +267,14 @@ class DialogTemplate(InputOutputTemplate):
             inputs[dialog_fields.dialog_field] = dialog_str
         return inputs
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        inputs = self.process_dialog(inputs)
-        return super().inputs_to_source(inputs)
+    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
+        return self.process_dialog(inputs)
 
 
 class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        # First, process the inputs with ChatTemplate's method
-        inputs = DialogTemplate.process_dialog(self, inputs)
-
-        # Now, process the inputs with PairwiseChoiceTemplate's method
-        return PairwiseChoiceTemplate.inputs_to_source(self, inputs)
+    def preprocess_inputs(self, inputs: Dict[str, object]) -> Dict[str, object]:
+        inputs = DialogTemplate.preprocess_inputs(self, inputs)
+        return PairwiseChoiceTemplate.preprocess_inputs(self, inputs)
 
 
 class MultipleChoiceTemplate(Template):

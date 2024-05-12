@@ -3,10 +3,10 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs={"question": "str", "model_answer": "str"},
+        inputs={"dialog": "List[Tuple[str, str]]"},
         outputs={"rating": "float"},
         metrics=["metrics.spearman"],
     ),
-    "tasks.model_response_assessment.model_rating_single_turn",
+    "tasks.response_assessment.rating.multi_turn",
     overwrite=True,
 )

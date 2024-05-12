@@ -12,12 +12,12 @@ add_to_catalog(
         ' "[[rating]]", for example: "Rating: [[5]]".\n\n',
         input_format="[Question]\n{question}\n\n"
         "[The Start of Reference Answer]\n{reference_answer}\n[The End of Reference Answer]\n\n"
-        "[The Start of Assistant's Answer]\n{model_answer}\n[The End of Assistant's Answer]",
+        "[The Start of Assistant's Answer]\n{answer}\n[The End of Assistant's Answer]",
         output_format="[[{rating}]]",
         postprocessors=[
             r"processors.extract_mt_bench_rating_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_rating_with_reference_single_turn",
+    "templates.response_assessment.rating.mt_bench_single_turn_with_reference",
     overwrite=True,
 )

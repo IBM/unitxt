@@ -1,8 +1,8 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import ChatTemplate, DialogFieldsData
+from unitxt.templates import DialogFieldsData, DialogPairwiseChoiceTemplate
 
 add_to_catalog(
-    ChatTemplate(
+    DialogPairwiseChoiceTemplate(
         dialog_fields=[
             DialogFieldsData(
                 dialog_field="reference_dialog",
@@ -11,13 +11,13 @@ add_to_catalog(
                 system_role_label="### System:",
             ),
             DialogFieldsData(
-                dialog_field="model_a_dialog",
+                dialog_field="dialog_a",
                 assistant_role_label="### Assistant A:",
                 user_role_label="### User:",
                 system_role_label="### System:",
             ),
             DialogFieldsData(
-                dialog_field="model_b_dialog",
+                dialog_field="dialog_b",
                 assistant_role_label="### Assistant B:",
                 user_role_label="### User:",
                 system_role_label="### System:",
@@ -25,6 +25,13 @@ add_to_catalog(
         ],
         turns_separator="\n\n",
         label_separator="\n",
+        choice_1_field="dialog_a",
+        choice_2_field="dialog_b",
+        answer_field="winner",
+        choice_1_label="A",
+        choice_2_label="B",
+        choice_tie_label="C",
+        shuffle=True,
         instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
         " assistants to the user questions. Your evaluation should consider correctness and helpfulness."
         " You will be given reference answers, the assistant A's answers, the assistant B's answers."
@@ -40,16 +47,16 @@ add_to_catalog(
         "{reference_dialog}\n\n"
         "<|The End of Reference Answer|>\n\n\n"
         "<|The Start of Assistant A's Conversation with User|>\n\n"
-        "{model_a_dialog}\n\n"
+        "{dialog_a}\n\n"
         "<|The End of Assistant A's Conversation with User|>\n\n\n"
         "<|The Start of Assistant B's Conversation with User|>\n\n"
-        "{model_b_dialog}\n\n"
+        "{dialog_b}\n\n"
         "<|The End of Assistant B's Conversation with User|>",
         output_format="[[{winner}]]",
         postprocessors=[
             r"processors.extract_mt_bench_label_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_multi_turn",
+    "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_reference_with_shuffle",
     overwrite=True,
 )

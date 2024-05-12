@@ -1,8 +1,8 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import ChatTemplate, DialogFieldsData
+from unitxt.templates import DialogFieldsData, DialogTemplate
 
 add_to_catalog(
-    ChatTemplate(
+    DialogTemplate(
         dialog_fields=[
             DialogFieldsData(
                 dialog_field="reference_dialog",
@@ -38,6 +38,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_rating_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_rating_with_reference_multi_turn",
+    "templates.response_assessment.rating.mt_bench_multi_turn_with_reference",
     overwrite=True,
 )

@@ -1,8 +1,15 @@
 from unitxt import add_to_catalog
-from unitxt.templates import InputOutputTemplate
+from unitxt.templates import PairwiseChoiceTemplate
 
 add_to_catalog(
-    InputOutputTemplate(
+    PairwiseChoiceTemplate(
+        choice_1_field="answer_a",
+        choice_2_field="answer_b",
+        answer_field="winner",
+        choice_1_label="A",
+        choice_2_label="B",
+        choice_tie_label="C",
+        shuffle=True,
         instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
         " assistants to the user question displayed below. Your evaluation should consider correctness"
         " and helpfulness. You will be given a reference answer, assistant A's answer, and assistant"
@@ -16,13 +23,13 @@ add_to_catalog(
         ' and "[[C]]" for a tie.\n\n',
         input_format="[User Question]\n{question}\n\n"
         "[The Start of Reference Answer]\n{reference_answer}\n[The End of Reference Answer]\n\n"
-        "[The Start of Assistant A's Answer]\n{model_a_answer}\n[The End of Assistant A's Answer]\n\n"
-        "[The Start of Assistant B's Answer]\n{model_b_answer}\n[The End of Assistant B's Answer]",
+        "[The Start of Assistant A's Answer]\n{answer_a}\n[The End of Assistant A's Answer]\n\n"
+        "[The Start of Assistant B's Answer]\n{answer_b}\n[The End of Assistant B's Answer]",
         output_format="[[{winner}]]",
         postprocessors=[
             r"processors.extract_mt_bench_label_judgment",
         ],
     ),
-    "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_single_turn",
+    "templates.model_response_assessment.mt_bench_model_pairwise_comparison_with_reference_single_turn_with_shuffle",
     overwrite=True,
 )
