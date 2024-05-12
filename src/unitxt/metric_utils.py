@@ -1,6 +1,6 @@
 import json
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Generator, Iterable, List, Optional
 
 from datasets import Features, Value
 from numpy import nanmean  # to not spread one np.nan all over
@@ -27,12 +27,28 @@ from .stream import MultiStream, Stream
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
+    """Given a multi-stream where each stream is already scored globally, generate a nested global score for the whole multi-stream.
+
+    The whole-ms-global-score is a nested structure, specifying (also) the individual global scores of the
+    individual streams participating in the input multi_stream.
+    The instances of all these individual streams are assumed to have the "group" field indicate the stream
+    they belong to.
+    Potentially, these individual streams were produced from a SplitByNestedGroup
+    operator that did not use the full length of the value in field "group" of the instances, but only the
+    first g components thereof, indicated by argument 'number_of_fusion_generations' of operator SplitByNestedGroup.
+    At any rate, a distinguishing prefix of the "group" value is recorded, by operator SplitByNestedGroup, in the stream_name.
+    The nested structure of the whole-ms-global-score is induced by these distinguishing prefixes,
+    by virtue of the global score of each individual stream sitting in the nested whole-ms-global-score,
+    deep in that dictionary, at the leaf lead to by a path being the distinguishing prefix indicated in the stream_name.
+    Thus, the global score of the stream becomes a leaf (though a dict by itself) of the whole-ms-global-score.
+
+    The ancestor nodes of the above leaves, in the whole-ms-global-score, contain each (in addition to dicts
+    leading down to leaves) a field named "score" whose value is set to be the mean of the values
+    sitting in field "score" of its immediate children nodes, and a field named "score_name" whose
+    value is set to be "group_mean".
+    """
+
     def update_intermediate_level_scores(self, level: dict) -> float:
-        # starting with the whole-ms-global-score (which will be updated
-        # by the accumulated scores[] of aggregate_results)
-        # here we update the intermediate levels of the nested global score
-        # with averaging into each node's "own_groups_mean_score" the "score",
-        # or "own_groups_mean_score" of its chldren
         if "score" in level:
             return level["score"]
             # the global score of the stream participating in this MultiStream
@@ -40,30 +56,17 @@ class MultiStreamScoreMean(MultiStreamOperator):
         for key in level:
             if isinstance(level[key], dict):
                 sub_scores.append(self.update_intermediate_level_scores(level[key]))
-        mean_own_groups_score = nanmean(sub_scores)
-        level.update({"own_groups_mean_score": mean_own_groups_score})
-        return mean_own_groups_score
+        level.update({"score": nanmean(sub_scores), "score_name": "groups_mean"})
+        return level["score"]
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         # each stream went through Metric which is a single-stream-operator , and ended up with all
         # its instance["score"]["global"] linking to the same single dict object.
         # Here we first generate a new nested version, and then update
         # each stream's global score with the new version
-        scores = []
         global_score = {}
         first_instances = {}
         iterators = {}
-
-        def never_peek_twice_generator(
-            stream_name: str, first_instances: dict, iterators: dict
-        ):
-            while True:
-                if stream_name in first_instances:
-                    yield first_instances.pop(stream_name)
-                try:
-                    yield next(iterators[stream_name])
-                except StopIteration:
-                    return
 
         for stream_name, stream in multi_stream.items():
             iterators[stream_name] = iter(stream)
@@ -78,16 +81,25 @@ class MultiStreamScoreMean(MultiStreamOperator):
                 value=deepcopy(instance["score"]["global"]),
                 not_exist_ok=True,
             )
-            scores.append(instance["score"]["global"]["score"])
 
         self.update_intermediate_level_scores(global_score)
-        global_score["all_groups_mean_score"] = nanmean(scores)
-
-        # update the global_score object for each stream. Recall that all instances in each stream link all
-        # to same python dict object
+        # update the global_score object for each stream. Recall that all instances
+        # in each stream link all to same python dict object
         for stream_name in multi_stream.keys():
             instance = first_instances[stream_name]
+            instance["score"]["global"].clear()
             instance["score"]["global"].update(global_score)
+
+        def never_peek_twice_generator(
+            stream_name: str, first_instances: dict, iterators: dict
+        ) -> Generator:
+            while True:
+                if stream_name in first_instances:
+                    yield first_instances.pop(stream_name)
+                try:
+                    yield next(iterators[stream_name])
+                except StopIteration:
+                    return
 
         return MultiStream(
             {

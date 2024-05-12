@@ -77,9 +77,8 @@ class TestMetricUtils(UnitxtTestCase):
             res[split] = list(stream)
         self.assertDictEqual(
             {
-                "rougeL": 0.6416666666666666,
-                "score": 0.6416666666666666,
-                "score_name": "rougeL",
+                "score_name": "groups_mean",
+                "score": 0.6214285714285714,
                 "originH1": {
                     "rougeL": 0.6416666666666666,
                     "score": 0.6416666666666666,
@@ -90,16 +89,13 @@ class TestMetricUtils(UnitxtTestCase):
                     "score": 0.6011904761904762,
                     "score_name": "rougeL",
                 },
-                "own_groups_mean_score": 0.6214285714285714,
-                "all_groups_mean_score": 0.6214285714285714,
             },
             res["test~originH1"][0]["score"]["global"],
         )
         self.assertDictEqual(
             {
-                "rougeL": 0.6011904761904762,
-                "score": 0.6011904761904762,
-                "score_name": "rougeL",
+                "score_name": "groups_mean",
+                "score": 0.6214285714285714,
                 "originH1": {
                     "rougeL": 0.6416666666666666,
                     "score": 0.6416666666666666,
@@ -110,8 +106,6 @@ class TestMetricUtils(UnitxtTestCase):
                     "score": 0.6011904761904762,
                     "score_name": "rougeL",
                 },
-                "own_groups_mean_score": 0.6214285714285714,
-                "all_groups_mean_score": 0.6214285714285714,
             },
             res["test~originH2"][0]["score"]["global"],
         )
@@ -160,9 +154,6 @@ class TestMetricUtils(UnitxtTestCase):
             res[split] = list(stream)
         self.assertDictEqual(
             {
-                "rougeL": 0.45,
-                "score": 0.45,
-                "score_name": "rougeL",
                 "originH1": {
                     "originQ1": {
                         "rougeL": 0.8333333333333333,
@@ -170,7 +161,8 @@ class TestMetricUtils(UnitxtTestCase):
                         "score_name": "rougeL",
                     },
                     "originQ2": {"rougeL": 0.45, "score": 0.45, "score_name": "rougeL"},
-                    "own_groups_mean_score": 0.6416666666666666,
+                    "score": 0.6416666666666666,
+                    "score_name": "groups_mean",
                 },
                 "originH2": {
                     "originQ3": {
@@ -183,10 +175,11 @@ class TestMetricUtils(UnitxtTestCase):
                         "score": 0.6190476190476191,
                         "score_name": "rougeL",
                     },
-                    "own_groups_mean_score": 0.6011904761904762,
+                    "score": 0.6011904761904762,
+                    "score_name": "groups_mean",
                 },
-                "own_groups_mean_score": 0.6214285714285714,
-                "all_groups_mean_score": 0.6214285714285714,
+                "score_name": "groups_mean",
+                "score": 0.6214285714285714,
             },
             res["test~originH1/originQ2"][0]["score"]["global"],
         )
@@ -195,16 +188,14 @@ class TestMetricUtils(UnitxtTestCase):
             nanmean(
                 [
                     res["test~originH1/originQ2"][0]["score"]["global"]["originH1"][
-                        "own_groups_mean_score"
+                        "score"
                     ],
                     res["test~originH1/originQ2"][0]["score"]["global"]["originH2"][
-                        "own_groups_mean_score"
+                        "score"
                     ],
                 ]
             ),
-            res["test~originH1/originQ2"][0]["score"]["global"][
-                "own_groups_mean_score"
-            ],
+            res["test~originH1/originQ2"][0]["score"]["global"]["score"],
         )
         # and finally - merge all 4 streams into one stream, named 'all',
         # the original stream-names are maintained in each instance["origin"]
