@@ -34,7 +34,7 @@ card = TaskCard(
         CopyFields(field_to_field={"answer/0": "answer"}),
     ],
     task="tasks.response_assessment.rating.single_turn",
-    templates=["templates.response_assessment.rating.mt_bench_multi_turn"],
+    templates=["templates.response_assessment.rating.mt_bench_single_turn"],
 )
 
 test_card(card, demos_taken_from="test", strict=False)

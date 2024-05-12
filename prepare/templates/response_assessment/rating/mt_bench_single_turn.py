@@ -17,6 +17,6 @@ add_to_catalog(
             r"processors.extract_mt_bench_rating_judgment",
         ],
     ),
-    "templates.response_assessment.rating.mt_bench_multi_turn",
+    "templates.response_assessment.rating.mt_bench_single_turn",
     overwrite=True,
 )
