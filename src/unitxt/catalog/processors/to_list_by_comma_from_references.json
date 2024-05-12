@@ -1,10 +1,5 @@
 {
-    "type": "sequential_operator",
-    "steps": [
-        {
-            "type": "to_list_by_comma",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "type": "to_list_by_comma",
+    "field": "references",
+    "process_every_value": true
 }
