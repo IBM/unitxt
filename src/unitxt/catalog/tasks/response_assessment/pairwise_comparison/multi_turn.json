@@ -5,7 +5,7 @@
         "dialog_b": "List[Tuple[str, str]]"
     },
     "outputs": {
-        "winner": "Literal['choice_a', 'choice_b', 'tie']"
+        "winner": "str"
     },
     "metrics": [
         "metrics.accuracy"

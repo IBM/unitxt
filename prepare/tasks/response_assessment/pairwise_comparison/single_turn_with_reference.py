@@ -9,7 +9,9 @@ add_to_catalog(
             "answer_b": "str",
             "reference_answer": "str",
         },
-        outputs={"winner": "Literal['choice_a', 'choice_b', 'tie']"},
+        outputs={
+            "winner": "str"
+        },  # TODO: Support and change to "Literal['choice_a', 'choice_b', 'tie']"},
         metrics=["metrics.accuracy"],
     ),
     "tasks.response_assessment.pairwise_comparison.single_turn_with_reference",
