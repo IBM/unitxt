@@ -66,6 +66,6 @@
     ],
     "task": "tasks.response_assessment.rating.single_turn",
     "templates": [
-        "templates.response_assessment.rating.mt_bench_multi_turn"
+        "templates.response_assessment.rating.mt_bench_single_turn"
     ]
 }
