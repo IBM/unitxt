@@ -30,7 +30,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.response_assessment.rating.multi_turn",
-    templates=["templates.model_response_assessment.mt_bench_model_rating_multi_turn"],
+    templates=["templates.response_assessment.rating.mt_bench_multi_turn"],
 )
 
 test_card(card, demos_taken_from="test", strict=False)
