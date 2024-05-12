@@ -26,7 +26,7 @@ from .operator import (
     StreamingOperator,
     StreamInstanceOperator,
 )
-from .operators import CopyFields
+from .operators import CopyFields, FilterByCondition
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -1117,6 +1117,65 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
     @abstractmethod
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         pass
+
+
+class Aggregator(SingleStreamOperator):
+    """Given a stream of individually scored instances, and a score_name, generate the stream-global score for that score_name.
+
+    For a given score_name, each instance is assumed to have a value in its instance["score"]["instance"][score_name].
+    This operator computes the global score from all these instance-scores, and writes this computed global score in the
+    instance["score"]["global"] section of each instance in the stream.
+    """
+
+    def process(
+        self,
+        stream: Stream,
+        stream_name: Optional[str] = None,
+        score_names: Optional[List[str]] = None,
+    ) -> Generator:
+        if score_names is None:
+            score_names = ["score"]
+        global_score = {}
+        instances = []
+        for instance in stream:
+            if "score" not in instance:
+                instance["score"] = {"global": global_score, "instance": {}}
+            else:
+                global_score = instance["score"]["global"]
+            instances.append(instance)
+
+        for score_name in self.score_names:
+            gs = self.aggregate_instance_scores_to_a_global_score(instances, score_name)
+            global_score.update(
+                {score_name: gs, score_name + "_agg_name": self.aggregator_name}
+            )
+        # all instances link to same global_score object, and hence all instances now have an updated global score
+        yield from instances
+
+    def aggregate_instance_scores_to_a_global_score(
+        self, instances: List[Dict[str, Any]], score_name: str
+    ) -> float:
+        from .metrics import MetricWithConfidenceInterval
+
+        return MetricWithConfidenceInterval.average_item_scores(instances, score_name)
+
+
+class FilterAggregator(Aggregator):
+    """Filter the instances by a given filter, and aggregate over the remaining instances."""
+
+    filter_by_condition: FilterByCondition = None
+
+    def process(
+        self,
+        stream: Stream,
+        stream_name: Optional[str] = None,
+        score_names: Optional[List[str]] = None,
+    ) -> Generator:
+        if self.filter_by_condition is None:
+            instances = stream
+        else:
+            instances = self.filter_by_condition(stream)
+        yield from super().process(stream=instances, score_names=score_names)
 
 
 class Accuracy(InstanceMetric):
