@@ -238,7 +238,7 @@ This is a global metric because it performs the calculation over all the instanc
 
 
 
-1. Calculating confidence internals for global metricscan be costly if each invocation of the metric takes a long time.
+1. Calculating confidence intervals for global metrics can be costly if each invocation of the metric takes a long time.
 To avoid calculating confidence internals for global metrics set `n_resamples = 0`.
 
 2. Unitxt calculates instance results in global metrics to allow viewing the output on a single instances.  
