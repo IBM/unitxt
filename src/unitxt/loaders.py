@@ -25,6 +25,7 @@ LoadFromIBMCloud: loads a dataset from the IBM cloud.
 import itertools
 import os
 import tempfile
+from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -80,6 +81,13 @@ class Loader(SourceOperator):
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         operator = AddFields(fields={"data_classification": self.data_classification})
         return operator(multi_stream)
+
+    @abstractmethod
+    def load_data(self):
+        pass
+
+    def process(self) -> MultiStream:
+        return self.add_data_classification(self.load_data())
 
 
 class LoadHF(Loader):
@@ -184,7 +192,7 @@ class LoadHF(Loader):
 
     def limited_load(self):
         self.log_limited_loading()
-        multi_stream = MultiStream(
+        return MultiStream(
             {
                 name: Stream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
@@ -192,9 +200,8 @@ class LoadHF(Loader):
                 for name in self._cache.keys()
             }
         )
-        return self.add_data_classification(multi_stream)
 
-    def process(self):
+    def load_data(self):
         try:
             dataset = self.stream_dataset()
         except (
@@ -205,9 +212,7 @@ class LoadHF(Loader):
         if self.get_limit() is not None:
             return self.limited_load()
 
-        multi_stream = MultiStream.from_iterables(dataset)
-
-        return self.add_data_classification(multi_stream)
+        return MultiStream.from_iterables(dataset)
 
 
 class LoadCSV(Loader):
@@ -245,23 +250,21 @@ class LoadCSV(Loader):
 
         yield from self._cache[file]
 
-    def process(self):
+    def load_data(self):
         if self.streaming:
-            multi_stream = MultiStream(
+            return MultiStream(
                 {
                     name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
                     for name, file in self.files.items()
                 }
             )
-        else:
-            multi_stream = MultiStream(
-                {
-                    name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
-                    for name, file in self.files.items()
-                }
-            )
 
-        return self.add_data_classification(multi_stream)
+        return MultiStream(
+            {
+                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                for name, file in self.files.items()
+            }
+        )
 
 
 class LoadFromSklearn(Loader):
@@ -282,7 +285,7 @@ class LoadFromSklearn(Loader):
 
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
-    def process(self):
+    def load_data(self):
         with TemporaryDirectory() as temp_directory:
             for split in self.splits:
                 split_data = self.downloader(subset=split)
@@ -292,9 +295,7 @@ class LoadFromSklearn(Loader):
                 df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
-        multi_stream = MultiStream.from_iterables(dataset)
-
-        return self.add_data_classification(multi_stream)
+        return MultiStream.from_iterables(dataset)
 
 
 class MissingKaggleCredentialsError(ValueError):
@@ -321,14 +322,12 @@ class LoadFromKaggle(Loader):
 
         self.downloader = download
 
-    def process(self):
+    def load_data(self):
         with TemporaryDirectory() as temp_directory:
             self.downloader(self.url, temp_directory)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
-        multi_stream = MultiStream.from_iterables(dataset)
-
-        return self.add_data_classification(multi_stream)
+        return MultiStream.from_iterables(dataset)
 
 
 class LoadFromIBMCloud(Loader):
@@ -411,7 +410,7 @@ class LoadFromIBMCloud(Loader):
         if self.streaming:
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
-    def process(self):
+    def load_data(self):
         import ibm_boto3
 
         cos = ibm_boto3.resource(
@@ -465,9 +464,7 @@ class LoadFromIBMCloud(Loader):
                 local_dir, streaming=False, data_files=self.data_files
             )
 
-        multi_stream = MultiStream.from_iterables(dataset)
-
-        return self.add_data_classification(multi_stream)
+        return MultiStream.from_iterables(dataset)
 
 
 class MultipleSourceLoader(Loader):
@@ -487,7 +484,7 @@ class MultipleSourceLoader(Loader):
 
     sources: List[Loader]
 
-    def process(self):
+    def load_data(self):
         return FixedFusion(
             origins=self.sources, max_instances_per_origin_split=self.get_limit()
         ).process()
@@ -512,6 +509,5 @@ class LoadFromDictionary(Loader):
 
     data: Dict[str, List[Dict[str, Any]]]
 
-    def process(self) -> MultiStream:
-        multi_stream = MultiStream.from_iterables(self.data)
-        return self.add_data_classification(multi_stream)
+    def load_data(self) -> MultiStream:
+        return MultiStream.from_iterables(self.data)
