@@ -16,6 +16,7 @@ from .operators import (
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    CopyFields,
     FlattenInstances,
     MergeStreams,
     SplitByNestedGroup,
@@ -158,6 +159,7 @@ class MetricRecipe(SequentialOperatorInitializer):
                 function="json.loads",
                 to_field="task_data",
             ),
+            CopyFields(field_to_field={"source": "task_data/source"}),
             ApplyOperatorsField(
                 operators_field="postprocessors",
             ),

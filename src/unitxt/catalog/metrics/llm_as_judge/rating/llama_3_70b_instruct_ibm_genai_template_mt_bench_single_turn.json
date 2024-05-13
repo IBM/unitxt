@@ -8,6 +8,8 @@
             "max_new_tokens": 252
         }
     },
-    "recipe": "card=cards.dynamic_cards_for_llm_judges.rating.single_turn,template=templates.response_assessment.rating.mt_bench_single_turn,format=formats.llama3_chat,demos_pool_size=0,num_demos=0",
+    "task": "rating.single_turn",
+    "template": "templates.response_assessment.rating.mt_bench_single_turn",
+    "format": "formats.llama3_chat",
     "main_score": "llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn"
 }
