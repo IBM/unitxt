@@ -110,8 +110,8 @@ due to implementation efficiently reasons, it's better to run them in bulk (for 
 `BulkInstanceMetric` runs on a batch of instances each time, but then aggregate the instance scores as before.
 Some examples of bulk instance metrics are `SentenceBert`, `Reward`.
 
-GlobalMetric - Class for metrics for which the global scores must be calculated over all the instances together.
-Some examples of global metrics are f1, Spearman, Kendall Tau.  Note that by default global metrics are executed once per instance 
+`GlobalMetric` - Class for metrics for which the global scores must be calculated over all the instances together.
+Some examples of global metrics are `f1`, `Spearman`, `Kendall Tau`.  Note that by default global metrics are executed once per instance 
 to generate per instance scores, and then once again over all instances together.   So if there are 100 instances, 
 it will first be called 100 times , each on a single instance, and then one time on all 100 instances.  
 
