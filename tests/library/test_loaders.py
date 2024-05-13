@@ -239,7 +239,6 @@ class TestLoaders(UnitxtTestCase):
                 ]
             )
             ms = loader()
-
             for file in ["train", "test"]:
                 assert len(dfs[file]) == len(list(ms[file]))
                 for saved_instance, loaded_instance in zip(

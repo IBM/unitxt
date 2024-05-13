@@ -33,7 +33,6 @@ metrics = {
         model_name="OpenAssistant/reward-model-deberta-v3-large-v2"
     ),
 }
-
 predictions = ["apple", "boy", "cat"]
 references = [["apple2"], ["boys"], ["dogs"]]
 task_data = [{"context": "apple 2e"}, {"context": "boy"}, {"context": "dog"}]
@@ -42,10 +41,8 @@ instance_targets = [
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
     {"f1": 0, "precision": 0, "recall": 0, "score": 0, "score_name": "f1"},
 ]
-
 # Currently, CopyFields does not delete the source fields,
 # so we get both "precision" and "precision_overlap_with_context" in results
-
 global_target = {
     "f1": 0.56,
     "f1_ci_high": 0.89,
@@ -64,8 +61,6 @@ global_target = {
     "score_ci_low": 0.0,
     "score_name": "f1",
 }
-
-
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
@@ -87,8 +82,6 @@ metric = MetricPipeline(
     ],
 )
 add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
-
-
 outputs = test_metric(
     metric=metric,
     predictions=predictions,
@@ -97,7 +90,6 @@ outputs = test_metric(
     global_target=global_target,
     task_data=task_data,
 )
-
 metric = metrics["metrics.bert_score.deberta_xlarge_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -108,7 +100,6 @@ instance_targets = [
     {"f1": 0.8, "precision": 0.86, "recall": 0.84, "score": 0.8, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-
 global_target = {
     "f1": 0.9,
     "f1_ci_high": 1.0,
@@ -124,7 +115,6 @@ global_target = {
     "score_ci_low": 0.8,
     "score_name": "f1",
 }
-
 # test_metric(
 #     metric=metric,
 #     predictions=predictions,
@@ -132,7 +122,6 @@ global_target = {
 #     instance_targets=instance_targets,
 #     global_target=global_target,
 # )
-
 metric = metrics["metrics.bert_score.deberta_large_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -143,7 +132,6 @@ instance_targets = [
     {"f1": 0.73, "precision": 0.83, "recall": 0.79, "score": 0.73, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-
 global_target = {
     "f1": 0.87,
     "f1_ci_high": 1.0,
@@ -159,7 +147,6 @@ global_target = {
     "score_ci_low": 0.73,
     "score_name": "f1",
 }
-
 # test_metric(
 #     metric=metric,
 #     predictions=predictions,
@@ -167,7 +154,6 @@ global_target = {
 #     instance_targets=instance_targets,
 #     global_target=global_target,
 # )
-
 metric = metrics["metrics.bert_score.deberta_base_mnli"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -178,7 +164,6 @@ instance_targets = [
     {"f1": 0.81, "precision": 0.85, "recall": 0.81, "score": 0.81, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-
 global_target = {
     "f1": 0.9,
     "f1_ci_high": 1.0,
@@ -194,7 +179,6 @@ global_target = {
     "score_ci_low": 0.81,
     "score_name": "f1",
 }
-
 test_metric(
     metric=metric,
     predictions=predictions,
@@ -202,7 +186,6 @@ test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-
 metric = metrics["metrics.bert_score.distilbert_base_uncased"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -213,7 +196,6 @@ instance_targets = [
     {"f1": 0.85, "precision": 0.91, "recall": 0.86, "score": 0.85, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-
 global_target = {
     "f1": 0.93,
     "f1_ci_high": 1.0,
@@ -229,7 +211,6 @@ global_target = {
     "score_ci_low": 0.85,
     "score_name": "f1",
 }
-
 test_metric(
     metric=metric,
     predictions=predictions,
@@ -237,7 +218,6 @@ test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-
 metric = metrics["metrics.bert_score.deberta_v3_base_mnli_xnli_ml"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -248,7 +228,6 @@ instance_targets = [
     {"f1": 0.74, "precision": 0.81, "recall": 0.71, "score": 0.74, "score_name": "f1"},
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
 ]
-
 global_target = {
     "f1": 0.87,
     "f1_ci_high": 1.0,
@@ -264,7 +243,6 @@ global_target = {
     "score_ci_low": 0.74,
     "score_name": "f1",
 }
-
 test_metric(
     metric=metric,
     predictions=predictions,
@@ -272,14 +250,12 @@ test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-
 metric = metrics["metrics.sentence_bert.mpnet_base_v2"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
     ["hello there general kenobi", "hello there!"],
     ["foo bar foobar", "foo bar"],
 ]
-
 instance_targets = [
     {"score": 0.71, "score_name": "score"},
     {"score": 1.0, "score_name": "score"},
@@ -290,7 +266,6 @@ global_target = {
     "score_ci_low": 0.71,
     "score_name": "score",
 }
-
 test_metric(
     metric=metric,
     predictions=predictions,
@@ -298,7 +273,6 @@ test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-
 metric = metrics["metrics.reward.deberta_v3_large_v2"]
 predictions = ["hello there General Dude", "foo bar foobar"]
 references = [["How do you greet General Dude"], ["What is your name?"]]
@@ -312,7 +286,6 @@ global_target = {
     "score_ci_low": 0.03,
     "score_name": "score",
 }
-
 # test_metric(
 #     metric=metric,
 #     predictions=predictions,
@@ -320,12 +293,9 @@ global_target = {
 #     instance_targets=instance_targets,
 #     global_target=global_target,
 # )
-
 for metric_id, metric in metrics.items():
     add_to_catalog(metric, metric_id, overwrite=True)
-
 # rag metrics:
-
 # reference-less:
 #   context-relevance:
 #       metrics.rag.context_relevance
@@ -336,7 +306,6 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.bert_k_precision        k_precision stands for "knowledge precision"
 #   answer-relevance:
 #       metrics.rag.answer_relevance
-
 # reference-based:
 #   context-correctness:
 #       metrics.rag.mrr
@@ -346,7 +315,6 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.correctness
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
-
 for metric_name, catalog_name in [
     ("map", "metrics.rag.map"),
     ("mrr", "metrics.rag.mrr"),
@@ -363,8 +331,6 @@ for metric_name, catalog_name in [
         metric=f"metrics.{metric_name}",
     )
     add_to_catalog(metric, catalog_name, overwrite=True)
-
-
 context_relevance = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
@@ -376,7 +342,6 @@ context_relevance = MetricPipeline(
     metric="metrics.perplexity_q.flan_t5_small",
 )
 add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
-
 context_perplexity = MetricPipeline(
     main_score="score",
     preprocess_steps=[
@@ -395,7 +360,6 @@ context_perplexity = MetricPipeline(
     ],
 )
 add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
-
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.faithfulness", "metrics.token_overlap"),
     ("metrics.rag.k_precision", "metrics.token_overlap"),
@@ -416,7 +380,6 @@ for new_catalog_name, base_catalog_name in [
         metric=base_catalog_name,
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
-
 for new_catalog_name, base_catalog_name in [
     ("metrics.rag.answer_correctness", "metrics.token_overlap"),
     ("metrics.rag.recall", "metrics.token_overlap"),
@@ -434,7 +397,6 @@ for new_catalog_name, base_catalog_name in [
         metric=base_catalog_name,
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
-
 answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
@@ -450,7 +412,6 @@ answer_reward = MetricPipeline(
     metric="metrics.reward.deberta_v3_large_v2",
 )
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
-
 answer_inference = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
@@ -462,3 +423,41 @@ answer_inference = MetricPipeline(
     metric="metrics.perplexity_nli.t5_nli_mixture",
 )
 add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
+
+for axis, base_metric, main_score in [
+    ("correctness", "token_overlap", "f1"),
+    ("correctness", "bert_score.deberta_large_mnli", "recall"),
+    ("correctness", "bert_score.deberta_v3_base_mnli_xnli_ml", "recall"),
+    ("faithfullness", "token_overlap", "precision"),
+]:
+    preprocess_steps = (
+        [
+            CopyFields(field_to_field=[("task_data/contexts", "references")]),
+        ]
+        if axis == "faithfullness"
+        else []
+    )
+
+    metric = MetricPipeline(
+        main_score=main_score,
+        preprocess_steps=preprocess_steps,
+        postpreprocess_steps=[
+            CopyFields(
+                field_to_field={
+                    "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
+                    "score/instance/recall": f"score/instance/{axis}_recall_{base_metric}",
+                    "score/instance/precision": f"score/instance/{axis}_precision_{base_metric}",
+                    "score/global/f1": f"score/global/{axis}_f1_{base_metric}",
+                    "score/global/recall": f"score/global/{axis}_recall_{base_metric}",
+                    "score/global/precision": f"score/global/{axis}_precision_{base_metric}",
+                },
+                not_exist_ok=True,
+            ),
+        ],
+        metric=f"metrics.{base_metric}",
+        prediction_type="str",
+    )
+
+    add_to_catalog(
+        metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
+    )
