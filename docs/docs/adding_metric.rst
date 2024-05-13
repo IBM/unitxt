@@ -331,7 +331,7 @@ you can use:
         ...
         hf_additional_input_fields_pass_one_value=["tokenize"],
         ...
-     )   
+    )   
    
 
 This assumes the field has the same value is in all instances.
