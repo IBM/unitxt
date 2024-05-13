@@ -319,7 +319,7 @@ For example:
         hf_additional_input_fields_pass = ["num1","num2"], # passes the task's num1 and num2 fields 
         ...
         
-     )    
+    )    
 
 In the above example, the `num1` and `num2`fields are passed as lists of values to the metric
 (each element in the list corresponds to an instance).  If you want to pass a scalar (single) value to the metric
