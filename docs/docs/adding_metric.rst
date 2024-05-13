@@ -337,7 +337,7 @@ you can use:
 This assumes the field has the same value is in all instances.
 
 
-Note that Huggingface metrics are independent the tasks they are used for, and receive arbitrary types of predictions, references, and additional
+Note that Huggingface metrics are independent from the tasks they are used for, and receive arbitrary types of predictions, references, and additional
 parameters.  It may be need to map between unitxt field names, values and types to the corresponding interface of the metric, using
 the `MetricPipeline` described in the previous section.   
 
