@@ -53,7 +53,7 @@ The metric should receive a single integer.
 Metric Outputs
 ---------------
 
-By default, each metric provides scores for each instance separately and global scores over all instances together.
+By default, each metric provides scores for each instance separately and global aggregated scores over all instances together.
 The output of the metrics is a nested dictionary per instance.
 
 The scores calculated on instance `i` by itself are found in `results[i]["score"]["instance"]`. 
