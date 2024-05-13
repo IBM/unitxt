@@ -309,7 +309,7 @@ This is done using the predefined HuggingfaceMetric class.
     add_to_catalog(metric, "metrics.bleu", overwrite=True)
 
 By default, the HuggingfaceMetric wrapper passes the only the `predictions` and `references` fields to 
-the metrics.  You can also pass fields from the task_data inputs, by specifying `hf_additional_input_fields`.
+the metrics. You can also pass fields from the task_data inputs, by specifying `hf_additional_input_fields`.
 For example:
 
  .. code-block:: python
