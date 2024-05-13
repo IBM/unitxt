@@ -61,7 +61,7 @@ The global scores calculated over all instances are found in `results[i]["score"
 Note the global scores are the same in all instances, so usually `results[0]["score"]["global"]` is used to get the global scores.
 
 A metric could return multiple scores, but it should always return a field called `score` with the main score of the metric,
-and `score_name` which the name of the score.
+and `score_name` which the name of the main score.
 
 For example, the score list for an instance could be:
 
