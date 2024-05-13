@@ -101,9 +101,9 @@ and a set of scores over all instances (called `global` scores).
 Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics, depending on how the
 scores are calculated.
 
-InstanceMetric - Class for metrics in which the global scores are be calculated by aggregating the instance scores.
-Typically, the global score is the average of all instance scores.  InstanceMetric first evaluates each instance separately,
-and then aggregate the instances score.   Some examples of instance metrics are Accuracy, TokenOverlap, CharEditDistance.  
+`InstanceMetric` - Class for metrics in which the global scores are be calculated by aggregating the instance scores.
+Typically, the global score is the average of all instance scores.  `InstanceMetric` first evaluates each instance separately,
+and then aggregate the instances score.  Some examples of instance metrics are `Accuracy`, `TokenOverlap`, `CharEditDistance`.  
 
 BulkInstanceMetric - Similar to InstanceMetric , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
 due to implementation efficiently reasons, it's better to run them in bulk (for example, when using LLMs during score calculations).
