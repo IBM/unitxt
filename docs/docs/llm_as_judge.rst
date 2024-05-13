@@ -22,7 +22,7 @@ To specify an LLM as judge metric, you can specify it in the dataset or in the r
 
 .. code-block:: python
 
-    card=cards.almost_evil,template=templates.qa.open.simple,metrics=[metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template]",
+    card=cards.almost_evil,template=templates.qa.open.simple,metrics=[metrics.llm_as_judge.rating.llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn]",
 
 
 
@@ -36,8 +36,8 @@ For a classical code-based metric (like F1, Rouge), the general evaluation flow 
 
     3. create a metric and evaluate the results.
 
-In LLM as judge metric, we should feed a judge model by the predictions of the model we want to test, and ask it to judge
-these prediction. The evaluation scores should be the predictions of the judge model.
+In LLM as judge metric, we should feed a judge model with the predictions of the model we want to test, and ask it to judge
+these prediction. The evaluation scores is the predictions of the judge model.
 
 Therefore, LLM as a judge flow:
     1. create dataset
@@ -64,7 +64,7 @@ Lets review an example of adding a LLM by judge metric:
 
     # 1. Create the dataset
     dataset = load_dataset("unitxt/data", "card=cards.almost_evil,template=templates.qa.open.simple,"
-                                          "metrics=[metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template]",
+                                          "metrics=[metrics.llm_as_judge.rating.llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn]",
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
     inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32)
@@ -75,7 +75,7 @@ Lets review an example of adding a LLM by judge metric:
 
     [print(item) for item in scores[0]["score"]["global"].items()]
 
-In this case, we used the metric metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template, which uses flan t5
+In this case, we used the metric metrics.llm_as_judge.rating.llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn, which uses llama3_8b model on ibm_genai,
 as a judge, and it use mt_bench recipe for creating the judging dataset.
 
 In order to create new LLM as a judge metric, you should simply use the LLMAsJudge class. For example, lets see the definition
@@ -85,24 +85,32 @@ of metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pip
 .. code-block:: python
 
     from unitxt import add_to_catalog
-    from unitxt.inference import HFPipelineBasedInferenceEngine
+    from unitxt.inference import (
+    IbmGenAiInferenceEngine,
+    IbmGenAiInferenceEngineParams)
     from unitxt.llm_as_judge import LLMAsJudge
 
-    inference_model = HFPipelineBasedInferenceEngine(
-        model_name="google/flan-t5-large", max_new_tokens=32
-    )
-    recipe = (
-        "card=cards.rag.model_response_assessment.llm_as_judge_using_mt_bench_template,"
-        "template=templates.rag.model_response_assessment.llm_as_judge_using_mt_bench_template,"
-        "demos_pool_size=0,"
-        "num_demos=0"
+    model_id = "meta-llama/llama-3-8b-instruct"
+    gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=252)
+    inference_model = IbmGenAiInferenceEngine(
+        model_name=model_id, parameters=gen_params
     )
 
-    metric = LLMAsJudge(inference_model=inference_model, recipe=recipe)
+    task = "rating.single_turn"
+    format = "formats.llama3_chat"
+    template = "templates.response_assessment.rating.mt_bench_single_turn"
+
+    metric = LLMAsJudge(
+        inference_model=inference_model,
+        task=task,
+        template=template,
+        format=format,
+        main_score="llama_3_8b_mt_bench_single_turn",
+    )
 
     add_to_catalog(
         metric,
-        "metrics.rag.model_response_assessment.llm_as_judge_by_flan_t5_large_on_hf_pipeline_using_mt_bench_template",
+        f"metrics.llm_as_judge.rating.llama_3_8b_mt_bench_single_turn",
         overwrite=True,
     )
 
@@ -112,12 +120,7 @@ We can see, that each LLM as a judge metric needs two specifications:
     2. Unitxt recipe for creating the judgment inputs.
 
 Please note, that since the metric performs nested inference, there should be a consistency between the main recipe, and the judgment recipe.
-    1. Since the judgment recipe uses the main recipe inputs and output, the names should match. In our example,
-    card.almost_evil uses tasks.qa.open task, which specify the input field "question" and the output field "answers".
-    On the other hand, cards.rag.model_response_assessment.llm_as_judge_using_mt_bench_template uses the task
-    tasks.rag.model_response_assessment. This task defined as input the fields "question" - which is consistent
-    with the main recipe field, and "model_output" - which is the standard name for the inference result. This task defines the
-    output field "rating_label" - which is a standard name.
+    1. Currently the LLM as a judge receive the raw input the evaluated model received and the processed output as processed by the task.
 
     2. Since LLM as a judge metric last step is extracting the judgment and passed it as a metric score, the template of the
     recipe should define postprocessor for the extraction. Since the unitxt scores are in scase of [0, 1], the postprocessor
