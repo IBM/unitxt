@@ -1,0 +1,5 @@
+{
+    "type": "literal_eval",
+    "field": "prediction",
+    "process_every_value": false
+}
