@@ -30,7 +30,6 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
-from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from tqdm import tqdm
 
@@ -38,6 +37,7 @@ from .dataclass import InternalField, OptionalField
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
+from .operators import AddFields
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 
@@ -77,26 +77,9 @@ class Loader(SourceOperator):
             f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
         )
 
-    def _add_data_classification(self, data, split=None):
-        if isinstance(data, DatasetDict) or isinstance(data, IterableDatasetDict):
-
-            def add_sensitivity_column(row):
-                return {**row, "data_classification": self.data_classification}
-
-            return data.map(add_sensitivity_column)
-
-        if isinstance(data, Dataset) or isinstance(data, IterableDataset):
-            length = data.info.splits[split].num_examples
-            return data.add_column(
-                "data_classification", [self.data_classification] * length
-            )
-
-        raise NotImplementedError(
-            f"{data.__class__.__name__} is not supported by the '_add_data_classification' "
-            f"method of the 'Loader' class. The function supports: 'Dataset', 'DatasetDict', "
-            f"'IterableDataset' and 'IterableDatasetDict'. Please overwrite the method in "
-            f"respective child class to be compatible with your data form."
-        )
+    def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
+        operator = AddFields(fields={"data_classification": self.data_classification})
+        return operator(multi_stream)
 
 
 class LoadHF(Loader):
@@ -197,14 +180,11 @@ class LoadHF(Loader):
         return dataset
 
     def split_limited_load(self, split_name):
-        yield from itertools.islice(
-            self._add_data_classification(self._cache[split_name], split_name),
-            self.get_limit(),
-        )
+        yield from itertools.islice(self._cache[split_name], self.get_limit())
 
     def limited_load(self):
         self.log_limited_loading()
-        return MultiStream(
+        multi_stream = MultiStream(
             {
                 name: Stream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
@@ -212,6 +192,7 @@ class LoadHF(Loader):
                 for name in self._cache.keys()
             }
         )
+        return self.add_data_classification(multi_stream)
 
     def process(self):
         try:
@@ -224,12 +205,9 @@ class LoadHF(Loader):
         if self.get_limit() is not None:
             return self.limited_load()
 
-        return MultiStream.from_iterables(
-            {
-                split: self._add_data_classification(dataset[split], split)
-                for split in dataset
-            }
-        )
+        multi_stream = MultiStream.from_iterables(dataset)
+
+        return self.add_data_classification(multi_stream)
 
 
 class LoadCSV(Loader):
@@ -239,10 +217,6 @@ class LoadCSV(Loader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
-
-    def _add_data_classification(self, data, split=None):
-        data["data_classification"] = self.data_classification
-        return data
 
     def stream_csv(self, file):
         if self.get_limit() is not None:
@@ -256,9 +230,7 @@ class LoadCSV(Loader):
             for _, row in chunk.iterrows():
                 if self.get_limit() is not None and row_count >= self.get_limit():
                     return
-                row = row.to_dict()
-                row = self._add_data_classification(row)
-                yield row
+                yield row.to_dict()
                 row_count += 1
 
     def load_csv(self, file):
@@ -271,25 +243,25 @@ class LoadCSV(Loader):
             else:
                 self._cache[file] = pd.read_csv(file).to_dict("records")
 
-        self._cache[file] = self._add_data_classification(self._cache[file])
-
         yield from self._cache[file]
 
     def process(self):
         if self.streaming:
-            return MultiStream(
+            multi_stream = MultiStream(
                 {
                     name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
                     for name, file in self.files.items()
                 }
             )
+        else:
+            multi_stream = MultiStream(
+                {
+                    name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                    for name, file in self.files.items()
+                }
+            )
 
-        return MultiStream(
-            {
-                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
-                for name, file in self.files.items()
-            }
-        )
+        return self.add_data_classification(multi_stream)
 
 
 class LoadFromSklearn(Loader):
@@ -320,12 +292,9 @@ class LoadFromSklearn(Loader):
                 df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
-        return MultiStream.from_iterables(
-            {
-                split: self._add_data_classification(dataset[split], split)
-                for split in dataset
-            }
-        )
+        multi_stream = MultiStream.from_iterables(dataset)
+
+        return self.add_data_classification(multi_stream)
 
 
 class MissingKaggleCredentialsError(ValueError):
@@ -357,12 +326,9 @@ class LoadFromKaggle(Loader):
             self.downloader(self.url, temp_directory)
             dataset = hf_load_dataset(temp_directory, streaming=False)
 
-        return MultiStream.from_iterables(
-            {
-                split: self._add_data_classification(dataset[split], split)
-                for split in dataset
-            }
-        )
+        multi_stream = MultiStream.from_iterables(dataset)
+
+        return self.add_data_classification(multi_stream)
 
 
 class LoadFromIBMCloud(Loader):
@@ -499,12 +465,9 @@ class LoadFromIBMCloud(Loader):
                 local_dir, streaming=False, data_files=self.data_files
             )
 
-        return MultiStream.from_iterables(
-            {
-                split: self._add_data_classification(dataset[split], split)
-                for split in dataset
-            }
-        )
+        multi_stream = MultiStream.from_iterables(dataset)
+
+        return self.add_data_classification(multi_stream)
 
 
 class MultipleSourceLoader(Loader):
@@ -550,12 +513,5 @@ class LoadFromDictionary(Loader):
     data: Dict[str, List[Dict[str, Any]]]
 
     def process(self) -> MultiStream:
-        return MultiStream.from_iterables(
-            {
-                split: [
-                    {**instance, "data_classification": self.data_classification}
-                    for instance in instances
-                ]
-                for split, instances in self.data.items()
-            }
-        )
+        multi_stream = MultiStream.from_iterables(self.data)
+        return self.add_data_classification(multi_stream)
