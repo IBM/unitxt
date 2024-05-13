@@ -237,4 +237,6 @@ class ExtractMtBenchJudgment(FieldOperator):
 
 class LiteralEval(FieldOperator):
     def process_value(self, text: Any) -> Any:
+        if not text:
+            return text
         return ast.literal_eval(text.strip())
