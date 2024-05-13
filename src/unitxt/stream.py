@@ -212,3 +212,10 @@ class MultiStream(dict):
                 for key, iterable in iterables.items()
             }
         )
+
+    # to use by small multisets only. E.g. when processing the metrics
+    def to_dict_of_lists(self) -> Dict[str, List[Dict[str, Any]]]:
+        res = {}
+        for key in self:
+            res[key] = list(self[key])
+        return res
