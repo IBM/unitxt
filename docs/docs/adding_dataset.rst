@@ -102,7 +102,7 @@ For more built-in operators read :class:`operators <unitxt.operators>`.
 
 Most data can be normalized to the task schema using built-in operators, ensuring your data is processed with verified high-standard streaming code.
 
-For custom operators, refer to the :ref:`adding_operator guide <operator>`.
+For custom operators, refer to the :ref:`Operators Tutorial <adding_operator>`.
 
 The Template
 ----------------
