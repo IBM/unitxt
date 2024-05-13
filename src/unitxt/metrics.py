@@ -13,7 +13,6 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-from fuzzywuzzy import fuzz
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -3648,6 +3647,8 @@ class NormalizedSacrebleu(HuggingfaceMetric):
 
 class CustomF1Fuzzy(CustomF1):
     def calculate_groups_ratio(self, actual_group, total_group):
+        from fuzzywuzzy import fuzz
+
         tmp = []
         for actual_key in actual_group.keys():
             max_score = self.fuzz_ratio
