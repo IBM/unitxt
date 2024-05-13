@@ -237,6 +237,10 @@ class ExtractMtBenchJudgment(FieldOperator):
 
 class LiteralEval(FieldOperator):
     def process_value(self, text: Any) -> Any:
-        if not text:
+        if text is not None and not isinstance(text, str):
+            raise ValueError(
+                f"LiteralEval: field '{self.field}' is expected to be of 'str' input type, got: {type(text)}"
+            )
+        if text is None or text == "":
             return text
         return ast.literal_eval(text.strip())
