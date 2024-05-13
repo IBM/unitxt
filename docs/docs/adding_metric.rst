@@ -105,10 +105,10 @@ scores are calculated.
 Typically, the global score is the average of all instance scores.  `InstanceMetric` first evaluates each instance separately,
 and then aggregate the instances score.  Some examples of instance metrics are `Accuracy`, `TokenOverlap`, `CharEditDistance`.  
 
-BulkInstanceMetric - Similar to InstanceMetric , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
+`BulkInstanceMetric` - Similar to `InstanceMetric` , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
 due to implementation efficiently reasons, it's better to run them in bulk (for example, when using LLMs during score calculations).
-BulkInstanceMetric runs on a batch of instances each time, but then aggregate the instance scores as before.
-Some examples of bulk instance metrics are SentenceBert, Reward.
+`BulkInstanceMetric` runs on a batch of instances each time, but then aggregate the instance scores as before.
+Some examples of bulk instance metrics are `SentenceBert`, `Reward`.
 
 GlobalMetric - Class for metrics for which the global scores must be calculated over all the instances together.
 Some examples of global metrics are f1, Spearman, Kendall Tau.  Note that by default global metrics are executed once per instance 
