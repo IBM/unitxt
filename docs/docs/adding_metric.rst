@@ -115,7 +115,7 @@ Some examples of global metrics are f1, Spearman, Kendall Tau.  Note that by def
 to generate per instance scores, and then once again over all instances together.   So if there are 100 instances, 
 it will first be called 100 times , each on a single instance, and then one time on all 100 instances.  
 
-Instance scores of GlobalMetrics are useful for error-analysis. Consider f1 score, for example. 
+Instance scores of `GlobalMetrics` are useful for error-analysis. Consider f1 score, for example. 
 It can be calculated only on all instances together. Yet it is useful to report the score of every instance
 so you can see that good instances get f1 score of 1 and bad ones get 0.
 
