@@ -1,0 +1,38 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "billsum"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "text": "document"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "document_type": "document"
+            }
+        }
+    ],
+    "task": {
+        "type": "form_task",
+        "inputs": [
+            "document",
+            "document_type"
+        ],
+        "outputs": [
+            "summary"
+        ],
+        "metrics": [
+            "metrics.rouge"
+        ],
+        "augmentable_inputs": [
+            "document"
+        ]
+    },
+    "templates": "templates.summarization.abstractive.all"
+}
