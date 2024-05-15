@@ -1,0 +1,31 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "webis/tldr-17",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[50%]",
+                "test": "train[50%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "content": "document"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "document_type": "document"
+            }
+        }
+    ],
+    "task": "tasks.summarization.abstractive",
+    "templates": "templates.summarization.abstractive.all"
+}
