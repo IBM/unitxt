@@ -13,6 +13,7 @@ from .dataclass import (
     Field,
     InternalField,
     NonPositionalField,
+    OptionalField,
     fields,
 )
 from .logging_utils import get_logger
@@ -129,6 +130,8 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
+    data_classification_policy: List[str] = OptionalField(default_factory=list)
+
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -237,6 +240,18 @@ class Artifact(Dataclass):
         self._init_dict = get_raw(kwargs)
 
     @final
+    def verify_data_classification_policy(self):
+        if not isinstance(self.data_classification_policy, list) or not all(
+            isinstance(data_classification, str)
+            for data_classification in self.data_classification_policy
+        ):
+            raise ValueError(
+                f"'data_classification_policy' must be either an empty list - in case when "
+                f"no policy applies - or a list of strings, for example: ['public']. "
+                f"However, '{self.data_classification_policy}' was given instead."
+            )
+
+    @final
     def __post_init__(self):
         self.type = self.register_class(self.__class__)
 
@@ -248,6 +263,7 @@ class Artifact(Dataclass):
                 value = map_values_in_place(value, maybe_recover_artifact)
                 setattr(self, field.name, value)
 
+        self.verify_data_classification_policy()
         self.prepare()
         self.verify()
 
@@ -366,3 +382,63 @@ def register_all_artifacts(path):
                 # Make sure the class is a subclass of Artifact (but not Artifact itself)
                 if issubclass(obj, Artifact) and obj is not Artifact:
                     logger.info(obj)
+
+
+# Classification of the data sent to remote services in terms of its sensitivity.
+# It determines, for each specified artifact, what data can be used.
+# For example: '{"metrics.rag.context_relevance": ["public"],
+# "postprocessor.translate": ["proprietary"]}'.
+# This variable should be a dictionary, where each key is a given artifact's name,
+# and a value is a list of data classifications used by that artifact.
+UNITXT_DATA_CLASSIFICATION_POLICY = "UNITXT_DATA_CLASSIFICATION_POLICY"
+
+
+def get_artifacts_data_classification(artifact: str) -> List[str]:
+    """Loads given artifact's data classification policy from an environment variable.
+
+    Args:
+        artifact (str): Name of the artifact which the data classification policy
+            should be retrieved for.
+
+    Returns:
+        List[str] - Data classification policies for the specified artifact.
+    """
+    data_classification = settings.data_classification_policy
+    error_msg = (
+        f"The value of 'UNITXT_DATA_CLASSIFICATION_POLICY' "
+        f"should a valid json dictionary. Got "
+        f"'{UNITXT_DATA_CLASSIFICATION_POLICY}' instead."
+    )
+
+    try:
+        data_classification = json.loads(data_classification)
+    except json.decoder.JSONDecodeError as e:
+        raise RuntimeError(error_msg) from e
+
+    if not isinstance(data_classification, dict):
+        raise RuntimeError(error_msg)
+
+    for artifact_name, artifact_data_classifications in data_classification.items():
+        if (
+            not isinstance(artifact_name, str)
+            or not isinstance(artifact_data_classifications, list)
+            or not all(
+                isinstance(artifact_data_classification, str)
+                for artifact_data_classification in artifact_data_classifications
+            )
+        ):
+            raise RuntimeError(
+                "'UNITXT_DATA_CLASSIFICATION_POLICY' should be of type "
+                "'Dict[str, List[str]]', where a artifact's name is a key, and a "
+                "value is a list of data classifications used by that artifact."
+            )
+
+    if artifact not in data_classification.keys():
+        raise RuntimeError(
+            f"'{artifact}' was not found in 'UNITXT_DATA_CLASSIFICATION_POLICY'. "
+            f"Available artifacts are: '{list(data_classification.keys())}'. Please "
+            f"check if the name is correct, or add the data classification to the "
+            f"variable for the specified artifact."
+        )
+
+    return data_classification[artifact]

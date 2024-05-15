@@ -1,14 +1,21 @@
+import json
+import os
+
 from unitxt.artifact import (
+    UNITXT_DATA_CLASSIFICATION_POLICY,
     Artifact,
     fetch_artifact,
+    get_artifacts_data_classification,
     reset_artifacts_json_cache,
 )
 from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.logging_utils import get_logger
+from unitxt.metrics import F1Binary
 from unitxt.operator import SequentialOperator
-from unitxt.operators import AddFields, RenameFields
+from unitxt.operators import AddFields, RenameFields, VerifyDataClassificationPolicy
 from unitxt.processors import StringOrNotString
+from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
 from tests.utils import UnitxtTestCase
@@ -130,3 +137,74 @@ class TestArtifact(UnitxtTestCase):
 
     def test_reset_artifacts_json_cache(self):
         reset_artifacts_json_cache()
+
+    def test_checking_data_classification_policy_env(self):
+        artifact_name = "metrics.accuracy"
+
+        expected_data_classification_policies = {artifact_name: ["public"]}
+        os.environ[UNITXT_DATA_CLASSIFICATION_POLICY] = json.dumps(
+            expected_data_classification_policies
+        )
+
+        data_classification_policies = get_artifacts_data_classification(artifact_name)
+
+        self.assertListEqual(
+            expected_data_classification_policies[artifact_name],
+            data_classification_policies,
+        )
+
+        verification = VerifyDataClassificationPolicy(artifact_name=artifact_name)
+
+        instance = {"data": "text", "data_classification_policy": ["public"]}
+        output = verification.process(instance)
+        self.assertEqual(instance, output)
+
+        instance["data_classification_policy"] = ["pii"]
+        with self.assertRaises(ValueError) as e:
+            verification.process(instance)
+        self.assertEqual(
+            str(e.exception),
+            f"The following instance has the following data classification policy "
+            f"'{instance['data_classification_policy']}', however, the artifact "
+            f"'{artifact_name}' is only configured to support the data with classification "
+            f"'{expected_data_classification_policies[artifact_name]}'. To allow this set "
+            f"the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' or change the "
+            f"'{artifact_name}' object to include '{instance['data_classification_policy']}'.",
+        )
+
+    def test_checking_data_classification_policy_object(self):
+        instance = {"data": "text", "data_classification_policy": ["public"]}
+
+        metric = F1Binary(data_classification_policy=["public"])
+        metric_verification = VerifyDataClassificationPolicy(artifact=metric)
+
+        output = metric_verification.process(instance)
+        self.assertEqual(instance, output)
+
+        template = YesNoTemplate(data_classification_policy=["propriety", "pii"])
+        template_verification = VerifyDataClassificationPolicy(artifact=template)
+        instance["data_classification_policy"] = ["propriety", "pii"]
+
+        output = template_verification.process(instance)
+        self.assertEqual(instance, output)
+
+    def test_misconfigured_data_classification_policy(self):
+        with self.assertRaises(ValueError):
+            VerifyDataClassificationPolicy()
+
+        with self.assertRaises(ValueError) as e:
+            VerifyDataClassificationPolicy(artifact=1)
+        self.assertEqual(
+            str(e.exception),
+            "'artifact' must be an 'Artifact' object, for example an instance "
+            "of the 'Metric' class. However, '1' was given instead.",
+        )
+
+        with self.assertRaises(ValueError) as e:
+            VerifyDataClassificationPolicy(artifact_name=1)
+        self.assertEqual(
+            str(e.exception),
+            "'artifact_name' must be a proper string name of an artifact to be fetched. "
+            "For example: 'metrics.accuracy' or 'templates.span_labeling.extraction.carry'. "
+            "However, '1' was given instead.",
+        )

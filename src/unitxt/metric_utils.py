@@ -248,13 +248,6 @@ UNITXT_REMOTE_METRICS = "UNITXT_REMOTE_METRICS"
 # For example, 'http://127.0.0.1:8000/compute'
 UNITXT_REMOTE_METRICS_ENDPOINT = "UNITXT_REMOTE_METRICS_ENDPOINT"
 
-# Classification of the data sent to remote services in terms of its sensitivity.
-# It determines, for each specified metric, what data can be used.
-# For example: '{"metrics.rag.context_relevance": ["public"]}'.
-# This variable should be a dictionary, where each key is a given metric's name,
-# and a value is a list of data classifications used by that metric.
-UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION = "UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION"
-
 
 def get_remote_metrics_names() -> List[str]:
     """Load the remote metrics names from an environment variable.
@@ -296,55 +289,3 @@ def get_remote_metrics_endpoint() -> str:
             f"endpoint in the environment variable '{UNITXT_REMOTE_METRICS_ENDPOINT}'."
         ) from e
     return remote_metrics_endpoint
-
-
-def get_remote_metrics_data_classification(metric: str) -> List[str]:
-    """Loads the remote metrics data classification from an environment variable.
-
-    Args:
-        metric (str): Name of the metric which the data classification should be
-            retrieved for.
-
-    Returns:
-        List[str] - Data classification for the specified metric.
-    """
-    settings = get_settings()
-    data_classification = settings.remote_metrics_data_classification
-    error_msg = (
-        f"The value of 'UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION' "
-        f"should a valid json dictionary. Got "
-        f"'{UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION}' instead."
-    )
-
-    try:
-        data_classification = json.loads(data_classification)
-    except json.decoder.JSONDecodeError as e:
-        raise RuntimeError(error_msg) from e
-
-    if not isinstance(data_classification, dict):
-        raise RuntimeError(error_msg)
-
-    for metric_name, metric_data_classifications in data_classification.items():
-        if (
-            not isinstance(metric_name, str)
-            or not isinstance(metric_data_classifications, list)
-            or not all(
-                isinstance(metric_data_classification, str)
-                for metric_data_classification in metric_data_classifications
-            )
-        ):
-            raise RuntimeError(
-                "'UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION' should be of type "
-                "'Dict[str, List[str]]', where a metric's name is a key, and a "
-                "value is a list of data classifications used by that metric."
-            )
-
-    if metric not in data_classification.keys():
-        raise RuntimeError(
-            f"'{metric}' was not found in 'UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION'. "
-            f"Available metrics are: '{list(data_classification.keys())}'. Please "
-            f"check if the name is correct, or add the data classification to the "
-            f"variable for the specified metric."
-        )
-
-    return data_classification[metric]

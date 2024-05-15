@@ -2725,58 +2725,17 @@ class RemoteMetric(SingleStreamOperator, Metric):
     endpoint: the remote host that supports the remote metric execution.
     metric_name: the name of the metric that is executed remotely.
     api_key: optional, passed to the remote metric with the input, allows secure authentication.
-    allowed_data_classification: optional, classification of data that can be used by the metric.
     """
 
     main_score: str = None
     endpoint: str
     metric_name: str
     api_key: str = None
-    allowed_data_classification: List[str] = None
-
-    def check_allowed_data_classification(
-        self, instances: List[Dict[str, Any]]
-    ) -> None:
-        if not self.allowed_data_classification:
-            get_logger().warning(
-                "The metric has 'allowed_data_classification' attribute set empty, "
-                "thus it cannot verify if possibly sensitive data is handled in a "
-                "proper way. Set the 'allowed_data_classification' parameter in "
-                "order to avoid a potential sending of undesired data to external "
-                "service."
-            )
-            return
-
-        for instance in instances:
-            instance_data_classification = instance.get("data_classification")
-
-            if not instance_data_classification:
-                get_logger().warning(
-                    "The data does not provide information if it can be used by that "
-                    "particular metric. This may lead to sending of undesired data to "
-                    "external service. Set the 'data_classification' attribute of a loader "
-                    "to ensure a proper handling of sensitive data."
-                )
-                continue
-
-            if not any(
-                data_classification in self.allowed_data_classification
-                for data_classification in instance_data_classification
-            ):
-                raise ValueError(
-                    f"The following instance has data classification of "
-                    f"'{instance_data_classification}', however the metric '{self.metric_name}' "
-                    f"is only configured to support the data with classification "
-                    f"'{self.allowed_data_classification}'. To allow this set the environment "
-                    f"variable 'UNITXT_REMOTE_METRICS_DATA_CLASSIFICATION' to include "
-                    f"'{instance_data_classification}'."
-                )
 
     @staticmethod
     def wrap_inner_metric_pipeline_metric(
         metric_pipeline: MetricPipeline,
         remote_metrics_endpoint: str,
-        allowed_data_classification: List[str],
     ) -> MetricPipeline:
         """Wrap the inner metric in a MetricPipeline with a RemoteMetric.
 
@@ -2791,7 +2750,6 @@ class RemoteMetric(SingleStreamOperator, Metric):
             main_score=local_inner_metric.main_score,
             metric_name=local_inner_metric.__id__,
             endpoint=remote_metrics_endpoint,
-            allowed_data_classification=allowed_data_classification,
         )
         return metric_pipeline
 
@@ -2802,7 +2760,6 @@ class RemoteMetric(SingleStreamOperator, Metric):
         predictions, references, additional_inputs, instances = self.consume_stream(
             stream
         )
-        self.check_allowed_data_classification(instances)
         metric_request = self.create_metric_request(
             predictions, references, additional_inputs
         )

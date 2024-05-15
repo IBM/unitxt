@@ -63,13 +63,15 @@ class TestLoaders(UnitxtTestCase):
                 path = os.path.join(tmp_dir, file + ".csv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
                 df.to_csv(path, index=False)
-                df["data_classification"] = [
+                df["data_classification_policy"] = [
                     data_classification for _ in range(len(df))
                 ]
                 dfs[file] = df
                 files[file] = path
 
-            loader = LoadCSV(files=files, data_classification=data_classification)
+            loader = LoadCSV(
+                files=files, data_classification_policy=data_classification
+            )
             ms = loader()
 
             for file in ["train", "test"]:
@@ -89,14 +91,14 @@ class TestLoaders(UnitxtTestCase):
                 path = os.path.join(tmp_dir, file + ".tsv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
                 df.to_csv(path, index=False, sep="\t")
-                df["data_classification"] = [
+                df["data_classification_policy"] = [
                     data_classification for _ in range(len(df))
                 ]
                 dfs[file] = df
                 files[file] = path
 
             loader = LoadCSV(
-                files=files, sep="\t", data_classification=data_classification
+                files=files, sep="\t", data_classification_policy=data_classification
             )
             ms = loader()
 
@@ -124,7 +126,7 @@ class TestLoaders(UnitxtTestCase):
                     data_dir="DUMMY_DATA_DIR",
                     data_files=data_files,
                     loader_limit=loader_limit,
-                    data_classification=["public"],
+                    data_classification_policy=["public"],
                 )
                 with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
                     ms = loader()
@@ -135,7 +137,7 @@ class TestLoaders(UnitxtTestCase):
                         self.assertEqual(len(ds["test"]), loader_limit)
                     self.assertEqual(
                         ds["test"][0],
-                        {"a": 1, "b": 2, "data_classification": ["public"]},
+                        {"a": 1, "b": 2, "data_classification_policy": ["public"]},
                     )
 
     def test_load_from_HF_compressed(self):
@@ -173,12 +175,12 @@ class TestLoaders(UnitxtTestCase):
             "hide new secretions from the parental units ",
         )
         self.assertEqual(
-            dataset["train"][0]["data_classification"],
-            None,
+            dataset["train"][0]["data_classification_policy"],
+            [],
         )
         self.assertEqual(
-            dataset["test"][0]["data_classification"],
-            None,
+            dataset["test"][0]["data_classification_policy"],
+            [],
         )
         assert set(dataset.keys()) == {
             "train",
@@ -228,7 +230,7 @@ class TestLoaders(UnitxtTestCase):
                 else:
                     df = pd.DataFrame({"x": ["test_1", "test_2", "test_3"]})
                 df.to_csv(path, index=False)
-                df["data_classification"] = [None] * len(df)
+                df["data_classification_policy"] = [[]] * len(df)
                 dfs[file] = df
                 files[file] = path
 
@@ -270,5 +272,5 @@ class TestLoaders(UnitxtTestCase):
 
         for split, instances in data.items():
             for original_instance, stream_instance in zip(instances, streams[split]):
-                original_instance["data_classification"] = None
+                original_instance["data_classification_policy"] = []
                 self.assertEqual(original_instance, stream_instance)

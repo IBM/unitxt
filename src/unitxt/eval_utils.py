@@ -4,11 +4,7 @@ from typing import List, Optional
 import pandas as pd
 
 from .artifact import verbosed_fetch_artifact
-from .metric_utils import (
-    get_remote_metrics_data_classification,
-    get_remote_metrics_endpoint,
-    get_remote_metrics_names,
-)
+from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
 
@@ -75,12 +71,10 @@ def as_remote_metric(metric):
     from .metrics import MetricPipeline, RemoteMetric
 
     remote_metrics_endpoint = get_remote_metrics_endpoint()
-    data_classification = get_remote_metrics_data_classification(metric)
     if isinstance(metric, MetricPipeline):
         metric = RemoteMetric.wrap_inner_metric_pipeline_metric(
             metric_pipeline=metric,
             remote_metrics_endpoint=remote_metrics_endpoint,
-            allowed_data_classification=data_classification,
         )
     else:
         raise ValueError(

@@ -55,7 +55,6 @@ class Loader(SourceOperator):
     # stream, after load is complete.
     loader_limit: int = None
     streaming: bool = False
-    data_classification: Optional[List[str]] = None
 
     def get_limit(self):
         if settings.global_loader_limit is not None and self.loader_limit is not None:
@@ -79,7 +78,9 @@ class Loader(SourceOperator):
         )
 
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
-        operator = AddFields(fields={"data_classification": self.data_classification})
+        operator = AddFields(
+            fields={"data_classification_policy": self.data_classification_policy}
+        )
         return operator(multi_stream)
 
     @abstractmethod
