@@ -1,0 +1,38 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "PatronusAI/financebench"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[10%]",
+                "test": "train[90%]"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "answer": "answers",
+                "evidence_text": "context"
+            }
+        },
+        {
+            "type": "list_field_values",
+            "fields": [
+                "answers"
+            ],
+            "to_field": "answers"
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "context_type": "context"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.rag.response_generation.correctness.bert_score.deberta_large_mnli]]",
+    "templates": "templates.qa.with_context.all"
+}
