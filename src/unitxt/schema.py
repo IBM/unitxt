@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from datasets import Features, Sequence, Value
 
+from .artifact import Artifact
 from .operator import StreamInstanceOperatorValidator
 
 UNITXT_DATASET_SCHEMA = Features(
@@ -28,22 +29,28 @@ UNITXT_DATASET_SCHEMA = Features(
 # })
 
 
+def artifact_to_jsonable(artifact):
+    if artifact.__id__ is None:
+        return artifact.to_dict()
+    return artifact.__id__
+
+
 class ToUnitxtGroup(StreamInstanceOperatorValidator):
     group: str
     metrics: List[str] = None
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
-    def _to_lists_of_keys_and_values(self, dict: Dict[str, str]):
-        return {
-            "key": [key for key, _ in dict.items()],
-            "value": [str(value) for _, value in dict.items()],
-        }
-
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        task_data = {**instance["inputs"], **instance["outputs"]}
+        metadata = {}
+        for key, val in instance["recipe_metadata"]:
+            if isinstance(val, Artifact):
+                metadata[key] = artifact_to_jsonable(val)
+
+        task_data = {**instance["inputs"], **instance["outputs"], "metadata": metadata}
+
         instance["task_data"] = json.dumps(task_data)
 
         if self.remove_unnecessary_fields:
@@ -55,7 +62,8 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
 
             for key in keys_to_delete:
                 del instance[key]
-        instance["group"] = self.group
+        if "group" not in instance:
+            instance["group"] = self.group
         if self.metrics is not None:
             instance["metrics"] = self.metrics
         if self.postprocessors is not None:
