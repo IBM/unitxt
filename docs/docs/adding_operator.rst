@@ -6,7 +6,7 @@
 
 
 =====================================
-Adding Operators ✨
+Operators ✨
 =====================================
 
 In this section we will add brand new stream operators to review the existing operators  :ref:`press here <operators>`.

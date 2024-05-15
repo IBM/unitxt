@@ -3,6 +3,8 @@ Operators List
 
 This library provides various operators for stream processing.
 
-.. include:: ../unitxt.operators.rst
-   :start-line: 10
+.. automodule:: unitxt.operators
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
