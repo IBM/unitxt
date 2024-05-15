@@ -26,9 +26,32 @@ class LLMAsJudge(BulkInstanceMetric):
     template: str
     format: Optional[str] = None
     system_prompt: Optional[str] = None
+    strip_system_prompt_and_format_from_inputs: bool = True
     inference_model: InferenceEngine
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
+
+    def _get_input_instances(self, task_data: List[Dict]) -> List:
+        instances = []
+        for task_data_instance in task_data:
+            recipe_for_judge_input_dict = task_data_instance["recipe_metadata"]
+            card = recipe_for_judge_input_dict["card"]
+            template = recipe_for_judge_input_dict["template"]
+            if self.strip_system_prompt_and_format_from_inputs:
+                system_prompt = "system_prompts.empty"
+                format = "formats.empty"
+            else:
+                system_prompt = recipe_for_judge_input_dict["system_prompt"]
+                format = recipe_for_judge_input_dict["format"]
+            recipe = (
+                f"card={card},"
+                f"template={template},"
+                f"system_prompt={system_prompt},"
+                f"format={format}"
+            )
+            instance = produce(task_data_instance, recipe)
+            instances.append(instance)
+        return instances
 
     def prepare(self):
         super().prepare()
@@ -62,38 +85,37 @@ class LLMAsJudge(BulkInstanceMetric):
         predictions: List[Any],
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
+        input_instances = self._get_input_instances(task_data)
         if self.task == "rating.single_turn":
             instances = [
                 {
-                    **task_data_instance,
-                    "input": task_data_instance["source"],
-                    "output": prediction,
+                    "question": input_instance,
+                    "answer": prediction,
                     "rating": "[[5]]",  # This is a dummy value that is not used in practice
                 }
-                for task_data_instance, prediction, reference in zip(
-                    task_data, predictions, references
+                for input_instance, prediction, reference in zip(
+                    input_instances, predictions, references
                 )
             ]
-            card = "cards.dynamic_cards_for_llm_judges.rating.single_turn"
-            recipe = (
-                f"card={card},"
-                f"template={self.template},"
-                "demos_pool_size=0,"
-                "num_demos=0"
+        else:
+            raise NotImplementedError(
+                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             )
-            if self.system_prompt:
-                recipe = f"{recipe},system_prompt={self.system_prompt}"
-            if self.format:
-                recipe = f"{recipe},format={self.format}"
 
-            dataset = produce(instances, recipe)
-            verdicts = self.inference_model.infer(dataset)
-            meta_metric = evaluate.load("unitxt/metric")
-            meta_scores = meta_metric.compute(predictions=verdicts, references=dataset)
-            return [
-                {self.main_score: instance["prediction"]} for instance in meta_scores
-            ]
-
-        raise NotImplementedError(
-            f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
+        card = "cards.dynamic_cards_for_llm_judges.rating.single_turn"
+        recipe = (
+            f"card={card},"
+            f"template={self.template},"
+            "demos_pool_size=0,"
+            "num_demos=0"
         )
+        if self.system_prompt:
+            recipe = f"{recipe},system_prompt={self.system_prompt}"
+        if self.format:
+            recipe = f"{recipe},format={self.format}"
+
+        dataset = produce(instances, recipe)
+        verdicts = self.inference_model.infer(dataset)
+        meta_metric = evaluate.load("unitxt/metric")
+        meta_scores = meta_metric.compute(predictions=verdicts, references=dataset)
+        return [{self.main_score: instance["prediction"]} for instance in meta_scores]

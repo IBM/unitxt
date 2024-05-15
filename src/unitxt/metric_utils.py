@@ -159,7 +159,12 @@ class MetricRecipe(SequentialOperatorInitializer):
                 function="json.loads",
                 to_field="task_data",
             ),
-            CopyFields(field_to_field={"source": "task_data/source"}),
+            CopyFields(
+                field_to_field={
+                    "source": "task_data/source",
+                    "recipe_metadata": "task_data/recipe_metadata",
+                }
+            ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
             ),
