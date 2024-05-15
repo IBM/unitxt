@@ -1,0 +1,46 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "nguha/legalbench",
+        "name": "proa"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "text": "text",
+                "answer": "label"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "clause",
+                "classes": [
+                    "Yes",
+                    "No"
+                ],
+                "type_of_class": "a private right of action",
+                "classes_descriptions": "A private right of action is when a regular person, a private citizen, is legally entitled to enforce their rights under a given statute"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.with_classes_descriptions",
+    "templates": {
+        "default": {
+            "type": "input_output_template",
+            "input_format": "{text_type}: {text}",
+            "output_format": "{label}",
+            "instruction": "{classes_descriptions}. Does the {text_type} specify {type_of_class}? Answer from one of {classes}",
+            "target_prefix": "A: ",
+            "title_fields": [
+                "text_type"
+            ],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc"
+            ]
+        }
+    }
+}

@@ -178,5 +178,5 @@ Welcome!
    docs/production
    docs/helm
    documentation
-   catalog
+   catalog/catalog.__dir__
 
