@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import AddFields, FormTask, TaskCard
+from unitxt.blocks import AddFields, TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.operators import RenameFields
 from unitxt.test_utils.card import test_card
@@ -11,12 +11,7 @@ card = TaskCard(
         RenameFields(field_to_field={"text": "document"}),
         AddFields(fields={"document_type": "document"}),
     ],
-    task=FormTask(
-        inputs=["document", "document_type"],
-        outputs=["summary"],
-        metrics=["metrics.rouge"],
-        augmentable_inputs=["document"],
-    ),
+    task="tasks.summarization.abstractive",
     templates="templates.summarization.abstractive.all",
 )
 test_card(
