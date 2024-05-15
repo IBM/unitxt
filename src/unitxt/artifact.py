@@ -13,7 +13,6 @@ from .dataclass import (
     Field,
     InternalField,
     NonPositionalField,
-    OptionalField,
     fields,
 )
 from .logging_utils import get_logger
@@ -130,7 +129,9 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
-    data_classification_policy: List[str] = OptionalField(default_factory=list)
+    data_classification_policy: List[str] = NonPositionalField(
+        default_factory=list, required=False, also_positional=False
+    )
 
     @classmethod
     def is_artifact_dict(cls, d):
