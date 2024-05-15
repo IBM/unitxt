@@ -12,6 +12,7 @@ jobs:
      runs-on: ubuntu-latest
      env:
        OS: ubuntu-latest
+       GENAI_KEY: "dummy"
 
      steps:
      - uses: actions/checkout@v4
