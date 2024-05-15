@@ -18,21 +18,6 @@
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": [
-            "document",
-            "document_type"
-        ],
-        "outputs": [
-            "summary"
-        ],
-        "metrics": [
-            "metrics.rouge"
-        ],
-        "augmentable_inputs": [
-            "document"
-        ]
-    },
+    "task": "tasks.summarization.abstractive",
     "templates": "templates.summarization.abstractive.all"
 }
