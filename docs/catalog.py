@@ -132,6 +132,8 @@ class CatalogEntry:
         label = label.replace(os.path.sep, ".")
         if not self.is_main_catalog_entry():
             label = "catalog." + label
+        if self.is_dir:
+            label = "dir_" + label
         return label
 
     def is_main_catalog_entry(self):
@@ -150,11 +152,15 @@ class CatalogEntry:
             dirname = "catalog." + dirname
         result = os.path.join(
             destination_directory,
+            "catalog",
             dirname + Path(self.rel_path).stem,
         )
+        if self.is_dir:
+            result += ".__dir__"
 
         if with_extension:
             result += ".rst"
+
         return result
 
     def write_dir_contents_to_rst(self, destination_directory, start_directory):
@@ -178,6 +184,8 @@ class CatalogEntry:
             sub_name = sub_dir_entry.get_artifact_doc_path(
                 destination_directory="", with_extension=False
             )
+            if sub_name.startswith("catalog/"):
+                sub_name = sub_name.replace("catalog/", "", 1)
             dir_doc_content += f"   {sub_name}\n"
 
         sub_file_entries = [entry for entry in sub_catalog_entries if not entry.is_dir]
@@ -186,6 +194,8 @@ class CatalogEntry:
             sub_name = sub_file_entry.get_artifact_doc_path(
                 destination_directory="", with_extension=False
             )
+            if sub_name.startswith("catalog/"):
+                sub_name = sub_name.replace("catalog/", "", 1)
             dir_doc_content += f"   {sub_name}\n"
 
         dir_doc_path = self.get_artifact_doc_path(destination_directory)
