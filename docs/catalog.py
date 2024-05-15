@@ -140,7 +140,8 @@ class CatalogEntry:
         return self.rel_path.startswith("catalog")
 
     def get_title(self):
-        return Path(self.rel_path).stem
+        title = Path(self.rel_path).stem
+        return title.replace("_", " ").title()
 
     def get_artifact_doc_path(self, destination_directory, with_extension=True):
         """Return the path to an RST file which describes this object."""
@@ -165,8 +166,6 @@ class CatalogEntry:
 
     def write_dir_contents_to_rst(self, destination_directory, start_directory):
         title = self.get_title()
-        if title:
-            title = f"{title[0].upper()}{title[1:]}"
         label = self.get_label()
         dir_doc_content = write_title(title, label)
         dir_doc_content += ".. toctree::\n   :maxdepth: 1\n\n"
