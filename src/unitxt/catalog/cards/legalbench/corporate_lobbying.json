@@ -1,0 +1,49 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "nguha/legalbench",
+        "name": "corporate_lobbying"
+    },
+    "preprocess_steps": [
+        {
+            "type": "format_text",
+            "text": "Official title of bill: {bill_title}\nOfficial summary of bill: {bill_summary}\nCompany name: {company_name}\nCompany business description: {company_description}",
+            "to_field": "text"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "text": "text",
+                "answer": "label"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "",
+                "classes": [
+                    "Yes",
+                    "No"
+                ],
+                "type_of_class": "",
+                "classes_descriptions": "You are a lobbyist analyzing Congressional bills for their impacts on companies.\nGiven the title and summary of the bill, plus information on the company from its 10K SEC filing, is a bill at least somewhat relevant to a company in terms of whether it could impact the company's bottom-line if it was enacted"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.with_classes_descriptions",
+    "templates": {
+        "default": {
+            "type": "input_output_template",
+            "input_format": "{text}\nIs this bill potentially relevant to the company? FINAL ANSWER:",
+            "output_format": "{label}",
+            "instruction": "{classes_descriptions}, it is your job to determine {type_of_class} (by saying Yes or No).",
+            "target_prefix": "",
+            "title_fields": [],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc"
+            ]
+        }
+    }
+}
