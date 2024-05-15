@@ -335,7 +335,7 @@ def get_artifactory_name_and_args(
 
 def verbosed_fetch_artifact(identifier):
     artifact, artifactory = fetch_artifact(identifier)
-    logger.info(f"Artifact {identifier} is fetched from {artifactory}")
+    logger.debug(f"Artifact {identifier} is fetched from {artifactory}")
     return artifact
 
 

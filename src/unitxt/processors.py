@@ -1,3 +1,4 @@
+import ast
 import json
 import re
 from difflib import get_close_matches
@@ -232,3 +233,14 @@ class ExtractMtBenchJudgment(FieldOperator):
             return float(match.group(1)) / 10
         except:
             return 0.0
+
+
+class LiteralEval(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        if text is not None and not isinstance(text, str):
+            raise ValueError(
+                f"LiteralEval: field '{self.field}' is expected to be of 'str' input type, got: {type(text)}"
+            )
+        if text is None or text == "":
+            return text
+        return ast.literal_eval(text.strip())

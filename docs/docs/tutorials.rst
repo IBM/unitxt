@@ -15,4 +15,6 @@ Tutorials ✨
    adding_operator
    adding_metric
    llm_as_judge
+   tags_and_descriptions
    contributors_guide
+

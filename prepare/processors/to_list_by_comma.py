@@ -14,11 +14,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ToListByComma(field="references", process_every_value=True),
-        ]
-    ),
+    ToListByComma(field="references", process_every_value=True),
     "processors.to_list_by_comma_from_references",
     overwrite=True,
 )
