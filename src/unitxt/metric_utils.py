@@ -162,7 +162,6 @@ class MetricRecipe(SequentialOperatorInitializer):
             CopyFields(
                 field_to_field={
                     "source": "task_data/source",
-                    "recipe_metadata": "task_data/recipe_metadata",
                 }
             ),
             ApplyOperatorsField(

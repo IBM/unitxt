@@ -47,6 +47,16 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         ]
 
 
+class MockInferenceEngine(InferenceEngine):
+    model_name: str
+
+    def prepare(self):
+        return
+
+    def infer(self, dataset):
+        return ["[[10]]" for instance in dataset]
+
+
 class IbmGenAiInferenceEngineParams(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     max_new_tokens: Optional[int] = None

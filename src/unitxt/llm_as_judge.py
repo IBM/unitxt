@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Literal, Optional
 
-import evaluate
-
-from .api import produce
+from .api import evaluate, produce
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
+from .operator import SequentialOperator
 
 
 class LLMAsJudge(BulkInstanceMetric):
@@ -35,6 +34,24 @@ class LLMAsJudge(BulkInstanceMetric):
     batch_size: int = 32
 
     def _get_input_instances(self, task_data: List[Dict]) -> List:
+        if self.strip_system_prompt_and_format_from_inputs:
+            instances = []
+            for task_data_instance in task_data:
+                template = task_data_instance["metadata"]["template"]
+                instance = SequentialOperator(
+                    steps=[template, "formats.empty"]
+                ).process_instance(
+                    {"inputs": task_data_instance, "outputs": task_data_instance}
+                )
+                instances.append(instance["source"])
+                """
+                We also have access to: instance["target"]
+                                        instance["references"]
+                """
+            return instances
+        return [t["source"] for t in task_data]
+
+    def _get_input_instances_old(self, task_data: List[Dict]) -> List:
         instances = []
         for task_data_instance in task_data:
             recipe_for_judge_input_dict = task_data_instance["recipe_metadata"]
@@ -94,7 +111,7 @@ class LLMAsJudge(BulkInstanceMetric):
                 {
                     "question": input_instance,
                     "answer": prediction,
-                    "rating": "[[5]]",  # This is a dummy value that is not used in practice
+                    "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -119,6 +136,5 @@ class LLMAsJudge(BulkInstanceMetric):
 
         dataset = produce(instances, recipe)
         verdicts = self.inference_model.infer(dataset)
-        meta_metric = evaluate.load("unitxt/metric")
-        meta_scores = meta_metric.compute(predictions=verdicts, references=dataset)
+        meta_scores = evaluate(predictions=verdicts, data=dataset)
         return [{self.main_score: instance["prediction"]} for instance in meta_scores]
