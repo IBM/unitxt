@@ -1,0 +1,46 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "nguha/legalbench",
+        "name": "international_citizenship_questions"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "question": "text",
+                "answer": "label"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "text_type": "question",
+                "classes": [
+                    "Yes",
+                    "No"
+                ],
+                "type_of_class": "",
+                "classes_descriptions": "considering the state of international law on January 1st, 2020"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.with_classes_descriptions",
+    "templates": {
+        "default": {
+            "type": "input_output_template",
+            "input_format": "{text_type}: {text} Answer from one of {classes}.",
+            "output_format": "{label}",
+            "instruction": "Answer the following {text_type} {classes_descriptions}.\n",
+            "target_prefix": "Answer: ",
+            "title_fields": [
+                "text_type"
+            ],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc"
+            ]
+        }
+    }
+}
