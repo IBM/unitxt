@@ -133,6 +133,7 @@ if Settings.is_uninitilized():
     settings.test_metric_disable = (bool, False)
     settings.metrics_master_key_token = None
     settings.seed = (int, 42)
+    settings.skip_artifacts_prepare_and_verify = (bool, False)
 
 if Constants.is_uninitilized():
     constants = Constants()

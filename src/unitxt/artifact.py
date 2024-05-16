@@ -248,8 +248,9 @@ class Artifact(Dataclass):
                 value = map_values_in_place(value, maybe_recover_artifact)
                 setattr(self, field.name, value)
 
-        self.prepare()
-        self.verify()
+        if not settings.skip_artifacts_prepare_and_verify:
+            self.prepare()
+            self.verify()
 
     def _to_raw_dict(self):
         return {"type": self.type, **self._init_dict}
