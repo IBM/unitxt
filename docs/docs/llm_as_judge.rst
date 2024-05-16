@@ -63,7 +63,7 @@ Fortunately, all these components are readily available in the unitxt catalog, i
 .. note::
 
    Pay attention!
-   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the terms to use it on the model page and set the HUGGINGFACE_TOKEN environment argument.
+   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the terms to use it on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using OpenAI platform, you will need to set your OpenAI api key.
 
 From here, constructing the full unitxt recipe string is standard and straightforward:
 
