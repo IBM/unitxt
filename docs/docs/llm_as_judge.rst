@@ -62,6 +62,7 @@ Fortunately, all these components are readily available in the unitxt catalog, i
    We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the terms to use it on the model page and set the HUGGINGFACE_TOKEN environment argument.
 
 From here, constructing the full unitxt recipe string is standard and straightforward:
+
 .. code-block:: text
     card=cards.mt_bench.generation.english_single_turn,
     template=templates.empty,
