@@ -1,6 +1,5 @@
 from unitxt import add_to_catalog
 from unitxt.operators import AugmentPrefixSuffix
-from unitxt.test_utils.operators import apply_operator
 
 pattern_distribution = {
     " ": 20,
@@ -18,10 +17,10 @@ operator = AugmentPrefixSuffix(
     remove_existing_whitespaces=True,
 )
 
-text = " She is riding a black horse\t\t  "
-inputs = [{"inputs": {"text": text}}]
-operator.set_task_input_fields(["text"])
-outputs = apply_operator(operator, inputs)
+# text = " She is riding a black horse\t\t  "
+# inputs = [{"inputs": {"text": text}}]
+# operator.set_task_input_fields(["text"])
+# outputs = apply_operator(operator, inputs)
 
 add_to_catalog(
     operator,
