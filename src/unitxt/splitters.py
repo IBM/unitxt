@@ -200,7 +200,7 @@ class DiverseLabelsSampler(Sampler):
                 choices = [choices]
             else:
                 raise ValueError(
-                    f"Unexpected input choices value '{choices}'. Expected a list or string"
+                    f"Unexpected input choices value '{choices}'. Expected a list or a string."
                 )
 
         if "outputs" not in exemplar:
