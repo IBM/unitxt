@@ -68,8 +68,9 @@ From here, constructing the full unitxt recipe string is standard and straightfo
     format=formats.empty,
     metrics=[metrics.llm_as_judge.rating.mistralai_Mistral_7B_Instruct_v0_2_huggingface_template_mt_bench_single_turn]
 
+
 Verifying Your Configuration
----------------------------
+------------------------------
 
 If you want to verify that your setup runs smoothly, follow the steps outlined above to ensure everything runs as expected.
 
