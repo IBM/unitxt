@@ -1,7 +1,6 @@
 .. _llm_as_judge:
 
 .. note::
-
    To follow this tutorial, ensure you have :ref:`unitxt installed <install_unitxt>`.
 
 =====================================
@@ -26,19 +25,13 @@ An LLM as a Judge metric consists of several essential components:
 2. The platform responsible for executing the judge model, such as Huggingface or OpenAI API.
 3. The template used to construct prompts for the judge models. This template should be reflective of the judgment needs to be done and usually incorporate both the input and output of the evaluated model. For instance:
 
-   ```rst
    .. code-block:: text
-
       Please rate the clarity, coherence, and informativeness of the following summary on a scale of 1 to 10\\n Full text: {model_input}\\nSummary: {model_output}
-   ```
 
 4. The format in which the judge model expects to receive prompts. For example:
 
-   ```rst
    .. code-block:: text
-
       <INST>{input}</INST>|
-   ```
 
 5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
 
