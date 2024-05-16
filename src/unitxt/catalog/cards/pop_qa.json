@@ -10,12 +10,8 @@
             "page_size": 14267
         },
         {
-            "type": "apply",
-            "function": "json.loads",
-            "to_field": "possible_answers",
-            "_argv": [
-                "possible_answers"
-            ]
+            "type": "load_json",
+            "field": "possible_answers"
         }
     ],
     "task": {

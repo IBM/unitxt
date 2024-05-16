@@ -7,7 +7,7 @@ add_to_catalog(
         outputs={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
-            "text": "List[str]",
+            "text": "str",
             "labels": "List[str]",
         },
         prediction_type="List[Tuple[str,str]]",
@@ -24,7 +24,7 @@ add_to_catalog(
         outputs={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
-            "text": "List[str]",
+            "text": "str",
             "labels": "List[str]",
         },
         prediction_type="List[Tuple[str,str]]",

@@ -9,18 +9,19 @@
 Tasks ✨
 =====================================
 
-Tasks are fundamental to the Unitxt, acting as standardized interface for integrating new datasets, metrics and templates.
+Tasks are fundamental to Unitxt, acting as standardized interface for integrating new datasets, metrics and templates.
 
 The Task schema is a formal definition of the NLP task, including its inputs, outputs, and default evaluation metrics.
 
-The `inputs` of the task are a set of fields that are used by to format the textual input to the model.
-The `output` of the task are a set of fields that are used by to format the expected textual output from the model (gold references)
+The `inputs` of the task are a set of fields that are used to format the textual input to the model.
+The `output` of the task are a set of fields that are used to format the expected textual output from the model (gold references).
 The `metrics` of the task are a set of default metrics to be used to evaluate the outputs of the model.
 
 As an example, consider an evaluation task for LLMs to evaluate how well they are able to calculate the sum of two integer numbers.
 The task is formally defined as:
 
 .. code-block:: python
+   
    from unitxt.blocks import FormTask
 
    task = FormTask(
@@ -33,7 +34,7 @@ The task is formally defined as:
         ],
    )
 
-The `inputs` and `outputs` fields of the task used by to format the textual input to the model.
+The `inputs` and `outputs` fields of the task used to format the textual input to the model.
 
 The task does not verbalize the input to the model, as this can be done in different ways by different templates.
 For example, same input could be verbalized as
@@ -44,7 +45,7 @@ or as
 
 `How much is three hundred and three plus one hundred and four?`
 
-The `output` fields of the tasks that are used by to format the textual expected output from the model (gold references).
+The `output` fields of the tasks that are used to format the textual expected output from the model (gold references).
 There may a single gold reference or multiple one.
 
 The gold references are are used in two places.  When running in-context-learning, gold references are used as example answers.

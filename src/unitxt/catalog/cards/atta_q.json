@@ -29,12 +29,8 @@
             }
         },
         {
-            "type": "apply",
-            "function": "json.dumps",
-            "to_field": "input_label",
-            "_argv": [
-                "input_label"
-            ]
+            "type": "dump_json",
+            "field": "input_label"
         }
     ],
     "task": {
