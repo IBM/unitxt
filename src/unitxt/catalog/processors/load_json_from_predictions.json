@@ -4,7 +4,9 @@
         {
             "type": "load_json",
             "field": "prediction",
-            "process_every_value": false
+            "process_every_value": false,
+            "allow_to_fail": true,
+            "failed_value": []
         }
     ]
 }
