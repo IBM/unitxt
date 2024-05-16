@@ -51,26 +51,24 @@ class LLMAsJudge(BulkInstanceMetric):
             return instances
         return [t["source"] for t in task_data]
 
-    def _get_input_instances_old(self, task_data: List[Dict]) -> List:
-        instances = []
-        for task_data_instance in task_data:
-            recipe_for_judge_input_dict = task_data_instance["recipe_metadata"]
-            card = recipe_for_judge_input_dict["card"]
-            template = recipe_for_judge_input_dict["template"]
-            if self.strip_system_prompt_and_format_from_inputs:
-                system_prompt = "system_prompts.empty"
-                format = "formats.empty"
-            else:
-                system_prompt = recipe_for_judge_input_dict["system_prompt"]
-                format = recipe_for_judge_input_dict["format"]
-            recipe = (
-                f"card={card},"
-                f"template={template},"
-                f"system_prompt={system_prompt},"
-                f"format={format}"
+    def _get_instance_for_judge_model(
+        self, input_instances: List[str], predictions: List, references: List
+    ) -> List[Dict]:
+        if self.task == "rating.single_turn":
+            instances = [
+                {
+                    "question": input_instance,
+                    "answer": prediction,
+                    "rating": 5.0,  # This is a dummy value that is not used in practice
+                }
+                for input_instance, prediction, reference in zip(
+                    input_instances, predictions, references
+                )
+            ]
+        else:
+            raise NotImplementedError(
+                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             )
-            instance = produce(task_data_instance, recipe)
-            instances.append(instance)
         return instances
 
     def prepare(self):
@@ -106,21 +104,9 @@ class LLMAsJudge(BulkInstanceMetric):
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         input_instances = self._get_input_instances(task_data)
-        if self.task == "rating.single_turn":
-            instances = [
-                {
-                    "question": input_instance,
-                    "answer": prediction,
-                    "rating": 5.0,  # This is a dummy value that is not used in practice
-                }
-                for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
-                )
-            ]
-        else:
-            raise NotImplementedError(
-                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
-            )
+        instances = self._get_instance_for_judge_model(
+            input_instances, predictions, references
+        )
 
         card = "cards.dynamic_cards_for_llm_judges.rating.single_turn"
         recipe = (

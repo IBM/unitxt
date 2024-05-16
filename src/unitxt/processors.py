@@ -232,7 +232,7 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
         try:
             return float(match.group(1)) / 10
         except:
-            return 0.0
+            return -1.0
 
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
