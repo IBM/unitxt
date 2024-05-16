@@ -23,16 +23,11 @@ An LLM as a Judge metric consists of several essential components:
 
 1. The judge model, such as *Llama-3-8B-Instruct*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. The template used to construct prompts for the judge models. This template should be reflective of the judgment needs to be done and usually incorporate both the input and output of the evaluated model. For instance:
+3. The template used to construct prompts for the judge models. This template should be reflective of the judgment needs to be done and usually incorporate both the input and output of the evaluated model. For instance::
+    "Please rate the clarity, coherence, and informativeness of the following summary on a scale of 1 to 10\\n Full text: {model_input}\\nSummary: {model_output}"
 
-    .. code-block:: text
-        "Please rate the clarity, coherence, and informativeness of the following summary on a scale of 1 to 10\\n Full text: {model_input}\\nSummary: {model_output}"
-
-4. The format in which the judge model expects to receive prompts. For example:
-
-    .. code-block:: text
-        # Text block
-        "<INST>{input}</INST>"
+4. The format in which the judge model expects to receive prompts. For example::
+    "<INST>{input}</INST>"
 
 5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
 
