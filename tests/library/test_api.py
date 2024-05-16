@@ -112,7 +112,7 @@ class TestAPI(UnitxtTestCase):
             '"text_b_type": "hypothesis", '
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
-            '"label": "?"} '
+            '"label": "?", '
             '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
