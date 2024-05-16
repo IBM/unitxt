@@ -18,4 +18,4 @@ test_card(
     card,
     format="formats.textual_assistant",
 )
-add_to_catalog(card, "cards.tldr")
+add_to_catalog(card, "cards.tldr", overwrite=True)
