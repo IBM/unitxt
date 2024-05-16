@@ -1,7 +1,12 @@
 import re
-from typing import List
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
-from .operators import FieldOperator
+from .operators import FieldOperator, StreamInstanceOperator
 
 
 class Split(FieldOperator):
@@ -37,6 +42,17 @@ class Join(FieldOperator):
 
     def process_value(self, value: List[str]) -> str:
         return self.by.join(value)
+
+
+class FormatText(StreamInstanceOperator):
+    to_field: str
+    text: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        instance[self.to_field] = self.text.format(**instance)
+        return instance
 
 
 class Strip(FieldOperator):
