@@ -1,14 +1,12 @@
-import json
-
 from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    Apply,
     CopyFields,
     FilterByCondition,
     ListFieldValues,
     RemoveFields,
 )
+from unitxt.struct_data_operators import LoadJson
 from unitxt.test_utils.card import test_card
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
@@ -18,7 +16,7 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
         preprocess_steps=[
-            Apply("METADATA", function=json.loads, to_field="metadata"),
+            LoadJson(field="METADATA", to_field="metadata"),
             CopyFields(field_to_field=[("metadata/language", "extracted_language")]),
             FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),

@@ -1,6 +1,8 @@
 from unitxt.struct_data_operators import (
     ConvertTableColNamesToSequential,
+    DumpJson,
     ListToKeyValPairs,
+    LoadJson,
     SerializeKeyValPairs,
     SerializeTableAsDFLoader,
     SerializeTableAsIndexedRowMajor,
@@ -451,3 +453,42 @@ class TestStructDataOperators(UnitxtTestCase):
             targets=targets,
             tester=self,
         )
+
+    def test_load_and_dump_json(self):
+        inputs = [{"data": {"hello": "world"}}]
+
+        targets = [{"data": '{"hello": "world"}'}]
+
+        check_operator(
+            operator=DumpJson(field="data"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        check_operator(
+            operator=LoadJson(field="data"),
+            inputs=targets,
+            targets=inputs,
+            tester=self,
+        )
+
+    def test_load_json_failours(self):
+        inputs = [{"data": '{"hello": world"}'}]
+
+        targets = [{"data": None}]
+
+        check_operator(
+            operator=LoadJson(field="data", allow_to_fail=True),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        with self.assertRaises(ValueError):
+            check_operator(
+                operator=LoadJson(field="data", allow_to_fail=False),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )

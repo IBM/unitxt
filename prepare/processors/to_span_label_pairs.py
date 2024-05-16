@@ -4,9 +4,9 @@ from unitxt.operator import SequentialOperator
 from unitxt.processors import (
     DictOfListsToPairs,
     ListToEmptyEntitiesTuples,
-    LoadJson,
     RegexParser,
 )
+from unitxt.struct_data_operators import LoadJson
 
 logger = get_logger()
 
@@ -67,7 +67,7 @@ add_to_catalog(
     overwrite=True,
 )
 
-parser = LoadJson(field="TBD")
+parser = LoadJson(field="TBD", allow_to_fail=True, failed_value=[])
 operator = DictOfListsToPairs(position_key_before_value=False, field="TBD")
 
 example = '{"PER":["david", "james"]}'
@@ -79,8 +79,18 @@ assert converted == [("david", "PER"), ("james", "PER")]
 add_to_catalog(
     SequentialOperator(
         steps=[
-            LoadJson(field="prediction", process_every_value=False),
-            LoadJson(field="references", process_every_value=True),
+            LoadJson(
+                field="prediction",
+                process_every_value=False,
+                allow_to_fail=True,
+                failed_value=[],
+            ),
+            LoadJson(
+                field="references",
+                process_every_value=True,
+                allow_to_fail=True,
+                failed_value=[],
+            ),
         ]
     ),
     "processors.load_json",
@@ -90,7 +100,12 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
-            LoadJson(field="prediction", process_every_value=False),
+            LoadJson(
+                field="prediction",
+                process_every_value=False,
+                allow_to_fail=True,
+                failed_value=[],
+            ),
         ]
     ),
     "processors.load_json_from_predictions",

@@ -547,3 +547,22 @@ class ShuffleTableColumns(FieldOperator):
         table_content["rows"] = shuffled_rows
 
         return table_content
+
+
+class LoadJson(FieldOperator):
+    failed_value: Any = None
+    allow_to_fail: bool = False
+
+    def process_value(self, value: str) -> Any:
+        if self.allow_to_fail:
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return self.failed_value
+        else:
+            return json.loads(value)
+
+
+class DumpJson(FieldOperator):
+    def process_value(self, value: str) -> str:
+        return json.dumps(value)
