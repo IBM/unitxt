@@ -5,15 +5,15 @@
             "type": "load_json",
             "field": "prediction",
             "process_every_value": false,
-            "allow_to_fail": true,
-            "failed_value": []
+            "allow_failure": true,
+            "failure_value": []
         },
         {
             "type": "load_json",
             "field": "references",
             "process_every_value": true,
-            "allow_to_fail": true,
-            "failed_value": []
+            "allow_failure": true,
+            "failure_value": []
         }
     ]
 }

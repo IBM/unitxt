@@ -550,15 +550,15 @@ class ShuffleTableColumns(FieldOperator):
 
 
 class LoadJson(FieldOperator):
-    failed_value: Any = None
-    allow_to_fail: bool = False
+    failure_value: Any = None
+    allow_failure: bool = False
 
     def process_value(self, value: str) -> Any:
-        if self.allow_to_fail:
+        if self.allow_failure:
             try:
                 return json.loads(value)
             except json.JSONDecodeError:
-                return self.failed_value
+                return self.failure_value
         else:
             return json.loads(value)
 

@@ -67,7 +67,7 @@ add_to_catalog(
     overwrite=True,
 )
 
-parser = LoadJson(field="TBD", allow_to_fail=True, failed_value=[])
+parser = LoadJson(field="TBD", allow_failure=True, failure_value=[])
 operator = DictOfListsToPairs(position_key_before_value=False, field="TBD")
 
 example = '{"PER":["david", "james"]}'
@@ -82,14 +82,14 @@ add_to_catalog(
             LoadJson(
                 field="prediction",
                 process_every_value=False,
-                allow_to_fail=True,
-                failed_value=[],
+                allow_failure=True,
+                failure_value=[],
             ),
             LoadJson(
                 field="references",
                 process_every_value=True,
-                allow_to_fail=True,
-                failed_value=[],
+                allow_failure=True,
+                failure_value=[],
             ),
         ]
     ),
@@ -103,8 +103,8 @@ add_to_catalog(
             LoadJson(
                 field="prediction",
                 process_every_value=False,
-                allow_to_fail=True,
-                failed_value=[],
+                allow_failure=True,
+                failure_value=[],
             ),
         ]
     ),

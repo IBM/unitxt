@@ -473,13 +473,13 @@ class TestStructDataOperators(UnitxtTestCase):
             tester=self,
         )
 
-    def test_load_json_failours(self):
+    def test_load_json_failures(self):
         inputs = [{"data": '{"hello": world"}'}]
 
         targets = [{"data": None}]
 
         check_operator(
-            operator=LoadJson(field="data", allow_to_fail=True),
+            operator=LoadJson(field="data", allow_failure=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -487,7 +487,7 @@ class TestStructDataOperators(UnitxtTestCase):
 
         with self.assertRaises(ValueError):
             check_operator(
-                operator=LoadJson(field="data", allow_to_fail=False),
+                operator=LoadJson(field="data", allow_failure=False),
                 inputs=inputs,
                 targets=targets,
                 tester=self,
