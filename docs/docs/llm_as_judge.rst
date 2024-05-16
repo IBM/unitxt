@@ -1,6 +1,7 @@
 .. _llm_as_judge:
 
 .. note::
+
    To follow this tutorial, ensure you have :ref:`unitxt installed <install_unitxt>`.
 
 =====================================
@@ -60,12 +61,14 @@ Fortunately, all these components are readily available in the unitxt catalog, i
 4. LLMaJ Metric: *"metrics.llm_as_judge.rating.mistralai_Mistral_7B_Instruct_v0_2_huggingface_template_mt_bench_single_turn"*.
 
 .. note::
+
    Pay attention!
    We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the terms to use it on the model page and set the HUGGINGFACE_TOKEN environment argument.
 
 From here, constructing the full unitxt recipe string is standard and straightforward:
 
 .. code-block:: text
+
     card=cards.mt_bench.generation.english_single_turn,
     template=templates.empty,
     format=formats.empty,
@@ -78,6 +81,7 @@ Verifying Your Configuration
 If you want to verify that your setup runs smoothly, follow the steps outlined above to ensure everything runs as expected.
 
 .. code-block:: python
+
     import evaluate
     from datasets import load_dataset
     from unitxt.inference import HFPipelineBasedInferenceEngine
@@ -123,6 +127,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 For this example, we'll create an `HFPipelineInferenceEngine` object with the model ID and generation parameters:
 
 .. code-block:: python
+
     from unitxt.inference import HFPipelineInferenceEngine
     from unitxt.llm_as_judge import LLMAsJudge
 
@@ -139,6 +144,7 @@ instructions for the judge, input questions, and model responses. This template 
 how the judge evaluates the responses. Here's an example template definition:
 
 .. code-block:: python
+
     from unitxt import add_to_catalog
     from unitxt.templates import InputOutputTemplate
 
