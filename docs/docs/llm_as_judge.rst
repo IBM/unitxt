@@ -2,7 +2,7 @@
 
 .. note::
 
-   To follow this tutorial, ensure you have :ref:`unitxt installed <install_unitxt>`.
+    To follow this tutorial, ensure you have :ref:`unitxt installed <install_unitxt>`.
 
 =====================================
 LLM as a Judge Metrics Guide 📊
