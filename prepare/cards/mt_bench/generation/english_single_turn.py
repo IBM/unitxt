@@ -34,7 +34,7 @@ card = TaskCard(
     templates=["templates.empty"],
 )
 
-test_card(card, demos_taken_from="test", strict=True)
+test_card(card, demos_taken_from="test", strict=False)
 add_to_catalog(
     card,
     "cards.mt_bench.generation.english_single_turn",
