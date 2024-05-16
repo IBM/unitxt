@@ -35,7 +35,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def prepare(self):
         from transformers import pipeline
 
-        self.model = pipeline(model=self.model_name)
+        self.model = pipeline(model=self.model_name, trust_remote_code=True)
 
     def infer(self, dataset):
         return [
