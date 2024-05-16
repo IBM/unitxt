@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -25,7 +25,7 @@ card = TaskCard(
             expression=get_asserts, imports_list=["re"], to_field="test_list"
         )
     ],
-    task=FormTask(
+    task=Task(
         inputs=["prompt"],
         outputs=["prompt", "canonical_solution", "test_list"],
         metrics=["metrics.bleu"],

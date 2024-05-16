@@ -6,7 +6,7 @@ from .dataclass import OptionalField
 from .loaders import Loader
 from .operator import StreamingOperator
 from .splitters import RandomSampler, Sampler
-from .task import FormTask
+from .task import Task
 
 
 class TaskCard(Artifact):
@@ -24,6 +24,6 @@ class TaskCard(Artifact):
 
     loader: Loader
     preprocess_steps: List[StreamingOperator] = None
-    task: FormTask
+    task: Task
     templates: Collection = None
     sampler: Sampler = OptionalField(default_factory=RandomSampler)

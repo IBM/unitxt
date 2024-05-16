@@ -2,9 +2,9 @@ import os
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -16,7 +16,7 @@ card = TaskCard(
     preprocess_steps=[
         JoinStr(field_to_field={"test_list": "test_list_str"}, separator=os.linesep),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["text", "test_list_str"],
         outputs=["test_list", "code"],
         metrics=["metrics.bleu"],

@@ -490,7 +490,7 @@ class Augmentor(StreamInstanceOperator):
 
     Args:
         augment_model_input: Whether to augment the input to the model.
-        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the FormTask operator.
+        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the Task operator.
 
     """
 
@@ -525,7 +525,7 @@ class Augmentor(StreamInstanceOperator):
         if self.augment_task_input:
             assert (
                 len(self._task_input_fields) > 0
-            ), "No augmentable input fields were defined in FormTask, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the FormTask."
+            ), "No augmentable input fields were defined in Task, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the Task."
             fields = self._task_input_fields
             assert not self.augment_model_input
 

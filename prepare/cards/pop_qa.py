@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -16,7 +16,7 @@ card = TaskCard(
         Shuffle(page_size=14267),
         LoadJson(field="possible_answers"),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["question", "prop", "subj"],
         outputs=["possible_answers"],
         metrics=["metrics.accuracy"],

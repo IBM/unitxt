@@ -16,7 +16,7 @@
         }
     ],
     "task": {
-        "type": "form_task",
+        "type": "task",
         "inputs": [
             "text",
             "test_list_str"

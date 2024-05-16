@@ -63,7 +63,7 @@
         }
     ],
     "task": {
-        "type": "form_task",
+        "type": "task",
         "inputs": [
             "first_prompt"
         ],

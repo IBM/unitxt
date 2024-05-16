@@ -1,9 +1,9 @@
 from unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -23,7 +23,7 @@ card = TaskCard(
             }
         ),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["choices", "question1", "question2"],
         outputs=["label"],
         metrics=["metrics.accuracy"],

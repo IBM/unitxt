@@ -1,7 +1,6 @@
 from unitxt import load
 from unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
@@ -11,6 +10,7 @@ from unitxt.blocks import (
     SliceSplit,
     SplitRandomMix,
     SpreadSplit,
+    Task,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.formats import SystemFormat
@@ -46,7 +46,7 @@ recipe = SequentialRecipe(
             }
         ),
         NormalizeListFields(fields=["choices"]),
-        FormTask(
+        Task(
             inputs=["choices", "sentence1", "sentence2"],
             outputs=["label"],
             metrics=["metrics.accuracy"],

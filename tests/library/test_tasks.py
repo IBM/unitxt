@@ -1,4 +1,4 @@
-from unitxt.task import FormTask, MultipleChoiceTask
+from unitxt.task import MultipleChoiceTask, Task
 from unitxt.test_utils.operators import apply_operator
 
 from tests.utils import UnitxtTestCase
@@ -54,7 +54,7 @@ class TestTasks(UnitxtTestCase):
             self.assertDictEqual(output, target)
 
     def test_task_metrics_type_checking(self):
-        operator = FormTask(
+        operator = Task(
             inputs={"input": "str"},
             outputs={"label": "str"},
             prediction_type="str",
