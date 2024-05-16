@@ -26,12 +26,12 @@ An LLM as a Judge metric consists of several essential components:
 3. The template used to construct prompts for the judge models. This template should be reflective of the judgment needs to be done and usually incorporate both the input and output of the evaluated model. For instance:
 
     .. code-block::
-        Please rate the clarity, coherence, and informativeness of the following summary on a scale of 1 to 10\\n Full text: {model_input}\\nSummary: {model_output}
+        "Please rate the clarity, coherence, and informativeness of the following summary on a scale of 1 to 10\\n Full text: {model_input}\\nSummary: {model_output}"
 
 4. The format in which the judge model expects to receive prompts. For example:
 
     .. code-block::
-        <INST>{input}</INST>|
+        "<INST>{input}</INST>"
 
 5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
 
