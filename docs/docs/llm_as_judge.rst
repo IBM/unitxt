@@ -31,6 +31,7 @@ An LLM as a Judge metric consists of several essential components:
 4. The format in which the judge model expects to receive prompts. For example:
 
     .. code-block:: text
+        # Text block
         "<INST>{input}</INST>"
 
 5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
