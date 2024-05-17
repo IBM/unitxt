@@ -1,5 +1,6 @@
 import re
 import shutil
+from typing import List, Tuple
 
 from .logging_utils import get_logger
 
@@ -129,3 +130,35 @@ def nested_tuple_to_string(nested_tuple: tuple) -> str:
 def is_made_of_sub_strings(string, sub_strings):
     pattern = "^(" + "|".join(map(re.escape, sub_strings)) + ")+$"
     return bool(re.match(pattern, string))
+
+
+# Giveמ all the lines of a file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
+# and an object name, e.g. TaskCard,
+# return the ordinal number of the line that starts that object, in our example: the
+# line number of the following line, notice that the line where TaskCard is imported
+# is not supposed to return:
+#         card = TaskCard(
+# and the line number of the line that ends the object, in our case the line that include
+# the matching close:
+#         )
+# flake8: noqa: B007
+def lines_defining_obj(all_lines: List[str], obj_name: str) -> Tuple[int, int]:
+    for starting_line, line in enumerate(all_lines):
+        if obj_name + "(" in line:
+            break
+    if obj_name not in line:
+        raise ValueError(f"{obj_name} is not found anywhere in the input lines")
+    num_of_opens = 0
+    num_of_closes = 0
+    for ending_line in range(starting_line, len(all_lines)):
+        num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))
+        num_of_closes += len(re.findall(r"[)}\]]", all_lines[ending_line]))
+        if num_of_closes == num_of_opens:
+            break
+
+    if num_of_closes != num_of_opens:
+        raise ValueError(
+            "input lines were exhausted before the matching close is found"
+        )
+
+    return (starting_line, ending_line)
