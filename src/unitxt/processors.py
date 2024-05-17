@@ -55,14 +55,6 @@ class ExtractWithRegex(RegexParser):
         return ""
 
 
-class LoadJson(FieldOperator):
-    def process_value(self, text: Any) -> Any:
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return []
-
-
 class ListToEmptyEntitiesTuples(FieldOperator):
     def process_value(self, lst: Any) -> Any:
         try:

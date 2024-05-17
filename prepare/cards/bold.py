@@ -1,5 +1,3 @@
-import json
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     FormTask,
@@ -10,12 +8,12 @@ from unitxt.blocks import (
 )
 from unitxt.operators import (
     AddFields,
-    Apply,
     CopyFields,
     FilterByCondition,
     Shuffle,
 )
 from unitxt.splitters import RenameSplits
+from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -34,7 +32,7 @@ card = TaskCard(
                 "first_wiki": "input_label/wiki",
             },
         ),
-        Apply("input_label", function=json.dumps, to_field="input_label"),
+        DumpJson(field="input_label"),
     ],
     task=FormTask(
         inputs=["first_prompt"], outputs=["input_label"], metrics=["metrics.regard"]

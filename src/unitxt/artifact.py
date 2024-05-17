@@ -265,8 +265,9 @@ class Artifact(Dataclass):
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
-        self.prepare()
-        self.verify()
+        if not settings.skip_artifacts_prepare_and_verify:
+            self.prepare()
+            self.verify()
 
     def _to_raw_dict(self):
         return {"type": self.type, **self._init_dict}
