@@ -494,6 +494,11 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         )
         return None
 
+    if data_classification == "UNITXT_DATA_CLASSIFICATION_POLICY":
+        # there may be a case when user does not configure the variable
+        # since they are not using it
+        return None
+
     error_msg = (
         f"If specified, the value of 'UNITXT_DATA_CLASSIFICATION_POLICY' "
         f"should be a valid json dictionary. Got '{data_classification}' "
@@ -504,11 +509,6 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         data_classification = json.loads(data_classification)
     except json.decoder.JSONDecodeError as e:
         raise RuntimeError(error_msg) from e
-
-    if data_classification == "UNITXT_DATA_CLASSIFICATION_POLICY":
-        # there may be a case when user does not configure the variable
-        # since they are not using it
-        return None
 
     if not isinstance(data_classification, dict):
         raise RuntimeError(error_msg)

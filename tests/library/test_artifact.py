@@ -203,3 +203,8 @@ class TestArtifact(UnitxtTestCase):
             f"in case when no policy applies - or a list of strings, for example: "
             f"['public']. However, '{wrong_data_classification}' was given instead.",
         )
+
+        # "Fixing" the env variable so that it does not affect other tests:
+        os.environ[
+            UNITXT_DATA_CLASSIFICATION_POLICY
+        ] = "UNITXT_DATA_CLASSIFICATION_POLICY"
