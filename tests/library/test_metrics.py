@@ -217,7 +217,7 @@ class TestMetrics(UnitxtTestCase):
             for key, value in global_result.items()
             if key in expected_global_result
         }
-        self.assertDictEqual(expected_global_result, global_result)
+        self.assertDictEqual(global_result, expected_global_result)
 
         instance_targets = [
             {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},

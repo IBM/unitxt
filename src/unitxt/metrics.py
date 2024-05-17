@@ -429,7 +429,7 @@ class MetricWithConfidenceInterval(Metric):
 
             # resample the instance scores, and then return the global score each time
             scores = numpy.apply_along_axis(
-                lambda x: metric(x),
+                lambda x: metric(sample=[instances[i] for i in x]),
                 axis=axis,
                 arr=arr,
             )
@@ -566,6 +566,8 @@ class MetricWithConfidenceInterval(Metric):
     def compute_stream_score_version_for_ci(
         self, instances: List[Dict[str, Any]], score_name: str
     ) -> dict:
+        if score_name is None or not isinstance(score_name, str):
+            score_name = self.main_score
         full_score = self.compute_stream_score(instances, [score_name])
         return full_score[score_name]
 
@@ -886,6 +888,8 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         global_score.update(
             self.compute_stream_score(instances=instances, score_names=self.score_names)
         )
+        global_score["score"] = global_score[self.main_score]
+        global_score["score_name"] = self.main_score
 
         ci_fields = (
             list(set(self.ci_scores))
