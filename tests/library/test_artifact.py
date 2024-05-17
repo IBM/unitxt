@@ -11,9 +11,9 @@ from unitxt.artifact import (
 from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.logging_utils import get_logger
-from unitxt.metrics import F1Binary
+from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
-from unitxt.operators import AddFields, RenameFields, VerifyDataClassificationPolicy
+from unitxt.operators import AddFields, RenameFields
 from unitxt.processors import StringOrNotString
 from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
@@ -140,71 +140,66 @@ class TestArtifact(UnitxtTestCase):
 
     def test_checking_data_classification_policy_env(self):
         artifact_name = "metrics.accuracy"
-
         expected_data_classification_policies = {artifact_name: ["public"]}
         os.environ[UNITXT_DATA_CLASSIFICATION_POLICY] = json.dumps(
             expected_data_classification_policies
         )
 
         data_classification_policies = get_artifacts_data_classification(artifact_name)
-
         self.assertListEqual(
             expected_data_classification_policies[artifact_name],
             data_classification_policies,
         )
 
-        verification = VerifyDataClassificationPolicy(artifact_name=artifact_name)
-
+        metric = Accuracy()
+        metric.__id__ = artifact_name
         instance = {"data": "text", "data_classification_policy": ["public"]}
-        output = verification.process(instance)
+        output = metric.verify_instance(instance)
         self.assertEqual(instance, output)
 
         instance["data_classification_policy"] = ["pii"]
         with self.assertRaises(ValueError) as e:
-            verification.process(instance)
+            metric.verify_instance(instance)
         self.assertEqual(
             str(e.exception),
-            f"The following instance has the following data classification policy "
+            f"The instance '{instance} 'has the following data classification policy "
             f"'{instance['data_classification_policy']}', however, the artifact "
             f"'{artifact_name}' is only configured to support the data with classification "
-            f"'{expected_data_classification_policies[artifact_name]}'. To allow this set "
-            f"the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' or change the "
-            f"'{artifact_name}' object to include '{instance['data_classification_policy']}'.",
+            f"'{data_classification_policies}'. To enable this either change "
+            f"the 'data_classification_policy' attribute of the artifact, "
+            f"or modify the environment variable "
+            f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
         )
 
-    def test_checking_data_classification_policy_object(self):
+    def test_checking_data_classification_policy_attribute(self):
         instance = {"data": "text", "data_classification_policy": ["public"]}
-
         metric = F1Binary(data_classification_policy=["public"])
-        metric_verification = VerifyDataClassificationPolicy(artifact=metric)
-
-        output = metric_verification.process(instance)
+        output = metric.verify_instance(instance)
         self.assertEqual(instance, output)
 
         template = YesNoTemplate(data_classification_policy=["propriety", "pii"])
-        template_verification = VerifyDataClassificationPolicy(artifact=template)
-        instance["data_classification_policy"] = ["propriety", "pii"]
-
-        output = template_verification.process(instance)
+        instance["data_classification_policy"] = ["propriety"]
+        output = template.verify_instance(instance)
         self.assertEqual(instance, output)
 
     def test_misconfigured_data_classification_policy(self):
-        with self.assertRaises(ValueError):
-            VerifyDataClassificationPolicy()
+        wrong_data_classification = "public"
 
-        with self.assertRaises(ValueError) as e:
-            VerifyDataClassificationPolicy(artifact=1)
+        os.environ[UNITXT_DATA_CLASSIFICATION_POLICY] = wrong_data_classification
+        with self.assertRaises(RuntimeError) as e:
+            get_artifacts_data_classification("")
         self.assertEqual(
             str(e.exception),
-            "'artifact' must be an 'Artifact' object, for example an instance "
-            "of the 'Metric' class. However, '1' was given instead.",
+            f"If specified, the value of 'UNITXT_DATA_CLASSIFICATION_POLICY' "
+            f"should be a valid json dictionary. Got '{wrong_data_classification}' "
+            f"instead.",
         )
 
         with self.assertRaises(ValueError) as e:
-            VerifyDataClassificationPolicy(artifact_name=1)
+            Accuracy(data_classification_policy=wrong_data_classification)
         self.assertEqual(
             str(e.exception),
-            "'artifact_name' must be a proper string name of an artifact to be fetched. "
-            "For example: 'metrics.accuracy' or 'templates.span_labeling.extraction.carry'. "
-            "However, '1' was given instead.",
+            f"'data_classification_policy' must be either an empty list - "
+            f"in case when no policy applies - or a list of strings, for example: "
+            f"['public']. However, '{wrong_data_classification}' was given instead.",
         )

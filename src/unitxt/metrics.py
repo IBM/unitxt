@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
 from dataclasses import field
+from operator import itemgetter
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
@@ -166,6 +167,7 @@ class Metric(Artifact):
         additional_inputs = []
         instances = []
         for instance in stream:
+            instance = self.verify_instance(instance)
             references.append(instance["references"])
             predictions.append(instance["prediction"])
             additional_inputs.append(
@@ -445,6 +447,8 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             if "score" not in instance:
                 instance["score"] = {"global": global_score, "instance": {}}
             else:
@@ -549,7 +553,9 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             list,
             zip(
                 *[
-                    (instance["references"], instance["prediction"])
+                    itemgetter("references", "prediction")(
+                        self.verify_instance(instance)
+                    )
                     for instance in stream
                 ]
             ),
@@ -830,6 +836,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             task_data = instance["task_data"] if "task_data" in instance else {}
 
             if self.reference_field == "references":
