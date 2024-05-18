@@ -74,6 +74,25 @@ def main():
             ],
             task="tasks.qa.multiple_choice.with_topic",
             templates="templates.qa.multiple_choice.with_topic.all",
+            __tags__={
+                "dataset_info_tags": [
+                    "task_categories:question-answering",
+                    "task_ids:multiple-choice-qa",
+                    "annotations_creators:no-annotation",
+                    "language_creators:expert-generated",
+                    "multilinguality:monolingual",
+                    "size_categories:10K<n<100K",
+                    "source_datasets:original",
+                    "language:en",
+                    "license:mit",
+                    "croissant",
+                    "arxiv:2009.03300",
+                    "arxiv:2005.00700",
+                    "arxiv:2005.14165",
+                    "arxiv:2008.02275",
+                    "region:us",
+                ]
+            },
         )
         if i == 0:
             test_card(card, strict=False)

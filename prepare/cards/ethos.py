@@ -58,6 +58,26 @@ card = TaskCard(
             ),
         ]
     ),
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:multi-label-classification",
+            "task_ids:sentiment-classification",
+            "annotations_creators:crowdsourced",
+            "annotations_creators:expert-generated",
+            "language_creators:found",
+            "language_creators:other",
+            "multilinguality:monolingual",
+            "size_categories:n<1K",
+            "source_datasets:original",
+            "language:en",
+            "license:agpl-3.0",
+            "Hate Speech Detection",
+            "croissant",
+            "arxiv:2006.08328",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card, demos_pool_size=20, loader_limit=1000)

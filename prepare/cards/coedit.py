@@ -33,6 +33,17 @@ gec_card = TaskCard(
     ],
     task="tasks.grammatical_error_correction",
     templates="templates.grammatical_error_correction.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 error_detection_metrics = [
@@ -69,6 +80,17 @@ error_detection_card = TaskCard(
     ],
     task=f"tasks.classification.binary.zero_or_one[metrics=[{','.join(error_detection_metrics)}]]",
     templates="templates.grammatical_error_detection.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 
@@ -103,6 +125,17 @@ card = TaskCard(
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)
@@ -156,6 +189,17 @@ card = TaskCard(
     ],
     task="tasks.selection.by_attribute",
     templates="templates.selection.by_attribute.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)
@@ -206,6 +250,17 @@ card = TaskCard(
     ],
     task="tasks.rewriting.by_attribute",
     templates="templates.rewriting.by_attribute.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)
@@ -232,6 +287,17 @@ card = TaskCard(
     ],
     task="tasks.rewriting.paraphrase",
     templates="templates.rewriting.paraphrase.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)

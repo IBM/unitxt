@@ -42,10 +42,28 @@ card = TaskCard(
         "accuracy."
     ),
     __tags__={
-        "urls": {
-            "arxiv": "arXiv:1905.00537",
-            "homepage": "http://people.ict.usc.edu/~gordon/copa.html",
-        }
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_categories:token-classification",
+            "task_categories:question-answering",
+            "task_ids:natural-language-inference",
+            "task_ids:word-sense-disambiguation",
+            "task_ids:coreference-resolution",
+            "task_ids:extractive-qa",
+            "annotations_creators:expert-generated",
+            "language_creators:other",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:extended|other",
+            "language:en",
+            "license:other",
+            "superglue",
+            "NLU",
+            "natural language understanding",
+            "croissant",
+            "arxiv:1905.00537",
+            "region:us",
+        ]
     },
 )
 

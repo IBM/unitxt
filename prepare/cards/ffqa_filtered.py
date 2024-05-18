@@ -113,6 +113,7 @@ def add_card(split: str):
         ],
         task="tasks.qa.with_context.extractive",
         templates="templates.qa.with_context.all",
+        __tags__={"dataset_info_tags": ["croissant", "region:us"]},
     )
 
     test_card(card)

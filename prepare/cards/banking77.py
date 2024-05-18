@@ -46,10 +46,21 @@ card = TaskCard(
         "It focuses on fine-grained single-domain intent detection."
     ),
     __tags__={
-        "urls": {
-            "homepage": "https://github.com/PolyAI-LDN/task-specific-datasets",
-            "arxiv": "https://arxiv.org/abs/2003.04807",
-        }
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:intent-classification",
+            "task_ids:multi-class-classification",
+            "annotations_creators:expert-generated",
+            "language_creators:expert-generated",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-4.0",
+            "croissant",
+            "arxiv:2003.04807",
+            "region:us",
+        ]
     },
 )
 test_card(card, debug=False)

@@ -33,6 +33,28 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "task_ids:extractive-qa",
+            "annotations_creators:crowdsourced",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:1K<n<10K",
+            "source_datasets:extended|race",
+            "source_datasets:extended|cnn_dailymail",
+            "source_datasets:extended|wikipedia",
+            "source_datasets:extended|other",
+            "language:en",
+            "license:other",
+            "conversational-qa",
+            "croissant",
+            "arxiv:1808.07042",
+            "arxiv:1704.04683",
+            "arxiv:1506.03340",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)
@@ -58,6 +80,28 @@ card = TaskCard(
     ],
     task="tasks.completion.abstractive",
     templates="templates.completion.abstractive.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "task_ids:extractive-qa",
+            "annotations_creators:crowdsourced",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:1K<n<10K",
+            "source_datasets:extended|race",
+            "source_datasets:extended|cnn_dailymail",
+            "source_datasets:extended|wikipedia",
+            "source_datasets:extended|other",
+            "language:en",
+            "license:other",
+            "conversational-qa",
+            "croissant",
+            "arxiv:1808.07042",
+            "arxiv:1704.04683",
+            "arxiv:1506.03340",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)

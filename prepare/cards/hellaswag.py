@@ -25,7 +25,12 @@ card = TaskCard(
         "A paper was published at ACL2019."
     ),
     __tags__={
-        "urls": {"acl": "2019", "homepage": "https://rowanzellers.com/hellaswag/"}
+        "dataset_info_tags": [
+            "language:en",
+            "croissant",
+            "arxiv:1905.07830",
+            "region:us",
+        ]
     },
 )
 # We disable strict checking because garbage predictions (when using the post processor

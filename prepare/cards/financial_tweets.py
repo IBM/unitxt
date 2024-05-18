@@ -59,6 +59,28 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:multi-class-classification",
+            "annotations_creators:other",
+            "language_creators:other",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:mit",
+            "twitter",
+            "finance",
+            "markets",
+            "stocks",
+            "wallstreet",
+            "quant",
+            "hedgefunds",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)

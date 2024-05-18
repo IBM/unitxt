@@ -15,6 +15,21 @@ card = TaskCard(
     ],
     task="tasks.summarization.abstractive",
     templates="templates.summarization.abstractive.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:summarization",
+            "task_ids:news-articles-summarization",
+            "annotations_creators:no-annotation",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:100K<n<1M",
+            "source_datasets:original",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)

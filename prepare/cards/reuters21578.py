@@ -154,6 +154,14 @@ for subset in get_dataset_config_names(dataset_name):
         ],
         task="tasks.classification.multi_label",
         templates="templates.classification.multi_label.all",
+        __tags__={
+            "dataset_info_tags": [
+                "language:en",
+                "license:other",
+                "croissant",
+                "region:us",
+            ]
+        },
     )
     test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

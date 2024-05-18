@@ -28,6 +28,25 @@ for lang in langs:
         ],
         task="tasks.qa.open",
         templates="templates.qa.open.all",
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:question-answering",
+                "size_categories:10K<n<100K",
+                "language:en",
+                "language:ru",
+                "language:pt",
+                "language:it",
+                "language:es",
+                "language:fr",
+                "language:de",
+                "language:nl",
+                "license:cc-by-nc-3.0",
+                "wikihow",
+                "QnA",
+                "croissant",
+                "region:us",
+            ]
+        },
     )
 
     if lang == langs[0]:

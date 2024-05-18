@@ -95,6 +95,21 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:multi-class-classification",
+            "annotations_creators:expert-generated",
+            "language_creators:expert-generated",
+            "multilinguality:monolingual",
+            "size_categories:1K<n<10K",
+            "source_datasets:original",
+            "language:en",
+            "license:unknown",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)

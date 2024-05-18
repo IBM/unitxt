@@ -79,6 +79,26 @@ for sub_task in sub_tasks:
         ],
         task="tasks.span_labeling.extraction",
         templates="templates.span_labeling.extraction.all",
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:token-classification",
+                "language:ceb",
+                "language:da",
+                "language:de",
+                "language:en",
+                "language:hr",
+                "language:pt",
+                "language:ru",
+                "language:sk",
+                "language:sr",
+                "language:sv",
+                "language:tl",
+                "language:zh",
+                "license:cc-by-sa-4.0",
+                "arxiv:2311.09122",
+                "region:us",
+            ]
+        },
     )
 
     if sub_task == "en_ewt":

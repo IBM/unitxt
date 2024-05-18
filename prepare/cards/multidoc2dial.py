@@ -25,6 +25,25 @@ card_abstractive = TaskCard(
     ],
     task="tasks.qa.with_context.abstractive",
     templates="templates.qa.with_context.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "task_ids:open-domain-qa",
+            "annotations_creators:crowdsourced",
+            "language_creators:crowdsourced",
+            "language_creators:expert-generated",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "size_categories:1K<n<10K",
+            "size_categories:n<1K",
+            "source_datasets:extended|doc2dial",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2109.12595",
+            "region:us",
+        ]
+    },
 )
 
 card_extractive = TaskCard(
@@ -39,6 +58,25 @@ card_extractive = TaskCard(
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "task_ids:open-domain-qa",
+            "annotations_creators:crowdsourced",
+            "language_creators:crowdsourced",
+            "language_creators:expert-generated",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "size_categories:1K<n<10K",
+            "size_categories:n<1K",
+            "source_datasets:extended|doc2dial",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2109.12595",
+            "region:us",
+        ]
+    },
 )
 
 for name, card in zip(

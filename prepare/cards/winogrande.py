@@ -17,6 +17,7 @@ for subtask in ["debiased", "l", "m", "s", "xl", "xs"]:
         ],
         task="tasks.qa.multiple_choice.open",
         templates="templates.qa.multiple_choice.open.all",
+        __tags__={"dataset_info_tags": ["language:en", "croissant", "region:us"]},
     )
     if subtask == "debiased":
         test_card(card, demos_taken_from="test", strict=False)

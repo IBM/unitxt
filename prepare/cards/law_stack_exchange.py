@@ -53,6 +53,16 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "language:en",
+            "stackexchange",
+            "law",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)

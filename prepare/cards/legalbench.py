@@ -137,6 +137,22 @@ for task_name, task_cfg in task_cfgs.items():
                 ),
             }
         ),
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:text-classification",
+                "task_categories:question-answering",
+                "task_categories:text-generation",
+                "size_categories:10K<n<100K",
+                "language:en",
+                "license:other",
+                "legal",
+                "law",
+                "finance",
+                "croissant",
+                "arxiv:2308.11462",
+                "region:us",
+            ]
+        },
     )
 
     test_card(card, format="formats.textual_assistant")

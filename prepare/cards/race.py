@@ -18,6 +18,22 @@ for subset in ["all", "high", "middle"]:
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates="templates.qa.multiple_choice.with_context.all",
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:multiple-choice",
+                "task_ids:multiple-choice-qa",
+                "annotations_creators:expert-generated",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "size_categories:10K<n<100K",
+                "source_datasets:original",
+                "language:en",
+                "license:other",
+                "croissant",
+                "arxiv:1704.04683",
+                "region:us",
+            ]
+        },
     )
     if subset == "middle":
         test_card(card, strict=False)

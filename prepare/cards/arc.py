@@ -18,6 +18,23 @@ for subtask in subtasks:
         ],
         task="tasks.qa.multiple_choice.with_topic",
         templates="templates.qa.multiple_choice.with_topic.all",
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:question-answering",
+                "task_ids:open-domain-qa",
+                "task_ids:multiple-choice-qa",
+                "annotations_creators:found",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "size_categories:1K<n<10K",
+                "source_datasets:original",
+                "language:en",
+                "license:cc-by-sa-4.0",
+                "croissant",
+                "arxiv:1803.05457",
+                "region:us",
+            ]
+        },
     )
     test_card(card, strict=False)
     add_to_catalog(

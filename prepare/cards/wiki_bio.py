@@ -26,6 +26,21 @@ card = TaskCard(
     ],
     task="tasks.generation",
     templates="templates.generation.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:table-to-text",
+            "annotations_creators:found",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:100K<n<1M",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-sa-3.0",
+            "croissant",
+            "arxiv:1603.07771",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card)

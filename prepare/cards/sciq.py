@@ -25,6 +25,21 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "task_ids:closed-domain-qa",
+            "annotations_creators:no-annotation",
+            "language_creators:crowdsourced",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-nc-3.0",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 test_card(card, strict=False)
 add_to_catalog(card, "cards.sciq", overwrite=True)

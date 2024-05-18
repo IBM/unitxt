@@ -44,6 +44,19 @@ card = TaskCard(
             ),
         ]
     ),
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-4.0",
+            "croissant",
+            "arxiv:2101.11718",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card, demos_taken_from="test", strict=False)

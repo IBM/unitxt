@@ -91,6 +91,17 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:cc-by-3.0",
+            "croissant",
+            "arxiv:1911.11408",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card, debug=False)

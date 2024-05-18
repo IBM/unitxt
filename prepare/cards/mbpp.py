@@ -29,6 +29,24 @@ card = TaskCard(
             ),
         ]
     ),
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text2text-generation",
+            "annotations_creators:crowdsourced",
+            "annotations_creators:expert-generated",
+            "language_creators:crowdsourced",
+            "language_creators:expert-generated",
+            "multilinguality:monolingual",
+            "size_categories:n<1K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-4.0",
+            "code-generation",
+            "croissant",
+            "arxiv:2108.07732",
+            "region:us",
+        ]
+    },
 )
 
 test_card(

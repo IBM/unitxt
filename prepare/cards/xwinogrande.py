@@ -16,6 +16,21 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         ],
         task="tasks.qa.multiple_choice.open",
         templates="templates.qa.multiple_choice.open.all",
+        __tags__={
+            "dataset_info_tags": [
+                "language:en",
+                "language:fr",
+                "language:ja",
+                "language:pt",
+                "language:ru",
+                "language:zh",
+                "license:cc-by-4.0",
+                "croissant",
+                "arxiv:2211.01786",
+                "arxiv:2106.12066",
+                "region:us",
+            ]
+        },
     )
     if lang == "pt":
         test_card(card, demos_taken_from="test", strict=False)

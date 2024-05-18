@@ -51,6 +51,27 @@ for lang in langs:
         ],
         task="tasks.classification.multi_class.relation",
         templates="templates.classification.multi_class.relation.all",
+        __tags__={
+            "dataset_info_tags": [
+                "language:ar",
+                "language:bg",
+                "language:de",
+                "language:el",
+                "language:en",
+                "language:es",
+                "language:fr",
+                "language:hi",
+                "language:ru",
+                "language:sw",
+                "language:th",
+                "language:tr",
+                "language:ur",
+                "language:vi",
+                "language:zh",
+                "croissant",
+                "region:us",
+            ]
+        },
     )
     if lang == langs[0]:
         test_card(card)

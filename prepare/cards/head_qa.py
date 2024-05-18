@@ -40,10 +40,20 @@ for subset in get_dataset_config_names(dataset_name):
             "The dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology."
         ),
         __tags__={
-            "urls": {
-                "acl": "https://www.aclweb.org/anthology/P19-1092",
-                "homepage": "https://aghie.github.io/head-qa/",
-            }
+            "dataset_info_tags": [
+                "task_categories:question-answering",
+                "task_ids:multiple-choice-qa",
+                "annotations_creators:no-annotation",
+                "language_creators:expert-generated",
+                "multilinguality:monolingual",
+                "size_categories:1K<n<10K",
+                "source_datasets:original",
+                "language:en",
+                "language:es",
+                "license:mit",
+                "croissant",
+                "region:us",
+            ]
         },
     )
     test_card(card, debug=False)

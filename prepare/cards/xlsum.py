@@ -23,6 +23,21 @@ for lang in langs:
         ],
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",
+        __tags__={
+            "dataset_info_tags": [
+                "task_categories:summarization",
+                "annotations_creators:none",
+                "language_creators:unknown",
+                "multilinguality:unknown",
+                "size_categories:unknown",
+                "source_datasets:original",
+                "language:und",
+                "license:cc-by-nc-sa-4.0",
+                "croissant",
+                "arxiv:1607.01759",
+                "region:us",
+            ]
+        },
     )
     if lang == langs[0]:
         test_card(card, debug=False, strict=False)

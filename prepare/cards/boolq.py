@@ -35,6 +35,22 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class.relation",
     templates="templates.classification.multi_class.relation.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:natural-language-inference",
+            "annotations_creators:crowdsourced",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-sa-3.0",
+            "croissant",
+            "arxiv:1905.10044",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card, demos_taken_from="test")
@@ -60,6 +76,22 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:natural-language-inference",
+            "annotations_creators:crowdsourced",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-sa-3.0",
+            "croissant",
+            "arxiv:1905.10044",
+            "region:us",
+        ]
+    },
 )
 
 test_card(card, demos_taken_from="test", strict=False)

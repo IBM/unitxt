@@ -53,6 +53,21 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:topic-classification",
+            "annotations_creators:found",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:1M<n<10M",
+            "source_datasets:extended|other-yahoo-answers-corpus",
+            "language:en",
+            "license:unknown",
+            "croissant",
+            "region:us",
+        ]
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)
