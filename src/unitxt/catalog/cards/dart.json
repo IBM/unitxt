@@ -36,5 +36,27 @@
         }
     ],
     "task": "tasks.generation",
-    "templates": "templates.generation.all"
+    "templates": "templates.generation.all",
+    "__description__": "DART is a large and open-domain structured DAta Record to Text generation corpus with high-qualitysentence annotations with each input being a set of entity-relation triples following a tree-structured ontology.It consists of 82191 examples across different domains with each input being a semantic RDF triple set derivedfrom data records in tables and the tree ontology of table schema, annotated with sentence description thatcovers all facts in the triple set.",
+    "__tags__": {
+        "dataset_info_tags": [
+            "task_categories:tabular-to-text",
+            "task_ids:rdf-to-text",
+            "annotations_creators:crowdsourced",
+            "annotations_creators:machine-generated",
+            "language_creators:crowdsourced",
+            "language_creators:machine-generated",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:extended|wikitable_questions",
+            "source_datasets:extended|wikisql",
+            "source_datasets:extended|web_nlg",
+            "source_datasets:extended|cleaned_e2e",
+            "language:en",
+            "license:mit",
+            "croissant",
+            "arxiv:2007.02871",
+            "region:us"
+        ]
+    }
 }

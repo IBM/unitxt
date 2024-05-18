@@ -336,5 +336,20 @@
         }
     ],
     "task": "tasks.classification.multi_class",
-    "templates": "templates.classification.multi_class.all"
+    "templates": "templates.classification.multi_class.all",
+    "__tags__": {
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:intent-classification",
+            "annotations_creators:expert-generated",
+            "language_creators:crowdsourced",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-3.0",
+            "croissant",
+            "region:us"
+        ]
+    }
 }

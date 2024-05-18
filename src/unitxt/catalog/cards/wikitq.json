@@ -43,6 +43,20 @@
         },
         "languages": [
             "english"
+        ],
+        "dataset_info_tags": [
+            "task_categories:question-answering",
+            "annotations_creators:crowdsourced",
+            "language_creators:found",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:cc-by-4.0",
+            "table-question-answering",
+            "croissant",
+            "arxiv:1508.00305",
+            "region:us"
         ]
     }
 }

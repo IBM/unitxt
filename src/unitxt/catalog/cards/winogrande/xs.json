@@ -34,5 +34,12 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.open",
-    "templates": "templates.qa.multiple_choice.open.all"
+    "templates": "templates.qa.multiple_choice.open.all",
+    "__tags__": {
+        "dataset_info_tags": [
+            "language:en",
+            "croissant",
+            "region:us"
+        ]
+    }
 }

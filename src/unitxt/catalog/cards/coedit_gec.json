@@ -38,5 +38,16 @@
         }
     ],
     "task": "tasks.grammatical_error_correction",
-    "templates": "templates.grammatical_error_correction.all"
+    "templates": "templates.grammatical_error_correction.all",
+    "__tags__": {
+        "dataset_info_tags": [
+            "task_categories:text-generation",
+            "size_categories:10K<n<100K",
+            "language:en",
+            "license:apache-2.0",
+            "croissant",
+            "arxiv:2305.09857",
+            "region:us"
+        ]
+    }
 }

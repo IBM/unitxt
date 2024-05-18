@@ -37,5 +37,28 @@
         }
     ],
     "task": "tasks.classification.multi_class.relation",
-    "templates": "templates.classification.multi_class.relation.truthfulness.all"
+    "templates": "templates.classification.multi_class.relation.truthfulness.all",
+    "__tags__": {
+        "dataset_info_tags": [
+            "task_categories:text-classification",
+            "task_ids:acceptability-classification",
+            "task_ids:natural-language-inference",
+            "task_ids:semantic-similarity-scoring",
+            "task_ids:sentiment-classification",
+            "task_ids:text-scoring",
+            "annotations_creators:other",
+            "language_creators:other",
+            "multilinguality:monolingual",
+            "size_categories:10K<n<100K",
+            "source_datasets:original",
+            "language:en",
+            "license:other",
+            "qa-nli",
+            "coreference-nli",
+            "paraphrase-identification",
+            "croissant",
+            "arxiv:1804.07461",
+            "region:us"
+        ]
+    }
 }

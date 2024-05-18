@@ -41,5 +41,11 @@
                 ]
             }
         ]
+    },
+    "__tags__": {
+        "dataset_info_tags": [
+            "croissant",
+            "region:us"
+        ]
     }
 }
