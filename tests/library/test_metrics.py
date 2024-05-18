@@ -50,6 +50,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
+from unitxt.operators import SplitByValue
 from unitxt.test_utils.metrics import apply_metric
 
 from tests.utils import UnitxtTestCase
@@ -1282,6 +1283,21 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "group_mean_precision_ci_low": 0.2095091529536007,
                 "group_mean_precision_ci_high": 0.6666666666666666,
             },
+        )
+
+        global_metric_to_test_on_groups = Rouge()
+        global_metric_to_test_on_groups.split_to_groups_by = SplitByValue(
+            fields=["task_data/group_id"]
+        )
+        global_metric_to_test_on_groups.ci_samples_from_groups_scores = True
+        global_metric_to_test_on_groups.ci_scores = [
+            global_metric_to_test_on_groups.main_score
+        ]
+        global_metric_to_test_on_groups.prefix = ""
+        self._test_grouped_instance_confidence_interval(
+            metric=global_metric_to_test_on_groups,
+            expected_ci_low=0.15308065714331093,
+            expected_ci_high=0.7666666666666666,
         )
 
     def _test_grouped_instance_confidence_interval(
