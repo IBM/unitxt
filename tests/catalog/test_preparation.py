@@ -4,6 +4,7 @@ import os
 import time
 from datetime import timedelta
 
+from huggingface_hub.utils import GatedRepoError
 from unitxt.loaders import MissingKaggleCredentialsError
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_constants
@@ -52,7 +53,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
             with self.subTest(file=file):
                 try:
                     import_module_from_file(file)
-                except MissingKaggleCredentialsError as e:
+                except (MissingKaggleCredentialsError, GatedRepoError) as e:
                     logger.info(f"Skipping file {file} due to ignored error {e}")
                     continue
                 logger.info(f"Testing preparation file: {file} passed")
