@@ -126,9 +126,9 @@ class LLMAsJudgeSingleModelSingleTurn(LLMAsJudge):
         if self.template_model_input_field_name is None:
             self.template_model_input_field_name = "dummy_input"
         if self.template_model_output_field_name is None:
-            self.template_model_input_field_name = "dummy_output"
+            self.template_model_output_field_name = "dummy_output"
         if self.template_reference_field_name is None:
-            self.template_model_input_field_name = "dummy_reference"
+            self.template_reference_field_name = "dummy_reference"
 
     def _get_instance_for_judge_model(
         self, input_instances: List[str], predictions: List, references: List
