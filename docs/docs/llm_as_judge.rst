@@ -76,7 +76,7 @@ From here, constructing the full unitxt recipe string is standard and straightfo
 Verifying Your Configuration
 ------------------------------
 
-If you want to verify that your setup runs smoothly, follow the steps outlined above to ensure everything runs as expected.
+To verify that your setup runs smoothly, you can use the following code snippet to ensure everything runs as expected.
 
 .. code-block:: python
     from datasets import load_dataset
