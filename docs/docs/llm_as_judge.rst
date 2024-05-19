@@ -8,10 +8,8 @@
 LLM as a Judge Metrics Guide 📊
 =====================================
 
-Welcome to the LLM as a Judge Metrics Guide! This section will walk you through harnessing
-the power of LLM as judge (LLMaJ) metrics using the Unitxt package. LLM as a judge
-provides a method to assess the performance of a model based on the judgments of
-another model.
+This section will walk you through harnessing the power of LLM as judge (LLMaJ) metrics using the Unitxt package. LLM as a judge
+provides a method to assess the performance of a model based on the judgments of another model.
 
 In this guide, we'll explore three key aspects of LLMaJ:
     1. Utilizing LLM as judge as a metric in Unitxt.
@@ -41,7 +39,7 @@ An LLM as a Judge metric consists of several essential components:
 
 5. Optionally, a system prompt to pass to the judge model. This can provide additional context for evaluation.
 
-Understanding these components is crucial for effectively leveraging LLM as a judge metrics. With this foundation, let's delve into how to utilize and create these metrics in the Unitxt package.
+Understanding these components is crucial for effectively leveraging LLM as a judge metrics. With this foundation, let's examine  how to utilize and create these metrics in the Unitxt package.
 
 Using LLM as a Judge in Unitxt
 -------------------------------
@@ -49,7 +47,9 @@ Employing a pre-defined LLM as a judge metric is effortlessly achieved within Un
 
 The Unitxt catalog boasts a variety of preexisting LLM as judges that seamlessly integrate into your workflow.
 
-Let's consider an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating variation. To accomplish this, we require the following:
+Let's consider an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating evaluation approach.  In this approach, we provide the LLM as a Judge, the input provided to the model and the output it generation.   The LLM as Judge is asked to rate how well the output of the model address the request in the input.  
+
+To accomplish this evaluation, we require the following:
 
 1. A Unitxt dataset card containing MT-Bench inputs, which will serve as the input for our evaluated model.
 2. A Unitxt template to be paired with the card. As the MT-Bench dataset already includes full prompts, there is no need to construct one using a template; hence, we'll opt for the *empty* template, which just passes the input prompt from the dataset to the model.
@@ -69,14 +69,10 @@ From here, constructing the full unitxt recipe string is standard and straightfo
 .. note::
 
    Pay attention!
-   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the terms to use it on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using OpenAI platform, you will need to set your OpenAI api key.
+   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the Terms of Use it on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using an LLM as judge based on the OpenAI platform, you will need to set your OpenAI api key.
 
 
-
-Verifying Your Configuration
-------------------------------
-
-To verify that your setup runs smoothly, you can use the following code snippet to ensure everything runs as expected.
+The following code performs the required evaluation:
 
 .. code-block:: python
     from datasets import load_dataset
@@ -96,6 +92,7 @@ To verify that your setup runs smoothly, you can use the following code snippet 
     # 2. use inference module to infer based on the dataset inputs.
     inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32, use_fp16=True)
     predictions = inference_model.infer(dataset)
+
     # 3. create a metric and evaluate the results.
     scores = evaluate(predictions=predictions, data=dataset)
 
@@ -110,13 +107,12 @@ To construct a new LLM as a Judge metric, several key components must be defined
 
 1. **Judge Model**: Select a model that will assess the performance of other models.
 2. **Execution Platform**: Choose the platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template.
+3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template.  Two common tasks are single model rating we saw above and pairwise model comparision , in which the outputs of two models is compared, to see which better addressed the required input.
 4. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
 5. **Format**: Specify the format in which the judge model expects to receive prompts.
 6. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
 
-Let's walk through an example of creating a new LLM as a Judge metric, specifically recreating the MT-Bench judge metric single-model-rating variation:
-
+Let's walk through an example of creating a new LLM as a Judge metric, specifically recreating the MT-Bench judge metric single-model-rating evaluation:
 
 1. **Selecting a Judge Model**: We will utilize the *mistralai/Mistral-7B-Instruct-v0.2* model from Huggingface as our judge model.
 2. **Selecting an Execution Platform**: We will opt to execute the model locally using Huggingface.
@@ -182,7 +178,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 
     .. note::
         Ensure the template includes a postprocessor for extracting the judgment from the judge model output and
-        passing it as a metric score. In our example, the template specify for the judge how it expect the judgment format
+        passing it as a metric score. In our example, the template specifies for the judge the expected judgment format
         ("you must rate the response on a scale of 1 to 10 by strictly following this format: "[[rating]]""),
         and such, it also defines the processor for extracting the judgment. (postprocessors=[r"processors.extract_mt_bench_rating_judgment"],).
         This processor simply extract the number within [[ ]] and divide it by 10 in order to scale to to [0, 1].
@@ -236,7 +232,7 @@ With these components defined, creating a new LLM as a Judge metric is straightf
 Evaluating a LLMaJ metric (Meta-evaluation)
 --------------------------------------------
 But wait, we missed a step! We know the LLM as a judge we created worth anything?
-The answer is: You evaluate it like any other model in Unitxt!
+The answer is: You evaluate it like any other model in Unitxt.
 Remember the task we defined in the previous section?
 
     .. code-block:: python
@@ -253,9 +249,9 @@ Remember the task we defined in the previous section?
             overwrite=True,
         )
 
-This task define the (meta) evaluation of our LLMaJ model!
-We will fetch a dataset of MT-Bench inputs and models outputs, together with scores as judges by GPT-4.
-We will consider these scores our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
+This task define the (meta) evaluation of our LLMaJ model.
+We will fetch a dataset of MT-Bench inputs and models outputs, together with scores judged by GPT-4.
+We will consider these GPT4 scores our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
 to the score of GPT4 using spearman correlation as defined in the task card.
 
 We will create a task, as we do for every other Unitxt scenario:
@@ -306,12 +302,11 @@ We will create a task, as we do for every other Unitxt scenario:
     )
 
 This is a card for the first turn inputs of the MT-Bench benchmarks (without reference),
-together with the outputs of multiple models to those inputs and the scoring of GPT-4
+together with the outputs of multiple models to those inputs and the scores of GPT-4
 to those outputs.
 
-
 Now all we need to do is to load the card, with the template and format the judge model is expected to use,
-and run it! Simple!
+and run it.
 
 .. code-block:: python
     from datasets import load_dataset
