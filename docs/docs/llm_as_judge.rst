@@ -254,7 +254,7 @@ We will fetch a dataset of MT-Bench inputs and models outputs, together with sco
 We will consider these GPT4 scores as our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
 to the score of GPT4 using spearman correlation as defined in the task card.
 
-We will create a task, as we do for every other Unitxt scenario:
+We will create a card, as we do for every other Unitxt scenario:
 
 .. code-block:: python
     from unitxt.blocks import (
@@ -309,6 +309,7 @@ Now all we need to do is to load the card, with the template and format the judg
 and run it.
 
 .. code-block:: python
+
     from datasets import load_dataset
     from unitxt.inference import HFPipelineBasedInferenceEngine
     from unitxt import evaluate
