@@ -319,7 +319,7 @@ and run it! Simple!
     from unitxt import evaluate
 
     # 1. Create the dataset
-    card = ("cards.mt_bench.response_assessment.rating.single_turn_gpt4_judgement,"
+    card = ("card=cards.mt_bench.response_assessment.rating.single_turn_gpt4_judgement,"
             "template=templates.response_assessment.rating.mt_bench_single_turn,"
             "format=formats.models.mistral.instruction")
 
