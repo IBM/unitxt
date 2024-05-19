@@ -39,20 +39,18 @@ card = TaskCard(
         ]
     ),
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:text2text-generation",
-            "annotations_creators:expert-generated",
-            "language_creators:expert-generated",
-            "multilinguality:monolingual",
-            "size_categories:n<1K",
-            "source_datasets:original",
-            "language:en",
-            "license:mit",
-            "code-generation",
-            "croissant",
-            "arxiv:2107.03374",
-            "region:us",
-        ]
+        "annotations_creators": "expert-generated",
+        "arxiv": "2107.03374",
+        "code-generation": True,
+        "croissant": True,
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "n<1K",
+        "source_datasets": "original",
+        "task_categories": "text2text-generation",
     },
 )
 

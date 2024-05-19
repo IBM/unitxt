@@ -48,26 +48,30 @@
     "task": "tasks.classification.multi_label",
     "templates": "templates.classification.multi_label.all",
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:question-answering",
-            "task_categories:text-classification",
-            "task_ids:multi-class-classification",
-            "task_ids:multi-label-classification",
-            "task_ids:multiple-choice-qa",
-            "task_ids:topic-classification",
-            "annotations_creators:found",
-            "language_creators:found",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:extended",
-            "language:en",
-            "license:cc-by-4.0",
-            "croissant",
-            "arxiv:2110.00976",
-            "arxiv:2109.00904",
-            "arxiv:1805.01217",
-            "arxiv:2104.08671",
-            "region:us"
+        "annotations_creators": "found",
+        "arxiv": [
+            "2110.00976",
+            "2109.00904",
+            "1805.01217",
+            "2104.08671"
+        ],
+        "croissant": true,
+        "language": "en",
+        "language_creators": "found",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended",
+        "task_categories": [
+            "question-answering",
+            "text-classification"
+        ],
+        "task_ids": [
+            "multi-class-classification",
+            "multi-label-classification",
+            "multiple-choice-qa",
+            "topic-classification"
         ]
     }
 }

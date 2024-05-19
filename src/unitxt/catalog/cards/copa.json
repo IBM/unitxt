@@ -42,27 +42,29 @@
     "templates": "templates.qa.multiple_choice.with_context.all",
     "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled afterGLUE with a new set of more difficult language understanding tasks, improvedresources, and a new public leaderboard.The Choice Of Plausible Alternatives (COPA, Roemmele et al., 2011) dataset is a causalreasoning task in which a system is given a premise sentence and two possible alternatives. Thesystem must choose the alternative which has the more plausible causal relationship with the premise.The method used for the construction of the alternatives ensures that the task requires causal reasoningto solve. Examples either deal with alternative possible causes or alternative possible effects of thepremise sentence, accompanied by a simple question disambiguating between the two instancetypes for the model. All examples are handcrafted and focus on topics from online blogs and aphotography-related encyclopedia. Following the recommendation of the authors, we evaluate usingaccuracy.",
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:text-classification",
-            "task_categories:token-classification",
-            "task_categories:question-answering",
-            "task_ids:natural-language-inference",
-            "task_ids:word-sense-disambiguation",
-            "task_ids:coreference-resolution",
-            "task_ids:extractive-qa",
-            "annotations_creators:expert-generated",
-            "language_creators:other",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:extended|other",
-            "language:en",
-            "license:other",
-            "superglue",
-            "NLU",
-            "natural language understanding",
-            "croissant",
-            "arxiv:1905.00537",
-            "region:us"
+        "NLU": true,
+        "annotations_creators": "expert-generated",
+        "arxiv": "1905.00537",
+        "croissant": true,
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "natural language understanding": true,
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended|other",
+        "superglue": true,
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
         ]
     }
 }

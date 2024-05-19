@@ -46,21 +46,18 @@ card = TaskCard(
         "It focuses on fine-grained single-domain intent detection."
     ),
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:text-classification",
-            "task_ids:intent-classification",
-            "task_ids:multi-class-classification",
-            "annotations_creators:expert-generated",
-            "language_creators:expert-generated",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:original",
-            "language:en",
-            "license:cc-by-4.0",
-            "croissant",
-            "arxiv:2003.04807",
-            "region:us",
-        ]
+        "annotations_creators": "expert-generated",
+        "arxiv": "2003.04807",
+        "croissant": True,
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": ["intent-classification", "multi-class-classification"],
     },
 )
 test_card(card, debug=False)

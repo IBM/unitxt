@@ -39,19 +39,17 @@ for subset in get_dataset_config_names(dataset_name):
         task="tasks.classification.multi_class",
         templates="templates.classification.multi_class.all",
         __tags__={
-            "dataset_info_tags": [
-                "task_categories:text-classification",
-                "task_ids:intent-classification",
-                "annotations_creators:expert-generated",
-                "language_creators:crowdsourced",
-                "multilinguality:monolingual",
-                "size_categories:10K<n<100K",
-                "source_datasets:original",
-                "language:en",
-                "license:cc-by-3.0",
-                "croissant",
-                "region:us",
-            ]
+            "annotations_creators": "expert-generated",
+            "croissant": True,
+            "language": "en",
+            "language_creators": "crowdsourced",
+            "license": "cc-by-3.0",
+            "multilinguality": "monolingual",
+            "region": "us",
+            "size_categories": "10K<n<100K",
+            "source_datasets": "original",
+            "task_categories": "text-classification",
+            "task_ids": "intent-classification",
         },
     )
     test_card(card, debug=False)

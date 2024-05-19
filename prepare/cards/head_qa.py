@@ -40,20 +40,17 @@ for subset in get_dataset_config_names(dataset_name):
             "The dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology."
         ),
         __tags__={
-            "dataset_info_tags": [
-                "task_categories:question-answering",
-                "task_ids:multiple-choice-qa",
-                "annotations_creators:no-annotation",
-                "language_creators:expert-generated",
-                "multilinguality:monolingual",
-                "size_categories:1K<n<10K",
-                "source_datasets:original",
-                "language:en",
-                "language:es",
-                "license:mit",
-                "croissant",
-                "region:us",
-            ]
+            "annotations_creators": "no-annotation",
+            "croissant": True,
+            "language": ["en", "es"],
+            "language_creators": "expert-generated",
+            "license": "mit",
+            "multilinguality": "monolingual",
+            "region": "us",
+            "size_categories": "1K<n<10K",
+            "source_datasets": "original",
+            "task_categories": "question-answering",
+            "task_ids": "multiple-choice-qa",
         },
     )
     test_card(card, debug=False)

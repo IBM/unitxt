@@ -45,17 +45,15 @@ card = TaskCard(
         ]
     ),
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:text-generation",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:original",
-            "language:en",
-            "license:cc-by-4.0",
-            "croissant",
-            "arxiv:2101.11718",
-            "region:us",
-        ]
+        "arxiv": "2101.11718",
+        "croissant": True,
+        "language": "en",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-generation",
     },
 )
 

@@ -36,7 +36,7 @@ card = TaskCard(
             ),
         ]
     ),
-    __tags__={"dataset_info_tags": ["croissant", "region:us"]},
+    __tags__={"croissant": True, "region": "us"},
 )
 
 test_card(card, demos_taken_from="test", strict=False)

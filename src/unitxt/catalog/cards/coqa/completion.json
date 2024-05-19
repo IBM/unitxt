@@ -45,25 +45,27 @@
     "task": "tasks.completion.abstractive",
     "templates": "templates.completion.abstractive.all",
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:question-answering",
-            "task_ids:extractive-qa",
-            "annotations_creators:crowdsourced",
-            "language_creators:found",
-            "multilinguality:monolingual",
-            "size_categories:1K<n<10K",
-            "source_datasets:extended|race",
-            "source_datasets:extended|cnn_dailymail",
-            "source_datasets:extended|wikipedia",
-            "source_datasets:extended|other",
-            "language:en",
-            "license:other",
-            "conversational-qa",
-            "croissant",
-            "arxiv:1808.07042",
-            "arxiv:1704.04683",
-            "arxiv:1506.03340",
-            "region:us"
-        ]
+        "annotations_creators": "crowdsourced",
+        "arxiv": [
+            "1808.07042",
+            "1704.04683",
+            "1506.03340"
+        ],
+        "conversational-qa": true,
+        "croissant": true,
+        "language": "en",
+        "language_creators": "found",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": [
+            "extended|race",
+            "extended|cnn_dailymail",
+            "extended|wikipedia",
+            "extended|other"
+        ],
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
     }
 }

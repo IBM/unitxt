@@ -36,13 +36,11 @@ card = TaskCard(
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
     __tags__={
-        "dataset_info_tags": [
-            "license:mit",
-            "human-feedback",
-            "croissant",
-            "arxiv:2204.05862",
-            "region:us",
-        ]
+        "arxiv": "2204.05862",
+        "croissant": True,
+        "human-feedback": True,
+        "license": "mit",
+        "region": "us",
     },
 )
 

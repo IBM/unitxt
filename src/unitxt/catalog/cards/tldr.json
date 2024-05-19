@@ -29,18 +29,16 @@
     "task": "tasks.summarization.abstractive",
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:summarization",
-            "annotations_creators:no-annotation",
-            "language_creators:crowdsourced",
-            "multilinguality:monolingual",
-            "size_categories:1M<n<10M",
-            "source_datasets:original",
-            "language:en",
-            "license:cc-by-4.0",
-            "reddit-posts-summarization",
-            "croissant",
-            "region:us"
-        ]
+        "annotations_creators": "no-annotation",
+        "croissant": true,
+        "language": "en",
+        "language_creators": "crowdsourced",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "reddit-posts-summarization": true,
+        "region": "us",
+        "size_categories": "1M<n<10M",
+        "source_datasets": "original",
+        "task_categories": "summarization"
     }
 }

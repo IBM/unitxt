@@ -25,20 +25,20 @@
     "task": "tasks.qa.with_context.extractive",
     "templates": "templates.qa.with_context.all",
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:question-answering",
-            "task_ids:extractive-qa",
-            "annotations_creators:crowdsourced",
-            "language_creators:crowdsourced",
-            "language_creators:found",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:extended|wikipedia",
-            "language:en",
-            "license:cc-by-sa-4.0",
-            "croissant",
-            "arxiv:1606.05250",
-            "region:us"
-        ]
+        "annotations_creators": "crowdsourced",
+        "arxiv": "1606.05250",
+        "croissant": true,
+        "language": "en",
+        "language_creators": [
+            "crowdsourced",
+            "found"
+        ],
+        "license": "cc-by-sa-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended|wikipedia",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
     }
 }

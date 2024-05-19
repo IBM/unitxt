@@ -26,19 +26,17 @@ card = TaskCard(
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:question-answering",
-            "task_ids:closed-domain-qa",
-            "annotations_creators:no-annotation",
-            "language_creators:crowdsourced",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:original",
-            "language:en",
-            "license:cc-by-nc-3.0",
-            "croissant",
-            "region:us",
-        ]
+        "annotations_creators": "no-annotation",
+        "croissant": True,
+        "language": "en",
+        "language_creators": "crowdsourced",
+        "license": "cc-by-nc-3.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "closed-domain-qa",
     },
 )
 test_card(card, strict=False)

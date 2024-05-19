@@ -49,19 +49,19 @@
         }
     },
     "__tags__": {
-        "dataset_info_tags": [
-            "task_categories:text-classification",
-            "task_categories:question-answering",
-            "task_categories:text-generation",
-            "size_categories:10K<n<100K",
-            "language:en",
-            "license:other",
-            "legal",
-            "law",
-            "finance",
-            "croissant",
-            "arxiv:2308.11462",
-            "region:us"
+        "arxiv": "2308.11462",
+        "croissant": true,
+        "finance": true,
+        "language": "en",
+        "law": true,
+        "legal": true,
+        "license": "other",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": [
+            "text-classification",
+            "question-answering",
+            "text-generation"
         ]
     }
 }

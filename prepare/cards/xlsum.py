@@ -24,19 +24,17 @@ for lang in langs:
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",
         __tags__={
-            "dataset_info_tags": [
-                "task_categories:summarization",
-                "annotations_creators:none",
-                "language_creators:unknown",
-                "multilinguality:unknown",
-                "size_categories:unknown",
-                "source_datasets:original",
-                "language:und",
-                "license:cc-by-nc-sa-4.0",
-                "croissant",
-                "arxiv:1607.01759",
-                "region:us",
-            ]
+            "annotations_creators": "none",
+            "arxiv": "1607.01759",
+            "croissant": True,
+            "language": "und",
+            "language_creators": "unknown",
+            "license": "cc-by-nc-sa-4.0",
+            "multilinguality": "unknown",
+            "region": "us",
+            "size_categories": "unknown",
+            "source_datasets": "original",
+            "task_categories": "summarization",
         },
     )
     if lang == langs[0]:

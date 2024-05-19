@@ -30,25 +30,23 @@ card = TaskCard(
         "covers all facts in the triple set."
     ),
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:tabular-to-text",
-            "task_ids:rdf-to-text",
-            "annotations_creators:crowdsourced",
-            "annotations_creators:machine-generated",
-            "language_creators:crowdsourced",
-            "language_creators:machine-generated",
-            "multilinguality:monolingual",
-            "size_categories:10K<n<100K",
-            "source_datasets:extended|wikitable_questions",
-            "source_datasets:extended|wikisql",
-            "source_datasets:extended|web_nlg",
-            "source_datasets:extended|cleaned_e2e",
-            "language:en",
-            "license:mit",
-            "croissant",
-            "arxiv:2007.02871",
-            "region:us",
-        ]
+        "annotations_creators": ["crowdsourced", "machine-generated"],
+        "arxiv": "2007.02871",
+        "croissant": True,
+        "language": "en",
+        "language_creators": ["crowdsourced", "machine-generated"],
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": [
+            "extended|wikitable_questions",
+            "extended|wikisql",
+            "extended|web_nlg",
+            "extended|cleaned_e2e",
+        ],
+        "task_categories": "tabular-to-text",
+        "task_ids": "rdf-to-text",
     },
 )
 

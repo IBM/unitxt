@@ -17,19 +17,11 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         task="tasks.qa.multiple_choice.open",
         templates="templates.qa.multiple_choice.open.all",
         __tags__={
-            "dataset_info_tags": [
-                "language:en",
-                "language:fr",
-                "language:ja",
-                "language:pt",
-                "language:ru",
-                "language:zh",
-                "license:cc-by-4.0",
-                "croissant",
-                "arxiv:2211.01786",
-                "arxiv:2106.12066",
-                "region:us",
-            ]
+            "arxiv": ["2211.01786", "2106.12066"],
+            "croissant": True,
+            "language": ["en", "fr", "ja", "pt", "ru", "zh"],
+            "license": "cc-by-4.0",
+            "region": "us",
         },
     )
     if lang == "pt":

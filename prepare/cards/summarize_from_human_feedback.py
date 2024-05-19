@@ -29,7 +29,7 @@ card = TaskCard(
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
-    __tags__={"dataset_info_tags": ["croissant", "arxiv:2009.01325", "region:us"]},
+    __tags__={"arxiv": "2009.01325", "croissant": True, "region": "us"},
 )
 
 test_card(card, strict=False)

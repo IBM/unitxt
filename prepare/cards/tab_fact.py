@@ -32,12 +32,10 @@ card = TaskCard(
     task="tasks.classification.multi_class.relation",
     templates="templates.classification.multi_class.relation.all",
     __tags__={
-        "dataset_info_tags": [
-            "task_categories:text-classification",
-            "license:cc-by-4.0",
-            "arxiv:1909.02164",
-            "region:us",
-        ]
+        "arxiv": "1909.02164",
+        "license": "cc-by-4.0",
+        "region": "us",
+        "task_categories": "text-classification",
     },
 )
 

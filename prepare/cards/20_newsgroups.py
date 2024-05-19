@@ -54,7 +54,7 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
-    __tags__={"dataset_info_tags": ["croissant", "region:us"]},
+    __tags__={"croissant": True, "region": "us"},
 )
 
 test_card(card, debug=False)
