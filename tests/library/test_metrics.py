@@ -1,7 +1,7 @@
 from math import isnan
 
 from unitxt.inference import MockInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudgeSingleModelSingleTurn
+from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
     NER,
@@ -1307,7 +1307,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         model_label = f"{model_label}_ibm_genai"
         template_label = template.split(".")[-1]
         metric_label = f"{model_label}_template_{template_label}"
-        metric = LLMAsJudgeSingleModelSingleTurn(
+        metric = LLMAsJudge(
             inference_model=inference_model,
             template=template,
             task=task,
