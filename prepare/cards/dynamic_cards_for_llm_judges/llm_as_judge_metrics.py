@@ -1,7 +1,7 @@
 from unitxt.blocks import TaskCard
 from unitxt.catalog import add_to_catalog
 
-task = "tasks.response_assessment.rating.single_turn"
+task = "tasks.dynamic_tasks_for_llm_judges.input_output_reference"
 card = TaskCard(loader=None, preprocess_steps=[], task=task)
 sub_task = ".".join(task.split(".")[-2:])
 add_to_catalog(

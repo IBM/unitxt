@@ -2,5 +2,5 @@
     "type": "task_card",
     "loader": null,
     "preprocess_steps": [],
-    "task": "tasks.response_assessment.rating.single_turn"
+    "task": "tasks.dynamic_tasks_for_llm_judges.input_output_reference"
 }
