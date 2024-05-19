@@ -225,7 +225,7 @@ With these components defined, creating a new LLM as a Judge metric is straightf
 
 .. note::
 
-    The `LLMAsJudge` class can receive the boolean argument `strip_system_prompt_and_format_from_inputs`
+    The *LLMAsJudge* class can receive the boolean argument *strip_system_prompt_and_format_from_inputs*
     (defaulting to True). When set to True, any system prompts or formatting in the inputs received by
     the evaluated model will be stripped.
 
