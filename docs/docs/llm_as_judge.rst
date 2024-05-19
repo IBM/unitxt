@@ -25,7 +25,7 @@ Overview
 
 An LLM as a Judge metric consists of several essential components:
 
-1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo, which evaluates the performance of other models.
+1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface or OpenAI API.
 3. The template used to construct prompts for the judge model. This template should be reflective of the judgment needed and usually incorporates both the input and output of the evaluated model. For instance:
 
