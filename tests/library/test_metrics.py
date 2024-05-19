@@ -1,7 +1,7 @@
 from math import isnan
 
 from unitxt.inference import MockInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import LLMAsJudgeSingleModelSingleTurn
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
     NER,
@@ -1298,7 +1298,6 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
-        task = "rating.single_turn"
         format = "formats.llama3_chat"
         template = "templates.response_assessment.rating.mt_bench_single_turn"
 
@@ -1307,12 +1306,14 @@ class TestConfidenceIntervals(UnitxtTestCase):
         model_label = f"{model_label}_ibm_genai"
         template_label = template.split(".")[-1]
         metric_label = f"{model_label}_template_{template_label}"
-        metric = LLMAsJudge(
+        metric = LLMAsJudgeSingleModelSingleTurn(
             inference_model=inference_model,
-            task=task,
             template=template,
             format=format,
             main_score=metric_label,
+            template_model_input_field_label="question",
+            template_model_output_field_label="answer",
+            template_reference_field_label=None,
         )
 
         predictions = ["[[10]]"] * 3

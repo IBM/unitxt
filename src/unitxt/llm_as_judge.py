@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Literal, Optional
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 from .api import evaluate, produce
 from .inference import InferenceEngine, OpenAiInferenceEngine
@@ -6,13 +7,11 @@ from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 
 
-class LLMAsJudge(BulkInstanceMetric):
+class LLMAsJudge(BulkInstanceMetric, ABC):
     """LLM as judge based metric class for evaluating correctness.
 
     Attributes:
         main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn"]): The type of task the llm-as-judge runs. This defines the output and input
-         format of the jude model.
         template (str): The template used when generating inputs for the judge llm.
         format (str): The format used when generating inputs for judge llm.
         system_prompt (str): The system prompt used when generating inputs for judge llm.
@@ -24,7 +23,6 @@ class LLMAsJudge(BulkInstanceMetric):
     """
 
     main_score: str = "llm_as_judge"
-    task: Literal["rating.single_turn"] = "rating.single_turn"
     template: str
     format: Optional[str] = None
     system_prompt: Optional[str] = None
@@ -51,36 +49,16 @@ class LLMAsJudge(BulkInstanceMetric):
             return instances
         return [t["source"] for t in task_data]
 
+    @abstractmethod
     def _get_instance_for_judge_model(
         self, input_instances: List[str], predictions: List, references: List
     ) -> List[Dict]:
-        if self.task == "rating.single_turn":
-            instances = [
-                {
-                    "question": input_instance,
-                    "answer": prediction,
-                    "rating": 5.0,  # This is a dummy value that is not used in practice
-                }
-                for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
-                )
-            ]
-        else:
-            raise NotImplementedError(
-                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
-            )
-        return instances
+        pass
 
     def prepare(self):
         super().prepare()
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
-
-        supported_tasks = ["rating.single_turn"]
-        assert self.task in supported_tasks, (
-            f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
-            f"The supported tasks types are: {', '.join(supported_tasks)}."
-        )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
             if self.format:
@@ -108,7 +86,7 @@ class LLMAsJudge(BulkInstanceMetric):
             input_instances, predictions, references
         )
 
-        card = "cards.dynamic_cards_for_llm_judges.rating.single_turn"
+        card = "tasks.dynamic_tasks_for_llm_judges.input_output_reference"
         recipe = (
             f"card={card},"
             f"template={self.template},"
@@ -124,3 +102,45 @@ class LLMAsJudge(BulkInstanceMetric):
         verdicts = self.inference_model.infer(dataset)
         meta_scores = evaluate(predictions=verdicts, data=dataset)
         return [{self.main_score: instance["prediction"]} for instance in meta_scores]
+
+
+class LLMAsJudgeSingleModelSingleTurn(LLMAsJudge):
+    template_model_input_field_label: Optional[str]
+    template_model_output_field_label: Optional[str]
+    template_reference_field_label: Optional[str]
+
+    def prepare(self):
+        super().prepare()
+        assert (
+            self.template_model_input_field_label
+            or self.template_model_output_field_label
+            or self.template_reference_field_label
+        ), (
+            "Error in 'LLMAsJudgeForSingleModelSingleTurn' metric."
+            " At least one of the following input fields"
+            " must not be 'None':"
+            " 'template_model_input_field_label',"
+            " 'template_model_output_field_label,"
+            " 'template_reference_field_label."
+        )
+        if self.template_model_input_field_label is None:
+            self.template_model_input_field_label = "dummy_input"
+        if self.template_model_output_field_label is None:
+            self.template_model_input_field_label = "dummy_output"
+        if self.template_reference_field_label is None:
+            self.template_model_input_field_label = "dummy_reference"
+
+    def _get_instance_for_judge_model(
+        self, input_instances: List[str], predictions: List, references: List
+    ) -> List[Dict]:
+        return [
+            {
+                self.template_model_input_field_label: input_instance,
+                self.template_model_output_field_label: prediction,
+                self.template_reference_field_label: reference,
+                "score": "dummy",  # This is a dummy value that is not used in practice
+            }
+            for input_instance, prediction, reference in zip(
+                input_instances, predictions, references
+            )
+        ]
