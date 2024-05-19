@@ -1,7 +1,7 @@
 .. _documentation:
 
 =====================================
-Documentation
+Code Documentation
 =====================================
 
 .. include:: unitxt.rst
