@@ -323,10 +323,36 @@ and run it.
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
     inference_model = HFPipelineBasedInferenceEngine(model_name="mistralai/Mistral-7B-Instruct-v0.2",
-                                                     max_new_tokens=32,
+                                                     max_new_tokens=256,
                                                      use_fp16=True)
     predictions = inference_model.infer(dataset)
     # 3. create a metric and evaluate the results.
     scores = evaluate(predictions=predictions, data=dataset)
 
     [print(item) for item in scores[0]["score"]["global"].items()]
+
+The output of this code is:
+
+.. code-block:: text
+
+    ('spearmanr', 0.18328402960291354)
+    ('score', 0.18328402960291354)
+    ('score_name', 'spearmanr')
+    ('score_ci_low', 0.14680574316651868)
+    ('score_ci_high', 0.23030798909064645)
+    ('spearmanr_ci_low', 0.14680574316651868)
+    ('spearmanr_ci_high', 0.23030798909064645)
+
+We can see the Spearman correlation is *0.18*, which is considered low.
+This means *"mistralai/Mistral-7B-Instruct-v0.2"* is not a good model to act as an LLM as a Judge,
+at least when using the MT-Bench template.
+
+In order to understand precisely why it is so, examination of the outputs of the model is needed.
+In this case, it seems Mistral is having difficulties outputting the scores in the double square brackets format.
+An example for the model output is:
+
+.. code-block:: text
+
+    Rating: 9
+
+    The assistant's response is engaging and provides a good balance between cultural experiences and must-see attractions in Hawaii. The description of the Polynesian Cultural Center and the Na Pali Coast are vivid and evoke a sense of wonder and excitement. The inclusion of traditional Hawaiian dishes adds depth and authenticity to the post. The response is also well-structured and easy to follow. However, the response could benefit from a few more specific details or anecdotes to make it even more engaging and memorable.
