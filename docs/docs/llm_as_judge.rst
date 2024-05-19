@@ -25,9 +25,9 @@ Overview
 
 An LLM as a Judge metric consists of several essential components:
 
-1. The judge model, such as *Llama-3-8B-Instruct*, which evaluates the performance of other models.
+1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. The template used to construct prompts for the judge models. This template should be reflective of the judgment needs to be done and usually incorporate both the input and output of the evaluated model. For instance:
+3. The template used to construct prompts for the judge model. This template should be reflective of the judgment needed and usually incorporates both the input and output of the evaluated model. For instance:
 
     .. code-block:: text
 
@@ -49,10 +49,10 @@ Employing a pre-defined LLM as a judge metric is effortlessly achieved within Un
 
 The Unitxt catalog boasts a variety of preexisting LLM as judges that seamlessly integrate into your workflow.
 
-Let's delve into an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating variation. To accomplish this, we require the following:
+Let's consider an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating variation. To accomplish this, we require the following:
 
 1. A Unitxt dataset card containing MT-Bench inputs, which will serve as the input for our evaluated model.
-2. A Unitxt template to be paired with the card. As the MT-Bench dataset already includes full prompts, there is no need to construct one using a template; hence, we'll opt for the *empty* template.
+2. A Unitxt template to be paired with the card. As the MT-Bench dataset already includes full prompts, there is no need to construct one using a template; hence, we'll opt for the *empty* template, which just passes the input prompt from the dataset to the model.
 3. A unitxt format to be utilized with the card. Given that *flan* models do not demand special formatting of the inputs, we'll utilize the *empty* format here as well.
 4. An LLM as a judge metric leveraging the MT-Bench evaluation prompt.
 
