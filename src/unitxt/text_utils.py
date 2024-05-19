@@ -135,19 +135,26 @@ def is_made_of_sub_strings(string, sub_strings):
 # Giveמ all the lines of a file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
 # and an object name, e.g. TaskCard,
 # return the ordinal number of the line that starts that object, in our example: the
-# line number of the following line, notice that the line where TaskCard is imported
-# is not supposed to return:
+# line number of the following line (notice that the line where TaskCard is imported
+# is not supposed to return):
 #         card = TaskCard(
 # and the line number of the line that ends the object, in our case the line that include
 # the matching close:
 #         )
+# This util depends on ruff to ensure this setting of the card file: that a close of one
+# tag and the open of the next tag, do not sit in same line, both tags being
+# major level within TaskCard
 # flake8: noqa: B007
-def lines_defining_obj(all_lines: List[str], obj_name: str) -> Tuple[int, int]:
-    for starting_line, line in enumerate(all_lines):
-        if obj_name + "(" in line:
+def lines_defining_obj(
+    all_lines: List[str], obj_name: str, start_search_at_line: int = 0
+) -> Tuple[int, int]:
+    for starting_line in range(start_search_at_line, len(all_lines)):
+        line = all_lines[starting_line]
+        if obj_name in line:
             break
     if obj_name not in line:
-        raise ValueError(f"{obj_name} is not found anywhere in the input lines")
+        # obj_name found no where in the input lines
+        return (-1, -1)
     num_of_opens = 0
     num_of_closes = 0
     for ending_line in range(starting_line, len(all_lines)):
