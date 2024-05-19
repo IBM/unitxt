@@ -1311,9 +1311,9 @@ class TestConfidenceIntervals(UnitxtTestCase):
             template=template,
             format=format,
             main_score=metric_label,
-            template_model_input_field_label="question",
-            template_model_output_field_label="answer",
-            template_reference_field_label=None,
+            template_model_input_field_name="question",
+            template_model_output_field_name="answer",
+            template_reference_field_name=None,
         )
 
         predictions = ["[[10]]"] * 3

@@ -105,16 +105,16 @@ class LLMAsJudge(BulkInstanceMetric, ABC):
 
 
 class LLMAsJudgeSingleModelSingleTurn(LLMAsJudge):
-    template_model_input_field_label: Optional[str]
-    template_model_output_field_label: Optional[str]
-    template_reference_field_label: Optional[str]
+    template_model_input_field_name: Optional[str]
+    template_model_output_field_name: Optional[str]
+    template_reference_field_name: Optional[str]
 
     def prepare(self):
         super().prepare()
         assert (
-            self.template_model_input_field_label
-            or self.template_model_output_field_label
-            or self.template_reference_field_label
+            self.template_model_input_field_name
+            or self.template_model_output_field_name
+            or self.template_reference_field_name
         ), (
             "Error in 'LLMAsJudgeForSingleModelSingleTurn' metric."
             " At least one of the following input fields"
@@ -123,21 +123,21 @@ class LLMAsJudgeSingleModelSingleTurn(LLMAsJudge):
             " 'template_model_output_field_label,"
             " 'template_reference_field_label."
         )
-        if self.template_model_input_field_label is None:
-            self.template_model_input_field_label = "dummy_input"
-        if self.template_model_output_field_label is None:
-            self.template_model_input_field_label = "dummy_output"
-        if self.template_reference_field_label is None:
-            self.template_model_input_field_label = "dummy_reference"
+        if self.template_model_input_field_name is None:
+            self.template_model_input_field_name = "dummy_input"
+        if self.template_model_output_field_name is None:
+            self.template_model_input_field_name = "dummy_output"
+        if self.template_reference_field_name is None:
+            self.template_model_input_field_name = "dummy_reference"
 
     def _get_instance_for_judge_model(
         self, input_instances: List[str], predictions: List, references: List
     ) -> List[Dict]:
         return [
             {
-                self.template_model_input_field_label: input_instance,
-                self.template_model_output_field_label: prediction,
-                self.template_reference_field_label: reference,
+                self.template_model_input_field_name: input_instance,
+                self.template_model_output_field_name: prediction,
+                self.template_reference_field_name: reference,
                 "score": "dummy",  # This is a dummy value that is not used in practice
             }
             for input_instance, prediction, reference in zip(
