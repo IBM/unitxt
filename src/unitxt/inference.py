@@ -28,7 +28,7 @@ class InferenceEngine(abc.ABC, Artifact):
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     model_name: str
     max_new_tokens: int
-    use_fp16: bool
+    use_fp16: bool = True
     _requirement = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
