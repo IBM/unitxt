@@ -49,7 +49,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             else "cpu"
         )
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
-        # (even thou the model might *just* fit to a single gpu), even if there is a gpu available, and this will
+        # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
         # cause an error because the data is always on the gpu
         if torch.cuda.device_count() > 1:
             assert device == torch.device(0)
@@ -58,17 +58,15 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             model_args.update({"device": device})
 
         model_args.update({"max_new_tokens": self.max_new_tokens})
-        self.model_args = model_args
 
-        self.model = pipeline(model=self.model_name, trust_remote_code=True)
+        self.model = pipeline(
+            model=self.model_name, trust_remote_code=True, **model_args
+        )
 
     def infer(self, dataset):
         return [
             output["generated_text"]
-            for output in self.model(
-                [instance["source"] for instance in dataset],
-                **self.model_args,
-            )
+            for output in self.model([instance["source"] for instance in dataset])
         ]
 
 
