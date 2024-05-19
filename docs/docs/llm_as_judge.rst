@@ -87,14 +87,14 @@ If you want to verify that your setup runs smoothly, follow the steps outlined a
     card = ("card=cards.mt_bench.generation.english_single_turn,"
             "template=templates.empty,"
             "format=formats.empty,"
-            "metrics=[metrics.llm_as_judge.rating.mistralai_mistral_7b_instruct_v0_2_huggingface_template_mt_bench_single_turn]"
+            "metrics=[metrics.llm_as_judge.rating.mistral_7b_instruct_v0_2_huggingface_template_mt_bench_single_turn]"
             )
 
     dataset = load_dataset("unitxt/data",
                            card,
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
-    inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32)
+    inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32, use_fp16=True)
     predictions = inference_model.infer(dataset)
     # 3. create a metric and evaluate the results.
     scores = evaluate(predictions=predictions, data=dataset)
@@ -110,13 +110,15 @@ To construct a new LLM as a Judge metric, several key components must be defined
 
 1. **Judge Model**: Select a model that will assess the performance of other models.
 2. **Execution Platform**: Choose the platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
-4. **Format**: Specify the format in which the judge model expects to receive prompts.
-5. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
+3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template.
+4. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
+5. **Format**: Specify the format in which the judge model expects to receive prompts.
+6. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
 
 Let's walk through an example of creating a new LLM as a Judge metric, specifically recreating the MT-Bench judge metric single-model-rating variation:
 
-1. **Selecting a Judge Model**: We will utilize the *meta-llama/Meta-Llama-3-8B-Instruct* model from Huggingface as our judge model.
+
+1. **Selecting a Judge Model**: We will utilize the *mistralai/Mistral-7B-Instruct-v0.2* model from Huggingface as our judge model.
 2. **Selecting an Execution Platform**: We will opt to execute the model locally using Huggingface.
 
     For this example, we will use the `HFPipelineInferenceEngine` class:
@@ -125,7 +127,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
         from unitxt.inference import HFPipelineInferenceEngine
         from unitxt.llm_as_judge import LLMAsJudge
 
-        model_id = "meta-llama/llama-3-8b-instruct"
+        model_id = "mistralai/Mistral-7B-Instruct-v0.2"
         inference_model = HFPipelineInferenceEngine(model_name=model_id, max_generated_tokens=256)
 
 
@@ -135,7 +137,24 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
         You can find the definition of the `InferenceEngine` abstract class and pre-built inference engines
         (e.g., `OpenAiInferenceEngine`) in `src/unitxt/inference.py`.
 
-3. **Define the Template**: We want to construct a template that is identical to the MT-Bench judge metric:
+
+3. **Selecting the Judging Task**: This is a standard Unitxt task that defines the api of the judge model. The task specifies the input fields expected by the judge model, such as "question" and "answer," in the example below, which are utilized in the subsequent template. Additionally, it defines the expected output field as a float type. Another significant field is "metrics," which is utilized for the (meta) evaluation of the judge, as explained in the following section. Currently supported tasks are "rating.single_turn" and "rating.single_turn_with_reference".
+
+    .. code-block:: python
+        from unitxt.blocks import FormTask
+        from unitxt.catalog import add_to_catalog
+
+        add_to_catalog(
+            FormTask(
+                inputs={"question": "str", "answer": "str"},
+                outputs={"rating": "float"},
+                metrics=["metrics.spearman"],
+            ),
+            "tasks.response_assessment.rating.single_turn",
+            overwrite=True,
+        )
+
+4. **Define the Template**: We want to construct a template that is identical to the MT-Bench judge metric. Pay attention that this metric have field that are compatible with the task we chose ("question", "answer" and "rating").
 
     .. code-block:: python
         from unitxt import add_to_catalog
@@ -161,52 +180,55 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
             overwrite=True,
         )
 
-    Ensure the template includes a postprocessor for extracting the judgment from the judge model output and
-    passing it as a metric score. In our example, the template specify for the judge how it expect the judgment format
-    ("you must rate the response on a scale of 1 to 10 by strictly following this format: "[[rating]]""),
-    and such, it also defines the processor for extracting the judgment. (postprocessors=[r"processors.extract_mt_bench_rating_judgment"],).
-    This processor simply extract the number within [[ ]] and divide it by 10 in order to scale to to [0, 1].
+    .. note::
+        Ensure the template includes a postprocessor for extracting the judgment from the judge model output and
+        passing it as a metric score. In our example, the template specify for the judge how it expect the judgment format
+        ("you must rate the response on a scale of 1 to 10 by strictly following this format: "[[rating]]""),
+        and such, it also defines the processor for extracting the judgment. (postprocessors=[r"processors.extract_mt_bench_rating_judgment"],).
+        This processor simply extract the number within [[ ]] and divide it by 10 in order to scale to to [0, 1].
 
-4. **Define Format**: Define the format expected by the judge model for receiving prompts. For Llama3 models, you can use the format already available in the Unitxt catalog under *"formats.llama3_chat"*.
 
-5. **Define System Prompt**: We will not use a system prompt in this example.
+5. **Define Format**: Define the format expected by the judge model for receiving prompts. For Mitral models, you can use the format already available in the Unitxt catalog under *"formats.models.mistral.instruction""*.
+
+6. **Define System Prompt**: We will not use a system prompt in this example.
 
 With these components defined, creating a new LLM as a Judge metric is straightforward:
 
 .. code-block:: python
     from unitxt import add_to_catalog
-    from unitxt.inference import (
-    IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams)
+    from unitxt.inference import HFPipelineBasedInferenceEngine
     from unitxt.llm_as_judge import LLMAsJudge
 
-    model_id = "meta-llama/llama-3-8b-instruct"
-    gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=252)
-    inference_model = IbmGenAiInferenceEngine(
-        model_name=model_id, parameters=gen_params
-    )
-
-    task = "rating.single_turn"
-    format = "formats.llama3_chat"
+    model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+    format = "formats.models.mistral.instruction"
     template = "templates.response_assessment.rating.mt_bench_single_turn"
+    task = "rating.single_turn"
 
+    inference_model = HFPipelineBasedInferenceEngine(
+        model_name=model_id, max_new_tokens=256, use_fp16=True
+    )
+    model_label = model_id.split("/")[1].replace("-", "_").replace(".", "_").lower()
+    model_label = f"{model_label}_huggingface"
+    template_label = template.split(".")[-1]
+    metric_label = f"{model_label}_template_{template_label}"
     metric = LLMAsJudge(
         inference_model=inference_model,
-        task=task,
         template=template,
+        task=task,
         format=format,
-        main_score="llama_3_8b_mt_bench_single_turn",
+        main_score=metric_label,
     )
 
     add_to_catalog(
         metric,
-        f"metrics.llm_as_judge.rating.llama_3_8b_mt_bench_single_turn",
+        f"metrics.llm_as_judge.rating.{model_label}_template_{template_label}",
         overwrite=True,
     )
 
 
 
+.. note::
 
-Note that the `LLMAsJudge` class can receive the boolean argument `strip_system_prompt_and_format_from_inputs`
-(defaulting to True). When set to True, any system prompts or formatting in the inputs received by
-the evaluated model will be stripped.
+    The `LLMAsJudge` class can receive the boolean argument `strip_system_prompt_and_format_from_inputs`
+    (defaulting to True). When set to True, any system prompts or formatting in the inputs received by
+    the evaluated model will be stripped.
