@@ -34,20 +34,14 @@
             }
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "model_input",
-            "_argv": [
-                "model_input"
-            ]
+            "field": "model_input"
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "model_output",
-            "_argv": [
-                "model_output"
-            ]
+            "field": "model_output"
         },
         {
             "type": "interleave_lists_to_dialog_operator",

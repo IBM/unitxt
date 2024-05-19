@@ -36,12 +36,9 @@
             }
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "question",
-            "_argv": [
-                "question"
-            ]
+            "field": "question"
         },
         {
             "type": "copy_fields",
@@ -50,12 +47,9 @@
             }
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "answer",
-            "_argv": [
-                "answer"
-            ]
+            "field": "answer"
         },
         {
             "type": "copy_fields",

@@ -1,16 +1,14 @@
-import ast
-
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    Apply,
     FilterByCondition,
     InterleaveListsToDialogOperator,
     RenameFields,
 )
+from unitxt.processors import LiteralEval
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -21,9 +19,9 @@ card = TaskCard(
         FilterByCondition(values={"turn": 2}, condition="eq"),
         FilterByCondition(values={"reference": "[]"}, condition="ne"),
         RenameFields(field_to_field={"score": "rating", "category": "group"}),
-        Apply("model_input", function=ast.literal_eval, to_field="model_input"),
-        Apply("model_output", function=ast.literal_eval, to_field="model_output"),
-        Apply("reference", function=ast.literal_eval, to_field="reference"),
+        LiteralEval("model_input", to_field="model_input"),
+        LiteralEval("model_output", to_field="model_output"),
+        LiteralEval("reference", to_field="reference"),
         InterleaveListsToDialogOperator(
             user_turns_field="model_input",
             assistant_turns_field="model_output",

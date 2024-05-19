@@ -1,16 +1,14 @@
-import ast
-
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    Apply,
     CopyFields,
     FilterByCondition,
     RenameFields,
 )
+from unitxt.processors import LiteralEval
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -29,13 +27,11 @@ card = TaskCard(
                 "model_output": "answer",
             }
         ),
-        Apply("question", function=ast.literal_eval, to_field="question"),
+        LiteralEval("question", to_field="question"),
         CopyFields(field_to_field={"question/0": "question"}),
-        Apply("answer", function=ast.literal_eval, to_field="answer"),
+        LiteralEval("answer", to_field="answer"),
         CopyFields(field_to_field={"answer/0": "answer"}),
-        Apply(
-            "reference_answer", function=ast.literal_eval, to_field="reference_answer"
-        ),
+        LiteralEval("reference_answer", to_field="reference_answer"),
         CopyFields(field_to_field={"reference_answer/0": "reference_answer"}),
     ],
     task="tasks.response_assessment.rating.single_turn_with_reference",
