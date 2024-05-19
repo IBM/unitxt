@@ -103,7 +103,7 @@ If you want to verify that your setup runs smoothly, follow the steps outlined a
 
 
 
-Creating a new LLM As a Judge Metric
+Creating a new LLM as a Judge Metric
 -------------------------------------
 
 To construct a new LLM as a Judge metric, several key components must be defined:
