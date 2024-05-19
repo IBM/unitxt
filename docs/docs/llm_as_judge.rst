@@ -47,7 +47,7 @@ Employing a pre-defined LLM as a judge metric is effortlessly achieved within Un
 
 The Unitxt catalog boasts a variety of preexisting LLM as judges that seamlessly integrate into your workflow.
 
-Let's consider an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating evaluation approach.  In this approach, we provide the LLM as a Judge, the input provided to the model and the output it generation.   The LLM as Judge is asked to rate how well the output of the model address the request in the input.  
+Let's consider an example of evaluating a *flan-t5-small* model on the MT-Bench benchmark, specifically utilizing the single model rating evaluation part of the benchmark. In this part, we provide the LLM as a Judge, the input provided to the model and the output it generation. The LLM as Judge is asked to rate how well the output of the model address the request in the input.
 
 To accomplish this evaluation, we require the following:
 
@@ -69,10 +69,10 @@ From here, constructing the full unitxt recipe string is standard and straightfo
 .. note::
 
    Pay attention!
-   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the Terms of Use it on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using an LLM as judge based on the OpenAI platform, you will need to set your OpenAI api key.
+   We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. Using this model requires you to agree to the Terms of Use on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using an LLM as judge based on the OpenAI platform, you will need to set your OpenAI api key.
 
 
-The following code performs the required evaluation:
+The following code performs the desired evaluation:
 
 .. code-block:: python
     from datasets import load_dataset
@@ -107,7 +107,7 @@ To construct a new LLM as a Judge metric, several key components must be defined
 
 1. **Judge Model**: Select a model that will assess the performance of other models.
 2. **Execution Platform**: Choose the platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template.  Two common tasks are single model rating we saw above and pairwise model comparision , in which the outputs of two models is compared, to see which better addressed the required input.
+3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template. Two common tasks are single model rating we saw above and pairwise model comparison, in which the outputs of two models is compared, to see which better addressed the required input.
 4. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
 5. **Format**: Specify the format in which the judge model expects to receive prompts.
 6. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
@@ -251,7 +251,7 @@ Remember the task we defined in the previous section?
 
 This task define the (meta) evaluation of our LLMaJ model.
 We will fetch a dataset of MT-Bench inputs and models outputs, together with scores judged by GPT-4.
-We will consider these GPT4 scores our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
+We will consider these GPT4 scores as our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
 to the score of GPT4 using spearman correlation as defined in the task card.
 
 We will create a task, as we do for every other Unitxt scenario:
