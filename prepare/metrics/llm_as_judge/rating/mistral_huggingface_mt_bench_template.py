@@ -9,7 +9,7 @@ task = "rating.single_turn"
 
 for model_id in model_list:
     inference_model = HFPipelineBasedInferenceEngine(
-        model_name=model_id, max_new_tokens=256
+        model_name=model_id, max_new_tokens=256, use_fp16=True
     )
     model_label = model_id.split("/")[1].replace("-", "_").replace(".", "_").lower()
     model_label = f"{model_label}_huggingface"

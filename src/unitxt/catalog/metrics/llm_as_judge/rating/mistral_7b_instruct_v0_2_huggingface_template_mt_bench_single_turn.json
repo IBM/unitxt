@@ -3,7 +3,8 @@
     "inference_model": {
         "type": "hf_pipeline_based_inference_engine",
         "model_name": "mistralai/Mistral-7B-Instruct-v0.2",
-        "max_new_tokens": 256
+        "max_new_tokens": 256,
+        "use_fp16": true
     },
     "template": "templates.response_assessment.rating.mt_bench_single_turn",
     "task": "rating.single_turn",

@@ -1,7 +1,7 @@
 import abc
 import os
 from dataclasses import field
-from typing import List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
@@ -28,12 +28,37 @@ class InferenceEngine(abc.ABC, Artifact):
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     model_name: str
     max_new_tokens: int
+    use_fp16: bool
     _requirement = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
 
     def prepare(self):
+        import torch
         from transformers import pipeline
+
+        model_args: Dict[str, Any] = (
+            {"torch_dtype": torch.float16} if self.use_fp16 else {}
+        )
+
+        device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+        # We do this, because in some cases, using device:auto will offload some weights to the cpu
+        # (even thou the model might *just* fit to a single gpu), even if there is a gpu available, and this will
+        # cause an error because the data is always on the gpu
+        if torch.cuda.device_count() > 1:
+            assert device == torch.device(0)
+            model_args.update({"device_map": "auto"})
+        else:
+            model_args.update({"device": device})
+
+        model_args.update({"max_new_tokens": self.max_new_tokens})
+        self.model_args = model_args
 
         self.model = pipeline(model=self.model_name, trust_remote_code=True)
 
@@ -42,7 +67,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             output["generated_text"]
             for output in self.model(
                 [instance["source"] for instance in dataset],
-                max_new_tokens=self.max_new_tokens,
+                **self.model_args,
             )
         ]
 
