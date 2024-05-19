@@ -75,7 +75,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import Stream
+from .stream import GeneratorStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -1770,7 +1770,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream(
             {
-                self.new_stream_name: Stream(
+                self.new_stream_name: GeneratorStream(
                     self.merge, gen_kwargs={"multi_stream": multi_stream}
                 )
             }

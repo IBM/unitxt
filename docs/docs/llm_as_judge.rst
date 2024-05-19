@@ -23,7 +23,7 @@ Overview
 
 An LLM as a Judge metric consists of several essential components:
 
-1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo, which evaluates the performance of other models.
+1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface or OpenAI API.
 3. The template used to construct prompts for the judge model. This template should be reflective of the judgment needed and usually incorporates both the input and output of the evaluated model. For instance:
 
@@ -37,7 +37,7 @@ An LLM as a Judge metric consists of several essential components:
 
         <INST>{input}</INST>
 
-5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
+5. Optionally, a system prompt to pass to the judge model. This can provide additional context for evaluation.
 
 Understanding these components is crucial for effectively leveraging LLM as a judge metrics. With this foundation, let's examine  how to utilize and create these metrics in the Unitxt package.
 
@@ -71,6 +71,7 @@ From here, constructing the full unitxt recipe string is standard and straightfo
    Pay attention!
    We are using the mistralai/Mistral-7B-Instruct-v0.2 model from Huggingface. This model requires you to agree to the Terms of Use it on the model page and set the HUGGINGFACE_TOKEN environment argument. Other platforms might have different requirements. For example if you are using an LLM as judge based on the OpenAI platform, you will need to set your OpenAI api key.
 
+
 The following code performs the required evaluation:
 
 .. code-block:: python
@@ -99,7 +100,7 @@ The following code performs the required evaluation:
 
 
 
-Creating a new LLM As a Judge Metric
+Creating a new LLM as a Judge Metric
 -------------------------------------
 
 To construct a new LLM as a Judge metric, several key components must be defined:
