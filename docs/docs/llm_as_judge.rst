@@ -75,6 +75,7 @@ From here, constructing the full unitxt recipe string is standard and straightfo
 The following code performs the desired evaluation:
 
 .. code-block:: python
+
     from datasets import load_dataset
     from unitxt.inference import HFPipelineBasedInferenceEngine
     from unitxt import evaluate
@@ -117,9 +118,10 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 1. **Selecting a Judge Model**: We will utilize the *mistralai/Mistral-7B-Instruct-v0.2* model from Huggingface as our judge model.
 2. **Selecting an Execution Platform**: We will opt to execute the model locally using Huggingface.
 
-    For this example, we will use the `HFPipelineInferenceEngine` class:
+    For this example, we will use the *HFPipelineInferenceEngine* class:
 
     .. code-block:: python
+
         from unitxt.inference import HFPipelineInferenceEngine
         from unitxt.llm_as_judge import LLMAsJudge
 
@@ -128,6 +130,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 
 
     .. note::
+
         If you wish to use a different platform for running your judge model, you can implement
         a new `InferenceEngine` class and substitute it with the `HFPipelineInferenceEngine`.
         You can find the definition of the `InferenceEngine` abstract class and pre-built inference engines
@@ -137,6 +140,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 3. **Selecting the Judging Task**: This is a standard Unitxt task that defines the api of the judge model. The task specifies the input fields expected by the judge model, such as "question" and "answer," in the example below, which are utilized in the subsequent template. Additionally, it defines the expected output field as a float type. Another significant field is "metrics," which is utilized for the (meta) evaluation of the judge, as explained in the following section. Currently supported tasks are "rating.single_turn" and "rating.single_turn_with_reference".
 
     .. code-block:: python
+
         from unitxt.blocks import FormTask
         from unitxt.catalog import add_to_catalog
 
@@ -153,6 +157,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 4. **Define the Template**: We want to construct a template that is identical to the MT-Bench judge metric. Pay attention that this metric have field that are compatible with the task we chose ("question", "answer" and "rating").
 
     .. code-block:: python
+
         from unitxt import add_to_catalog
         from unitxt.templates import InputOutputTemplate
 
@@ -177,6 +182,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
         )
 
     .. note::
+
         Ensure the template includes a postprocessor for extracting the judgment from the judge model output and
         passing it as a metric score. In our example, the template specifies for the judge the expected judgment format
         ("you must rate the response on a scale of 1 to 10 by strictly following this format: "[[rating]]""),
@@ -191,6 +197,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 With these components defined, creating a new LLM as a Judge metric is straightforward:
 
 .. code-block:: python
+
     from unitxt import add_to_catalog
     from unitxt.inference import HFPipelineBasedInferenceEngine
     from unitxt.llm_as_judge import LLMAsJudge
@@ -236,6 +243,7 @@ The answer is: You evaluate it like any other model in Unitxt.
 Remember the task we defined in the previous section?
 
     .. code-block:: python
+
         from unitxt.blocks import FormTask
         from unitxt.catalog import add_to_catalog
 
@@ -257,6 +265,7 @@ to the score of GPT4 using spearman correlation as defined in the task card.
 We will create a card, as we do for every other Unitxt scenario:
 
 .. code-block:: python
+
     from unitxt.blocks import (
         TaskCard,
     )
