@@ -1299,6 +1299,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
         format = "formats.llama3_chat"
+        task = "rating.single_turn"
         template = "templates.response_assessment.rating.mt_bench_single_turn"
 
         inference_model = MockInferenceEngine(model_name=model_id)
@@ -1309,11 +1310,9 @@ class TestConfidenceIntervals(UnitxtTestCase):
         metric = LLMAsJudgeSingleModelSingleTurn(
             inference_model=inference_model,
             template=template,
+            task=task,
             format=format,
             main_score=metric_label,
-            template_model_input_field_name="question",
-            template_model_output_field_name="answer",
-            template_reference_field_name=None,
         )
 
         predictions = ["[[10]]"] * 3
