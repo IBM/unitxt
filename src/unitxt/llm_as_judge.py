@@ -120,7 +120,7 @@ class LLMAsJudge(BulkInstanceMetric):
             input_instances, predictions, references
         )
 
-        card = "tasks.dynamic_tasks_for_llm_judges.input_output_reference"
+        card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
         recipe = (
             f"card={card},"
             f"template={self.template},"
