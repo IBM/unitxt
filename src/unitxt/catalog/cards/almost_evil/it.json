@@ -6,12 +6,9 @@
     },
     "preprocess_steps": [
         {
-            "type": "apply",
-            "function": "json.loads",
-            "to_field": "metadata",
-            "_argv": [
-                "METADATA"
-            ]
+            "type": "load_json",
+            "field": "METADATA",
+            "to_field": "metadata"
         },
         {
             "type": "copy_fields",

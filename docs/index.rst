@@ -53,8 +53,8 @@
       <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
       <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
       <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/catalog.html" class="custom-button">Catalog</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/docs/contributors_guide.html" class="custom-button">Contributors</a>
+      <a href="https://unitxt.readthedocs.io/en/latest/catalog/catalog.__dir__.html" class="custom-button">Catalog</a>
+      <a href="https://github.com/IBM/unitxt/blob/main/CONTRIBUTING.md" class="custom-button">Contributors</a>
       <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
       <a href="https://unitxt.readthedocs.io/en/latest/search.html" class="custom-button">Search</a>
       <a href="https://unitxt.readthedocs.io/en/latest/py-modindex.html" class="custom-button">Modules</a>
@@ -178,5 +178,5 @@ Welcome!
    docs/production
    docs/helm
    documentation
-   catalog
+   catalog/catalog.__dir__
 

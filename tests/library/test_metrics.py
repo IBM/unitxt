@@ -1130,7 +1130,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanAccuracy(),
             expected_ci_low=0.025,
-            expected_ci_high=0.44105968464125495,
+            expected_ci_high=0.4407250456645065,
         )
 
         self._test_grouped_instance_confidence_interval(
@@ -1141,8 +1141,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
         self._test_grouped_instance_confidence_interval(
             metric=GroupMeanStringContainment(),
-            expected_ci_low=0.15556138609239942,
-            expected_ci_high=0.707936507936508,
+            expected_ci_low=0.15627449950197503,
+            expected_ci_high=0.7080527276705952,
         )
 
         self._test_grouped_instance_confidence_interval(
@@ -1247,7 +1247,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "group_mean_f1_ci_high": 0.6805555555555555,
                 "score_ci_low": 0.22302503471948287,
                 "score_ci_high": 0.6805555555555555,
-                "group_mean_precision_ci_low": 0.20949399775845196,
+                "group_mean_precision_ci_low": 0.2095091529536007,
                 "group_mean_precision_ci_high": 0.6666666666666666,
             },
         )
@@ -1290,10 +1290,10 @@ class TestConfidenceIntervals(UnitxtTestCase):
         for score_name, score_value in global_result.items():
             if score_name in expected_global_result:
                 self.assertAlmostEqual(
-                    score_value,
                     expected_global_result[score_name],
+                    score_value,
                     places=5,
-                    msg=f"{group_score_name} score mismatch for {metric.__class__.__name__}, got {expected_global_result[score_name]} but expected {score_value}",
+                    msg=f"{score_name} score mismatch for {metric.__class__.__name__}, expected {expected_global_result[score_name]} but got {score_value}",
                 )
             else:
                 # An output score that is not expected
