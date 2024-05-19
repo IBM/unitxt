@@ -235,4 +235,103 @@ With these components defined, creating a new LLM as a Judge metric is straightf
 
 Evaluating a LLMaJ metric (Meta-evaluation)
 --------------------------------------------
-But wait, we missed a step! We know how to create a LLM as a judge worth anything?
+But wait, we missed a step! We know the LLM as a judge we created worth anything?
+The answer is: You evaluate it like any other model in Unitxt!
+Remember the task we defined in the previous section?
+
+    .. code-block:: python
+        from unitxt.blocks import FormTask
+        from unitxt.catalog import add_to_catalog
+
+        add_to_catalog(
+            FormTask(
+                inputs={"question": "str", "answer": "str"},
+                outputs={"rating": "float"},
+                metrics=["metrics.spearman"],
+            ),
+            "tasks.response_assessment.rating.single_turn",
+            overwrite=True,
+        )
+
+This task define the (meta) evaluation of our LLMaJ model!
+We will fetch a dataset of MT-Bench inputs and models outputs, together with scores as judges by GPT-4.
+We will consider these scores our gold labels and evaluate our LLMaJ model by comparing its score on the model outputs
+to the score of GPT4 using spearman correlation as defined in the task card.
+
+We will create a task, as we do for every other Unitxt scenario:
+
+.. code-block:: python
+    from unitxt.blocks import (
+        TaskCard,
+    )
+    from unitxt.catalog import add_to_catalog
+    from unitxt.loaders import LoadHF
+    from unitxt.operators import (
+        CopyFields,
+        FilterByCondition,
+        RenameFields,
+    )
+    from unitxt.processors import LiteralEval
+    from unitxt.splitters import RenameSplits
+    from unitxt.test_utils.card import test_card
+
+    card = TaskCard(
+        loader=LoadHF(path="OfirArviv/mt_bench_single_score_gpt4_judgement", split="train"),
+        preprocess_steps=[
+            RenameSplits({"train": "test"}),
+            FilterByCondition(values={"turn": 1}, condition="eq"),
+            FilterByCondition(values={"reference": "[]"}, condition="eq"),
+            RenameFields(
+                field_to_field={
+                    "model_input": "question",
+                    "score": "rating",
+                    "category": "group",
+                    "model_output": "answer",
+                }
+            ),
+            LiteralEval("question", to_field="question"),
+            CopyFields(field_to_field={"question/0": "question"}),
+            LiteralEval("answer", to_field="answer"),
+            CopyFields(field_to_field={"answer/0": "answer"}),
+        ],
+        task="tasks.response_assessment.rating.single_turn",
+        templates=["templates.response_assessment.rating.mt_bench_single_turn"],
+    )
+
+    test_card(card, demos_taken_from="test", strict=False)
+    add_to_catalog(
+        card,
+        "cards.mt_bench.response_assessment.rating.single_turn_gpt4_judgement",
+        overwrite=True,
+    )
+
+This is a card for the first turn inputs of the MT-Bench benchmarks (without reference),
+together with the outputs of multiple models to those inputs and the scoring of GPT-4
+to those outputs.
+
+
+Now all we need to do is to load the card, with the template ad format the judge model is expected to use,
+and run it! Simple!
+
+.. code-block:: python
+    from datasets import load_dataset
+    from unitxt.inference import HFPipelineBasedInferenceEngine
+    from unitxt import evaluate
+
+    # 1. Create the dataset
+    card = ("cards.mt_bench.response_assessment.rating.single_turn_gpt4_judgement"
+            "template=templates.response_assessment.rating.mt_bench_single_turn,"
+            "format=formats.models.mistral.instruction")
+
+    dataset = load_dataset("unitxt/data",
+                           card,
+                           split='test')
+    # 2. use inference module to infer based on the dataset inputs.
+    inference_model = HFPipelineBasedInferenceEngine(model_name="mistralai/Mistral-7B-Instruct-v0.2",
+                                                     max_new_tokens=32,
+                                                     use_fp16=True)
+    predictions = inference_model.infer(dataset)
+    # 3. create a metric and evaluate the results.
+    scores = evaluate(predictions=predictions, data=dataset)
+
+    [print(item) for item in scores[0]["score"]["global"].items()]
