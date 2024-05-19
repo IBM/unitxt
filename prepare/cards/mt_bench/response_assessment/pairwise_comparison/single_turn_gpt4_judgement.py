@@ -1,17 +1,15 @@
-import ast
-
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    Apply,
     CopyFields,
     FilterByCondition,
     MapInstanceValues,
     RenameFields,
 )
+from unitxt.processors import LiteralEval
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -39,11 +37,11 @@ card = TaskCard(
                 "category": "group",
             }
         ),
-        Apply("question", function=ast.literal_eval, to_field="question"),
+        LiteralEval("question", to_field="question"),
         CopyFields(field_to_field={"question/0": "question"}),
-        Apply("answer_a", function=ast.literal_eval, to_field="answer_a"),
+        LiteralEval("answer_a", to_field="answer_a"),
         CopyFields(field_to_field={"answer_a/0": "answer_a"}),
-        Apply("answer_b", function=ast.literal_eval, to_field="answer_b"),
+        LiteralEval("answer_b", to_field="answer_b"),
         CopyFields(field_to_field={"answer_b/0": "answer_b"}),
     ],
     task="tasks.response_assessment.pairwise_comparison.single_turn",

@@ -54,28 +54,19 @@
             }
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "model_input",
-            "_argv": [
-                "model_input"
-            ]
+            "field": "model_input"
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "model_1_output",
-            "_argv": [
-                "model_1_output"
-            ]
+            "field": "model_1_output"
         },
         {
-            "type": "apply",
-            "function": "ast.literal_eval",
+            "type": "literal_eval",
             "to_field": "model_2_output",
-            "_argv": [
-                "model_2_output"
-            ]
+            "field": "model_2_output"
         },
         {
             "type": "interleave_lists_to_dialog_operator",

@@ -1,17 +1,15 @@
-import ast
-
 from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    Apply,
     FilterByCondition,
     InterleaveListsToDialogOperator,
     MapInstanceValues,
     RenameFields,
 )
+from unitxt.processors import LiteralEval
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -32,10 +30,10 @@ card = TaskCard(
             }
         ),
         RenameFields(field_to_field={"category": "group"}),
-        Apply("model_input", function=ast.literal_eval, to_field="model_input"),
-        Apply("model_1_output", function=ast.literal_eval, to_field="model_1_output"),
-        Apply("model_2_output", function=ast.literal_eval, to_field="model_2_output"),
-        Apply("reference", function=ast.literal_eval, to_field="reference"),
+        LiteralEval("model_input", to_field="model_input"),
+        LiteralEval("model_1_output", to_field="model_1_output"),
+        LiteralEval("model_2_output", to_field="model_2_output"),
+        LiteralEval("reference", to_field="reference"),
         InterleaveListsToDialogOperator(
             user_turns_field="model_input",
             assistant_turns_field="model_1_output",
