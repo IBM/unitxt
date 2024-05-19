@@ -35,11 +35,12 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     def prepare(self):
         import torch
-        from transformers import pipeline
+        from transformers import AutoConfig, pipeline
 
         model_args: Dict[str, Any] = (
             {"torch_dtype": torch.float16} if self.use_fp16 else {}
         )
+        model_args.update({"max_new_tokens": self.max_new_tokens})
 
         device = torch.device(
             "mps"
@@ -57,7 +58,16 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         else:
             model_args.update({"device": device})
 
-        model_args.update({"max_new_tokens": self.max_new_tokens})
+        task = (
+            "text2text-generation"
+            if AutoConfig.from_pretrained(
+                self.model_name, trust_remote_code=True
+            ).is_encoder_decoder
+            else "text-generation"
+        )
+
+        if task == "text-generation":
+            model_args.update({"return_full_text": False})
 
         self.model = pipeline(
             model=self.model_name, trust_remote_code=True, **model_args
