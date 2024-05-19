@@ -921,7 +921,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                     }
                 }
             }
-            for group_name in sorted(group_to_instance_scores.keys())
+            for group_name in sorted(group_to_instance_scores.keys()) # sorted for consistency 
         ]
 
     def _set_up_group_mean_aggregation(
