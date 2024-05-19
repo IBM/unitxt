@@ -56,6 +56,11 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                 except (MissingKaggleCredentialsError, GatedRepoError) as e:
                     logger.info(f"Skipping file {file} due to ignored error {e}")
                     continue
+                except OSError as e:
+                    if "You are trying to access a gated repo" in str(e):
+                        logger.info(f"Skipping file {file} due to ignored error {e}")
+                        continue
+                    raise
                 logger.info(f"Testing preparation file: {file} passed")
                 self.assertTrue(True)
 
