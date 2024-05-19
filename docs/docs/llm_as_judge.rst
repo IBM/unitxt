@@ -39,7 +39,7 @@ An LLM as a Judge metric consists of several essential components:
 
         <INST>{input}</INST>
 
-5. Optionally, a system prompt passed to the judge model. This can provide additional context for evaluation.
+5. Optionally, a system prompt to pass to the judge model. This can provide additional context for evaluation.
 
 Understanding these components is crucial for effectively leveraging LLM as a judge metrics. With this foundation, let's delve into how to utilize and create these metrics in the Unitxt package.
 
