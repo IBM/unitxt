@@ -310,7 +310,7 @@ together with the outputs of multiple models to those inputs and the scoring of 
 to those outputs.
 
 
-Now all we need to do is to load the card, with the template ad format the judge model is expected to use,
+Now all we need to do is to load the card, with the template and format the judge model is expected to use,
 and run it! Simple!
 
 .. code-block:: python
