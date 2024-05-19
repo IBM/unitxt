@@ -64,10 +64,12 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         )
 
     def infer(self, dataset):
-        return [
-            output["generated_text"]
-            for output in self.model([instance["source"] for instance in dataset])
-        ]
+        outputs = []
+        for output in self.model([instance["source"] for instance in dataset]):
+            if isinstance(output, list):
+                output = output[0]
+            outputs.append(output["generated_text"])
+        return outputs
 
 
 class MockInferenceEngine(InferenceEngine):
