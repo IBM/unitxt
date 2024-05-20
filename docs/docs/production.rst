@@ -5,17 +5,19 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Using in Production
+Dynamic Data Processing For Inference
 =====================================
 
-Unitxt can be used to process data in production. First define a recipe:
+Unitxt can be used to process data dynamically and generate model-ready inputs on the fly, based on a given task recipe.
+
+First define a recipe:
 
 .. code-block:: python
 
   recipe = "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2"
 
 
-Second prepare an instance in the exact schema of the task in that recipe:
+Second, prepare an python dictionary object in the exact schema of the task used in that recipe:
 
 
 .. code-block:: python
@@ -30,7 +32,7 @@ Second prepare an instance in the exact schema of the task in that recipe:
     "text_b_type": "hypothesis",
   }
 
-Then you can produce that model-ready data with the `produce` function:
+Then you can produce the model-ready input data with the `produce` function:
 
 .. code-block:: python
 
@@ -38,7 +40,7 @@ Then you can produce that model-ready data with the `produce` function:
 
   result = produce([instance], recipe)
 
-Then you have the production ready instance in the result. If you `print(result[0]["source"])` you will get:
+Then you have the formatted instance in the result. If you `print(result[0]["source"])` you will get:
 
 .. code-block::
 
