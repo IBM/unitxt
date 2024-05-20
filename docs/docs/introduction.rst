@@ -34,7 +34,7 @@ Unitxt can be used in standalone code, and is also integrated into common librar
 `HuggingFace`_, `Helm`_, `LM-eval-harness`_. 
 
 To get started, can explore the Unitxt :ref:`catalog <demo>`, and then see how you can load a :ref:`dataset<loading_datasets>` and  :ref:`evaluate <evaluating_datasets>` it in a just a few lines of code.
-Finally, you can then learn how to :ref:`add new datasets <datasets>`.
+Finally, you can then learn how to :ref:`add new datasets <adding_dataset>`.
 
 Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively.
 
