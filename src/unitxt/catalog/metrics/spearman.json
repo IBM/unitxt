@@ -14,5 +14,6 @@
     ],
     "metric": {
         "type": "spearmanr"
-    }
+    },
+    "prediction_type": "float"
 }
