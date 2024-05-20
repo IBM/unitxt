@@ -7,7 +7,7 @@
 Introduction
 ===================
 
-Unitxt is an innovative library for customizable textual data preparation and evaluation tailored to generative language models.
+Unitxt is an innovative library for textual data preparation and evaluation of generative language models.
 
 In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations.
 The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.
@@ -16,11 +16,11 @@ Unitxt deconstructs the data preparations and evaluation flows into modular comp
 
 Key Capabilities:
 
-- Built in support for variety of NLP tasks , including ones not found typically found in other frameworks, such as multi label classification, targeted sentiment, entity and relation extraction, table understanding, and retrieval augmented generation
+- Built in support for variety of NLP tasks, including ones not typically found in other frameworks, such as multi label classification, targeted sentiment analysis, entity and relation extraction, table understanding, and retrieval augmented generation.
 
-- Support for changing templates and formats
+- Support for changing templates and formats.
 
-- Allow loading data from datasources (e.g Local files, Huggingface, Cloud Storage, Kaggle , Scikit learns)
+- Supports loading data from different datasources (e.g Local files, Huggingface, Cloud Storage, Kaggle )
 
 - Large collection of metrics (including LLM as Judges)
 
@@ -28,7 +28,7 @@ Key Capabilities:
 
 - The same Unitxt data preparation pipeline can be used in evaluation and during inference in production systems
 
-- Removes requirement to run user python code in dataset processing - reducing security risks
+- Removes the requirement to run user python code in dataset processing - reducing security risks
 
 Unitxt can be used in standalone code, and is also integrated into common libraries and evaluation frameworks such as
 `HuggingFace`_, `Helm`_, `LM-eval-harness`_. 
