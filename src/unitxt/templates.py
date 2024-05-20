@@ -464,25 +464,20 @@ class YesNoTemplate(Template):
             raise RuntimeError(
                 f"Available outputs are {list(outputs.keys())}, missing required label field: '{self.label_field}'."
             ) from e
-        if not isinstance(gold_class_names, list) or not gold_class_names:
+        if not isinstance(gold_class_names, list):
             raise RuntimeError(
-                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expected a non-empty list."
+                f"Unexpected value for gold_class_names: '{gold_class_names}'. Expecting a list."
             )
         try:
-            queried_class_names = outputs[self.class_field]
+            queried_class_name = outputs[self.class_field]
         except KeyError as e:
             raise RuntimeError(
                 f"Available outputs are {list(outputs.keys())}, missing required class field: '{self.class_field}'."
             ) from e
-        if (
-            not queried_class_names
-            or not isinstance(queried_class_names, list)
-            or not len(queried_class_names) == 1
-        ):
+        if not queried_class_name or not isinstance(queried_class_name, str):
             raise RuntimeError(
-                f"Unexpected value for queried_class_names: '{queried_class_names}'. Expected a list with one item."
+                f"Unexpected value for queried_class_names: '{queried_class_name}'. Expected a string."
             )
-        queried_class_name = queried_class_names[0]
         if queried_class_name in gold_class_names:
             return self.yes_answer, [self.yes_answer]
         return self.no_answer, [self.no_answer]

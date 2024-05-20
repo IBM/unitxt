@@ -340,8 +340,8 @@ class TestTemplates(UnitxtTestCase):
         )
 
         processed_input_to_inputs = {
-            "Is text_a of news?": {"text": "text_a", "class": ["news"]},
-            "Is text_b of news?": {"text": "text_b", "class": ["news"]},
+            "Is text_a of news?": {"text": "text_a", "class": "news"},
+            "Is text_b of news?": {"text": "text_b", "class": "news"},
         }
         for expected_processed_input, inputs in processed_input_to_inputs.items():
             processed = template.inputs_to_source(inputs)
@@ -376,8 +376,8 @@ class TestTemplates(UnitxtTestCase):
         )
 
         processed_output_to_outputs = {
-            no_answer: {label_field: ["sports"], class_field: ["news"]},
-            yes_answer: {label_field: ["news", "sports"], class_field: ["news"]},
+            no_answer: {label_field: ["sports"], class_field: "news"},
+            yes_answer: {label_field: ["news", "sports"], class_field: "news"},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
             processed, references = template.outputs_to_target_and_references(outputs)
@@ -396,7 +396,7 @@ class TestTemplates(UnitxtTestCase):
         )
 
         with self.assertRaises(RuntimeError) as cm:
-            outputs = {class_field: ["news"]}
+            outputs = {class_field: "news"}
             template.outputs_to_target_and_references(outputs=outputs)
         self.assertEqual(
             f"Available outputs are {list(outputs.keys())}, missing required label field: '{label_field}'.",
@@ -423,13 +423,10 @@ class TestTemplates(UnitxtTestCase):
                     outputs={"labels": wrong_labels_value}
                 )
             self.assertEqual(
-                f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expected a non-empty list.",
+                f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expecting a list.",
                 str(cm.exception),
             )
 
-        _test_with_wrong_labels_value(
-            wrong_labels_value=[]
-        )  # list of labels values should not be empty
         _test_with_wrong_labels_value(wrong_labels_value="non list value is an error")
 
     def test_yes_no_template_process_output_wrong_value_in_class_field(self):
@@ -449,17 +446,14 @@ class TestTemplates(UnitxtTestCase):
                     }
                 )
             self.assertEqual(
-                f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a list with one item.",
+                f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a string.",
                 str(cm.exception),
             )
 
         _test_with_wrong_class_value(
-            wrong_class_value=[]
+            wrong_class_value=None
         )  # list of class values should not be empty
-        _test_with_wrong_class_value(wrong_class_value="non list value is an error")
-        _test_with_wrong_class_value(
-            wrong_class_value=["list with", "two or more items is an error"]
-        )
+        _test_with_wrong_class_value(wrong_class_value=["list is a wrong value"])
 
     def test_span_labeling_template_one_entity_escaping(self):
         template = SpanLabelingTemplate(
