@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "source_language": "str", "target_language": "str"},
         outputs={"translation": "str"},
         prediction_type="str",

@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "dialog_a": "List[Tuple[str, str]]",
             "dialog_b": "List[Tuple[str, str]]",

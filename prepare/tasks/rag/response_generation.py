@@ -1,10 +1,10 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
+    Task,
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "contexts": "List[str]",
             "contexts_ids": "List[int]",

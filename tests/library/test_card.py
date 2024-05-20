@@ -1,10 +1,10 @@
 from unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
     SplitRandomMix,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -26,7 +26,7 @@ card = TaskCard(
             }
         ),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["choices", "sentence1", "sentence2"],
         outputs=["label"],
         metrics=["metrics.accuracy"],
