@@ -15,36 +15,35 @@
         {
             "type": "add_fields",
             "fields": {
-                "answer": "yes"
+                "answer": "yes",
+                "choices": [
+                    "yes",
+                    "no"
+                ]
             }
         },
         {
             "type": "rename_fields",
             "field_to_field": {
-                "filled_template": "context"
+                "filled_template": "question"
             }
         }
     ],
-    "task": {
-        "type": "form_task",
-        "inputs": {
-            "context": "str"
-        },
-        "outputs": {
-            "answer": "str"
-        },
-        "prediction_type": "str",
-        "metrics": [
-            "metrics.string_containment"
-        ]
-    },
+    "task": "tasks.qa.multiple_choice.open",
     "templates": {
         "type": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
-                "input_format": "Human: {context}\n\nPlease answer the above question with either \"yes\" or \"no\".\n\nAssistant: Based on the information provided if I had to choose between \"yes\" and \"no\" my answer would be ",
-                "output_format": "{answer}"
+                "type": "multiple_choice_template",
+                "input_format": "{question}\n\nPlease answer the above question with either {choices}.\n\n",
+                "target_prefix": "Based on the information provided if I had to choose between {choices} my answer would be ",
+                "target_field": "answer",
+                "target_choice_format": "{choice_text}",
+                "source_choice_format": "\"{choice_text}\"",
+                "choices_separator": " or ",
+                "postprocessors": [
+                    "processors.match_closest_option"
+                ]
             }
         ]
     }
