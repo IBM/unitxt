@@ -65,7 +65,7 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.premise: Steve follows Fred's example in everything. He influences him hugely., hypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., hypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly, hypothesis: It works!\nThe entailment class is ",
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
             "target": "?",
             "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
@@ -103,7 +103,7 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.premise: Steve follows Fred's example in everything. He influences him hugely., hypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood., hypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly, hypothesis: It works!\nThe entailment class is ",
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
             "target": "?",
             "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
