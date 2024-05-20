@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Dynamic data processing
+Dynamic Data Processing For Inference
 =====================================
 
 Unitxt can be used to process data dynamically and generate model-ready inputs on the fly, based on a given task recipe.
