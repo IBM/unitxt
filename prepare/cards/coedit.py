@@ -33,6 +33,25 @@ gec_card = TaskCard(
     ],
     task="tasks.grammatical_error_correction",
     templates="templates.grammatical_error_correction.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 error_detection_metrics = [
@@ -69,6 +88,25 @@ error_detection_card = TaskCard(
     ],
     task=f"tasks.classification.binary.zero_or_one[metrics=[{','.join(error_detection_metrics)}]]",
     templates="templates.grammatical_error_detection.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 
@@ -103,6 +141,25 @@ card = TaskCard(
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 test_card(card)
@@ -156,6 +213,25 @@ card = TaskCard(
     ],
     task="tasks.selection.by_attribute",
     templates="templates.selection.by_attribute.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 test_card(card)
@@ -206,6 +282,25 @@ card = TaskCard(
     ],
     task="tasks.rewriting.by_attribute",
     templates="templates.rewriting.by_attribute.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 test_card(card)
@@ -232,6 +327,25 @@ card = TaskCard(
     ],
     task="tasks.rewriting.paraphrase",
     templates="templates.rewriting.paraphrase.all",
+    __tags__={
+        "arxiv": "2305.09857",
+        "croissant": True,
+        "language": "en",
+        "license": "apache-2.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
+        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
+        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
+        "Project Repo: https://github.com/vipulraheja/coedit\n"
+        "Dataset Summary\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
+        "Dataset Structure\n"
+        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    ),
 )
 
 test_card(card)

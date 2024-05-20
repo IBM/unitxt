@@ -137,6 +137,25 @@ for task_name, task_cfg in task_cfgs.items():
                 ),
             }
         ),
+        __tags__={
+            "arxiv": "2308.11462",
+            "croissant": True,
+            "finance": True,
+            "language": "en",
+            "law": True,
+            "legal": True,
+            "license": "other",
+            "region": "us",
+            "size_categories": "10K<n<100K",
+            "task_categories": [
+                "text-classification",
+                "question-answering",
+                "text-generation",
+            ],
+        },
+        __description__=(
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+        ),
     )
 
     test_card(card, format="formats.textual_assistant")

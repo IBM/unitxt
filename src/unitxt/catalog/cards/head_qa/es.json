@@ -30,5 +30,22 @@
         }
     ],
     "task": "tasks.classification.multi_class",
-    "templates": "templates.classification.multi_class.all"
+    "templates": "templates.classification.multi_class.all",
+    "__description__": "HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to access a specialized position in the\nSpanish healthcare system, and are challenging even for highly specialized humans. They are designed by the Ministerio\nde Sanidad, Consumo y Bienestar Social.\nThe dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology.",
+    "__tags__": {
+        "annotations_creators": "no-annotation",
+        "croissant": true,
+        "language": [
+            "en",
+            "es"
+        ],
+        "language_creators": "expert-generated",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "multiple-choice-qa"
+    }
 }
