@@ -1,0 +1,109 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "reference": "[]"
+            },
+            "condition": "ne"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "winner": [
+                    "model_1",
+                    "tie",
+                    "model_2"
+                ]
+            },
+            "condition": "in"
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "winner": {
+                    "model_1": "choice_a",
+                    "model_2": "choice_b",
+                    "tie": "tie"
+                }
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "answer_a",
+                "model_2_output": "answer_b",
+                "reference": "reference_answer",
+                "category": "group"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "question",
+            "field": "question"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "question/0": "question"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "answer_a",
+            "field": "answer_a"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "answer_a/0": "answer_a"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "answer_b",
+            "field": "answer_b"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "answer_b/0": "answer_b"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "reference_answer",
+            "field": "reference_answer"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "reference_answer/0": "reference_answer"
+            }
+        }
+    ],
+    "task": "tasks.response_assessment.pairwise_comparison.single_turn_with_reference",
+    "templates": [
+        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_reference_with_shuffle"
+    ]
+}

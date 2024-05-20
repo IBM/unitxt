@@ -27,7 +27,7 @@ class UnitxtCatalogPreparationTestCase(unittest.TestCase):
         enable_explicit_format()
         unitxt.settings.allow_unverified_code = True
         unitxt.settings.use_only_local_catalogs = True
-        unitxt.settings.global_loader_limit = 300
+        # unitxt.settings.global_loader_limit = 300
         unitxt.settings.max_log_message_size = 1000
         register_local_catalog_for_tests()
         cls.maxDiff = None

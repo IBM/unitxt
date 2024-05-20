@@ -6,7 +6,8 @@ from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
-    ExtractMtBenchJudgment,
+    ExtractMtBenchLabelJudgment,
+    ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
@@ -319,16 +320,32 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
-            ExtractMtBenchJudgment(
+            ExtractMtBenchRatingJudgment(
                 field="prediction",
             ),
-            ExtractMtBenchJudgment(
+            ExtractMtBenchRatingJudgment(
                 field="references",
                 process_every_value=True,
             ),
         ]
     ),
-    "processors.extract_mt_bench_judgment",
+    "processors.extract_mt_bench_rating_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchLabelJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchLabelJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_label_judgment",
     overwrite=True,
 )
 
