@@ -102,12 +102,12 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
 
     def test_exemplar_repr_with_string_for_input_choices(self):
         sampler = DiverseLabelsSampler()
-        exemplar_input_choices = "a string which is a wrong value"
+        exemplar_input_choices = {"not": "good"}
         wrong_exemplar = self.new_exemplar(choices=exemplar_input_choices)
         with self.assertRaises(ValueError) as cm:
             sampler.exemplar_repr(exemplar=wrong_exemplar)
         self.assertEqual(
-            f"Unexpected input choices value '{exemplar_input_choices}'. Expected a list.",
+            f"Unexpected input choices value '{exemplar_input_choices}'. Expected a list or a string.",
             str(cm.exception),
         )
 
