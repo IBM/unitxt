@@ -1,0 +1,41 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "shi3z/MTbenchJapanese",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "turns/0": "turns"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "turns": "input",
+                "category": "group"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "output": "None",
+                "type_of_input": "question",
+                "type_of_output": "answer"
+            }
+        }
+    ],
+    "task": "tasks.generation",
+    "templates": [
+        "templates.empty"
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "extract_mt_bench_rating_judgment",
+            "field": "prediction"
+        },
+        {
+            "type": "extract_mt_bench_rating_judgment",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

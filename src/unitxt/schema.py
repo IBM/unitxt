@@ -34,16 +34,24 @@ class ToUnitxtGroup(StreamInstanceOperatorValidator):
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
-    def _to_lists_of_keys_and_values(self, dict: Dict[str, str]):
-        return {
-            "key": [key for key, _ in dict.items()],
-            "value": [str(value) for _, value in dict.items()],
-        }
+    @staticmethod
+    def artifact_to_jsonable(artifact):
+        if artifact.__id__ is None:
+            return artifact.to_dict()
+        return artifact.__id__
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        task_data = {**instance["inputs"], **instance["outputs"]}
+        task_data = {
+            **instance["inputs"],
+            **instance["outputs"],
+            "metadata": {
+                "template": self.artifact_to_jsonable(
+                    instance["recipe_metadata"]["template"]
+                )
+            },
+        }
         instance["task_data"] = json.dumps(task_data)
 
         if self.remove_unnecessary_fields:
