@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
 from datasets import Features, Value
-from numpy import nanmean  # to not spread one np.nan all over
+from numpy import nanmean
 
 from .dataclass import Dataclass
 from .dict_utils import dict_set
@@ -13,9 +13,9 @@ from .operator import (
     StreamInitializerOperator,
 )
 from .operators import (
-    Apply,
     ApplyMetric,
     ApplyOperatorsField,
+    CopyFields,
     FlattenInstances,
     MergeStreams,
     SplitByNestedGroup,
@@ -23,7 +23,8 @@ from .operators import (
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_settings
-from .stream import MultiStream, Stream
+from .stream import GeneratorStream, MultiStream
+from .struct_data_operators import LoadJson
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
@@ -108,7 +109,7 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
         return MultiStream(
             {
-                stream_name: Stream(
+                stream_name: GeneratorStream(
                     never_peek_twice_generator,
                     gen_kwargs={
                         "stream_name": stream_name,
@@ -131,7 +132,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
     ) -> MultiStream:
         return MultiStream(
             {
-                split_name: Stream(
+                split_name: GeneratorStream(
                     self.zip,
                     gen_kwargs={"predictions": predictions, "references": references},
                 )
@@ -153,10 +154,11 @@ class MetricRecipe(SequentialOperatorInitializer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
-            Apply(
-                "task_data",
-                function="json.loads",
-                to_field="task_data",
+            LoadJson(field="task_data"),
+            CopyFields(
+                field_to_field={
+                    "source": "task_data/source",
+                }
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",

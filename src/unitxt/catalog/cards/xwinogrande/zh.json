@@ -33,5 +33,23 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.open",
-    "templates": "templates.qa.multiple_choice.open.all"
+    "templates": "templates.qa.multiple_choice.open.all",
+    "__tags__": {
+        "arxiv": [
+            "2211.01786",
+            "2106.12066"
+        ],
+        "croissant": true,
+        "language": [
+            "en",
+            "fr",
+            "ja",
+            "pt",
+            "ru",
+            "zh"
+        ],
+        "license": "cc-by-4.0",
+        "region": "us"
+    },
+    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
 }

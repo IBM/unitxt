@@ -55,14 +55,6 @@ class ExtractWithRegex(RegexParser):
         return ""
 
 
-class LoadJson(FieldOperator):
-    def process_value(self, text: Any) -> Any:
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return []
-
-
 class ListToEmptyEntitiesTuples(FieldOperator):
     def process_value(self, lst: Any) -> Any:
         try:
@@ -226,13 +218,22 @@ class StringOrNotString(FieldOperator):
         return text
 
 
-class ExtractMtBenchJudgment(FieldOperator):
+class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
         try:
             return float(match.group(1)) / 10
         except:
             return 0.0
+
+
+class ExtractMtBenchLabelJudgment(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[\[([^\]]+)\]\]", text)
+        try:
+            return str(match.group(1))
+        except:
+            return "None"
 
 
 class LiteralEval(FieldOperator):

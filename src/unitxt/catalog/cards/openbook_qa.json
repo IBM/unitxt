@@ -27,5 +27,22 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.open",
-    "templates": "templates.qa.multiple_choice.open.all"
+    "templates": "templates.qa.multiple_choice.open.all",
+    "__tags__": {
+        "annotations_creators": [
+            "crowdsourced",
+            "expert-generated"
+        ],
+        "croissant": true,
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "unknown",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "open-domain-qa"
+    },
+    "__description__": "Dataset Card for OpenBookQA\nDataset Summary\nOpenBookQA aims to promote research in advanced question-answering, probing a deeper understanding of both the topic\n(with salient facts summarized as an open book, also provided with the dataset) and the language it is expressed in. In\nparticular, it contains questions that require multi-step reasoning, use of additional common and commonsense knowledge,\nand rich text comprehension.\nOpenBookQA is a new kind of… See the full description on the dataset page: https://huggingface.co/datasets/allenai/openbookqa."
 }

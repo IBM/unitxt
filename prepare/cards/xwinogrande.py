@@ -16,6 +16,16 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         ],
         task="tasks.qa.multiple_choice.open",
         templates="templates.qa.multiple_choice.open.all",
+        __tags__={
+            "arxiv": ["2211.01786", "2106.12066"],
+            "croissant": True,
+            "language": ["en", "fr", "ja", "pt", "ru", "zh"],
+            "license": "cc-by-4.0",
+            "region": "us",
+        },
+        __description__=(
+            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
+        ),
     )
     if lang == "pt":
         test_card(card, demos_taken_from="test", strict=False)

@@ -1,7 +1,9 @@
 import json
 from abc import abstractmethod
+from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .operator import StreamInstanceOperator
@@ -48,6 +50,11 @@ class Template(StreamInstanceOperator):
         )
         return instruction, target_prefix
 
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        return inputs, outputs
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -61,9 +68,9 @@ class Template(StreamInstanceOperator):
 
         inputs = instance.get("inputs")
         outputs = instance.get("outputs")
+        inputs, outputs = self.preprocess_inputs_and_outputs(inputs, outputs)
 
         self.set_titles(inputs)
-
         source = self.inputs_to_source(inputs)
         instruction, target_prefix = self.inputs_to_instruction_and_target_prefix(
             inputs
@@ -148,6 +155,135 @@ class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
             outputs, "output", self.reference, "reference", serialize=True
         )
         return target, [reference]
+
+
+class PairwiseChoiceTemplate(InputOutputTemplate):
+    """PairwiseChoiceTemplate.
+
+    Requirements:
+     The answer field value should be of type Literal["choice_a", "choice_b", "tie"]
+
+    Args:
+         choice_a_field (str): The field which contains choice_a value
+         choice_b_field (str): The field which contains choice_b value
+         answer_field (str): The field which contains the answer value.
+           Should be of type Literal["choice_1", "choice_2", "tie"]
+         choice_a_label (str): The label of choice A answer as it is verbalized in the template.
+         choice_b_label (str): The label of choice B answer as it is verbalized in the template.
+         choice_tie_label (str): The label of a tie answer as it should be verbalized in the template.
+         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+
+    shuffle: 50% of the time:
+     1) The values of choice_a_field and choice_b_field will be swapped.
+     2) If the values of answer_field is choice_a_label, set it to choice_b_label.
+         Else if the values of answer_field is choice_b_label, set it to choice_a_label.
+         Else if the value of answer_field is choice_tie_label, do nothing.
+
+    """
+
+    choice_a_field: str
+    choice_b_field: str
+    answer_field: str
+    choice_a_label: str
+    choice_b_label: str
+    choice_tie_label: str
+    shuffle: bool
+
+    def verbalize_answer_field(self, outputs: Dict[str, object]):
+        answer = outputs[self.answer_field]
+        assert answer in ["choice_a", "choice_b", "tie"]
+        if answer == "choice_a":
+            outputs[self.answer_field] = self.choice_a_label
+        elif answer == "choice_b":
+            outputs[self.answer_field] = self.choice_b_label
+        else:
+            outputs[self.answer_field] = self.choice_tie_label
+
+        return outputs
+
+    def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+        outcome = random()  # A float between 0 and 1
+        if outcome <= 0.5:
+            choice_a_value = inputs[self.choice_a_field]
+            choice_b_value = inputs[self.choice_b_field]
+
+            inputs[self.choice_a_field] = choice_a_value
+            inputs[self.choice_b_field] = choice_b_value
+
+            answer = outputs[self.answer_field]
+            assert answer in [
+                self.choice_a_label,
+                self.choice_b_label,
+                self.choice_tie_label,
+            ]
+            if answer == self.choice_a_label:
+                outputs[self.answer_field] = self.choice_b_label
+            elif answer == self.choice_b_label:
+                outputs[self.answer_field] = self.choice_a_label
+
+        return inputs, outputs
+
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        outputs = self.verbalize_answer_field(outputs)
+        inputs, outputs = self.shuffle_values(inputs, outputs)
+        return inputs, outputs
+
+
+class DialogFieldsData(Artifact):
+    user_role_label: str
+    assistant_role_label: str
+    system_role_label: str
+    dialog_field: str
+
+
+class DialogTemplate(InputOutputTemplate):
+    dialog_fields: List[DialogFieldsData]
+    turns_separator: str = "\n\n"
+    label_separator: str = " "
+
+    def process_dialog(self, inputs: Dict[str, object]):
+        for dialog_fields in self.dialog_fields:
+            dialog = inputs[dialog_fields.dialog_field]
+            # TODO: update isoftype method to support Literal verification and check
+            #  it's List[Tuple[Literal["user", "assistant", "system"], str]] (Issue #799)
+            assert isoftype(dialog, List[Tuple[str, str]])
+
+            user_role_label = dialog_fields.user_role_label
+            assistant_role_label = dialog_fields.assistant_role_label
+            system_role_label = dialog_fields.system_role_label
+
+            dialog_str = ""
+            for i, turn in enumerate(dialog):
+                (turn_type, turn_text) = turn
+                turns_separator = "" if i == 0 else self.turns_separator
+                if turn_type == "user":
+                    dialog_str += f"{turns_separator}{user_role_label}{self.label_separator}{turn_text}"
+                elif turn_type == "assistant":
+                    dialog_str += f"{turns_separator}{assistant_role_label}{self.label_separator}{turn_text}"
+                elif turn_type == "system":
+                    dialog_str += f"{turns_separator}{system_role_label}{self.label_separator}{turn_text}"
+
+            inputs[dialog_fields.dialog_field] = dialog_str
+        return inputs
+
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        return self.process_dialog(inputs), outputs
+
+
+class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        inputs, outputs = DialogTemplate.preprocess_inputs_and_outputs(
+            self, inputs, outputs
+        )
+        return PairwiseChoiceTemplate.preprocess_inputs_and_outputs(
+            self, inputs, outputs
+        )
 
 
 class MultipleChoiceTemplate(Template):
