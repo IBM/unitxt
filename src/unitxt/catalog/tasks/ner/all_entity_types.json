@@ -1,5 +1,5 @@
 {
-    "type": "form_task",
+    "type": "task",
     "inputs": {
         "text": "str",
         "entity_types": "List[str]"

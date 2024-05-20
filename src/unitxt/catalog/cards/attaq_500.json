@@ -542,7 +542,7 @@
         }
     ],
     "task": {
-        "type": "form_task",
+        "type": "task",
         "inputs": [
             "input"
         ],
