@@ -40,6 +40,25 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __description__=(
+        "BANKING77 dataset provides a very fine-grained set of intents in a banking domain.\n"
+        "It comprises 13,083 customer service queries labeled with 77 intents.\n"
+        "It focuses on fine-grained single-domain intent detection."
+    ),
+    __tags__={
+        "annotations_creators": "expert-generated",
+        "arxiv": "2003.04807",
+        "croissant": True,
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": ["intent-classification", "multi-class-classification"],
+    },
 )
 test_card(card, debug=False)
 add_to_catalog(artifact=card, name=f"cards.{dataset_name}", overwrite=True)

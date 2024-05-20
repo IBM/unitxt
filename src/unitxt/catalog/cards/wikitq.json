@@ -35,14 +35,19 @@
     ],
     "task": "tasks.qa.with_context.extractive",
     "templates": "templates.qa.with_context.all",
-    "__description__": "The WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables.",
+    "__description__": "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables.",
     "__tags__": {
-        "modality": "table",
-        "urls": {
-            "arxiv": "https://arxiv.org/abs/1508.00305"
-        },
-        "languages": [
-            "english"
-        ]
+        "annotations_creators": "crowdsourced",
+        "arxiv": "1508.00305",
+        "croissant": true,
+        "language": "en",
+        "language_creators": "found",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "table-question-answering": true,
+        "task_categories": "question-answering"
     }
 }

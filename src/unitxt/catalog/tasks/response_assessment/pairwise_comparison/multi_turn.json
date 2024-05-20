@@ -1,0 +1,13 @@
+{
+    "type": "form_task",
+    "inputs": {
+        "dialog_a": "List[Tuple[str, str]]",
+        "dialog_b": "List[Tuple[str, str]]"
+    },
+    "outputs": {
+        "winner": "str"
+    },
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}

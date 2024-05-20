@@ -1,0 +1,65 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "reference": "[]"
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "score": "rating",
+                "category": "group",
+                "model_output": "answer"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "question",
+            "field": "question"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "question/0": "question"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "answer",
+            "field": "answer"
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "answer/0": "answer"
+            }
+        }
+    ],
+    "task": "tasks.response_assessment.rating.single_turn",
+    "templates": [
+        "templates.response_assessment.rating.mt_bench_single_turn"
+    ]
+}
