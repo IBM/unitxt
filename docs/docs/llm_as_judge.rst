@@ -141,11 +141,11 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 
     .. code-block:: python
 
-        from unitxt.blocks import FormTask
+        from unitxt.blocks import Task
         from unitxt.catalog import add_to_catalog
 
         add_to_catalog(
-            FormTask(
+            Task(
                 inputs={"question": "str", "answer": "str"},
                 outputs={"rating": "float"},
                 metrics=["metrics.spearman"],
@@ -244,11 +244,11 @@ Remember the task we defined in the previous section?
 
     .. code-block:: python
 
-        from unitxt.blocks import FormTask
+        from unitxt.blocks import Task
         from unitxt.catalog import add_to_catalog
 
         add_to_catalog(
-            FormTask(
+            Task(
                 inputs={"question": "str", "answer": "str"},
                 outputs={"rating": "float"},
                 metrics=["metrics.spearman"],
