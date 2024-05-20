@@ -1,0 +1,34 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "PrimeQA/clapnq"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train",
+                "test": "validation"
+            }
+        },
+        {
+            "type": "copy_fields",
+            "field_to_field": {
+                "passages/*/text": "contexts",
+                "input": "question",
+                "output/*/answer": "reference_answers"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "contexts_ids": []
+            }
+        }
+    ],
+    "task": "tasks.rag.response_generation",
+    "templates": {
+        "default": "templates.rag.response_generation.simple"
+    }
+}

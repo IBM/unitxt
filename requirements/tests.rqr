@@ -17,3 +17,5 @@ llama-index-llms-openai
 pytrec-eval
 SentencePiece
 fuzzywuzzy
+openai
+ibm-generative-ai

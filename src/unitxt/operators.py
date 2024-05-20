@@ -37,7 +37,7 @@ import operator
 import uuid
 import zipfile
 from abc import abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
@@ -75,7 +75,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import Stream
+from .stream import GeneratorStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -860,6 +860,51 @@ class ZipFieldValues(StreamInstanceOperator):
         return instance
 
 
+class InterleaveListsToDialogOperator(StreamInstanceOperator):
+    """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
+
+     The list of tuples if of format (role, turn_content), where the role label is specified by
+     the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
+
+    The user turns and assistant turns field are specified in the arguments.
+     The value of each of the 'fields' is assumed to be a list.
+
+    """
+
+    user_turns_field: str
+    assistant_turns_field: str
+    user_role_label: str = "user"
+    assistant_role_label: str = "assistant"
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        user_turns = instance[self.user_turns_field]
+        assistant_turns = instance[self.assistant_turns_field]
+
+        assert (
+            len(user_turns) == len(assistant_turns)
+            or (len(user_turns) - len(assistant_turns) == 1)
+        ), "user_turns must have either the same length as assistant_turns or one more turn."
+
+        interleaved_dialog = []
+        i, j = 0, 0  # Indices for the user and assistant lists
+        # While either list has elements left, continue interleaving
+        while i < len(user_turns) or j < len(assistant_turns):
+            if i < len(user_turns):
+                interleaved_dialog.append((self.user_role_label, user_turns[i]))
+                i += 1
+            if j < len(assistant_turns):
+                interleaved_dialog.append(
+                    (self.assistant_role_label, assistant_turns[j])
+                )
+                j += 1
+
+        instance[self.to_field] = interleaved_dialog
+        return instance
+
+
 class IndexOf(StreamInstanceOperator):
     """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
@@ -1560,6 +1605,52 @@ class SplitByValue(MultiStreamOperator):
         return MultiStream(result)
 
 
+class SplitByNestedGroup(MultiStreamOperator):
+    """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
+
+    Args:
+        number_of_fusion_generations: int
+
+    the value in field group is of the form "sourcen/sourcenminus1/..." describing the sources in which the instance sat
+    when these were fused, potentially several phases of fusion. the name of the most recent source sits first in this value.
+    (See BaseFusion and its extensions)
+    number_of_fuaion_generations  specifies the length of the prefix by which to split the stream.
+    E.g. for number_of_fusion_generations = 1, only the most recent fusion in creating this multi_stream, affects the splitting.
+    For number_of_fusion_generations = -1, take the whole history written in this field, ignoring number of generations.
+    """
+
+    field_name_of_group: str = "group"
+    number_of_fusion_generations: int = 1
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        result = defaultdict(list)
+
+        for stream_name, stream in multi_stream.items():
+            for instance in stream:
+                if self.field_name_of_group not in instance:
+                    raise ValueError(
+                        f"Field {self.field_name_of_group} is missing from instance {instance}"
+                    )
+                signature = (
+                    stream_name
+                    + "~"  #  a sign that does not show within group values
+                    + (
+                        "/".join(
+                            instance[self.field_name_of_group].split("/")[
+                                : self.number_of_fusion_generations
+                            ]
+                        )
+                        if self.number_of_fusion_generations >= 0
+                        # for values with a smaller number of generations - take up to their last generation
+                        else instance[self.field_name_of_group]
+                        # for each instance - take all its generations
+                    )
+                )
+                result[signature].append(instance)
+
+        return MultiStream.from_iterables(result)
+
+
 class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
     """Applies stream operators to a stream based on specified fields in each instance.
 
@@ -1668,7 +1759,7 @@ class MergeStreams(MultiStreamOperator):
     add_origin_stream_name: bool = True
     origin_stream_name_field_name: str = "origin"
 
-    def merge(self, multi_stream):
+    def merge(self, multi_stream) -> Generator:
         for stream_name, stream in multi_stream.items():
             if self.streams_to_merge is None or stream_name in self.streams_to_merge:
                 for instance in stream:
@@ -1679,7 +1770,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream(
             {
-                self.new_stream_name: Stream(
+                self.new_stream_name: GeneratorStream(
                     self.merge, gen_kwargs={"multi_stream": multi_stream}
                 )
             }

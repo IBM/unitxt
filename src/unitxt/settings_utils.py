@@ -126,13 +126,14 @@ if Settings.is_uninitilized():
     settings.max_log_message_size = (int, 100000)
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
-    settings.default_verbosity = "debug"
+    settings.default_verbosity = "info"
     settings.remote_metrics = []
     settings.allow_passing_data_to_remote_api = (bool, False)
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)
     settings.metrics_master_key_token = None
     settings.seed = (int, 42)
+    settings.skip_artifacts_prepare_and_verify = (bool, False)
 
 if Constants.is_uninitilized():
     constants = Constants()

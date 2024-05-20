@@ -91,6 +91,24 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "arxiv": "1911.11408",
+        "croissant": True,
+        "language": "en",
+        "license": "cc-by-3.0",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "task_categories": "text-classification",
+    },
+    __description__=(
+        "Dataset Card for Argument-Quality-Ranking-30k Dataset\n"
+        "Dataset Summary\n"
+        "Argument Quality Ranking\n"
+        "The dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets.\n"
+        "The dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.\n"
+        "Argument Topic\n"
+        "This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k."
+    ),
 )
 
 test_card(card, debug=False)

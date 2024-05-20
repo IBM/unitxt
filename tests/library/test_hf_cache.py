@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 
-from unitxt.stream import MultiStream, Stream
+from unitxt.stream import GeneratorStream, MultiStream
 from unitxt.test_utils.storage import get_directory_size
 
 from tests.utils import UnitxtTestCase
@@ -16,7 +16,7 @@ class TestHfCache(UnitxtTestCase):
                 for i in range(100000):  # must be big or else hf won't cache
                     yield {"x": i}
 
-            ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
+            ds = MultiStream({"test": GeneratorStream(generator=gen)}).to_dataset(
                 disable_cache=False, cache_dir=tmp_dir
             )
             for i, item in enumerate(ds["test"]):
@@ -31,7 +31,7 @@ class TestHfCache(UnitxtTestCase):
                 for i in range(100000):  # must be big or else hf won't cache
                     yield {"x": i}
 
-            ds = MultiStream({"test": Stream(generator=gen)}).to_dataset(
+            ds = MultiStream({"test": GeneratorStream(generator=gen)}).to_dataset(
                 cache_dir=tmp_dir
             )
             for i, item in enumerate(ds["test"]):
