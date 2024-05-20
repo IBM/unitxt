@@ -74,7 +74,7 @@ card = TaskCard(
         "task_ids": ["multi-label-classification", "sentiment-classification"],
     },
     __description__=(
-        "ETHOS: onlinE haTe speecH detectiOn dataSet. This repository contains a dataset for hate speech\n"
+        "ETHOS: online hate speecg detection dataset. This repository contains a dataset for hate speech\n"
         "detection on social media platforms, called Ethos. There are two variations of the dataset:\n"
         "Ethos_Dataset_Binary: contains 998 comments in the dataset alongside with a label\n"
         "about hate speech presence or absence. 565 of them do not contain hate speech,\n"

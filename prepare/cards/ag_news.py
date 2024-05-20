@@ -55,7 +55,7 @@ card = TaskCard(
         "AG is a collection of more than 1 million news articles. News articles have been\n"
         "gathered from more than 2000 news sources by ComeToMyHead in more than 1 year of\n"
         "activity. ComeToMyHead is an academic news search engine which has been running\n"
-        "since July, 2004. The dataset is provided by the academic comunity for research\n"
+        "since July, 2004. The dataset is provided by the academic community for research\n"
         "purposes in data mining (clustering, classification, etc), information retrieval\n"
         "(ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/ag_news."
     ),
