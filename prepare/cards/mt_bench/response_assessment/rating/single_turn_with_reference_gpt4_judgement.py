@@ -40,7 +40,7 @@ card = TaskCard(
     ],
 )
 
-test_card(card, demos_taken_from="test", strict=False, loader_limit=5000)
+test_card(card, demos_taken_from="test", strict=False, loader_limit=1000)
 add_to_catalog(
     card,
     "cards.mt_bench.response_assessment.rating.single_turn_with_reference_gpt4_judgement",
