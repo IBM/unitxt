@@ -114,9 +114,9 @@ class SystemFormat(Format):
     """
 
     demos_field: str = "demos"
-    demo_format: str = "{source}\n{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
+    demo_format: str = "{source}\\N{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
     model_input_format: str = (
-        "{system_prompt}{instruction}{demos}{source}\n{target_prefix}"
+        "{system_prompt}\\N{instruction}\\N{demos}{source}\\N{target_prefix}"
     )
     format_args: Dict[str, str] = OptionalField(default_factory=dict)
 
