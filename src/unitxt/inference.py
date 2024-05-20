@@ -1,7 +1,7 @@
 import abc
 import os
-from dataclasses import dataclass
-from typing import List, Optional, Union
+from dataclasses import field
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
@@ -28,28 +28,72 @@ class InferenceEngine(abc.ABC, Artifact):
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     model_name: str
     max_new_tokens: int
+    use_fp16: bool = True
     _requirement = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
 
     def prepare(self):
-        from transformers import pipeline
+        import torch
+        from transformers import AutoConfig, pipeline
 
-        self.model = pipeline(model=self.model_name)
+        model_args: Dict[str, Any] = (
+            {"torch_dtype": torch.float16} if self.use_fp16 else {}
+        )
+        model_args.update({"max_new_tokens": self.max_new_tokens})
+
+        device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+        # We do this, because in some cases, using device:auto will offload some weights to the cpu
+        # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
+        # cause an error because the data is always on the gpu
+        if torch.cuda.device_count() > 1:
+            assert device == torch.device(0)
+            model_args.update({"device_map": "auto"})
+        else:
+            model_args.update({"device": device})
+
+        task = (
+            "text2text-generation"
+            if AutoConfig.from_pretrained(
+                self.model_name, trust_remote_code=True
+            ).is_encoder_decoder
+            else "text-generation"
+        )
+
+        if task == "text-generation":
+            model_args.update({"return_full_text": False})
+
+        self.model = pipeline(
+            model=self.model_name, trust_remote_code=True, **model_args
+        )
 
     def infer(self, dataset):
-        return [
-            output["generated_text"]
-            for output in self.model(
-                [instance["source"] for instance in dataset],
-                max_new_tokens=self.max_new_tokens,
-            )
-        ]
+        outputs = []
+        for output in self.model([instance["source"] for instance in dataset]):
+            if isinstance(output, list):
+                output = output[0]
+            outputs.append(output["generated_text"])
+        return outputs
 
 
-@dataclass()
-class IbmGenAiInferenceEngineParams:
-    decoding_method: str = None
+class MockInferenceEngine(InferenceEngine):
+    model_name: str
+
+    def prepare(self):
+        return
+
+    def infer(self, dataset):
+        return ["[[10]]" for instance in dataset]
+
+
+class IbmGenAiInferenceEngineParams(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
     max_new_tokens: Optional[int] = None
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
@@ -64,7 +108,9 @@ class IbmGenAiInferenceEngineParams:
 class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "ibm_genai"
     model_name: str
-    parameters: IbmGenAiInferenceEngineParams = IbmGenAiInferenceEngineParams()
+    parameters: IbmGenAiInferenceEngineParams = field(
+        default_factory=IbmGenAiInferenceEngineParams
+    )
     _requirement = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
@@ -87,7 +133,19 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
-        genai_params = TextGenerationParameters(**self.parameters.__dict__)
+        genai_params = TextGenerationParameters(
+            max_new_tokens=self.parameters.max_new_tokens,
+            min_new_tokens=self.parameters.min_new_tokens,
+            random_seed=self.parameters.random_seed,
+            repetition_penalty=self.parameters.repetition_penalty,
+            stop_sequences=self.parameters.stop_sequences,
+            temperature=self.parameters.temperature,
+            top_p=self.parameters.top_p,
+            top_k=self.parameters.top_k,
+            typical_p=self.parameters.typical_p,
+            decoding_method=self.parameters.decoding_method,
+        )
+
         return list(
             self.client.text.generation.create(
                 model_id=self.model_name,
@@ -97,8 +155,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         )
 
 
-@dataclass
-class OpenAiInferenceEngineParams:
+class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
@@ -111,7 +168,9 @@ class OpenAiInferenceEngineParams:
 class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "openai"
     model_name: str
-    parameters: OpenAiInferenceEngineParams = OpenAiInferenceEngineParams()
+    parameters: OpenAiInferenceEngineParams = field(
+        default_factory=OpenAiInferenceEngineParams
+    )
     _requirement = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }

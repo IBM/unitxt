@@ -2,7 +2,7 @@ import copy
 import time
 
 from unitxt.operators import Apply
-from unitxt.stream import Stream
+from unitxt.stream import GeneratorStream
 from unitxt.test_utils.operators import apply_operator
 
 from tests.utils import UnitxtTestCase
@@ -13,7 +13,7 @@ class TestStreamCaching(UnitxtTestCase):
         def generator():
             yield {"x": str(time.time())}
 
-        stream = Stream(
+        stream = GeneratorStream(
             generator=generator,
             caching=False,
         )
@@ -24,7 +24,7 @@ class TestStreamCaching(UnitxtTestCase):
         def generator():
             yield {"x": str(time.time())}
 
-        stream = Stream(
+        stream = GeneratorStream(
             generator=generator,
             caching=True,
         )
