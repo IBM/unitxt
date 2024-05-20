@@ -27,7 +27,7 @@
         }
     ],
     "task": {
-        "type": "form_task",
+        "type": "task",
         "inputs": [
             "choices",
             "text",
@@ -50,5 +50,32 @@
                 "output_format": "{label}"
             }
         ]
-    }
+    },
+    "__tags__": {
+        "NLU": true,
+        "annotations_creators": "expert-generated",
+        "arxiv": "1905.00537",
+        "croissant": true,
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "natural language understanding": true,
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended|other",
+        "superglue": true,
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
+        ]
+    },
+    "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\nGLUE with a new set of more difficult language understanding tasks, improved\nresources, and a new public leaderboard."
 }

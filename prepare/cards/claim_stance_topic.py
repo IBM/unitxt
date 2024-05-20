@@ -76,6 +76,22 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "croissant": True,
+        "language": "en",
+        "license": "cc-by-3.0",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "task_categories": "text-classification",
+    },
+    __description__=(
+        "Dataset Card for Claim Stance Dataset\n"
+        "Dataset Summary\n"
+        "Claim Stance\n"
+        "This dataset contains 2,394 labeled Wikipedia claims for 55 topics. The dataset includes the stance (Pro/Con) of each claim towards the topic,\n"
+        "as well as fine-grained annotations, based on the semantic model of Stance Classification of Context-Dependent Claims (topic target,\n"
+        "topic sentiment towards its target, claim target, claim sentiment towards its target, and the relation… See the full description on the dataset page: https://huggingface.co/datasets/ibm/claim_stance."
+    ),
 )
 
 test_card(card, debug=False)

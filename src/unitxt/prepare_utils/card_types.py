@@ -4,7 +4,7 @@ from ..card import TaskCard
 from ..loaders import Loader
 from ..operator import StreamingOperator
 from ..operators import AddFields, MapInstanceValues, RenameFields
-from ..task import FormTask
+from ..task import Task
 from ..templates import TemplatesDict, TemplatesList
 
 
@@ -25,7 +25,7 @@ def create_2sentences_classification_card(
     label2string: Dict,
     inputs: List[str],
     metrics: List[str] = tuple("accuracy"),
-    task: FormTask = None,
+    task: Task = None,
     preprocess_steps: Optional[List[Union[StreamingOperator, str]]] = None,
     templates: Union[TemplatesList, TemplatesDict] = None,
 ) -> TaskCard:
@@ -39,7 +39,7 @@ def create_2sentences_classification_card(
         ),
     ]
     if task is None:
-        task = FormTask(
+        task = Task(
             inputs=["choices", sentence1_col, sentence2_col],
             outputs=[label_name],
             metrics=metrics,
@@ -59,7 +59,7 @@ def create_sentence_classification_card(
     label2string: Dict,
     inputs: List[str],
     metrics: List[str] = tuple("accuracy"),
-    task: FormTask = None,
+    task: Task = None,
     preprocess_steps: Optional[List[StreamingOperator]] = None,
     templates: Union[TemplatesList, TemplatesDict] = None,
 ) -> TaskCard:
@@ -71,7 +71,7 @@ def create_sentence_classification_card(
         RenameFields(field_to_field={inputs[0]: sentence_col}),
     ]
     if task is None:
-        task = FormTask(
+        task = Task(
             inputs=["choices", sentence_col], outputs=[label_name], metrics=metrics
         )
         return TaskCard(

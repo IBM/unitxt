@@ -1,0 +1,14 @@
+{
+    "type": "task",
+    "inputs": {
+        "question": "str",
+        "answer": "str",
+        "reference_answer": "str"
+    },
+    "outputs": {
+        "rating": "float"
+    },
+    "metrics": [
+        "metrics.spearman"
+    ]
+}

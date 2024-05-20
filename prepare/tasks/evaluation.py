@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs=["input", "input_type", "output_type", "choices", "instruction"],
         outputs=["choices", "output_choice"],
         metrics=[

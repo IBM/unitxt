@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "context": "str",
             "context_type": "str",
@@ -19,7 +19,7 @@ add_to_catalog(
 
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"topic": "str", "question": "str", "choices": "List[str]"},
         outputs={"answer": "Union[int,str]", "choices": "List[str]"},
         prediction_type="str",
@@ -30,7 +30,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"question": "str", "choices": "List[str]"},
         outputs={"answer": "Union[int,str]", "choices": "List[str]"},
         prediction_type="str",
@@ -41,7 +41,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "topic": "str",
             "context": "str",

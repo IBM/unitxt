@@ -18,6 +18,31 @@ for subset in ["all", "high", "middle"]:
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates="templates.qa.multiple_choice.with_context.all",
+        __tags__={
+            "annotations_creators": "expert-generated",
+            "arxiv": "1704.04683",
+            "croissant": True,
+            "language": "en",
+            "language_creators": "found",
+            "license": "other",
+            "multilinguality": "monolingual",
+            "region": "us",
+            "size_categories": "10K<n<100K",
+            "source_datasets": "original",
+            "task_categories": "multiple-choice",
+            "task_ids": "multiple-choice-qa",
+        },
+        __description__=(
+            'Dataset Card for "race"\n'
+            "Dataset Summary\n"
+            "RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The\n"
+            "dataset is collected from English examinations in China, which are designed for middle school and high school students.\n"
+            "The dataset can be served as the training and test sets for machine comprehension.\n"
+            "Supported Tasks and Leaderboards\n"
+            "More Information Needed\n"
+            "Languages\n"
+            "More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race."
+        ),
     )
     if subset == "middle":
         test_card(card, strict=False)

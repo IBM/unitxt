@@ -33,6 +33,25 @@ for subset in get_dataset_config_names(dataset_name):
         ],
         task="tasks.classification.multi_class",
         templates="templates.classification.multi_class.all",
+        __description__=(
+            "HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to access a specialized position in the\n"
+            "Spanish healthcare system, and are challenging even for highly specialized humans. They are designed by the Ministerio\n"
+            "de Sanidad, Consumo y Bienestar Social.\n"
+            "The dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology."
+        ),
+        __tags__={
+            "annotations_creators": "no-annotation",
+            "croissant": True,
+            "language": ["en", "es"],
+            "language_creators": "expert-generated",
+            "license": "mit",
+            "multilinguality": "monolingual",
+            "region": "us",
+            "size_categories": "1K<n<10K",
+            "source_datasets": "original",
+            "task_categories": "question-answering",
+            "task_ids": "multiple-choice-qa",
+        },
     )
     test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

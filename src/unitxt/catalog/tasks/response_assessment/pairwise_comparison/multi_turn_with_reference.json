@@ -1,0 +1,14 @@
+{
+    "type": "task",
+    "inputs": {
+        "dialog_a": "List[Tuple[str, str]]",
+        "dialog_b": "List[Tuple[str, str]]",
+        "reference_dialog": "List[Tuple[str, str]]"
+    },
+    "outputs": {
+        "winner": "str"
+    },
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}

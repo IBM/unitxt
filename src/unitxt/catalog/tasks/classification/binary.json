@@ -1,5 +1,5 @@
 {
-    "type": "form_task",
+    "type": "task",
     "inputs": {
         "text": "str",
         "text_type": "str",

@@ -1,0 +1,68 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
+        "split": "train"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "turn": 2
+            },
+            "condition": "eq"
+        },
+        {
+            "type": "filter_by_condition",
+            "values": {
+                "reference": "[]"
+            },
+            "condition": "ne"
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "score": "rating",
+                "category": "group"
+            }
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "model_input",
+            "field": "model_input"
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "model_output",
+            "field": "model_output"
+        },
+        {
+            "type": "literal_eval",
+            "to_field": "reference",
+            "field": "reference"
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "model_output",
+            "to_field": "dialog"
+        },
+        {
+            "type": "interleave_lists_to_dialog_operator",
+            "user_turns_field": "model_input",
+            "assistant_turns_field": "reference",
+            "to_field": "reference_dialog"
+        }
+    ],
+    "task": "tasks.response_assessment.rating.multi_turn_with_reference",
+    "templates": [
+        "templates.response_assessment.rating.mt_bench_multi_turn_with_reference"
+    ]
+}
