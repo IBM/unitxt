@@ -24,10 +24,10 @@ Once your catalog is registered, you can add artifacts to it:
 
 .. code-block:: python
 
-    from unitxt.task import FormTask
+    from unitxt.task import Task
     from unitxt import add_to_catalog
 
-    my_task = FormTask(...)
+    my_task = Task(...)
 
     catalog_name = "tasks.my_task"
 

@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.task import FormTask
+from unitxt.task import Task
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs=["original_text"],
         outputs=["corrected_texts"],
         metrics=[

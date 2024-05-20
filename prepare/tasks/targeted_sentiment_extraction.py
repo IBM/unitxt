@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str", "sentiment_class": "str"},
         outputs={
             "spans_starts": "List[int]",
@@ -19,7 +19,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str"},
         outputs={
             "spans_starts": "List[int]",

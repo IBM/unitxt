@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -526,9 +526,7 @@ card = TaskCard(
         ),
         DumpJson(field="input_label"),
     ],
-    task=FormTask(
-        inputs=["input"], outputs=["input_label"], metrics=["metrics.safety"]
-    ),
+    task=Task(inputs=["input"], outputs=["input_label"], metrics=["metrics.safety"]),
     templates=TemplatesList(
         [
             InputOutputTemplate(

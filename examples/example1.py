@@ -2,12 +2,12 @@ from unitxt import load
 from unitxt.artifact import Artifact
 from unitxt.blocks import (
     AddFields,
-    FormTask,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
     SequentialRecipe,
     SplitRandomMix,
+    Task,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.formats import SystemFormat
@@ -35,7 +35,7 @@ recipe = SequentialRecipe(
                 "instruction": "Classify the relationship between the two sentences from the choices.",
             }
         ),
-        FormTask(
+        Task(
             inputs=["choices", "instruction", "sentence1", "sentence2"],
             outputs=["label"],
             metrics=["metrics.accuracy"],

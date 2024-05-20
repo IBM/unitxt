@@ -21,10 +21,10 @@ As an example, consider an evaluation task for LLMs to evaluate how well they ar
 The task is formally defined as:
 
 .. code-block:: python
-   
-   from unitxt.blocks import FormTask
 
-   task = FormTask(
+   from unitxt.blocks import Task
+
+   task = Task(
         inputs={"num1" : "int", "num2" : "int"},
         outputs={"sum" : "int"},
         prediction_type="int",
