@@ -38,6 +38,15 @@ card = TaskCard(
         "task_categories": "question-answering",
         "task_ids": "closed-domain-qa",
     },
+    __description__=(
+        'Dataset Card for "sciq"\n'
+        "Dataset Summary\n"
+        "The SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided.\n"
+        "Supported Tasks and Leaderboards\n"
+        "More Information Needed\n"
+        "Languages\n"
+        "More Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq."
+    ),
 )
 test_card(card, strict=False)
 add_to_catalog(card, "cards.sciq", overwrite=True)

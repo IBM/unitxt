@@ -23,6 +23,9 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
             "license": "cc-by-4.0",
             "region": "us",
         },
+        __description__=(
+            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
+        ),
     )
     if lang == "pt":
         test_card(card, demos_taken_from="test", strict=False)

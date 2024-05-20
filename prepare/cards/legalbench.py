@@ -153,6 +153,9 @@ for task_name, task_cfg in task_cfgs.items():
                 "text-generation",
             ],
         },
+        __description__=(
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+        ),
     )
 
     test_card(card, format="formats.textual_assistant")

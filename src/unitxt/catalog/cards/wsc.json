@@ -76,5 +76,6 @@
             "coreference-resolution",
             "extractive-qa"
         ]
-    }
+    },
+    "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\nGLUE with a new set of more difficult language understanding tasks, improved\nresources, and a new public leaderboard."
 }

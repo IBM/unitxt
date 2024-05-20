@@ -190,7 +190,7 @@
     ],
     "task": "tasks.classification.multi_class",
     "templates": "templates.classification.multi_class.all",
-    "__description__": "BANKING77 dataset provides a very fine-grained set of intents in a banking domain.It comprises 13,083 customer service queries labeled with 77 intents.It focuses on fine-grained single-domain intent detection.",
+    "__description__": "BANKING77 dataset provides a very fine-grained set of intents in a banking domain.\nIt comprises 13,083 customer service queries labeled with 77 intents.\nIt focuses on fine-grained single-domain intent detection.",
     "__tags__": {
         "annotations_creators": "expert-generated",
         "arxiv": "2003.04807",

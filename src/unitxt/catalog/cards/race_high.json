@@ -74,5 +74,6 @@
         "source_datasets": "original",
         "task_categories": "multiple-choice",
         "task_ids": "multiple-choice-qa"
-    }
+    },
+    "__description__": "Dataset Card for \"race\"\nDataset Summary\nRACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The\ndataset is collected from English examinations in China, which are designed for middle school and high school students.\nThe dataset can be served as the training and test sets for machine comprehension.\nSupported Tasks and Leaderboards\nMore Information Needed\nLanguages\nMore… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race."
 }

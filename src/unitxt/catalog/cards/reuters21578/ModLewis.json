@@ -155,5 +155,6 @@
         "language": "en",
         "license": "other",
         "region": "us"
-    }
+    },
+    "__description__": "The Reuters-21578 dataset  is one of the most widely used data collections for text\ncategorization research. It is collected from the Reuters financial newswire service in 1987."
 }

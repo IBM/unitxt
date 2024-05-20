@@ -55,6 +55,12 @@ card = TaskCard(
         "source_datasets": "original",
         "task_categories": "text-generation",
     },
+    __description__=(
+        "Dataset Card for Bias in Open-ended Language Generation Dataset (BOLD)\n"
+        "Dataset Description\n"
+        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies.\n"
+        "Some examples of prompts in BOLD are as follows:… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
+    ),
 )
 
 test_card(card, demos_taken_from="test", strict=False)

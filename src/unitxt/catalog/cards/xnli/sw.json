@@ -66,5 +66,6 @@
             "zh"
         ],
         "region": "us"
-    }
+    },
+    "__description__": "Dataset Card for \"xnli\"\nDataset Summary\nXNLI is a subset of a few thousand examples from MNLI which has been translated\ninto a 14 different languages (some low-ish resource). As with MNLI, the goal is\nto predict textual entailment (does sentence A imply/contradict/neither sentence\nB) and is a classification task (given two sentences, predict one of three\nlabels).\nSupported Tasks and Leaderboards\nMore Information Needed\nLanguages\nMore… See the full description on the dataset page: https://huggingface.co/datasets/xnli."
 }

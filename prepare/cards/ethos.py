@@ -73,6 +73,17 @@ card = TaskCard(
         "task_categories": "text-classification",
         "task_ids": ["multi-label-classification", "sentiment-classification"],
     },
+    __description__=(
+        "ETHOS: onlinE haTe speecH detectiOn dataSet. This repository contains a dataset for hate speech\n"
+        "detection on social media platforms, called Ethos. There are two variations of the dataset:\n"
+        "Ethos_Dataset_Binary: contains 998 comments in the dataset alongside with a label\n"
+        "about hate speech presence or absence. 565 of them do not contain hate speech,\n"
+        "while the rest of them, 433, contain.\n"
+        "Ethos_Dataset_Multi_Label: which contains 8 labels for the 433 comments with hate speech content.\n"
+        "These labels are violence (if it incites (1) or not (0) violence), directed_vs_general (if it is\n"
+        "directed to a person (1) or a group (0)), and 6 labels about the category of hate speech like,\n"
+        "gender, race, national_origin, disability, religion and sexual_orientation."
+    ),
 )
 
 test_card(card, demos_pool_size=20, loader_limit=1000)

@@ -37,6 +37,13 @@ card = TaskCard(
         ]
     ),
     __tags__={"croissant": True, "region": "us"},
+    __description__=(
+        "Dataset Card for PopQA\n"
+        "Dataset Summary\n"
+        "PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entityand relationship_type annotation, as well as Wikipedia monthly page views.\n"
+        "Languages\n"
+        "The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA."
+    ),
 )
 
 test_card(card, demos_taken_from="test", strict=False)

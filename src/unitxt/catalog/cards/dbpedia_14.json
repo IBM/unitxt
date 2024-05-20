@@ -83,5 +83,6 @@
         "source_datasets": "original",
         "task_categories": "text-classification",
         "task_ids": "topic-classification"
-    }
+    },
+    "__description__": "Dataset Card for DBpedia14\nDataset Summary\nThe DBpedia ontology classification dataset is constructed by picking 14 non-overlapping classes\nfrom DBpedia 2014. They are listed in classes.txt. From each of thse 14 ontology classes, we\nrandomly choose 40,000 training samples and 5,000 testing samples. Therefore, the total size\nof the training dataset is 560,000 and testing dataset 70,000.\nThere are 3 columns in the dataset (same for train and test splits)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/dbpedia_14."
 }

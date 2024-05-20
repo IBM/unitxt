@@ -39,6 +39,9 @@ card_abstractive = TaskCard(
         "task_categories": "question-answering",
         "task_ids": "open-domain-qa",
     },
+    __description__=(
+        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents."
+    ),
 )
 
 card_extractive = TaskCard(
@@ -67,6 +70,9 @@ card_extractive = TaskCard(
         "task_categories": "question-answering",
         "task_ids": "open-domain-qa",
     },
+    __description__=(
+        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents."
+    ),
 )
 
 for name, card in zip(

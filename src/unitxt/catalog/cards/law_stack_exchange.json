@@ -68,5 +68,6 @@
         "region": "us",
         "stackexchange": true,
         "task_categories": "text-classification"
-    }
+    },
+    "__description__": "Dataset Card for Law Stack Exchange Dataset\nDataset Summary\nDataset from the Law Stack Exchange, as used in \"Parameter-Efficient Legal Domain Adaptation\".\nCitation Information\n@inproceedings{li-etal-2022-parameter,\ntitle = \"Parameter-Efficient Legal Domain Adaptation\",\nauthor = \"Li, Jonathan  and\nBhambhoria, Rohan  and\nZhu, Xiaodan\",\nbooktitle = \"Proceedings of the Natural Legal Language Processing Workshop 2022\",\nmonth =… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange."
 }

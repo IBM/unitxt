@@ -154,6 +154,12 @@ for subset in subsets:
                 "source_datasets": ["original", "extended"],
                 "task_categories": "text-generation",
             },
+            __description__=(
+                "Dataset Summary\n"
+                "Aya Evaluation Suite contains a total of 26,750 open-ended conversation-style prompts to evaluate multilingual open-ended generation quality.To strike a balance between language coverage and the quality that comes with human curation, we create an evaluation suite that includes:\n"
+                "human-curated examples in 7 languages (tur, eng, yor, arb, zho, por, tel) → aya-human-annotated.\n"
+                "machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite."
+            ),
         )
 
         from copy import deepcopy
@@ -170,29 +176,3 @@ for subset in subsets:
             overwrite=True,
             catalog_path="src/unitxt/catalog",
         )
-
-########################  to remove once done ############################
-# logger = get_logger()
-# recipe = StandardRecipeWithIndexes(
-#     template_card_index=1,
-#     card=f"cards.cohere_for_ai.{subsets[0]}.{langs[0]}",
-#     num_demos=2,
-#     demos_pool_size=10,
-# )
-# ms = recipe()
-# logger.info(ms)
-# train_as_list = list(ms["train"])
-# logger.info(len(train_as_list))
-# logger.info(train_as_list[0])
-# logger.info(train_as_list[1])
-# logger.info("+++++++++++1+++++++++++++++")
-# logger.info(train_as_list[0]["source"])
-# logger.info("+++++++++++2+++++++++++++++")
-# logger.info(train_as_list[1]["source"])
-# logger.info("+++++++++++3+++++++++++++++")
-# logger.info(train_as_list[2]["source"])
-# logger.info("+++++++++++4+++++++++++++++")
-# logger.info(train_as_list[3]["source"])
-# logger.info("+++++++++++done+++++++++++++++")
-# logger.info("done")
-############# end of to remove once done ##################

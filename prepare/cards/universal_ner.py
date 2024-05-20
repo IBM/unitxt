@@ -99,6 +99,10 @@ for sub_task in sub_tasks:
             "region": "us",
             "task_categories": "token-classification",
         },
+        __description__=(
+            "Universal Named Entity Recognition (UNER) aims to fill a gap in multilingual NLP: high quality NER datasets in many languages with a shared tagset.\n"
+            "UNER is modeled after the Universal Dependencies project, in that it is intended to be a large community annotation effort with language-universal guidelines. Further, we use the same text corpora as Universal Dependencies."
+        ),
     )
 
     if sub_task == "en_ewt":

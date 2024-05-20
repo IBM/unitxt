@@ -59,5 +59,6 @@
             "question-answering",
             "text-generation"
         ]
-    }
+    },
+    "__description__": "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
 }

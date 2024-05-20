@@ -33,5 +33,6 @@
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "summarization"
-    }
+    },
+    "__description__": "Dataset Card for \"billsum\"\nDataset Summary\nBillSum, summarization of US Congressional and California state bills.\nThere are several features:\ntext: bill text.\nsummary: summary of the bills.\ntitle: title of the bills.\nfeatures for us bills. ca bills does not have.\ntext_len: number of chars in text.\nsum_len: number of chars in summary.\nSupported Tasks and Leaderboards\nMore Information Needed\nLanguages\nMore Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/billsum."
 }

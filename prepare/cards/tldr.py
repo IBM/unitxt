@@ -26,6 +26,13 @@ card = TaskCard(
         "source_datasets": "original",
         "task_categories": "summarization",
     },
+    __description__=(
+        "This corpus contains preprocessed posts from the Reddit dataset.\n"
+        "The dataset consists of 3,848,330 posts with an average length of 270 words for content,\n"
+        "and 28 words for the summary.\n"
+        "Features includes strings: author, body, normalizedBody, content, summary, subreddit, subreddit_id.\n"
+        "Content is used as document and summary is used as summary."
+    ),
 )
 test_card(
     card,

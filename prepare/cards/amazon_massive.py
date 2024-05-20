@@ -37,12 +37,6 @@ for lang in langs:
         ],
         task="tasks.classification.multi_class",
         templates="templates.classification.multi_class.all",
-        __description__=(
-            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations"
-            "for the Natural Language Understanding tasks of intent prediction and slot annotation."
-            "Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing"
-            "the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
-        ),
         __tags__={
             "annotations_creators": "expert-generated",
             "arxiv": "2204.08582",
@@ -110,6 +104,12 @@ for lang in langs:
             "task_categories": "text-classification",
             "task_ids": ["intent-classification", "multi-class-classification"],
         },
+        __description__=(
+            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations\n"
+            "for the Natural Language Understanding tasks of intent prediction and slot annotation.\n"
+            "Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing\n"
+            "the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
+        ),
     )
 
     if lang == langs[0]:

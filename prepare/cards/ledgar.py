@@ -50,6 +50,11 @@ card = TaskCard(
             "topic-classification",
         ],
     },
+    __description__=(
+        'Dataset Card for "LexGLUE"\n'
+        "Dataset Summary\n"
+        "Inspired by the recent widespread use of the GLUE multi-task benchmark NLP dataset (Wang et al., 2018), the subsequent more difficult SuperGLUE (Wang et al., 2019), other previous multi-task NLP benchmarks (Conneau and Kiela, 2018; McCann et al., 2018), and similar initiatives in other domains (Peng et al., 2019), we introduce the Legal General Language Understanding Evaluation (LexGLUE) benchmark, a benchmark dataset to… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue."
+    ),
 )
 test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)

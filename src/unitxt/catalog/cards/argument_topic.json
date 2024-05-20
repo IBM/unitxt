@@ -97,5 +97,6 @@
         "region": "us",
         "size_categories": "10K<n<100K",
         "task_categories": "text-classification"
-    }
+    },
+    "__description__": "Dataset Card for Argument-Quality-Ranking-30k Dataset\nDataset Summary\nArgument Quality Ranking\nThe dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets.\nThe dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.\nArgument Topic\nThis subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k."
 }

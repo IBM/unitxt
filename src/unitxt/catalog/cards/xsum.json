@@ -27,5 +27,6 @@
         "source_datasets": "original",
         "task_categories": "summarization",
         "task_ids": "news-articles-summarization"
-    }
+    },
+    "__description__": "Extreme Summarization (XSum) Dataset.\nThere are three features:\n- document: Input news article.\n- summary: One sentence summary of the article.\n- id: BBC ID of the article."
 }

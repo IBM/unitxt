@@ -57,5 +57,6 @@
         "source_datasets": "original",
         "task_categories": "text-classification",
         "task_ids": "natural-language-inference"
-    }
+    },
+    "__description__": "Dataset Card for Boolq\nDataset Summary\nBoolQ is a question answering dataset for yes/no questions containing 15942 examples. These questions are naturally\noccurring ---they are generated in unprompted and unconstrained settings.\nEach example is a triplet of (question, passage, answer), with the title of the page as optional additional context.\nThe text-pair classification setup is similar to existing natural language inference tasks.\nSupported Tasks… See the full description on the dataset page: https://huggingface.co/datasets/google/boolq."
 }

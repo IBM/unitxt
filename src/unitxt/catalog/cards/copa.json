@@ -40,7 +40,7 @@
     ],
     "task": "tasks.qa.multiple_choice.with_context",
     "templates": "templates.qa.multiple_choice.with_context.all",
-    "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled afterGLUE with a new set of more difficult language understanding tasks, improvedresources, and a new public leaderboard.The Choice Of Plausible Alternatives (COPA, Roemmele et al., 2011) dataset is a causalreasoning task in which a system is given a premise sentence and two possible alternatives. Thesystem must choose the alternative which has the more plausible causal relationship with the premise.The method used for the construction of the alternatives ensures that the task requires causal reasoningto solve. Examples either deal with alternative possible causes or alternative possible effects of thepremise sentence, accompanied by a simple question disambiguating between the two instancetypes for the model. All examples are handcrafted and focus on topics from online blogs and aphotography-related encyclopedia. Following the recommendation of the authors, we evaluate usingaccuracy.",
+    "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\nGLUE with a new set of more difficult language understanding tasks, improved\nresources, and a new public leaderboard.",
     "__tags__": {
         "NLU": true,
         "annotations_creators": "expert-generated",

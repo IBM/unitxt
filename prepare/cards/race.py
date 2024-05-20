@@ -32,6 +32,17 @@ for subset in ["all", "high", "middle"]:
             "task_categories": "multiple-choice",
             "task_ids": "multiple-choice-qa",
         },
+        __description__=(
+            'Dataset Card for "race"\n'
+            "Dataset Summary\n"
+            "RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The\n"
+            "dataset is collected from English examinations in China, which are designed for middle school and high school students.\n"
+            "The dataset can be served as the training and test sets for machine comprehension.\n"
+            "Supported Tasks and Leaderboards\n"
+            "More Information Needed\n"
+            "Languages\n"
+            "More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race."
+        ),
     )
     if subset == "middle":
         test_card(card, strict=False)

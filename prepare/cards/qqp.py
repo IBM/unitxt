@@ -61,6 +61,15 @@ card = TaskCard(
             "text-scoring",
         ],
     },
+    __description__=(
+        "Dataset Card for GLUE\n"
+        "Dataset Summary\n"
+        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
+        "Supported Tasks and Leaderboards\n"
+        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
+        "ax\n"
+        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+    ),
 )
 
 test_card(card)

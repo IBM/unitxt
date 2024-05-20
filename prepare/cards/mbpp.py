@@ -43,6 +43,12 @@ card = TaskCard(
         "source_datasets": "original",
         "task_categories": "text2text-generation",
     },
+    __description__=(
+        "Dataset Card for Mostly Basic Python Problems (mbpp)\n"
+        "Dataset Summary\n"
+        "The benchmark consists of around 1,000 crowd-sourced Python programming problems, designed to be solvable by entry level programmers, covering programming fundamentals, standard library functionality, and so on. Each problem consists of a task description, code solution and 3 automated test cases. As described in the paper, a subset of the data has been hand-verified by us.\n"
+        "Released here as part… See the full description on the dataset page: https://huggingface.co/datasets/mbpp."
+    ),
 )
 
 test_card(

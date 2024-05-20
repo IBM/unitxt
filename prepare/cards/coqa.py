@@ -53,6 +53,14 @@ card = TaskCard(
         "task_categories": "question-answering",
         "task_ids": "extractive-qa",
     },
+    __description__=(
+        'Dataset Card for "coqa"\n'
+        "Dataset Summary\n"
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
+        "Supported Tasks and Leaderboards\n"
+        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+    ),
 )
 
 test_card(card)
@@ -98,6 +106,14 @@ card = TaskCard(
         "task_categories": "question-answering",
         "task_ids": "extractive-qa",
     },
+    __description__=(
+        'Dataset Card for "coqa"\n'
+        "Dataset Summary\n"
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
+        "Supported Tasks and Leaderboards\n"
+        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+    ),
 )
 
 test_card(card)

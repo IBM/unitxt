@@ -52,6 +52,11 @@ card = TaskCard(
             "extractive-qa",
         ],
     },
+    __description__=(
+        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\n"
+        "GLUE with a new set of more difficult language understanding tasks, improved\n"
+        "resources, and a new public leaderboard."
+    ),
 )
 
 test_card(card)
