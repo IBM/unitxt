@@ -256,10 +256,6 @@ class StreamOperator(MultiStreamOperator):
             self._process_stream,
             gen_kwargs={"stream": stream, "stream_name": stream_name},
         )
-        return GeneratorStream(
-            self._process_stream,
-            gen_kwargs={"stream": stream, "stream_name": stream_name},
-        )
 
     def _is_should_be_processed(self, stream_name):
         if (
