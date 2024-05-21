@@ -19,7 +19,7 @@ add_to_catalog(
 
 add_to_catalog(
     FormTask(
-        inputs={"text": "str", "entity_types": "List[str]"},
+        inputs={"text": "str", "relation_types": "List[str]"},
         outputs={
             "entity_surface_form1": "List[str]",
             "relation_type": "List[str]",
