@@ -1,4 +1,4 @@
-.. _llm_as_judge:
+.. _data_classification_policy
 
 .. note::
 
