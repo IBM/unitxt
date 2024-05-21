@@ -22,6 +22,7 @@
 # and warnings.
 #
 #
+import csv
 import glob
 import json
 import logging
@@ -36,8 +37,10 @@ from huggingface_hub import dataset_info
 from huggingface_hub.repocard import RepoCard
 
 from ..logging_utils import get_logger
+from ..settings_utils import settings
 from ..text_utils import lines_defining_obj
 
+settings.default_verbosity = "critical"
 logger = get_logger()
 logger.setLevel(logging.INFO)
 # so, with settings.default_verbosity = "critical", only this module catches stdout and stderr
@@ -53,7 +56,11 @@ logger.info(f"Annotating files: {all_preparation_files}")
 # all_infos.txt will gather all the accessible info in all ways tried here
 with open("all_infos.txt", "w") as writer:
     writer.write("starting annotations\n")
+dict_per_file = []
+max_num_of_tags = 0
 for file in all_preparation_files:
+    this_file_dict = {}
+    dict_per_file.append(this_file_dict)
     logger.info(
         "\n_____________________________________________\n"
         f"  Testing preparation file:\n  {file}."
@@ -61,6 +68,8 @@ for file in all_preparation_files:
     )
     with open("all_infos.txt", "a") as writer:
         writer.write(f"\nCard file: {file}\n")
+
+    this_file_dict["file_name"] = file[1 + file.rfind("/") :]
 
     # go out to the task-card generator, and catch all printouts
     # invoked from there.
@@ -87,6 +96,9 @@ for file in all_preparation_files:
     if len(card["path"]) == 0:
         # not a LoadHF
         continue
+    this_file_dict["url_in_hf"] = (
+        '=HYPERLINK("https://huggingface.co/datasets/' + card["path"] + '")'
+    )
     ds_builder = None
     try:
         if card["name"] is None:
@@ -159,8 +171,14 @@ for file in all_preparation_files:
             writer.write(str(ds_builder.info.description))
             writer.write("\nJust Citation:\n")
             writer.write(str(ds_builder.info.citation))
+            this_file_dict["citation"] = "//".join(
+                (ds_builder.info.citation).split("\n")
+            )
             writer.write("\nJust Homepage:\n")
             writer.write(str(ds_builder.info.homepage))
+            this_file_dict["home_page"] = (
+                '=HYPERLINK("' + ds_builder.info.homepage + '")'
+            )
             writer.write("\nJust Features:\n")
             writer.write(str(ds_builder.info.features))
         if ds_info is not None:
@@ -204,6 +222,7 @@ for file in all_preparation_files:
             scraped_description = scraped_description.strip()
             scraped_description = scraped_description.replace('"', '\\"')
             writer.write(scraped_description)
+            this_file_dict["description"] = scraped_description
 
     tags_to_add = (
         []
@@ -241,6 +260,14 @@ for file in all_preparation_files:
             ": true}", ": True}"
         )
 
+    this_file_dict["tags"] = len(the_dict_to_become_tags)
+    for i, key in enumerate(sorted(the_dict_to_become_tags.keys())):
+        this_file_dict["tag" + str(i + 1)] = (
+            key + ": " + str(the_dict_to_become_tags[key])
+        )
+    if len(the_dict_to_become_tags) > max_num_of_tags:
+        max_num_of_tags = len(the_dict_to_become_tags)
+    continue
     to_lines = []
     with open(file) as fp:
         all_lines = fp.readlines()
@@ -318,3 +345,19 @@ for file in all_preparation_files:
             to_lines.append(tags_indent + "),\n")
             # in case of __tags__: simply use, instead of the above three lines:
             # to_lines.append(tags_indent + "__tags__ = " + string_for_tags + ",\n")
+
+all_tags_titles = ["tag" + str(i + 1) for i in range(max_num_of_tags)]
+with open("all_cards_sprinkled_tags.csv", "w", newline="") as csvfile:
+    fieldnames = [
+        "file_name",
+        "url_in_hf",
+        "description",
+        "home_page",
+        "citation",
+        "tags",
+    ]
+    fieldnames.extend(all_tags_titles)
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for file_dict in dict_per_file:
+        writer.writerow(file_dict)
