@@ -75,7 +75,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import Stream
+from .stream import GeneratorStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -490,7 +490,7 @@ class Augmentor(StreamInstanceOperator):
 
     Args:
         augment_model_input: Whether to augment the input to the model.
-        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the FormTask operator.
+        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the Task operator.
 
     """
 
@@ -525,7 +525,7 @@ class Augmentor(StreamInstanceOperator):
         if self.augment_task_input:
             assert (
                 len(self._task_input_fields) > 0
-            ), "No augmentable input fields were defined in FormTask, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the FormTask."
+            ), "No augmentable input fields were defined in Task, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the Task."
             fields = self._task_input_fields
             assert not self.augment_model_input
 
@@ -857,6 +857,51 @@ class ZipFieldValues(StreamInstanceOperator):
         else:
             zipped = zip(*values)
         instance[self.to_field] = list(zipped)
+        return instance
+
+
+class InterleaveListsToDialogOperator(StreamInstanceOperator):
+    """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
+
+     The list of tuples if of format (role, turn_content), where the role label is specified by
+     the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
+
+    The user turns and assistant turns field are specified in the arguments.
+     The value of each of the 'fields' is assumed to be a list.
+
+    """
+
+    user_turns_field: str
+    assistant_turns_field: str
+    user_role_label: str = "user"
+    assistant_role_label: str = "assistant"
+    to_field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        user_turns = instance[self.user_turns_field]
+        assistant_turns = instance[self.assistant_turns_field]
+
+        assert (
+            len(user_turns) == len(assistant_turns)
+            or (len(user_turns) - len(assistant_turns) == 1)
+        ), "user_turns must have either the same length as assistant_turns or one more turn."
+
+        interleaved_dialog = []
+        i, j = 0, 0  # Indices for the user and assistant lists
+        # While either list has elements left, continue interleaving
+        while i < len(user_turns) or j < len(assistant_turns):
+            if i < len(user_turns):
+                interleaved_dialog.append((self.user_role_label, user_turns[i]))
+                i += 1
+            if j < len(assistant_turns):
+                interleaved_dialog.append(
+                    (self.assistant_role_label, assistant_turns[j])
+                )
+                j += 1
+
+        instance[self.to_field] = interleaved_dialog
         return instance
 
 
@@ -1725,7 +1770,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream(
             {
-                self.new_stream_name: Stream(
+                self.new_stream_name: GeneratorStream(
                     self.merge, gen_kwargs={"multi_stream": multi_stream}
                 )
             }

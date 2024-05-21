@@ -168,15 +168,16 @@ Welcome!
 
    docs/introduction
    docs/demo
-   docs/no_installation_usage
+   docs/loading_datasets
+   docs/evaluating_datasets
    docs/installation
-   docs/components
    docs/tutorials
-   docs/backend
    docs/operators
    docs/saving_and_loading_from_catalog
    docs/production
+   docs/debugging
    docs/helm
+   docs/glossary
    documentation
    catalog/catalog.__dir__
 

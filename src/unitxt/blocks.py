@@ -31,7 +31,7 @@ from .struct_data_operators import (
     TruncateTableCells,
     TruncateTableRows,
 )
-from .task import FormTask
+from .task import Task
 from .templates import (
     InputOutputTemplate,
     MultiLabelTemplate,

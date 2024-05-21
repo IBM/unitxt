@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -25,7 +25,7 @@ card = TaskCard(
             expression=get_asserts, imports_list=["re"], to_field="test_list"
         )
     ],
-    task=FormTask(
+    task=Task(
         inputs=["prompt"],
         outputs=["prompt", "canonical_solution", "test_list"],
         metrics=["metrics.bleu"],
@@ -37,6 +37,28 @@ card = TaskCard(
                 output_format="{prompt}\n{canonical_solution}",
             ),
         ]
+    ),
+    __tags__={
+        "annotations_creators": "expert-generated",
+        "arxiv": "2107.03374",
+        "code-generation": True,
+        "croissant": True,
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "n<1K",
+        "source_datasets": "original",
+        "task_categories": "text2text-generation",
+    },
+    __description__=(
+        "Dataset Card for OpenAI HumanEval\n"
+        "Dataset Summary\n"
+        "The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models.\n"
+        "Supported Tasks and Leaderboards\n"
+        "Languages\n"
+        "The programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval."
     ),
 )
 

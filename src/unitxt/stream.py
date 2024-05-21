@@ -1,5 +1,6 @@
 import tempfile
-from typing import Dict, Iterable
+from abc import abstractmethod
+from typing import Any, Callable, Dict, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
@@ -8,6 +9,36 @@ from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 
 
 class Stream(Dataclass):
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    @abstractmethod
+    def peek(self):
+        pass
+
+    @abstractmethod
+    def take(self, n):
+        pass
+
+
+class ListStream(Stream):
+    instances_list: List[Dict[str, Any]]
+
+    def __iter__(self):
+        return iter(self.instances_list)
+
+    def peek(self):
+        return next(iter(self.instances_list))
+
+    def take(self, n):
+        for i, instance in enumerate(self.instances_list):
+            if i >= n:
+                break
+            yield instance
+
+
+class GeneratorStream(Stream):
     """A class for handling streaming data in a customizable way.
 
     This class provides methods for generating, caching, and manipulating streaming data.
@@ -18,8 +49,8 @@ class Stream(Dataclass):
         caching (bool): Whether the data is cached or not. :no-index:
     """
 
-    generator: callable
-    gen_kwargs: Dict[str, any] = OptionalField(default_factory=dict)
+    generator: Callable
+    gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
     caching: bool = False
     copying: bool = False
 
@@ -147,7 +178,7 @@ class MultiStream(dict):
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
-                key: Stream(
+                key: GeneratorStream(
                     generator.generator,
                     gen_kwargs=generator.gen_kwargs,
                     caching=caching,
@@ -173,7 +204,7 @@ class MultiStream(dict):
         """
         return cls(
             {
-                key: Stream(
+                key: GeneratorStream(
                     iterable.__iter__,
                     caching=caching,
                     copying=copying,

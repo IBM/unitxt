@@ -224,5 +224,33 @@
         }
     ],
     "task": "tasks.classification.multi_class",
-    "templates": "templates.classification.multi_class.all"
+    "templates": "templates.classification.multi_class.all",
+    "__tags__": {
+        "annotations_creators": "found",
+        "arxiv": [
+            "2110.00976",
+            "2109.00904",
+            "1805.01217",
+            "2104.08671"
+        ],
+        "croissant": true,
+        "language": "en",
+        "language_creators": "found",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended",
+        "task_categories": [
+            "question-answering",
+            "text-classification"
+        ],
+        "task_ids": [
+            "multi-class-classification",
+            "multi-label-classification",
+            "multiple-choice-qa",
+            "topic-classification"
+        ]
+    },
+    "__description__": "Dataset Card for \"LexGLUE\"\nDataset Summary\nInspired by the recent widespread use of the GLUE multi-task benchmark NLP dataset (Wang et al., 2018), the subsequent more difficult SuperGLUE (Wang et al., 2019), other previous multi-task NLP benchmarks (Conneau and Kiela, 2018; McCann et al., 2018), and similar initiatives in other domains (Peng et al., 2019), we introduce the Legal General Language Understanding Evaluation (LexGLUE) benchmark, a benchmark dataset to… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue."
 }

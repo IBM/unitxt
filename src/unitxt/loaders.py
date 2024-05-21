@@ -40,7 +40,7 @@ from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import AddFields
 from .settings_utils import get_settings
-from .stream import MultiStream, Stream
+from .stream import GeneratorStream, MultiStream
 
 logger = get_logger()
 settings = get_settings()
@@ -195,7 +195,7 @@ class LoadHF(Loader):
         self.log_limited_loading()
         return MultiStream(
             {
-                name: Stream(
+                name: GeneratorStream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
                 )
                 for name in self._cache.keys()
@@ -255,14 +255,18 @@ class LoadCSV(Loader):
         if self.streaming:
             return MultiStream(
                 {
-                    name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
+                    name: GeneratorStream(
+                        generator=self.stream_csv, gen_kwargs={"file": file}
+                    )
                     for name, file in self.files.items()
                 }
             )
 
         return MultiStream(
             {
-                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                name: GeneratorStream(
+                    generator=self.load_csv, gen_kwargs={"file": file}
+                )
                 for name, file in self.files.items()
             }
         )

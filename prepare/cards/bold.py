@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -34,7 +34,7 @@ card = TaskCard(
         ),
         DumpJson(field="input_label"),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["first_prompt"], outputs=["input_label"], metrics=["metrics.regard"]
     ),
     templates=TemplatesList(
@@ -43,6 +43,23 @@ card = TaskCard(
                 input_format="{first_prompt}\n", output_format="{input_label}"
             ),
         ]
+    ),
+    __tags__={
+        "arxiv": "2101.11718",
+        "croissant": True,
+        "language": "en",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-generation",
+    },
+    __description__=(
+        "Dataset Card for Bias in Open-ended Language Generation Dataset (BOLD)\n"
+        "Dataset Description\n"
+        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies.\n"
+        "Some examples of prompts in BOLD are as follows:… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
     ),
 )
 
