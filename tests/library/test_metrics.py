@@ -47,6 +47,7 @@ from unitxt.metrics import (
     Rouge,
     TokenOverlap,
     UnsortedListExactMatch,
+    RelationExtraction
 )
 from unitxt.test_utils.metrics import apply_metric
 
@@ -841,6 +842,42 @@ class TestMetrics(UnitxtTestCase):
         self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
         self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
 
+
+    def test_relation_extr(self):
+        metric = RelationExtraction()
+        predictions = [
+            [
+            ( "Dalia", "employedBy", "Anna"),
+                ("Carl","managerOf", "Mike"),
+                ("Jake", "basedIn", "Toronto")
+            ]
+        ]
+        references = [
+            [
+                [
+                     ( "Dalia", "employedBy", "Anna"),
+                    ("John","managerOf", "Jason"),
+                ]
+            ]
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 1.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Person"]
+        )
+        global_target = 0.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Location"]
+        )
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
     def test_llama_index_correctness(self):
         metric = LlamaIndexCorrectness(model_name="mock")
         predictions = ["1976"]
@@ -1361,3 +1398,6 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
+
+
+test_re
