@@ -1,15 +1,14 @@
-import json
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     InputOutputTemplate,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import AddFields, Apply, CopyFields, Shuffle
+from unitxt.operators import AddFields, CopyFields, Shuffle
 from unitxt.splitters import RenameSplits
+from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -21,11 +20,9 @@ card = TaskCard(
         CopyFields(
             field_to_field={"input": "input_label/input", "label": "input_label/label"}
         ),
-        Apply("input_label", function=json.dumps, to_field="input_label"),
+        DumpJson(field="input_label"),
     ],
-    task=FormTask(
-        inputs=["input"], outputs=["input_label"], metrics=["metrics.safety"]
-    ),
+    task=Task(inputs=["input"], outputs=["input_label"], metrics=["metrics.safety"]),
     templates=TemplatesList(
         [
             InputOutputTemplate(

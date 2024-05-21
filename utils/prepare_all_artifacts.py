@@ -45,6 +45,7 @@ def prepare_all_catalog_artifacts(catalog_dir):
     os.environ["UNITXT_USE_ONLY_LOCAL_CATALOGS"] = "True"
     os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
     os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
+    os.environ["UNITXT_SKIP_ARTIFACTS_PREPARE_AND_VERIFY"] = "True"
     logger.info("*" * 100)
     logger.info("*" * 100)
     logger.info("* DELETING OLD FM_EVAL CATALOG  *** ")

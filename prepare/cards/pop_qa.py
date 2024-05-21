@@ -1,13 +1,12 @@
-import json
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    FormTask,
     LoadHF,
+    Task,
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import Apply, Shuffle
+from unitxt.operators import Shuffle
+from unitxt.struct_data_operators import LoadJson
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
@@ -15,9 +14,9 @@ card = TaskCard(
     loader=LoadHF(path="akariasai/PopQA"),
     preprocess_steps=[
         Shuffle(page_size=14267),
-        Apply("possible_answers", function=json.loads, to_field="possible_answers"),
+        LoadJson(field="possible_answers"),
     ],
-    task=FormTask(
+    task=Task(
         inputs=["question", "prop", "subj"],
         outputs=["possible_answers"],
         metrics=["metrics.accuracy"],
@@ -36,6 +35,14 @@ card = TaskCard(
                 ],
             ),
         ]
+    ),
+    __tags__={"croissant": True, "region": "us"},
+    __description__=(
+        "Dataset Card for PopQA\n"
+        "Dataset Summary\n"
+        "PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entityand relationship_type annotation, as well as Wikipedia monthly page views.\n"
+        "Languages\n"
+        "The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA."
     ),
 )
 

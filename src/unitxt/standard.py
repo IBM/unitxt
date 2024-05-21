@@ -135,6 +135,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.metadata,
             self.standardization,
             self.processing,
+            self.metadata,
             self.verblization,
             self.finalize,
         ]
@@ -144,6 +145,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.inference_instance.steps = [
             self.metadata,
             self.processing,
+            self.metadata,
         ]
 
         self.inference_demos = SourceSequentialOperator()
@@ -153,6 +155,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.metadata,
             self.standardization,
             self.processing,
+            self.metadata,
         ]
 
         self.inference = SequentialOperator()

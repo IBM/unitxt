@@ -6,13 +6,16 @@ from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
-    ExtractMtBenchJudgment,
+    ExtractMtBenchLabelJudgment,
+    ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
+    LiteralEval,
     LowerCase,
     LowerCaseTillPunc,
     MatchClosestOption,
+    RegexParser,
     StanceToProCon,
     StringOrNotString,
     StrToFloatFormat,
@@ -317,15 +320,43 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
-            ExtractMtBenchJudgment(
+            ExtractMtBenchRatingJudgment(
                 field="prediction",
             ),
-            ExtractMtBenchJudgment(
+            ExtractMtBenchRatingJudgment(
                 field="references",
                 process_every_value=True,
             ),
         ]
     ),
-    "processors.extract_mt_bench_judgment",
+    "processors.extract_mt_bench_rating_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchLabelJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchLabelJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_label_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    RegexParser(field="prediction", regex=".+", process_every_value=False),
+    "processors.regex_parser_from_prediction",
+    overwrite=True,
+)
+
+add_to_catalog(
+    LiteralEval(field="prediction", process_every_value=False),
+    "processors.literal_eval",
     overwrite=True,
 )

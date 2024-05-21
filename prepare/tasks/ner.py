@@ -1,13 +1,13 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "entity_type": "str"},
         outputs={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
-            "text": "List[str]",
+            "text": "str",
             "labels": "List[str]",
         },
         prediction_type="List[Tuple[str,str]]",
@@ -19,12 +19,12 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "entity_types": "List[str]"},
         outputs={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
-            "text": "List[str]",
+            "text": "str",
             "labels": "List[str]",
         },
         prediction_type="List[Tuple[str,str]]",

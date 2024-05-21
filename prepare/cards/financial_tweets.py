@@ -59,6 +59,37 @@ card = TaskCard(
     ],
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
+    __tags__={
+        "annotations_creators": "other",
+        "croissant": True,
+        "finance": True,
+        "hedgefunds": True,
+        "language": "en",
+        "language_creators": "other",
+        "license": "mit",
+        "markets": True,
+        "multilinguality": "monolingual",
+        "quant": True,
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "stocks": True,
+        "task_categories": "text-classification",
+        "task_ids": "multi-class-classification",
+        "twitter": True,
+        "wallstreet": True,
+    },
+    __description__=(
+        "Dataset Description\n"
+        "The Twitter Financial News dataset is an English-language dataset containing an annotated corpus of finance-related tweets. This dataset is used to classify finance-related tweets for their topic.\n"
+        "The dataset holds 21,107 documents annotated with 20 labels:\n"
+        "topics = {\n"
+        '"LABEL_0": "Analyst Update",\n'
+        '"LABEL_1": "Fed | Central Banks",\n'
+        '"LABEL_2": "Company | Product News",\n'
+        '"LABEL_3": "Treasuries | Corporate Debt",\n'
+        '"LABEL_4": "Dividend"… See the full description on the dataset page: https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic.'
+    ),
 )
 test_card(card, debug=False)
 add_to_catalog(card, f"cards.{dataset_name}", overwrite=True)

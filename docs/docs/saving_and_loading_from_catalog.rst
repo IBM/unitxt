@@ -1,7 +1,7 @@
 .. _using_catalog:
 
 =====================================
-Saving and Loading from the Catalog
+Save/Load from Catalog
 =====================================
 
 The Unitxt catalog serves as a repository for people to share their processing tools. This includes templates, formats, operators, and other Unitxt assets. These can be shared through a local catalog located in a directory on the local filesystem or via a directory in a GitHub repository.
@@ -24,10 +24,10 @@ Once your catalog is registered, you can add artifacts to it:
 
 .. code-block:: python
 
-    from unitxt.task import FormTask
+    from unitxt.task import Task
     from unitxt import add_to_catalog
 
-    my_task = FormTask(...)
+    my_task = Task(...)
 
     catalog_name = "tasks.my_task"
 

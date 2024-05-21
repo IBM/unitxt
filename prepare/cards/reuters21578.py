@@ -154,6 +154,16 @@ for subset in get_dataset_config_names(dataset_name):
         ],
         task="tasks.classification.multi_label",
         templates="templates.classification.multi_label.all",
+        __tags__={
+            "croissant": True,
+            "language": "en",
+            "license": "other",
+            "region": "us",
+        },
+        __description__=(
+            "The Reuters-21578 dataset  is one of the most widely used data collections for text\n"
+            "categorization research. It is collected from the Reuters financial newswire service in 1987."
+        ),
     )
     test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

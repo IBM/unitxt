@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str", "class": "str"},
         outputs={"class": "str", "label": "List[str]"},
         prediction_type="List[str]",
@@ -18,7 +18,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str", "class": "str"},
         outputs={"class": "str", "label": "int"},
         prediction_type="float",
@@ -33,7 +33,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text": "str",
             "text_type": "str",
@@ -54,7 +54,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text": "str",
             "text_type": "str",
@@ -71,7 +71,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text_a": "str",
             "text_a_type": "str",
@@ -86,5 +86,24 @@ add_to_catalog(
         augmentable_inputs=["text_a", "text_b"],
     ),
     "tasks.classification.multi_class.relation",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    Task(
+        inputs={
+            "text": "str",
+            "text_type": "str",
+            "classes": "List[str]",
+            "type_of_class": "str",
+            "classes_descriptions": "str",
+        },
+        outputs={"label": "str"},
+        prediction_type="str",
+        metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        augmentable_inputs=["text"],
+    ),
+    "tasks.classification.multi_class.with_classes_descriptions",
     overwrite=True,
 )

@@ -11,6 +11,20 @@ def list_to_stream_with_prediction_and_references(list: List[Any]) -> List[Any]:
     return [{"prediction": item, "references": [item]} for item in list]
 
 
+def list_to_stream_with_prediction_or_references(
+    list: List[Any], key: str
+) -> List[Any]:
+    if key == "prediction":
+        stream = [{key: item} for item in list]
+    elif key == "references":
+        stream = [{key: [item]} for item in list]
+    else:
+        raise ValueError(
+            f"Unexpected key, expected 'prediction' or 'references' - got {key}"
+        )
+    return stream
+
+
 class TestPostProcessors(UnitxtTestCase):
     def test_convert_to_boolean(self):
         parser, _ = fetch_artifact("processors.convert_to_boolean")
@@ -341,8 +355,8 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
-    def test_extract_mt_bench_judgment(self):
-        postprocessor, _ = fetch_artifact("processors.extract_mt_bench_judgment")
+    def test_extract_mt_bench_rating_judgment(self):
+        postprocessor, _ = fetch_artifact("processors.extract_mt_bench_rating_judgment")
         predictions = [
             "no reason 3.14 [[3]]",
             "[[6]]",
@@ -357,5 +371,68 @@ class TestPostProcessors(UnitxtTestCase):
             operator=postprocessor,
             inputs=list_to_stream_with_prediction_and_references(predictions),
             targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_extract_mt_bench_label_judgment(self):
+        postprocessor, _ = fetch_artifact("processors.extract_mt_bench_label_judgment")
+        predictions = [
+            "no reason 3.14 [[A]]",
+            "[[B]]",
+            "[[A]] because",
+            "good",
+            "bad [[C]]",
+        ]
+        targets = ["A", "B", "A", "None", "C"]
+
+        check_operator(
+            operator=postprocessor,
+            inputs=list_to_stream_with_prediction_and_references(predictions),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
+    def test_literal_eval(self):
+        parser, _ = fetch_artifact("processors.literal_eval")
+        inputs = [
+            "[1, 2, 3]",
+            "[1,2,3]",
+            " [1,2,3] ",
+            "['bob','sam','lance']",
+            "[{'name': 'bob', 'age': 42}, {'name': 'Stacy', 'age': 25}]",
+            "{'name': 'Stacy', 'age': 25}",
+            "{'names': ['Sam', 'Bob'], 'age': 25}",
+        ]
+        targets = [
+            [1, 2, 3],
+            [1, 2, 3],
+            [1, 2, 3],
+            ["bob", "sam", "lance"],
+            [{"name": "bob", "age": 42}, {"name": "Stacy", "age": 25}],
+            {"name": "Stacy", "age": 25},
+            {"names": ["Sam", "Bob"], "age": 25},
+        ]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_or_references(
+                inputs, key="prediction"
+            ),
+            targets=list_to_stream_with_prediction_or_references(
+                targets, key="prediction"
+            ),
+            tester=self,
+        )
+        parser, _ = fetch_artifact(
+            "processors.literal_eval[process_every_value=true,field=references]"
+        )
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_or_references(
+                inputs, key="references"
+            ),
+            targets=list_to_stream_with_prediction_or_references(
+                targets, key="references"
+            ),
             tester=self,
         )

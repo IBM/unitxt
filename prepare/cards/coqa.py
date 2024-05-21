@@ -33,6 +33,34 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
+    __tags__={
+        "annotations_creators": "crowdsourced",
+        "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
+        "conversational-qa": True,
+        "croissant": True,
+        "language": "en",
+        "language_creators": "found",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": [
+            "extended|race",
+            "extended|cnn_dailymail",
+            "extended|wikipedia",
+            "extended|other",
+        ],
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa",
+    },
+    __description__=(
+        'Dataset Card for "coqa"\n'
+        "Dataset Summary\n"
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
+        "Supported Tasks and Leaderboards\n"
+        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+    ),
 )
 
 test_card(card)
@@ -58,6 +86,34 @@ card = TaskCard(
     ],
     task="tasks.completion.abstractive",
     templates="templates.completion.abstractive.all",
+    __tags__={
+        "annotations_creators": "crowdsourced",
+        "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
+        "conversational-qa": True,
+        "croissant": True,
+        "language": "en",
+        "language_creators": "found",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": [
+            "extended|race",
+            "extended|cnn_dailymail",
+            "extended|wikipedia",
+            "extended|other",
+        ],
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa",
+    },
+    __description__=(
+        'Dataset Card for "coqa"\n'
+        "Dataset Summary\n"
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
+        "Supported Tasks and Leaderboards\n"
+        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+    ),
 )
 
 test_card(card)

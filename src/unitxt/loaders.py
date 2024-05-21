@@ -27,7 +27,7 @@ import os
 import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -38,7 +38,7 @@ from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
-from .stream import MultiStream, Stream
+from .stream import GeneratorStream, MultiStream
 
 logger = get_logger()
 settings = get_settings()
@@ -180,7 +180,7 @@ class LoadHF(Loader):
         self.log_limited_loading()
         return MultiStream(
             {
-                name: Stream(
+                name: GeneratorStream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
                 )
                 for name in self._cache.keys()
@@ -240,14 +240,18 @@ class LoadCSV(Loader):
         if self.streaming:
             return MultiStream(
                 {
-                    name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
+                    name: GeneratorStream(
+                        generator=self.stream_csv, gen_kwargs={"file": file}
+                    )
                     for name, file in self.files.items()
                 }
             )
 
         return MultiStream(
             {
-                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
+                name: GeneratorStream(
+                    generator=self.load_csv, gen_kwargs={"file": file}
+                )
                 for name, file in self.files.items()
             }
         )
@@ -472,5 +476,28 @@ class MultipleSourceLoader(Loader):
 
     def process(self):
         return FixedFusion(
-            origins=self.sources, max_instances_per_origin=self.get_limit()
+            origins=self.sources, max_instances_per_origin_split=self.get_limit()
         ).process()
+
+
+class LoadFromDictionary(Loader):
+    """Allows loading data from dictionary of constants.
+
+    The loader can be used, for example, when debugging or working with small datasets.
+
+    Attributes:
+        data (Dict[str, List[Dict[str, Any]]]): a dictionary of constants from which the data will be loaded
+
+    Examples:
+        data = {
+            "train": {"input": "SomeInput1", "output": "SomeResult1"},
+            "test": {"input": "SomeInput2", "output": "SomeResult2"},
+        }
+        loader = LoadFromDictionary(data=data)
+        multi_stream = loader.process()
+    """
+
+    data: Dict[str, List[Dict[str, Any]]]
+
+    def process(self) -> MultiStream:
+        return MultiStream.from_iterables(self.data)

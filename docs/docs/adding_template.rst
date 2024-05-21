@@ -5,7 +5,7 @@
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
 =====================================
-Adding Templates ✨
+Templates ✨
 =====================================
 
 In this section you learn how to add a Template. Templates are the way for unitxt to take your task data and verbalize the task instructions to the model.
