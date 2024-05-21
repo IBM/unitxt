@@ -14,7 +14,7 @@ from .type_utils import (
 
 
 class Task(StreamInstanceOperator):
-    """FormTask packs the different instance fields into dictionaries by their roles in the task.
+    """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
         inputs (Union[Dict[str, str], List[str]]):
@@ -81,7 +81,7 @@ class Task(StreamInstanceOperator):
     def check_metrics_type(self) -> None:
         prediction_type = parse_type_string(self.prediction_type)
         for metric_id in self.metrics:
-            metric_prediction_type = FormTask.get_metric_prediction_type(metric_id)
+            metric_prediction_type = Task.get_metric_prediction_type(metric_id)
 
             if (
                 prediction_type == metric_prediction_type
