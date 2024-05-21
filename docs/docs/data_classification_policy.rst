@@ -14,7 +14,7 @@ Data classification policy
 ----------------------------
 Whenever processing streams in unitxt, users can specify a parameter called `data_classification_policy`, which determines how this data should be treated. The taxonomy is defined by a user and may encompass multiple different policies.
 
-Each component used in unitxt (metrics, operators etc.) has the same parameter as well. This allows a given component to verify if it can process instances of a stream.
+Each component used in Unitxt (metrics, operators, inference engines etc.) has the same parameter as well. This allows a given component to verify if it can process instances of a stream.
 
 If user-defined policies for a component include that of data, then a stream may be further processed. Otherwise, an error will be raised.
 
