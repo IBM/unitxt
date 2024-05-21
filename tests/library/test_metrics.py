@@ -1397,6 +1397,3 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
-
-
-test_re
