@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from statistics import mean
-from typing import Any, Dict, Generator, List, Optional, Tuple, Callable
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
@@ -1769,7 +1769,9 @@ class CustomF1(GlobalMetric):
         references: List[List[Any]],
         predictions: List[Any],
         task_data: List[Dict],
-        reference_extraction_func: Callable[[Any, List[List[Any]]], None] = lambda ref:[element[0] for element in ref],
+        reference_extraction_func: Callable[
+            [Any, List[List[Any]]], None
+        ] = lambda ref: [element[0] for element in ref],
     ) -> dict:
         references = reference_extraction_func(references)
 
@@ -1906,6 +1908,7 @@ def normalize_answer(s):
 
     return white_space_fix(remove_articles(remove_punc(lower(s))))
 
+
 class RelationExtraction(CustomF1):
     prediction_type = "List[Tuple[str,str]]"
 
@@ -1914,7 +1917,7 @@ class RelationExtraction(CustomF1):
 
     def get_element_representation(self, element, additional_input):
         return str(element)
-    
+
     def normalize_answer(s):
         """Lower text and remove punctuation, articles and extra whitespace."""
 
@@ -1932,6 +1935,7 @@ class RelationExtraction(CustomF1):
             return text.lower()
 
         return white_space_fix(remove_articles(remove_punc(lower(s))))
+
 
 class TokenOverlap(InstanceMetric):
     reduction_map = {"mean": ["f1", "precision", "recall"]}

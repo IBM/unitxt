@@ -1,17 +1,23 @@
+import sys
+
 from unitxt import add_to_catalog
-import sys, os
 
 sys.path.append("/Users/pklocek/fm_eval_workspace/unitxt/src/unitxt/metrics.py")
-from unitxt.metrics import NER, RelationExtraction
+from unitxt.metrics import RelationExtraction
 from unitxt.test_utils.metrics import test_metric
-
-
-
 
 metric = RelationExtraction()
 
-predictions = [[("Amir", "employedBy" ,"IBM"), ("Yaron", "employedBy" ,"IBM")]]
-references = [[[("Yaron","employedBy" ,"IBM"), ("Ran", "employedBy" ,"IBM"), ("Yonatan", "employedBy" ,"IBM")]]]
+predictions = [[("Amir", "employedBy", "IBM"), ("Yaron", "employedBy", "IBM")]]
+references = [
+    [
+        [
+            ("Yaron", "employedBy", "IBM"),
+            ("Ran", "employedBy", "IBM"),
+            ("Yonatan", "employedBy", "IBM"),
+        ]
+    ]
+]
 # Precision = 1/2, Recall = 1/3, F1 = 2 * 1/2 * 1/3 / (1/2 + 1/3) = 0.4
 instance_targets = [
     {
@@ -50,8 +56,22 @@ outputs = test_metric(
 
 
 # 1.2 more then one instance of an element
-predictions = [[("Amir", "employedBy" ,"IBM"), ("Yaron", "employedBy" ,"IBM"),("Yaron", "employedBy" ,"IBM")]]
-references = [[[("Yaron","employedBy" ,"IBM"), ("Ran", "employedBy" ,"IBM"), ("Yonatan", "employedBy" ,"IBM")]]]
+predictions = [
+    [
+        ("Amir", "employedBy", "IBM"),
+        ("Yaron", "employedBy", "IBM"),
+        ("Yaron", "employedBy", "IBM"),
+    ]
+]
+references = [
+    [
+        [
+            ("Yaron", "employedBy", "IBM"),
+            ("Ran", "employedBy", "IBM"),
+            ("Yonatan", "employedBy", "IBM"),
+        ]
+    ]
+]
 # Precision = 1/2, Recall = 1/3, F1 = 2 * 1/2 * 1/3 / (1/2 + 1/3) = 0.4
 instance_targets = [
     {
@@ -89,7 +109,15 @@ outputs = test_metric(
 )
 # 1.3 class with no predictions
 predictions = [[]]
-references = [[[("Yaron","employedBy" ,"IBM"), ("Ran", "employedBy" ,"IBM"), ("Yonatan", "employedBy" ,"IBM")]]]
+references = [
+    [
+        [
+            ("Yaron", "employedBy", "IBM"),
+            ("Ran", "employedBy", "IBM"),
+            ("Yonatan", "employedBy", "IBM"),
+        ]
+    ]
+]
 # Precision = 0/0=(by def for prediction)=0, Recall = 0/3, F1 = 2 * 1 * 0 / (1 + 0) = 0
 instance_targets = [
     {
@@ -128,25 +156,25 @@ outputs = test_metric(
 # 1.4 multi classes multi examples
 predictions = [
     [
-        ("Amir", "employedBy" ,"IBM"),
-        ("Kyle", "employedBy" ,"Google"),
-        ("Jenna", "employedBy" ,"Exxon"),
+        ("Amir", "employedBy", "IBM"),
+        ("Kyle", "employedBy", "Google"),
+        ("Jenna", "employedBy", "Exxon"),
         ("Rami", "managerOf", "Tom"),
         ("Rami", "managerOf", "Tom"),
         ("James", "basedIn", "Chicago"),
-        ("Abhishek","basedIn", "Bangalore"),
-        ("Zuzia","basedIn", "Cracow"),
+        ("Abhishek", "basedIn", "Bangalore"),
+        ("Zuzia", "basedIn", "Cracow"),
     ]
 ]
 references = [
     [
         [
-        ("Jenna", "employedBy" ,"Exxon"),
-        ("Amir", "employedBy" ,"IBM"),
-        ("Kyle", "employedBy" ,"Google"),
-        ("George", "employedBy","Bloomberg"),
-        ("Rami", "managerOf", "Tom"),
-        ("Annie", "managerOf", "Trevor"),
+            ("Jenna", "employedBy", "Exxon"),
+            ("Amir", "employedBy", "IBM"),
+            ("Kyle", "employedBy", "Google"),
+            ("George", "employedBy", "Bloomberg"),
+            ("Rami", "managerOf", "Tom"),
+            ("Annie", "managerOf", "Trevor"),
         ]
     ]
 ]

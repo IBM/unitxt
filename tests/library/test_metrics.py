@@ -43,11 +43,11 @@ from unitxt.metrics import (
     Perplexity,
     PrecisionBinary,
     RecallBinary,
+    RelationExtraction,
     RocAuc,
     Rouge,
     TokenOverlap,
     UnsortedListExactMatch,
-    RelationExtraction
 )
 from unitxt.test_utils.metrics import apply_metric
 
@@ -842,21 +842,20 @@ class TestMetrics(UnitxtTestCase):
         self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
         self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
 
-
     def test_relation_extr(self):
         metric = RelationExtraction()
         predictions = [
             [
-            ( "Dalia", "employedBy", "Anna"),
-                ("Carl","managerOf", "Mike"),
-                ("Jake", "basedIn", "Toronto")
+                ("Dalia", "employedBy", "Anna"),
+                ("Carl", "managerOf", "Mike"),
+                ("Jake", "basedIn", "Toronto"),
             ]
         ]
         references = [
             [
                 [
-                     ( "Dalia", "employedBy", "Anna"),
-                    ("John","managerOf", "Jason"),
+                    ("Dalia", "employedBy", "Anna"),
+                    ("John", "managerOf", "Jason"),
                 ]
             ]
         ]
