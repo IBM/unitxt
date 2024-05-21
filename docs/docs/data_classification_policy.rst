@@ -8,7 +8,7 @@
 Sensitive data in unitxt ✨
 =====================================
 
-The section discusses how to properly handle sensitive data in unitxt in order to avoid accidentally sending propriety/confidential data to external services.
+The section discusses how to properly handle sensitive data in unitxt in order to avoid accidentally sending proprietary/confidential data to external services.
 
 Data classification policy
 ----------------------------
