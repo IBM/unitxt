@@ -317,14 +317,6 @@ class Artifact(Dataclass):
             data_classification_policy = self.data_classification_policy
 
         if not data_classification_policy:
-            get_logger().warning(
-                f"Data classification policy for '{name}' was not "
-                f"specified, thus it will not be possible to verify if "
-                f"sensitive data is handled in a proper way. To enable "
-                f"this either set the 'data_classification_policy' attribute "
-                f"of the artifact, or modify the environment variable "
-                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly."
-            )
             return instance
 
         instance_data_classification = instance.get("data_classification_policy")
@@ -487,11 +479,7 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
     try:
         data_classification = settings.data_classification_policy
     except AttributeError:
-        get_logger().warning(
-            "Environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' was "
-            "not set. Consider declaring it to enable proper handling of "
-            "possibly sensitive data."
-        )
+        # variable was not set
         return None
 
     if data_classification == "UNITXT_DATA_CLASSIFICATION_POLICY":
