@@ -171,6 +171,8 @@ class TestArtifact(UnitxtTestCase):
             f"or modify the environment variable "
             f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
         )
+        # "Fixing" the env variable so that it does not affect other tests:
+        del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]
 
     def test_checking_data_classification_policy_attribute(self):
         instance = {"data": "text", "data_classification_policy": ["public"]}
@@ -206,4 +208,4 @@ class TestArtifact(UnitxtTestCase):
         )
 
         # "Fixing" the env variable so that it does not affect other tests:
-        settings.data_classification_policy = None
+        del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]
