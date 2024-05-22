@@ -2,7 +2,6 @@ import json
 import os
 
 from unitxt.artifact import (
-    UNITXT_DATA_CLASSIFICATION_POLICY,
     Artifact,
     fetch_artifact,
     get_artifacts_data_classification,
@@ -15,12 +14,14 @@ from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
 from unitxt.operators import AddFields, RenameFields
 from unitxt.processors import StringOrNotString
+from unitxt.settings_utils import get_settings
 from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
+settings = get_settings()
 
 
 class TestArtifact(UnitxtTestCase):
@@ -141,7 +142,7 @@ class TestArtifact(UnitxtTestCase):
     def test_checking_data_classification_policy_env(self):
         artifact_name = "metrics.accuracy"
         expected_data_classification_policies = {artifact_name: ["public"]}
-        os.environ[UNITXT_DATA_CLASSIFICATION_POLICY] = json.dumps(
+        os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"] = json.dumps(
             expected_data_classification_policies
         )
 
@@ -185,7 +186,7 @@ class TestArtifact(UnitxtTestCase):
     def test_misconfigured_data_classification_policy(self):
         wrong_data_classification = "public"
 
-        os.environ[UNITXT_DATA_CLASSIFICATION_POLICY] = wrong_data_classification
+        os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"] = wrong_data_classification
         with self.assertRaises(RuntimeError) as e:
             get_artifacts_data_classification("")
         self.assertEqual(
@@ -205,6 +206,4 @@ class TestArtifact(UnitxtTestCase):
         )
 
         # "Fixing" the env variable so that it does not affect other tests:
-        os.environ[
-            UNITXT_DATA_CLASSIFICATION_POLICY
-        ] = "UNITXT_DATA_CLASSIFICATION_POLICY"
+        settings.data_classification_policy = None
