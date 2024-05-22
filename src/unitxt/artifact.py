@@ -130,7 +130,7 @@ class Artifact(Dataclass):
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
     data_classification_policy: List[str] = NonPositionalField(
-        default_factory=list, required=False, also_positional=False
+        default=None, required=False, also_positional=False
     )
 
     @classmethod
@@ -230,6 +230,11 @@ class Artifact(Dataclass):
         new_artifact.__id__ = artifact_identifier
         return new_artifact
 
+    def get_pretty_print_name(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return self.__class__.__name__
+
     def prepare(self):
         pass
 
@@ -242,15 +247,16 @@ class Artifact(Dataclass):
 
     @final
     def verify_data_classification_policy(self):
-        if not isinstance(self.data_classification_policy, list) or not all(
-            isinstance(data_classification, str)
-            for data_classification in self.data_classification_policy
-        ):
-            raise ValueError(
-                f"'data_classification_policy' must be either an empty list - in case when "
-                f"no policy applies - or a list of strings, for example: ['public']. "
-                f"However, '{self.data_classification_policy}' was given instead."
-            )
+        if self.data_classification_policy is not None:
+            if not isinstance(self.data_classification_policy, list) or not all(
+                isinstance(data_classification, str)
+                for data_classification in self.data_classification_policy
+            ):
+                raise ValueError(
+                    f"The 'data_classification_policy' of {self.get_pretty_print_name()} must be either None - in case when "
+                    f"no policy applies - or a list of strings, for example: ['public']. "
+                    f"However, '{self.data_classification_policy}' of type {type(self.data_classification_policy)} was provided instead."
+                )
 
     @final
     def __post_init__(self):

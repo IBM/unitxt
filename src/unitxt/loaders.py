@@ -78,20 +78,31 @@ class Loader(SourceOperator):
         )
 
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
-        get_logger().warning(
-            f"The {self.__class__.__name__} loader does not set the `data_classification_policy`. "
-            f"This may lead to sending of undesired data to external services.\n"
-            f"Set it to a list of classification identifiers. \n"
-            f"For example:\n"
-            f"data_classification_policy = ['public']\n"
-            f" or \n"
-            f"data_classification_policy =['confidential','pii'])\n")
-
+        if self.data_classification_policy is None:
+            get_logger().warning(
+                f"The {self.__class__.__name__} loader does not set the `data_classification_policy`. "
+                f"This may lead to sending of undesired data to external services.\n"
+                f"Set it to a list of classification identifiers. \n"
+                f"For example:\n"
+                f"data_classification_policy = ['public']\n"
+                f" or \n"
+                f"data_classification_policy =['confidential','pii'])\n"
+            )
 
         operator = AddFields(
             fields={"data_classification_policy": self.data_classification_policy}
         )
         return operator(multi_stream)
+
+    def sef_default_data_classification(
+        self, default_data_classification_policy, additional_info
+    ):
+        if self.data_classification_policy is None:
+            logger.info(
+                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to {default_data_classification_policy} by default {additional_info}.\n"
+                "To use a different value or remove this message, explicitly set the `data_classification_policy` attribute of the loader.\n"
+            )
+            self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
     def load_data(self):
@@ -213,6 +224,14 @@ class LoadHF(Loader):
         )
 
     def load_data(self):
+        if os.path.exists(self.path):
+            self.sef_default_data_classification(
+                ["proprietary"], "when loading from local files"
+            )
+        else:
+            self.sef_default_data_classification(
+                ["public"], "when loading from Huggingface hub"
+            )
         try:
             dataset = self.stream_dataset()
         except (
@@ -262,6 +281,9 @@ class LoadCSV(Loader):
         yield from self._cache[file]
 
     def load_data(self):
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from local files"
+        )
         if self.streaming:
             return MultiStream(
                 {
@@ -285,6 +307,7 @@ class LoadCSV(Loader):
 class LoadFromSklearn(Loader):
     dataset_name: str
     splits: List[str] = ["train", "test"]
+    data_classification_policy = ["public"]
 
     _requirements_list: List[str] = ["sklearn", "pandas"]
 
@@ -320,6 +343,7 @@ class MissingKaggleCredentialsError(ValueError):
 class LoadFromKaggle(Loader):
     url: str
     _requirements_list: List[str] = ["opendatasets"]
+    data_classification_policy = ["public"]
 
     def verify(self):
         super().verify()
@@ -358,6 +382,7 @@ class LoadFromIBMCloud(Loader):
     # 3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
+    data_classification_policy = "proprietary"
     _requirements_list: List[str] = ["ibm_boto3"]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -426,6 +451,9 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def load_data(self):
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from IBM COS"
+        )
         import ibm_boto3
 
         cos = ibm_boto3.resource(
@@ -525,4 +553,7 @@ class LoadFromDictionary(Loader):
     data: Dict[str, List[Dict[str, Any]]]
 
     def load_data(self) -> MultiStream:
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from python dictionary"
+        )
         return MultiStream.from_iterables(self.data)

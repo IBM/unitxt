@@ -200,9 +200,9 @@ class TestArtifact(UnitxtTestCase):
             Accuracy(data_classification_policy=wrong_data_classification)
         self.assertEqual(
             str(e.exception),
-            f"'data_classification_policy' must be either an empty list - "
-            f"in case when no policy applies - or a list of strings, for example: "
-            f"['public']. However, '{wrong_data_classification}' was given instead.",
+            f"The 'data_classification_policy' of Accuracy must be either None - "
+            f"in case when no policy applies - or a list of strings, for example: ['public']. "
+            f"However, '{wrong_data_classification}' of type {type(wrong_data_classification)} was provided instead.",
         )
 
         # "Fixing" the env variable so that it does not affect other tests:

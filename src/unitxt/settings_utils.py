@@ -134,6 +134,7 @@ if Settings.is_uninitilized():
     settings.metrics_master_key_token = None
     settings.seed = (int, 42)
     settings.skip_artifacts_prepare_and_verify = (bool, False)
+    settings.data_classification_policy = None
 
 if Constants.is_uninitilized():
     constants = Constants()
