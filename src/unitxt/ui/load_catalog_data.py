@@ -54,7 +54,7 @@ def get_templates(template_data):
 def load_cards_data():
     def is_valid_data(data):
         for item in ["task", "templates"]:
-            if isinstance(data[item], dict):
+            if item not in data or isinstance(data[item], dict):
                 return False
         return True
 

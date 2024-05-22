@@ -11,6 +11,7 @@ from unitxt.metrics import (
     BinaryMaxF1,
     Detector,
     F1Binary,
+    F1BinaryPosOnly,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
@@ -307,6 +308,13 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertEqual("f1_binary", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_binary", outputs[0]["score"]["instance"]["score_name"])
+
+        metric_pos = F1BinaryPosOnly()
+        outputs = apply_metric(
+            metric=metric_pos, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertIsNone(outputs[0]["score"]["global"].get("f1_binary_neg"))
 
     def test_precision_binary(self):
         metric = PrecisionBinary()

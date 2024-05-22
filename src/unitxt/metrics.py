@@ -4,7 +4,7 @@ import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
 from statistics import mean
@@ -1313,10 +1313,13 @@ class F1Binary(GlobalMetric):
     _metric = None
     metric = "f1"
     single_reference_per_prediction = True
+    _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
         super().prepare()
-        self._metric = evaluate.load(self.metric)
+        from sklearn import metrics
+
+        self._metric = metrics.precision_recall_fscore_support
 
     def _validate_reference(self, reference):
         super()._validate_reference(reference)
@@ -1333,19 +1336,27 @@ class F1Binary(GlobalMetric):
     ) -> dict:
         flattened_int_references = [int(r[0]) for r in references]
         int_predictions = [int(p > self.threshold) for p in predictions]
-
-        result = self._metric.compute(
-            references=flattened_int_references,
-            predictions=int_predictions,
+        precision, recall, f1, _ = self._metric(
+            y_true=flattened_int_references,
+            y_pred=int_predictions,
             labels=[0, 1],
             average=self.average,
         )
-        if isinstance(result[self.metric], numpy.ndarray):
+        if self.average is None:
             return {
-                self.main_score: result[self.metric][1],
-                f"{self.main_score}_neg": result[self.metric][0],
+                "f1_binary": f1[1],
+                "f1_binary_neg": f1[0],
+                "recall_binary": recall[1],
+                "recall_binary_neg": recall[0],
+                "precision_binary": precision[1],
+                "precision_binary_neg": precision[0],
             }
-        return {self.main_score: result[self.metric]}
+        return {"f1_binary": f1, "recall_binary": recall, "precision_binary": precision}
+
+
+class F1BinaryPosOnly(F1Binary):
+    average = "binary"
+    main_score = "f1_binary"
 
 
 class RecallBinary(F1Binary):
@@ -3397,6 +3408,7 @@ class BinaryMaxF1(F1Binary):
 
     main_score = "max_f1_binary"
     single_reference_per_prediction = True
+    average = None
 
     def compute(
         self,
@@ -3405,9 +3417,9 @@ class BinaryMaxF1(F1Binary):
         task_data: List[Dict],
     ) -> dict:
         best_thr = -1
-        best_f1 = -1
+        best_f1 = defaultdict(lambda: -1)
         best_thr_neg = -1
-        best_f1_neg = -1
+        best_f1_neg = defaultdict(lambda: -1)
         thrs = {round(fp, 3) for fp in predictions}
         for thr in thrs:
             new_predictions = [
@@ -3416,21 +3428,25 @@ class BinaryMaxF1(F1Binary):
             ]
             f1_results = super().compute(references, new_predictions, task_data)
 
-            f1 = f1_results[self.main_score]
-            if f1 > best_f1:
-                best_f1 = f1
+            f1 = f1_results["f1_binary"]
+            if f1 > best_f1["f1_binary"]:
+                best_f1 = f1_results.copy()
                 best_thr = thr
 
-            f1_neg = f1_results[f"{self.main_score}_neg"]
-            if f1_neg > best_f1_neg:
-                best_f1_neg = f1_neg
+            f1_neg = f1_results["f1_binary_neg"]
+            if f1_neg > best_f1_neg["f1_binary_neg"]:
+                best_f1_neg = f1_results.copy()
                 best_thr_neg = thr
 
         return {
-            self.main_score: best_f1,
+            self.main_score: best_f1["f1_binary"],
             "best_thr_maxf1": best_thr,
-            f"{self.main_score}_neg": best_f1_neg,
+            f"{self.main_score}_neg": best_f1_neg["f1_binary_neg"],
             "best_thr_maxf1_neg": best_thr_neg,
+            "recall_at_max_f1": best_f1["recall_binary"],
+            "recall_at_max_f1_neg": best_f1_neg["recall_binary_neg"],
+            "precision_at_max_f1": best_f1["precision_binary"],
+            "precision_at_max_f1_neg": best_f1_neg["precision_binary_neg"],
         }
 
 

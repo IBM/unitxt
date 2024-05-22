@@ -1,8 +1,8 @@
-from unitxt.blocks import FormTask
+from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str", "class": "str"},
         outputs={"class": "str", "label": "List[str]"},
         prediction_type="List[str]",
@@ -18,7 +18,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={"text": "str", "text_type": "str", "class": "str"},
         outputs={"class": "str", "label": "int"},
         prediction_type="float",
@@ -33,7 +33,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text": "str",
             "text_type": "str",
@@ -54,7 +54,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text": "str",
             "text_type": "str",
@@ -71,7 +71,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text_a": "str",
             "text_a_type": "str",
@@ -91,7 +91,7 @@ add_to_catalog(
 
 
 add_to_catalog(
-    FormTask(
+    Task(
         inputs={
             "text": "str",
             "text_type": "str",
