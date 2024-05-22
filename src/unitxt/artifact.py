@@ -456,15 +456,6 @@ def register_all_artifacts(path):
                     logger.info(obj)
 
 
-# Classification of the data sent to remote services in terms of its sensitivity.
-# It determines, for each specified artifact, what data can be used.
-# For example: '{"metrics.rag.context_relevance": ["public"],
-# "postprocessor.translate": ["proprietary"]}'.
-# This variable should be a dictionary, where each key is a given artifact's name,
-# and a value is a list of data classifications used by that artifact.
-UNITXT_DATA_CLASSIFICATION_POLICY = "UNITXT_DATA_CLASSIFICATION_POLICY"
-
-
 def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
     """Loads given artifact's data classification policy from an environment variable.
 
@@ -480,11 +471,6 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         data_classification = settings.data_classification_policy
     except AttributeError:
         # variable was not set
-        return None
-
-    if data_classification == "UNITXT_DATA_CLASSIFICATION_POLICY":
-        # there may be a case when user does not configure the variable
-        # since they are not using it
         return None
 
     error_msg = (
@@ -517,11 +503,6 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
             )
 
     if artifact not in data_classification.keys():
-        get_logger().info(
-            f"'{artifact}' was not found in 'UNITXT_DATA_CLASSIFICATION_POLICY'. "
-            f"Available artifacts are: '{list(data_classification.keys())}'. Please "
-            f"check if the name is correct, or add the data classification to the "
-            f"variable for the specified artifact."
-        )
+        return None
 
     return data_classification.get(artifact)

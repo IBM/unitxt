@@ -78,6 +78,16 @@ class Loader(SourceOperator):
         )
 
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
+        get_logger().warning(
+            f"The {self.__class__.__name__} loader does not set the `data_classification_policy`. "
+            f"This may lead to sending of undesired data to external services.\n"
+            f"Set it to a list of classification identifiers. \n"
+            f"For example:\n"
+            f"data_classification_policy = ['public']\n"
+            f" or \n"
+            f"data_classification_policy =['confidential','pii'])\n")
+
+
         operator = AddFields(
             fields={"data_classification_policy": self.data_classification_policy}
         )

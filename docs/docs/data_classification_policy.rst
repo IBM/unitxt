@@ -8,26 +8,45 @@
 Sensitive data in unitxt ✨
 =====================================
 
-The section discusses how to properly handle sensitive data in unitxt in order to avoid accidentally sending proprietary/confidential data to external services.
+The section discusses how to properly handle sensitive data in Unitxt in order to avoid accidentally exposing 
+proprietary/confidential/personal data to unauthorized services or 3rd parties. For example, sending sensitive 
+data for inference by an external API in LLM as Judge metric.
+
+The problem is exacerbated since the person who owns the data and uses the metric in their card,
+may not know what 3rd services are used by internally by the metric.
+
+To address this Unitxt allows the data owner to specify the data classification of their data, and require that
+any metric (or other component) that processes the data, must be explicitly allowed to process data with this classification.
+
 
 Data classification policy
 ----------------------------
-Whenever processing streams in unitxt, users can specify a parameter called `data_classification_policy`, which determines how this data should be treated. The taxonomy is defined by a user and may encompass multiple different policies.
 
-Each component used in Unitxt (metrics, operators, inference engines etc.) has the same parameter as well. This allows a given component to verify if it can process instances of a stream.
+When data is loaded from an external data source using a Loader, it can be tagged with a `data_classification_policy`,
+which is a list of string identifiers, such as `public`, `proprietary`, `confidential`, `pii`.
+The taxonomy is defined by a user and may encompass multiple different policies.
 
-If user-defined policies for a component include that of data, then a stream may be further processed. Otherwise, an error will be raised.
+Each component that processes used in Unitxt ( operators, metrics, inference engines, etc.) has 
+a parameter called `data_classification_policy`` as well.  This parameter determines which kinds of data
+it can process.  The parameter is a list of strings, which are names of allowed data classification.
 
-The purpose is to ensure that potentially sensitive data (for example PII information) is handled in a proper way. That is particularly important when accessing external services, for instance calling metrics which are calculated remotely.
+Before processing the data, the component verifies that the `data_classification_policy` of the data meets its `data_classification_policy`.
+If the policies for a component include the classification of the data, then the data may be further processed. Otherwise, an error will be raised.
+For example, a LLM as judge that calls an external api, may set `data_classification_policy` to `['public']`.
+If data marked [`confidential`] is passed to the metric, it will not process the data and fail.
 
-The parameter itself should be a list of strings, which are names of considered policies.
+If the data has multiple `data_classification_policy`s then the component must be allowed to handle all of them.
+If the `data_classification_policy` is not set, the component can handle all data.  
+
+It is possible to override the `data_classification_policy` of a component with an environment variable.  See below.
 
 Adding `data_classification_policy` for data
 ----------------------------
 
-Data classification information is added to streams of data by the use of unitxt loaders.
+Data classification information is added to streams of data by the use of Unitxt loaders.
 
-Users need to set the `data_classification_policy` parameter of a chosen loader, which value will be then added as an additional field to all instances within a stream.
+Users need to set the `data_classification_policy` parameter of a chosen loader.
+The value will be then added as an additional field to all instances within a stream.
 
 Example:
 
@@ -36,8 +55,8 @@ Example:
     from unitxt.loaders import LoadFromDictionary
 
     data = {
-        "train": {"text": "SomeText1", "output": "SomeResult1"},
-        "test": {"text": "SomeText2", "output": "SomeResult2"},
+        "train": [{"text": "SomeText1", "output": "SomeResult1"}],
+        "test": [{"text": "SomeText2", "output": "SomeResult2"}],
     }
 
     loader = LoadFromDictionary(
@@ -46,30 +65,18 @@ Example:
     )
 
     multi_stream = loader.process()  # the field will be added during processing
-
-    assert multi_stream["test"]["data_classification_policy"] == ["public"]
+    dataset = multi_stream.to_dataset()
+    assert dataset["test"][0]["data_classification_policy"] == ["public"]
 
 Adding `data_classification_policy` for components
 ----------------------------
 
-In case of unitxt components, the parameter can be added by either setting an environment variable or setting the attribute of a class in the code.
+In case of unitxt components, the parameter can be added by setting the attribute of a class in the code or by setting an environment variable.
 
-1. **Using env**:
+1. **Setting default data classification policy class attribute**:
 
-To specify data classification policy for a chosen unitxt component, you need to set the `UNITXT_DATA_CLASSIFICATION_POLICY` env variable accordingly. It should be of type `Dict[str, List[str]]`, where a key is a name of a given artifact, and a corresponding value is a list of applied policies. For example:
-
-.. code-block:: python
-
-    UNITXT_DATA_CLASSIFICATION_POLICY = {
-        "metrics.accuracy": ["public"],
-        "templates.span_labeling.extraction.carry": ["pii", "propriety"],
-    }
-
-2. **Setting class attribute**:
-
-The other way is to set the `data_classification_policy` attribute of a given artifact directly inside the code. Again, it should be a list of string, and its default value is None.
-
-It is important to keep in mind that the priority always go to a value present in env and a component will try to use it first. If the env variable was not configured, then the passed value of `data_classification_policy` is used instead.
+The `data_classification_policy` attribute can be set in the code when the class is created.
+The attribute should be a list of strings, and its default value is None.
 
 Example:
 
@@ -79,15 +86,29 @@ Example:
     from unitxt.operators import DuplicateInstances
 
     stream = [
-        {"input": "Input1", "data_classification_policy": ["pii", "propriety"]},
-        {"input": "Input2", "data_classification_policy": ["pii", "propriety"]},
+        {"input": "Input1", "data_classification_policy": ["pii", "proprietary"]},
+        {"input": "Input2", "data_classification_policy": ["pii", "proprietary"]},
     ]
 
     metric = F1Binary(data_classification_policy=["public"])
-    metric.process(stream)  # will raise an error as policies are different
+    list(metric.process(stream))  # will raise an error as policies are different
 
     operator = DuplicateInstances(
         num_duplications=2,
         data_classification_policy=["pii"],
     )
-    operator.process_instance(stream[0])  # will not raise an error as the policy is included
+    list(operator.process(stream))  # will not raise an error as the policy is included
+
+
+1. **Overriding default policy during environment variable **:
+
+
+You can override the data classification of artifacts that was saved in the catalog, by setting the the `UNITXT_DATA_CLASSIFICATION_POLICY` env variable accordingly.
+It should be of string representation of type `Dict[str, List[str]]`, where a key is a name of a given artifact, and a corresponding value of allowed data classification. For example:
+
+.. code-block:: bash
+
+    export UNITXT_DATA_CLASSIFICATION_POLICY '{ "metrics.llm_as_judge.rating.mistral_7b_instruct_v0_2_huggingface_template_mt_bench_single_turn": ["public","proprietary", "pii"], "processors.translate": ["public", "proprietry"]}'
+
+
+
