@@ -172,6 +172,7 @@ Welcome!
    docs/evaluating_datasets
    docs/installation
    docs/tutorials
+   docs/data_classification_policy
    docs/operators
    docs/saving_and_loading_from_catalog
    docs/production

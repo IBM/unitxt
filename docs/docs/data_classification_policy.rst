@@ -24,11 +24,11 @@ Data classification policy
 
 When data is loaded from an external data source using a Loader, it can be tagged with a `data_classification_policy`,
 which is a list of string identifiers, such as `public`, `proprietary`, `confidential`, `pii`.
-The taxonomy is defined by a user and may encompass multiple different policies.
+You can define your own data classification identifiers.
 
-Each component that processes used in Unitxt ( operators, metrics, inference engines, etc.) has 
-a parameter called `data_classification_policy`` as well.  This parameter determines which kinds of data
-it can process.  The parameter is a list of strings, which are names of allowed data classification.
+Each component that processes data in Unitxt ( operators, metrics, inference engines, etc.) also has 
+a parameter called `data_classification_policy`.  This parameter determines which kinds of data
+it can process.  The parameter is also a list of string identifiers, which are names of allowed data classification.
 
 Before processing the data, the component verifies that the `data_classification_policy` of the data meets its `data_classification_policy`.
 If the policies for a component include the classification of the data, then the data may be further processed. Otherwise, an error will be raised.
@@ -44,9 +44,11 @@ Adding `data_classification_policy` for data
 ----------------------------
 
 Data classification information is added to streams of data by the use of Unitxt loaders.
+Existing loaders have default data classification policies. For example, LoadHF sets the policy to `['public']` for datasets
+downloaded from the Huggingface and `['proprietary']` for datasets loaded from local files.  You can override this by setting
+the `data_classification_policy` parameter of the loader. 
 
-Users need to set the `data_classification_policy` parameter of a chosen loader.
-The value will be then added as an additional field to all instances within a stream.
+The data classification value is added as an additional field to all instances within a stream.
 
 Example:
 
@@ -61,7 +63,7 @@ Example:
 
     loader = LoadFromDictionary(
         data=data,
-        data_classification_policy=["public"],
+        data_classification_policy=["public"], # Overrides the default of ["proprietary"]
     )
 
     multi_stream = loader.process()  # the field will be added during processing
@@ -71,7 +73,7 @@ Example:
 Adding `data_classification_policy` for components
 ----------------------------
 
-In case of unitxt components, the parameter can be added by setting the attribute of a class in the code or by setting an environment variable.
+In case of Unitxt components, the parameter can be added by setting the attribute of a class in the code or by setting an environment variable.
 
 1. **Setting default data classification policy class attribute**:
 
