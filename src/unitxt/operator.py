@@ -4,8 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
-from .settings_utils import settings
-from .stream import GeneratorStream, ListStream, MultiStream, Stream
+from .stream import DynamicStream, MultiStream, Stream
 from .utils import is_module_available
 
 
@@ -171,7 +170,7 @@ def instance_generator(instance):
 
 
 def stream_single(instance: Dict[str, Any]) -> Stream:
-    return GeneratorStream(
+    return DynamicStream(
         generator=instance_generator, gen_kwargs={"instance": instance}
     )
 
@@ -245,14 +244,7 @@ class StreamOperator(MultiStreamOperator):
     def _process_single_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Stream:
-        if settings.eager_mode_is_on:
-            instances_list = []
-            for instance in self._process_stream(
-                stream=stream, stream_name=stream_name
-            ):
-                instances_list.append(instance)
-            return ListStream(instances_list=instances_list)
-        return GeneratorStream(
+        return DynamicStream(
             self._process_stream,
             gen_kwargs={"stream": stream, "stream_name": stream_name},
         )
@@ -447,7 +439,7 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         result = {}
 
         for stream_name, stream in multi_stream.items():
-            stream = GeneratorStream(
+            stream = DynamicStream(
                 self.generator,
                 gen_kwargs={"stream": stream, "multi_stream": multi_stream},
             )
