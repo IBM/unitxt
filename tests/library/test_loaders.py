@@ -57,21 +57,18 @@ class TestLoaders(UnitxtTestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             files = {}
             dfs = {}
-            data_classification = ["public"]
 
             for file in ["train", "test"]:
                 path = os.path.join(tmp_dir, file + ".csv")  # Adding a file extension
                 df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})  # Replace with your data
                 df.to_csv(path, index=False)
                 df["data_classification_policy"] = [
-                    data_classification for _ in range(len(df))
+                    ["proprietary"] for _ in range(len(df))
                 ]
                 dfs[file] = df
                 files[file] = path
 
-            loader = LoadCSV(
-                files=files, data_classification_policy=data_classification
-            )
+            loader = LoadCSV(files=files)
             ms = loader()
 
             for file in ["train", "test"]:
@@ -167,7 +164,7 @@ class TestLoaders(UnitxtTestCase):
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
 
     def test_load_from_HF(self):
-        loader = LoadHF(path="sst2")
+        loader = LoadHF(path="sst2", loader_limit=10)
         ms = loader.process()
         dataset = ms.to_dataset()
         self.assertEqual(
@@ -176,11 +173,11 @@ class TestLoaders(UnitxtTestCase):
         )
         self.assertEqual(
             dataset["train"][0]["data_classification_policy"],
-            [],
+            ["public"],
         )
         self.assertEqual(
             dataset["test"][0]["data_classification_policy"],
-            [],
+            ["public"],
         )
         assert set(dataset.keys()) == {
             "train",
@@ -230,14 +227,19 @@ class TestLoaders(UnitxtTestCase):
                 else:
                     df = pd.DataFrame({"x": ["test_1", "test_2", "test_3"]})
                 df.to_csv(path, index=False)
-                df["data_classification_policy"] = [[]] * len(df)
                 dfs[file] = df
                 files[file] = path
 
             loader = MultipleSourceLoader(
                 sources=[
-                    LoadCSV(files={"train": files["train"]}),
-                    LoadCSV(files={"test": files["test"]}),
+                    LoadCSV(
+                        files={"train": files["train"]},
+                        data_classification_policy=["public"],
+                    ),
+                    LoadCSV(
+                        files={"test": files["test"]},
+                        data_classification_policy=["pii"],
+                    ),
                 ]
             )
             ms = loader()
@@ -246,7 +248,15 @@ class TestLoaders(UnitxtTestCase):
                 for saved_instance, loaded_instance in zip(
                     dfs[file].iterrows(), ms[file]
                 ):
-                    self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
+                    saved_instance_as_dict = saved_instance[1].to_dict()
+                    if file == "train":
+                        saved_instance_as_dict["data_classification_policy"] = [
+                            "public"
+                        ]
+                    else:
+                        saved_instance_as_dict["data_classification_policy"] = ["pii"]
+
+                    self.assertEqual(saved_instance_as_dict, loaded_instance)
 
             loader = MultipleSourceLoader(
                 sources=[
@@ -272,5 +282,5 @@ class TestLoaders(UnitxtTestCase):
 
         for split, instances in data.items():
             for original_instance, stream_instance in zip(instances, streams[split]):
-                original_instance["data_classification_policy"] = []
+                original_instance["data_classification_policy"] = ["proprietary"]
                 self.assertEqual(original_instance, stream_instance)

@@ -26,6 +26,7 @@ import itertools
 import os
 import tempfile
 from abc import abstractmethod
+from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -527,6 +528,13 @@ class MultipleSourceLoader(Loader):
 
     sources: List[Loader]
 
+    # MultipleSourceLoaders uses the the data classification from source loaders,
+    # so only need to add it, if explicitly requested to override.
+    def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
+        if self.data_classification_policy is None:
+            return multi_stream
+        return super().add_data_classification(multi_stream)
+
     def load_data(self):
         return FixedFusion(
             origins=self.sources, max_instances_per_origin_split=self.get_limit()
@@ -556,4 +564,4 @@ class LoadFromDictionary(Loader):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
-        return MultiStream.from_iterables(self.data)
+        return MultiStream.from_iterables(deepcopy(self.data))
