@@ -228,7 +228,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
-        if self.demos_pool_size is not None:
+        if self.demos_pool_size is not None and self.demos_pool_size > 0:
             self.processing.steps.append(
                 CreateDemosPool(
                     from_split=self.demos_taken_from,
