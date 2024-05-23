@@ -514,10 +514,9 @@ class LoadFromHFSpace(Loader):
         data_files (Mapping[str, Union[List[str], str]]): Mapping of files to be read,
             where a key is the type of files (training, testing etc.) and a value represents
             their relative paths within a given repository.
-        token (Union[str, bool], optional): An authentication token used for download
-            (if necessary). If the parameter is set to True, then the token is read from
-            the Huggingface config folder. If the parameter is a string, then that string
-            is used for authentication.
+        token (Union[str, bool], optional): If set to True, then the token is read from the
+            Huggingface config folder. If the parameter is a string, then it should be a key
+            of an env variable which value will be used for authentication.
         revision (str, optional): ID of a Git branch or commit to be used. By default, it is
             set to None, thus data is downloaded from the main branch of the accessed
             repository.
@@ -547,12 +546,14 @@ class LoadFromHFSpace(Loader):
         from huggingface_hub import hf_hub_download
         from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
 
+        token = os.getenv(self.token) if isinstance(self.token, str) else self.token
+
         try:
             file_path = hf_hub_download(
                 repo_id=self.space_name,
                 filename=file_name,
                 repo_type="space",
-                token=self.token,
+                token=token,
                 revision=self.revision,
             )
         except EntryNotFoundError as e:
