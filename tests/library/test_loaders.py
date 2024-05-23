@@ -251,19 +251,16 @@ class TestLoaders(UnitxtTestCase):
                 self.assertEqual(original_instance, stream_instance)
 
     def test_load_from_hf_space(self):
-        loader = LoadFromHFSpace(
-            space_name="lmsys/mt-bench",
-            data_files={
+        params = {
+            "space_name": "lmsys/mt-bench",
+            "data_files": {
                 "train": [
                     "data/mt_bench/model_answer/koala-13b.jsonl",
                     "data/mt_bench/model_answer/llama-13b.jsonl",
                 ],
                 "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
             },
-        )
-        ms = loader.process().to_dataset()
-
-        assert ms.shape["train"] == (160, 5) and ms.shape["test"] == (80, 5)
+        }
 
         expected_sample = {
             "question_id": 81,
@@ -271,6 +268,13 @@ class TestLoaders(UnitxtTestCase):
             "answer_id": "DKHvKJgtzsvHN2ZJ8a3o5C",
             "tstamp": 1686788249.913451,
         }
+        loader = LoadFromHFSpace(**params)
+        ms = loader.process().to_dataset()
         actual_sample = ms["test"][0]
         actual_sample.pop("choices")
         self.assertEqual(expected_sample, actual_sample)
+
+        params["loader_limit"] = 10
+        loader = LoadFromHFSpace(**params)
+        ms = loader.process().to_dataset()
+        assert ms.shape["train"] == (10, 5) and ms.shape["test"] == (10, 5)
