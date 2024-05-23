@@ -473,10 +473,8 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         Optional[List[str]] - Data classification policies for the specified artifact
             if they were found, or None otherwise.
     """
-    try:
-        data_classification = settings.data_classification_policy
-    except AttributeError:
-        # variable was not set
+    data_classification = settings.data_classification_policy
+    if data_classification is None:
         return None
 
     error_msg = (
