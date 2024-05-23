@@ -1888,31 +1888,13 @@ class NER(CustomF1):
 
 
 class RelationExtraction(CustomF1):
-    prediction_type = "List[Tuple[str,str]]"
+    prediction_type = "List[Tuple[str,str,str]]"
 
     def get_element_group(self, element, additional_input):
         return element[1]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
-
-    def normalize_answer(s):
-        """Lower text and remove punctuation, articles and extra whitespace."""
-
-        def remove_articles(text):
-            return re.sub(r"\b(a|an|the)\b", " ", text)
-
-        def white_space_fix(text):
-            return " ".join(text.split())
-
-        def remove_punc(text):
-            exclude = set(string.punctuation)
-            return "".join(ch for ch in text if ch not in exclude)
-
-        def lower(text):
-            return text.lower()
-
-        return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
 class TokenOverlap(InstanceMetric):
