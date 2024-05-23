@@ -1769,11 +1769,8 @@ class CustomF1(GlobalMetric):
         references: List[List[Any]],
         predictions: List[Any],
         task_data: List[Dict],
-        reference_extraction_func: Callable[
-            [Any, List[List[Any]]], None
-        ] = lambda ref: [element[0] for element in ref],
     ) -> dict:
-        references = reference_extraction_func(references)
+        references = [element[0] for element in references]
 
         if self.groups is None:
             groups = self.get_groups(references, task_data)
@@ -1888,25 +1885,6 @@ class NER(CustomF1):
 
     def get_element_representation(self, element, additional_input):
         return str(element)
-
-
-def normalize_answer(s):
-    """Lower text and remove punctuation, articles and extra whitespace."""
-
-    def remove_articles(text):
-        return re.sub(r"\b(a|an|the)\b", " ", text)
-
-    def white_space_fix(text):
-        return " ".join(text.split())
-
-    def remove_punc(text):
-        exclude = set(string.punctuation)
-        return "".join(ch for ch in text if ch not in exclude)
-
-    def lower(text):
-        return text.lower()
-
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
 class RelationExtraction(CustomF1):
