@@ -501,3 +501,85 @@ class LoadFromDictionary(Loader):
 
     def process(self) -> MultiStream:
         return MultiStream.from_iterables(self.data)
+
+
+class LoadFromHFSpace(Loader):
+    """Used to load data from Huggingface spaces.
+
+    Loaders firstly tries to download all files specified in the 'data_files' parameter
+    from the given space and then reads them as a Huggingface dataset.
+
+    Attributes:
+        space_name (str): Name of the Huggingface space to be accessed to.
+        data_files (Mapping[str, Union[List[str], str]]): Mapping of files to be read,
+            where a key is the type of files (training, testing etc.) and a value represents
+            their relative paths within a given repository.
+        token (Union[str, bool], optional): An authentication token used for download
+            (if necessary). If the parameter is set to True, then the token is read from
+            the Huggingface config folder. If the parameter is a string, then that string
+            is used for authentication.
+        revision (str, optional): ID of a Git branch or commit to be used. By default, it is
+            set to None, thus data is downloaded from the main branch of the accessed
+            repository.
+
+    Examples:
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
+                "train": [
+                    "data/mt_bench/model_answer/gpt-3.5-turbo.jsonl",
+                    "data/mt_bench/model_answer/gpt-4.jsonl",
+                ],
+                "test": "data/mt_bench/model_answer/tulu-30b.jsonl",
+            },
+        )
+        multi_stream = loader.process()
+    """
+
+    space_name: str
+    data_files: Mapping[str, Union[List[str], str]]
+    token: Optional[Union[str, bool]] = None
+    revision: Optional[str] = None
+
+    _requirements_list: List[str] = ["huggingface_hub"]
+
+    def _download_file_from_space(self, file_name: str) -> str:
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
+
+        try:
+            file_path = hf_hub_download(
+                repo_id=self.space_name,
+                filename=file_name,
+                repo_type="space",
+                token=self.token,
+                revision=self.revision,
+            )
+        except EntryNotFoundError as e:
+            raise ValueError(
+                f"The file '{file_name}' was not found in the space '{self.space_name}'. "
+                f"Please check if the filename is correct, or if it exists in that "
+                f"Huggingface space."
+            ) from e
+        except RepositoryNotFoundError as e:
+            raise ValueError(
+                f"The Huggingface space '{self.space_name}' was not found. "
+                f"Please check if the name is correct and you have access to the space."
+            ) from e
+
+        return file_path
+
+    def process(self) -> MultiStream:
+        for files in self.data_files.values():
+            if not isinstance(files, list):
+                files = [files]
+            # All files - within the same space - are downloaded into the same base directory:
+            paths = [self._download_file_from_space(file) for file in files]
+            dir_path = paths[0].replace(files[0], "")
+
+        dataset = hf_load_dataset(
+            path=dir_path,
+            data_files=self.data_files,
+        )
+
+        return MultiStream.from_iterables(dataset)
