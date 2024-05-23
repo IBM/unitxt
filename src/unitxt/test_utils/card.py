@@ -55,18 +55,14 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     logger.info("*" * 80)
     logger.info(f"Using template card index: {template_card_index}")
 
-    if "num_demos" not in kwargs:
-        kwargs["num_demos"] = 1
-
-    if "demos_pool_size" not in kwargs:
-        kwargs["demos_pool_size"] = 10
-
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 30
 
     recipe = StandardRecipe(
         card=card, template_card_index=template_card_index, **kwargs
     )
+    logger.info("Using these recipe parameters: ", kwargs)
+
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
             examples = print_recipe_output(
@@ -88,20 +84,17 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     return examples
 
 
-def construct_recipe_output_message(
+def print_recipe_output(
     recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
 ):
-    # Prepare the message string
-    message = ""
     recipe.set_max_steps(max_steps)
 
     if print_header:
         step_description = recipe.get_last_step_description()
-        header = "=" * 80 + "\n"
-        header += "=" * 8 + "\n"
-        header += "=" * 8 + " " + step_description + "\n"
-        header += "=" * 8 + "\n"
-        message += header
+        logger.info("=" * 80)
+        logger.info("=" * 8)
+        logger.info(f"{'=' * 8} {step_description}")
+        logger.info("=" * 8)
 
     multi_stream = recipe()
 
@@ -109,43 +102,26 @@ def construct_recipe_output_message(
         for stream_name in multi_stream.keys():
             stream = multi_stream[stream_name]
             num_instances = len(list(iter(stream)))
-            message += f"stream named '{stream_name}' has {num_instances} instances\n"
-        message += "\n"
+            logger.info(f"stream named '{stream_name}' has {num_instances} instances\n")
 
     examples = []
     for stream_name in multi_stream.keys():
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
-            examples_in_stream = list(stream.take(num_examples))
-            stream_header = "-" * 10 + "\n"
-            stream_header += f"Showing {len(examples_in_stream)} example(s) from stream '{stream_name}':\n"
-            message += stream_header
-
-            for example in examples_in_stream:
+            logger.info("-" * 10)
+            logger.info(f"Showing up to {num_examples} from stream '{stream_name}':")
+            for example, _ in zip(stream, range(num_examples)):
                 dict_message = construct_dict_str(example)
-                message += dict_message + "\n\n"
-
-            examples.extend(examples_in_stream)
-
-    return message, examples
-
-
-def print_recipe_output(
-    recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
-):
-    message, examples = construct_recipe_output_message(
-        recipe, max_steps, num_examples, print_header, print_stream_size, streams
-    )
-    # Print the message
-    message = "\n" + message
-    logger.info(message)
+                logger.info(dict_message)
+                logger.info("\n")
+                examples.append(example)
     return examples
 
 
 # flake8: noqa: C901
 def test_with_eval(
     card,
-    debug=False,
+    debug=True,
     strict=True,
     exact_match_score=1.0,
     full_mismatch_score=0.0,
