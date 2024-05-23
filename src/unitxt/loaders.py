@@ -46,7 +46,7 @@ from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, MultiStream
+from .stream import MultiStream, Stream
 
 logger = get_logger()
 settings = get_settings()
@@ -220,7 +220,7 @@ class LoadHF(Loader):
         self.log_limited_loading()
         return MultiStream(
             {
-                name: GeneratorStream(
+                name: Stream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
                 )
                 for name in self._cache.keys()
@@ -299,18 +299,14 @@ class LoadCSV(Loader):
         if self.streaming:
             return MultiStream(
                 {
-                    name: GeneratorStream(
-                        generator=self.stream_csv, gen_kwargs={"file": file}
-                    )
+                    name: Stream(generator=self.stream_csv, gen_kwargs={"file": file})
                     for name, file in self.files.items()
                 }
             )
 
         return MultiStream(
             {
-                name: GeneratorStream(
-                    generator=self.load_csv, gen_kwargs={"file": file}
-                )
+                name: Stream(generator=self.load_csv, gen_kwargs={"file": file})
                 for name, file in self.files.items()
             }
         )

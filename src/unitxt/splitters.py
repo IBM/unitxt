@@ -6,6 +6,7 @@ from typing import Dict, List
 from .artifact import Artifact
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .random_utils import new_random_generator
+from .settings_utils import get_settings
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
@@ -14,6 +15,8 @@ from .split_utils import (
     slice_streams,
 )
 from .stream import MultiStream
+
+settings = get_settings()
 
 
 class Splitter(MultiStreamOperator):
@@ -103,6 +106,8 @@ class SliceSplit(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_slices_string(v) for k, v in self.slices.items()}
         generators = slice_streams(multi_stream, mapping)
+        if settings.eager_mode_is_on:
+            return MultiStream.from_iterables(generators)
         return MultiStream.from_generators(generators)
 
 

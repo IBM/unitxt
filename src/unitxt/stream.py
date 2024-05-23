@@ -1,6 +1,5 @@
 import tempfile
-from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, Iterable
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
@@ -9,36 +8,6 @@ from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 
 
 class Stream(Dataclass):
-    @abstractmethod
-    def __iter__(self):
-        pass
-
-    @abstractmethod
-    def peek(self):
-        pass
-
-    @abstractmethod
-    def take(self, n):
-        pass
-
-
-class ListStream(Stream):
-    instances_list: List[Dict[str, Any]]
-
-    def __iter__(self):
-        return iter(self.instances_list)
-
-    def peek(self):
-        return next(iter(self.instances_list))
-
-    def take(self, n):
-        for i, instance in enumerate(self.instances_list):
-            if i >= n:
-                break
-            yield instance
-
-
-class GeneratorStream(Stream):
     """A class for handling streaming data in a customizable way.
 
     This class provides methods for generating, caching, and manipulating streaming data.
@@ -131,6 +100,9 @@ class MultiStream(dict):
         for stream in self.values():
             stream.copying = copying
 
+    def to_dict_of_lists(self):
+        return {stream_name: list(self[stream_name]) for stream_name in self}
+
     def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
@@ -178,7 +150,7 @@ class MultiStream(dict):
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
-                key: GeneratorStream(
+                key: Stream(
                     generator.generator,
                     gen_kwargs=generator.gen_kwargs,
                     caching=caching,
@@ -204,7 +176,7 @@ class MultiStream(dict):
         """
         return cls(
             {
-                key: GeneratorStream(
+                key: Stream(
                     iterable.__iter__,
                     caching=caching,
                     copying=copying,

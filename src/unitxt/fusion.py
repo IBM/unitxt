@@ -4,7 +4,7 @@ from typing import Dict, Generator, List, Optional, Union
 from .dataclass import NonPositionalField
 from .operator import SourceOperator
 from .random_utils import new_random_generator
-from .stream import GeneratorStream, MultiStream
+from .stream import MultiStream, Stream
 from .type_utils import isoftype
 
 
@@ -49,9 +49,7 @@ class BaseFusion(SourceOperator):
     ) -> MultiStream:
         result = {}
         for split in self.splits():
-            result[split] = GeneratorStream(
-                self.fusion_generator, gen_kwargs={"split": split}
-            )
+            result[split] = Stream(self.fusion_generator, gen_kwargs={"split": split})
         return MultiStream(result)
 
 

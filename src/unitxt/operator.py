@@ -4,8 +4,13 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
-from .stream import GeneratorStream, MultiStream, Stream
+from .logging_utils import get_logger
+from .settings_utils import get_settings
+from .stream import MultiStream, Stream
 from .utils import is_module_available
+
+settings = get_settings()
+logger = get_logger()
 
 
 class Operator(Artifact):
@@ -170,9 +175,7 @@ def instance_generator(instance):
 
 
 def stream_single(instance: Dict[str, Any]) -> Stream:
-    return GeneratorStream(
-        generator=instance_generator, gen_kwargs={"instance": instance}
-    )
+    return Stream(generator=instance_generator, gen_kwargs={"instance": instance})
 
 
 class MultiStreamOperator(StreamingOperator):
@@ -243,7 +246,14 @@ class StreamOperator(MultiStreamOperator):
     def _process_single_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Stream:
-        return GeneratorStream(
+        if settings.eager_mode_is_on:
+            instances_list = []
+            for instance in self._process_stream(
+                stream=stream, stream_name=stream_name
+            ):
+                instances_list.append(instance)
+            return Stream(generator=instances_list.__iter__)
+        return Stream(
             self._process_stream,
             gen_kwargs={"stream": stream, "stream_name": stream_name},
         )
@@ -438,7 +448,7 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         result = {}
 
         for stream_name, stream in multi_stream.items():
-            stream = GeneratorStream(
+            stream = Stream(
                 self.generator,
                 gen_kwargs={"stream": stream, "multi_stream": multi_stream},
             )
