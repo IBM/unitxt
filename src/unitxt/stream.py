@@ -1,11 +1,14 @@
 import tempfile
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, Generator, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
+from .settings_utils import get_settings
+
+settings = get_settings()
 
 
 class Stream(Dataclass):
@@ -31,7 +34,7 @@ class ListStream(Stream):
     def peek(self):
         return next(iter(self.instances_list))
 
-    def take(self, n):
+    def take(self, n) -> Generator:
         for i, instance in enumerate(self.instances_list):
             if i >= n:
                 break
@@ -89,6 +92,36 @@ class GeneratorStream(Stream):
             yield instance
 
 
+class DynamicStream(Stream):
+    generator: Callable
+    gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
+    caching: bool = False
+    copying: bool = False
+
+    def __post_init__(self):
+        if settings.eager_mode_is_on:
+            instances_list = []
+            for instance in self.generator(**self.gen_kwargs):
+                instances_list.append(instance)
+            self.stream = ListStream(instances_list=instances_list)
+        else:
+            self.stream = GeneratorStream(
+                generator=self.generator,
+                gen_kwargs=self.gen_kwargs,
+                caching=self.caching,
+                copying=self.copying,
+            )
+
+    def __iter__(self):
+        return self.stream.__iter__()
+
+    def peek(self):
+        return self.stream.peek()
+
+    def take(self, n):
+        return self.stream.take(n)
+
+
 class MultiStream(dict):
     """A class for handling multiple streams of data in a dictionary-like format.
 
@@ -112,7 +145,7 @@ class MultiStream(dict):
             isinstance(key, str), "MultiStream keys must be strings"
         super().__init__(data)
 
-    def get_generator(self, key):
+    def get_generator(self, key) -> Generator:
         """Gets a generator for a specified key.
 
         Args:
@@ -178,7 +211,7 @@ class MultiStream(dict):
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
-                key: GeneratorStream(
+                key: DynamicStream(
                     generator.generator,
                     gen_kwargs=generator.gen_kwargs,
                     caching=caching,
@@ -204,7 +237,7 @@ class MultiStream(dict):
         """
         return cls(
             {
-                key: GeneratorStream(
+                key: DynamicStream(
                     iterable.__iter__,
                     caching=caching,
                     copying=copying,
