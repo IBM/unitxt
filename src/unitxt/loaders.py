@@ -565,3 +565,110 @@ class LoadFromDictionary(Loader):
             ["proprietary"], "when loading from python dictionary"
         )
         return MultiStream.from_iterables(deepcopy(self.data))
+
+
+class LoadFromHFSpace(LoadHF):
+    """Used to load data from Huggingface spaces.
+
+    Loaders firstly tries to download all files specified in the 'data_files' parameter
+    from the given space and then reads them as a Huggingface dataset.
+
+    Attributes:
+        space_name (str): Name of the Huggingface space to be accessed to.
+        data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
+            paths to files within a given repository. If given as a mapping, paths should
+            be values, while keys should represent the type of respective files
+            (training, testing etc.).
+        path (str, optional): Absolute path to a directory where data should be downloaded to.
+        revision (str, optional): ID of a Git branch or commit to be used. By default, it is
+            set to None, thus data is downloaded from the main branch of the accessed
+            repository.
+        use_token (bool, optional): Whether token used for authentication when accessing
+            the Huggingface space - if necessary - should be read from the Huggingface
+            config folder.
+        token_env (str, optional): Key of an env variable which value will be used for
+            authentication when accessing the Huggingface space - if necessary.
+
+    Examples:
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
+                "train": [
+                    "data/mt_bench/model_answer/gpt-3.5-turbo.jsonl",
+                    "data/mt_bench/model_answer/gpt-4.jsonl",
+                ],
+                "test": "data/mt_bench/model_answer/tulu-30b.jsonl",
+            },
+        )
+        multi_stream = loader.process()
+    """
+
+    space_name: str
+    data_files: Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
+    path: Optional[str] = None
+    revision: Optional[str] = None
+    use_token: Optional[bool] = None
+    token_env: Optional[str] = None
+    requirements_list: List[str] = ["huggingface_hub"]
+
+    def _get_token(self) -> Optional[Union[bool, str]]:
+        if self.token_env:
+            token = os.getenv(self.token_env)
+            if not token:
+                get_logger().warning(
+                    f"The 'token_env' parameter was specified as '{self.token_env}', "
+                    f"however, no environment variable under such a name was found. "
+                    f"Therefore, the loader will not use any tokens for authentication."
+                )
+            return token
+        return self.use_token
+
+    def _download_file_from_space(self, filename: str) -> str:
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
+
+        token = self._get_token()
+
+        try:
+            file_path = hf_hub_download(
+                repo_id=self.space_name,
+                filename=filename,
+                repo_type="space",
+                token=token,
+                revision=self.revision,
+                local_dir=self.path,
+            )
+        except EntryNotFoundError as e:
+            raise ValueError(
+                f"The file '{filename}' was not found in the space '{self.space_name}'. "
+                f"Please check if the filename is correct, or if it exists in that "
+                f"Huggingface space."
+            ) from e
+        except RepositoryNotFoundError as e:
+            raise ValueError(
+                f"The Huggingface space '{self.space_name}' was not found. "
+                f"Please check if the name is correct and you have access to the space."
+            ) from e
+
+        return file_path
+
+    def _download_data(self) -> str:
+        if isinstance(self.data_files, str):
+            data_files = [self.data_files]
+        elif isinstance(self.data_files, Mapping):
+            data_files = list(self.data_files.values())
+        else:
+            data_files = self.data_files
+
+        for files in data_files:
+            if isinstance(files, str):
+                files = [files]
+            # All files - within the same space - are downloaded into the same base directory:
+            paths = [self._download_file_from_space(file) for file in files]
+            dir_path = paths[0].replace(files[0], "")
+
+        return dir_path
+
+    def process(self):
+        self.path = self._download_data()
+        return super().process()
