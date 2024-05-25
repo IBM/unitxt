@@ -235,9 +235,7 @@ class StreamOperator(MultiStreamOperator):
         result = {}
         for stream_name, stream in multi_stream.items():
             if self._is_should_be_processed(stream_name):
-                stream = self._process_single_stream(
-                    stream, invoked_from_ms=True, stream_name=stream_name
-                )
+                stream = self._process_single_stream(stream, stream_name=stream_name)
             else:
                 stream = stream
             assert isinstance(stream, Stream), "StreamOperator must return a Stream"
@@ -248,16 +246,8 @@ class StreamOperator(MultiStreamOperator):
     def _process_single_stream(
         self,
         stream: Stream,
-        invoked_from_ms: bool = False,
         stream_name: Optional[str] = None,
     ) -> Stream:
-        if invoked_from_ms and settings.eager_mode_is_on:
-            instances_list = []
-            for instance in self._process_stream(
-                stream=stream, stream_name=stream_name
-            ):
-                instances_list.append(instance)
-            return Stream(instances_list.__iter__)
         return Stream(
             self._process_stream,
             gen_kwargs={"stream": stream, "stream_name": stream_name},
@@ -284,7 +274,13 @@ class StreamOperator(MultiStreamOperator):
     def _process_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Generator:
-        yield from self.process(stream, stream_name)
+        if settings.eager_mode_is_on:
+            instances_list = []
+            for instance in self.process(stream, stream_name):
+                instances_list.append(instance)
+            yield from instances_list
+        else:
+            yield from self.process(stream, stream_name)
 
     @abstractmethod
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -292,7 +288,7 @@ class StreamOperator(MultiStreamOperator):
 
     def process_instance(self, instance, stream_name="tmp"):
         processed_stream = self._process_single_stream(
-            stream_single(instance), invoked_from_ms=False, stream_name=stream_name
+            stream_single(instance), stream_name=stream_name
         )
         return next(iter(processed_stream))
 
@@ -322,14 +318,20 @@ class PagedStreamOperator(StreamOperator):
         for instance in stream:
             page.append(instance)
             if len(page) >= self.page_size:
-                yield from self.process(page, stream_name)
+                yield from self._process_page(page, stream_name)
                 page = []
         yield from self._process_page(page, stream_name)
 
     def _process_page(
         self, page: List[Dict], stream_name: Optional[str] = None
     ) -> Generator:
-        yield from self.process(page, stream_name)
+        if settings.eager_mode_is_on:
+            page_instances_list = []
+            for instance in self.process(page, stream_name):
+                page_instances_list.append(instance)
+            yield from page_instances_list
+        else:
+            yield from self.process(page, stream_name)
 
     @abstractmethod
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
@@ -380,9 +382,13 @@ class InstanceOperator(StreamOperator):
                     f"Error processing instance '{_index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
                 ) from e
 
+    # flake8: noqa: RET504
     def _process_instance(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        if settings.eager_mode_is_on:
+            instance_to_ret = self.process(instance, stream_name)
+            return instance_to_ret
         return self.process(instance, stream_name)
 
     @abstractmethod

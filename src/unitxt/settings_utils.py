@@ -128,7 +128,7 @@ if Settings.is_uninitilized():
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "info"
     settings.remote_metrics = []
-    settings.eager_mode_is_on = False
+    settings.eager_mode_is_on = True
     settings.allow_passing_data_to_remote_api = (bool, False)
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)
