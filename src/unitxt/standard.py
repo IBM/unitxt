@@ -178,15 +178,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({"__inference__": task_instances})
-        # the cheater's trap:
-        ms2 = self.inference_instance(ms)
-        logger.info("keys of ms2 = ", str(list(ms2.keys())))
-        # for key in ms2:
-        #     if key != "__inference__":
-        #         key_list = list(ms2[key])
-        #         logger.info("key: ", key, "len(key_list): ", len(key_list))
-
-        return list(ms2["__inference__"])
+        return list(self.inference_instance(ms)["__inference__"])
 
     def production_demos_pool(self):
         if self.num_demos > 0:

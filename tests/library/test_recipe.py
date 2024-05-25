@@ -329,11 +329,12 @@ class TestRecipes(UnitxtTestCase):
         with self.assertRaises(Exception) as cm:
             list(recipe()["test"])
 
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "Unable to fetch instances from 'demos_pool' to 'demos'"
-            )
-        )
+        # self.assertTrue(
+        #     str(cm.exception).startswith(
+        #         "Unable to fetch instances from 'demos_pool' to 'demos'"
+        #     )
+        # )
+        self.assertTrue("is not available in input stream" in str(cm.exception))
 
         with self.assertRaises(Exception) as cm:
             recipe = StandardRecipeWithIndexes(

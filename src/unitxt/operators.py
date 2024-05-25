@@ -1594,7 +1594,7 @@ class SplitByValue(MultiStreamOperator):
                 filtering_values = dict(zip(self.fields, unique_values))
                 filtered_streams = FilterByCondition(
                     values=filtering_values, condition="eq"
-                )._process_single_stream(stream)
+                )._process_single_stream(stream, invoked_from_ms=True)
                 filtered_stream_name = (
                     stream_name + "_" + nested_tuple_to_string(unique_values)
                 )
