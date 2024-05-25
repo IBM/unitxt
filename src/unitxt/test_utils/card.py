@@ -118,56 +118,7 @@ def print_recipe_output(
     return examples
 
 
-# flake8: noqa: C901
-def test_with_eval(
-    card,
-    debug=True,
-    strict=True,
-    exact_match_score=1.0,
-    full_mismatch_score=0.0,
-    **kwargs,
-):
-    if type(card.templates) is TemplatesDict:
-        for template_card_index in card.templates.keys():
-            examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_card_index, debug=debug, **kwargs
-            )
-            test_predictions(
-                examples=examples,
-                strict=strict,
-                exact_match_score=exact_match_score,
-                full_mismatch_score=full_mismatch_score,
-            )
-    else:
-        num_templates = len(card.templates)
-        for template_card_index in range(0, num_templates):
-            examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_card_index, debug=debug, **kwargs
-            )
-            test_predictions(
-                examples=examples,
-                strict=strict,
-                exact_match_score=exact_match_score,
-                full_mismatch_score=full_mismatch_score,
-            )
-
-
-def test_predictions(
-    examples, strict=True, exact_match_score=1.0, full_mismatch_score=0.0
-):
-    # metric = evaluate.load('unitxt/metric')
-    correct_predictions = []
-    for example in examples:
-        correct_predictions.append(
-            example["references"][0] if len(example["references"]) > 0 else []
-        )
-
-    results = _compute(predictions=correct_predictions, references=examples)
-    logger.info("*" * 80)
-    logger.info(
-        "Show the output of the post processing of predictions by the template:"
-    )
-    logger.info("(Uses the references as sample predictions)")
+def print_predictions(correct_predictions, results):
     for result, correct_prediction in zip(results, correct_predictions):
         logger.info("*" * 5)
         logger.info(
@@ -180,9 +131,20 @@ def test_predictions(
             f"Processed references: ({type(result['references']).__name__}) {result['references']}"
         )
     logger.info("*" * 80)
-    logger.info("Sample score output:")
+    logger.info("Score output:")
     logger.info(json.dumps(results[0]["score"]["global"], sort_keys=True, indent=4))
     logger.info("*" * 80)
+
+
+def test_correct_predictions(examples, strict, exact_match_score):
+    correct_predictions = [example["target"] for example in examples]
+    logger.info("*" * 80)
+    logger.info("Running with the gold references as predictions.")
+    results = _compute(predictions=correct_predictions, references=examples)
+
+    logger.info("Showing the output of the post processing:")
+
+    print_predictions(correct_predictions, results)
 
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
@@ -210,8 +172,21 @@ def test_predictions(
         logger.info(warning_message)
         logger.info("*" * 80)
 
-    wrong_predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+
+def test_wrong_predictions(
+    examples, strict, full_mismatch_score, full_mismatch_prediction_values
+):
+    import random
+
+    wrong_predictions = [
+        random.choice(full_mismatch_prediction_values) for example in examples
+    ]
+    logger.info("*" * 80)
+    logger.info("Running with random values as predictions.")
     results = _compute(predictions=wrong_predictions, references=examples)
+
+    logger.info("Showing the output of the post processing:")
+    print_predictions(wrong_predictions, results)
 
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
@@ -246,10 +221,15 @@ def test_card(
     card,
     debug=False,
     strict=True,
+    test_exact_match_score_when_predictions_equal_references=True,
+    test_full_mismatch_score_with_full_mismatch_prediction_values=True,
     exact_match_score=1.0,
     full_mismatch_score=0.0,
+    full_mismatch_prediction_values=None,
     **kwargs,
 ):
+    if full_mismatch_prediction_values is None:
+        full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:
         logger.info(
             "test_card() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
@@ -258,11 +238,24 @@ def test_card(
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
-    test_with_eval(
-        card,
-        debug=debug,
-        strict=strict,
-        exact_match_score=exact_match_score,
-        full_mismatch_score=full_mismatch_score,
-        **kwargs,
-    )
+
+    if type(card.templates) is TemplatesDict:
+        template_card_indices = card.templates.keys()
+    else:
+        num_templates = len(card.templates)
+        template_card_indices = range(0, num_templates)
+    for template_card_index in template_card_indices:
+        examples = load_examples_from_standard_recipe(
+            card, template_card_index=template_card_index, debug=debug, **kwargs
+        )
+        if test_exact_match_score_when_predictions_equal_references:
+            test_correct_predictions(
+                examples=examples, strict=strict, exact_match_score=exact_match_score
+            )
+        if test_full_mismatch_score_with_full_mismatch_prediction_values:
+            test_wrong_predictions(
+                examples=examples,
+                strict=strict,
+                full_mismatch_score=full_mismatch_score,
+                full_mismatch_prediction_values=full_mismatch_prediction_values,
+            )
