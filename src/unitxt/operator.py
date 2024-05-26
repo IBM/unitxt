@@ -415,21 +415,6 @@ class InstanceOperatorValidator(InstanceOperator):
         )
 
 
-class InstanceOperator(Artifact):
-    """A class representing an instance operator in the streaming system.
-
-    An instance operator is a type of `Artifact` that operates on a single instance (represented as a dict) at a time. It takes an instance as input and produces a transformed instance as output.
-    """
-
-    def __call__(self, data: dict) -> dict:
-        data = self.verify_instance(data)
-        return self.process(data)
-
-    @abstractmethod
-    def process(self, data: dict) -> dict:
-        pass
-
-
 class BaseFieldOperator(Artifact):
     """A class representing a field operator in the streaming system.
 
