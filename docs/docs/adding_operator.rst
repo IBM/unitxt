@@ -8,17 +8,34 @@
 Operators ✨
 =====================================
 
-Operators are specialized functions designed to process each instance in your data.
-They are particularly useful in preparing data for specific tasks, or for modifying the output of models to fit specific metrics.
+Operators are specialized functions designed to process data.
 
-Why Use Operators?
-------------------
+They are used in the TaskCard for preparing data for specific tasks and by Post Processors
+to process the textual output of the model to the expect input of the metrics. 
 
-While Python code can directly process data, using operators provides several benefits:
+There are several types of operators. 
 
-1. **Testability**: Operators are often unit-tested, ensuring reliability and functionality.
+1. Field Operators - Operators that modify individual fields of the instances in the input streams.  Example of such operators are operators that
+cast field values, uppercase string fields, or translate text between languages.
+
+2. Instance Operators - Operators that modify individual instances in the input streams. For example, operators that add or remove fields.
+
+3. Stream Operators - Operators that perform operations on full streams. For example, operators that remove instances based on some condition.
+
+4. MultiStream Operators - Operator that perform operations on multiple streams.  For example, operators that repartition the instances between train and test splits.
+
+Unitxt comes with a large collection of built in operators - that were design to cover most common requirements of dataset processing.
+
+The list of available operators can be found in the :ref:`operators <operators>` section.
+
+Built in operators have some benefits:
+
+1. **Testability**: Built-in Operators are unit-tested, ensuring reliability and functionality.
 2. **Code Reusability**: Shared, well-maintained operator code can be reused across projects.
-3. **Performance**: Operators are designed to maintain high performance standards, particularly suitable for stream processing.
+3. **Performance**: Built-in Operators are designed to maintain high performance standards, particularly suitable for stream processing.
+4. **Security** : Built-in Operators do not require running of arbitrary user code, and hence can be run in secured environments that prohibit running user code.
+
+It is recommended to use existing operators when possible. 
 
 However, if a highly specific or uncommon operation is needed that existing operators do not cover, and it is unlikely to be reused, you can use :ref:`ExecuteExpression <operators.ExecuteExpression>`  or :ref:`FilterByExpression <operators.FilterByExpression>`operators:
 
@@ -29,9 +46,7 @@ However, if a highly specific or uncommon operation is needed that existing oper
 
 **Explanation**: These lines demonstrate how to use two specific operators for string manipulation and conditional filtering.
 
-It is recommended to use existing operators to encourage code sharing and common code testing. The list of available operators can be found in the :ref:`operators <operators>` section. This tutorial will guide you through creating new operators for personal use and community contribution.
-
-Operators are categorized based on their operation scope, some operate on a specific field of an instance, while others handle the entire instance or multiple instances at once.
+In addition, this tutorial will now guide you on creating new operators in Python for personal use and community contribution.
 
 Field Operators
 ---------------
@@ -152,7 +167,9 @@ MultiStream operators handle operations across multiple data streams concurrentl
                 }
             )
 
-**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream. The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged". This operator is particularly useful in scenarios where data from different sources needs to be combined into a single dataset for analysis or further processing.
+**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream. 
+The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged". 
+This operator is particularly useful in scenarios where data from different sources needs to be combined into a single dataset for analysis or further processing.
 
 Unit Testing Operators
 -----------------------
