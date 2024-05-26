@@ -89,6 +89,9 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
             res += construct_dict_str(value, indent + indent_delta, max_chars=max_chars)
         else:
             str_value = str(value)
+            str_value = re.sub(r"\w+=None, ", "", str_value)
+            str_value = re.sub(r"\w+={}, ", "", str_value)
+            str_value = re.sub(r"\w+=\[\], ", "", str_value)
             line_width = max_chars - indent
             lines = str_value.split("\n")
             res += f"{indent_str}{key} ({type(value).__name__}):\n"
