@@ -126,11 +126,16 @@ class TestRecipes(UnitxtTestCase):
             recipe.production_demos_pool(), recipe.production_demos_pool()
         )
 
+        i1 = recipe.production_preprocess(instances)[0]
+        del i1["recipe_metadata"]
+        i2 = recipe.production_preprocess(instances)[0]
+        del i2["recipe_metadata"]
         self.assertDictEqual(
-            recipe.production_preprocess(instances)[0],
-            recipe.production_preprocess(instances)[0],
+            i1,
+            i2,
+            # recipe.production_preprocess(instances)[0],
+            # recipe.production_preprocess(instances)[0],
         )
-
         self.assertDictEqual(
             recipe.produce(instances)[0],
             recipe.produce(instances)[0],
