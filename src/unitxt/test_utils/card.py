@@ -233,7 +233,7 @@ def test_card(
     with random predictions (selected from a fixed set of values).  The score expected in this case
     is typically 0.
 
-    During the test, sample datasets instances, as well as the predictions/references
+    During the test, sample datasets instances, as well as the predictions/references are displayed.
     It also shows the processed predictions and references, after the template's post processors
     are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
 
