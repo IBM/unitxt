@@ -15,11 +15,19 @@ Unitxt catalog contains several loaders for the most popular datasource formats.
 All these loaders inherit from Loader, and hence, implementing a loader to expand over a new type of datasource, is
 straight forward.
 
-Operators in Unitxt catalog:
-LoadHF : loads from Huggingface dataset.
-LoadCSV: loads from csv (comma separated value) files
-LoadFromKaggle: loads datasets from the kaggle.com community site
-LoadFromIBMCloud: loads a dataset from the IBM cloud.
+Available Loaders Overview:
+    - :ref:`LoadHF <unitxt.loaders.LoadHF>` - Loads data from Huggingface datasets.
+    - :ref:`LoadCSV <unitxt.loaders.LoadCSV>` - Imports data from CSV (Comma-Separated Values) files.
+    - :ref:`LoadFromKaggle <unitxt.loaders.LoadFromKaggle>` - Retrieves datasets from the Kaggle community site.
+    - :ref:`LoadFromIBMCloud <unitxt.loaders.LoadFromIBMCloud>` - Fetches datasets hosted on IBM Cloud.
+    - :ref:`LoadFromSklearn <unitxt.loaders.LoadFromSklearn>` - Loads datasets available through the sklearn library.
+    - :ref:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
+    - :ref:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
+    - :ref:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from Huggingface Spaces.
+
+
+
+
 ------------------------
 """
 import itertools
@@ -45,12 +53,22 @@ settings = get_settings()
 
 
 class Loader(SourceOperator):
-    # The loader_limit an optional parameter used to control the maximum number of instances to load from the the source.
-    # It is usually provided to the loader via the recipe (see standard.py)
-    # The loader can use this value to limit the amount of data downloaded from the source
-    # to reduce loading time.  However, this may not always be possible, so the
-    # loader may ignore this.  In any case, the recipe, will limit the number of instances in the returned
-    # stream, after load is complete.
+    """A base class for all loaders.
+
+    A loader is the first component in the Unitxt Recipe,
+    responsible for loading data from various sources and preparing it as a MultiStream for processing.
+    The loader_limit an optional parameter used to control the maximum number of instances to load from the the source.
+    It is usually provided to the loader via the recipe (see standard.py)
+    The loader can use this value to limit the amount of data downloaded from the source
+    to reduce loading time.  However, this may not always be possible, so the
+    loader may ignore this.  In any case, the recipe, will limit the number of instances in the returned
+    stream, after load is complete.
+
+    Args:
+        loader_limit: Optional integer to specify a limit on the number of records to load.
+        streaming: Bool indicating if streaming should be used.
+    """
+
     loader_limit: int = None
     streaming: bool = False
 
@@ -77,6 +95,28 @@ class Loader(SourceOperator):
 
 
 class LoadHF(Loader):
+    """Loads datasets from the Huggingface Hub.
+
+    It supports loading with or without streaming,
+    and can filter datasets upon loading.
+
+    Args:
+        path: The path or identifier of the dataset on the Huggingface Hub.
+        name: An optional dataset name.
+        data_dir: Optional directory to store downloaded data.
+        split: Optional specification of which split to load.
+        data_files: Optional specification of particular data files to load.
+        streaming: Bool indicating if streaming should be used.
+        filtering_lambda: A lambda function for filtering the data after loading.
+
+    Example:
+        Loading glue's mrpc dataset
+
+        .. code-block::python
+
+            load_hf = LoadHF(path='glue', name='mrpc')
+    """
+
     path: str
     name: Optional[str] = None
     data_dir: Optional[str] = None
@@ -202,6 +242,25 @@ class LoadHF(Loader):
 
 
 class LoadCSV(Loader):
+    """Loads data from CSV files.
+
+    Supports streaming and can handle large files by loading them in chunks.
+
+    Args:
+        files (Dict[str, str]): A dictionary mapping names to file paths.
+        chunksize : Size of the chunks to load at a time.
+        loader_limit: Optional integer to specify a limit on the number of records to load.
+        streaming: Bool indicating if streaming should be used.
+        sep: String specifying the separator used in the CSV files.
+
+    Example:
+        Loading csv
+
+        .. code-block::python
+
+            load_csv = LoadCSV(files={'train': 'path/to/train.csv'}, chunksize=100)
+    """
+
     files: Dict[str, str]
     chunksize: int = 1000
     _cache = InternalField(default_factory=dict)
@@ -258,6 +317,22 @@ class LoadCSV(Loader):
 
 
 class LoadFromSklearn(Loader):
+    """Loads datasets from the sklearn library.
+
+    This loader does not support streaming and is intended for use with sklearn's dataset fetch functions.
+
+    Args:
+        dataset_name: The name of the sklearn dataset to fetch.
+        splits: A list of data splits to load, e.g., ['train', 'test'].
+
+    Example:
+        Loading form sklearn
+
+        .. code-block::python
+
+            load_sklearn = LoadFromSklearn(dataset_name='iris', splits=['train', 'test'])
+    """
+
     dataset_name: str
     splits: List[str] = ["train", "test"]
 
@@ -293,7 +368,23 @@ class MissingKaggleCredentialsError(ValueError):
 
 
 class LoadFromKaggle(Loader):
+    """Loads datasets from Kaggle.
+
+    Requires Kaggle API credentials and does not support streaming.
+
+    Args:
+        url: URL to the Kaggle dataset.
+
+    Example:
+        Loading from kaggle
+
+        .. code-block::python
+
+            load_kaggle = LoadFromKaggle(url='kaggle.com/dataset/example')
+    """
+
     url: str
+
     _requirements_list: List[str] = ["opendatasets"]
 
     def verify(self):
@@ -321,18 +412,46 @@ class LoadFromKaggle(Loader):
 
 
 class LoadFromIBMCloud(Loader):
+    """Loads data from IBM Cloud Object Storage.
+
+    Does not support streaming and requires AWS-style access keys.
+    data_dir Can be either:
+    1. a list of file names, the split of each file is determined by the file name pattern
+    2. Mapping: split -> file_name, e.g. {"test" : "test.json", "train": "train.json"}
+    3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
+
+    Args:
+        endpoint_url_env: Environment variable name for the IBM Cloud endpoint URL.
+        aws_access_key_id_env: Environment variable name for the AWS access key ID.
+        aws_secret_access_key_env: Environment variable name for the AWS secret access key.
+        bucket_name: Name of the S3 bucket from which to load data.
+        data_dir: Optional directory path within the bucket.
+        data_files: Union type allowing either a list of file names or a mapping of splits to file names.
+        caching: Bool indicating if caching is enabled to avoid re-downloading data.
+
+    Example:
+        Loading from IBM Cloud
+
+        .. code-block::python
+
+            load_ibm_cloud = LoadFromIBMCloud(
+                endpoint_url_env='IBM_CLOUD_ENDPOINT',
+                aws_access_key_id_env='IBM_AWS_ACCESS_KEY_ID',
+                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',
+                bucket_name='my-bucket'
+            )
+            multi_stream = load_ibm_cloud.process()
+    """
+
     endpoint_url_env: str
     aws_access_key_id_env: str
     aws_secret_access_key_env: str
     bucket_name: str
     data_dir: str = None
 
-    # Can be either:
-    # 1. a list of file names, the split of each file is determined by the file name pattern
-    # 2. Mapping: split -> file_name, e.g. {"test" : "test.json", "train": "train.json"}
-    # 3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
+
     _requirements_list: List[str] = ["ibm_boto3"]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
@@ -458,18 +577,25 @@ class LoadFromIBMCloud(Loader):
 
 
 class MultipleSourceLoader(Loader):
-    """Allow loading data from multiple sources.
+    """Allows loading data from multiple sources, potentially mixing different types of loaders.
+
+    Args:
+        sources: A list of loaders that will be combined to form a unified dataset.
 
     Examples:
-    1) Loading the train split from Huggingface hub and the test set from a local file:
+        1) Loading the train split from Huggingface hub and the test set from a local file:
 
-    MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
+        .. code-block::python
 
-    2) Loading a test set combined from two files
-
-    MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
+            MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
 
 
+
+        2) Loading a test set combined from two files
+
+        .. code-block::python
+
+            MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
     """
 
     sources: List[Loader]
@@ -485,16 +611,19 @@ class LoadFromDictionary(Loader):
 
     The loader can be used, for example, when debugging or working with small datasets.
 
-    Attributes:
+    Args:
         data (Dict[str, List[Dict[str, Any]]]): a dictionary of constants from which the data will be loaded
 
-    Examples:
-        data = {
-            "train": {"input": "SomeInput1", "output": "SomeResult1"},
-            "test": {"input": "SomeInput2", "output": "SomeResult2"},
-        }
-        loader = LoadFromDictionary(data=data)
-        multi_stream = loader.process()
+    Example:
+        Loading dictionary
+
+        .. code-block::python
+
+            data = {
+                "train": {"input": "SomeInput1", "output": "SomeResult1"},
+                "test": {"input": "SomeInput2", "output": "SomeResult2"},
+            }
+            loader = LoadFromDictionary(data=data)
     """
 
     data: Dict[str, List[Dict[str, Any]]]
@@ -509,7 +638,7 @@ class LoadFromHFSpace(LoadHF):
     Loaders firstly tries to download all files specified in the 'data_files' parameter
     from the given space and then reads them as a Huggingface dataset.
 
-    Attributes:
+    Args:
         space_name (str): Name of the Huggingface space to be accessed to.
         data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
             paths to files within a given repository. If given as a mapping, paths should
@@ -525,18 +654,21 @@ class LoadFromHFSpace(LoadHF):
         token_env (str, optional): Key of an env variable which value will be used for
             authentication when accessing the Huggingface space - if necessary.
 
-    Examples:
-        loader = LoadFromHFSpace(
-            space_name="lmsys/mt-bench",
-            data_files={
-                "train": [
-                    "data/mt_bench/model_answer/gpt-3.5-turbo.jsonl",
-                    "data/mt_bench/model_answer/gpt-4.jsonl",
-                ],
-                "test": "data/mt_bench/model_answer/tulu-30b.jsonl",
-            },
-        )
-        multi_stream = loader.process()
+    Example:
+        Loading from Huggingface Space
+
+        .. code-block::python
+
+            loader = LoadFromHFSpace(
+                space_name="lmsys/mt-bench",
+                data_files={
+                    "train": [
+                        "data/mt_bench/model_answer/gpt-3.5-turbo.jsonl",
+                        "data/mt_bench/model_answer/gpt-4.jsonl",
+                    ],
+                    "test": "data/mt_bench/model_answer/tulu-30b.jsonl",
+                },
+            )
     """
 
     space_name: str
