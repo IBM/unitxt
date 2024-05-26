@@ -1,3 +1,4 @@
+import ast
 import re
 import string
 import uuid
@@ -3662,3 +3663,40 @@ class NormalizedSacrebleu(HuggingfaceMetric):
         "mecab_ko": KO_ERROR_MESSAGE,
         "mecab_ko_dic": KO_ERROR_MESSAGE,
     }
+
+
+class CustomF1Fuzzy(CustomF1):
+    def calculate_groups_ratio(self, actual_group, total_group):
+        from fuzzywuzzy import fuzz
+
+        tmp = []
+        for actual_key in actual_group.keys():
+            max_score = self.fuzz_ratio
+            best_total_key = None
+
+            for total_key in total_group.keys():
+                tup_ac = ast.literal_eval(actual_key)
+                tup_to = ast.literal_eval(total_key)
+
+                if tup_ac[1] == tup_to[1]:
+                    score = fuzz.ratio(tup_ac[0], tup_to[0])
+                    if score > max_score:
+                        max_score = score
+                        best_total_key = total_key
+
+            if best_total_key is not None:
+                tmp.append(min(actual_group[actual_key], total_group[best_total_key]))
+            else:
+                tmp.append(min(actual_group[actual_key], 0))
+        return sum(tmp), sum(actual_group.values())
+
+
+class FuzzyNer(CustomF1Fuzzy):
+    prediction_type = "List[Tuple[str,str]]"
+    fuzz_ratio = 75
+
+    def get_element_group(self, element, additional_input):
+        return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)

@@ -8,6 +8,7 @@ import pandas as pd
 from unitxt.loaders import (
     LoadCSV,
     LoadFromDictionary,
+    LoadFromHFSpace,
     LoadFromIBMCloud,
     LoadHF,
     MultipleSourceLoader,
@@ -248,3 +249,32 @@ class TestLoaders(UnitxtTestCase):
         for split, instances in data.items():
             for original_instance, stream_instance in zip(instances, streams[split]):
                 self.assertEqual(original_instance, stream_instance)
+
+    def test_load_from_hf_space(self):
+        params = {
+            "space_name": "lmsys/mt-bench",
+            "data_files": {
+                "train": [
+                    "data/mt_bench/model_answer/koala-13b.jsonl",
+                    "data/mt_bench/model_answer/llama-13b.jsonl",
+                ],
+                "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
+            },
+        }
+
+        expected_sample = {
+            "question_id": 81,
+            "model_id": "wizardlm-13b",
+            "answer_id": "DKHvKJgtzsvHN2ZJ8a3o5C",
+            "tstamp": 1686788249.913451,
+        }
+        loader = LoadFromHFSpace(**params)
+        ms = loader.process().to_dataset()
+        actual_sample = ms["test"][0]
+        actual_sample.pop("choices")
+        self.assertEqual(expected_sample, actual_sample)
+
+        params["loader_limit"] = 10
+        loader = LoadFromHFSpace(**params)
+        ms = loader.process().to_dataset()
+        assert ms.shape["train"] == (10, 5) and ms.shape["test"] == (10, 5)
