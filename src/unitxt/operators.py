@@ -138,7 +138,7 @@ class MapInstanceValues(InstanceOperator):
         replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
         instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
         Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
         each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
         instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
