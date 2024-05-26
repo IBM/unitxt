@@ -234,7 +234,7 @@ def test_card(
     is typically 0.
 
     During the test, sample datasets instances, as well as the predictions/references
-    It also shows the processed predictions and references, after the templates post processors
+    It also shows the processed predictions and references, after the template's post processors
     are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
 
         Parameters:
