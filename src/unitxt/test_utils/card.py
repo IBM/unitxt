@@ -226,7 +226,7 @@ def test_card(
 ):
     """Tests a given card.
 
-    By default, the test goes over all templates defined in the cards,
+    By default, the test goes over all templates defined in the card,
     and generates sample outputs for template. It also runs two tests on sample data.
     The first is running the metrics in the card with predictions which are equal to the references.
     The expected score in this case is typically 1.  The second test is running the metrics in the card
