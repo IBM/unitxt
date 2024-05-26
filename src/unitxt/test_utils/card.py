@@ -53,20 +53,13 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         return None
 
     logger.info("*" * 80)
-    logger.info(f"Using template card index: {template_card_index}")
-
-    if "num_demos" not in kwargs:
-        kwargs["num_demos"] = 1
-
-    if "demos_pool_size" not in kwargs:
-        kwargs["demos_pool_size"] = 10
-
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 30
+    kwargs["template_card_index"] = template_card_index
 
-    recipe = StandardRecipe(
-        card=card, template_card_index=template_card_index, **kwargs
-    )
+    recipe = StandardRecipe(card=card, **kwargs)
+    logger.info(f"Using these card recipe parameters: {kwargs}")
+
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
             examples = print_recipe_output(
@@ -88,20 +81,17 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
     return examples
 
 
-def construct_recipe_output_message(
+def print_recipe_output(
     recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
 ):
-    # Prepare the message string
-    message = ""
     recipe.set_max_steps(max_steps)
 
     if print_header:
         step_description = recipe.get_last_step_description()
-        header = "=" * 80 + "\n"
-        header += "=" * 8 + "\n"
-        header += "=" * 8 + " " + step_description + "\n"
-        header += "=" * 8 + "\n"
-        message += header
+        logger.info("=" * 80)
+        logger.info("=" * 8)
+        logger.info(f"{'=' * 8} {step_description}")
+        logger.info("=" * 8)
 
     multi_stream = recipe()
 
@@ -109,89 +99,25 @@ def construct_recipe_output_message(
         for stream_name in multi_stream.keys():
             stream = multi_stream[stream_name]
             num_instances = len(list(iter(stream)))
-            message += f"stream named '{stream_name}' has {num_instances} instances\n"
-        message += "\n"
+            logger.info(f"stream named '{stream_name}' has {num_instances} instances\n")
 
     examples = []
     for stream_name in multi_stream.keys():
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
-            examples_in_stream = list(stream.take(num_examples))
-            stream_header = "-" * 10 + "\n"
-            stream_header += f"Showing {len(examples_in_stream)} example(s) from stream '{stream_name}':\n"
-            message += stream_header
-
-            for example in examples_in_stream:
+            logger.info("-" * 10)
+            logger.info(
+                f"Showing up to {num_examples} examples from stream '{stream_name}':"
+            )
+            for example, _ in zip(stream, range(num_examples)):
                 dict_message = construct_dict_str(example)
-                message += dict_message + "\n\n"
-
-            examples.extend(examples_in_stream)
-
-    return message, examples
-
-
-def print_recipe_output(
-    recipe, max_steps, num_examples, print_header, print_stream_size, streams=None
-):
-    message, examples = construct_recipe_output_message(
-        recipe, max_steps, num_examples, print_header, print_stream_size, streams
-    )
-    # Print the message
-    message = "\n" + message
-    logger.info(message)
+                logger.info(dict_message)
+                logger.info("\n")
+                examples.append(example)
     return examples
 
 
-# flake8: noqa: C901
-def test_with_eval(
-    card,
-    debug=False,
-    strict=True,
-    exact_match_score=1.0,
-    full_mismatch_score=0.0,
-    **kwargs,
-):
-    if type(card.templates) is TemplatesDict:
-        for template_card_index in card.templates.keys():
-            examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_card_index, debug=debug, **kwargs
-            )
-            test_predictions(
-                examples=examples,
-                strict=strict,
-                exact_match_score=exact_match_score,
-                full_mismatch_score=full_mismatch_score,
-            )
-    else:
-        num_templates = len(card.templates)
-        for template_card_index in range(0, num_templates):
-            examples = load_examples_from_standard_recipe(
-                card, template_card_index=template_card_index, debug=debug, **kwargs
-            )
-            test_predictions(
-                examples=examples,
-                strict=strict,
-                exact_match_score=exact_match_score,
-                full_mismatch_score=full_mismatch_score,
-            )
-
-
-def test_predictions(
-    examples, strict=True, exact_match_score=1.0, full_mismatch_score=0.0
-):
-    # metric = evaluate.load('unitxt/metric')
-    correct_predictions = []
-    for example in examples:
-        correct_predictions.append(
-            example["references"][0] if len(example["references"]) > 0 else []
-        )
-
-    results = _compute(predictions=correct_predictions, references=examples)
-    logger.info("*" * 80)
-    logger.info(
-        "Show the output of the post processing of predictions by the template:"
-    )
-    logger.info("(Uses the references as sample predictions)")
+def print_predictions(correct_predictions, results):
     for result, correct_prediction in zip(results, correct_predictions):
         logger.info("*" * 5)
         logger.info(
@@ -203,15 +129,25 @@ def test_predictions(
         logger.info(
             f"Processed references: ({type(result['references']).__name__}) {result['references']}"
         )
-    logger.info("*" * 80)
-    logger.info("Sample score output:")
+    logger.info("*" * 5)
+    logger.info("Score output:")
     logger.info(json.dumps(results[0]["score"]["global"], sort_keys=True, indent=4))
-    logger.info("*" * 80)
+
+
+def test_correct_predictions(examples, strict, exact_match_score):
+    correct_predictions = [example["target"] for example in examples]
+    logger.info("*" * 40)
+    logger.info("Running with the gold references as predictions.")
+    results = _compute(predictions=correct_predictions, references=examples)
+
+    logger.info("Showing the output of the post processing:")
+
+    print_predictions(correct_predictions, results)
 
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
-    if exact_match_score is not None and not math.isclose(score, exact_match_score):
+    if not math.isclose(score, exact_match_score):
         message = (
             f"The results of running the main metric used in the card ({score_name}) "
             f"over simulated predictions that are equal to the references returns a different score than expected.\n"
@@ -230,21 +166,33 @@ def test_predictions(
         )
         if strict:
             raise AssertionError(error_message)
-        logger.info("*" * 80)
+        logger.info("*" * 10)
         logger.info(warning_message)
-        logger.info("*" * 80)
 
-    wrong_predictions = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+
+def test_wrong_predictions(
+    examples, strict, maximum_full_mismatch_score, full_mismatch_prediction_values
+):
+    import random
+
+    wrong_predictions = [
+        random.choice(full_mismatch_prediction_values) for example in examples
+    ]
+    logger.info("*" * 40)
+    logger.info("Running with random values as predictions.")
     results = _compute(predictions=wrong_predictions, references=examples)
+
+    logger.info("Showing the output of the post processing:")
+    print_predictions(wrong_predictions, results)
 
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
-    if full_mismatch_score is not None and score != full_mismatch_score:
+    if score > maximum_full_mismatch_score:
         message = (
             f"The results of running the main metric used in the card ({score_name}) "
             f"over random predictions returns a different score than expected.\n"
-            f"Usually, one would expect a low score of {full_mismatch_score} in this case, but returned metric score was {score}.\n"
+            f"The test expected a low score of atmost {maximum_full_mismatch_score} in this case, but returned metric score was {score}.\n"
         )
         error_message = (
             f"{message}"
@@ -261,19 +209,69 @@ def test_predictions(
         if strict:
             raise AssertionError(error_message)
 
-        logger.info("*" * 80)
+        logger.info("*" * 10)
         logger.info(warning_message)
-        logger.info("*" * 80)
 
 
 def test_card(
     card,
     debug=False,
     strict=True,
+    test_exact_match_score_when_predictions_equal_references=True,
+    test_full_mismatch_score_with_full_mismatch_prediction_values=True,
     exact_match_score=1.0,
-    full_mismatch_score=0.0,
+    maximum_full_mismatch_score=0.0,
+    full_mismatch_prediction_values=None,
     **kwargs,
 ):
+    """Tests a given card.
+
+    By default, the test goes over all templates defined in the card,
+    and generates sample outputs for template. It also runs two tests on sample data.
+    The first is running the metrics in the card with predictions which are equal to the references.
+    The expected score in this case is typically 1.  The second test is running the metrics in the card
+    with random predictions (selected from a fixed set of values).  The score expected in this case
+    is typically 0.
+
+    During the test, sample datasets instances, as well as the predictions/references are displayed.
+    It also shows the processed predictions and references, after the template's post processors
+    are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
+
+        Parameters:
+        1. `card`: The `Card` object to be tested.
+        2. `debug`: A boolean value indicating whether to enable debug mode. In debug mode, the data processing pipeline is executed step by step, printing a representative output of each step.  Default is False.
+        3. `strict`: A boolean value indicating whether to fail if scores do not match the expected ones.
+           Default is True.
+        4. `test_exact_match_score_when_predictions_equal_references`: A boolean value indicating whether to test the exact match score when predictions equal references. Default is True.
+        5. `test_full_mismatch_score_with_full_mismatch_prediction_values`: A boolean value indicating whether to test the full mismatch score with full mismatch prediction values.
+            The potential mismatched predeiction values are specified in full_mismatch_prediction_values`.
+            Default is True.
+        6. `exact_match_score`: The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
+        7. `maximum_full_mismatch_score`: The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
+        8. `full_mismatch_prediction_values`: An optional list of prediction values to use for testing full mismatches. Default is None.
+            If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+        9. **kwargs`: Additional keyword arguments to be passed to the recipe.
+
+    Example:
+            # Test the templates with few shots
+            test_card(card,num_demos=1,demo_pool_size=10)
+
+            # Shows the step by step processing of data.
+            test_card(card,debug=True)
+
+            # In some metrics (e.g. BertScore) random predictions do not generate a score of zero so we disable this test
+            test_card(card,test_full_mismatch_score_with_full_mismatch_prediction_values=False)
+
+            # Alternatively, we can ensure the score on random predictions is less than 0.7
+            test_card(card,maximum_full_mismatch_score=0.7)
+
+            # Override the values used when running the test to check that fully mismatched values get 0 score
+            test_card(card,full_mismatch_prediction_values=["NA","NONE])
+
+
+    """
+    if full_mismatch_prediction_values is None:
+        full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:
         logger.info(
             "test_card() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
@@ -282,11 +280,24 @@ def test_card(
     test_adding_to_catalog(card)
     test_metrics_exist(card)
     test_loading_from_catalog(card)
-    test_with_eval(
-        card,
-        debug=debug,
-        strict=strict,
-        exact_match_score=exact_match_score,
-        full_mismatch_score=full_mismatch_score,
-        **kwargs,
-    )
+
+    if type(card.templates) is TemplatesDict:
+        template_card_indices = card.templates.keys()
+    else:
+        num_templates = len(card.templates)
+        template_card_indices = range(0, num_templates)
+    for template_card_index in template_card_indices:
+        examples = load_examples_from_standard_recipe(
+            card, template_card_index=template_card_index, debug=debug, **kwargs
+        )
+        if test_exact_match_score_when_predictions_equal_references:
+            test_correct_predictions(
+                examples=examples, strict=strict, exact_match_score=exact_match_score
+            )
+        if test_full_mismatch_score_with_full_mismatch_prediction_values:
+            test_wrong_predictions(
+                examples=examples,
+                strict=strict,
+                maximum_full_mismatch_score=maximum_full_mismatch_score,
+                full_mismatch_prediction_values=full_mismatch_prediction_values,
+            )
