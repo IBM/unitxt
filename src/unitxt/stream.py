@@ -1,5 +1,6 @@
 import tempfile
 from abc import abstractmethod
+from copy import deepcopy
 from typing import Any, Callable, Dict, Generator, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -29,7 +30,7 @@ class ListStream(Stream):
     instances_list: List[Dict[str, Any]]
 
     def __iter__(self):
-        return iter(self.instances_list)
+        return iter(deepcopy(self.instances_list))
 
     def peek(self):
         return next(iter(self.instances_list))
@@ -99,7 +100,7 @@ class DynamicStream(Stream):
     copying: bool = False
 
     def __post_init__(self):
-        if settings.eager_mode_is_on:
+        if settings.use_eager_execution:
             instances_list = []
             for instance in self.generator(**self.gen_kwargs):
                 instances_list.append(instance)
