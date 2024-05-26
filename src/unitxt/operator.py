@@ -214,7 +214,7 @@ class MultiStreamOperator(StreamingOperator):
         return next(iter(processed_multi_stream[stream_name]))
 
 
-class SingleStreamOperator(MultiStreamOperator):
+class StreamOperator(MultiStreamOperator):
     """A class representing a single-stream operator in the streaming system.
 
     A single-stream operator is a type of `MultiStreamOperator` that operates on individual
@@ -237,9 +237,7 @@ class SingleStreamOperator(MultiStreamOperator):
                 stream = self._process_single_stream(stream, stream_name)
             else:
                 stream = stream
-            assert isinstance(
-                stream, Stream
-            ), "SingleStreamOperator must return a Stream"
+            assert isinstance(stream, Stream), "StreamOperator must return a Stream"
             result[stream_name] = stream
 
         return MultiStream(result)
@@ -287,10 +285,14 @@ class SingleStreamOperator(MultiStreamOperator):
         return next(iter(processed_stream))
 
 
-class PagedStreamOperator(SingleStreamOperator):
+class SingleStreamOperator(StreamOperator):
+    pass
+
+
+class PagedStreamOperator(StreamOperator):
     """A class representing a paged-stream operator in the streaming system.
 
-    A paged-stream operator is a type of `SingleStreamOperator` that operates on a page of instances
+    A paged-stream operator is a type of `StreamOperator` that operates on a page of instances
     in a `Stream` at a time, where a page is a subset of instances.
     The `process` method should be implemented by subclasses to define the specific operations
     to be performed on each page.
@@ -346,10 +348,10 @@ class SingleStreamReducer(StreamingOperator):
         pass
 
 
-class StreamInstanceOperator(SingleStreamOperator):
+class InstanceOperator(StreamOperator):
     """A class representing a stream instance operator in the streaming system.
 
-    A stream instance operator is a type of `SingleStreamOperator` that operates on individual instances within a `Stream`. It iterates through each instance in the `Stream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each instance.
+    A stream instance operator is a type of `StreamOperator` that operates on individual instances within a `Stream`. It iterates through each instance in the `Stream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each instance.
     """
 
     def _process_stream(
@@ -383,10 +385,14 @@ class StreamInstanceOperator(SingleStreamOperator):
         return self._process_instance(instance, stream_name)
 
 
-class StreamInstanceOperatorValidator(StreamInstanceOperator):
+class StreamInstanceOperator(InstanceOperator):
+    pass
+
+
+class InstanceOperatorValidator(InstanceOperator):
     """A class representing a stream instance operator validator in the streaming system.
 
-    A stream instance operator validator is a type of `StreamInstanceOperator` that includes a validation step. It operates on individual instances within a `Stream` and validates the result of processing each instance.
+    A stream instance operator validator is a type of `InstanceOperator` that includes a validation step. It operates on individual instances within a `Stream` and validates the result of processing each instance.
     """
 
     @abstractmethod

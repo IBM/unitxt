@@ -60,18 +60,18 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
+    InstanceOperator,
     MultiStream,
     MultiStreamOperator,
     PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamOperator,
     SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
-    StreamInstanceOperator,
+    StreamOperator,
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
@@ -116,10 +116,10 @@ class IterableSource(SourceOperator):
         return MultiStream.from_iterables(self.iterables)
 
 
-class MapInstanceValues(StreamInstanceOperator):
+class MapInstanceValues(InstanceOperator):
     """A class used to map instance values into other values.
 
-    This class is a type of StreamInstanceOperator,
+    This class is a type of InstanceOperator,
     it maps values of instances in a stream using predefined mappers.
 
     Attributes:
@@ -204,7 +204,7 @@ class MapInstanceValues(StreamInstanceOperator):
         return val
 
 
-class FlattenInstances(StreamInstanceOperator):
+class FlattenInstances(InstanceOperator):
     """Flattens each instance in a stream, making nested dictionary entries into top-level entries.
 
     Args:
@@ -221,7 +221,7 @@ class FlattenInstances(StreamInstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class AddFields(StreamInstanceOperator):
+class AddFields(InstanceOperator):
     """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
@@ -264,7 +264,7 @@ class AddFields(StreamInstanceOperator):
         return instance
 
 
-class RemoveFields(StreamInstanceOperator):
+class RemoveFields(InstanceOperator):
     """Remove specified fields from each instance in a stream.
 
     Args:
@@ -281,7 +281,7 @@ class RemoveFields(StreamInstanceOperator):
         return instance
 
 
-class InstanceFieldOperator(StreamInstanceOperator):
+class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
@@ -485,7 +485,7 @@ class AddConstant(FieldOperator):
         return self.add + value
 
 
-class Augmentor(StreamInstanceOperator):
+class Augmentor(InstanceOperator):
     """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
 
     Args:
@@ -732,7 +732,7 @@ class JoinStr(FieldOperator):
         return self.separator.join(str(x) for x in value)
 
 
-class Apply(StreamInstanceOperator):
+class Apply(InstanceOperator):
     """A class used to apply a python function and store the result in a field.
 
     Args:
@@ -802,7 +802,7 @@ class Apply(StreamInstanceOperator):
         return instance
 
 
-class ListFieldValues(StreamInstanceOperator):
+class ListFieldValues(InstanceOperator):
     """Concatenates values of multiple fields into a list, and assigns it to a new field."""
 
     fields: List[str]
@@ -824,7 +824,7 @@ class ListFieldValues(StreamInstanceOperator):
         return instance
 
 
-class ZipFieldValues(StreamInstanceOperator):
+class ZipFieldValues(InstanceOperator):
     """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
 
     The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
@@ -860,7 +860,7 @@ class ZipFieldValues(StreamInstanceOperator):
         return instance
 
 
-class InterleaveListsToDialogOperator(StreamInstanceOperator):
+class InterleaveListsToDialogOperator(InstanceOperator):
     """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
 
      The list of tuples if of format (role, turn_content), where the role label is specified by
@@ -905,7 +905,7 @@ class InterleaveListsToDialogOperator(StreamInstanceOperator):
         return instance
 
 
-class IndexOf(StreamInstanceOperator):
+class IndexOf(InstanceOperator):
     """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
     search_in: str
@@ -927,7 +927,7 @@ class IndexOf(StreamInstanceOperator):
         return instance
 
 
-class TakeByField(StreamInstanceOperator):
+class TakeByField(InstanceOperator):
     """From field 'field' of a given instance, select the member indexed by field 'index', and store to field 'to_field'."""
 
     field: str
@@ -1034,7 +1034,7 @@ class GetItemByIndex(FieldOperator):
         return self.items_list[value]
 
 
-class AddID(StreamInstanceOperator):
+class AddID(InstanceOperator):
     """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
 
     id_field_name: str = "id"
@@ -1046,7 +1046,7 @@ class AddID(StreamInstanceOperator):
         return instance
 
 
-class CastFields(StreamInstanceOperator):
+class CastFields(InstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
@@ -1106,7 +1106,7 @@ class CastFields(StreamInstanceOperator):
         return instance
 
 
-class DivideAllFieldsBy(StreamInstanceOperator):
+class DivideAllFieldsBy(InstanceOperator):
     """Recursively reach down to all fields that are float, and divide each by 'divisor'.
 
     The given instance is viewed as a tree whose internal nodes are dictionaries and lists, and
@@ -1165,7 +1165,7 @@ class ArtifactFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class ApplyOperatorsField(StreamInstanceOperator):
+class ApplyOperatorsField(InstanceOperator):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
@@ -1206,7 +1206,7 @@ class ApplyOperatorsField(StreamInstanceOperator):
         return operator.process_instance(instance)
 
 
-class FilterByCondition(SingleStreamOperator):
+class FilterByCondition(StreamOperator):
     """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator.
 
     Raises an error if a required field name is missing from the input instance.
@@ -1322,7 +1322,7 @@ class ComputeExpressionMixin(Artifact):
         )
 
 
-class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
+class FilterByExpression(StreamOperator, ComputeExpressionMixin):
     """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
 
     Raises an error if a field participating in the specified condition is missing from the instance
@@ -1337,9 +1337,7 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
        FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
        FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
        FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
-       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in
-                                        which key 'b' is mapped to a value that is neither 4 nor 8
-
+       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in which key 'b' is mapped to a value that is neither 4 nor 8
     """
 
     error_on_filtered_all: bool = True
@@ -1357,7 +1355,7 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
             )
 
 
-class ExecuteExpression(StreamInstanceOperator, ComputeExpressionMixin):
+class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     """Compute an expression, specified as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
@@ -1651,7 +1649,7 @@ class SplitByNestedGroup(MultiStreamOperator):
         return MultiStream.from_iterables(result)
 
 
-class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
+class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
     """Applies stream operators to a stream based on specified fields in each instance.
 
     Args:
@@ -1676,14 +1674,14 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             operator = self.get_artifact(operator_name)
             assert isinstance(
                 operator, StreamingOperator
-            ), f"Operator {operator_name} must be a SingleStreamOperator"
+            ), f"Operator {operator_name} must be a StreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 
 
-class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
     Args:
@@ -1855,7 +1853,7 @@ class FeatureGroupedShuffle(Shuffle):
         return list(itertools.chain(*page_blocks))
 
 
-class EncodeLabels(StreamInstanceOperator):
+class EncodeLabels(InstanceOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
 
     Encoding is determined by a str->int map that is built on the go, as different values are
@@ -1908,7 +1906,7 @@ class EncodeLabels(StreamInstanceOperator):
         return instance
 
 
-class StreamRefiner(SingleStreamOperator):
+class StreamRefiner(StreamOperator):
     """Discard from the input stream all instances beyond the leading 'max_instances' instances.
 
     Thereby, if the input stream consists of no more than 'max_instances' instances, the resulting stream is the whole of the
@@ -2071,7 +2069,7 @@ class ExtractZipFile(SideEffectOperator):
             zf.extractall(self.target_dir)
 
 
-class DuplicateInstances(SingleStreamOperator):
+class DuplicateInstances(StreamOperator):
     """Operator which duplicates each instance in stream a given number of times.
 
     Attributes:
