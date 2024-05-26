@@ -106,6 +106,54 @@ Example command output:
 
 **Explanation**: This shows the output of the `Join` operator when processing a sample instance.
 
+Stream Operators
+----------------
+
+Stream operators are designed to manage and manipulate entire data streams. These operators process instances sequentially, allowing for operations that affect the entire stream, such as limiting the number of instances processed.
+
+.. code-block:: python
+
+    from unitxt.stream import Stream
+    from unitxt.operator import StreamOperator
+
+    class LimitSize(StreamOperator):
+        size: int
+        def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+            for i, instance in enumerate(stream):
+                if i > self.size:
+                    break
+                yield instance
+
+**Explanation**: The `LimitSize` class inherits from `StreamOperator` and is used to limit the number of instances processed in a stream. It iterates over each instance in the stream and stops yielding new instances once the specified size limit is exceeded. This operator is useful for scenarios such as data sampling or when resource constraints limit the number of instances that can be processed.
+
+MultiStream Operators
+---------------------
+
+MultiStream operators handle operations across multiple data streams concurrently. These operators are capable of merging, filtering, or redistributing data from multiple streams into a new stream configuration.
+
+.. code-block:: python
+
+    from unitxt.stream import MultiStream, GeneratorStream
+    from unitxt.operator import MultiStreamOperator
+
+    class MergeAllStreams(MultiStreamOperator):
+
+        def merge(self, streams) -> Generator:
+            for stream in streams:
+                for instance in stream:
+                    yield instance
+
+        def process(self, multi_stream: MultiStream) -> MultiStream:
+            return MultiStream(
+                {
+                    "merged": GeneratorStream(
+                        self.merge, gen_kwargs={"streams": multi_stream.values()}
+                    )
+                }
+            )
+
+**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream. The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged". This operator is particularly useful in scenarios where data from different sources needs to be combined into a single dataset for analysis or further processing.
+
 Unit Testing Operators
 -----------------------
 
