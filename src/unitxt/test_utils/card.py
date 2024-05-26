@@ -53,15 +53,12 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         return None
 
     logger.info("*" * 80)
-    logger.info(f"Using template card index: {template_card_index}")
-
     if "loader_limit" not in kwargs:
         kwargs["loader_limit"] = 30
+    kwargs["template_card_index"] = template_card_index
 
-    recipe = StandardRecipe(
-        card=card, template_card_index=template_card_index, **kwargs
-    )
-    logger.info("Using these recipe parameters: ", kwargs)
+    recipe = StandardRecipe(card=card, **kwargs)
+    logger.info(f"Using these card recipe parameters: {kwargs}")
 
     if debug:
         for max_steps in range(1, recipe.num_steps() + 1):
@@ -109,7 +106,9 @@ def print_recipe_output(
         if streams is None or stream_name in streams:
             stream = multi_stream[stream_name]
             logger.info("-" * 10)
-            logger.info(f"Showing up to {num_examples} from stream '{stream_name}':")
+            logger.info(
+                f"Showing up to {num_examples} examples from stream '{stream_name}':"
+            )
             for example, _ in zip(stream, range(num_examples)):
                 dict_message = construct_dict_str(example)
                 logger.info(dict_message)
@@ -130,15 +129,14 @@ def print_predictions(correct_predictions, results):
         logger.info(
             f"Processed references: ({type(result['references']).__name__}) {result['references']}"
         )
-    logger.info("*" * 80)
+    logger.info("*" * 5)
     logger.info("Score output:")
     logger.info(json.dumps(results[0]["score"]["global"], sort_keys=True, indent=4))
-    logger.info("*" * 80)
 
 
 def test_correct_predictions(examples, strict, exact_match_score):
     correct_predictions = [example["target"] for example in examples]
-    logger.info("*" * 80)
+    logger.info("*" * 40)
     logger.info("Running with the gold references as predictions.")
     results = _compute(predictions=correct_predictions, references=examples)
 
@@ -149,7 +147,7 @@ def test_correct_predictions(examples, strict, exact_match_score):
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
-    if exact_match_score is not None and not math.isclose(score, exact_match_score):
+    if not math.isclose(score, exact_match_score):
         message = (
             f"The results of running the main metric used in the card ({score_name}) "
             f"over simulated predictions that are equal to the references returns a different score than expected.\n"
@@ -168,20 +166,19 @@ def test_correct_predictions(examples, strict, exact_match_score):
         )
         if strict:
             raise AssertionError(error_message)
-        logger.info("*" * 80)
+        logger.info("*" * 10)
         logger.info(warning_message)
-        logger.info("*" * 80)
 
 
 def test_wrong_predictions(
-    examples, strict, full_mismatch_score, full_mismatch_prediction_values
+    examples, strict, maximum_full_mismatch_score, full_mismatch_prediction_values
 ):
     import random
 
     wrong_predictions = [
         random.choice(full_mismatch_prediction_values) for example in examples
     ]
-    logger.info("*" * 80)
+    logger.info("*" * 40)
     logger.info("Running with random values as predictions.")
     results = _compute(predictions=wrong_predictions, references=examples)
 
@@ -191,11 +188,11 @@ def test_wrong_predictions(
     score_name = results[0]["score"]["global"]["score_name"]
     score = results[0]["score"]["global"]["score"]
 
-    if full_mismatch_score is not None and score != full_mismatch_score:
+    if score > maximum_full_mismatch_score:
         message = (
             f"The results of running the main metric used in the card ({score_name}) "
             f"over random predictions returns a different score than expected.\n"
-            f"Usually, one would expect a low score of {full_mismatch_score} in this case, but returned metric score was {score}.\n"
+            f"The test expected a low score of atmost {maximum_full_mismatch_score} in this case, but returned metric score was {score}.\n"
         )
         error_message = (
             f"{message}"
@@ -212,9 +209,8 @@ def test_wrong_predictions(
         if strict:
             raise AssertionError(error_message)
 
-        logger.info("*" * 80)
+        logger.info("*" * 10)
         logger.info(warning_message)
-        logger.info("*" * 80)
 
 
 def test_card(
@@ -224,10 +220,56 @@ def test_card(
     test_exact_match_score_when_predictions_equal_references=True,
     test_full_mismatch_score_with_full_mismatch_prediction_values=True,
     exact_match_score=1.0,
-    full_mismatch_score=0.0,
+    maximum_full_mismatch_score=0.0,
     full_mismatch_prediction_values=None,
     **kwargs,
 ):
+    """Tests a given card.
+
+    By default, the test goes over all templates defined in the cards,
+    and generates sample outputs for template. It also runs two tests on sample data.
+    The first is running the metrics in the card with predictions which are equal to the references.
+    The expected score in this case is typically 1.  The second test is running the metrics in the card
+    with random predictions (selected from a fixed set of values).  The score expected in this case
+    is typically 0.
+
+    During the test, sample datasets instances, as well as the predictions/references
+    It also shows the processed predictions and references, after the templates post processors
+    are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
+
+        Parameters:
+        1. `card`: The `Card` object to be tested.
+        2. `debug`: A boolean value indicating whether to enable debug mode. In debug mode, the data processing pipeline is executed step by step, printing a representative output of each step.  Default is False.
+        3. `strict`: A boolean value indicating whether to fail if scores do not match the expected ones.
+           Default is True.
+        4. `test_exact_match_score_when_predictions_equal_references`: A boolean value indicating whether to test the exact match score when predictions equal references. Default is True.
+        5. `test_full_mismatch_score_with_full_mismatch_prediction_values`: A boolean value indicating whether to test the full mismatch score with full mismatch prediction values.
+            The potential mismatched predeiction values are specified in full_mismatch_prediction_values`.
+            Default is True.
+        6. `exact_match_score`: The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
+        7. `maximum_full_mismatch_score`: The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
+        8. `full_mismatch_prediction_values`: An optional list of prediction values to use for testing full mismatches. Default is None.
+            If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+        9. **kwargs`: Additional keyword arguments to be passed to the recipe.
+
+    Example:
+            # Test the templates with few shots
+            test_card(card,num_demos=1,demo_pool_size=10)
+
+            # Shows the step by step processing of data.
+            test_card(card,debug=True)
+
+            # In some metrics (e.g. BertScore) random predictions do not generate a score of zero so we disable this test
+            test_card(card,test_full_mismatch_score_with_full_mismatch_prediction_values=False)
+
+            # Alternatively, we can ensure the score on random predictions is less than 0.7
+            test_card(card,maximum_full_mismatch_score=0.7)
+
+            # Override the values used when running the test to check that fully mismatched values get 0 score
+            test_card(card,full_mismatch_prediction_values=["NA","NONE])
+
+
+    """
     if full_mismatch_prediction_values is None:
         full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:
@@ -256,6 +298,6 @@ def test_card(
             test_wrong_predictions(
                 examples=examples,
                 strict=strict,
-                full_mismatch_score=full_mismatch_score,
+                maximum_full_mismatch_score=maximum_full_mismatch_score,
                 full_mismatch_prediction_values=full_mismatch_prediction_values,
             )
