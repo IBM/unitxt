@@ -6,7 +6,7 @@ from typing import (
     Optional,
 )
 
-from .operators import FieldOperator, StreamInstanceOperator
+from .operators import FieldOperator, InstanceOperator
 
 
 class Split(FieldOperator):
@@ -44,7 +44,7 @@ class Join(FieldOperator):
         return self.by.join(value)
 
 
-class FormatText(StreamInstanceOperator):
+class FormatText(InstanceOperator):
     to_field: str
     text: str
 

@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 
 
-class NormalizeListFields(StreamInstanceOperator):
+class NormalizeListFields(InstanceOperator):
     fields: List[str]
     key_prefix: str = ""
     empty_value: str = ""
