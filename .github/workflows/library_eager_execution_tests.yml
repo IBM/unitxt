@@ -1,0 +1,33 @@
+name: Test Library Code Eager Execution
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-full-tests-suit:
+
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      UNITXT_USE_EAGER_EXECUTION: True
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: 'pip' # caching pip dependencies
+    - run: pip install -r requirements/base.rqr
+    - run: pip install -r requirements/tests.rqr
+    - run: pip install -e .
+    - run: pip install coverage[toml]
+
+    - name: Run Tests
+      run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v2
