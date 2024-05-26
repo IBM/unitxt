@@ -20,10 +20,10 @@ from .dataclass import AbstractField, InternalField, NonPositionalField, Optiona
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
+    InstanceOperator,
     MultiStreamOperator,
-    SingleStreamOperator,
     StreamingOperator,
-    StreamInstanceOperator,
+    StreamOperator,
 )
 from .operators import CopyFields
 from .random_utils import get_seed
@@ -68,7 +68,7 @@ def nan_max(x):
         return np.nanmax(x)
 
 
-class UpdateStream(StreamInstanceOperator):
+class UpdateStream(InstanceOperator):
     update: dict
 
     def process(
@@ -421,7 +421,7 @@ class MetricWithConfidenceInterval(Metric):
         return result
 
 
-class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     """A class for computing metrics that require joint calculations over all instances and are not just aggregation of scores of individuals instances.
 
     For example, macro_F1 requires
@@ -531,7 +531,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
 
-class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
@@ -622,7 +622,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         pass
 
 
-class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
+class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
     InstanceMetric currently allows two reductions:
@@ -2733,7 +2733,7 @@ class KPA(CustomF1):
         return element == "none"
 
 
-class RemoteMetric(SingleStreamOperator, Metric):
+class RemoteMetric(StreamOperator, Metric):
     """A metric that runs another metric remotely.
 
     main_score: the score updated by this metric.

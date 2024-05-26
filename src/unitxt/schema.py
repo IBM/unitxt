@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from datasets import Features, Sequence, Value
 
-from .operator import StreamInstanceOperatorValidator
+from .operator import InstanceOperatorValidator
 
 UNITXT_DATASET_SCHEMA = Features(
     {
@@ -28,7 +28,7 @@ UNITXT_DATASET_SCHEMA = Features(
 # })
 
 
-class ToUnitxtGroup(StreamInstanceOperatorValidator):
+class ToUnitxtGroup(InstanceOperatorValidator):
     group: str
     metrics: List[str] = None
     postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])

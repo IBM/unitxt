@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 from .type_utils import (
     get_args,
     get_origin,
@@ -13,7 +13,7 @@ from .type_utils import (
 )
 
 
-class Task(StreamInstanceOperator):
+class Task(InstanceOperator):
     """FormTask packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:

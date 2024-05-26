@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 
 
-class IobExtractor(StreamInstanceOperator):
+class IobExtractor(InstanceOperator):
     """A class designed to extract entities from sequences of text using the Inside-Outside-Beginning (IOB) tagging convention. It identifies entities based on IOB tags and categorizes them into predefined labels such as Person, Organization, and Location.
 
     Attributes:
