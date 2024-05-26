@@ -57,7 +57,7 @@ class Loader(SourceOperator):
 
     A loader is the first component in the Unitxt Recipe,
     responsible for loading data from various sources and preparing it as a MultiStream for processing.
-    The loader_limit an optional parameter used to control the maximum number of instances to load from the the source.
+    The loader_limit an optional parameter used to control the maximum number of instances to load from the data source.  It is applied for each split separately. 
     It is usually provided to the loader via the recipe (see standard.py)
     The loader can use this value to limit the amount of data downloaded from the source
     to reduce loading time.  However, this may not always be possible, so the
