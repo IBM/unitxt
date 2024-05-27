@@ -296,6 +296,7 @@ class TestLoaders(UnitxtTestCase):
                 ],
                 "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
             },
+            "data_classification_policy": ["pii"],
         }
 
         expected_sample = {
@@ -303,11 +304,9 @@ class TestLoaders(UnitxtTestCase):
             "model_id": "wizardlm-13b",
             "answer_id": "DKHvKJgtzsvHN2ZJ8a3o5C",
             "tstamp": 1686788249.913451,
+            "data_classification_policy": ["pii"],
         }
         loader = LoadFromHFSpace(**params)
-        expected_sample[
-            "data_classification_policy"
-        ] = loader.data_classification_policy
         ms = loader.process().to_dataset()
         actual_sample = ms["test"][0]
         actual_sample.pop("choices")
@@ -316,4 +315,4 @@ class TestLoaders(UnitxtTestCase):
         params["loader_limit"] = 10
         loader = LoadFromHFSpace(**params)
         ms = loader.process().to_dataset()
-        assert ms.shape["train"] == (10, 5) and ms.shape["test"] == (10, 5)
+        assert ms.shape["train"] == (10, 6) and ms.shape["test"] == (10, 6)

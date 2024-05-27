@@ -808,4 +808,4 @@ class LoadFromHFSpace(LoadHF):
             ["public"], "when loading from Huggingface spaces"
         )
         self.path = self._download_data()
-        return super().process()
+        return super().load_data()
