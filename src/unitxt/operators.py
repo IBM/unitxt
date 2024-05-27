@@ -32,6 +32,7 @@ The rest of this section is dedicated for general operators.
 General Operaotrs List:
 ------------------------
 """
+
 import copy
 import operator
 import uuid
@@ -1983,6 +1984,80 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class MinimumOneExamplePerLabelRefiner(StreamRefiner):
+    """A class used to include at least one example per label.
+
+    For each instance, a signature is constructed from the values of the instance in specified input 'fields'.
+    By discarding instances from the input stream, MinimumOneExamplePerLabelRefiner maintains at least one
+    example per label. MinimumOneExamplePerLabelRefiner shuffles the results to avoid having one element
+    from each class first and then the rest . If max instance is not set, the original stream will be used
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int)
+
+    Usage:
+        balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
+        balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1},{"a": 1},{"a": 2}] is fed into
+        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=2)
+        the resulting stream will be: [{"a": 2}] + one of [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1}]
+    """
+
+    fields: List[str]
+
+    def signature(self, instance):
+        return str(tuple(dict_get(instance, field) for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        if self.max_instances is None:
+            for instance in stream:
+                yield instance
+
+        counter = Counter()
+
+        for instance in stream:
+            counter[self.signature(instance)] += 1
+        all_keys = counter.keys()
+        if len(counter) == 0:
+            return
+
+        if self.max_instances is not None and len(all_keys) > self.max_instances:
+            raise Exception(
+                f"max instances of {self.max_instances} is smaller than the number of different labels"
+                f" ({len(all_keys)}"
+            )
+
+        counter = Counter()
+        used_indices = set()
+        selected_elements = []
+        # select at least one per class
+        for idx, instance in enumerate(stream):
+            sign = self.signature(instance)
+            if counter[sign] == 0:
+                counter[sign] += 1
+                used_indices.add(idx)
+                selected_elements.append(
+                    instance
+                )  # collect all elements first to allow shuffling of both groups
+
+        # select more to reach self.max_instances examples
+        for idx, instance in enumerate(stream):
+            if idx not in used_indices:
+                if self.max_instances is None or len(used_indices) < self.max_instances:
+                    used_indices.add(idx)
+                    selected_elements.append(
+                        instance
+                    )  # collect all elements first to allow shuffling of both groups
+
+        # shuffle elements to avoid having one element from each class appear first
+        random_generator = new_random_generator(sub_seed=selected_elements)
+        random_generator.shuffle(selected_elements)
+        yield from selected_elements
 
 
 class LengthBalancer(DeterministicBalancer):

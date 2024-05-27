@@ -1,5 +1,9 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import DeterministicBalancer, LengthBalancer
+from unitxt.operators import (
+    DeterministicBalancer,
+    LengthBalancer,
+    MinimumOneExamplePerLabelRefiner,
+)
 
 balancer = DeterministicBalancer(fields=["outputs/label"])
 
@@ -19,4 +23,12 @@ balancer = LengthBalancer(fields=["outputs/labels"], segments_boundaries=[1])
 
 add_to_catalog(
     balancer, "operators.balancers.ner.zero_vs_many_entities", overwrite=True
+)
+
+balancer = MinimumOneExamplePerLabelRefiner(fields=["outputs/label"])
+
+add_to_catalog(
+    balancer,
+    "operators.balancers.classification.minimum_one_example_per_class",
+    overwrite=True,
 )
