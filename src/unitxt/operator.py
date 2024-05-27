@@ -1,4 +1,3 @@
-import re
 from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
@@ -488,8 +487,7 @@ class SequentialOperator(MultiStreamOperator):
         last_step = (
             self.max_steps - 1 if self.max_steps is not None else len(self.steps) - 1
         )
-        description = str(self.steps[last_step])
-        return re.sub(r"\w+=None, ", "", description)
+        return self.steps[last_step].__description__
 
     def _get_max_steps(self):
         return self.max_steps if self.max_steps is not None else len(self.steps)
