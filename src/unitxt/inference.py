@@ -10,19 +10,15 @@ from .operator import PackageRequirementsMixin
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
-    @staticmethod
-    def verify_dataset(infer_function):
-        def wrapper(self, dataset):
-            [self.verify_instance(instance) for instance in dataset]
-            return infer_function(self, dataset)
-
-        return wrapper
-
     @abc.abstractmethod
-    @verify_dataset
-    def infer(self, dataset):
+    def _infer(self, dataset):
         """Perform inference on the input dataset."""
         pass
+
+    def infer(self, dataset):
+        """Verifies instances of a dataset and performs inference."""
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer(dataset)
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -73,8 +69,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
-    @InferenceEngine.verify_dataset
-    def infer(self, dataset):
+    def _infer(self, dataset):
         outputs = []
         for output in self.model([instance["source"] for instance in dataset]):
             if isinstance(output, list):
@@ -89,7 +84,7 @@ class MockInferenceEngine(InferenceEngine):
     def prepare(self):
         return
 
-    def infer(self, dataset):
+    def _infer(self, dataset):
         return ["[[10]]" for instance in dataset]
 
 
@@ -130,8 +125,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         credentials = Credentials(api_key=api_key, api_endpoint=api_endpoint)
         self.client = Client(credentials=credentials)
 
-    @InferenceEngine.verify_dataset
-    def infer(self, dataset):
+    def _infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
@@ -188,8 +182,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
         self.client = OpenAI(api_key=api_key)
 
-    @InferenceEngine.verify_dataset
-    def infer(self, dataset):
+    def _infer(self, dataset):
         return [
             self.client.chat.completions.create(
                 messages=[
