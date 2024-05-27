@@ -2028,7 +2028,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
 
         if self.max_instances is not None and len(all_keys) > self.max_instances:
             raise Exception(
-                f"max instances of {self.max_instances} is smaller than the number of different labels"
+                f"Can not generate a stream with at least one example per label, because the max instances requested  {self.max_instances} is smaller than the number of different labels {len(all_keys)}"
                 f" ({len(all_keys)}"
             )
 
