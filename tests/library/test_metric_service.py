@@ -26,6 +26,7 @@ class TestMetricsServiceClientConfig(UnitxtTestCase):
 
         remote_metrics = get_remote_metrics_names()
         self.assertListEqual(remote_metrics, expected_remote_metrics)
+
         remote_metrics_endpoint = get_remote_metrics_endpoint()
         self.assertEqual(remote_metrics_endpoint, expected_remote_metrics_endpoint)
 

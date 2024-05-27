@@ -207,6 +207,7 @@ class MultiStreamOperator(StreamingOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         multi_stream = MultiStream({stream_name: stream_single(instance)})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
@@ -276,6 +277,7 @@ class StreamOperator(MultiStreamOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         processed_stream = self._process_single_stream(
             stream_single(instance), stream_name
         )
@@ -321,6 +323,7 @@ class PagedStreamOperator(StreamOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         processed_stream = self._process_page([instance], stream_name)
         return next(iter(processed_stream))
 
@@ -368,6 +371,7 @@ class InstanceOperator(StreamOperator):
     def _process_instance(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        instance = self.verify_instance(instance)
         return self.process(instance, stream_name)
 
     @abstractmethod
@@ -417,6 +421,7 @@ class BaseFieldOperator(Artifact):
     """
 
     def __call__(self, data: Dict[str, Any], field: str) -> dict:
+        data = self.verify_instance(data)
         value = self.process(data[field])
         data[field] = value
         return data
@@ -447,7 +452,10 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         return MultiStream(result)
 
     def generator(self, stream, multi_stream):
-        yield from (self.process(instance, multi_stream) for instance in stream)
+        yield from (
+            self.process(self.verify_instance(instance), multi_stream)
+            for instance in stream
+        )
 
     @abstractmethod
     def process(self, instance: dict, multi_stream: MultiStream) -> dict:

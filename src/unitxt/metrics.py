@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
+from operator import itemgetter
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
@@ -167,6 +168,7 @@ class Metric(Artifact):
         additional_inputs = []
         instances = []
         for instance in stream:
+            instance = self.verify_instance(instance)
             references.append(instance["references"])
             predictions.append(instance["prediction"])
             additional_inputs.append(
@@ -446,6 +448,8 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             if "score" not in instance:
                 instance["score"] = {"global": global_score, "instance": {}}
             else:
@@ -550,7 +554,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             list,
             zip(
                 *[
-                    (instance["references"], instance["prediction"])
+                    itemgetter("references", "prediction")(
+                        self.verify_instance(instance)
+                    )
                     for instance in stream
                 ]
             ),
@@ -831,6 +837,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             task_data = instance["task_data"] if "task_data" in instance else {}
 
             if self.reference_field == "references":
@@ -2099,6 +2107,7 @@ class LlamaIndexCorrectness(InstanceMetric):
     ] = []  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
+    data_classification_policy = ["public"]
 
     _requirements_list: List[str] = ["llama_index"]
 
@@ -2179,11 +2188,6 @@ class LlamaIndexCorrectness(InstanceMetric):
         """
         # treat the references as the questions and the predictions as answers
         # assume a single reference
-
-        assert (
-            not self._model_using_extrnal_api()
-            or settings.allow_passing_data_to_remote_api
-        ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
 
         query = task_data["question"]
 
@@ -2747,10 +2751,12 @@ class RemoteMetric(StreamOperator, Metric):
     endpoint: str
     metric_name: str
     api_key: str = None
+    data_classification_policy = ["public", "proprietary"]
 
     @staticmethod
     def wrap_inner_metric_pipeline_metric(
-        metric_pipeline: MetricPipeline, remote_metrics_endpoint: str
+        metric_pipeline: MetricPipeline,
+        remote_metrics_endpoint: str,
     ) -> MetricPipeline:
         """Wrap the inner metric in a MetricPipeline with a RemoteMetric.
 
