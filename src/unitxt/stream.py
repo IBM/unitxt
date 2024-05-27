@@ -118,15 +118,15 @@ class DynamicStream(Stream):
                 )
 
     def __iter__(self):
-        self.def_self_stream_if_none()
+        self._verify_init()
         return self.stream.__iter__()
 
     def peek(self):
-        self.def_self_stream_if_none()
+        self._verify_init()
         return self.stream.peek()
 
     def take(self, n):
-        self.def_self_stream_if_none()
+        self._verify_init()
         return self.stream.take(n)
 
 
