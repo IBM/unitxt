@@ -151,7 +151,7 @@ class LoadHF(Loader):
     Example:
         Loading glue's mrpc dataset
 
-        .. code-block::python
+        .. code-block:: python
 
             load_hf = LoadHF(path='glue', name='mrpc')
     """
@@ -303,7 +303,7 @@ class LoadCSV(Loader):
     Example:
         Loading csv
 
-        .. code-block::python
+        .. code-block:: python
 
             load_csv = LoadCSV(files={'train': 'path/to/train.csv'}, chunksize=100)
     """
@@ -378,7 +378,7 @@ class LoadFromSklearn(Loader):
     Example:
         Loading form sklearn
 
-        .. code-block::python
+        .. code-block:: python
 
             load_sklearn = LoadFromSklearn(dataset_name='iris', splits=['train', 'test'])
     """
@@ -429,7 +429,7 @@ class LoadFromKaggle(Loader):
     Example:
         Loading from kaggle
 
-        .. code-block::python
+        .. code-block:: python
 
             load_kaggle = LoadFromKaggle(url='kaggle.com/dataset/example')
     """
@@ -484,7 +484,7 @@ class LoadFromIBMCloud(Loader):
     Example:
         Loading from IBM Cloud
 
-        .. code-block::python
+        .. code-block:: python
 
             load_ibm_cloud = LoadFromIBMCloud(
                 endpoint_url_env='IBM_CLOUD_ENDPOINT',
@@ -641,7 +641,7 @@ class MultipleSourceLoader(Loader):
     Examples:
         1) Loading the train split from Huggingface hub and the test set from a local file:
 
-        .. code-block::python
+        .. code-block:: python
 
             MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
 
@@ -649,7 +649,7 @@ class MultipleSourceLoader(Loader):
 
         2) Loading a test set combined from two files
 
-        .. code-block::python
+        .. code-block:: python
 
             MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
     """
@@ -680,7 +680,7 @@ class LoadFromDictionary(Loader):
     Example:
         Loading dictionary
 
-        .. code-block::python
+        .. code-block:: python
 
             data = {
                 "train": {"input": "SomeInput1", "output": "SomeResult1"},
@@ -723,7 +723,7 @@ class LoadFromHFSpace(LoadHF):
     Example:
         Loading from Huggingface Space
 
-        .. code-block::python
+        .. code-block:: python
 
             loader = LoadFromHFSpace(
                 space_name="lmsys/mt-bench",
