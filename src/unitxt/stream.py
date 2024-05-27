@@ -102,7 +102,7 @@ class DynamicStream(Stream):
     def __post_init__(self):
         self.stream = None
 
-    def def_self_stream_if_none(self):
+    def _verify_init(self):
         if self.stream is None:
             if settings.use_eager_execution:
                 instances_list = []
