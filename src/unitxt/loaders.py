@@ -81,7 +81,7 @@ class Loader(SourceOperator):
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         if self.data_classification_policy is None:
             get_logger().warning(
-                f"The {self.__class__.__name__} loader does not set the `data_classification_policy`. "
+                f"The {self.get_pretty_print_name()} loader does not set the `data_classification_policy`. "
                 f"This may lead to sending of undesired data to external services.\n"
                 f"Set it to a list of classification identifiers. \n"
                 f"For example:\n"
@@ -100,8 +100,10 @@ class Loader(SourceOperator):
     ):
         if self.data_classification_policy is None:
             logger.info(
-                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to {default_data_classification_policy} by default {additional_info}.\n"
-                "To use a different value or remove this message, explicitly set the `data_classification_policy` attribute of the loader.\n"
+                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
+                f"{default_data_classification_policy} by default {additional_info}.\n"
+                "To use a different value or remove this message, explicitly set the "
+                "`data_classification_policy` attribute of the loader.\n"
             )
             self.data_classification_policy = default_data_classification_policy
 
@@ -669,6 +671,9 @@ class LoadFromHFSpace(LoadHF):
 
         return dir_path
 
-    def process(self):
+    def load_data(self):
+        self.sef_default_data_classification(
+            ["public"], "when loading from Huggingface spaces"
+        )
         self.path = self._download_data()
         return super().process()

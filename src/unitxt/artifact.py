@@ -253,9 +253,10 @@ class Artifact(Dataclass):
                 for data_classification in self.data_classification_policy
             ):
                 raise ValueError(
-                    f"The 'data_classification_policy' of {self.get_pretty_print_name()} must be either None - in case when "
-                    f"no policy applies - or a list of strings, for example: ['public']. "
-                    f"However, '{self.data_classification_policy}' of type {type(self.data_classification_policy)} was provided instead."
+                    f"The 'data_classification_policy' of {self.get_pretty_print_name()} "
+                    f"must be either None - in case when no policy applies - or a list of "
+                    f"strings, for example: ['public']. However, '{self.data_classification_policy}' "
+                    f"of type {type(self.data_classification_policy)} was provided instead."
                 )
 
     @final
@@ -317,7 +318,7 @@ class Artifact(Dataclass):
             metric = fetch_artifact("metrics.accuracy")
             metric.verify_instance(instance)
         """
-        name = name or self.__id__ or self.__class__.__name__
+        name = name or self.get_pretty_print_name()
         data_classification_policy = get_artifacts_data_classification(name)
         if not data_classification_policy:
             data_classification_policy = self.data_classification_policy

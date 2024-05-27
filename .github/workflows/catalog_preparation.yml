@@ -13,7 +13,6 @@ jobs:
      env:
        OS: ubuntu-latest
        GENAI_KEY: "dummy"
-       UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API: "True"
 
      steps:
      - uses: actions/checkout@v4

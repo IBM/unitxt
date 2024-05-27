@@ -305,6 +305,9 @@ class TestLoaders(UnitxtTestCase):
             "tstamp": 1686788249.913451,
         }
         loader = LoadFromHFSpace(**params)
+        expected_sample[
+            "data_classification_policy"
+        ] = loader.data_classification_policy
         ms = loader.process().to_dataset()
         actual_sample = ms["test"][0]
         actual_sample.pop("choices")
