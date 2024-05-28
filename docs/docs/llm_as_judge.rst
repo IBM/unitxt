@@ -64,7 +64,7 @@ From here, constructing the full unitxt recipe string is standard and straightfo
     card=cards.mt_bench.generation.english_single_turn,
     template=templates.empty,
     format=formats.empty,
-    metrics=[metrics.llm_as_judge.rating.mistralai_Mistral_7B_Instruct_v0_2_huggingface_template_mt_bench_single_turn]
+    metrics=[metrics.llm_as_judge.rating.mistral_7b_instruct_v0_2_huggingface_template_mt_bench_single_turn]
 
 .. note::
 
