@@ -768,18 +768,36 @@ class LoadFromHFSpace(LoadHF):
         elif isinstance(self.data_files, Mapping):
             new_mapping = {}
             for k, v in self.data_files.items():
-                new_mapping[k] = [
-                    file
-                    for p in v
-                    for file in self._get_file_list_from_wildcard_path(p, repo_files)
-                ]
+                if isinstance(v, list):
+                    assert all(isinstance(s, str) for s in v)
+                    new_mapping[k] = [
+                        file
+                        for p in v
+                        for file in self._get_file_list_from_wildcard_path(
+                            p, repo_files
+                        )
+                    ]
+                elif isinstance(v, str):
+                    new_mapping[k] = self._get_file_list_from_wildcard_path(
+                        v, repo_files
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"Loader does not support input 'data_files' of type Mapping[{type(v)}]"
+                    )
+
             self.data_files = new_mapping
-        else:
+        elif isinstance(self.data_files, list):
+            assert all(isinstance(s, str) for s in self.data_files)
             self.data_files = [
                 file
                 for p in self.data_files
                 for file in self._get_file_list_from_wildcard_path(p, repo_files)
             ]
+        else:
+            raise NotImplementedError(
+                f"Loader does not support input 'data_files' of type {type(self.data_files)}"
+            )
 
     def process(self):
         self._map_wildcard_path_to_full_paths()
