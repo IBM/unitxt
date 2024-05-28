@@ -1987,7 +1987,7 @@ class DeterministicBalancer(StreamRefiner):
 
 
 class MinimumOneExamplePerLabelRefiner(StreamRefiner):
-    """A class used to include at least one example per label.
+    """A class used to return a specified number instances ensuring atleast one example  per label.
 
     For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
     By discarding instances from the input stream, MinimumOneExamplePerLabelRefiner maintains at least one
