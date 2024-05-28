@@ -4,6 +4,7 @@ from unitxt.blocks import (
     LoadHF,
     RenameFields,
     SerializeTableAsIndexedRowMajor,
+    Task,
     TaskCard,
     TemplatesList,
 )
@@ -23,7 +24,13 @@ card = TaskCard(
         SerializeTableAsIndexedRowMajor(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
-    task="tasks.generation",  # TODO: add task to the generation file with the relevant metrics
+    task=Task(
+        inputs={"input": "str", "type_of_input": "str", "type_of_output": "str"},
+        outputs={"output": "str"},
+        prediction_type="str",
+        metrics=["metrics.meteor"],
+        augmentable_inputs=["input"],
+    ),
     templates=TemplatesList(
         [
             InputOutputTemplate(
