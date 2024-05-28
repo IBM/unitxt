@@ -1987,7 +1987,7 @@ class DeterministicBalancer(StreamRefiner):
 
 
 class MinimumOneExamplePerLabelRefiner(StreamRefiner):
-    """A class used to return a specified number instances ensuring atleast one example  per label.
+    """A class used to return a specified number instances ensuring at least one example  per label.
 
     For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
     MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
@@ -1996,7 +1996,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
 
     Attributes:
         fields (List[str]): A list of field names to be used in producing the instance's signature.
-        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`) 
+        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`)
 
     Usage:
         balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
@@ -2004,9 +2004,9 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
 
     Example:
         When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}] is fed into
-        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=2)
+        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)
         the resulting stream will be:
-        [{"a": 2, "b": 5}] + one of [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4}]
+        [{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}] (order may be different)
     """
 
     fields: List[str]
@@ -2015,8 +2015,9 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
         return str(tuple(dict_get(instance, field) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        for instance in stream:
-            yield instance
+        if self.max_instances is None:
+            for instance in stream:
+                yield instance
 
         counter = Counter()
         for instance in stream:
