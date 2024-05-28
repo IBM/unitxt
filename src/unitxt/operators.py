@@ -1990,7 +1990,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
     """A class used to return a specified number instances ensuring atleast one example  per label.
 
     For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
-    By discarding instances from the input stream, MinimumOneExamplePerLabelRefiner maintains at least one
+    MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
     example per label. MinimumOneExamplePerLabelRefiner shuffles the results to avoid having one element
     from each class first and then the rest . If max instance is not set, the original stream will be used
 
