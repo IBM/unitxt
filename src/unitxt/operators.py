@@ -1996,7 +1996,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
 
     Attributes:
         fields (List[str]): A list of field names to be used in producing the instance's signature.
-        max_instances (Optional, int): Number of elements to select
+        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`) 
 
     Usage:
         balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
