@@ -503,7 +503,7 @@ class LoadFromIBMCloud(Loader):
 
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
-    data_classification_policy = "proprietary"
+    data_classification_policy = ["proprietary"]
 
     _requirements_list: List[str] = ["ibm_boto3"]
 
