@@ -384,10 +384,6 @@ class InstanceOperator(StreamOperator):
         return self._process_instance(instance, stream_name)
 
 
-class StreamInstanceOperator(InstanceOperator):
-    pass
-
-
 class InstanceOperatorValidator(InstanceOperator):
     """A class representing a stream instance operator validator in the streaming system.
 
