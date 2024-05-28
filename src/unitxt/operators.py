@@ -1996,7 +1996,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
 
     Attributes:
         fields (List[str]): A list of field names to be used in producing the instance's signature.
-        max_instances (int): Number of elements to select
+        max_instances (Optional, int): Number of elements to select
 
     Usage:
         balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
@@ -2010,14 +2010,15 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
     """
 
     fields: List[str]
-    max_instances: int
 
     def signature(self, instance):
         return str(tuple(dict_get(instance, field) for field in self.fields))
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        counter = Counter()
+        for instance in stream:
+            yield instance
 
+        counter = Counter()
         for instance in stream:
             counter[self.signature(instance)] += 1
         all_keys = counter.keys()
