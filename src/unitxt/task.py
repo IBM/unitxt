@@ -107,11 +107,13 @@ class Task(InstanceOperator):
 
         inputs = {key: instance[key] for key in self.inputs.keys()}
         outputs = {key: instance[key] for key in self.outputs.keys()}
+        data_classification_policy = instance.get("data_classification_policy", [])
 
         return {
             "inputs": inputs,
             "outputs": outputs,
             "metrics": self.metrics,
+            "data_classification_policy": data_classification_policy,
         }
 
 

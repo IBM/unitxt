@@ -44,6 +44,7 @@ class TestRecipes(UnitxtTestCase):
                     "references": ["not entailment"],
                     "group": "unitxt",
                     "postprocessors": ["processors.to_string_stripped"],
+                    "data_classification_policy": ["public"],
                 },
             )
             break
@@ -97,6 +98,7 @@ class TestRecipes(UnitxtTestCase):
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(result, target)
@@ -169,6 +171,7 @@ class TestRecipes(UnitxtTestCase):
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(result, target)

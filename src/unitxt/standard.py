@@ -131,11 +131,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         )
         self.standardization = SequentialOperator()
         self.standardization.__description__ = (
-            "Standardizing the dataset fields to task definition."
+            "Standardizing the raw dataset fields to task field definition."
         )
         self.processing = SequentialOperator()
         self.processing.__description__ = (
-            "Processing the task fields (e.g. selecting demos per sample if needed)."
+            "Setting task fields (and selecting demos per sample if needed)."
         )
         self.verblization = SequentialOperator()
         self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
