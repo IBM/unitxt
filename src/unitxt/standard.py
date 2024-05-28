@@ -135,7 +135,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         )
         self.processing = SequentialOperator()
         self.processing.__description__ = (
-            "Setting task fields (and add selecting demos per sample if needed)."
+            "Setting task fields (and selecting demos per sample if needed)."
         )
         self.verblization = SequentialOperator()
         self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
