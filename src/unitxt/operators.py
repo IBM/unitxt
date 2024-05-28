@@ -49,11 +49,13 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
 )
 
+import pandas as pd
 import requests
 
 from .artifact import Artifact, fetch_artifact
@@ -75,7 +77,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, Stream
+from .stream import GeneratorStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -279,6 +281,25 @@ class RemoveFields(InstanceOperator):
         for field_name in self.fields:
             del instance[field_name]
         return instance
+
+
+class SelectFields(InstanceOperator):
+    """Keep only specified fields from each instance in a stream.
+
+    Args:
+        fields (List[str]): The fields to keep from each instance.
+    """
+
+    fields: List[str]
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        new_instance = {}
+        for field_name, field_value in instance.items():
+            if field_name in self.fields:
+                new_instance[field_name] = field_value
+        return new_instance
 
 
 class InstanceFieldOperator(InstanceOperator):
@@ -1743,6 +1764,37 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+class JoinStreams(MultiStreamOperator):
+    """Merges multiple streams into a single stream.
+
+    Args:
+        new_stream_name (str): The name of the new stream resulting from the merge.
+        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
+        origin_stream_name_field_name (str): The field name for the origin stream name.
+    """
+
+    left_stream: str
+    right_stream: str
+    how: Literal["left", "right", "inner", "outer", "cross"]
+    on: List[str]
+    new_stream_name: str
+
+    def merge(self, multi_stream) -> List:
+        assert self.right_stream in multi_stream and self.left_stream in multi_stream
+        stream_dict = dict(multi_stream.items())
+        left_stream = list(stream_dict[self.left_stream])
+        right_stream = list(stream_dict[self.right_stream])
+        left_stream_df = pd.DataFrame(left_stream)
+        right_stream_df = pd.DataFrame(right_stream)
+        merged_df = pd.merge(left_stream_df, right_stream_df, how=self.how, on=self.on)
+        return merged_df.to_dict(orient="records")
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        merged_records = self.merge(multi_stream)
+        multi_stream[self.new_stream_name] = ListStream(instances_list=merged_records)
+        return multi_stream
+
+
 class MergeStreams(MultiStreamOperator):
     """Merges multiple streams into a single stream.
 
@@ -2104,3 +2156,13 @@ class DuplicateInstances(StreamOperator):
                 f"If given, duplication_index_field must be a string. "
                 f"Got: {self.duplication_index_field}"
             )
+
+
+class DeleteSplits(MultiStreamOperator):
+    splits: List[str]
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        generators = {
+            key: val for key, val in multi_stream.items() if key not in self.splits
+        }
+        return MultiStream(generators)
