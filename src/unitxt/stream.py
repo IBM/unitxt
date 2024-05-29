@@ -101,32 +101,30 @@ class DynamicStream(Stream):
 
     def __post_init__(self):
         self.stream = None
-
-    def _verify_init(self):
-        if self.stream is None:
-            if settings.use_eager_execution:
+        if settings.use_eager_execution:
+            try:
                 instances_list = []
                 for instance in self.generator(**self.gen_kwargs):
                     instances_list.append(instance)
                 self.stream = ListStream(instances_list=instances_list)
-            else:
-                self.stream = GeneratorStream(
-                    generator=self.generator,
-                    gen_kwargs=self.gen_kwargs,
-                    caching=self.caching,
-                    copying=self.copying,
-                )
+            except:
+                # input stream is empty
+                self.stream = None
+        if self.stream is None:
+            self.stream = GeneratorStream(
+                generator=self.generator,
+                gen_kwargs=self.gen_kwargs,
+                caching=self.caching,
+                copying=self.copying,
+            )
 
     def __iter__(self):
-        self._verify_init()
         return self.stream.__iter__()
 
     def peek(self):
-        self._verify_init()
         return self.stream.peek()
 
     def take(self, n):
-        self._verify_init()
         return self.stream.take(n)
 
 
