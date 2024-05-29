@@ -121,8 +121,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
         )
-        api_endpoint = os.environ.get("GENAI_KEY")
-        credentials = Credentials(api_key=api_key, api_endpoint=api_endpoint)
+        credentials = Credentials(api_key=api_key)
         self.client = Client(credentials=credentials)
 
     def _infer(self, dataset):
