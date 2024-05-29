@@ -11,7 +11,6 @@ model_list = [
 ]  # will point to llamaguard2
 format = "formats.llamaguard2"
 template = "templates.safety.unsafe_content"
-# task = "tasks.response_assessment.single_turn.multiple_choice"
 task = "rating.single_turn"
 
 gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=252)
