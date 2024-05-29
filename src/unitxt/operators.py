@@ -296,9 +296,8 @@ class SelectFields(InstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         new_instance = {}
-        for field_name, field_value in instance.items():
-            if field_name in self.fields:
-                new_instance[field_name] = field_value
+        for selected_field in self.fields:
+            new_instance[selected_field] = instance[selected_field]
         return new_instance
 
 
@@ -1314,6 +1313,52 @@ class FilterByCondition(StreamOperator):
         return True
 
 
+class FilterByConditionBasedOnFields(FilterByCondition):
+    """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator. The value is another field in the dataset.
+
+    Raises an error if a required field name is missing from the input instance.
+
+    Args:
+       values (Dict[str, str]): Field namesthat instances must match according the condition, to be included in the output.
+       condition: the name of the desired condition operator between the specified (sub) field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(values = {"a":"b}, condition = "gt") will yield only instances where field "a" contains a value greater then the value in field "b".
+       FilterByCondition(values = {"a":"b}, condition = "le") will yield only instances where "a"<="b"
+    """
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.values.items():
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            try:
+                instance_value = dict_get(instance, value)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            if self.condition == "in":
+                if instance_key not in instance_value:
+                    return False
+            elif self.condition == "not in":
+                if instance_key in instance_value:
+                    return False
+            else:
+                func = self.condition_to_func[self.condition]
+                if func is None:
+                    raise ValueError(
+                        f"Function not defined for condition '{self.condition}'"
+                    )
+                if not func(instance_key, instance_value):
+                    return False
+        return True
+
+
 class ComputeExpressionMixin(Artifact):
     """Computes an expression expressed over fields of an instance.
 
@@ -1776,7 +1821,9 @@ class JoinStreams(MultiStreamOperator):
     left_stream: str
     right_stream: str
     how: Literal["left", "right", "inner", "outer", "cross"]
-    on: List[str]
+    on: Optional[List[str]] = None
+    left_on: Optional[List[str]] = None
+    right_on: Optional[List[str]] = None
     new_stream_name: str
 
     def merge(self, multi_stream) -> List:
@@ -1786,7 +1833,29 @@ class JoinStreams(MultiStreamOperator):
         right_stream = list(stream_dict[self.right_stream])
         left_stream_df = pd.DataFrame(left_stream)
         right_stream_df = pd.DataFrame(right_stream)
-        merged_df = pd.merge(left_stream_df, right_stream_df, how=self.how, on=self.on)
+
+        # Remove common col we don't join on, so we don't have unexpected column (standard behavior is to add a suffix)
+        common_cols = set(left_stream_df.columns).intersection(
+            set(right_stream_df.columns)
+        )
+        on = self.on if self.on is not None else []
+        left_on = self.left_on if self.left_on is not None else []
+        right_on = self.right_on if self.right_on is not None else []
+        on_cols = set(on + left_on + right_on)
+        col_to_remove = list(common_cols - on_cols)
+        left_stream_df = left_stream_df.drop(columns=col_to_remove, errors="ignore")
+        right_stream_df = right_stream_df.drop(columns=col_to_remove, errors="ignore")
+
+        # TODO: We remove 'recipe_metadata'. Is that ok?
+
+        merged_df = pd.merge(
+            left_stream_df,
+            right_stream_df,
+            how=self.how,
+            on=self.on,
+            left_on=self.left_on,
+            right_on=self.right_on,
+        )
         return merged_df.to_dict(orient="records")
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
