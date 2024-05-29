@@ -1,0 +1,32 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "Bertievidgen/SimpleSafetyTests",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "prompt": "input"
+            }
+        },
+        {
+            "type": "add_fields",
+            "fields": {
+                "output": "None",
+                "type_of_input": "question",
+                "type_of_output": "answer",
+                "prediction_type": "str"
+            }
+        }
+    ],
+    "task": "tasks.generation",
+    "templates": [
+        "templates.empty"
+    ],
+    "__tags__": {}
+}
