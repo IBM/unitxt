@@ -126,7 +126,7 @@ if Settings.is_uninitilized():
     settings.max_log_message_size = (int, 100000)
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
-    settings.default_verbosity = "info"
+    settings.default_verbosity = "critical"
     settings.remote_metrics = []
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)

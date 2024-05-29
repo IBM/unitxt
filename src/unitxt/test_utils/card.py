@@ -270,6 +270,18 @@ def test_card(
 
 
     """
+    # ==================
+    card_info = {
+        "path": card.loader.path if hasattr(card.loader, "path") else "",
+        "name": card.loader.name if hasattr(card.loader, "name") else "",
+        #  "tags": card.__tags__ if hasattr(card, "__tags__") else "",
+        #  "desc": card.__description__ if hasattr(card, "__description__") else ""
+    }
+    jsoned_card_info = str(json.dumps(card_info))
+    logger.info(jsoned_card_info)
+    return
+    # ===============
+
     if full_mismatch_prediction_values is None:
         full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:

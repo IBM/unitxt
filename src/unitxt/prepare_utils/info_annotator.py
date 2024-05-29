@@ -56,6 +56,14 @@ logger.info(f"Annotating files: {all_preparation_files}")
 # all_infos.txt will gather all the accessible info in all ways tried here
 with open("all_infos.txt", "w") as writer:
     writer.write("starting annotations\n")
+with open("all_descs.txt", "w") as writer:
+    writer.write(
+        "Descriptions of HF datasets, extracted through ds_info.description \n"
+    )
+    writer.write(
+        "(https://huggingface.co/docs/huggingface_hub/v0.23.2/package_reference/hf_api)\n\n"
+    )
+
 dict_per_file = []
 max_num_of_tags = 0
 for file in all_preparation_files:
@@ -66,8 +74,15 @@ for file in all_preparation_files:
         f"  Testing preparation file:\n  {file}."
         "\n_____________________________________________\n"
     )
-    with open("all_infos.txt", "a") as writer:
-        writer.write(f"\nCard file: {file}\n")
+    with open("all_descs.txt", "a") as writer:
+        writer.write("=============================================================\n")
+        writer.write(
+            "Card name: "
+            + file[1 + file.rfind("/") : -3]
+            + "   Full file path: "
+            + file
+            + "\n"
+        )
 
     this_file_dict["file_name"] = file[1 + file.rfind("/") :]
 
@@ -99,6 +114,11 @@ for file in all_preparation_files:
     this_file_dict["url_in_hf"] = (
         '=HYPERLINK("https://huggingface.co/datasets/' + card["path"] + '")'
     )
+    with open("all_descs.txt", "a") as writer:
+        writer.write(
+            "Url at HF:  https://huggingface.co/datasets/" + card["path"] + "\n\n"
+        )
+
     ds_builder = None
     try:
         if card["name"] is None:
@@ -213,16 +233,27 @@ for file in all_preparation_files:
         else str(ds_info.description)
     )
     if scraped_description is not None:
-        with open("all_infos.txt", "a") as writer:
+        # the following is for MichalJ:
+        with open("all_descs.txt", "a") as writer:
             scraped_description = scraped_description.strip()
-            writer.write("scraped description from ds_info:\n")
-            writer.write(scraped_description)
-            writer.write('\ntranslated s+ and escape " \n')
             scraped_description = re.sub(r"[\t\n]+", "\n", scraped_description)
             scraped_description = scraped_description.strip()
-            scraped_description = scraped_description.replace('"', '\\"')
+            scraped_description = scraped_description.replace("\n", " ")
+            writer.write("-------------------------------------------------------\n")
             writer.write(scraped_description)
-            this_file_dict["description"] = scraped_description
+            writer.write("\n-----------------------------------------------------\n")
+
+        # the following I used before:
+        # with open("all_infos.txt", "a") as writer:
+        #     scraped_description = scraped_description.strip()
+        #     writer.write("scraped description from ds_info:\n")
+        #     writer.write(scraped_description)
+        #     writer.write('\ntranslated s+ and escape " \n')
+        #     scraped_description = re.sub(r"[\t\n]+", "\n", scraped_description)
+        #     scraped_description = scraped_description.strip()
+        #     scraped_description = scraped_description.replace('"', '\\"')
+        #     writer.write(scraped_description)
+        #     this_file_dict["description"] = scraped_description
 
     tags_to_add = (
         []

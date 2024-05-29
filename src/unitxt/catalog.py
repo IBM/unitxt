@@ -128,6 +128,7 @@ def add_to_catalog(
     catalog_path: Optional[str] = None,
     verbose=True,
 ):
+    return
     reset_artifacts_json_cache()
     if catalog is None:
         if catalog_path is None:
