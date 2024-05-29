@@ -6,7 +6,7 @@ from unitxt.formats import SystemFormat
 # PROMPT_TEMPLATE_2 = Template(f"[INST] {PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATION}{PROMPT_INSTRUCTIONS_2} [/INST]")
 
 format = SystemFormat(
-    demo_format="",  # User: {question}\n\nAgent: {answer}\n\n",
+    demo_format="",
     model_input_format="[INST] {source} [/INST]",
 )
 
