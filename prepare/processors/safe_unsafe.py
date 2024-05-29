@@ -1,19 +1,8 @@
-from typing import Any
-
 from unitxt import add_to_catalog
 from unitxt.operator import (
     SequentialOperator,
 )
-from unitxt.operators import FieldOperator
-
-
-class ExtractSafeUnsafeJudgment(FieldOperator):
-    def process_value(self, text: Any) -> Any:
-        first_line = text.split("\n")[0]
-        if first_line == "safe":
-            return 1.0
-        return 0.0
-
+from unitxt.processors import ExtractSafeUnsafeJudgment
 
 add_to_catalog(
     SequentialOperator(
