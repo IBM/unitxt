@@ -127,14 +127,22 @@ class TestRecipes(UnitxtTestCase):
         )
 
         self.assertDictEqual(
-            recipe.production_preprocess(instances)[0],
-            recipe.production_preprocess(instances)[0],
+            recipe.produce(instances)[0],
+            recipe.produce(instances)[0],
         )
 
-        self.assertDictEqual(
-            recipe.produce(instances)[0],
-            recipe.produce(instances)[0],
-        )
+        i1 = recipe.production_preprocess(instances)[0]
+        i2 = recipe.production_preprocess(instances)[0]
+        for meta_data in ["card", "template", "format", "system_prompt"]:
+            i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
+                meta_data
+            ]._to_raw_dict()
+            if not isinstance(i2["recipe_metadata"][meta_data], dict):
+                i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
+                    meta_data
+                ]._to_raw_dict()
+
+        self.assertDictEqual(i1, i2)
 
     def test_standard_recipe_production_with_demos(self):
         recipe = StandardRecipe(
