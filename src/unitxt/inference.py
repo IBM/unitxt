@@ -140,13 +140,14 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             decoding_method=self.parameters.decoding_method,
         )
 
-        return list(
-            self.client.text.generation.create(
+        return [
+            response.results[0].generated_text
+            for response in self.client.text.generation.create(
                 model_id=self.model_name,
                 inputs=[instance["source"] for instance in dataset],
                 parameters=genai_params,
             )
-        )
+        ]
 
 
 class OpenAiInferenceEngineParams(Artifact):
