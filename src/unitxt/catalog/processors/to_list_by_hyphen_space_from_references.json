@@ -1,0 +1,19 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "to_list_by_hyphen_space",
+            "field": "references",
+            "process_every_value": true
+        },
+        {
+            "type": "remove_values",
+            "field": "references",
+            "unallowed_values": [
+                "",
+                " "
+            ],
+            "process_every_value": true
+        }
+    ]
+}
