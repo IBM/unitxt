@@ -28,7 +28,10 @@ card = TaskCard(
         inputs={"input": "str", "type_of_input": "str", "type_of_output": "str"},
         outputs={"output": "str"},
         prediction_type="str",
-        metrics=["metrics.meteor"],
+        metrics=["metrics.bleu", "metrics.rouge",
+                "metrics.bert_score.bert-base-uncased",
+                "metrics.meteor"],
+                # TODO: add PARENT (Raj+Shir)
         augmentable_inputs=["input"],
     ),
     templates=TemplatesList(
