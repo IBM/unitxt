@@ -25,7 +25,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.generation",
-    templates=["templates.empty"],
+    templates=["templates.generation.empty"],
     __tags__={},
 )
 
