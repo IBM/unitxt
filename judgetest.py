@@ -6,9 +6,8 @@ from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEnginePar
 card = (
     "card=cards.safety.simple_safety_tests,"
     "template=templates.empty,"
-    "format=formats.empty,"
-    "metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_genai_template_unsafe_content],"
-    "data_classification_policy=['public']"
+    "format=formats.llama3_chat,"
+    "metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_genai_template_unsafe_content]"
 )
 
 dataset = load_dataset("unitxt/data", card, split="test")
