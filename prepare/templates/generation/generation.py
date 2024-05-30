@@ -26,11 +26,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    TemplatesList(
-        [
-            "templates.generation.default",
-        ]
-    ),
+    TemplatesList(["templates.generation.default", "templates.generation.empty"]),
     "templates.generation.all",
     overwrite=True,
 )
