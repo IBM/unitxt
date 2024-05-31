@@ -39,15 +39,17 @@
     "__tags__": {
         "annotations_creators": "crowdsourced",
         "arxiv": "1508.00305",
-        "croissant": true,
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": [
+            "croissant",
+            "table-question-answering"
+        ],
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
-        "table-question-answering": true,
         "task_categories": "question-answering"
     }
 }

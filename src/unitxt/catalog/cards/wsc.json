@@ -52,19 +52,21 @@
         ]
     },
     "__tags__": {
-        "NLU": true,
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
-        "croissant": true,
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "natural language understanding": true,
         "region": "us",
+        "singletons": [
+            "NLU",
+            "croissant",
+            "natural language understanding",
+            "superglue"
+        ],
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|other",
-        "superglue": true,
         "task_categories": [
             "text-classification",
             "token-classification",

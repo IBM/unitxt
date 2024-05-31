@@ -51,13 +51,15 @@
             "1704.04683",
             "1506.03340"
         ],
-        "conversational-qa": true,
-        "croissant": true,
         "language": "en",
         "language_creators": "found",
         "license": "other",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": [
+            "conversational-qa",
+            "croissant"
+        ],
         "size_categories": "1K<n<10K",
         "source_datasets": [
             "extended|race",

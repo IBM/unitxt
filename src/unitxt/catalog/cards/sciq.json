@@ -42,12 +42,14 @@
     "templates": "templates.qa.multiple_choice.with_context.all",
     "__tags__": {
         "annotations_creators": "no-annotation",
-        "croissant": true,
         "language": "en",
         "language_creators": "crowdsourced",
         "license": "cc-by-nc-3.0",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": [
+            "croissant"
+        ],
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "question-answering",

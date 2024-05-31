@@ -48,13 +48,15 @@
     },
     "__tags__": {
         "arxiv": "2308.11462",
-        "croissant": true,
-        "finance": true,
         "language": "en",
-        "law": true,
-        "legal": true,
         "license": "other",
         "region": "us",
+        "singletons": [
+            "croissant",
+            "finance",
+            "law",
+            "legal"
+        ],
         "size_categories": "10K<n<100K",
         "task_categories": [
             "text-classification",

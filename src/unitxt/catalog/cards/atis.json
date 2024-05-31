@@ -362,7 +362,9 @@
     "task": "tasks.span_labeling.extraction",
     "templates": "templates.span_labeling.extraction.all",
     "__tags__": {
-        "croissant": true,
-        "region": "us"
+        "region": "us",
+        "singletons": [
+            "croissant"
+        ]
     }
 }

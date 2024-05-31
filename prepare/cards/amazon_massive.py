@@ -9,11 +9,11 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
-langs = get_dataset_config_names("AmazonScience/massive")
+langs = get_dataset_config_names("AmazonScience/massive", trust_remote_code=True)
 # now langs is the list of all languages showing in the dataset
 
 
-ds_builder = load_dataset_builder("AmazonScience/massive")
+ds_builder = load_dataset_builder("AmazonScience/massive", trust_remote_code=True)
 classlabels = ds_builder.info.features["intent"]
 
 mappers = {}

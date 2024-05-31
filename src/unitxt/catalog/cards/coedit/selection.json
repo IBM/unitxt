@@ -90,10 +90,12 @@
     "templates": "templates.selection.by_attribute.all",
     "__tags__": {
         "arxiv": "2305.09857",
-        "croissant": true,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
+        "singletons": [
+            "croissant"
+        ],
         "size_categories": "10K<n<100K",
         "task_categories": "text-generation"
     },
