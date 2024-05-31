@@ -37,10 +37,9 @@ card = TaskCard(
     templates="templates.evaluation.preference.all",
     __tags__={
         "arxiv": "2204.05862",
-        "croissant": True,
-        "human-feedback": True,
         "license": "mit",
         "region": "us",
+        "singletons": ["croissant", "human-feedback"],
     },
     __description__=(
         "Dataset Card for HH-RLHF\n"

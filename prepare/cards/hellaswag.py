@@ -25,9 +25,9 @@ card = TaskCard(
     ),
     __tags__={
         "arxiv": "1905.07830",
-        "croissant": True,
         "language": "en",
         "region": "us",
+        "singletons": ["croissant"],
     },
 )
 # We disable strict checking because garbage predictions (when using the post processor

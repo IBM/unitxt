@@ -36,7 +36,7 @@ card = TaskCard(
             ),
         ]
     ),
-    __tags__={"croissant": True, "region": "us"},
+    __tags__={"region": "us", "singletons": ["croissant"]},
     __description__=(
         "Dataset Card for PopQA\n"
         "Dataset Summary\n"

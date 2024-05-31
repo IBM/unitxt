@@ -22,12 +22,12 @@ for lang in langs:
         templates="templates.summarization.abstractive.all",
         __tags__={
             "annotations_creators": "found",
-            "croissant": True,
             "language": ["de", "es", "fr", "ru", "tr"],
             "language_creators": "found",
             "license": "other",
             "multilinguality": "multilingual",
             "region": "us",
+            "singletons": ["croissant"],
             "size_categories": ["100K<n<1M", "10K<n<100K"],
             "source_datasets": ["extended|cnn_dailymail", "original"],
             "task_categories": ["summarization", "translation", "text-classification"],

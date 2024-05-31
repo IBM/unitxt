@@ -40,12 +40,12 @@ for subset in get_dataset_config_names(dataset_name):
         templates="templates.classification.multi_class.all",
         __tags__={
             "annotations_creators": "expert-generated",
-            "croissant": True,
             "language": "en",
             "language_creators": "crowdsourced",
             "license": "cc-by-3.0",
             "multilinguality": "monolingual",
             "region": "us",
+            "singletons": ["croissant"],
             "size_categories": "10K<n<100K",
             "source_datasets": "original",
             "task_categories": "text-classification",

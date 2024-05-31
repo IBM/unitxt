@@ -155,10 +155,10 @@ for subset in get_dataset_config_names(dataset_name):
         task="tasks.classification.multi_label",
         templates="templates.classification.multi_label.all",
         __tags__={
-            "croissant": True,
             "language": "en",
             "license": "other",
             "region": "us",
+            "singletons": ["croissant"],
         },
         __description__=(
             "The Reuters-21578 dataset  is one of the most widely used data collections for text\n"

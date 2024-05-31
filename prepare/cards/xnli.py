@@ -52,7 +52,6 @@ for lang in langs:
         task="tasks.classification.multi_class.relation",
         templates="templates.classification.multi_class.relation.all",
         __tags__={
-            "croissant": True,
             "language": [
                 "ar",
                 "bg",
@@ -71,6 +70,7 @@ for lang in langs:
                 "zh",
             ],
             "region": "us",
+            "singletons": ["croissant"],
         },
         __description__=(
             'Dataset Card for "xnli"\n'

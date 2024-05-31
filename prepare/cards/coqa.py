@@ -36,13 +36,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "conversational-qa": True,
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "other",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": ["conversational-qa", "croissant"],
         "size_categories": "1K<n<10K",
         "source_datasets": [
             "extended|race",
@@ -89,13 +88,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "conversational-qa": True,
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "other",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": ["conversational-qa", "croissant"],
         "size_categories": "1K<n<10K",
         "source_datasets": [
             "extended|race",

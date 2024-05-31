@@ -21,12 +21,12 @@ for subtask in subtasks:
         __tags__={
             "annotations_creators": "found",
             "arxiv": "1803.05457",
-            "croissant": True,
             "language": "en",
             "language_creators": "found",
             "license": "cc-by-sa-4.0",
             "multilinguality": "monolingual",
             "region": "us",
+            "singletons": ["croissant"],
             "size_categories": "1K<n<10K",
             "source_datasets": "original",
             "task_categories": "question-answering",

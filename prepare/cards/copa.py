@@ -33,19 +33,21 @@ card = TaskCard(
         "resources, and a new public leaderboard."
     ),
     __tags__={
-        "NLU": True,
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
-        "croissant": True,
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "natural language understanding": True,
         "region": "us",
+        "singletons": [
+            "NLU",
+            "croissant",
+            "natural language understanding",
+            "superglue",
+        ],
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|other",
-        "superglue": True,
         "task_categories": [
             "text-classification",
             "token-classification",

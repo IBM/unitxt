@@ -46,11 +46,11 @@ card = TaskCard(
     ),
     __tags__={
         "arxiv": "2101.11718",
-        "croissant": True,
         "language": "en",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": ["croissant"],
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "text-generation",

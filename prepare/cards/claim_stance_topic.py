@@ -77,10 +77,10 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
     __tags__={
-        "croissant": True,
         "language": "en",
         "license": "cc-by-3.0",
         "region": "us",
+        "singletons": ["croissant"],
         "size_categories": "1K<n<10K",
         "task_categories": "text-classification",
     },

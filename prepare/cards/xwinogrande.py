@@ -18,10 +18,10 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         templates="templates.qa.multiple_choice.open.all",
         __tags__={
             "arxiv": ["2211.01786", "2106.12066"],
-            "croissant": True,
             "language": ["en", "fr", "ja", "pt", "ru", "zh"],
             "license": "cc-by-4.0",
             "region": "us",
+            "singletons": ["croissant"],
         },
         __description__=(
             "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."

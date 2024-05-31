@@ -97,12 +97,12 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "expert-generated",
-        "croissant": True,
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",
         "multilinguality": "monolingual",
         "region": "us",
+        "singletons": ["croissant"],
         "size_categories": "1K<n<10K",
         "source_datasets": "original",
         "task_categories": "text-classification",

@@ -15,14 +15,12 @@ card = TaskCard(
     task="tasks.qa.open",
     templates="templates.qa.open.all",
     __tags__={
-        "QnA": True,
-        "croissant": True,
         "language": ["en", "ru", "pt", "it", "es", "fr", "de", "nl"],
         "license": "cc-by-nc-3.0",
         "region": "us",
+        "singletons": ["QnA", "croissant", "wikihow"],
         "size_categories": "10K<n<100K",
         "task_categories": "question-answering",
-        "wikihow": True,
     },
     __description__=(
         "Dataset Card for multilingual WikiHow with ~16.8K entries. ~(2-2.2)K for each language.\n"

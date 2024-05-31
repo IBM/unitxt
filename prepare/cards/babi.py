@@ -12,7 +12,7 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
-    __tags__={"croissant": True, "region": "us"},
+    __tags__={"region": "us", "singletons": ["croissant"]},
     __description__=(
         "Creation (Copied & adapted from https://github.com/stanford-crfm/helm/blob/0eaaa62a2263ddb94e9850ee629423b010f57e4a/src/helm/benchmark/scenarios/babi_qa_scenario.py):\n"
         "!wget http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz\n"

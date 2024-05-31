@@ -26,12 +26,12 @@ for lang in langs:
         __tags__={
             "annotations_creators": "none",
             "arxiv": "1607.01759",
-            "croissant": True,
             "language": "und",
             "language_creators": "unknown",
             "license": "cc-by-nc-sa-4.0",
             "multilinguality": "unknown",
             "region": "us",
+            "singletons": ["croissant"],
             "size_categories": "unknown",
             "source_datasets": "original",
             "task_categories": "summarization",

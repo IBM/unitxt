@@ -40,7 +40,6 @@ for lang in langs:
         __tags__={
             "annotations_creators": "expert-generated",
             "arxiv": "2204.08582",
-            "croissant": True,
             "language_creators": "found",
             "license": "cc-by-4.0",
             "multilinguality": [
@@ -97,8 +96,8 @@ for lang in langs:
                 "zh-CN",
                 "zh-TW",
             ],
-            "natural-language-understanding": True,
             "region": "us",
+            "singletons": ["croissant", "natural-language-understanding"],
             "size_categories": "100K<n<1M",
             "source_datasets": "original",
             "task_categories": "text-classification",
