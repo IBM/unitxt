@@ -94,6 +94,28 @@ class Metric(Artifact):
     # parsing on every use
     _parsed_prediction_type = None
 
+    #
+    # Used to add a prefix to all score, except the "score_name" and "score" fields.
+    # This is used to distinguish two scores of the same metrics, operating on different fields of the task
+    #
+    score_prefix: str = ""
+
+    def _add_score_prefix(self, score_name):
+        return (
+            self.score_prefix + score_name
+            if score_name not in ["score", "score_name"]
+            else score_name
+        )
+
+    def _add_score_prefixes_to_score_dict(self, scores: Dict[str, Any]):
+        new_scores = {}
+        for score_name, score in scores.items():
+            score_with_prefix = self._add_score_prefix(score_name)
+            new_scores[score_with_prefix] = (
+                score if score_name not in ["score_name"] else self.score_prefix + score
+            )
+        return new_scores
+
     def _validate_references_and_prediction(self, references, predictions):
         if not isoftype(predictions, List[Any]):
             raise ValueError(
@@ -446,14 +468,13 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
             instance_references, instance_prediction = (
                 instance["references"],
                 instance["prediction"],
             )
+
             references.append(instance_references)
             predictions.append(instance_prediction)
             instances.append(instance)
@@ -463,6 +484,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             )
             task_data.append(instance_task_data)
             instance_score = None
+
             # for backward compatibility
             no_score_value = np.nan
             if self.process_single_instances:
@@ -483,13 +505,14 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 if isinstance(self.main_score, str):
                     instance_score[self.main_score] = no_score_value
 
-            instance["score"]["instance"].update(instance_score)
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(instance_score)
+            )
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
 
-        global_score.update(result)
-
+        global_score.update(self._add_score_prefixes_to_score_dict(result))
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
             references, predictions, task_data, score_name
@@ -497,7 +520,7 @@ class GlobalMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         global_score.update(confidence_interval)
 
         for instance in instances:
-            instance["score"]["global"] = global_score
+            instance["score"]["global"].update(global_score)
             yield instance
 
     def _compute(
@@ -536,6 +559,7 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
     main_score: str
+
     reduction_map: Dict[str, List[str]]
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
@@ -574,12 +598,11 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
         for instance, score in zip(stream, instance_scores):
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
-            instance["score"]["instance"].update(score)
-
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(score)
+            )
             instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
@@ -589,27 +612,32 @@ class BulkInstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             if reduction == "mean":
                 for field_name in fields:
-                    global_score[field_name] = mean(
+                    field_name_with_prefix = self._add_score_prefix(field_name)
+                    global_score[field_name_with_prefix] = mean(
                         [
-                            instance["score"]["instance"][field_name]
+                            instance["score"]["instance"][field_name_with_prefix]
                             for instance in instances
                         ]
                     )
                     if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name]
-                        global_score["score_name"] = self.main_score
+                        global_score["score"] = global_score[field_name_with_prefix]
+                        global_score["score_name"] = self.score_prefix + self.main_score
 
                 ci_fields = (
                     list(set(self.ci_scores))
                     if self.ci_scores is not None
                     else [self.main_score]
                 )
+                ci_fields_with_prefix = [
+                    self._add_score_prefix(ci_field) for ci_field in ci_fields
+                ]
                 confidence_interval = self.score_based_confidence_interval(
-                    instances=instances, score_names=ci_fields
+                    instances=instances, score_names=ci_fields_with_prefix
                 )
                 global_score.update(confidence_interval)
 
         for instance in instances:
+            instance["score"]["global"].update(global_score)
             yield instance
 
     @abstractmethod
@@ -748,8 +776,8 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances, global_score = self.compute_instance_scores(stream)
-
+        instances = self.compute_instance_scores(stream)
+        global_score = {}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -795,7 +823,9 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
 
             # calculate global scores for each reduction field
             for field_name in reduction_fields:
-                field_name_full = field_name_full_prefix + field_name
+                field_name_full = (
+                    field_name_full_prefix + self.score_prefix + field_name
+                )
                 # if group resampling (3rd element of agg_func parameter) is True, then
                 #   1. scores_to_resample are the group scores, and
                 #   2. aggregation_function is to take the raw mean
@@ -804,7 +834,7 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
                 #   2. aggregation_function is to apply the group aggregation from the instance scores
                 # either way, the application of aggregation_function to scores_to_resample yields the global score
                 global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, field_name
+                    scores_to_resample, self.score_prefix + field_name
                 )
                 if field_name == self.main_score:
                     global_score["score"] = global_score[field_name_full]
@@ -815,18 +845,21 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             if self.ci_scores is not None:
                 confidence_interval = self.score_based_confidence_interval(
                     instances=scores_to_resample,
-                    score_names=list(set(self.ci_scores)),
+                    score_names=[
+                        self.score_prefix + ci_score for ci_score in set(self.ci_scores)
+                    ],
                     ci_score_prefix=field_name_full_prefix,
                     aggregation_func=aggregation_function,
                 )
                 global_score.update(confidence_interval)
 
+        for instance in instances:
+            instance["score"]["global"].update(global_score)
         yield from instances
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        global_score = {}
         instances = []
 
         for instance in stream:
@@ -849,18 +882,19 @@ class InstanceMetric(SingleStreamOperator, MetricWithConfidenceInterval):
             instance_score = self.compute(
                 references=refs, prediction=pred, task_data=task_data
             )
+
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
-            instance["score"]["instance"].update(instance_score)
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(instance_score)
+            )
 
             instances.append(instance)
 
-        return instances, global_score
+        return instances
 
     def get_group_scores(
         self, instances: List[dict], score_names: List[str], group_aggregation_func
@@ -1082,8 +1116,14 @@ class MetricPipeline(MultiStreamOperator, Metric):
         super().prepare()
         self.prepare_score = CopyFields(
             field_to_field=[
-                [f"score/instance/{self.main_score}", "score/instance/score"],
-                [f"score/global/{self.main_score}", "score/global/score"],
+                [
+                    f"score/instance/{self.metric._add_score_prefix(self.main_score)}",
+                    "score/instance/score",
+                ],
+                [
+                    f"score/global/{self.metric._add_score_prefix(self.main_score)}",
+                    "score/global/score",
+                ],
             ],
         )
 
