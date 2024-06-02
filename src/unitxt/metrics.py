@@ -188,6 +188,8 @@ class Metric(Artifact):
 
     @staticmethod
     def update_instance_scores(instances, instances_scores: List[Dict[str, Any]]):
+        # what is scores?
+        # this method is only used by RemoteMetric, perhaps move it to there?
         for instance, new_scores in zip(instances, instances_scores):
             if "score" not in instance:
                 instance["score"] = {}
@@ -198,6 +200,8 @@ class Metric(Artifact):
 
     @staticmethod
     def set_global_score(instances, global_score: Dict[str, Any]):
+        # what is scores?
+        # this method is only used by RemoteMetric, perhaps move it to there?
         for instance in instances:
             if "score" not in instance:
                 instance["score"] = {}
@@ -229,6 +233,27 @@ class PerformanceDropRateFloatsReducer(ControlComparisonFloatsReducer):
         )
 
 
+class Aggregator(Artifact):
+    @abstractmethod
+    def aggregate_one_group_score_names(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        pass
+
+
+class AverageItemsAggregator(Aggregator):
+    @staticmethod
+    def aggregate_one_group_score_names(
+        instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        return {
+            score_name: MetricWithConfidenceInterval.average_item_scores(
+                instances=instances, score_name=score_name
+            )
+            for score_name in score_names
+        }
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
@@ -246,13 +271,40 @@ class MetricWithConfidenceInterval(Metric):
     # as the whole stream global score.
     split_to_groups_by: SplitByValue = None
 
-    # in case of grouping by, the following flag is a boolean specifying whether resampling for CI
+    # in case of grouping by, the following boolean flag specifies whether resampling for CI
     # should be done from the individual groups' scores (True), as if each group is represented by
-    # one instance whose instance["score"]["instance"][score_name] is the group's aggregated score for score_name,
+    # one instance whose instance["score"]["instance"][score_name] is the group's global score for score_name,
     # Or from the whole stream (False), where each resample is then split to
     # groups, the score of which is then computed, and finally averaged with the other groups' scores, as done
     # here for the original whole stream.
     ci_samples_from_groups_scores: bool = False
+
+    # generate a score that compares the groups' scores of two subsets of the input stream: group 'control' and group 'comparison'
+    # this comes per one group (in case that split_to_groups_by is not None), or per the whole
+    # stream (in case that split_to_groups_by is None).
+    control_comparison: Dict[Literal["control", "comparison"], FilterByCondition] = None
+    control_comparison_floats_calculator: ControlComparisonFloatsReducer = Field(
+        default_factory=lambda: PerformanceDropRateFloatsReducer()
+    )
+
+    # the basic aggregation along the instances: no split to groups, nor control comparison, no filtering,
+    aggregator: Aggregator = Field(default_factory=lambda: AverageItemsAggregator())
+
+    def prepare(self):
+        if not hasattr(self, "score_names") or self.score_names is None:
+            assert (
+                self.main_score is not None
+            ), "both score_names and main_score are None"
+            self.score_names = [self.main_score]
+        self.prefix = ""
+        if self.split_to_groups_by is not None:
+            self.prefix = "group_"
+            if self.ci_samples_from_groups_scores:
+                self.prefix = "fixed_group_"
+            self.prefix += self.aggregating_function_name
+            self.prefix += "_"
+            # this prefix was only used for instancemetric,
+            # we suggest to always add it
 
     @staticmethod
     def new_random_generator():
@@ -462,17 +514,65 @@ class MetricWithConfidenceInterval(Metric):
             result[f"{score_name}_ci_high"] = ci.high
         return result
 
-    # aggregate over one group, which can be the whole stream when split_to_groups_by is None, for metric evaluation.
-    # It take into account: filtering, or splitting to control and compqrison, but does not assume further
-    # splitting of the input instances into groups by split_to_groups_by
-    # returns a dictionary of named scores
-    @abstractmethod
+    # aggregates over one group, which can be the whole stream when split_to_groups_by is None, for metric evaluation.
+    # It takes into account: filtering, or splitting to control and comparison, but does not assume further
+    # splitting of the input instances into groups by split_to_groups_by.
+    # Returns a dictionary of named scores
     def aggregate_one_group(
         self, instances: List[Dict[str, Any]], score_names: List[str]
     ) -> dict:
-        pass
+        if self.filter_by_condition is not None:
+            filtered_instances = [
+                instance
+                for instance in instances
+                if self.filter_by_condition._is_required(instance)
+            ]
+            instances = filtered_instances
+        if (
+            self.control_comparison is not None
+            and self.control_comparison_floats_calculator is not None
+        ):
+            groups_dict = {
+                side: [
+                    instance
+                    for instance in instances
+                    if self.control_comparison[side]._is_required(instance)
+                ]
+                for side in ["control", "comparison"]
+            }
+            dict_to_return = {}
+            for score_name in score_names:
+                if isinstance(self, GlobalMetric):
+                    floats_dict = {
+                        side: [
+                            self.aggregator.aggregate_one_group_score_names(
+                                instances=groups_dict[side], score_names=score_names
+                            )[score_name]
+                        ]
+                        for side in ["control", "comparison"]
+                    }
+                else:
+                    floats_dict = {
+                        side: [
+                            instance["score"]["instance"][score_name]
+                            for instance in groups_dict[side]
+                        ]
+                        for side in ["control", "comparison"]
+                    }
 
-    # This does deal with split_to_groups_by, when is not None. Returned is a dict whose keys
+                dict_to_return[
+                    score_name
+                ] = self.control_comparison_floats_calculator.reduce_floats(
+                    floats_dict=floats_dict
+                )
+            return dict_to_return
+
+        # no split to control-comparison, simply aggregate
+        return self.aggregator.aggregate_one_group_score_names(
+            instances=instances, score_names=score_names
+        )
+
+    # The following does deal with split_to_groups_by, when is not None. Returned is a dict whose keys
     # are the groups' names', and the values are dicts themselves. Each being the respective group's
     # global score: what the group's instances carry in their instance["score"]["global"], when evaluated
     # taking into account all settings except for split_to_groups_by.
@@ -585,18 +685,12 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_global_metrics
     )
 
     # calculate scores for single instances
     process_single_instances = True
-
-    # generate a score that compares the groups' scores of two subsets of the input stream: group 'control' and group 'comparison'
-    control_comparison: Dict[Literal["control", "comparison"], FilterByCondition] = None
-    control_comparison_floats_calculator: ControlComparisonFloatsReducer = Field(
-        default_factory=lambda: PerformanceDropRateFloatsReducer()
-    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
@@ -649,7 +743,18 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
 
             instance["score"]["instance"].update(instance_score)
 
-        self._validate_references_and_prediction(references, predictions)
+        class GlobalMetricAggregator(Aggregator):
+            @staticmethod
+            def aggregate_one_group_score_names(
+                instances: List[Dict[str, Any]], score_names: List[str]
+            ) -> dict:
+                predictions, references, task_data, _ = self.consume_stream(
+                    stream=instances, task_data_field_name="task_data"
+                )
+                self._validate_references_and_prediction(references, predictions)
+                return self.compute(references, predictions, task_data)
+
+        self.aggregator = GlobalMetricAggregator()
         result = self.compute_stream_score(
             instances=instances, score_names=[self.main_score]
         )
@@ -708,73 +813,12 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         """
         pass
 
-    def aggregate_one_group(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        # for Global metric, only self.main_score counts
-        if self.filter_by_condition is not None:
-            filtered_instances = [
-                instance
-                for instance in instances
-                if self.filter_by_condition._is_required(instance)
-            ]
-            instances = filtered_instances
-        if (
-            self.control_comparison is not None
-            and self.control_comparison_floats_calculator is not None
-        ):
-            floats_dict = {}
-            for side in ["control", "comparison"]:
-                group = [
-                    instance
-                    for instance in instances
-                    if self.control_comparison[side]._is_required(instance)
-                ]
-                predictions, references, task_data, instances = self.consume_stream(
-                    stream=group, task_data_field_name="task_data"
-                )
-                self._validate_references_and_prediction(references, predictions)
-                floats_dict[side] = [
-                    self.compute(references, predictions, task_data)[self.main_score]
-                ]
-            return {
-                self.main_score: self.control_comparison_floats_calculator.reduce_floats(
-                    floats_dict=floats_dict
-                )
-            }
-        predictions, references, task_data, instances = self.consume_stream(
-            stream=instances, task_data_field_name="task_data"
-        )
-        self._validate_references_and_prediction(references, predictions)
-        return self.compute(references, predictions, task_data)
-
-
-class Aggregator(Artifact):
-    @abstractmethod
-    def aggregate_one_group_score_names(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ):
-        pass
-
-
-class AverageItemsAggregator(Aggregator):
-    @staticmethod
-    def aggregate_one_group_score_names(
-        instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> float:
-        return {
-            score_name: MetricWithConfidenceInterval.average_item_scores(
-                instances=instances, score_name=score_name
-            )
-            for score_name in score_names
-        }
-
 
 class MaxItemsAggregator(Aggregator):
     @staticmethod
     def aggregate_one_group_score_names(
         instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> float:
+    ) -> dict:
         return {
             score_name: MetricWithConfidenceInterval.max_item_scores(
                 instances=instances, score_name=score_name
@@ -783,41 +827,8 @@ class MaxItemsAggregator(Aggregator):
         }
 
 
-# generate a score that compares the groups' scores of two subsets of the input stream: group 'control' and group 'comparison'
-class ControlComparisonAggregator(Aggregator):
-    control_comparison: Dict[Literal["control", "comparison"], FilterByCondition]
-    control_comparison_floats_calculator: ControlComparisonFloatsReducer = Field(
-        default_factory=lambda: PerformanceDropRateFloatsReducer()
-    )
-
-    def aggregate_one_group_score_names(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> float:
-        pair_of_groups = {
-            side: [
-                instance
-                for instance in instances
-                if self.control_comparison[side]._is_required(instance)
-            ]
-            for side in ["control", "comparison"]
-        }
-        to_return = {}
-        for score_name in score_names:
-            pair_of_floats = {
-                side: [
-                    instance["score"]["instance"][score_name]
-                    for instance in pair_of_groups[side]
-                ]
-                for side in ["control", "comparison"]
-            }
-            to_return[
-                score_name
-            ] = self.control_comparison_floats_calculator.reduce_floats(pair_of_floats)
-        return to_return
-
-
 class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
     main_score: str
@@ -893,21 +904,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     ) -> List[Dict[str, Any]]:
         pass
 
-    def aggregate_one_group(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        if self.filter_by_condition is not None:
-            filtered_instances = [
-                instance
-                for instance in instances
-                if self.filter_by_condition._is_required(instance)
-            ]
-            instances = filtered_instances
-
-        return self.aggregator.aggregate_one_group_score_names(
-            instances=instances, score_names=score_names
-        )
-
 
 class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
@@ -940,7 +936,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """
 
     # for confidence_interval
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
 
@@ -967,22 +963,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         assert self.split_to_groups_by is None or (
             issubclass(type(self.split_to_groups_by), SplitByValue)
         )
-
-    def prepare(self):
-        if self.score_names is None:
-            assert (
-                self.main_score is not None
-            ), "both score_names and main_score are None"
-            self.score_names = [self.main_score]
-        self.prefix = ""
-        if self.split_to_groups_by is not None:
-            self.prefix = "group_"
-            if self.ci_samples_from_groups_scores:
-                self.prefix = "fixed_group_"
-            self.prefix += self.aggregating_function_name
-            self.prefix += "_"
-            # for backward compatibility, only when grouping do we note the aggregation function name
-            # we suggest to always add it
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances, global_score = self.compute_instance_scores(stream)
@@ -1077,21 +1057,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instances.append(instance)
 
         return instances, global_score
-
-    def aggregate_one_group(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        if self.filter_by_condition is not None:
-            filtered_instances = [
-                instance
-                for instance in instances
-                if self.filter_by_condition._is_required(instance)
-            ]
-            instances = filtered_instances
-
-        return self.aggregator.aggregate_one_group_score_names(
-            instances=instances, score_names=score_names
-        )
 
     @abstractmethod
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
@@ -3023,18 +2988,6 @@ def interpret_effect_size(x: float):
     )[0]
 
 
-def abs_normalized_cohens_h(
-    control_subgroup: List[float],
-    comparison_subgroup: List[float],
-    interpret=False,
-):
-    return np.abs(
-        normalized_cohens_h(
-            control_subgroup=control_subgroup, comparison_subgroup=comparison_subgroup
-        )
-    )
-
-
 def normalized_cohens_h(
     control_subgroup: List[float],
     comparison_subgroup: List[float],
@@ -3101,9 +3054,26 @@ def normalized_cohens_h(
     return norm_h, interpret_effect_size(h)
 
 
+# for ease of use of this repeating arg, we define it here
+split_by_group_id = Field(
+    default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
+)
+original_paraphrase_control_comparison = Field(
+    default_factory=lambda: {
+        "control": FilterByCondition(
+            values={"task_data/variant_type": ["original"]}, condition="in"
+        ),
+        "comparison": FilterByCondition(
+            values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+        ),
+    },
+)
+
+
 class NormalizedCohensHFloatsReducer(ControlComparisonFloatsReducer):
+    @staticmethod
     def reduce_floats(
-        self, floats_dict: Dict[Literal["control", "comparison"], List[float]]
+        floats_dict: Dict[Literal["control", "comparison"], List[float]]
     ) -> float:
         return normalized_cohens_h(
             control_subgroup=floats_dict["control"],
@@ -3112,34 +3082,28 @@ class NormalizedCohensHFloatsReducer(ControlComparisonFloatsReducer):
 
 
 class AbsNormalizedCohensHFloatsReducer(ControlComparisonFloatsReducer):
+    @staticmethod
     def reduce_floats(
-        self, floats_dict: Dict[Literal["control", "comparison"], List[float]]
+        floats_dict: Dict[Literal["control", "comparison"], List[float]]
     ) -> float:
-        return abs_normalized_cohens_h(
-            control_subgroup=floats_dict["control"],
-            comparison_subgroup=floats_dict["comparison"],
+        return np.abs(
+            normalized_cohens_h(
+                control_subgroup=floats_dict["control"],
+                comparison_subgroup=floats_dict["comparison"],
+            )
         )
-
-
-def abs_normalized_hedges_g(
-    control_subgroup: List[float],
-    comparison_subgroup: List[float],
-    interpret=False,
-):
-    return np.abs(
-        normalized_hedges_g(
-            control_subgroup=control_subgroup, comparison_subgroup=comparison_subgroup
-        )
-    )
 
 
 class AbsNormalizedHedgesGFloatsReducer(ControlComparisonFloatsReducer):
+    @staticmethod
     def reduce_floats(
-        self, floats_dict: Dict[Literal["control", "comparison"], List[float]]
+        floats_dict: Dict[Literal["control", "comparison"], List[float]]
     ) -> float:
-        return abs_normalized_hedges_g(
-            control_subgroup=floats_dict["control"],
-            comparison_subgroup=floats_dict["comparison"],
+        return np.abs(
+            normalized_hedges_g(
+                control_subgroup=floats_dict["control"],
+                comparison_subgroup=floats_dict["comparison"],
+            )
         )
 
 
@@ -3214,8 +3178,9 @@ def normalized_hedges_g(
 
 
 class NormalizedHedgesGFloatsReducer(ControlComparisonFloatsReducer):
+    @staticmethod
     def reduce_floats(
-        self, floats_dict: Dict[Literal["control", "comparison"], List[float]]
+        floats_dict: Dict[Literal["control", "comparison"], List[float]]
     ) -> float:
         return normalized_hedges_g(
             control_subgroup=floats_dict["control"],
@@ -3225,31 +3190,23 @@ class NormalizedHedgesGFloatsReducer(ControlComparisonFloatsReducer):
 
 # metrics using mean reduction
 class GroupMeanAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
 
 
 class FixedGroupMeanAccuracy(Accuracy):
     # the same as GroupMeanAccuracy, except the groups are fixed and are resampled together
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
 
 
 # same as above, now using StringContainment
 class GroupMeanStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
 
 
 class FixedGroupMeanStringContainment(StringContainment):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
 
 
@@ -3260,9 +3217,7 @@ class FixedGroupMeanBaselineAccuracy(Accuracy):
             values={"task_data/variant_type": ["original"]}, condition="in"
         )
     )
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
     aggregating_function_name = "mean_baseline"
 
@@ -3273,9 +3228,7 @@ class FixedGroupMeanParaphraseAccuracy(Accuracy):
             values={"task_data/variant_type": ["paraphrase"]}, condition="in"
         )
     )
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
 
     aggregating_function_name = "mean_paraphrase"
@@ -3288,9 +3241,7 @@ class FixedGroupMeanBaselineStringContainment(StringContainment):
             values={"task_data/variant_type": ["original"]}, condition="in"
         )
     )
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
     aggregating_function_name = "mean_baseline"
 
@@ -3301,232 +3252,118 @@ class FixedGroupMeanParaphraseStringContainment(StringContainment):
             values={"task_data/variant_type": ["paraphrase"]}, condition="in"
         )
     )
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
     aggregating_function_name = "mean_paraphrase"
 
 
 # using PDR
 class FixedGroupPDRParaphraseAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
 
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=PerformanceDropRateFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: PerformanceDropRateFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "pdr_paraphrase"
 
 
 class FixedGroupPDRParaphraseStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=PerformanceDropRateFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: PerformanceDropRateFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "pdr_paraphrase"
 
 
 class GroupMeanTokenOverlap(TokenOverlap):
     score_names = ["f1", "precision", "recall"]
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
 
 
 # using Cohens's h for proportions
 class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=NormalizedCohensHFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: NormalizedCohensHFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "norm_cohens_h_paraphrase"
 
 
 class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=NormalizedCohensHFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: NormalizedCohensHFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "norm_cohens_h_paraphrase"
 
 
 # using Hedges' g (takes into account internal variation in group scores)
 class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=NormalizedHedgesGFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: NormalizedHedgesGFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "norm_hedges_g_paraphrase"
 
 
 class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=NormalizedHedgesGFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: NormalizedHedgesGFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "norm_hedges_g_paraphrase"
 
 
 # for above metrics, take absolute value of group score first; this measures variation in either direction
 class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=AbsNormalizedCohensHFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: AbsNormalizedCohensHFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "absval_norm_cohens_h_paraphrase"
 
 
 class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=AbsNormalizedCohensHFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: AbsNormalizedCohensHFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "absval_norm_cohens_h_paraphrase"
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=AbsNormalizedHedgesGFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: AbsNormalizedHedgesGFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "absval_norm_hedges_g_paraphrase"
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
-    split_to_groups_by = Field(
-        default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-    )
+    split_to_groups_by = split_by_group_id
     ci_samples_from_groups_scores = True
-    aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_floats_calculator=AbsNormalizedHedgesGFloatsReducer(),
-            control_comparison={
-                "control": FilterByCondition(
-                    values={"task_data/variant_type": ["original"]}, condition="in"
-                ),
-                "comparison": FilterByCondition(
-                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-                ),
-            },
-        )
+    control_comparison_floats_calculator = Field(
+        default_factory=lambda: AbsNormalizedHedgesGFloatsReducer()
     )
+    control_comparison = original_paraphrase_control_comparison
     aggregating_function_name = "absval_norm_hedges_g_paraphrase"
 
 
