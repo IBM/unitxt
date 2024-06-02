@@ -4,7 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     MapInstanceValues,
     RenameFields,
@@ -38,11 +38,11 @@ card = TaskCard(
             }
         ),
         LiteralEval("question", to_field="question"),
-        CopyFields(field_to_field={"question/0": "question"}),
+        Copy(field="question/0", to_field="question"),
         LiteralEval("answer_a", to_field="answer_a"),
-        CopyFields(field_to_field={"answer_a/0": "answer_a"}),
+        Copy(field="answer_a/0", to_field="answer_a"),
         LiteralEval("answer_b", to_field="answer_b"),
-        CopyFields(field_to_field={"answer_b/0": "answer_b"}),
+        Copy(field="answer_b/0", to_field="answer_b"),
     ],
     task="tasks.response_assessment.pairwise_comparison.single_turn",
     templates=[

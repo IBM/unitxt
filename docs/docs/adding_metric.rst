@@ -274,7 +274,7 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
         metric = MetricPipeline(
             main_score="score",
             preprocess_steps=[
-                CopyFields(field_to_field=[("task_data/context", "references")]),
+                Copy(field="task_data/context", to_field="references")]),
                 ListFieldValues(fields=["references"], to_field="references"),
             ],
             metric=metrics["metrics.token_overlap"],

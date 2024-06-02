@@ -4,7 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     RenameFields,
 )
@@ -28,11 +28,11 @@ card = TaskCard(
             }
         ),
         LiteralEval("question", to_field="question"),
-        CopyFields(field_to_field={"question/0": "question"}),
+        Copy(field="question/0", to_field="question"),
         LiteralEval("answer", to_field="answer"),
-        CopyFields(field_to_field={"answer/0": "answer"}),
+        Copy(field="answer/0", to_field="answer"),
         LiteralEval("reference_answer", to_field="reference_answer"),
-        CopyFields(field_to_field={"reference_answer/0": "reference_answer"}),
+        Copy(field="reference_answer/0", to_field="reference_answer"),
     ],
     task="tasks.response_assessment.rating.single_turn_with_reference",
     templates=[

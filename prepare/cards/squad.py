@@ -1,12 +1,13 @@
-from unitxt.blocks import AddFields, CopyFields, LoadHF, TaskCard
+from unitxt.blocks import AddFields, LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="squad"),
     preprocess_steps=[
         "splitters.small_no_test",
-        CopyFields(field_to_field=[["answers/text", "answers"]]),
+        Copy(field="answers/text", to_field="answers"),
         AddFields({"context_type": "passage"}),
     ],
     task="tasks.qa.with_context.extractive",
