@@ -20,7 +20,7 @@ card = TaskCard(
         AddFields(fields={"type_of_input": "table", "type_of_output": "text"}),
         HTMLTableToJSON(
             field_to_field=[["table_html_clean", "table_out"]]
-        ),  # TODO: add tests to test_ file
+        ), 
         SerializeTableAsIndexedRowMajor(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
@@ -31,7 +31,7 @@ card = TaskCard(
         metrics=["metrics.bleu", "metrics.rouge",
                 "metrics.bert_score.bert-base-uncased",
                 "metrics.meteor"],
-                # TODO: add PARENT (Raj+Shir)
+                # add PARENT [we leave it for now, as it doesn't have to be the chosen metric]
         augmentable_inputs=["input"],
     ),
     templates=TemplatesList(
