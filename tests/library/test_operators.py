@@ -36,6 +36,7 @@ from unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    MinimumOneExamplePerLabelRefiner,
     NullAugmentor,
     Perturb,
     RemoveFields,
@@ -2407,6 +2408,52 @@ class TestOperators(UnitxtTestCase):
         check_operator(
             operator=DeterministicBalancer(fields=["a", "b"], max_instances=2),
             inputs=inputs + inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_minimum_one_per_label_balancer(self):
+        inputs = [
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love dogs", "label": "dogs", "id": 1},
+            {"text": "I love dogs", "label": "dogs", "id": 2},
+            {"text": "I love dogs", "label": "dogs", "id": 3},
+            {"text": "I love dogs", "label": "dogs", "id": 4},
+            {"text": "I love dogs", "label": "dogs", "id": 5},
+            {"text": "I love dogs", "label": "dogs", "id": 6},
+            {"text": "I love dogs", "label": "dogs", "id": 7},
+            {"text": "I love dogs", "label": "dogs", "id": 8},
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+        ]
+
+        targets = [
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+        ]
+
+        check_operator(
+            operator=MinimumOneExamplePerLabelRefiner(
+                fields=["label"], max_instances=3
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        targets = [
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+            {"text": "I love dogs", "label": "dogs", "id": 1},
+        ]
+
+        check_operator(
+            operator=MinimumOneExamplePerLabelRefiner(
+                fields=["label"], max_instances=4
+            ),
+            inputs=inputs,
             targets=targets,
             tester=self,
         )

@@ -5,24 +5,20 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
-from .settings_utils import get_settings
 
 
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
-    def infer(self, dataset):
+    def _infer(self, dataset):
         """Perform inference on the input dataset."""
         pass
 
-    @staticmethod
-    def _assert_allow_passing_data_to_remote_api(remote_api_label: str):
-        assert get_settings().allow_passing_data_to_remote_api, (
-            f"LlmAsJudge metric cannot run send data to remote APIs ({remote_api_label}) when"
-            f" unitxt.settings.allow_passing_data_to_remote_api=False."
-            f" Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this. "
-        )
+    def infer(self, dataset):
+        """Verifies instances of a dataset and performs inference."""
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer(dataset)
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -73,7 +69,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
-    def infer(self, dataset):
+    def _infer(self, dataset):
         outputs = []
         for output in self.model([instance["source"] for instance in dataset]):
             if isinstance(output, list):
@@ -88,7 +84,7 @@ class MockInferenceEngine(InferenceEngine):
     def prepare(self):
         return
 
-    def infer(self, dataset):
+    def _infer(self, dataset):
         return ["[[10]]" for instance in dataset]
 
 
@@ -114,6 +110,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     _requirement = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
+    data_classification_policy = ["public", "proprietary"]
 
     def prepare(self):
         from genai import Client, Credentials
@@ -128,9 +125,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         credentials = Credentials(api_key=api_key, api_endpoint=api_endpoint)
         self.client = Client(credentials=credentials)
 
-        self._assert_allow_passing_data_to_remote_api(self.label)
-
-    def infer(self, dataset):
+    def _infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
@@ -186,9 +181,8 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         )
 
         self.client = OpenAI(api_key=api_key)
-        self._assert_allow_passing_data_to_remote_api(self.label)
 
-    def infer(self, dataset):
+    def _infer(self, dataset):
         return [
             self.client.chat.completions.create(
                 messages=[

@@ -32,6 +32,7 @@ The rest of this section is dedicated for general operators.
 General Operaotrs List:
 ------------------------
 """
+
 import copy
 import operator
 import uuid
@@ -1987,6 +1988,80 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class MinimumOneExamplePerLabelRefiner(StreamRefiner):
+    """A class used to return a specified number instances ensuring at least one example  per label.
+
+    For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
+    MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
+    MinimumOneExamplePerLabelRefiner then shuffles the results to avoid having one instance
+    from each class first and then the rest . If max instance is not set, the original stream will be used
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`)
+
+    Usage:
+        balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
+        balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}] is fed into
+        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)
+        the resulting stream will be:
+        [{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}] (order may be different)
+    """
+
+    fields: List[str]
+
+    def signature(self, instance):
+        return str(tuple(dict_get(instance, field) for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        if self.max_instances is None:
+            for instance in stream:
+                yield instance
+
+        counter = Counter()
+        for instance in stream:
+            counter[self.signature(instance)] += 1
+        all_keys = counter.keys()
+        if len(counter) == 0:
+            return
+
+        if self.max_instances is not None and len(all_keys) > self.max_instances:
+            raise Exception(
+                f"Can not generate a stream with at least one example per label, because the max instances requested  {self.max_instances} is smaller than the number of different labels {len(all_keys)}"
+                f" ({len(all_keys)}"
+            )
+
+        counter = Counter()
+        used_indices = set()
+        selected_elements = []
+        # select at least one per class
+        for idx, instance in enumerate(stream):
+            sign = self.signature(instance)
+            if counter[sign] == 0:
+                counter[sign] += 1
+                used_indices.add(idx)
+                selected_elements.append(
+                    instance
+                )  # collect all elements first to allow shuffling of both groups
+
+        # select more to reach self.max_instances examples
+        for idx, instance in enumerate(stream):
+            if idx not in used_indices:
+                if self.max_instances is None or len(used_indices) < self.max_instances:
+                    used_indices.add(idx)
+                    selected_elements.append(
+                        instance
+                    )  # collect all elements first to allow shuffling of both groups
+
+        # shuffle elements to avoid having one element from each class appear first
+        random_generator = new_random_generator(sub_seed=selected_elements)
+        random_generator.shuffle(selected_elements)
+        yield from selected_elements
 
 
 class LengthBalancer(DeterministicBalancer):

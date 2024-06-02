@@ -5,7 +5,7 @@ import os
 import pkgutil
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Dict, List, Optional, Union, final
+from typing import Any, Dict, List, Optional, Union, final
 
 from .dataclass import (
     AbstractField,
@@ -129,6 +129,10 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
+    data_classification_policy: List[str] = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
+
     @classmethod
     def is_artifact_dict(cls, d):
         return isinstance(d, dict) and "type" in d
@@ -226,6 +230,11 @@ class Artifact(Dataclass):
         new_artifact.__id__ = artifact_identifier
         return new_artifact
 
+    def get_pretty_print_name(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return self.__class__.__name__
+
     def prepare(self):
         pass
 
@@ -235,6 +244,20 @@ class Artifact(Dataclass):
     @final
     def __pre_init__(self, **kwargs):
         self._init_dict = get_raw(kwargs)
+
+    @final
+    def verify_data_classification_policy(self):
+        if self.data_classification_policy is not None:
+            if not isinstance(self.data_classification_policy, list) or not all(
+                isinstance(data_classification, str)
+                for data_classification in self.data_classification_policy
+            ):
+                raise ValueError(
+                    f"The 'data_classification_policy' of {self.get_pretty_print_name()} "
+                    f"must be either None - in case when no policy applies - or a list of "
+                    f"strings, for example: ['public']. However, '{self.data_classification_policy}' "
+                    f"of type {type(self.data_classification_policy)} was provided instead."
+                )
 
     @final
     def __post_init__(self):
@@ -248,6 +271,7 @@ class Artifact(Dataclass):
                 value = map_values_in_place(value, maybe_recover_artifact)
                 setattr(self, field.name, value)
 
+        self.verify_data_classification_policy()
         if not settings.skip_artifacts_prepare_and_verify:
             self.prepare()
             self.verify()
@@ -258,6 +282,76 @@ class Artifact(Dataclass):
     def save(self, path):
         data = self.to_dict()
         save_json(path, data)
+
+    def verify_instance(
+        self, instance: Dict[str, Any], name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Checks if data classifications of an artifact and instance are compatible.
+
+        Raises an error if an artifact's data classification policy does not include that of
+        processed data. The purpose is to ensure that any sensitive data is handled in a
+        proper way (for example when sending it to some external services).
+
+        Args:
+            instance (Dict[str, Any]): data which should contain its allowed data
+                classification policies under key 'data_classification_policy'.
+            name (Optional[str]): name of artifact which should be used to retrieve
+                data classification from env. If not specified, then either __id__ or
+                 __class__.__name__, are used instead, respectively.
+
+        Returns:
+            Dict[str, Any]: unchanged instance.
+
+        Examples:
+            instance = {"x": "some_text", "data_classification_policy": ["pii"]}
+
+            # Will raise an error as "pii" is not included policy
+            metric = Accuracy(data_classification_policy=["public"])
+            metric.verify_instance(instance)
+
+            # Will not raise an error
+            template = SpanLabelingTemplate(data_classification_policy=["pii", "propriety"])
+            template.verify_instance(instance)
+
+            # Will not raise an error since the policy was specified in environment variable:
+            UNITXT_DATA_CLASSIFICATION_POLICY = json.dumps({"metrics.accuracy": ["pii"]})
+            metric = fetch_artifact("metrics.accuracy")
+            metric.verify_instance(instance)
+        """
+        name = name or self.get_pretty_print_name()
+        data_classification_policy = get_artifacts_data_classification(name)
+        if not data_classification_policy:
+            data_classification_policy = self.data_classification_policy
+
+        if not data_classification_policy:
+            return instance
+
+        instance_data_classification = instance.get("data_classification_policy")
+        if not instance_data_classification:
+            get_logger().warning(
+                f"The data does not provide information if it can be used by "
+                f"'{name}' with the following data classification policy "
+                f"'{data_classification_policy}'. This may lead to sending of undesired "
+                f"data to external service. Set the 'data_classification_policy' "
+                f"of the data to ensure a proper handling of sensitive information."
+            )
+            return instance
+
+        if not any(
+            data_classification in data_classification_policy
+            for data_classification in instance_data_classification
+        ):
+            raise ValueError(
+                f"The instance '{instance} 'has the following data classification policy "
+                f"'{instance_data_classification}', however, the artifact '{name}' "
+                f"is only configured to support the data with classification "
+                f"'{data_classification_policy}'. To enable this either change "
+                f"the 'data_classification_policy' attribute of the artifact, "
+                f"or modify the environment variable "
+                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly."
+            )
+
+        return instance
 
 
 def get_raw(obj):
@@ -367,3 +461,53 @@ def register_all_artifacts(path):
                 # Make sure the class is a subclass of Artifact (but not Artifact itself)
                 if issubclass(obj, Artifact) and obj is not Artifact:
                     logger.info(obj)
+
+
+def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
+    """Loads given artifact's data classification policy from an environment variable.
+
+    Args:
+        artifact (str): Name of the artifact which the data classification policy
+            should be retrieved for. For example "metrics.accuracy".
+
+    Returns:
+        Optional[List[str]] - Data classification policies for the specified artifact
+            if they were found, or None otherwise.
+    """
+    data_classification = settings.data_classification_policy
+    if data_classification is None:
+        return None
+
+    error_msg = (
+        f"If specified, the value of 'UNITXT_DATA_CLASSIFICATION_POLICY' "
+        f"should be a valid json dictionary. Got '{data_classification}' "
+        f"instead."
+    )
+
+    try:
+        data_classification = json.loads(data_classification)
+    except json.decoder.JSONDecodeError as e:
+        raise RuntimeError(error_msg) from e
+
+    if not isinstance(data_classification, dict):
+        raise RuntimeError(error_msg)
+
+    for artifact_name, artifact_data_classifications in data_classification.items():
+        if (
+            not isinstance(artifact_name, str)
+            or not isinstance(artifact_data_classifications, list)
+            or not all(
+                isinstance(artifact_data_classification, str)
+                for artifact_data_classification in artifact_data_classifications
+            )
+        ):
+            raise RuntimeError(
+                "'UNITXT_DATA_CLASSIFICATION_POLICY' should be of type "
+                "'Dict[str, List[str]]', where a artifact's name is a key, and a "
+                "value is a list of data classifications used by that artifact."
+            )
+
+    if artifact not in data_classification.keys():
+        return None
+
+    return data_classification.get(artifact)
