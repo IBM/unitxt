@@ -205,7 +205,7 @@ def test_predictions(
         )
     logger.info("*" * 80)
     logger.info("Sample score output:")
-    logger.info(json.dumps(results[0]["score"]["global"], sort_keys=True, indent=4))
+    logger.info(json.dumps(results[0]["score"], sort_keys=True, indent=4))
     logger.info("*" * 80)
 
     score_name = results[0]["score"]["global"]["score_name"]
