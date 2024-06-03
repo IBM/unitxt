@@ -29,7 +29,7 @@ Other specelized operators are used by unitxt internally:
 
 The rest of this section is dedicated for general operators.
 
-General Operaotrs List:
+General Operators List:
 ------------------------
 """
 
