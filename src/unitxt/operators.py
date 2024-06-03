@@ -394,6 +394,11 @@ class InstanceFieldOperator(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        # Need to deep copy instance, because when assigning two dictionary fields,
+        # dict_set() the target field dictionary fields.
+        # This means that if this target field was assigned to another field before,
+        # the field is updated as well.
+        instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
