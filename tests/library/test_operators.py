@@ -675,7 +675,10 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        exception_text = """Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' due to : query "label2" did not match any item in dict:
+label (str):
+    b
+"""
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
@@ -2267,7 +2270,12 @@ class TestOperators(UnitxtTestCase):
         )
 
         inputs = [{"prediction": "red", "references": "blue"}]
-        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict: {'prediction': 'red', 'references': 'blue'}"
+        exception_text = """Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict:
+prediction (str):
+    red
+references (str):
+    blue
+"""
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,
