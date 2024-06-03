@@ -173,7 +173,7 @@ class Metric(Artifact):
             self._parsed_prediction_type = parse_type_string(self.prediction_type)
         except ValueError:
             raise ValueError(
-                "Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
+                f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
             ) from None
         return self._parsed_prediction_type
 
