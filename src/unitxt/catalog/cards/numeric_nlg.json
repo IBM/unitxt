@@ -21,7 +21,7 @@
             }
         },
         {
-            "type": "html_table_to_json",
+            "type": "map_html_table_to_json",
             "field_to_field": [
                 [
                     "table_html_clean",
@@ -30,7 +30,7 @@
             ]
         },
         {
-            "type": "serialize_table_as_indexed_row_major",
+            "type": "serialize_table_as_markdown",
             "field_to_field": [
                 [
                     "table_out",
@@ -45,7 +45,27 @@
             }
         }
     ],
-    "task": "tasks.generation",
+    "task": {
+        "type": "task",
+        "inputs": {
+            "input": "str",
+            "type_of_input": "str",
+            "type_of_output": "str"
+        },
+        "outputs": {
+            "output": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.bleu",
+            "metrics.rouge",
+            "metrics.bert_score.bert_base_uncased",
+            "metrics.meteor"
+        ],
+        "augmentable_inputs": [
+            "input"
+        ]
+    },
     "templates": {
         "type": "templates_list",
         "items": [

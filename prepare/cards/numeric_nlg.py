@@ -3,7 +3,7 @@ from unitxt.blocks import (
     LoadHF,
     MapHTMLTableToJSON,
     RenameFields,
-    SerializeTableAsIndexedRowMajor,
+    SerializeTableAsMarkdown,
     Task,
     TaskCard,
     TemplatesList,
@@ -19,7 +19,7 @@ card = TaskCard(
         SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
         AddFields(fields={"type_of_input": "table", "type_of_output": "text"}),
         MapHTMLTableToJSON(field_to_field=[["table_html_clean", "table_out"]]),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table_out", "input"]]),
+        SerializeTableAsMarkdown(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
     task=Task(
@@ -29,7 +29,7 @@ card = TaskCard(
         metrics=[
             "metrics.bleu",
             "metrics.rouge",
-            "metrics.bert_score.bert-base-uncased",
+            "metrics.bert_score.bert_base_uncased",
             "metrics.meteor",
         ],
         # add PARENT [we leave it for now, as it doesn't have to be the chosen metric]

@@ -26,7 +26,7 @@ metrics = {
     "metrics.bert_score.deberta_v3_base_mnli_xnli_ml": BertScore(
         model_name="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli", model_layer=10
     ),
-    "metrics.bert_score.bert-base-uncased": BertScore(
+    "metrics.bert_score.bert_base_uncased": BertScore(
         model_name="google-bert/bert-base-uncased"
     ),
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
