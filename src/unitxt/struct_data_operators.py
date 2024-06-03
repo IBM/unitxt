@@ -568,7 +568,7 @@ class DumpJson(FieldOperator):
         return json.dumps(value)
 
 
-class HTMLTableToJSON(FieldOperator):
+class MapHTMLTableToJSON(FieldOperator):
     """Converts HTML table format to the basic one (JSON).
 
     JSON format

@@ -3,6 +3,7 @@ from unitxt.struct_data_operators import (
     DumpJson,
     ListToKeyValPairs,
     LoadJson,
+    MapHTMLTableToJSON,
     SerializeKeyValPairs,
     SerializeTableAsDFLoader,
     SerializeTableAsIndexedRowMajor,
@@ -14,7 +15,7 @@ from unitxt.struct_data_operators import (
     ShuffleTableColumns,
     ShuffleTableRows,
     TruncateTableCells,
-    TruncateTableRows, HTMLTableToJSON,
+    TruncateTableRows,
 )
 from unitxt.test_utils.operators import (
     check_operator,
@@ -493,24 +494,28 @@ class TestStructDataOperators(UnitxtTestCase):
                 tester=self,
             )
 
-    def test_HTMLTableToJSON(self):
-        inputs = [{"data": "<table border='1' class='dataframe'> <thead> <tr style='text-align: right;'> <th></th> <th>F1</th> </tr> </thead> <tbody> <tr> <td>Position Feature || plain text PF</td> <td>83.21</td> </tr> <tr> <td>Position Feature || TPF1</td> <td>83.99</td> </tr> </tbody></table>"}]
-        targets = [{
-            "header": ["", "F1"],
-            "rows": [["Position Feature || plain text PF", "83.21"], ["Position Feature || TPF1", "83.99"]]
-        }]
+    def test_map_htmltable_to_json(self):
+        inputs = [
+            {
+                "data": "<table border='1' class='dataframe'> <thead> <tr style='text-align: right;'> <th></th> <th>F1</th> </tr> </thead> <tbody> <tr> <td>Position Feature || plain text PF</td> <td>83.21</td> </tr> <tr> <td>Position Feature || TPF1</td> <td>83.99</td> </tr> </tbody></table>"
+            }
+        ]
+        targets = [
+            {
+                "data": "<table border='1' class='dataframe'> <thead> <tr style='text-align: right;'> <th></th> <th>F1</th> </tr> </thead> <tbody> <tr> <td>Position Feature || plain text PF</td> <td>83.21</td> </tr> <tr> <td>Position Feature || TPF1</td> <td>83.99</td> </tr> </tbody></table>",
+                "table_out": {
+                    "header": ["", "F1"],
+                    "rows": [
+                        ["Position Feature || plain text PF", "83.21"],
+                        ["Position Feature || TPF1", "83.99"],
+                    ],
+                },
+            }
+        ]
 
         check_operator(
-            operator=HTMLTableToJSON(field="data"),
+            operator=MapHTMLTableToJSON(field_to_field=[["data", "table_out"]]),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
-
-        with self.assertRaises(ValueError):
-            check_operator(
-                operator=HTMLTableToJSON(field="data"),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )

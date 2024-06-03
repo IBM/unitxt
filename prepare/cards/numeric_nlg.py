@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     AddFields,
-    HTMLTableToJSON,
     LoadHF,
+    MapHTMLTableToJSON,
     RenameFields,
     SerializeTableAsIndexedRowMajor,
     Task,
@@ -18,9 +18,7 @@ card = TaskCard(
     preprocess_steps=[
         SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
         AddFields(fields={"type_of_input": "table", "type_of_output": "text"}),
-        HTMLTableToJSON(
-            field_to_field=[["table_html_clean", "table_out"]]
-        ), 
+        MapHTMLTableToJSON(field_to_field=[["table_html_clean", "table_out"]]),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
@@ -28,10 +26,13 @@ card = TaskCard(
         inputs={"input": "str", "type_of_input": "str", "type_of_output": "str"},
         outputs={"output": "str"},
         prediction_type="str",
-        metrics=["metrics.bleu", "metrics.rouge",
-                "metrics.bert_score.bert-base-uncased",
-                "metrics.meteor"],
-                # add PARENT [we leave it for now, as it doesn't have to be the chosen metric]
+        metrics=[
+            "metrics.bleu",
+            "metrics.rouge",
+            "metrics.bert_score.bert-base-uncased",
+            "metrics.meteor",
+        ],
+        # add PARENT [we leave it for now, as it doesn't have to be the chosen metric]
         augmentable_inputs=["input"],
     ),
     templates=TemplatesList(
