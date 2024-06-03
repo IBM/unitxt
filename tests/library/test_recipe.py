@@ -134,13 +134,14 @@ class TestRecipes(UnitxtTestCase):
         i1 = recipe.production_preprocess(instances)[0]
         i2 = recipe.production_preprocess(instances)[0]
         for meta_data in ["card", "template", "format", "system_prompt"]:
-            i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
-                meta_data
-            ]._to_raw_dict()
-            if not isinstance(i2["recipe_metadata"][meta_data], dict):
-                i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
+            if meta_data in i1["recipe_metadata"]:
+                i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
                     meta_data
                 ]._to_raw_dict()
+                if not isinstance(i2["recipe_metadata"][meta_data], dict):
+                    i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
+                        meta_data
+                    ]._to_raw_dict()
 
         self.assertDictEqual(i1, i2)
 
