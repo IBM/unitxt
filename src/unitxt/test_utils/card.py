@@ -131,7 +131,7 @@ def print_predictions(correct_predictions, results):
         )
     logger.info("*" * 5)
     logger.info("Score output:")
-    logger.info(json.dumps(results[0]["score"]["global"], sort_keys=True, indent=4))
+    logger.info(json.dumps(results[0]["score"], sort_keys=True, indent=4))
 
 
 def test_correct_predictions(examples, strict, exact_match_score):

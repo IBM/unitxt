@@ -1,6 +1,8 @@
 import re
 from typing import Any, List, Tuple
 
+from .text_utils import construct_dict_str
+
 indx = re.compile(r"^(\d+)$")
 name = re.compile(r"^[\w. -]+$")
 
@@ -395,21 +397,19 @@ def dict_get(
     if len(components) > 1:
         try:
             success, values = get_values(dic, components, -1 * len(components))
-            if not success:
-                if not_exist_ok:
-                    return default
-                raise ValueError(
-                    f'query "{query}" did not match any item in dict: {dic}'
-                )
-
-            return values
-
+            if success:
+                return values
         except Exception as e:
-            if not_exist_ok:
-                return default
             raise ValueError(
-                f'query "{query}" did not match any item in dict: {dic}'
+                f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
             ) from e
+
+        if not_exist_ok:
+            return default
+
+        raise ValueError(
+            f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
+        )
 
     # len(components) == 1
     if components[0] in dic:
@@ -418,7 +418,9 @@ def dict_get(
     if not_exist_ok:
         return default
 
-    raise ValueError(f'query "{query}" did not match any item in dict: {dic}')
+    raise ValueError(
+        f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
+    )
 
 
 # dict_set sets a value, 'value', which by itself, can be a dict or list or scalar, into 'dic', to become the value of
