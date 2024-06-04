@@ -17,7 +17,7 @@ card = TaskCard(
     loader=LoadHF(path="kasnerz/numericnlg"),  # TODO: load from github repo
     preprocess_steps=[
         SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
-        AddFields(fields={"type_of_input": "table", "type_of_output": "text"}),
+        AddFields(fields={"type_of_input": "table", "type_of_output": "description"}),
         MapHTMLTableToJSON(field_to_field=[["table_html_clean", "table_out"]]),
         SerializeTableAsMarkdown(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
