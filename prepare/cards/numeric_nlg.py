@@ -23,15 +23,7 @@ card = TaskCard(
         RenameFields(field_to_field={"description": "output"}),
     ],
     task="tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]",
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="Given the following {type_of_input}, generate the corresponding {type_of_output}. {type_of_input}: {input}",
-                output_format="{output}",
-                postprocessors=[],
-            ),
-        ]
-    ),
+    templates="templates.generation.all",
     __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     __tags__={
         "modality": "table",
