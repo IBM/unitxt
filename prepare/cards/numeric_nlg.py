@@ -22,19 +22,7 @@ card = TaskCard(
         SerializeTableAsMarkdown(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
-    task=Task(
-        inputs={"input": "str", "type_of_input": "str", "type_of_output": "str"},
-        outputs={"output": "str"},
-        prediction_type="str",
-        metrics=[
-            "metrics.bleu",
-            "metrics.rouge",
-            "metrics.bert_score.bert_base_uncased",
-            "metrics.meteor",
-        ],
-        # add PARENT [we leave it for now, as it doesn't have to be the chosen metric]
-        augmentable_inputs=["input"],
-    ),
+    task="tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]",
     templates=TemplatesList(
         [
             InputOutputTemplate(
