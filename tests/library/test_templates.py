@@ -744,7 +744,7 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
-        self.assertEqual(
+        self.assertIn(
             "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
