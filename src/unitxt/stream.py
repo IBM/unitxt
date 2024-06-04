@@ -149,9 +149,7 @@ class DynamicStream(Stream):
                         )
                         traceback = traceback.tb_next
                     logger.info("End of Stack Trace")
-                    raise ValueError(
-                        f"Could not generate any instance from input generator, due to {e!s}"
-                    ) from e
+                    raise e
 
         if self.stream is None:
             self.stream = GeneratorStream(
