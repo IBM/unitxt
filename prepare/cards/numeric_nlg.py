@@ -52,5 +52,5 @@ card = TaskCard(
     },
 )
 
-test_card(card, num_demos=2, strict=False)
+test_card(card, num_demos=2, demos_pool_size=5, strict=False)
 add_to_catalog(card, "cards.numeric_nlg", overwrite=True)
