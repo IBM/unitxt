@@ -159,7 +159,6 @@ for lang in language_codes:
         templates="templates.qa.multiple_choice.with_context.no_intro.all",
         __tags__={
             "arxiv": "2308.16884",
-            "croissant": True,
             "language": [
                 "af",
                 "am",
@@ -269,7 +268,6 @@ for lang in language_codes:
             ],
         },
         __description__=(
-            "The Belebele Benchmark for Massively Multilingual NLU Evaluation\n"
             "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
         ),
     )

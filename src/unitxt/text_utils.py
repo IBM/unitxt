@@ -135,8 +135,8 @@ def is_made_of_sub_strings(string, sub_strings):
     return bool(re.match(pattern, string))
 
 
-# Giveמ all the lines of a file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
-# and an object name, e.g. TaskCard,
+# Giveמ all the lines of a card preparer file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
+# and an object name, e.g. TaskCard(,
 # return the ordinal number of the line that starts that object, in our example: the
 # line number of the following line (notice that the line where TaskCard is imported
 # is not supposed to return):
@@ -145,10 +145,12 @@ def is_made_of_sub_strings(string, sub_strings):
 # the matching close:
 #         )
 # This util depends on ruff to ensure this setting of the card file: that a close of one
-# tag and the open of the next tag, do not sit in same line, both tags being
-# major level within TaskCard
+# tag and the open of the next tag, do not sit in same line, when both tags being
+# major level within TaskCard.
+# It also prepares for the case that  __description__ tag does not contain balanced
+# parentheses, since it is often cut in the middle, (with  "... see more at")
 # flake8: noqa: B007
-def lines_defining_obj(
+def lines_defining_obj_in_card(
     all_lines: List[str], obj_name: str, start_search_at_line: int = 0
 ) -> Tuple[int, int]:
     for starting_line in range(start_search_at_line, len(all_lines)):
@@ -160,11 +162,28 @@ def lines_defining_obj(
         return (-1, -1)
     num_of_opens = 0
     num_of_closes = 0
-    for ending_line in range(starting_line, len(all_lines)):
+    ending_line = starting_line - 1
+    while ending_line < len(all_lines):
+        ending_line += 1
         num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))
         num_of_closes += len(re.findall(r"[)}\]]", all_lines[ending_line]))
         if num_of_closes == num_of_opens:
             break
+        if "__description__" in all_lines[ending_line]:
+            # can not trust parentheses inside description.
+            # trust the indentation enforced by ruff, and the way we build __description__:
+            # a line consisting of only __description__=(
+            # followed by one or more lines of text, can not trust opens and closes
+            # in them, followed by a line consisting of only:  ),
+            # where the ) is indented with the beginning of __description__
+            tag_indentation = all_lines[ending_line].index("__description__")
+            last_line_to_start_with = (" " * tag_indentation) + ")"
+            while not all_lines[ending_line].startswith(last_line_to_start_with):
+                ending_line += 1
+            if "__description__" in obj_name:
+                return (starting_line, ending_line)
+            num_of_closes += 1  # for this last line of desc
+            # continue to the line following the end of description
 
     if num_of_closes != num_of_opens:
         raise ValueError(

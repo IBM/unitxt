@@ -154,15 +154,9 @@ for subset in get_dataset_config_names(dataset_name):
         ],
         task="tasks.classification.multi_label",
         templates="templates.classification.multi_label.all",
-        __tags__={
-            "croissant": True,
-            "language": "en",
-            "license": "other",
-            "region": "us",
-        },
+        __tags__={"language": "en", "license": "other", "region": "us"},
         __description__=(
-            "The Reuters-21578 dataset  is one of the most widely used data collections for text\n"
-            "categorization research. It is collected from the Reuters financial newswire service in 1987."
+            "The Reuters-21578 dataset is one of the most widely used data collections for text categorization research. It is collected from the Reuters financial newswire service in 1987."
         ),
     )
     test_card(card, debug=False)

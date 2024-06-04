@@ -55,7 +55,6 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "found",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "unknown",

@@ -77,7 +77,6 @@ def main():
             __tags__={
                 "annotations_creators": "no-annotation",
                 "arxiv": ["2009.03300", "2005.00700", "2005.14165", "2008.02275"],
-                "croissant": True,
                 "language": "en",
                 "language_creators": "expert-generated",
                 "license": "mit",
@@ -89,10 +88,7 @@ def main():
                 "task_ids": "multiple-choice-qa",
             },
             __description__=(
-                "Dataset Card for MMLU\n"
-                "Dataset Summary\n"
-                "Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021).\n"
-                "This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
+                "Dataset Card for MMLU Dataset Summary Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021). This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
             ),
         )
         if i == 0:
