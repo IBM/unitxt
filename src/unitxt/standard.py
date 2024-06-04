@@ -223,7 +223,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             AddFields(
                 fields={
                     "recipe_metadata": {
-                        "card": self.card,
                         "template": self.template,
                         "system_prompt": self.system_prompt,
                         "format": self.format,

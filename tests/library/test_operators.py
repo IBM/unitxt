@@ -675,7 +675,7 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = """Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' due to : query "label2" did not match any item in dict:
+        exception_text = """Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query "label2" did not match any item in dict:
 label (str):
     b
 """

@@ -54,25 +54,13 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
     __tags__={
-        "croissant": True,
+        "flags": ["law", "stackexchange"],
         "language": "en",
-        "law": True,
         "region": "us",
-        "stackexchange": True,
         "task_categories": "text-classification",
     },
     __description__=(
-        "Dataset Card for Law Stack Exchange Dataset\n"
-        "Dataset Summary\n"
-        'Dataset from the Law Stack Exchange, as used in "Parameter-Efficient Legal Domain Adaptation".\n'
-        "Citation Information\n"
-        "@inproceedings{li-etal-2022-parameter,\n"
-        'title = "Parameter-Efficient Legal Domain Adaptation",\n'
-        'author = "Li, Jonathan  and\n'
-        "Bhambhoria, Rohan  and\n"
-        'Zhu, Xiaodan",\n'
-        'booktitle = "Proceedings of the Natural Legal Language Processing Workshop 2022",\n'
-        "month =… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange."
+        'Dataset Card for Law Stack Exchange Dataset Dataset Summary Dataset from the Law Stack Exchange, as used in "Parameter-Efficient Legal Domain Adaptation". Citation Information @inproceedings{li-etal-2022-parameter, title = "Parameter-Efficient Legal Domain Adaptation", author = "Li, Jonathan and Bhambhoria, Rohan and Zhu, Xiaodan", booktitle = "Proceedings of the Natural Legal Language Processing Workshop 2022", month =… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange.'
     ),
 )
 test_card(card, debug=False)

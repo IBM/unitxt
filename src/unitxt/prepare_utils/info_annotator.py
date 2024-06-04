@@ -36,7 +36,7 @@ from huggingface_hub import dataset_info
 from huggingface_hub.repocard import RepoCard
 
 from ..logging_utils import get_logger
-from ..text_utils import lines_defining_obj
+from ..text_utils import lines_defining_obj_in_card
 
 logger = get_logger()
 logger.setLevel(logging.INFO)
@@ -225,12 +225,14 @@ for file in all_preparation_files:
                 tag[1 + tag.index(":") :].strip()
             )
         else:
-            the_dict_to_become_tags[tag.strip()] = True
+            if tag.strip() != "croissant":
+                the_dict_to_become_tags["flags"].append(tag.strip())
 
     for key in the_dict_to_become_tags:
         if (
             isinstance(the_dict_to_become_tags[key], list)
-            and len(the_dict_to_become_tags[key]) == 1
+            and (len(the_dict_to_become_tags[key]) == 1)
+            and (key != "flags")
         ):
             the_dict_to_become_tags[key] = the_dict_to_become_tags[key][0]
     if the_dict_to_become_tags is None or len(the_dict_to_become_tags) == 0:
@@ -247,7 +249,7 @@ for file in all_preparation_files:
     current_line = 0
     while True:
         # locate next definition of TaskCard in the input file
-        starting_card, ending_card = lines_defining_obj(
+        starting_card, ending_card = lines_defining_obj_in_card(
             all_lines=all_lines, obj_name="TaskCard(", start_search_at_line=current_line
         )
         if starting_card == -1:
@@ -277,32 +279,35 @@ for file in all_preparation_files:
         split_description = scraped_description.split("\n")
         for i in range(len(split_description)):
             split_description[i] = split_description[i].strip()
-        for i in range(len(split_description) - 1):
+        for i in range(len(split_description)):
             split_description[i] = split_description[i] + "\\n"
         for i in range(len(split_description)):
             split_description[i] = '"' + split_description[i] + '"\n'
-        for i in range(len(split_description) - 1):
-            split_description[i + 1] = tags_indent + "    " + split_description[i + 1]
+        for i in range(len(split_description)):
+            split_description[i] = tags_indent + "    " + split_description[i]
 
         # See if it has description line already:
-        starting_tags_in_card, ending_tags_in_card = lines_defining_obj(
-            all_lines=all_lines[starting_card:ending_card], obj_name="__description__"
+        starting_tags_in_card, ending_tags_in_card = lines_defining_obj_in_card(
+            all_lines=all_lines[starting_card:ending_card],
+            obj_name="__description__",
+            # obj_name="__tags__",
         )
         if starting_tags_in_card != -1:
-            # there was a __taggs__ field in the existing card, we will replace it now by
-            # the dict_to_become_tags
+            # there was a __tags__ field in the existing card, we will replace it now by
+            # the dict_to_become_tags. if we need to update - we will do it here.
             # current_tags = card["tags"]
             # current_tags.update(update_to_tags)
             # copy over all the lines down to the existing tag lines
             to_lines.extend(
                 all_lines[current_line : starting_card + starting_tags_in_card]
             )
+            # the following piece is for __description__
             current_line = starting_card + starting_tags_in_card
-            to_lines.append(tags_indent + "__description__=(" + split_description[0])
-            to_lines.extend(split_description[1:])
+            to_lines.append(tags_indent + "__description__=(")
+            to_lines.extend(split_description)
             to_lines.append(tags_indent + "),\n")
             # in case of __tags__: simply use, instead of the above three lines:
-            # to_lines.append(tags_indent + "__tags__ = " + string_for_tags + ",\n")
+            # to_lines.append(tags_indent + "__tags__=" + string_for_tags + ",\n")
 
             # skip the input lines that belonged to the existing __tags__
             current_line = starting_card + ending_tags_in_card + 1
@@ -310,11 +315,12 @@ for file in all_preparation_files:
             to_lines.extend(all_lines[current_line:ending_card])
             current_line = ending_card
         else:
-            # there was no tags in existing card, we copy all lines of cards and then append
+            # there was no tags in existing card, we copy all lines of cards
+            # and then append the lines of the new __description__
             to_lines.extend(all_lines[current_line:ending_card])
             current_line = ending_card
-            to_lines.append(tags_indent + "__description__=(" + split_description[0])
-            to_lines.extend(split_description[1:])
+            to_lines.append(tags_indent + "__description__=(")
+            to_lines.extend(split_description)
             to_lines.append(tags_indent + "),\n")
             # in case of __tags__: simply use, instead of the above three lines:
             # to_lines.append(tags_indent + "__tags__ = " + string_for_tags + ",\n")

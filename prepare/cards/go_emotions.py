@@ -33,7 +33,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2005.00547",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "apache-2.0",
@@ -45,11 +44,7 @@ card = TaskCard(
         "task_ids": ["multi-class-classification", "multi-label-classification"],
     },
     __description__=(
-        "Dataset Card for Go Emotions\n"
-        "Dataset Summary\n"
-        "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral.\n"
-        "This card contains the simplified version of the dataset with predefined train/val/test splits.\n"
-        "See full description on the dataset page: https://huggingface.co/datasets/go_emotions."
+        "Dataset Card for GoEmotions Dataset Summary The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits. Supported Tasks and Leaderboards This dataset is intended for multi-class, multi-label emotion classification. Languages The data is in English.… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
     ),
 )
 test_card(card, debug=False)

@@ -1,0 +1,15 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "extract_safe_unsafe_judgment",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "type": "extract_safe_unsafe_judgment",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}

@@ -33,7 +33,6 @@
             "crowdsourced",
             "expert-generated"
         ],
-        "croissant": true,
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",

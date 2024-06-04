@@ -40,6 +40,9 @@ card = TaskCard(
             ),
         ]
     ),
+    __description__=(
+        "Dataset Card for ToxiGen Sign up for Data Access To access ToxiGen, first fill out this form. Dataset Summary This dataset is for implicit hate speech detection. All instances were generated using GPT-3 and the methods described in our paper. Languages All text is written in English. Dataset Structure Data Fields We release TOXIGEN as a dataframe with the following fields: prompt is the prompt used for… See the full description on the dataset page: https://huggingface.co/datasets/toxigen/toxigen-data."
+    ),
 )
 
 try:
