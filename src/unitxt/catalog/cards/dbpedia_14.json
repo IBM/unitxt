@@ -86,5 +86,5 @@
         "task_categories": "text-classification",
         "task_ids": "topic-classification"
     },
-    "__description__": "The DBpedia ontology classification dataset is constructed by picking 14 non-overlapping classes from DBpedia 2014. They are listed in classes.txt. From each of these 14 ontology classes, we randomly choose 40,000 training samples and 5,000 testing samples. Therefore, the total size of the training dataset is 560,000 and testing dataset 70,000. There are 3 columns in the dataset (same for train and test splits)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/dbpedia_14.\n"
+    "__description__": "The DBpedia ontology classification dataset is constructed by picking 14 non-overlapping classes from DBpedia 2014. They are listed in classes.txt. From each of these 14 ontology classes, we randomly choose 40,000 training samples and 5,000 testing samples. Therefore, the total size of the training dataset is 560,000 and testing dataset 70,000. There are 3 columns in the dataset (same for train and test splits)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/dbpedia_14."
 }

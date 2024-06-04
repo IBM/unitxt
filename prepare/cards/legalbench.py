@@ -151,7 +151,7 @@ for task_name, task_cfg in task_cfgs.items():
             ],
         },
         __description__=(
-            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models.\n"
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
         ),
     )
 

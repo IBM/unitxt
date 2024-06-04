@@ -56,7 +56,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold.\n"
+        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
     ),
 )
 

@@ -43,7 +43,7 @@ gec_card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -91,7 +91,7 @@ error_detection_card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -137,7 +137,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -202,7 +202,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -264,7 +264,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -302,7 +302,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 

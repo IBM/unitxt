@@ -50,5 +50,5 @@
         "size_categories": "10K<n<100K",
         "task_categories": "text-generation"
     },
-    "__description__": "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
+    "__description__": "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
 }

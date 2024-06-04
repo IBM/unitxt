@@ -24,7 +24,7 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
             "region": "us",
         },
         __description__=(
-            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities.\n"
+            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
         ),
     )
     if lang == "pt":

@@ -21,7 +21,7 @@ card = TaskCard(
     task="tasks.completion.multiple_choice",
     templates="templates.completion.multiple_choice.all",
     __description__=(
-        "HellaSwag: Can a Machine Really Finish Your Sentence? is a new dataset for commonsense NLI. A paper was published at ACL2019.\n"
+        "HellaSwag: Can a Machine Really Finish Your Sentence? is a new dataset for commonsense NLI. A paper was published at ACL2019."
     ),
     __tags__={
         "arxiv": "1905.07830",

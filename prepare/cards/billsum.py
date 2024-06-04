@@ -27,7 +27,7 @@ card = TaskCard(
         "task_categories": "summarization",
     },
     __description__=(
-        "BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum.\n"
+        "BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum."
     ),
 )
 test_card(

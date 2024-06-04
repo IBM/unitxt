@@ -104,7 +104,7 @@ card = TaskCard(
         "Argument Quality Ranking\n"
         "The dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets. The dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.\n"
         "Argument Topic\n"
-        "This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k.\n"
+        "This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k."
     ),
 )
 

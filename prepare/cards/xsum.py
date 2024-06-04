@@ -28,7 +28,7 @@ card = TaskCard(
         "task_ids": "news-articles-summarization",
     },
     __description__=(
-        "Extreme Summarization (XSum) Dataset. There are three features: - document: Input news article. - summary: One sentence summary of the article. - id: BBC ID of the article.\n"
+        "Extreme Summarization (XSum) Dataset. There are three features: - document: Input news article. - summary: One sentence summary of the article. - id: BBC ID of the article."
     ),
 )
 

@@ -37,7 +37,7 @@ for lang in langs:
             "task_categories": "question-answering",
         },
         __description__=(
-            "Contains Parquet of a list of instructions and WikiHow articles on different languages. See the full description (and warnings) on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k.\n"
+            "Contains Parquet of a list of instructions and WikiHow articles on different languages. See the full description (and warnings) on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k."
         ),
     )
 

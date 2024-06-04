@@ -52,7 +52,7 @@ card = TaskCard(
         "task_categories": "text2text-generation",
     },
     __description__=(
-        "Dataset Card for OpenAI HumanEval Dataset Summary The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models. Supported Tasks and Leaderboards Languages The programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval.\n"
+        "Dataset Card for OpenAI HumanEval Dataset Summary The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models. Supported Tasks and Leaderboards Languages The programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval."
     ),
 )
 

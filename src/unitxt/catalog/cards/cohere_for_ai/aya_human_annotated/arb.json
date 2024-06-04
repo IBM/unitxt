@@ -156,5 +156,5 @@
         ],
         "task_categories": "text-generation"
     },
-    "__description__": "Aya Evaluation Suite contains a total of 26,750 open-ended conversation-style prompts to evaluate multilingual open-ended generation quality.\nTo strike a balance between language coverage and the quality that comes with human curation, we create an evaluation suite that includes: \n1. human-curated examples in 7 languages (tur, eng, yor, arb, zho, por, tel) → aya-human-annotated. \n2. machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite.\n"
+    "__description__": "Aya Evaluation Suite contains a total of 26,750 open-ended conversation-style prompts to evaluate multilingual open-ended generation quality.\nTo strike a balance between language coverage and the quality that comes with human curation, we create an evaluation suite that includes: \n1. human-curated examples in 7 languages (tur, eng, yor, arb, zho, por, tel) → aya-human-annotated. \n2. machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite."
 }
