@@ -4,13 +4,10 @@ from unitxt.blocks import (
     MapHTMLTableToJSON,
     RenameFields,
     SerializeTableAsMarkdown,
-    Task,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.splitters import SplitRandomMix
-from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -22,7 +19,7 @@ card = TaskCard(
         SerializeTableAsMarkdown(field_to_field=[["table_out", "input"]]),
         RenameFields(field_to_field={"description": "output"}),
     ],
-    task="tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]",
+    task="tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]]",
     templates="templates.generation.all",
     __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     __tags__={
