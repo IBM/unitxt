@@ -1,0 +1,68 @@
+from unitxt.blocks import (
+    LoadHF,
+    SerializeTableAsIndexedRowMajor,
+    TaskCard,
+    TemplatesList,
+)
+from unitxt.catalog import add_to_catalog
+from unitxt.splitters import SplitRandomMix
+from unitxt.struct_data_operators import ListsTableToJSON
+from unitxt.task import Task
+from unitxt.templates import InputOutputTemplate
+from unitxt.test_utils.card import test_card
+
+card = TaskCard(
+    loader=LoadHF(path="dreamerdeo/finqa"),  # TODO: load from github repo, no "program"
+    preprocess_steps=[
+        SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
+        ListsTableToJSON(),
+        SerializeTableAsIndexedRowMajor(field_to_field=[["serialized_triples", "table"]]),
+    ],
+    task=Task(
+        inputs={"pre-text": "str", "table": "str", "post-text": "str", "question": "str"},
+        outputs={"output": "str"},
+        prediction_type="str",
+        metrics=[], # TODO: add the script metric
+        augmentable_inputs=["pre-text", "table", "post-text", "question"],
+    ),
+    templates=TemplatesList(
+        [
+            InputOutputTemplate(
+                input_format="""Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific langauge (DSL) that will be executed to get the answer.
+                    The DSL consists of mathematical operations and table operations as executable programs. The program consists of a sequence of operations. Each operation takes a list of arguments.
+                    There are 6 mathematical operations: add, subtract, multiply, divide, greater, exp, and 4 table aggregation operations table-max, table-min, table-sum, table-average, that apply aggregation operations on table rows. The mathematical operations take arguments of either numbers from the given reports, or a numerical result from a previous step.
+                    The table operations take arguments of table row names. We use the special token #n to denote the result from the nth step.
+                    For example, in the example "divide(9413, 20.01), divide(8249, 9.48), subtract(#0, #1)", the program consists of 3 steps; The first and the second division steps take arguments from the table and the text, respectively, then the third step subtracts the results from the two previous steps.
+                    Definitions of all operations:
+                    [["Name", "Arguments", "Output", "Description"],
+                    ["add", "number1, number2", "number", "add two numbers: number1 + number2"],
+                    ["subtract", "number1, number2", "number", "subtract two numbers: number1 − number2"],
+                    ["multiply", "number1, number2", "number", "multiply two numbers: number1 * number2"],
+                    ["divide", "number1, number2", "number", "multiply two numbers: number1 / number2"],
+                    ["exp", "number1, number2", "number", "exponential: number1 ^ number2"],
+                    ["greater", "number1, number2", "bool", "comparison: number1 > number2"],
+                    ["table-sum", "table header", "number", "the summation of one table row"],
+                    ["table-average", "table header", "number", "the average of one table row"],
+                    ["table-max", "table header", "number", "the maximum number of one table row"],
+                    ["table-min", "table header", "number", "the minimum number of one table row"]]
+                    Answer with only the program, without any additional explanation.
+                    Pre-table text: {pre-text}
+                    Table: {table}
+                    Post-table text: {post-text}
+                    Question: {question}
+                    Program:
+                        """,
+                output_format="{answer}",
+                postprocessors=[],
+            ),
+        ]
+    ),
+    __tags__={
+        "modality": "table",
+        "urls": {"arxiv": "https://www.semanticscholar.org/reader/99053e3a708fc27709c9dab33110dc98b187c158"},
+        "languages": ["english"],
+    },
+)
+
+test_card(card, num_demos=2)
+add_to_catalog(card, "cards.fin_qa", overwrite=True)
