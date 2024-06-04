@@ -225,13 +225,14 @@ for file in all_preparation_files:
                 tag[1 + tag.index(":") :].strip()
             )
         else:
-            the_dict_to_become_tags["singletons"].append(tag.strip())
+            if tag.strip() != "croissant":
+                the_dict_to_become_tags["flags"].append(tag.strip())
 
     for key in the_dict_to_become_tags:
         if (
             isinstance(the_dict_to_become_tags[key], list)
             and (len(the_dict_to_become_tags[key]) == 1)
-            and (key != "singletons")
+            and (key != "flags")
         ):
             the_dict_to_become_tags[key] = the_dict_to_become_tags[key][0]
     if the_dict_to_become_tags is None or len(the_dict_to_become_tags) == 0:
