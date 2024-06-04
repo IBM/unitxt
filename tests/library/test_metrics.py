@@ -1490,7 +1490,12 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
         actual_scores = [output["score"] for output in outputs]
         instance_targets = [
-            {metric_label: 1.0, "score_name": metric_label, "score": 1.0}
+            {
+                metric_label: 1.0,
+                "score_name": metric_label,
+                "score": 1.0,
+                "judge_raw_output": "[[10]]",
+            }
         ] * 3
         global_target = {
             metric_label: 1.0,
