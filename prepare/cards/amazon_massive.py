@@ -9,11 +9,11 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
-langs = get_dataset_config_names("AmazonScience/massive")
+langs = get_dataset_config_names("AmazonScience/massive", trust_remote_code=True)
 # now langs is the list of all languages showing in the dataset
 
 
-ds_builder = load_dataset_builder("AmazonScience/massive")
+ds_builder = load_dataset_builder("AmazonScience/massive", trust_remote_code=True)
 classlabels = ds_builder.info.features["intent"]
 
 mappers = {}
@@ -40,7 +40,7 @@ for lang in langs:
         __tags__={
             "annotations_creators": "expert-generated",
             "arxiv": "2204.08582",
-            "croissant": True,
+            "flags": ["natural-language-understanding"],
             "language_creators": "found",
             "license": "cc-by-4.0",
             "multilinguality": [
@@ -97,7 +97,6 @@ for lang in langs:
                 "zh-CN",
                 "zh-TW",
             ],
-            "natural-language-understanding": True,
             "region": "us",
             "size_categories": "100K<n<1M",
             "source_datasets": "original",
@@ -105,10 +104,7 @@ for lang in langs:
             "task_ids": ["intent-classification", "multi-class-classification"],
         },
         __description__=(
-            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations\n"
-            "for the Natural Language Understanding tasks of intent prediction and slot annotation.\n"
-            "Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing\n"
-            "the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
+            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations for the Natural Language Understanding tasks of intent prediction and slot annotation. Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions. See the full description on the dataset page: https://huggingface.co/datasets/AmazonScience/massive."
         ),
     )
 

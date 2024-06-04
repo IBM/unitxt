@@ -153,10 +153,9 @@
     "task": "tasks.classification.multi_label",
     "templates": "templates.classification.multi_label.all",
     "__tags__": {
-        "croissant": true,
         "language": "en",
         "license": "other",
         "region": "us"
     },
-    "__description__": "The Reuters-21578 dataset  is one of the most widely used data collections for text\ncategorization research. It is collected from the Reuters financial newswire service in 1987."
+    "__description__": "The Reuters-21578 dataset is one of the most widely used data collections for text categorization research. It is collected from the Reuters financial newswire service in 1987."
 }

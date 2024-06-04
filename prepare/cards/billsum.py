@@ -16,8 +16,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "found",
         "arxiv": "1910.00523",
-        "bills-summarization": True,
-        "croissant": True,
+        "flags": ["bills-summarization"],
         "language": "en",
         "language_creators": "found",
         "license": "cc0-1.0",
@@ -28,20 +27,7 @@ card = TaskCard(
         "task_categories": "summarization",
     },
     __description__=(
-        'Dataset Card for "billsum"\n'
-        "Dataset Summary\n"
-        "BillSum, summarization of US Congressional and California state bills.\n"
-        "There are several features:\n"
-        "text: bill text.\n"
-        "summary: summary of the bills.\n"
-        "title: title of the bills.\n"
-        "features for us bills. ca bills does not have.\n"
-        "text_len: number of chars in text.\n"
-        "sum_len: number of chars in summary.\n"
-        "Supported Tasks and Leaderboards\n"
-        "More Information Needed\n"
-        "Languages\n"
-        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/billsum."
+        "BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum."
     ),
 )
 test_card(
