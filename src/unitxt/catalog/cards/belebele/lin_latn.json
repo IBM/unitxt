@@ -52,6 +52,9 @@
     "templates": "templates.qa.multiple_choice.with_context.no_intro.all",
     "__tags__": {
         "arxiv": "2308.16884",
+        "flags": [
+            "croissant"
+        ],
         "language": [
             "af",
             "am",
@@ -152,9 +155,6 @@
         ],
         "license": "cc-by-sa-4.0",
         "region": "us",
-        "singletons": [
-            "croissant"
-        ],
         "size_categories": "100K<n<1M",
         "task_categories": [
             "question-answering",
@@ -163,5 +163,5 @@
             "multiple-choice"
         ]
     },
-    "__description__": "The Belebele Benchmark for Massively Multilingual NLU Evaluation\nBelebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
+    "__description__": "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele.\n"
 }

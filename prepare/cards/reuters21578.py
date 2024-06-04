@@ -161,8 +161,7 @@ for subset in get_dataset_config_names(dataset_name):
             "region": "us",
         },
         __description__=(
-            "The Reuters-21578 dataset  is one of the most widely used data collections for text\n"
-            "categorization research. It is collected from the Reuters financial newswire service in 1987."
+            "The Reuters-21578 dataset is one of the most widely used data collections for text categorization research. It is collected from the Reuters financial newswire service in 1987.\n"
         ),
     )
     test_card(card, debug=False)

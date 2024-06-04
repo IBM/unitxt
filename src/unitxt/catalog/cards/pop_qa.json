@@ -43,10 +43,10 @@
         ]
     },
     "__tags__": {
-        "region": "us",
-        "singletons": [
+        "flags": [
             "croissant"
-        ]
+        ],
+        "region": "us"
     },
-    "__description__": "Dataset Card for PopQA\nDataset Summary\nPopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entityand relationship_type annotation, as well as Wikipedia monthly page views.\nLanguages\nThe dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA."
+    "__description__": "Dataset Card for PopQA Dataset Summary PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entityand relationship_type annotation, as well as Wikipedia monthly page views. Languages The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA.\n"
 }

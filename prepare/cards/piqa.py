@@ -28,20 +28,7 @@ card = TaskCard(
         "task_ids": "multiple-choice-qa",
     },
     __description__=(
-        "To apply eyeshadow without a brush, should I use a cotton swab or a toothpick?\n"
-        "Questions requiring this kind of physical commonsense pose a challenge to state-of-the-art\n"
-        "natural language understanding systems. The PIQA dataset introduces the task of physical commonsense reasoning\n"
-        "and a corresponding benchmark dataset Physical Interaction: Question Answering or PIQA.\n"
-        "Physical commonsense knowledge is a major challenge on the road to true AI-completeness,\n"
-        "including robots that interact with the world and understand natural language.\n"
-        "PIQA focuses on everyday situations with a preference for atypical solutions.\n"
-        "The dataset is inspired by instructables.com, which provides users with instructions on how to build, craft,\n"
-        "bake, or manipulate objects using everyday materials.\n"
-        "The underlying task is formualted as multiple choice question answering:\n"
-        "given a question `q` and two possible solutions `s1`, `s2`, a model or\n"
-        "a human must choose the most appropriate solution, of which exactly one is correct.\n"
-        "The dataset is further cleaned of basic artifacts using the AFLite algorithm which is an improvement of\n"
-        "adversarial filtering. The dataset contains 16,000 examples for training, 2,000 for development and 3,000 for testing."
+        "To apply eyeshadow without a brush, should I use a cotton swab or a toothpick? Questions requiring this kind of physical commonsense pose a challenge to state-of-the-art natural language understanding systems. The PIQA dataset introduces the task of physical commonsense reasoning and a corresponding benchmark dataset Physical Interaction: Question Answering or PIQA. Physical commonsense knowledge is a major challenge on the road to true AI-completeness, including robots that interact with the world and understand natural language. PIQA focuses on everyday situations with a preference for atypical solutions. The dataset is inspired by instructables.com, which provides users with instructions on how to build, craft, bake, or manipulate objects using everyday materials. The underlying task is formualted as multiple choice question answering: given a question `q` and two possible solutions `s1`, `s2`, a model or a human must choose the most appropriate solution, of which exactly one is correct. The dataset is further cleaned of basic artifacts using the AFLite algorithm which is an improvement of adversarial filtering. The dataset contains 16,000 examples for training, 2,000 for development and 3,000 for testing.\n"
     ),
 )
 test_card(card, strict=False)

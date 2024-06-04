@@ -42,18 +42,18 @@
     "__tags__": {
         "annotations_creators": "expert-generated",
         "arxiv": "2107.03374",
+        "flags": [
+            "code-generation",
+            "croissant"
+        ],
         "language": "en",
         "language_creators": "expert-generated",
         "license": "mit",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": [
-            "code-generation",
-            "croissant"
-        ],
         "size_categories": "n<1K",
         "source_datasets": "original",
         "task_categories": "text2text-generation"
     },
-    "__description__": "Dataset Card for OpenAI HumanEval\nDataset Summary\nThe HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models.\nSupported Tasks and Leaderboards\nLanguages\nThe programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval."
+    "__description__": "Dataset Card for OpenAI HumanEval Dataset Summary The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models. Supported Tasks and Leaderboards Languages The programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval.\n"
 }

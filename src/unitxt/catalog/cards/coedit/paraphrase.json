@@ -41,14 +41,14 @@
     "templates": "templates.rewriting.paraphrase.all",
     "__tags__": {
         "arxiv": "2305.09857",
+        "flags": [
+            "croissant"
+        ],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
-        "singletons": [
-            "croissant"
-        ],
         "size_categories": "10K<n<100K",
         "task_categories": "text-generation"
     },
-    "__description__": "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\nPaper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\nAuthors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\nProject Repo: https://github.com/vipulraheja/coedit\nDataset Summary\nThis is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\nDataset Structure\nThe… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    "__description__": "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.\n"
 }

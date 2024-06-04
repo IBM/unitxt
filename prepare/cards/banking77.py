@@ -41,9 +41,8 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
     __description__=(
-        "BANKING77 dataset provides a very fine-grained set of intents in a banking domain.\n"
-        "It comprises 13,083 customer service queries labeled with 77 intents.\n"
-        "It focuses on fine-grained single-domain intent detection."
+        "Dataset composed of online banking queries annotated with their corresponding intents.\n"
+        "BANKING77 dataset provides a very fine-grained set of intents in a banking domain. It comprises 13,083 customer service queries labeled with 77 intents. It focuses on fine-grained single-domain intent detection. See the full description on the dataset page: https://huggingface.co/datasets/PolyAI/banking77\n"
     ),
     __tags__={
         "annotations_creators": "expert-generated",

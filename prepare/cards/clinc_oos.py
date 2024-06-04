@@ -52,9 +52,7 @@ for subset in get_dataset_config_names(dataset_name):
             "task_ids": "intent-classification",
         },
         __description__=(
-            "Dataset Card for CLINC150\n"
-            "Dataset Summary\n"
-            "Task-oriented dialog systems need to know when a query falls outside their range of supported intents, but current text classification corpora only define label sets that cover every example. We introduce a new dataset that includes queries that are out-of-scope (OOS), i.e., queries that do not fall into any of the system's supported intents. This poses a new challenge because models cannot assume that every query at… See the full description on the dataset page: https://huggingface.co/datasets/clinc_oos."
+            "Task-oriented dialog systems need to know when a query falls outside their range of supported intents, but current text classification corpora only define label sets that cover every example. We introduce a new dataset that includes queries that are out-of-scope (OOS), i.e., queries that do not fall into any of the system's supported intents. This poses a new challenge because models cannot assume that every query at… See the full description on the dataset page: https://huggingface.co/datasets/clinc_oos.\n"
         ),
     )
     test_card(card, debug=False)

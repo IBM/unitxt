@@ -40,13 +40,7 @@ card = TaskCard(
         "task_categories": "table-to-text",
     },
     __description__=(
-        "This dataset gathers 728,321 biographies from wikipedia. It aims at evaluating text generation\n"
-        "algorithms. For each article, we provide the first paragraph and the infobox (both tokenized).\n"
-        "For each article, we extracted the first paragraph (text), the infobox (structured data). Each\n"
-        "infobox is encoded as a list of (field name, field value) pairs. We used Stanford CoreNLP\n"
-        "(http://stanfordnlp.github.io/CoreNLP/) to preprocess the data, i.e. we broke the text into\n"
-        "sentences and tokenized both the text and the field values. The dataset was randomly split in\n"
-        "three subsets train (80%), valid (10%), test (10%)."
+        "This dataset gathers 728,321 biographies from wikipedia. It aims at evaluating text generation algorithms. For each article, we provide the first paragraph and the infobox (both tokenized). For each article, we extracted the first paragraph (text), the infobox (structured data). Each infobox is encoded as a list of (field name, field value) pairs. We used Stanford CoreNLP (http://stanfordnlp.github.io/CoreNLP/) to preprocess the data, i.e. we broke the text into sentences and tokenized both the text and the field values. The dataset was randomly split in three subsets train (80%), valid (10%), test (10%).\n"
     ),
 )
 

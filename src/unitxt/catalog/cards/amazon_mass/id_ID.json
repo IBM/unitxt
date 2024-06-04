@@ -155,6 +155,10 @@
     "__tags__": {
         "annotations_creators": "expert-generated",
         "arxiv": "2204.08582",
+        "flags": [
+            "croissant",
+            "natural-language-understanding"
+        ],
         "language_creators": "found",
         "license": "cc-by-4.0",
         "multilinguality": [
@@ -212,10 +216,6 @@
             "zh-TW"
         ],
         "region": "us",
-        "singletons": [
-            "croissant",
-            "natural-language-understanding"
-        ],
         "size_categories": "100K<n<1M",
         "source_datasets": "original",
         "task_categories": "text-classification",
@@ -224,5 +224,5 @@
             "multi-class-classification"
         ]
     },
-    "__description__": "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations\nfor the Natural Language Understanding tasks of intent prediction and slot annotation.\nUtterances span 60 intents and include 55 slot types. MASSIVE was created by localizing\nthe SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
+    "__description__": "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations for the Natural Language Understanding tasks of intent prediction and slot annotation. Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions. See the full description on the dataset page: https://huggingface.co/datasets/AmazonScience/massive.\n"
 }

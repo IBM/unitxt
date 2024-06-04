@@ -37,10 +37,7 @@ for lang in langs:
             "task_categories": "question-answering",
         },
         __description__=(
-            "Dataset Card for multilingual WikiHow with ~16.8K entries. ~(2-2.2)K for each language.\n"
-            "Warning [1]\n"
-            "The WikiHow team contacted me and made it clear that they forbid the use of their data for machine learning purposes. However, I am not calling for anything, and this dataset only shows the concept, and I strongly advise against violating their ToS.\n"
-            "However, consultation with lawyers made it clear that dataset can be used for such purposes if the project has… See the full description on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k."
+            "Contains Parquet of a list of instructions and WikiHow articles on different languages. See the full description (and warnings) on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k.\n"
         ),
     )
 

@@ -23,6 +23,9 @@
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
         "annotations_creators": "found",
+        "flags": [
+            "croissant"
+        ],
         "language": [
             "de",
             "es",
@@ -34,9 +37,6 @@
         "license": "other",
         "multilinguality": "multilingual",
         "region": "us",
-        "singletons": [
-            "croissant"
-        ],
         "size_categories": [
             "100K<n<1M",
             "10K<n<100K"

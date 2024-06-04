@@ -39,17 +39,17 @@
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "language": "en",
-        "language_creators": "other",
-        "license": "other",
-        "multilinguality": "monolingual",
-        "region": "us",
-        "singletons": [
+        "flags": [
             "coreference-nli",
             "croissant",
             "paraphrase-identification",
             "qa-nli"
         ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "text-classification",
@@ -61,5 +61,5 @@
             "text-scoring"
         ]
     },
-    "__description__": "Dataset Card for GLUE\nDataset Summary\nGLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\nSupported Tasks and Leaderboards\nThe leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\nax\nA manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+    "__description__": "GLUE Dataset Summary GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.\n"
 }
