@@ -79,13 +79,14 @@
         ]
     },
     "__tags__": {
-        "Hate Speech Detection": true,
         "annotations_creators": [
             "crowdsourced",
             "expert-generated"
         ],
         "arxiv": "2006.08328",
-        "croissant": true,
+        "flags": [
+            "Hate Speech Detection"
+        ],
         "language": "en",
         "language_creators": [
             "found",

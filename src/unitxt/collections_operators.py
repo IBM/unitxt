@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Generator, List, Optional
 
-from .operators import FieldOperator, SingleStreamOperator
+from .operators import FieldOperator, StreamOperator
 from .stream import Stream
 
 
@@ -58,7 +58,7 @@ class Get(FieldOperator):
         return collection[self.item]
 
 
-class DuplicateByList(SingleStreamOperator):
+class DuplicateByList(StreamOperator):
     field: str
     to_field: Optional[str] = None
     use_deep_copy: bool = False
@@ -80,7 +80,7 @@ class DuplicateByList(SingleStreamOperator):
                 yield instance_copy
 
 
-class DuplicateBySubLists(SingleStreamOperator):
+class DuplicateBySubLists(StreamOperator):
     field: str
     to_field: Optional[str] = None
     use_deep_copy: bool = False

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 from .type_utils import (
     get_args,
     get_origin,
@@ -13,8 +13,8 @@ from .type_utils import (
 )
 
 
-class Task(StreamInstanceOperator):
-    """FormTask packs the different instance fields into dictionaries by their roles in the task.
+class Task(InstanceOperator):
+    """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
         inputs (Union[Dict[str, str], List[str]]):
@@ -81,7 +81,7 @@ class Task(StreamInstanceOperator):
     def check_metrics_type(self) -> None:
         prediction_type = parse_type_string(self.prediction_type)
         for metric_id in self.metrics:
-            metric_prediction_type = FormTask.get_metric_prediction_type(metric_id)
+            metric_prediction_type = Task.get_metric_prediction_type(metric_id)
 
             if (
                 prediction_type == metric_prediction_type
@@ -107,11 +107,13 @@ class Task(StreamInstanceOperator):
 
         inputs = {key: instance[key] for key in self.inputs.keys()}
         outputs = {key: instance[key] for key in self.outputs.keys()}
+        data_classification_policy = instance.get("data_classification_policy", [])
 
         return {
             "inputs": inputs,
             "outputs": outputs,
             "metrics": self.metrics,
+            "data_classification_policy": data_classification_policy,
         }
 
 

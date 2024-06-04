@@ -2,7 +2,7 @@ from unitxt.text_utils import (
     camel_to_snake_case,
     is_camel_case,
     is_snake_case,
-    lines_defining_obj,
+    lines_defining_obj_in_card,
     split_words,
 )
 
@@ -101,6 +101,8 @@ class TestTextUtils(UnitxtTestCase):
     def test_lines_defining_obj(self):
         with open("prepare/cards/cohere_for_ai.py") as fp:
             all_lines = fp.readlines()
-        starting, ending = lines_defining_obj(all_lines=all_lines, obj_name="TaskCard(")
+        starting, ending = lines_defining_obj_in_card(
+            all_lines=all_lines, obj_name="TaskCard("
+        )
         self.assertEqual("        card = TaskCard(\n", all_lines[starting])
         self.assertEqual("        )\n", all_lines[ending])

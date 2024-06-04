@@ -36,6 +36,7 @@ from unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     MergeStreams,
+    MinimumOneExamplePerLabelRefiner,
     NullAugmentor,
     Perturb,
     RemoveFields,
@@ -674,7 +675,10 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query \"label2\" did not match any item in dict: {'label': 'b'}"
+        exception_text = """Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query "label2" did not match any item in dict:
+label (str):
+    b
+"""
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
@@ -2266,7 +2270,12 @@ class TestOperators(UnitxtTestCase):
         )
 
         inputs = [{"prediction": "red", "references": "blue"}]
-        exception_text = "Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict: {'prediction': 'red', 'references': 'blue'}"
+        exception_text = """Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict:
+prediction (str):
+    red
+references (str):
+    blue
+"""
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,
@@ -2407,6 +2416,52 @@ class TestOperators(UnitxtTestCase):
         check_operator(
             operator=DeterministicBalancer(fields=["a", "b"], max_instances=2),
             inputs=inputs + inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_minimum_one_per_label_balancer(self):
+        inputs = [
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love dogs", "label": "dogs", "id": 1},
+            {"text": "I love dogs", "label": "dogs", "id": 2},
+            {"text": "I love dogs", "label": "dogs", "id": 3},
+            {"text": "I love dogs", "label": "dogs", "id": 4},
+            {"text": "I love dogs", "label": "dogs", "id": 5},
+            {"text": "I love dogs", "label": "dogs", "id": 6},
+            {"text": "I love dogs", "label": "dogs", "id": 7},
+            {"text": "I love dogs", "label": "dogs", "id": 8},
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+        ]
+
+        targets = [
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+        ]
+
+        check_operator(
+            operator=MinimumOneExamplePerLabelRefiner(
+                fields=["label"], max_instances=3
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        targets = [
+            {"text": "I love dogs", "label": "dogs", "id": 0},
+            {"text": "I love cats", "label": "cats", "id": 9},
+            {"text": "I love parrots", "label": "parrots", "id": 10},
+            {"text": "I love dogs", "label": "dogs", "id": 1},
+        ]
+
+        check_operator(
+            operator=MinimumOneExamplePerLabelRefiner(
+                fields=["label"], max_instances=4
+            ),
+            inputs=inputs,
             targets=targets,
             tester=self,
         )

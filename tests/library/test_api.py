@@ -25,6 +25,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
             ],
+            "data_classification_policy": ["public"],
         }
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)
@@ -81,6 +82,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
             ],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(target, result)
@@ -119,6 +121,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
             ],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(target, result)

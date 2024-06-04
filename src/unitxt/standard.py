@@ -124,11 +124,23 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def set_pipelines(self):
         self.loading = SequentialOperator()
+        self.loading.__description__ = "Loading the data from the data source."
         self.metadata = SequentialOperator()
+        self.metadata.__description__ = (
+            "Adding metadata (e.g. format, system prompt, template)  "
+        )
         self.standardization = SequentialOperator()
+        self.standardization.__description__ = (
+            "Standardizing the raw dataset fields to task field definition."
+        )
         self.processing = SequentialOperator()
+        self.processing.__description__ = (
+            "Setting task fields (and selecting demos per sample if needed)."
+        )
         self.verblization = SequentialOperator()
+        self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
         self.finalize = SequentialOperator()
+        self.finalize.__description__ = "Adding post processors. Removing intermediate fields. Creating the final output dataset."
 
         self.steps = [
             self.loading,
@@ -211,7 +223,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             AddFields(
                 fields={
                     "recipe_metadata": {
-                        "card": self.card,
                         "template": self.template,
                         "system_prompt": self.system_prompt,
                         "format": self.format,
@@ -228,7 +239,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
-        if self.demos_pool_size is not None:
+        if self.demos_pool_size is not None and self.demos_pool_size > 0:
             self.processing.steps.append(
                 CreateDemosPool(
                     from_split=self.demos_taken_from,

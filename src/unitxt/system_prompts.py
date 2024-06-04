@@ -2,10 +2,10 @@ from abc import abstractmethod
 from typing import Any, Dict, Optional
 
 from .dataclass import NonPositionalField
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 
 
-class SystemPrompt(StreamInstanceOperator):
+class SystemPrompt(InstanceOperator):
     """The role of SystemPrompt is to add task-independent opening-text to every instance."""
 
     skip_rendered_instance: bool = NonPositionalField(default=True)

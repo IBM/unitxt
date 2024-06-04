@@ -29,9 +29,10 @@ Other specelized operators are used by unitxt internally:
 
 The rest of this section is dedicated for general operators.
 
-General Operaotrs List:
+General Operators List:
 ------------------------
 """
+
 import copy
 import operator
 import uuid
@@ -60,18 +61,18 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
+    InstanceOperator,
     MultiStream,
     MultiStreamOperator,
     PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
-    SingleStreamOperator,
     SingleStreamReducer,
     SourceOperator,
     StreamingOperator,
     StreamInitializerOperator,
-    StreamInstanceOperator,
+    StreamOperator,
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
@@ -116,10 +117,10 @@ class IterableSource(SourceOperator):
         return MultiStream.from_iterables(self.iterables)
 
 
-class MapInstanceValues(StreamInstanceOperator):
+class MapInstanceValues(InstanceOperator):
     """A class used to map instance values into other values.
 
-    This class is a type of StreamInstanceOperator,
+    This class is a type of InstanceOperator,
     it maps values of instances in a stream using predefined mappers.
 
     Attributes:
@@ -138,7 +139,7 @@ class MapInstanceValues(StreamInstanceOperator):
         replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
         instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_element=True)
+        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)
         Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
         each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
         instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
@@ -204,7 +205,7 @@ class MapInstanceValues(StreamInstanceOperator):
         return val
 
 
-class FlattenInstances(StreamInstanceOperator):
+class FlattenInstances(InstanceOperator):
     """Flattens each instance in a stream, making nested dictionary entries into top-level entries.
 
     Args:
@@ -221,7 +222,7 @@ class FlattenInstances(StreamInstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class AddFields(StreamInstanceOperator):
+class AddFields(InstanceOperator):
     """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
@@ -264,7 +265,7 @@ class AddFields(StreamInstanceOperator):
         return instance
 
 
-class RemoveFields(StreamInstanceOperator):
+class RemoveFields(InstanceOperator):
     """Remove specified fields from each instance in a stream.
 
     Args:
@@ -281,7 +282,7 @@ class RemoveFields(StreamInstanceOperator):
         return instance
 
 
-class InstanceFieldOperator(StreamInstanceOperator):
+class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
@@ -393,6 +394,11 @@ class InstanceFieldOperator(StreamInstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        # Need to deep copy instance, because when assigning two dictionary fields,
+        # dict_set() the target field dictionary fields.
+        # This means that if this target field was assigned to another field before,
+        # the field is updated as well.
+        instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
@@ -485,7 +491,7 @@ class AddConstant(FieldOperator):
         return self.add + value
 
 
-class Augmentor(StreamInstanceOperator):
+class Augmentor(InstanceOperator):
     """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
 
     Args:
@@ -732,7 +738,7 @@ class JoinStr(FieldOperator):
         return self.separator.join(str(x) for x in value)
 
 
-class Apply(StreamInstanceOperator):
+class Apply(InstanceOperator):
     """A class used to apply a python function and store the result in a field.
 
     Args:
@@ -802,7 +808,7 @@ class Apply(StreamInstanceOperator):
         return instance
 
 
-class ListFieldValues(StreamInstanceOperator):
+class ListFieldValues(InstanceOperator):
     """Concatenates values of multiple fields into a list, and assigns it to a new field."""
 
     fields: List[str]
@@ -824,7 +830,7 @@ class ListFieldValues(StreamInstanceOperator):
         return instance
 
 
-class ZipFieldValues(StreamInstanceOperator):
+class ZipFieldValues(InstanceOperator):
     """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
 
     The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
@@ -860,7 +866,7 @@ class ZipFieldValues(StreamInstanceOperator):
         return instance
 
 
-class InterleaveListsToDialogOperator(StreamInstanceOperator):
+class InterleaveListsToDialogOperator(InstanceOperator):
     """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
 
      The list of tuples if of format (role, turn_content), where the role label is specified by
@@ -905,7 +911,7 @@ class InterleaveListsToDialogOperator(StreamInstanceOperator):
         return instance
 
 
-class IndexOf(StreamInstanceOperator):
+class IndexOf(InstanceOperator):
     """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
     search_in: str
@@ -927,7 +933,7 @@ class IndexOf(StreamInstanceOperator):
         return instance
 
 
-class TakeByField(StreamInstanceOperator):
+class TakeByField(InstanceOperator):
     """From field 'field' of a given instance, select the member indexed by field 'index', and store to field 'to_field'."""
 
     field: str
@@ -1034,7 +1040,7 @@ class GetItemByIndex(FieldOperator):
         return self.items_list[value]
 
 
-class AddID(StreamInstanceOperator):
+class AddID(InstanceOperator):
     """Stores a unique id value in the designated 'id_field_name' field of the given instance."""
 
     id_field_name: str = "id"
@@ -1046,7 +1052,7 @@ class AddID(StreamInstanceOperator):
         return instance
 
 
-class CastFields(StreamInstanceOperator):
+class CastFields(InstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
@@ -1106,7 +1112,7 @@ class CastFields(StreamInstanceOperator):
         return instance
 
 
-class DivideAllFieldsBy(StreamInstanceOperator):
+class DivideAllFieldsBy(InstanceOperator):
     """Recursively reach down to all fields that are float, and divide each by 'divisor'.
 
     The given instance is viewed as a tree whose internal nodes are dictionaries and lists, and
@@ -1165,7 +1171,7 @@ class ArtifactFetcherMixin:
         return cls.cache[artifact_identifier]
 
 
-class ApplyOperatorsField(StreamInstanceOperator):
+class ApplyOperatorsField(InstanceOperator):
     """Applies value operators to each instance in a stream based on specified fields.
 
     Args:
@@ -1206,7 +1212,7 @@ class ApplyOperatorsField(StreamInstanceOperator):
         return operator.process_instance(instance)
 
 
-class FilterByCondition(SingleStreamOperator):
+class FilterByCondition(StreamOperator):
     """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator.
 
     Raises an error if a required field name is missing from the input instance.
@@ -1322,7 +1328,7 @@ class ComputeExpressionMixin(Artifact):
         )
 
 
-class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
+class FilterByExpression(StreamOperator, ComputeExpressionMixin):
     """Filters a stream, yielding only instances which fulfil a condition specified as a string to be python's eval-uated.
 
     Raises an error if a field participating in the specified condition is missing from the instance
@@ -1337,9 +1343,7 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
        FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
        FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
        FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
-       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in
-                                        which key 'b' is mapped to a value that is neither 4 nor 8
-
+       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in which key 'b' is mapped to a value that is neither 4 nor 8
     """
 
     error_on_filtered_all: bool = True
@@ -1357,7 +1361,7 @@ class FilterByExpression(SingleStreamOperator, ComputeExpressionMixin):
             )
 
 
-class ExecuteExpression(StreamInstanceOperator, ComputeExpressionMixin):
+class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     """Compute an expression, specified as a string to be eval-uated, over the instance's fields, and store the result in field to_field.
 
     Raises an error if a field mentioned in the query is missing from the instance.
@@ -1651,7 +1655,7 @@ class SplitByNestedGroup(MultiStreamOperator):
         return MultiStream.from_iterables(result)
 
 
-class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
+class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
     """Applies stream operators to a stream based on specified fields in each instance.
 
     Args:
@@ -1676,14 +1680,14 @@ class ApplyStreamOperatorsField(SingleStreamOperator, ArtifactFetcherMixin):
             operator = self.get_artifact(operator_name)
             assert isinstance(
                 operator, StreamingOperator
-            ), f"Operator {operator_name} must be a SingleStreamOperator"
+            ), f"Operator {operator_name} must be a StreamOperator"
 
             stream = operator(MultiStream({"tmp": stream}))["tmp"]
 
         yield from stream
 
 
-class ApplyMetric(SingleStreamOperator, ArtifactFetcherMixin):
+class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
     Args:
@@ -1855,7 +1859,7 @@ class FeatureGroupedShuffle(Shuffle):
         return list(itertools.chain(*page_blocks))
 
 
-class EncodeLabels(StreamInstanceOperator):
+class EncodeLabels(InstanceOperator):
     """Encode each value encountered in any field in 'fields' into the integers 0,1,...
 
     Encoding is determined by a str->int map that is built on the go, as different values are
@@ -1908,7 +1912,7 @@ class EncodeLabels(StreamInstanceOperator):
         return instance
 
 
-class StreamRefiner(SingleStreamOperator):
+class StreamRefiner(StreamOperator):
     """Discard from the input stream all instances beyond the leading 'max_instances' instances.
 
     Thereby, if the input stream consists of no more than 'max_instances' instances, the resulting stream is the whole of the
@@ -1985,6 +1989,80 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class MinimumOneExamplePerLabelRefiner(StreamRefiner):
+    """A class used to return a specified number instances ensuring at least one example  per label.
+
+    For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
+    MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
+    MinimumOneExamplePerLabelRefiner then shuffles the results to avoid having one instance
+    from each class first and then the rest . If max instance is not set, the original stream will be used
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`)
+
+    Usage:
+        balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
+        balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}] is fed into
+        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)
+        the resulting stream will be:
+        [{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}] (order may be different)
+    """
+
+    fields: List[str]
+
+    def signature(self, instance):
+        return str(tuple(dict_get(instance, field) for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        if self.max_instances is None:
+            for instance in stream:
+                yield instance
+
+        counter = Counter()
+        for instance in stream:
+            counter[self.signature(instance)] += 1
+        all_keys = counter.keys()
+        if len(counter) == 0:
+            return
+
+        if self.max_instances is not None and len(all_keys) > self.max_instances:
+            raise Exception(
+                f"Can not generate a stream with at least one example per label, because the max instances requested  {self.max_instances} is smaller than the number of different labels {len(all_keys)}"
+                f" ({len(all_keys)}"
+            )
+
+        counter = Counter()
+        used_indices = set()
+        selected_elements = []
+        # select at least one per class
+        for idx, instance in enumerate(stream):
+            sign = self.signature(instance)
+            if counter[sign] == 0:
+                counter[sign] += 1
+                used_indices.add(idx)
+                selected_elements.append(
+                    instance
+                )  # collect all elements first to allow shuffling of both groups
+
+        # select more to reach self.max_instances examples
+        for idx, instance in enumerate(stream):
+            if idx not in used_indices:
+                if self.max_instances is None or len(used_indices) < self.max_instances:
+                    used_indices.add(idx)
+                    selected_elements.append(
+                        instance
+                    )  # collect all elements first to allow shuffling of both groups
+
+        # shuffle elements to avoid having one element from each class appear first
+        random_generator = new_random_generator(sub_seed=selected_elements)
+        random_generator.shuffle(selected_elements)
+        yield from selected_elements
 
 
 class LengthBalancer(DeterministicBalancer):
@@ -2071,7 +2149,7 @@ class ExtractZipFile(SideEffectOperator):
             zf.extractall(self.target_dir)
 
 
-class DuplicateInstances(SingleStreamOperator):
+class DuplicateInstances(StreamOperator):
     """Operator which duplicates each instance in stream a given number of times.
 
     Attributes:

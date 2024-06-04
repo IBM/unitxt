@@ -13,23 +13,23 @@ def convert_union_type(type_string: str) -> str:
 
     Args:
         type_string (str): A string representation of a Python type hint. It can be any
-                           valid Python type, which does not contain strings (e.g. 'Literal').
-                           Examples include 'List[int|float]', 'str|float|bool' etc.
+            valid Python type, which does not contain strings (e.g. 'Literal').
+            Examples include 'List[int|float]', 'str|float|bool' etc.
 
-        Formally, the function depends on the input string adhering to the following rules.
-        Assuming that the input is a valid type hint the function does not check that 'word' is
-        'str', 'bool', 'List' etc. It just depends on the following general structure (spaces ignored):
-        type -> word OR type( | type)* OR word[type( , type)*]
-        word is a sequence of (0 or more) chars, each being any char but: [ ] , |
-        This implies that if any of these 4 chars shows not as a meta char of the input
-        type_string, but inside some constant string (of Literal, for example), the scheme
-        will not work.
+            Formally, the function depends on the input string adhering to the following rules.
+            Assuming that the input is a valid type hint the function does not check that 'word' is
+            'str', 'bool', 'List' etc. It just depends on the following general structure (spaces ignored):
+            type -> word OR type( | type)* OR word[type( , type)*]
+            word is a sequence of (0 or more) chars, each being any char but: [ ] , |
+            This implies that if any of these 4 chars shows not as a meta char of the input
+            type_string, but inside some constant string (of Literal, for example), the scheme
+            will not work.
 
-        Cases like Literal, that might contain occurrences of the four chars above not as meta chars
-        in the type string, must be handled as special cases by this function, as shown for Literal,
-        as an example. Because 'format_type_string' serves as preprocessing for 'parse_type_string',
-        which has a list of allowed types, of which Literal is not a member, Literal and such are not
-        relevant at all now; and the case is brought here just for an example for future use.
+            Cases like Literal, that might contain occurrences of the four chars above not as meta chars
+            in the type string, must be handled as special cases by this function, as shown for Literal,
+            as an example. Because 'format_type_string' serves as preprocessing for 'parse_type_string',
+            which has a list of allowed types, of which Literal is not a member, Literal and such are not
+            relevant at all now; and the case is brought here just for an example for future use.
 
 
     Returns:

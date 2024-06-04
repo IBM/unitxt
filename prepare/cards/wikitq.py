@@ -26,7 +26,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1508.00305",
-        "croissant": True,
+        "flags": ["table-question-answering"],
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-4.0",
@@ -34,7 +34,6 @@ card = TaskCard(
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
-        "table-question-answering": True,
         "task_categories": "question-answering",
     },
 )

@@ -28,7 +28,7 @@ from typing import (
 import pandas as pd
 
 from .dict_utils import dict_get
-from .operators import FieldOperator, StreamInstanceOperator
+from .operators import FieldOperator, InstanceOperator
 
 
 class SerializeTable(ABC, FieldOperator):
@@ -237,7 +237,7 @@ def truncate_cell(cell_value, max_len):
     return None
 
 
-class TruncateTableCells(StreamInstanceOperator):
+class TruncateTableCells(InstanceOperator):
     """Limit the maximum length of cell values in a table to reduce the overall length.
 
     Args:
@@ -318,7 +318,7 @@ class TruncateTableRows(FieldOperator):
         return table_content
 
 
-class SerializeTableRowAsText(StreamInstanceOperator):
+class SerializeTableRowAsText(InstanceOperator):
     """Serializes a table row as text.
 
     Args:
@@ -348,7 +348,7 @@ class SerializeTableRowAsText(StreamInstanceOperator):
         return instance
 
 
-class SerializeTableRowAsList(StreamInstanceOperator):
+class SerializeTableRowAsList(InstanceOperator):
     """Serializes a table row as list.
 
     Args:
@@ -417,7 +417,7 @@ class SerializeKeyValPairs(FieldOperator):
         return serialized_str[:-2]
 
 
-class ListToKeyValPairs(StreamInstanceOperator):
+class ListToKeyValPairs(InstanceOperator):
     """Maps list of keys and values into key:value pairs.
 
     Sample input in expected format: {"keys": ["name", "age", "sex"], "values": ["Alex", 31, "M"]}
@@ -512,16 +512,16 @@ class ShuffleTableColumns(FieldOperator):
     """Shuffles the table columns randomly.
 
     Sample Input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-    }
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+        }
 
     Sample Output:
-    {
-        "header": ["age", "name"],
-        "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
-    }
+        {
+            "header": ["age", "name"],
+            "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
+        }
     """
 
     def process_value(self, table: Any) -> Any:

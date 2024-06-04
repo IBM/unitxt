@@ -48,6 +48,7 @@ def all_subtypes_of_artifact(artifact):
     return to_return
 
 
+# flake8: noqa: C901
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["type"]
     artifact_class = Artifact._class_register.get(artifact_type)
@@ -56,7 +57,13 @@ def make_content(artifact, label, all_labels):
     catalog_id = label.replace("catalog.", "")
     result = ""
     if "__description__" in artifact and artifact["__description__"] is not None:
-        result += "\n" + artifact["__description__"] + "\n"
+        split_description = artifact["__description__"].split("\n")
+        desc = "\n"
+        for split in split_description:
+            desc += "| " + split + "\n"
+        result += desc
+        # result += "\n" + artifact["__description__"] + "\n"
+        result += "\n"
     if "__tags__" in artifact and artifact["__tags__"] is not None:
         result += "\nTags: "
         tags = []

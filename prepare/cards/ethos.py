@@ -59,10 +59,9 @@ card = TaskCard(
         ]
     ),
     __tags__={
-        "Hate Speech Detection": True,
         "annotations_creators": ["crowdsourced", "expert-generated"],
         "arxiv": "2006.08328",
-        "croissant": True,
+        "flags": ["Hate Speech Detection"],
         "language": "en",
         "language_creators": ["found", "other"],
         "license": "agpl-3.0",

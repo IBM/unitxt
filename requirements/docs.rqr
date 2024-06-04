@@ -10,3 +10,4 @@ rouge_score
 scikit-learn
 jiwer
 editdistance
+fuzzywuzzy

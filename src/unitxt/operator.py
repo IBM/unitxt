@@ -1,4 +1,3 @@
-import re
 from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
@@ -208,12 +207,13 @@ class MultiStreamOperator(StreamingOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         multi_stream = MultiStream({stream_name: stream_single(instance)})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
 
 
-class SingleStreamOperator(MultiStreamOperator):
+class StreamOperator(MultiStreamOperator):
     """A class representing a single-stream operator in the streaming system.
 
     A single-stream operator is a type of `MultiStreamOperator` that operates on individual
@@ -236,9 +236,7 @@ class SingleStreamOperator(MultiStreamOperator):
                 stream = self._process_single_stream(stream, stream_name)
             else:
                 stream = stream
-            assert isinstance(
-                stream, Stream
-            ), "SingleStreamOperator must return a Stream"
+            assert isinstance(stream, Stream), "StreamOperator must return a Stream"
             result[stream_name] = stream
 
         return MultiStream(result)
@@ -279,16 +277,21 @@ class SingleStreamOperator(MultiStreamOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         processed_stream = self._process_single_stream(
             stream_single(instance), stream_name
         )
         return next(iter(processed_stream))
 
 
-class PagedStreamOperator(SingleStreamOperator):
+class SingleStreamOperator(StreamOperator):
+    pass
+
+
+class PagedStreamOperator(StreamOperator):
     """A class representing a paged-stream operator in the streaming system.
 
-    A paged-stream operator is a type of `SingleStreamOperator` that operates on a page of instances
+    A paged-stream operator is a type of `StreamOperator` that operates on a page of instances
     in a `Stream` at a time, where a page is a subset of instances.
     The `process` method should be implemented by subclasses to define the specific operations
     to be performed on each page.
@@ -320,6 +323,7 @@ class PagedStreamOperator(SingleStreamOperator):
         pass
 
     def process_instance(self, instance, stream_name="tmp"):
+        instance = self.verify_instance(instance)
         processed_stream = self._process_page([instance], stream_name)
         return next(iter(processed_stream))
 
@@ -343,10 +347,10 @@ class SingleStreamReducer(StreamingOperator):
         pass
 
 
-class StreamInstanceOperator(SingleStreamOperator):
+class InstanceOperator(StreamOperator):
     """A class representing a stream instance operator in the streaming system.
 
-    A stream instance operator is a type of `SingleStreamOperator` that operates on individual instances within a `Stream`. It iterates through each instance in the `Stream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each instance.
+    A stream instance operator is a type of `StreamOperator` that operates on individual instances within a `Stream`. It iterates through each instance in the `Stream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each instance.
     """
 
     def _process_stream(
@@ -367,6 +371,7 @@ class StreamInstanceOperator(SingleStreamOperator):
     def _process_instance(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        instance = self.verify_instance(instance)
         return self.process(instance, stream_name)
 
     @abstractmethod
@@ -379,10 +384,10 @@ class StreamInstanceOperator(SingleStreamOperator):
         return self._process_instance(instance, stream_name)
 
 
-class StreamInstanceOperatorValidator(StreamInstanceOperator):
+class InstanceOperatorValidator(InstanceOperator):
     """A class representing a stream instance operator validator in the streaming system.
 
-    A stream instance operator validator is a type of `StreamInstanceOperator` that includes a validation step. It operates on individual instances within a `Stream` and validates the result of processing each instance.
+    A stream instance operator validator is a type of `InstanceOperator` that includes a validation step. It operates on individual instances within a `Stream` and validates the result of processing each instance.
     """
 
     @abstractmethod
@@ -405,20 +410,6 @@ class StreamInstanceOperatorValidator(StreamInstanceOperator):
         )
 
 
-class InstanceOperator(Artifact):
-    """A class representing an instance operator in the streaming system.
-
-    An instance operator is a type of `Artifact` that operates on a single instance (represented as a dict) at a time. It takes an instance as input and produces a transformed instance as output.
-    """
-
-    def __call__(self, data: dict) -> dict:
-        return self.process(data)
-
-    @abstractmethod
-    def process(self, data: dict) -> dict:
-        pass
-
-
 class BaseFieldOperator(Artifact):
     """A class representing a field operator in the streaming system.
 
@@ -426,6 +417,7 @@ class BaseFieldOperator(Artifact):
     """
 
     def __call__(self, data: Dict[str, Any], field: str) -> dict:
+        data = self.verify_instance(data)
         value = self.process(data[field])
         data[field] = value
         return data
@@ -456,7 +448,10 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         return MultiStream(result)
 
     def generator(self, stream, multi_stream):
-        yield from (self.process(instance, multi_stream) for instance in stream)
+        yield from (
+            self.process(self.verify_instance(instance), multi_stream)
+            for instance in stream
+        )
 
     @abstractmethod
     def process(self, instance: dict, multi_stream: MultiStream) -> dict:
@@ -488,8 +483,7 @@ class SequentialOperator(MultiStreamOperator):
         last_step = (
             self.max_steps - 1 if self.max_steps is not None else len(self.steps) - 1
         )
-        description = str(self.steps[last_step])
-        return re.sub(r"\w+=None, ", "", description)
+        return self.steps[last_step].__description__
 
     def _get_max_steps(self):
         return self.max_steps if self.max_steps is not None else len(self.steps)

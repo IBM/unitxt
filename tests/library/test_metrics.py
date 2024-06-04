@@ -33,6 +33,7 @@ from unitxt.metrics import (
     FixedGroupNormHedgesGParaphraseStringContainment,
     FixedGroupPDRParaphraseAccuracy,
     FixedGroupPDRParaphraseStringContainment,
+    FuzzyNer,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -192,6 +193,39 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def test_accuracy_with_prefix(self):
+        metric = Accuracy(score_prefix="my_")
+
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "my_accuracy": 1 / 3,
+            "score": 1 / 3,
+            "score_name": "my_accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"my_accuracy": 0.0, "score": 0.0, "score_name": "my_accuracy"},
+            {"my_accuracy": 0.0, "score": 0.0, "score_name": "my_accuracy"},
+            {"my_accuracy": 1.0, "score": 1.0, "score_name": "my_accuracy"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
     def test_accuracy_max_aggregation(self):
         metric = MaxAccuracy()
 
@@ -237,6 +271,42 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_micro_with_prefix(self):
+        metric = F1Micro(score_prefix="my_")
+
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "my_f1_micro": 5 / 6,
+            "score": 5 / 6,
+            "score_name": "my_f1_micro",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 0.0, "score": 0.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
 
     def test_f1_errors(self):
         metric = F1Micro()
@@ -1028,6 +1098,82 @@ class TestMetrics(UnitxtTestCase):
             first_instance_target, outputs[0]["score"]["instance"]["score"]
         )
 
+    def test_fuzzyner(self):
+        metric = FuzzyNer()
+        predictions = [
+            [
+                ("jar htaras", "Person"),
+                ("Marathahalli", "Location"),
+                ("IBM", "Org"),
+            ]
+        ]
+        references = [
+            [
+                [
+                    ("jar htaras", "Person"),
+                    ("Marathahalli ring road", "Location"),
+                ]
+            ]
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 1.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Person"]
+        )
+        global_target = 0.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_Location"]
+        )
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+    def test_perplexity_with_prefix(self):
+        prediction = ["who are we?"]
+        references = [["we are the world"]]
+
+        perplexity_question = Perplexity(
+            model_name="google/flan-t5-small",
+            source_template="Generate a question based on the given content: {reference}",
+            target_template="{prediction}",
+            score_prefix="my_",
+        )
+
+        outputs = apply_metric(
+            metric=perplexity_question, predictions=prediction, references=references
+        )
+
+        expected_global_result = {
+            "my_perplexity": 0.05986589565873146,
+            "score": 0.05986589565873146,
+            "score_name": "my_perplexity",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {
+                "my_perplexity": 0.05986589565873146,
+                "score": 0.05986589565873146,
+                "score_name": "my_perplexity",
+                "my_reference_scores": [0.05986589565873146],
+            }
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
 
 class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):
@@ -1344,7 +1490,12 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
         actual_scores = [output["score"] for output in outputs]
         instance_targets = [
-            {metric_label: 1.0, "score_name": metric_label, "score": 1.0}
+            {
+                metric_label: 1.0,
+                "score_name": metric_label,
+                "score": 1.0,
+                "judge_raw_output": "[[10]]",
+            }
         ] * 3
         global_target = {
             metric_label: 1.0,

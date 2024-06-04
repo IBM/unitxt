@@ -7,11 +7,11 @@ from typing import (
 )
 
 from .dataclass import OptionalField
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 from .type_utils import isoftype
 
 
-class Format(StreamInstanceOperator):
+class Format(InstanceOperator):
     pass
 
 
