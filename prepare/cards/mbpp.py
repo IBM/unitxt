@@ -32,7 +32,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": ["crowdsourced", "expert-generated"],
         "arxiv": "2108.07732",
-        "flags": ["code-generation", "croissant"],
+        "flags": ["code-generation"],
         "language": "en",
         "language_creators": ["crowdsourced", "expert-generated"],
         "license": "cc-by-4.0",

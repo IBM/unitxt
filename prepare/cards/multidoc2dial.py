@@ -28,7 +28,6 @@ card_abstractive = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2109.12595",
-        "flags": ["croissant"],
         "language": "en",
         "language_creators": ["crowdsourced", "expert-generated"],
         "license": "apache-2.0",
@@ -59,7 +58,6 @@ card_extractive = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2109.12595",
-        "flags": ["croissant"],
         "language": "en",
         "language_creators": ["crowdsourced", "expert-generated"],
         "license": "apache-2.0",

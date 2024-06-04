@@ -36,7 +36,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "flags": ["conversational-qa", "croissant"],
+        "flags": ["conversational-qa"],
         "language": "en",
         "language_creators": "found",
         "license": "other",
@@ -84,7 +84,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "flags": ["conversational-qa", "croissant"],
+        "flags": ["conversational-qa"],
         "language": "en",
         "language_creators": "found",
         "license": "other",

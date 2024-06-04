@@ -38,7 +38,6 @@ for subset in subsets:
             templates="templates.qa.open.all",
             __tags__={
                 "arxiv": "2402.06619",
-                "flags": ["croissant"],
                 "language": [
                     "afr",
                     "sqi",

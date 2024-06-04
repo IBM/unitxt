@@ -23,12 +23,7 @@ card = TaskCard(
     __description__=(
         "HellaSwag: Can a Machine Really Finish Your Sentence? is a new dataset for commonsense NLI. A paper was published at ACL2019."
     ),
-    __tags__={
-        "arxiv": "1905.07830",
-        "flags": ["croissant"],
-        "language": "en",
-        "region": "us",
-    },
+    __tags__={"arxiv": "1905.07830", "language": "en", "region": "us"},
 )
 # We disable strict checking because garbage predictions (when using the post processor
 # that takes the first letter) is sometimes right and yields a non zero score.

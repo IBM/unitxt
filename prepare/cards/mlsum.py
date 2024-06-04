@@ -22,7 +22,6 @@ for lang in langs:
         templates="templates.summarization.abstractive.all",
         __tags__={
             "annotations_creators": "found",
-            "flags": ["croissant"],
             "language": ["de", "es", "fr", "ru", "tr"],
             "language_creators": "found",
             "license": "other",

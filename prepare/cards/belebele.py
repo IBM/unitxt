@@ -159,7 +159,6 @@ for lang in language_codes:
         templates="templates.qa.multiple_choice.with_context.no_intro.all",
         __tags__={
             "arxiv": "2308.16884",
-            "flags": ["croissant"],
             "language": [
                 "af",
                 "am",

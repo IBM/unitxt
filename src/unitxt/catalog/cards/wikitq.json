@@ -40,7 +40,6 @@
         "annotations_creators": "crowdsourced",
         "arxiv": "1508.00305",
         "flags": [
-            "croissant",
             "table-question-answering"
         ],
         "language": "en",

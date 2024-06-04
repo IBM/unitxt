@@ -30,12 +30,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "flags": [
-            "coreference-nli",
-            "croissant",
-            "paraphrase-identification",
-            "qa-nli",
-        ],
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",

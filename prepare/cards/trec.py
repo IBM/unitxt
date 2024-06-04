@@ -97,7 +97,6 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "expert-generated",
-        "flags": ["croissant"],
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",

@@ -151,9 +151,6 @@
     "task": "tasks.classification.multi_label",
     "templates": "templates.classification.multi_label.all",
     "__tags__": {
-        "flags": [
-            "croissant"
-        ],
         "language": "en",
         "license": "other",
         "region": "us"

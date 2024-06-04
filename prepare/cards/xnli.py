@@ -52,7 +52,6 @@ for lang in langs:
         task="tasks.classification.multi_class.relation",
         templates="templates.classification.multi_class.relation.all",
         __tags__={
-            "flags": ["croissant"],
             "language": [
                 "ar",
                 "bg",

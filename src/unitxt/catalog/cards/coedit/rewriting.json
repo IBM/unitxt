@@ -80,9 +80,6 @@
     "templates": "templates.rewriting.by_attribute.all",
     "__tags__": {
         "arxiv": "2305.09857",
-        "flags": [
-            "croissant"
-        ],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",

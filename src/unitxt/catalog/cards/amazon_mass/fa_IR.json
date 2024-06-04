@@ -156,7 +156,6 @@
         "annotations_creators": "expert-generated",
         "arxiv": "2204.08582",
         "flags": [
-            "croissant",
             "natural-language-understanding"
         ],
         "language_creators": "found",

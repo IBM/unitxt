@@ -69,8 +69,7 @@
             "1506.03340"
         ],
         "flags": [
-            "conversational-qa",
-            "croissant"
+            "conversational-qa"
         ],
         "language": "en",
         "language_creators": "found",

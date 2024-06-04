@@ -54,7 +54,7 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
     __tags__={
-        "flags": ["croissant", "law", "stackexchange"],
+        "flags": ["law", "stackexchange"],
         "language": "en",
         "region": "us",
         "task_categories": "text-classification",

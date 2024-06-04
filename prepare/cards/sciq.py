@@ -27,7 +27,6 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.with_context.all",
     __tags__={
         "annotations_creators": "no-annotation",
-        "flags": ["croissant"],
         "language": "en",
         "language_creators": "crowdsourced",
         "license": "cc-by-nc-3.0",

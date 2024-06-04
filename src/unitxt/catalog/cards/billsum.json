@@ -24,8 +24,7 @@
         "annotations_creators": "found",
         "arxiv": "1910.00523",
         "flags": [
-            "bills-summarization",
-            "croissant"
+            "bills-summarization"
         ],
         "language": "en",
         "language_creators": "found",

@@ -16,7 +16,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "found",
         "arxiv": "1910.00523",
-        "flags": ["bills-summarization", "croissant"],
+        "flags": ["bills-summarization"],
         "language": "en",
         "language_creators": "found",
         "license": "cc0-1.0",

@@ -31,7 +31,6 @@
     "__tags__": {
         "annotations_creators": "no-annotation",
         "flags": [
-            "croissant",
             "reddit-posts-summarization"
         ],
         "language": "en",

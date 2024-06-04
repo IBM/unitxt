@@ -29,7 +29,7 @@ card = TaskCard(
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
-    __tags__={"arxiv": "2009.01325", "flags": ["croissant"], "region": "us"},
+    __tags__={"arxiv": "2009.01325", "region": "us"},
     __description__=(
         'Summarize from Feedback contains the human feedback data released by the "Learning to summarize from human feedback" paper.'
     ),

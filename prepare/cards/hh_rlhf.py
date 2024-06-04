@@ -37,7 +37,7 @@ card = TaskCard(
     templates="templates.evaluation.preference.all",
     __tags__={
         "arxiv": "2204.05862",
-        "flags": ["croissant", "human-feedback"],
+        "flags": ["human-feedback"],
         "license": "mit",
         "region": "us",
     },

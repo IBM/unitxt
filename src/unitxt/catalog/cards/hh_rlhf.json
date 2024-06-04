@@ -75,7 +75,6 @@
     "__tags__": {
         "arxiv": "2204.05862",
         "flags": [
-            "croissant",
             "human-feedback"
         ],
         "license": "mit",

@@ -26,7 +26,6 @@ for lang in langs:
         __tags__={
             "annotations_creators": "none",
             "arxiv": "1607.01759",
-            "flags": ["croissant"],
             "language": "und",
             "language_creators": "unknown",
             "license": "cc-by-nc-sa-4.0",

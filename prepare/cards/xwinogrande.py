@@ -18,7 +18,6 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
         templates="templates.qa.multiple_choice.open.all",
         __tags__={
             "arxiv": ["2211.01786", "2106.12066"],
-            "flags": ["croissant"],
             "language": ["en", "fr", "ja", "pt", "ru", "zh"],
             "license": "cc-by-4.0",
             "region": "us",

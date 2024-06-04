@@ -63,7 +63,6 @@
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "flags": [
-            "croissant",
             "law",
             "stackexchange"
         ],

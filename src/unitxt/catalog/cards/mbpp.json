@@ -46,8 +46,7 @@
         ],
         "arxiv": "2108.07732",
         "flags": [
-            "code-generation",
-            "croissant"
+            "code-generation"
         ],
         "language": "en",
         "language_creators": [

@@ -62,7 +62,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "flags": [
-            "croissant",
             "finance",
             "hedgefunds",
             "markets",

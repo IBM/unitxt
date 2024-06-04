@@ -33,7 +33,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
-        "flags": ["NLU", "croissant", "natural language understanding", "superglue"],
+        "flags": ["NLU", "natural language understanding", "superglue"],
         "language": "en",
         "language_creators": "other",
         "license": "other",

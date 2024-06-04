@@ -38,7 +38,6 @@ for subset in get_dataset_config_names(dataset_name):
         ),
         __tags__={
             "annotations_creators": "no-annotation",
-            "flags": ["croissant"],
             "language": ["en", "es"],
             "language_creators": "expert-generated",
             "license": "mit",

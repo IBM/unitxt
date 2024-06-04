@@ -85,8 +85,7 @@
         ],
         "arxiv": "2006.08328",
         "flags": [
-            "Hate Speech Detection",
-            "croissant"
+            "Hate Speech Detection"
         ],
         "language": "en",
         "language_creators": [

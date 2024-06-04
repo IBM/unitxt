@@ -23,9 +23,6 @@
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
         "annotations_creators": "found",
-        "flags": [
-            "croissant"
-        ],
         "language": [
             "de",
             "es",

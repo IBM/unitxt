@@ -21,7 +21,6 @@ for subtask in subtasks:
         __tags__={
             "annotations_creators": "found",
             "arxiv": "1803.05457",
-            "flags": ["croissant"],
             "language": "en",
             "language_creators": "found",
             "license": "cc-by-sa-4.0",

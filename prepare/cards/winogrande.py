@@ -17,7 +17,7 @@ for subtask in ["debiased", "l", "m", "s", "xl", "xs"]:
         ],
         task="tasks.qa.multiple_choice.open",
         templates="templates.qa.multiple_choice.open.all",
-        __tags__={"flags": ["croissant"], "language": "en", "region": "us"},
+        __tags__={"language": "en", "region": "us"},
         __description__=(
             "WinoGrande is a new collection of 44k problems, inspired by Winograd Schema Challenge (Levesque, Davis, and Morgenstern 2011), but adjusted to improve the scale and robustness against the dataset-specific bias. Formulated as a fill-in-a-blank task with binary options, the goal is to choose the right option for a given sentence which requires commonsense reasoning."
         ),

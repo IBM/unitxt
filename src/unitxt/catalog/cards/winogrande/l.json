@@ -36,9 +36,6 @@
     "task": "tasks.qa.multiple_choice.open",
     "templates": "templates.qa.multiple_choice.open.all",
     "__tags__": {
-        "flags": [
-            "croissant"
-        ],
         "language": "en",
         "region": "us"
     },

@@ -77,7 +77,6 @@ card = TaskCard(
     task="tasks.classification.multi_class",
     templates="templates.classification.multi_class.all",
     __tags__={
-        "flags": ["croissant"],
         "language": "en",
         "license": "cc-by-3.0",
         "region": "us",

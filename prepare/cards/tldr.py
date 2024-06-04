@@ -15,7 +15,7 @@ card = TaskCard(
     templates="templates.summarization.abstractive.all",
     __tags__={
         "annotations_creators": "no-annotation",
-        "flags": ["croissant", "reddit-posts-summarization"],
+        "flags": ["reddit-posts-summarization"],
         "language": "en",
         "language_creators": "crowdsourced",
         "license": "cc-by-4.0",

@@ -35,7 +35,6 @@ gec_card = TaskCard(
     templates="templates.grammatical_error_correction.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -83,7 +82,6 @@ error_detection_card = TaskCard(
     templates="templates.grammatical_error_detection.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -129,7 +127,6 @@ card = TaskCard(
     templates="templates.evaluation.preference.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -194,7 +191,6 @@ card = TaskCard(
     templates="templates.selection.by_attribute.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -256,7 +252,6 @@ card = TaskCard(
     templates="templates.rewriting.by_attribute.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -294,7 +289,6 @@ card = TaskCard(
     templates="templates.rewriting.paraphrase.all",
     __tags__={
         "arxiv": "2305.09857",
-        "flags": ["croissant"],
         "language": "en",
         "license": "apache-2.0",
         "region": "us",

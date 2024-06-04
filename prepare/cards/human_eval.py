@@ -41,7 +41,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "expert-generated",
         "arxiv": "2107.03374",
-        "flags": ["code-generation", "croissant"],
+        "flags": ["code-generation"],
         "language": "en",
         "language_creators": "expert-generated",
         "license": "mit",

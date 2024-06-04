@@ -29,7 +29,7 @@ for lang in langs:
         task="tasks.qa.open",
         templates="templates.qa.open.all",
         __tags__={
-            "flags": ["QnA", "croissant", "wikihow"],
+            "flags": ["QnA", "wikihow"],
             "language": ["en", "ru", "pt", "it", "es", "fr", "de", "nl"],
             "license": "cc-by-nc-3.0",
             "region": "us",

@@ -40,7 +40,7 @@ for lang in langs:
         __tags__={
             "annotations_creators": "expert-generated",
             "arxiv": "2204.08582",
-            "flags": ["croissant", "natural-language-understanding"],
+            "flags": ["natural-language-understanding"],
             "language_creators": "found",
             "license": "cc-by-4.0",
             "multilinguality": [
