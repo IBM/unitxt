@@ -18,3 +18,4 @@ pytrec-eval
 SentencePiece
 openai
 ibm-generative-ai
+bs4
