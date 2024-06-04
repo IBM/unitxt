@@ -280,6 +280,8 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     def process(
         self, instance: Dict[str, object], multi_stream: MultiStream
     ) -> Dict[str, object]:
+        from .stream import NoInstancesToGenerateAStreamFromError
+
         try:
             if self.local_cache is None:
                 self.local_cache = list(multi_stream[self.source_stream])
@@ -288,10 +290,14 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
             source_stream = self.sampler.filter_source_by_instance(
                 source_stream, instance
             )
+            if len(source_stream) < self.sampler.sample_size:
+                raise ValueError(
+                    f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
+                )
             sampled_instances = self.sampler.sample(source_stream)
             instance[self.target_field] = sampled_instances
             return instance
         except Exception as e:
-            raise Exception(
+            raise NoInstancesToGenerateAStreamFromError(
                 f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
             ) from e
