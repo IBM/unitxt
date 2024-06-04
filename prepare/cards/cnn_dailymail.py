@@ -17,12 +17,12 @@ card = TaskCard(
     templates="templates.summarization.abstractive.all",
     __tags__={
         "annotations_creators": "no-annotation",
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": "found",
         "license": "apache-2.0",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "100K<n<1M",
         "source_datasets": "original",
         "task_categories": "summarization",

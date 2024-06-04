@@ -127,7 +127,7 @@ card = TaskCard(
     ],
     task="tasks.span_labeling.extraction",
     templates="templates.span_labeling.extraction.all",
-    __tags__={"region": "us", "singletons": ["croissant"]},
+    __tags__={"flags": ["croissant"], "region": "us"},
 )
 
 test_card(card)

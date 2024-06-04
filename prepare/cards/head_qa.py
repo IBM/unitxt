@@ -41,12 +41,12 @@ for subset in get_dataset_config_names(dataset_name):
         ),
         __tags__={
             "annotations_creators": "no-annotation",
+            "flags": ["croissant"],
             "language": ["en", "es"],
             "language_creators": "expert-generated",
             "license": "mit",
             "multilinguality": "monolingual",
             "region": "us",
-            "singletons": ["croissant"],
             "size_categories": "1K<n<10K",
             "source_datasets": "original",
             "task_categories": "question-answering",

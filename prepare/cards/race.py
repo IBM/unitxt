@@ -21,12 +21,12 @@ for subset in ["all", "high", "middle"]:
         __tags__={
             "annotations_creators": "expert-generated",
             "arxiv": "1704.04683",
+            "flags": ["croissant"],
             "language": "en",
             "language_creators": "found",
             "license": "other",
             "multilinguality": "monolingual",
             "region": "us",
-            "singletons": ["croissant"],
             "size_categories": "10K<n<100K",
             "source_datasets": "original",
             "task_categories": "multiple-choice",

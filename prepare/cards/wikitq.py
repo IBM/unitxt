@@ -26,12 +26,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1508.00305",
+        "flags": ["croissant", "table-question-answering"],
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant", "table-question-answering"],
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "question-answering",

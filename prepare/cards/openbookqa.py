@@ -18,12 +18,12 @@ card = TaskCard(
     templates="templates.qa.multiple_choice.open.all",
     __tags__={
         "annotations_creators": ["crowdsourced", "expert-generated"],
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "1K<n<10K",
         "source_datasets": "original",
         "task_categories": "question-answering",

@@ -34,12 +34,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": ["crowdsourced", "machine-generated"],
         "arxiv": "2007.02871",
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": ["crowdsourced", "machine-generated"],
         "license": "mit",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "10K<n<100K",
         "source_datasets": [
             "extended|wikitable_questions",

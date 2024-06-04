@@ -139,10 +139,10 @@ for task_name, task_cfg in task_cfgs.items():
         ),
         __tags__={
             "arxiv": "2308.11462",
+            "flags": ["croissant", "finance", "law", "legal"],
             "language": "en",
             "license": "other",
             "region": "us",
-            "singletons": ["croissant", "finance", "law", "legal"],
             "size_categories": "10K<n<100K",
             "task_categories": [
                 "text-classification",

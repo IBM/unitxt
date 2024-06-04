@@ -77,12 +77,12 @@ def main():
             __tags__={
                 "annotations_creators": "no-annotation",
                 "arxiv": ["2009.03300", "2005.00700", "2005.14165", "2008.02275"],
+                "flags": ["croissant"],
                 "language": "en",
                 "language_creators": "expert-generated",
                 "license": "mit",
                 "multilinguality": "monolingual",
                 "region": "us",
-                "singletons": ["croissant"],
                 "size_categories": "10K<n<100K",
                 "source_datasets": "original",
                 "task_categories": "question-answering",

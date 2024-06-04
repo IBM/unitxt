@@ -159,6 +159,7 @@ for lang in language_codes:
         templates="templates.qa.multiple_choice.with_context.no_intro.all",
         __tags__={
             "arxiv": "2308.16884",
+            "flags": ["croissant"],
             "language": [
                 "af",
                 "am",
@@ -259,7 +260,6 @@ for lang in language_codes:
             ],
             "license": "cc-by-sa-4.0",
             "region": "us",
-            "singletons": ["croissant"],
             "size_categories": "100K<n<1M",
             "task_categories": [
                 "question-answering",

@@ -34,12 +34,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "found",
         "arxiv": ["2110.00976", "2109.00904", "1805.01217", "2104.08671"],
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "10K<n<100K",
         "source_datasets": "extended",
         "task_categories": ["question-answering", "text-classification"],

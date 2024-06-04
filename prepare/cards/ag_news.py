@@ -38,12 +38,12 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "found",
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": "found",
         "license": "unknown",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "100K<n<1M",
         "source_datasets": "original",
         "task_categories": "text-classification",

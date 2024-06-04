@@ -61,12 +61,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": ["crowdsourced", "expert-generated"],
         "arxiv": "2006.08328",
+        "flags": ["Hate Speech Detection", "croissant"],
         "language": "en",
         "language_creators": ["found", "other"],
         "license": "agpl-3.0",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["Hate Speech Detection", "croissant"],
         "size_categories": "n<1K",
         "source_datasets": "original",
         "task_categories": "text-classification",

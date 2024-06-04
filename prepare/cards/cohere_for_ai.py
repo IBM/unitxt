@@ -38,6 +38,7 @@ for subset in subsets:
             templates="templates.qa.open.all",
             __tags__={
                 "arxiv": "2402.06619",
+                "flags": ["croissant"],
                 "language": [
                     "afr",
                     "sqi",
@@ -149,7 +150,6 @@ for subset in subsets:
                 "license": "apache-2.0",
                 "multilinguality": "multilingual",
                 "region": "us",
-                "singletons": ["croissant"],
                 "size_categories": "10K<n<100K",
                 "source_datasets": ["original", "extended"],
                 "task_categories": "text-generation",

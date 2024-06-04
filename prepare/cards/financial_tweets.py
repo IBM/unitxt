@@ -61,12 +61,7 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "other",
-        "language": "en",
-        "language_creators": "other",
-        "license": "mit",
-        "multilinguality": "monolingual",
-        "region": "us",
-        "singletons": [
+        "flags": [
             "croissant",
             "finance",
             "hedgefunds",
@@ -76,6 +71,11 @@ card = TaskCard(
             "twitter",
             "wallstreet",
         ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
         "task_categories": "text-classification",

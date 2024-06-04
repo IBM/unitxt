@@ -14,12 +14,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1606.05250",
+        "flags": ["croissant"],
         "language": "en",
         "language_creators": ["crowdsourced", "found"],
         "license": "cc-by-sa-4.0",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": ["croissant"],
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|wikipedia",
         "task_categories": "question-answering",

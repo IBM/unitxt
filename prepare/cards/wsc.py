@@ -29,17 +29,12 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
+        "flags": ["NLU", "croissant", "natural language understanding", "superglue"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
         "region": "us",
-        "singletons": [
-            "NLU",
-            "croissant",
-            "natural language understanding",
-            "superglue",
-        ],
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|other",
         "task_categories": [
