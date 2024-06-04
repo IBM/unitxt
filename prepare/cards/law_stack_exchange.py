@@ -60,7 +60,7 @@ card = TaskCard(
         "task_categories": "text-classification",
     },
     __description__=(
-        'Dataset Card for Law Stack Exchange Dataset Dataset Summary Dataset from the Law Stack Exchange, as used in "Parameter-Efficient Legal Domain Adaptation". Citation Information @inproceedings{li-etal-2022-parameter, title = "Parameter-Efficient Legal Domain Adaptation", author = "Li, Jonathan and Bhambhoria, Rohan and Zhu, Xiaodan", booktitle = "Proceedings of the Natural Legal Language Processing Workshop 2022", month =… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange.'
+        'Dataset from the Law Stack Exchange, as used in "Parameter-Efficient Legal Domain Adaptation"… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange.'
     ),
 )
 test_card(card, debug=False)

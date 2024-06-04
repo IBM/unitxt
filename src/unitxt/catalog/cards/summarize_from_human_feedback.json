@@ -35,5 +35,5 @@
         "arxiv": "2009.01325",
         "region": "us"
     },
-    "__description__": "Summarize from Feedback contains the human feedback data released by the \"Learning to summarize from human feedback\" paper."
+    "__description__": "Summarize from Feedback contains the human feedback data released by the \"Learning to summarize from human feedback\" paper… See the full description on the dataset page: https://huggingface.co/datasets/openai/summarize_from_feedback"
 }

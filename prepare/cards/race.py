@@ -32,7 +32,7 @@ for subset in ["all", "high", "middle"]:
             "task_ids": "multiple-choice-qa",
         },
         __description__=(
-            'Dataset Card for "race" Dataset Summary RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The dataset is collected from English examinations in China, which are designed for middle school and high school students. The dataset can be served as the training and test sets for machine comprehension. Supported Tasks and Leaderboards More Information Needed Languages More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race.'
+            "RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The dataset is collected from English examinations in China, which are designed for middle school and high school students. The dataset can be served as the training and test sets for machine comprehension. Supported Tasks and Leaderboards More Information Needed Languages More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race."
         ),
     )
     if subset == "middle":
