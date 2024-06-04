@@ -134,13 +134,17 @@ def slice_streams(input_streams, mapping):
         >>> slice_streams(old_streams, mapping)
         {"new_train": [1, 2, 3, 4, 5, 8, 9], "new_test": [12, 13, 14]}
     """
+    from .stream import NoInstancesToGenerateAStreamFromError
+
     new_streams = {}
     for new_stream, sources in mapping.items():
 
         def generator(new_stream, sources):
             for old_stream, slices in sources.items():
                 if old_stream not in input_streams:
-                    raise ValueError(f"'{old_stream}' is not available in input stream")
+                    raise NoInstancesToGenerateAStreamFromError(
+                        f"'{old_stream}' is not available in input streams, but need to slice there from"
+                    )
                 old_stream_content = input_streams[old_stream]
                 for start, end in slices:
                     yield from slice_stream(old_stream_content, start, end)

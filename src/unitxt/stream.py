@@ -7,9 +7,11 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
+from .logging_utils import get_logger
 from .settings_utils import get_settings
 
 settings = get_settings()
+logger = get_logger()
 
 
 class Stream(Dataclass):
@@ -93,6 +95,10 @@ class GeneratorStream(Stream):
             yield instance
 
 
+class NoInstancesToGenerateAStreamFromError(Exception):
+    pass
+
+
 class DynamicStream(Stream):
     generator: Callable
     gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
@@ -107,9 +113,46 @@ class DynamicStream(Stream):
                 for instance in self.generator(**self.gen_kwargs):
                     instances_list.append(instance)
                 self.stream = ListStream(instances_list=instances_list)
-            except:
-                # input stream is empty
-                self.stream = None
+            except Exception as e:
+                if isinstance(e, NoInstancesToGenerateAStreamFromError):
+                    logger.info(
+                        "Recognized cause for self.generator does not yield: problems in spitting and mixing, typically - for demos pool generation. \nStack Trace:"
+                    )
+                    traceback = e.__traceback__
+                    while traceback:
+                        logger.info(
+                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
+                        )
+                        traceback = traceback.tb_next
+                    logger.info("End of Stack Trace")
+                    self.stream = None
+                elif "generator raised StopIteration" in str(e):
+                    logger.info(
+                        f"Self.generator can not yield: {e.__cause__}. \nStack Trace:"
+                    )
+                    traceback = e.__traceback__
+                    while traceback:
+                        logger.info(
+                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
+                        )
+                        traceback = traceback.tb_next
+                    logger.info("End of Stack Trace")
+                    self.stream = None
+                else:
+                    logger.info(
+                        f"Coule not yield from self.generator, for {e}. \nStack Trace:"
+                    )
+                    traceback = e.__traceback__
+                    while traceback:
+                        logger.info(
+                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
+                        )
+                        traceback = traceback.tb_next
+                    logger.info("End of Stack Trace")
+                    raise ValueError(
+                        "Could not generate any instance from input generator"
+                    ) from e
+
         if self.stream is None:
             self.stream = GeneratorStream(
                 generator=self.generator,
