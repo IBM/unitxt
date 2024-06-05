@@ -21,7 +21,7 @@ card = TaskCard(
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
     __description__=(
-        "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables."
+        "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables… See the full description on the dataset page: https://huggingface.co/datasets/wikitablequestions"
     ),
     __tags__={
         "annotations_creators": "crowdsourced",
