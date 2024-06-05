@@ -32,7 +32,6 @@ The rest of this section is dedicated for operators that operates on streams.
 """
 
 from typing import (
-    Generator,
     List,
     Literal,
     Optional,
@@ -45,7 +44,7 @@ from .operator import (
     MultiStreamOperator,
 )
 from .settings_utils import get_settings
-from .stream import GeneratorStream, ListStream
+from .stream import ListStream
 
 settings = get_settings()
 
@@ -109,38 +108,6 @@ class JoinStreams(MultiStreamOperator):
         merged_records = self.merge(multi_stream)
         multi_stream[self.new_stream_name] = ListStream(instances_list=merged_records)
         return multi_stream
-
-
-class MergeStreams(MultiStreamOperator):
-    """Merges multiple streams into a single stream.
-
-    Args:
-        new_stream_name (str): The name of the new stream resulting from the merge.
-        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
-        origin_stream_name_field_name (str): The field name for the origin stream name.
-    """
-
-    streams_to_merge: List[str] = None
-    new_stream_name: str = "all"
-    add_origin_stream_name: bool = True
-    origin_stream_name_field_name: str = "origin"
-
-    def merge(self, multi_stream) -> Generator:
-        for stream_name, stream in multi_stream.items():
-            if self.streams_to_merge is None or stream_name in self.streams_to_merge:
-                for instance in stream:
-                    if self.add_origin_stream_name:
-                        instance[self.origin_stream_name_field_name] = stream_name
-                    yield instance
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        return MultiStream(
-            {
-                self.new_stream_name: GeneratorStream(
-                    self.merge, gen_kwargs={"multi_stream": multi_stream}
-                )
-            }
-        )
 
 
 class DeleteSplits(MultiStreamOperator):
