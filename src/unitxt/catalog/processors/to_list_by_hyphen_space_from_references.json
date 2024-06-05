@@ -2,8 +2,9 @@
     "type": "sequential_operator",
     "steps": [
         {
-            "type": "to_list_by_hyphen_space",
+            "type": "regex_split",
             "field": "references",
+            "by": "(?:^|\n)- ",
             "process_every_value": true
         },
         {

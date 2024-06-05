@@ -33,11 +33,6 @@ class ToListByComma(SplitStrip):
     strip_every_element = True
 
 
-class ToListByHyphenSpace(SplitStrip):
-    delimiter = "- "
-    strip_every_element = True
-
-
 class RegexParser(FieldOperator):
     """A processor that uses regex in order to parse a string."""
 

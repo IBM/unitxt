@@ -1,18 +1,20 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
 from unitxt.operators import RemoveValues
-from unitxt.processors import ToListByHyphenSpace
+from unitxt.string_operators import RegexSplit
+
+regex = "(?:^|\n)- "
 
 add_to_catalog(
     SequentialOperator(
         steps=[
-            ToListByHyphenSpace(field="prediction", process_every_value=False),
+            RegexSplit(field="prediction", by=regex),
             RemoveValues(
                 field="prediction",
                 unallowed_values=["", " "],
                 process_every_value=False,
             ),
-            ToListByHyphenSpace(field="references", process_every_value=True),
+            RegexSplit(field="references", by=regex, process_every_value=True),
             RemoveValues(
                 field="references",
                 unallowed_values=["", " "],
@@ -26,7 +28,7 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
-            ToListByHyphenSpace(field="references", process_every_value=True),
+            RegexSplit(field="references", by=regex, process_every_value=True),
             RemoveValues(
                 field="references",
                 unallowed_values=["", " "],
