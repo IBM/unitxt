@@ -22,7 +22,9 @@ Unitxt conforms to the Huggingface datasets and metrics API, so it can be used w
   scores = metric.compute(predictions=predictions,references=testset)
 
 Note, the `trust_remote_code=True` flag is required because in the background the Huggingface API downloads and installs the
-latest version of unitxt.  The core of unitxt has minimal dependencies (none beyond Huggingface evaluate).
+latest version of Unitxt from https://huggingface.co/datasets/unitxt/data/tree/main.
+
+The core of Unitxt has minimal dependencies (none beyond Huggingface evaluate).
 Note that specific metrics or other operators, may required specific dependencies, which are checked before the first time they are used.
 An error message is printed if the there are missing installed dependencies.
 
@@ -54,3 +56,16 @@ You can then use the API:
 
   scores = evaluate(predictions=predictions, data=test_dataset)
 
+
+If you get an error message like:
+
+```
+datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError: 
+Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0. 
+Please update unitxt package or uninstall it to avoid conflicts.
+```
+
+It means that you are loading datasets using the Huggingface API, but you also have a local version of Unitxt
+installed, and the versions are not compatible.  You should either update the local installed Unitxt
+to the Unitxt Huggingface dataset version, or uninstall the local Unitxt package (in case you don't require the access to Unitxt
+direct APIs)
