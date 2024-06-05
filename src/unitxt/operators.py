@@ -1816,12 +1816,16 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
 
 class JoinStreams(MultiStreamOperator):
-    """Merges multiple streams into a single stream.
+    """Join multiple streams into a single stream.
 
     Args:
+        left_stream (str): The stream that will be considered the "left" in the join operations.
+        right_stream (str): The stream that will be considered the "right" in the join operations.
+        how (Literal["left", "right", "inner", "outer", "cross"]): The type of join to be performed.
+        on (Optional[List[str]]): Column names to join on. These must be found in both streams.
+        left_on (Optional[List[str]]): Column  names to join on in the left stream.
+        right_on (Optional[List[str]]): Column  names to join on in the right streasm.
         new_stream_name (str): The name of the new stream resulting from the merge.
-        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
-        origin_stream_name_field_name (str): The field name for the origin stream name.
     """
 
     left_stream: str
@@ -1851,8 +1855,6 @@ class JoinStreams(MultiStreamOperator):
         col_to_remove = list(common_cols - on_cols)
         left_stream_df = left_stream_df.drop(columns=col_to_remove, errors="ignore")
         right_stream_df = right_stream_df.drop(columns=col_to_remove, errors="ignore")
-
-        # TODO: We remove 'recipe_metadata'. Is that ok?
 
         merged_df = pd.merge(
             left_stream_df,
