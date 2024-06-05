@@ -85,7 +85,6 @@
     "__tags__": {
         "annotations_creators": "crowdsourced",
         "arxiv": "2005.00547",
-        "croissant": true,
         "language": "en",
         "language_creators": "found",
         "license": "apache-2.0",
@@ -99,5 +98,5 @@
             "multi-label-classification"
         ]
     },
-    "__description__": "Dataset Card for Go Emotions\nDataset Summary\nThe GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral.\nThis card contains the simplified version of the dataset with predefined train/val/test splits.\nSee full description on the dataset page: https://huggingface.co/datasets/go_emotions."
+    "__description__": "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
 }

@@ -50,11 +50,12 @@
     },
     "__tags__": {
         "arxiv": "2308.11462",
-        "croissant": true,
-        "finance": true,
+        "flags": [
+            "finance",
+            "law",
+            "legal"
+        ],
         "language": "en",
-        "law": true,
-        "legal": true,
         "license": "other",
         "region": "us",
         "size_categories": "10K<n<100K",
@@ -64,5 +65,5 @@
             "text-generation"
         ]
     },
-    "__description__": "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+    "__description__": "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models… See the full description on the dataset page: https://huggingface.co/datasets/nguha/legalbench"
 }

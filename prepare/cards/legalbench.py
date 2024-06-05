@@ -139,11 +139,8 @@ for task_name, task_cfg in task_cfgs.items():
         ),
         __tags__={
             "arxiv": "2308.11462",
-            "croissant": True,
-            "finance": True,
+            "flags": ["finance", "law", "legal"],
             "language": "en",
-            "law": True,
-            "legal": True,
             "license": "other",
             "region": "us",
             "size_categories": "10K<n<100K",
@@ -154,7 +151,7 @@ for task_name, task_cfg in task_cfgs.items():
             ],
         },
         __description__=(
-            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models… See the full description on the dataset page: https://huggingface.co/datasets/nguha/legalbench"
         ),
     )
 
