@@ -50,13 +50,11 @@ from typing import (
     Generator,
     Iterable,
     List,
-    Literal,
     Optional,
     Tuple,
     Union,
 )
 
-import pandas as pd
 import requests
 
 from .artifact import Artifact, fetch_artifact
@@ -78,7 +76,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, ListStream, Stream
+from .stream import Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -1815,99 +1813,6 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
-class JoinStreams(MultiStreamOperator):
-    """Join multiple streams into a single stream.
-
-    Args:
-        left_stream (str): The stream that will be considered the "left" in the join operations.
-        right_stream (str): The stream that will be considered the "right" in the join operations.
-        how (Literal["left", "right", "inner", "outer", "cross"]): The type of join to be performed.
-        on (Optional[List[str]]): Column names to join on. These must be found in both streams.
-        left_on (Optional[List[str]]): Column  names to join on in the left stream.
-        right_on (Optional[List[str]]): Column  names to join on in the right streasm.
-        new_stream_name (str): The name of the new stream resulting from the merge.
-
-    Examples:
-       JoinStreams(left_stream = "questions", right_stream = "answers", how="inner", on="question_id", new_stream_name="question_with_answers" ) Join the 'question' and 'answer' stream based on the 'question_id' field using inner join, resulting with a new stream named "question_with_answers".
-       JoinStreams(left_stream = "questions", right_stream = "answers", how="inner", on_left="question_id", on_right="question" new_stream_name="question_with_answers" ) Join the 'question' and 'answer' stream based on the 'question_id' field in the left stream and the 'question' field in the right stream, using inner join, resulting with a new stream named "question_with_answers". This is suitable when the fields have different labels across the streams.
-    """
-
-    left_stream: str
-    right_stream: str
-    how: Literal["left", "right", "inner", "outer", "cross"]
-    on: Optional[List[str]] = None
-    left_on: Optional[List[str]] = None
-    right_on: Optional[List[str]] = None
-    new_stream_name: str
-
-    def merge(self, multi_stream) -> List:
-        assert self.right_stream in multi_stream and self.left_stream in multi_stream
-        stream_dict = dict(multi_stream.items())
-        left_stream = list(stream_dict[self.left_stream])
-        right_stream = list(stream_dict[self.right_stream])
-        left_stream_df = pd.DataFrame(left_stream)
-        right_stream_df = pd.DataFrame(right_stream)
-
-        # Remove common col we don't join on, so we don't have unexpected column (standard behavior is to add a suffix)
-        common_cols = set(left_stream_df.columns).intersection(
-            set(right_stream_df.columns)
-        )
-        on = self.on if self.on is not None else []
-        left_on = self.left_on if self.left_on is not None else []
-        right_on = self.right_on if self.right_on is not None else []
-        on_cols = set(on + left_on + right_on)
-        col_to_remove = list(common_cols - on_cols)
-        left_stream_df = left_stream_df.drop(columns=col_to_remove, errors="ignore")
-        right_stream_df = right_stream_df.drop(columns=col_to_remove, errors="ignore")
-
-        merged_df = pd.merge(
-            left_stream_df,
-            right_stream_df,
-            how=self.how,
-            on=self.on,
-            left_on=self.left_on,
-            right_on=self.right_on,
-        )
-        return merged_df.to_dict(orient="records")
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        merged_records = self.merge(multi_stream)
-        multi_stream[self.new_stream_name] = ListStream(instances_list=merged_records)
-        return multi_stream
-
-
-class MergeStreams(MultiStreamOperator):
-    """Merges multiple streams into a single stream.
-
-    Args:
-        new_stream_name (str): The name of the new stream resulting from the merge.
-        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
-        origin_stream_name_field_name (str): The field name for the origin stream name.
-    """
-
-    streams_to_merge: List[str] = None
-    new_stream_name: str = "all"
-    add_origin_stream_name: bool = True
-    origin_stream_name_field_name: str = "origin"
-
-    def merge(self, multi_stream) -> Generator:
-        for stream_name, stream in multi_stream.items():
-            if self.streams_to_merge is None or stream_name in self.streams_to_merge:
-                for instance in stream:
-                    if self.add_origin_stream_name:
-                        instance[self.origin_stream_name_field_name] = stream_name
-                    yield instance
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        return MultiStream(
-            {
-                self.new_stream_name: GeneratorStream(
-                    self.merge, gen_kwargs={"multi_stream": multi_stream}
-                )
-            }
-        )
-
-
 class Shuffle(PagedStreamOperator):
     """Shuffles the order of instances in each page of a stream.
 
@@ -2311,19 +2216,3 @@ class DuplicateInstances(StreamOperator):
                 f"If given, duplication_index_field must be a string. "
                 f"Got: {self.duplication_index_field}"
             )
-
-
-class DeleteSplits(MultiStreamOperator):
-    """Operator which delete splits in stream.
-
-    Attributes:
-        splits (List[str]): The splits to delete from the stream.
-    """
-
-    splits: List[str]
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        generators = {
-            key: val for key, val in multi_stream.items() if key not in self.splits
-        }
-        return MultiStream(generators)
