@@ -2314,6 +2314,12 @@ class DuplicateInstances(StreamOperator):
 
 
 class DeleteSplits(MultiStreamOperator):
+    """Operator which delete splits in stream.
+
+    Attributes:
+        splits (List[str]): The splits to delete from the stream.
+    """
+
     splits: List[str]
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
