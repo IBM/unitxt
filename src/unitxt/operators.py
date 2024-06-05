@@ -1826,6 +1826,10 @@ class JoinStreams(MultiStreamOperator):
         left_on (Optional[List[str]]): Column  names to join on in the left stream.
         right_on (Optional[List[str]]): Column  names to join on in the right streasm.
         new_stream_name (str): The name of the new stream resulting from the merge.
+
+    Examples:
+       JoinStreams(left_stream = "questions", right_stream = "answers", how="inner", on="question_id", new_stream_name="question_with_answers" ) Join the 'question' and 'answer' stream based on the 'question_id' field using inner join, resulting with a new stream named "question_with_answers".
+       JoinStreams(left_stream = "questions", right_stream = "answers", how="inner", on_left="question_id", on_right="question" new_stream_name="question_with_answers" ) Join the 'question' and 'answer' stream based on the 'question_id' field in the left stream and the 'question' field in the right stream, using inner join, resulting with a new stream named "question_with_answers". This is suitable when the fields have different labels across the streams.
     """
 
     left_stream: str
