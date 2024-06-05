@@ -43,6 +43,7 @@ from unitxt.operators import (
     RemoveFields,
     RemoveValues,
     RenameFields,
+    SelectFields,
     Shuffle,
     ShuffleFieldValues,
     SplitByValue,
@@ -3137,4 +3138,20 @@ Agent:"""
         self.assertListEqual(list(output_multi_stream.keys()), ["questions"])
         joined_stream = list(output_multi_stream["questions"])
         expected_joined_stream = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
+        TestOperators().compare_streams(joined_stream, expected_joined_stream)
+
+    def test_select_fields(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {"question": "question_1", "id_1": "1", "id_2": "1"},
+                ],
+            }
+        )
+        output_multi_stream = SelectFields(fields=["question", "id_1"])(
+            input_multi_stream
+        )
+        self.assertListEqual(list(output_multi_stream.keys()), ["questions"])
+        joined_stream = list(output_multi_stream["questions"])
+        expected_joined_stream = [{"question": "question_1", "id_1": "1"}]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
