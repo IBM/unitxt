@@ -17,7 +17,7 @@
             "type": "add_fields",
             "fields": {
                 "type_of_input": "table",
-                "type_of_output": "text"
+                "type_of_output": "description"
             }
         },
         {
@@ -45,38 +45,8 @@
             }
         }
     ],
-    "task": {
-        "type": "task",
-        "inputs": {
-            "input": "str",
-            "type_of_input": "str",
-            "type_of_output": "str"
-        },
-        "outputs": {
-            "output": "str"
-        },
-        "prediction_type": "str",
-        "metrics": [
-            "metrics.bleu",
-            "metrics.rouge",
-            "metrics.bert_score.bert_base_uncased",
-            "metrics.meteor"
-        ],
-        "augmentable_inputs": [
-            "input"
-        ]
-    },
-    "templates": {
-        "type": "templates_list",
-        "items": [
-            {
-                "type": "input_output_template",
-                "input_format": "Given the following {type_of_input}, generate the corresponding {type_of_output}. {type_of_input}: {input}",
-                "output_format": "{output}",
-                "postprocessors": []
-            }
-        ]
-    },
+    "task": "tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]]",
+    "templates": "templates.generation.all",
     "__description__": "NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     "__tags__": {
         "modality": "table",

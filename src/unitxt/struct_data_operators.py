@@ -578,6 +578,8 @@ class MapHTMLTableToJSON(FieldOperator):
     }
     """
 
+    _requirements_list = ["bs4"]
+
     def process_value(self, table: Any) -> Any:
         return self.truncate_table_rows(table_content=table)
 
