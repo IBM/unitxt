@@ -1320,13 +1320,13 @@ class FilterByCondition(StreamOperator):
 
 
 class FilterByConditionBasedOnFields(FilterByCondition):
-    """Filters a stream, yielding only instances in which the values in required fields follow the required condition operator. The value is another field in the dataset.
+    """Filters a stream based on a condition between 2 fields values.
 
-    Raises an error if a required field name is missing from the input instance.
+    Raises an error if either of the required fields names is missing from the input instance.
 
     Args:
-       values (Dict[str, str]): Field namesthat instances must match according the condition, to be included in the output.
-       condition: the name of the desired condition operator between the specified (sub) field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+       values (Dict[str, str]): The fields names that the filter operation is based on.
+       condition: the name of the desired condition operator between the specified field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
