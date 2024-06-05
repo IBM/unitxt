@@ -66,7 +66,7 @@ card = TaskCard(
         "task_ids": "topic-classification",
     },
     __description__=(
-        "Yahoo! Answers Topic Classification is text classification dataset. The dataset is the Yahoo! Answers corpus as of 10/25/2007. The Yahoo! Answers topic classification dataset is constructed using 10 largest main categories. From all the answers and other meta-information, this dataset only used the best answer content and the main category information."
+        "Yahoo! Answers Topic Classification is text classification dataset. The dataset is the Yahoo! Answers corpus as of 10/25/2007. The Yahoo! Answers topic classification dataset is constructed using 10 largest main categories. From all the answers and other meta-information, this dataset only used the best answer content and the main category information… See the full description on the dataset page: https://huggingface.co/datasets/yahoo_answers_topics"
     ),
 )
 test_card(card, debug=False)
