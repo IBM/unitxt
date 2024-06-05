@@ -234,24 +234,31 @@ class PerformanceDropRateFloatsReducer(ControlComparisonFloatsReducer):
 
 
 class Aggregator(Artifact):
-    @abstractmethod
+    aggregating_func: callable
+
     def aggregate_one_group_score_names(
         self, instances: List[Dict[str, Any]], score_names: List[str]
     ) -> dict:
-        pass
+        result = {}
+        for score_name in score_names:
+            result[score_name] = self.aggregating_func(instances, score_name)
+        return result
+
+
+def average_item_scores(instances: List[dict], score_name: str):
+    """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
+
+    Args:
+        instances: list of dicts of each instance's instance scores.
+        score_name: score field names to compute the mean for.
+    """
+    return nan_mean(
+        [instance["score"]["instance"][score_name] for instance in instances]
+    )
 
 
 class AverageItemsAggregator(Aggregator):
-    @staticmethod
-    def aggregate_one_group_score_names(
-        instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        return {
-            score_name: MetricWithConfidenceInterval.average_item_scores(
-                instances=instances, score_name=score_name
-            )
-            for score_name in score_names
-        }
+    aggregating_func = Field(default_factory=lambda: average_item_scores)
 
 
 class MetricWithConfidenceInterval(Metric):
@@ -323,17 +330,17 @@ class MetricWithConfidenceInterval(Metric):
             and num_predictions > 1
         )
 
-    @staticmethod
-    def average_item_scores(instances: List[dict], score_name: str):
-        """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
+    # @staticmethod
+    # def average_item_scores(instances: List[dict], score_name: str):
+    #     """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
 
-        Args:
-            instances: list of dicts of each instance's instance scores.
-            score_name: score field names to compute the mean for.
-        """
-        return nan_mean(
-            [instance["score"]["instance"][score_name] for instance in instances]
-        )
+    #     Args:
+    #         instances: list of dicts of each instance's instance scores.
+    #         score_name: score field names to compute the mean for.
+    #     """
+    #     return nan_mean(
+    #         [instance["score"]["instance"][score_name] for instance in instances]
+    #     )
 
     @staticmethod
     def max_item_scores(instances: List[dict], score_name: str):
@@ -392,7 +399,7 @@ class MetricWithConfidenceInterval(Metric):
             # if aggregation_func is None, we simply take the mean of the resampled instance scores
             # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
-            aggregation_func = AverageItemsAggregator.aggregate_one_group_score_names
+            aggregation_func = AverageItemsAggregator().aggregate_one_group_score_names
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -673,7 +680,7 @@ class MetricWithConfidenceInterval(Metric):
             instances=to_sample_from,
             score_names=list(set(self.ci_scores)),
             ci_score_prefix=score_prefix,
-            aggregation_func=AverageItemsAggregator.aggregate_one_group_score_names,
+            aggregation_func=AverageItemsAggregator().aggregate_one_group_score_names,
         )
 
 
@@ -744,6 +751,8 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
             instance["score"]["instance"].update(instance_score)
 
         class GlobalMetricAggregator(Aggregator):
+            aggregating_func = None
+
             @staticmethod
             def aggregate_one_group_score_names(
                 instances: List[Dict[str, Any]], score_names: List[str]
@@ -815,16 +824,9 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
 
 
 class MaxItemsAggregator(Aggregator):
-    @staticmethod
-    def aggregate_one_group_score_names(
-        instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        return {
-            score_name: MetricWithConfidenceInterval.max_item_scores(
-                instances=instances, score_name=score_name
-            )
-            for score_name in score_names
-        }
+    aggregating_func = Field(
+        default_factory=lambda: MetricWithConfidenceInterval.max_item_scores
+    )
 
 
 class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
