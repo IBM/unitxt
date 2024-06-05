@@ -41,8 +41,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "expert-generated",
         "arxiv": "2107.03374",
-        "code-generation": True,
-        "croissant": True,
+        "flags": ["code-generation"],
         "language": "en",
         "language_creators": "expert-generated",
         "license": "mit",
@@ -53,12 +52,7 @@ card = TaskCard(
         "task_categories": "text2text-generation",
     },
     __description__=(
-        "Dataset Card for OpenAI HumanEval\n"
-        "Dataset Summary\n"
-        "The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models.\n"
-        "Supported Tasks and Leaderboards\n"
-        "Languages\n"
-        "The programming problems are written in Python and contain English natural text in comments and… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval."
+        "The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval."
     ),
 )
 

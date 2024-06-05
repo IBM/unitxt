@@ -17,11 +17,16 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    TemplatesList(
-        [
-            "templates.generation.default",
-        ]
+    InputOutputTemplate(
+        input_format="{input}",
+        output_format="{output}",
     ),
+    "templates.generation.empty",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(["templates.generation.default", "templates.generation.empty"]),
     "templates.generation.all",
     overwrite=True,
 )

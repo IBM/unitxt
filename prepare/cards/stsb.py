@@ -30,14 +30,11 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": True,
-        "croissant": True,
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": True,
-        "qa-nli": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -51,13 +48,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE\n"
-        "Dataset Summary\n"
-        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
-        "Supported Tasks and Leaderboards\n"
-        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
-        "ax\n"
-        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Semantic Textual Similarity Benchmark (Cer et al., 2017) is a collection of sentence pairs drawn from news headlines, video and image captions, and natural language inference data. Each pair is human-annotated with a similarity score from 1 to 5… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

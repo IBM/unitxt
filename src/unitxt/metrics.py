@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
+from operator import itemgetter
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
@@ -95,6 +96,28 @@ class Metric(Artifact):
     # parsing on every use
     _parsed_prediction_type = None
 
+    #
+    # Used to add a prefix to all score, except the "score_name" and "score" fields.
+    # This is used to distinguish two scores of the same metrics, operating on different fields of the task
+    #
+    score_prefix: str = ""
+
+    def _add_score_prefix(self, score_name):
+        return (
+            self.score_prefix + score_name
+            if score_name not in ["score", "score_name"]
+            else score_name
+        )
+
+    def _add_score_prefixes_to_score_dict(self, scores: Dict[str, Any]):
+        new_scores = {}
+        for score_name, score in scores.items():
+            score_with_prefix = self._add_score_prefix(score_name)
+            new_scores[score_with_prefix] = (
+                score if score_name not in ["score_name"] else self.score_prefix + score
+            )
+        return new_scores
+
     def _validate_references_and_prediction(self, references, predictions):
         if not isoftype(predictions, List[Any]):
             raise ValueError(
@@ -152,7 +175,7 @@ class Metric(Artifact):
             self._parsed_prediction_type = parse_type_string(self.prediction_type)
         except ValueError:
             raise ValueError(
-                "Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
+                f"Could convert prediction type '{self.prediction_type}' in {self.get_metric_name()} to known type.  To enable type checking for this prediction type, open unitxt issue with this message. Alternatively, set the metric's prediction_type to 'Any'"
             ) from None
         return self._parsed_prediction_type
 
@@ -167,6 +190,7 @@ class Metric(Artifact):
         additional_inputs = []
         instances = []
         for instance in stream:
+            instance = self.verify_instance(instance)
             references.append(instance["references"])
             predictions.append(instance["prediction"])
             additional_inputs.append(
@@ -446,15 +470,16 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
             instance_references, instance_prediction = (
                 instance["references"],
                 instance["prediction"],
             )
+
             references.append(instance_references)
             predictions.append(instance_prediction)
             instances.append(instance)
@@ -464,6 +489,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
             )
             task_data.append(instance_task_data)
             instance_score = None
+
             # for backward compatibility
             no_score_value = np.nan
             if self.process_single_instances:
@@ -484,13 +510,14 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 if isinstance(self.main_score, str):
                     instance_score[self.main_score] = no_score_value
 
-            instance["score"]["instance"].update(instance_score)
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(instance_score)
+            )
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
 
-        global_score.update(result)
-
+        global_score.update(self._add_score_prefixes_to_score_dict(result))
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
             references, predictions, task_data, score_name
@@ -498,7 +525,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         global_score.update(confidence_interval)
 
         for instance in instances:
-            instance["score"]["global"] = global_score
+            instance["score"]["global"].update(global_score)
             yield instance
 
     def _compute(
@@ -537,6 +564,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
     main_score: str
+
     reduction_map: Dict[str, List[str]]
 
     implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
@@ -550,7 +578,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             list,
             zip(
                 *[
-                    (instance["references"], instance["prediction"])
+                    itemgetter("references", "prediction")(
+                        self.verify_instance(instance)
+                    )
                     for instance in stream
                 ]
             ),
@@ -575,12 +605,11 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance, score in zip(stream, instance_scores):
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
-            instance["score"]["instance"].update(score)
-
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(score)
+            )
             instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
@@ -590,27 +619,32 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
             if reduction == "mean":
                 for field_name in fields:
-                    global_score[field_name] = mean(
+                    field_name_with_prefix = self._add_score_prefix(field_name)
+                    global_score[field_name_with_prefix] = mean(
                         [
-                            instance["score"]["instance"][field_name]
+                            instance["score"]["instance"][field_name_with_prefix]
                             for instance in instances
                         ]
                     )
                     if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name]
-                        global_score["score_name"] = self.main_score
+                        global_score["score"] = global_score[field_name_with_prefix]
+                        global_score["score_name"] = self.score_prefix + self.main_score
 
                 ci_fields = (
                     list(set(self.ci_scores))
                     if self.ci_scores is not None
                     else [self.main_score]
                 )
+                ci_fields_with_prefix = [
+                    self._add_score_prefix(ci_field) for ci_field in ci_fields
+                ]
                 confidence_interval = self.score_based_confidence_interval(
-                    instances=instances, score_names=ci_fields
+                    instances=instances, score_names=ci_fields_with_prefix
                 )
                 global_score.update(confidence_interval)
 
         for instance in instances:
+            instance["score"]["global"].update(global_score)
             yield instance
 
     @abstractmethod
@@ -749,8 +783,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances, global_score = self.compute_instance_scores(stream)
-
+        instances = self.compute_instance_scores(stream)
+        global_score = {}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -796,7 +830,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
             # calculate global scores for each reduction field
             for field_name in reduction_fields:
-                field_name_full = field_name_full_prefix + field_name
+                field_name_full = (
+                    field_name_full_prefix + self.score_prefix + field_name
+                )
                 # if group resampling (3rd element of agg_func parameter) is True, then
                 #   1. scores_to_resample are the group scores, and
                 #   2. aggregation_function is to take the raw mean
@@ -805,7 +841,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 #   2. aggregation_function is to apply the group aggregation from the instance scores
                 # either way, the application of aggregation_function to scores_to_resample yields the global score
                 global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, field_name
+                    scores_to_resample, self.score_prefix + field_name
                 )
                 if field_name == self.main_score:
                     global_score["score"] = global_score[field_name_full]
@@ -816,21 +852,26 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             if self.ci_scores is not None:
                 confidence_interval = self.score_based_confidence_interval(
                     instances=scores_to_resample,
-                    score_names=list(set(self.ci_scores)),
+                    score_names=[
+                        self.score_prefix + ci_score for ci_score in set(self.ci_scores)
+                    ],
                     ci_score_prefix=field_name_full_prefix,
                     aggregation_func=aggregation_function,
                 )
                 global_score.update(confidence_interval)
 
+        for instance in instances:
+            instance["score"]["global"].update(global_score)
         yield from instances
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        global_score = {}
         instances = []
 
         for instance in stream:
+            instance = self.verify_instance(instance)
+
             task_data = instance["task_data"] if "task_data" in instance else {}
 
             if self.reference_field == "references":
@@ -850,18 +891,19 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score = self.compute(
                 references=refs, prediction=pred, task_data=task_data
             )
+
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
             if "score" not in instance:
-                instance["score"] = {"global": global_score, "instance": {}}
-            else:
-                global_score = instance["score"]["global"]
+                instance["score"] = {"global": {}, "instance": {}}
 
-            instance["score"]["instance"].update(instance_score)
+            instance["score"]["instance"].update(
+                self._add_score_prefixes_to_score_dict(instance_score)
+            )
 
             instances.append(instance)
 
-        return instances, global_score
+        return instances
 
     def get_group_scores(
         self, instances: List[dict], score_names: List[str], group_aggregation_func
@@ -1083,8 +1125,14 @@ class MetricPipeline(MultiStreamOperator, Metric):
         super().prepare()
         self.prepare_score = CopyFields(
             field_to_field=[
-                [f"score/instance/{self.main_score}", "score/instance/score"],
-                [f"score/global/{self.main_score}", "score/global/score"],
+                [
+                    f"score/instance/{self.metric._add_score_prefix(self.main_score)}",
+                    "score/instance/score",
+                ],
+                [
+                    f"score/global/{self.metric._add_score_prefix(self.main_score)}",
+                    "score/global/score",
+                ],
             ],
         )
 
@@ -2099,6 +2147,7 @@ class LlamaIndexCorrectness(InstanceMetric):
     ] = []  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
+    data_classification_policy = ["public"]
 
     _requirements_list: List[str] = ["llama_index"]
 
@@ -2179,11 +2228,6 @@ class LlamaIndexCorrectness(InstanceMetric):
         """
         # treat the references as the questions and the predictions as answers
         # assume a single reference
-
-        assert (
-            not self._model_using_extrnal_api()
-            or settings.allow_passing_data_to_remote_api
-        ), f"Cannot run send data to remote APIs ({self.model_name}) when unitxt.settings.allow_passing_data_to_remote_api=False.  Set UNITXT_ALLOW_PASSING_DATA_TO_REMOTE_API environment variable, if you want to allow this."
 
         query = task_data["question"]
 
@@ -2747,10 +2791,12 @@ class RemoteMetric(StreamOperator, Metric):
     endpoint: str
     metric_name: str
     api_key: str = None
+    data_classification_policy = ["public", "proprietary"]
 
     @staticmethod
     def wrap_inner_metric_pipeline_metric(
-        metric_pipeline: MetricPipeline, remote_metrics_endpoint: str
+        metric_pipeline: MetricPipeline,
+        remote_metrics_endpoint: str,
     ) -> MetricPipeline:
         """Wrap the inner metric in a MetricPipeline with a RemoteMetric.
 

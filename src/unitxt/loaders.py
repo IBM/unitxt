@@ -34,6 +34,8 @@ import fnmatch
 import itertools
 import os
 import tempfile
+from abc import abstractmethod
+from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -47,6 +49,7 @@ from .dataclass import InternalField, OptionalField
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
+from .operators import AddFields
 from .settings_utils import get_settings
 from .stream import GeneratorStream, MultiStream
 
@@ -94,6 +97,42 @@ class Loader(SourceOperator):
         logger.info(
             f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
         )
+
+    def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
+        if self.data_classification_policy is None:
+            get_logger().warning(
+                f"The {self.get_pretty_print_name()} loader does not set the `data_classification_policy`. "
+                f"This may lead to sending of undesired data to external services.\n"
+                f"Set it to a list of classification identifiers. \n"
+                f"For example:\n"
+                f"data_classification_policy = ['public']\n"
+                f" or \n"
+                f"data_classification_policy =['confidential','pii'])\n"
+            )
+
+        operator = AddFields(
+            fields={"data_classification_policy": self.data_classification_policy}
+        )
+        return operator(multi_stream)
+
+    def sef_default_data_classification(
+        self, default_data_classification_policy, additional_info
+    ):
+        if self.data_classification_policy is None:
+            logger.info(
+                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
+                f"{default_data_classification_policy} by default {additional_info}.\n"
+                "To use a different value or remove this message, explicitly set the "
+                "`data_classification_policy` attribute of the loader.\n"
+            )
+            self.data_classification_policy = default_data_classification_policy
+
+    @abstractmethod
+    def load_data(self):
+        pass
+
+    def process(self) -> MultiStream:
+        return self.add_data_classification(self.load_data())
 
 
 class LoadHF(Loader):
@@ -229,7 +268,15 @@ class LoadHF(Loader):
             }
         )
 
-    def process(self):
+    def load_data(self):
+        if os.path.exists(self.path):
+            self.sef_default_data_classification(
+                ["proprietary"], "when loading from local files"
+            )
+        else:
+            self.sef_default_data_classification(
+                ["public"], "when loading from Huggingface hub"
+            )
         try:
             dataset = self.stream_dataset()
         except (
@@ -297,7 +344,10 @@ class LoadCSV(Loader):
 
         yield from self._cache[file]
 
-    def process(self):
+    def load_data(self):
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from local files"
+        )
         if self.streaming:
             return MultiStream(
                 {
@@ -352,7 +402,7 @@ class LoadFromSklearn(Loader):
 
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
-    def process(self):
+    def load_data(self):
         with TemporaryDirectory() as temp_directory:
             for split in self.splits:
                 split_data = self.downloader(subset=split)
@@ -388,6 +438,7 @@ class LoadFromKaggle(Loader):
     url: str
 
     _requirements_list: List[str] = ["opendatasets"]
+    data_classification_policy = ["public"]
 
     def verify(self):
         super().verify()
@@ -405,7 +456,7 @@ class LoadFromKaggle(Loader):
 
         self.downloader = download
 
-    def process(self):
+    def load_data(self):
         with TemporaryDirectory() as temp_directory:
             self.downloader(self.url, temp_directory)
             dataset = hf_load_dataset(temp_directory, streaming=False)
@@ -453,6 +504,7 @@ class LoadFromIBMCloud(Loader):
 
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     caching: bool = True
+    data_classification_policy = ["proprietary"]
 
     _requirements_list: List[str] = ["ibm_boto3"]
 
@@ -521,7 +573,10 @@ class LoadFromIBMCloud(Loader):
         if self.streaming:
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
-    def process(self):
+    def load_data(self):
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from IBM COS"
+        )
         import ibm_boto3
 
         cos = ibm_boto3.resource(
@@ -602,7 +657,14 @@ class MultipleSourceLoader(Loader):
 
     sources: List[Loader]
 
-    def process(self):
+    # MultipleSourceLoaders uses the the data classification from source loaders,
+    # so only need to add it, if explicitly requested to override.
+    def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
+        if self.data_classification_policy is None:
+            return multi_stream
+        return super().add_data_classification(multi_stream)
+
+    def load_data(self):
         return FixedFusion(
             origins=self.sources, max_instances_per_origin_split=self.get_limit()
         ).process()
@@ -630,8 +692,11 @@ class LoadFromDictionary(Loader):
 
     data: Dict[str, List[Dict[str, Any]]]
 
-    def process(self) -> MultiStream:
-        return MultiStream.from_iterables(self.data)
+    def load_data(self) -> MultiStream:
+        self.sef_default_data_classification(
+            ["proprietary"], "when loading from python dictionary"
+        )
+        return MultiStream.from_iterables(deepcopy(self.data))
 
 
 class LoadFromHFSpace(LoadHF):
@@ -799,7 +864,10 @@ class LoadFromHFSpace(LoadHF):
                 f"Loader does not support input 'data_files' of type {type(self.data_files)}"
             )
 
-    def process(self):
+    def load_data(self):
+        self.sef_default_data_classification(
+            ["public"], "when loading from Huggingface spaces"
+        )
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
-        return super().process()
+        return super().load_data()
