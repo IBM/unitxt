@@ -567,7 +567,8 @@ class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
 
-class ListsTableToJSON(FieldOperator):
+
+class MapTableListsToStdTableJSON(FieldOperator):
     """Converts lists table format to the basic one (JSON).
 
     JSON format
@@ -578,8 +579,7 @@ class ListsTableToJSON(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        return self.truncate_table_rows(table_content=table)
+        return self.map_tablelists_to_stdtablejson_util(table_content=table)
 
-    def truncate_table_rows(self, table_content: str) -> Dict:
-
+    def map_tablelists_to_stdtablejson_util(self, table_content: str) -> Dict:
         return {"header": table_content[0], "rows": table_content[1:]}

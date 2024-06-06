@@ -1,4 +1,5 @@
 from unitxt.blocks import (
+    CopyFields,
     LoadHF,
     SerializeTableAsIndexedRowMajor,
     TaskCard,
@@ -6,7 +7,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.splitters import SplitRandomMix
-from unitxt.struct_data_operators import ListsTableToJSON
+from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -15,20 +16,29 @@ card = TaskCard(
     loader=LoadHF(path="dreamerdeo/finqa"),  # TODO: load from github repo, no "program"
     preprocess_steps=[
         SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
-        ListsTableToJSON(),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["serialized_triples", "table"]]),
+        CopyFields(field_to_field=[["pre_text/0", "pre_text"]]),
+        CopyFields(field_to_field=[["post_text/0", "post_text"]]),
+        MapTableListsToStdTableJSON(field_to_field=[["table", "stdtable"]]),
+        SerializeTableAsIndexedRowMajor(
+            field_to_field=[["stdtable", "serialized_table"]]
+        ),
     ],
     task=Task(
-        inputs={"pre-text": "str", "table": "str", "post-text": "str", "question": "str"},
-        outputs={"output": "str"},
+        inputs={
+            "pre_text": "str",
+            "serialized_table": "str",
+            "post_text": "str",
+            "question": "str",
+        },
+        outputs={"answer": "str"},
         prediction_type="str",
-        metrics=[], # TODO: add the script metric
-        augmentable_inputs=["pre-text", "table", "post-text", "question"],
+        metrics=[],  # TODO: add the script metric
+        augmentable_inputs=["pre_text", "serialized_table", "post_text", "question"],
     ),
     templates=TemplatesList(
         [
             InputOutputTemplate(
-                input_format="""Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific langauge (DSL) that will be executed to get the answer.
+                input_format="""Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific language (DSL) that will be executed to get the answer.
                     The DSL consists of mathematical operations and table operations as executable programs. The program consists of a sequence of operations. Each operation takes a list of arguments.
                     There are 6 mathematical operations: add, subtract, multiply, divide, greater, exp, and 4 table aggregation operations table-max, table-min, table-sum, table-average, that apply aggregation operations on table rows. The mathematical operations take arguments of either numbers from the given reports, or a numerical result from a previous step.
                     The table operations take arguments of table row names. We use the special token #n to denote the result from the nth step.
@@ -36,7 +46,7 @@ card = TaskCard(
                     Definitions of all operations:
                     [["Name", "Arguments", "Output", "Description"],
                     ["add", "number1, number2", "number", "add two numbers: number1 + number2"],
-                    ["subtract", "number1, number2", "number", "subtract two numbers: number1 − number2"],
+                    ["subtract", "number1, number2", "number", "subtract two numbers: number1 - number2"],
                     ["multiply", "number1, number2", "number", "multiply two numbers: number1 * number2"],
                     ["divide", "number1, number2", "number", "multiply two numbers: number1 / number2"],
                     ["exp", "number1, number2", "number", "exponential: number1 ^ number2"],
@@ -46,9 +56,9 @@ card = TaskCard(
                     ["table-max", "table header", "number", "the maximum number of one table row"],
                     ["table-min", "table header", "number", "the minimum number of one table row"]]
                     Answer with only the program, without any additional explanation.
-                    Pre-table text: {pre-text}
-                    Table: {table}
-                    Post-table text: {post-text}
+                    Pre-table text: {pre_text}
+                    Table: {serialized_table}
+                    Post-table text: {post_text}
                     Question: {question}
                     Program:
                         """,
@@ -59,10 +69,12 @@ card = TaskCard(
     ),
     __tags__={
         "modality": "table",
-        "urls": {"arxiv": "https://www.semanticscholar.org/reader/99053e3a708fc27709c9dab33110dc98b187c158"},
+        "urls": {
+            "arxiv": "https://www.semanticscholar.org/reader/99053e3a708fc27709c9dab33110dc98b187c158"
+        },
         "languages": ["english"],
     },
 )
 
-test_card(card, num_demos=2)
+test_card(card, num_demos=2, demos_pool_size=10)
 add_to_catalog(card, "cards.fin_qa", overwrite=True)
