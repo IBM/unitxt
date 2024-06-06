@@ -1317,6 +1317,52 @@ class FilterByCondition(StreamOperator):
         return True
 
 
+class FilterByConditionBasedOnFields(FilterByCondition):
+    """Filters a stream based on a condition between 2 fields values.
+
+    Raises an error if either of the required fields names is missing from the input instance.
+
+    Args:
+       values (Dict[str, str]): The fields names that the filter operation is based on.
+       condition: the name of the desired condition operator between the specified field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(values = {"a":"b}, condition = "gt") will yield only instances where field "a" contains a value greater then the value in field "b".
+       FilterByCondition(values = {"a":"b}, condition = "le") will yield only instances where "a"<="b"
+    """
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.values.items():
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            try:
+                instance_value = dict_get(instance, value)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            if self.condition == "in":
+                if instance_key not in instance_value:
+                    return False
+            elif self.condition == "not in":
+                if instance_key in instance_value:
+                    return False
+            else:
+                func = self.condition_to_func[self.condition]
+                if func is None:
+                    raise ValueError(
+                        f"Function not defined for condition '{self.condition}'"
+                    )
+                if not func(instance_key, instance_value):
+                    return False
+        return True
+
+
 class ComputeExpressionMixin(Artifact):
     """Computes an expression expressed over fields of an instance.
 
