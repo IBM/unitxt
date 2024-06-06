@@ -51,7 +51,7 @@ from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import AddFields
 from .settings_utils import get_settings
-from .stream import GeneratorStream, MultiStream
+from .stream import DynamicStream, MultiStream
 
 logger = get_logger()
 settings = get_settings()
@@ -261,7 +261,7 @@ class LoadHF(Loader):
         self.log_limited_loading()
         return MultiStream(
             {
-                name: GeneratorStream(
+                name: DynamicStream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
                 )
                 for name in self._cache.keys()
@@ -351,7 +351,7 @@ class LoadCSV(Loader):
         if self.streaming:
             return MultiStream(
                 {
-                    name: GeneratorStream(
+                    name: DynamicStream(
                         generator=self.stream_csv, gen_kwargs={"file": file}
                     )
                     for name, file in self.files.items()
@@ -360,9 +360,7 @@ class LoadCSV(Loader):
 
         return MultiStream(
             {
-                name: GeneratorStream(
-                    generator=self.load_csv, gen_kwargs={"file": file}
-                )
+                name: DynamicStream(generator=self.load_csv, gen_kwargs={"file": file})
                 for name, file in self.files.items()
             }
         )
@@ -684,8 +682,10 @@ class LoadFromDictionary(Loader):
         .. code-block:: python
 
             data = {
-                "train": {"input": "SomeInput1", "output": "SomeResult1"},
-                "test": {"input": "SomeInput2", "output": "SomeResult2"},
+                "train": [{"input": "SomeInput1", "output": "SomeResult1"},
+                          {"input": "SomeInput2", "output": "SomeResult2"}],
+                "test":  [{"input": "SomeInput3", "output": "SomeResult3"},
+                          {"input": "SomeInput4", "output": "SomeResult4"}]
             }
             loader = LoadFromDictionary(data=data)
     """

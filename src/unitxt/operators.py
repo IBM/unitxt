@@ -76,7 +76,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, Stream
+from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -1317,52 +1317,6 @@ class FilterByCondition(StreamOperator):
         return True
 
 
-class FilterByConditionBasedOnFields(FilterByCondition):
-    """Filters a stream based on a condition between 2 fields values.
-
-    Raises an error if either of the required fields names is missing from the input instance.
-
-    Args:
-       values (Dict[str, str]): The fields names that the filter operation is based on.
-       condition: the name of the desired condition operator between the specified field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
-       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
-
-    Examples:
-       FilterByCondition(values = {"a":"b}, condition = "gt") will yield only instances where field "a" contains a value greater then the value in field "b".
-       FilterByCondition(values = {"a":"b}, condition = "le") will yield only instances where "a"<="b"
-    """
-
-    def _is_required(self, instance: dict) -> bool:
-        for key, value in self.values.items():
-            try:
-                instance_key = dict_get(instance, key)
-            except ValueError as ve:
-                raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
-                ) from ve
-            try:
-                instance_value = dict_get(instance, value)
-            except ValueError as ve:
-                raise ValueError(
-                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
-                ) from ve
-            if self.condition == "in":
-                if instance_key not in instance_value:
-                    return False
-            elif self.condition == "not in":
-                if instance_key in instance_value:
-                    return False
-            else:
-                func = self.condition_to_func[self.condition]
-                if func is None:
-                    raise ValueError(
-                        f"Function not defined for condition '{self.condition}'"
-                    )
-                if not func(instance_key, instance_value):
-                    return False
-        return True
-
-
 class ComputeExpressionMixin(Artifact):
     """Computes an expression expressed over fields of an instance.
 
@@ -1813,6 +1767,38 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+class MergeStreams(MultiStreamOperator):
+    """Merges multiple streams into a single stream.
+
+    Args:
+        new_stream_name (str): The name of the new stream resulting from the merge.
+        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
+        origin_stream_name_field_name (str): The field name for the origin stream name.
+    """
+
+    streams_to_merge: List[str] = None
+    new_stream_name: str = "all"
+    add_origin_stream_name: bool = True
+    origin_stream_name_field_name: str = "origin"
+
+    def merge(self, multi_stream) -> Generator:
+        for stream_name, stream in multi_stream.items():
+            if self.streams_to_merge is None or stream_name in self.streams_to_merge:
+                for instance in stream:
+                    if self.add_origin_stream_name:
+                        instance[self.origin_stream_name_field_name] = stream_name
+                    yield instance
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        return MultiStream(
+            {
+                self.new_stream_name: DynamicStream(
+                    self.merge, gen_kwargs={"multi_stream": multi_stream}
+                )
+            }
+        )
+
+
 class Shuffle(PagedStreamOperator):
     """Shuffles the order of instances in each page of a stream.
 
@@ -2216,35 +2202,3 @@ class DuplicateInstances(StreamOperator):
                 f"If given, duplication_index_field must be a string. "
                 f"Got: {self.duplication_index_field}"
             )
-
-
-class MergeStreams(MultiStreamOperator):
-    """Merges multiple streams into a single stream.
-
-    Args:
-        new_stream_name (str): The name of the new stream resulting from the merge.
-        add_origin_stream_name (bool): Whether to add the origin stream name to each instance.
-        origin_stream_name_field_name (str): The field name for the origin stream name.
-    """
-
-    streams_to_merge: List[str] = None
-    new_stream_name: str = "all"
-    add_origin_stream_name: bool = True
-    origin_stream_name_field_name: str = "origin"
-
-    def merge(self, multi_stream) -> Generator:
-        for stream_name, stream in multi_stream.items():
-            if self.streams_to_merge is None or stream_name in self.streams_to_merge:
-                for instance in stream:
-                    if self.add_origin_stream_name:
-                        instance[self.origin_stream_name_field_name] = stream_name
-                    yield instance
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        return MultiStream(
-            {
-                self.new_stream_name: GeneratorStream(
-                    self.merge, gen_kwargs={"multi_stream": multi_stream}
-                )
-            }
-        )

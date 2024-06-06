@@ -5,7 +5,7 @@ from typing import Dict
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .random_utils import new_random_generator
-from .stream import Stream
+from .stream import MissingStreamError, Stream
 
 logger = get_logger()
 
@@ -140,7 +140,9 @@ def slice_streams(input_streams, mapping):
         def generator(new_stream, sources):
             for old_stream, slices in sources.items():
                 if old_stream not in input_streams:
-                    raise ValueError(f"'{old_stream}' is not available in input stream")
+                    raise MissingStreamError(
+                        f"'{old_stream}' is not available in input streams, but need to slice there from"
+                    )
                 old_stream_content = input_streams[old_stream]
                 for start, end in slices:
                     yield from slice_stream(old_stream_content, start, end)
