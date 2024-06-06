@@ -1,0 +1,34 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "regex_split",
+            "field": "prediction",
+            "by": "(?:^|\n)- "
+        },
+        {
+            "type": "remove_values",
+            "field": "prediction",
+            "unallowed_values": [
+                "",
+                " "
+            ],
+            "process_every_value": false
+        },
+        {
+            "type": "regex_split",
+            "field": "references",
+            "by": "(?:^|\n)- ",
+            "process_every_value": true
+        },
+        {
+            "type": "remove_values",
+            "field": "references",
+            "unallowed_values": [
+                "",
+                " "
+            ],
+            "process_every_value": true
+        }
+    ]
+}

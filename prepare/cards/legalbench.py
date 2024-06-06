@@ -151,7 +151,7 @@ for task_name, task_cfg in task_cfgs.items():
             ],
         },
         __description__=(
-            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models… See the full description on the dataset page: https://huggingface.co/datasets/nguha/legalbench"
         ),
     )
 

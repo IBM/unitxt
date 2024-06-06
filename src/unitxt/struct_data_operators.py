@@ -566,3 +566,42 @@ class LoadJson(FieldOperator):
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
+
+
+class MapHTMLTableToJSON(FieldOperator):
+    """Converts HTML table format to the basic one (JSON).
+
+    JSON format
+    {
+        "header": ["col1", "col2"],
+        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+    }
+    """
+
+    _requirements_list = ["bs4"]
+
+    def process_value(self, table: Any) -> Any:
+        return self.truncate_table_rows(table_content=table)
+
+    def truncate_table_rows(self, table_content: str) -> Dict:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(table_content, "html.parser")
+
+        # Extract header
+        header = []
+        header_cells = soup.find("thead").find_all("th")
+        for cell in header_cells:
+            header.append(cell.get_text())
+
+        # Extract rows
+        rows = []
+        for row in soup.find("tbody").find_all("tr"):
+            row_data = []
+            for cell in row.find_all("td"):
+                row_data.append(cell.get_text())
+            rows.append(row_data)
+
+        # return dictionary
+
+        return {"header": header, "rows": rows}
