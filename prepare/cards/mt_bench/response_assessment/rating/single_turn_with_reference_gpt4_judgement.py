@@ -2,22 +2,28 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadHF
+from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     Copy,
     FilterByCondition,
     RenameFields,
 )
-from unitxt.processors import LiteralEval
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="OfirArviv/mt_bench_single_score_gpt4_judgement", split="train"),
+    loader=LoadFromHFSpace(
+        space_name="lmsys/mt-bench",
+        revision="a4b674c",  # Nov 4, 2023
+        data_files={
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl",
+        },
+    ),
     preprocess_steps=[
-        RenameSplits({"train": "test"}),
+        "operators.mt_bench.rating_hf_space_processing_steps",
         FilterByCondition(values={"turn": 1}, condition="eq"),
-        FilterByCondition(values={"reference": "[]"}, condition="ne"),
+        FilterByCondition(values={"reference": None}, condition="ne"),
         RenameFields(
             field_to_field={
                 "model_input": "question",
@@ -27,11 +33,8 @@ card = TaskCard(
                 "model_output": "answer",
             }
         ),
-        LiteralEval("question", to_field="question"),
         Copy(field="question/0", to_field="question"),
-        LiteralEval("answer", to_field="answer"),
         Copy(field="answer/0", to_field="answer"),
-        LiteralEval("reference_answer", to_field="reference_answer"),
         Copy(field="reference_answer/0", to_field="reference_answer"),
     ],
     task="tasks.response_assessment.rating.single_turn_with_reference",

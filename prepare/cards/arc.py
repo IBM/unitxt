@@ -21,7 +21,6 @@ for subtask in subtasks:
         __tags__={
             "annotations_creators": "found",
             "arxiv": "1803.05457",
-            "croissant": True,
             "language": "en",
             "language_creators": "found",
             "license": "cc-by-sa-4.0",
@@ -33,12 +32,7 @@ for subtask in subtasks:
             "task_ids": ["open-domain-qa", "multiple-choice-qa"],
         },
         __description__=(
-            'Dataset Card for "ai2_arc"\n'
-            "Dataset Summary\n"
-            "A new dataset of 7,787 genuine grade-school level, multiple-choice science questions, assembled to encourage research in\n"
-            "advanced question-answering. The dataset is partitioned into a Challenge Set and an Easy Set, where the former contains\n"
-            "only questions answered incorrectly by both a retrieval-based algorithm and a word co-occurrence algorithm. We are also\n"
-            "including a corpus of over 14 million science sentences… See the full description on the dataset page: https://huggingface.co/datasets/allenai/ai2_arc."
+            "A new dataset of 7,787 genuine grade-school level, multiple-choice science questions, assembled to encourage research in advanced question-answering. The dataset is partitioned into a Challenge Set and an Easy Set, where the former contains only questions answered incorrectly by both a retrieval-based algorithm and a word co-occurrence algorithm. We are also including a corpus of over 14 million science sentences… See the full description on the dataset page: https://huggingface.co/datasets/allenai/ai2_arc."
         ),
     )
     test_card(card, strict=False)

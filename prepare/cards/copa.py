@@ -28,24 +28,19 @@ card = TaskCard(
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
     __description__=(
-        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\n"
-        "GLUE with a new set of more difficult language understanding tasks, improved\n"
-        "resources, and a new public leaderboard."
+        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after GLUE with a new set of more difficult language understanding tasks, improved resources, and a new public leaderboard… See the full description on the dataset page: https://huggingface.co/datasets/super_glue"
     ),
     __tags__={
-        "NLU": True,
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
-        "croissant": True,
+        "flags": ["NLU", "natural language understanding", "superglue"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "natural language understanding": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|other",
-        "superglue": True,
         "task_categories": [
             "text-classification",
             "token-classification",

@@ -2,25 +2,29 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.loaders import LoadHF
+from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     FilterByCondition,
     InterleaveListsToDialogOperator,
     MapInstanceValues,
     RenameFields,
 )
-from unitxt.processors import LiteralEval
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(
-        path="OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments", split="train"
+    loader=LoadFromHFSpace(
+        space_name="lmsys/mt-bench",
+        revision="a4b674c",  # Nov 4, 2023
+        data_files={
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl",
+        },
     ),
     preprocess_steps=[
-        RenameSplits({"train": "test"}),
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
         FilterByCondition(values={"turn": 2}, condition="eq"),
-        FilterByCondition(values={"reference": "[]"}, condition="ne"),
+        FilterByCondition(values={"reference": None}, condition="ne"),
         FilterByCondition(
             values={"winner": ["model_1", "tie", "model_2"]}, condition="in"
         ),
@@ -30,10 +34,6 @@ card = TaskCard(
             }
         ),
         RenameFields(field_to_field={"category": "group"}),
-        LiteralEval("model_input", to_field="model_input"),
-        LiteralEval("model_1_output", to_field="model_1_output"),
-        LiteralEval("model_2_output", to_field="model_2_output"),
-        LiteralEval("reference", to_field="reference"),
         InterleaveListsToDialogOperator(
             user_turns_field="model_input",
             assistant_turns_field="model_1_output",

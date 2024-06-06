@@ -15,7 +15,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1606.05250",
-        "croissant": True,
         "language": "en",
         "language_creators": ["crowdsourced", "found"],
         "license": "cc-by-sa-4.0",
@@ -27,12 +26,7 @@ card = TaskCard(
         "task_ids": "extractive-qa",
     },
     __description__=(
-        "Dataset Card for SQuAD\n"
-        "Dataset Summary\n"
-        "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n"
-        "SQuAD 1.1 contains 100,000+ question-answer pairs on 500+ articles.\n"
-        "Supported Tasks and Leaderboards\n"
-        "Question… See the full description on the dataset page: https://huggingface.co/datasets/rajpurkar/squad."
+        "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable. SQuAD 1.1 contains 100,000+ question-answer pairs on 500+ articles. Supported Tasks and Leaderboards Question… See the full description on the dataset page: https://huggingface.co/datasets/rajpurkar/squad."
     ),
 )
 

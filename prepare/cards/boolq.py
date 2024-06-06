@@ -38,7 +38,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1905.10044",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-sa-3.0",
@@ -50,13 +49,7 @@ card = TaskCard(
         "task_ids": "natural-language-inference",
     },
     __description__=(
-        "Dataset Card for Boolq\n"
-        "Dataset Summary\n"
-        "BoolQ is a question answering dataset for yes/no questions containing 15942 examples. These questions are naturally\n"
-        "occurring ---they are generated in unprompted and unconstrained settings.\n"
-        "Each example is a triplet of (question, passage, answer), with the title of the page as optional additional context.\n"
-        "The text-pair classification setup is similar to existing natural language inference tasks.\n"
-        "Supported Tasks… See the full description on the dataset page: https://huggingface.co/datasets/google/boolq."
+        "BoolQ is a question answering dataset for yes/no questions containing 15942 examples. These questions are naturally occurring ---they are generated in unprompted and unconstrained settings. Each example is a triplet of (question, passage, answer), with the title of the page as optional additional context. The text-pair classification setup is similar to existing natural language inference tasks… See the full description on the dataset page: https://huggingface.co/datasets/google/boolq."
     ),
 )
 
@@ -86,7 +79,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "1905.10044",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-sa-3.0",
@@ -98,13 +90,7 @@ card = TaskCard(
         "task_ids": "natural-language-inference",
     },
     __description__=(
-        "Dataset Card for Boolq\n"
-        "Dataset Summary\n"
-        "BoolQ is a question answering dataset for yes/no questions containing 15942 examples. These questions are naturally\n"
-        "occurring ---they are generated in unprompted and unconstrained settings.\n"
-        "Each example is a triplet of (question, passage, answer), with the title of the page as optional additional context.\n"
-        "The text-pair classification setup is similar to existing natural language inference tasks.\n"
-        "Supported Tasks… See the full description on the dataset page: https://huggingface.co/datasets/google/boolq."
+        "BoolQ is a question answering dataset for yes/no questions containing 15942 examples. These questions are naturally occurring ---they are generated in unprompted and unconstrained settings. Each example is a triplet of (question, passage, answer), with the title of the page as optional additional context. The text-pair classification setup is similar to existing natural language inference tasks… See the full description on the dataset page: https://huggingface.co/datasets/google/boolq."
     ),
 )
 

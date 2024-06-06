@@ -29,9 +29,9 @@ card = TaskCard(
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",
-    __tags__={"arxiv": "2009.01325", "croissant": True, "region": "us"},
+    __tags__={"arxiv": "2009.01325", "region": "us"},
     __description__=(
-        'Summarize from Feedback contains the human feedback data released by the "Learning to summarize from human feedback" paper.'
+        'Summarize from Feedback contains the human feedback data released by the "Learning to summarize from human feedback" paper… See the full description on the dataset page: https://huggingface.co/datasets/openai/summarize_from_feedback'
     ),
 )
 

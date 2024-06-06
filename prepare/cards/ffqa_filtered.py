@@ -113,9 +113,8 @@ def add_card(split: str):
         ],
         task="tasks.qa.with_context.extractive",
         templates="templates.qa.with_context.all",
-        __tags__={"croissant": True, "region": "us"},
+        __tags__={"region": "us"},
         __description__=(
-            'Dataset Card for "WikiQA-Free_Form_QA"\n'
             "The WikiQA task is the task of answering a question based on the information given in a Wikipedia document. We have built upon the short answer format data in Google Natural Questions to construct our QA task. It is formatted as a document and a question. We ensure the answer to the question is a short answer which is either a single word or a small sentence directly cut pasted from the document. Having the task structured as such, we can… See the full description on the dataset page: https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA."
         ),
     )

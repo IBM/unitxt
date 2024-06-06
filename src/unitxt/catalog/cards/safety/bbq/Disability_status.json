@@ -3,7 +3,10 @@
     "loader": {
         "type": "load_hf",
         "path": "heegyu/bbq",
-        "name": "Disability_status"
+        "name": "Disability_status",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
@@ -31,5 +34,14 @@
     "task": "tasks.qa.multiple_choice.with_context",
     "templates": [
         "templates.qa.multiple_choice.with_context.match"
-    ]
+    ],
+    "__description__": "Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
+    "__tags__": {
+        "languages": [
+            "english"
+        ],
+        "urls": {
+            "arxiv": "https://arxiv.org/abs/2110.08193"
+        }
+    }
 }

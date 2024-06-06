@@ -35,14 +35,11 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": True,
-        "croissant": True,
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": True,
-        "qa-nli": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -56,13 +53,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE\n"
-        "Dataset Summary\n"
-        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
-        "Supported Tasks and Leaderboards\n"
-        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
-        "ax\n"
-        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Stanford Question Answering Dataset is a question-answering dataset consisting of question-paragraph pairs, where one of the sentences in the paragraph (drawn from Wikipedia) contains the answer to the corresponding question (written by an annotator). The authors of the benchmark convert the task into sentence pair classification by forming a pair between each question and each sentence in the corresponding context, and filtering out pairs with low lexical overlap between the question and the context sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

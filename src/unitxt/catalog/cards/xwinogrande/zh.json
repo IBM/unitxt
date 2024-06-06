@@ -39,7 +39,6 @@
             "2211.01786",
             "2106.12066"
         ],
-        "croissant": true,
         "language": [
             "en",
             "fr",
@@ -51,5 +50,5 @@
         "license": "cc-by-4.0",
         "region": "us"
     },
-    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
+    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities… See the full description on the dataset page: https://huggingface.co/datasets/Muennighoff/xwinograd"
 }
