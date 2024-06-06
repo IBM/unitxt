@@ -1,17 +1,17 @@
 {
     "type": "task_card",
     "loader": {
-        "type": "load_hf",
-        "path": "OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments",
-        "split": "train"
+        "type": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl"
+        }
     },
     "preprocess_steps": [
-        {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
         {
             "type": "filter_by_condition",
             "values": {
@@ -22,7 +22,7 @@
         {
             "type": "filter_by_condition",
             "values": {
-                "reference": "[]"
+                "reference": null
             },
             "condition": "eq"
         },
@@ -52,21 +52,6 @@
             "field_to_field": {
                 "category": "group"
             }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "model_input",
-            "field": "model_input"
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "model_1_output",
-            "field": "model_1_output"
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "model_2_output",
-            "field": "model_2_output"
         },
         {
             "type": "interleave_lists_to_dialog_operator",
