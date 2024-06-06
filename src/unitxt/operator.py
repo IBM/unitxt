@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
-from .stream import GeneratorStream, MultiStream, Stream
+from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
 from .utils import is_module_available
 
 
@@ -170,7 +170,7 @@ def instance_generator(instance):
 
 
 def stream_single(instance: Dict[str, Any]) -> Stream:
-    return GeneratorStream(
+    return DynamicStream(
         generator=instance_generator, gen_kwargs={"instance": instance}
     )
 
@@ -244,7 +244,7 @@ class StreamOperator(MultiStreamOperator):
     def _process_single_stream(
         self, stream: Stream, stream_name: Optional[str] = None
     ) -> Stream:
-        return GeneratorStream(
+        return DynamicStream(
             self._process_stream,
             gen_kwargs={"stream": stream, "stream_name": stream_name},
         )
@@ -401,7 +401,7 @@ class InstanceOperatorValidator(InstanceOperator):
         try:
             first_instance = next(iterator)
         except StopIteration as e:
-            raise StopIteration(f"Stream '{stream_name}' is empty") from e
+            raise EmptyStreamError(f"Stream '{stream_name}' is empty") from e
         result = self._process_instance(first_instance, stream_name)
         self.validate(result)
         yield result
@@ -439,7 +439,7 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         result = {}
 
         for stream_name, stream in multi_stream.items():
-            stream = GeneratorStream(
+            stream = DynamicStream(
                 self.generator,
                 gen_kwargs={"stream": stream, "multi_stream": multi_stream},
             )
