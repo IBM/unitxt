@@ -6,14 +6,6 @@
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
-            "mix": {
-                "train": "train",
-                "validation": "validation",
-                "test": "test"
-            }
-        },
-        {
             "type": "add_fields",
             "fields": {
                 "type_of_input": "table",
@@ -22,27 +14,18 @@
         },
         {
             "type": "map_html_table_to_json",
-            "field_to_field": [
-                [
-                    "table_html_clean",
-                    "table_out"
-                ]
-            ]
+            "field": "table_html_clean",
+            "to_field": "table_out"
         },
         {
             "type": "serialize_table_as_markdown",
-            "field_to_field": [
-                [
-                    "table_out",
-                    "input"
-                ]
-            ]
+            "field": "table_out",
+            "to_field": "input"
         },
         {
             "type": "rename_fields",
-            "field_to_field": {
-                "description": "output"
-            }
+            "field": "description",
+            "to_field": "output"
         }
     ],
     "task": "tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]]",
