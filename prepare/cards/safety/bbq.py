@@ -22,7 +22,9 @@ for dataset_name in [
     "Sexual_orientation",
 ]:
     card = TaskCard(
-        loader=LoadHF(path="heegyu/bbq", name=dataset_name),
+        loader=LoadHF(
+            path="heegyu/bbq", name=dataset_name, data_classification_policy=["public"]
+        ),
         preprocess_steps=[
             AddFields({"context_type": "description"}),
             RenameFields(field_to_field={"label": "answer"}),
@@ -30,6 +32,11 @@ for dataset_name in [
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates=["templates.qa.multiple_choice.with_context.match"],
+        __description__="Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
+        __tags__={
+            "languages": ["english"],
+            "urls": {"arxiv": "https://arxiv.org/abs/2110.08193"},
+        },
     )
 
     test_card(card, strict=False, demos_taken_from="test", num_demos=0)
