@@ -3124,21 +3124,16 @@ Agent:"""
         self.assertListEqual(list(output_multi_stream.keys()), ["test"])
 
     def test_filter_by_condition_based_on_fields(self):
-        input_multi_stream = MultiStream(
-            {
-                "questions": [
-                    {"question": "question_1", "id_1": "1", "id_2": "1"},
-                    {"question": "question_2", "id_1": "2", "id_2": "1"},
-                ],
-            }
+        inputs = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
+        targets = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
+        check_operator(
+            operator=FilterByConditionBasedOnFields(
+                values={"id_1": "id_2"}, condition="eq"
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
         )
-        output_multi_stream = FilterByConditionBasedOnFields(
-            values=["id_1", "id_2"], condition="eq"
-        )(input_multi_stream)
-        self.assertListEqual(list(output_multi_stream.keys()), ["questions"])
-        joined_stream = list(output_multi_stream["questions"])
-        expected_joined_stream = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
-        TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
     def test_select_fields(self):
         input_multi_stream = MultiStream(
