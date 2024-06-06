@@ -5,14 +5,9 @@ repos:
     # Ruff version.
     rev: v0.1.6
     hooks:
-      - id: ruff
-        name: ruff-for-prepare
-        files: ^prepare/
-        args: [--ignore, "TID252" ]
       # Run the linter.
       - id: ruff
         args: [ --fix ]
-        exclude: ^prepare/
       # Run the formatter.
       - id: ruff-format
 

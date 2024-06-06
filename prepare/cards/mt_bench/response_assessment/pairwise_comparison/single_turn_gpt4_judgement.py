@@ -11,8 +11,6 @@ from unitxt.operators import (
 )
 from unitxt.test_utils.card import test_card
 
-from ...common import mt_bench_pairwise_hf_space_processing_steps
-
 card = TaskCard(
     loader=LoadFromHFSpace(
         space_name="lmsys/mt-bench",
@@ -24,7 +22,7 @@ card = TaskCard(
         },
     ),
     preprocess_steps=[
-        *mt_bench_pairwise_hf_space_processing_steps,
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
         FilterByCondition(values={"turn": 1}, condition="eq"),
         FilterByCondition(values={"reference": None}, condition="eq"),
         FilterByCondition(

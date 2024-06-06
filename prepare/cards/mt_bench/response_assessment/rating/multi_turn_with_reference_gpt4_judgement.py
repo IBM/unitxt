@@ -11,8 +11,6 @@ from unitxt.operators import (
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
-from ...common import mt_bench_rating_hf_space_processing_steps
-
 card = TaskCard(
     loader=LoadFromHFSpace(
         space_name="lmsys/mt-bench",
@@ -24,7 +22,7 @@ card = TaskCard(
         },
     ),
     preprocess_steps=[
-        *mt_bench_rating_hf_space_processing_steps,
+        "operators.mt_bench.rating_hf_space_processing_steps",
         RenameSplits({"train": "test"}),
         FilterByCondition(values={"turn": 2}, condition="eq"),
         FilterByCondition(values={"reference": None}, condition="ne"),
