@@ -184,6 +184,14 @@ with demo:
         with gr.Column(scale=1):
             with gr.Group() as buttons_group:
                 tasks = gr.Dropdown(choices=sorted(data.keys()), label="Task", scale=3)
+                tasks_js_button = gr.Button(
+                    config.JSON_BUTTON_TXT,
+                    scale=1,
+                    size="sm",
+                    min_width=0.1,
+                    interactive=False,
+                    variant="secondary",
+                )
                 cards = gr.Dropdown(choices=[], label="Dataset Card", scale=9)
                 cards_js_button = gr.Button(
                     config.JSON_BUTTON_TXT,
@@ -303,9 +311,9 @@ with demo:
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(
         update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmentors]
-    ).then(deactivate_button, outputs=generate_prompts_button).then(
-        deactivate_button, outputs=infer_button
-    )
+    ).then(activate_button, outputs=tasks_js_button).then(
+        deactivate_button, outputs=generate_prompts_button
+    ).then(deactivate_button, outputs=infer_button)
     cards.select(get_templates, inputs=[tasks, cards], outputs=templates).then(
         activate_button, outputs=cards_js_button
     ).then(
@@ -314,6 +322,9 @@ with demo:
         outputs=generate_prompts_button,
     )
 
+    tasks_js_button.click(
+        display_json_button, tasks, [tabs, json_intro, element_name, json_viewer]
+    )
     cards_js_button.click(
         display_json_button, cards, [tabs, json_intro, element_name, json_viewer]
     )
