@@ -1,17 +1,17 @@
 {
     "type": "task_card",
     "loader": {
-        "type": "load_hf",
-        "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
-        "split": "train"
+        "type": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl"
+        }
     },
     "preprocess_steps": [
-        {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
+        "operators.mt_bench.rating_hf_space_processing_steps",
         {
             "type": "filter_by_condition",
             "values": {
@@ -22,7 +22,7 @@
         {
             "type": "filter_by_condition",
             "values": {
-                "reference": "[]"
+                "reference": null
             },
             "condition": "eq"
         },
@@ -32,16 +32,6 @@
                 "score": "rating",
                 "category": "group"
             }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "model_input",
-            "field": "model_input"
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "model_output",
-            "field": "model_output"
         },
         {
             "type": "interleave_lists_to_dialog_operator",

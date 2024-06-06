@@ -22,10 +22,9 @@
             "start": 1
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "src/0": "instruction"
-            }
+            "type": "copy",
+            "field": "src/0",
+            "to_field": "instruction"
         },
         {
             "type": "join",

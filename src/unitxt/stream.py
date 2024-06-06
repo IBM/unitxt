@@ -1,11 +1,19 @@
 import tempfile
+import traceback
+import warnings
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterable, List
+from copy import deepcopy
+from typing import Any, Callable, Dict, Generator, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
+from .logging_utils import get_logger
+from .settings_utils import get_settings
+
+settings = get_settings()
+logger = get_logger()
 
 
 class Stream(Dataclass):
@@ -21,21 +29,31 @@ class Stream(Dataclass):
     def take(self, n):
         pass
 
+    @abstractmethod
+    def set_copying(self, copying: bool):
+        pass
+
 
 class ListStream(Stream):
     instances_list: List[Dict[str, Any]]
+    copying: bool = False
 
     def __iter__(self):
+        if self.copying:
+            return iter(deepcopy(self.instances_list))
         return iter(self.instances_list)
 
     def peek(self):
-        return next(iter(self.instances_list))
+        return next(iter(self))
 
-    def take(self, n):
+    def take(self, n) -> Generator:
         for i, instance in enumerate(self.instances_list):
             if i >= n:
                 break
             yield instance
+
+    def set_copying(self, copying: bool):
+        self.copying = copying
 
 
 class GeneratorStream(Stream):
@@ -88,6 +106,79 @@ class GeneratorStream(Stream):
                 break
             yield instance
 
+    def set_copying(self, copying: bool):
+        self.copying = copying
+
+
+class FaultyStreamError(Exception):
+    """Base class for all stream-related exceptions."""
+
+    pass
+
+
+class MissingStreamError(FaultyStreamError):
+    """Raised when a required stream is missing."""
+
+    pass
+
+
+class EmptyStreamError(FaultyStreamError):
+    """Raised when a stream is unexpectedly empty."""
+
+    pass
+
+
+def eager_failed():
+    traceback.print_exc()
+    warnings.warn(
+        "The eager execution has failed due to the error above.", stacklevel=2
+    )
+
+
+class DynamicStream(Stream):
+    generator: Callable
+    gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
+    caching: bool = False
+    copying: bool = False
+
+    def __post_init__(self):
+        self.stream = None
+        if settings.use_eager_execution:
+            try:
+                instances_list = []
+                for instance in self.generator(**self.gen_kwargs):
+                    instances_list.append(instance)
+                self.stream = ListStream(
+                    instances_list=instances_list, copying=self.copying
+                )
+            except FaultyStreamError:
+                eager_failed()
+            except RuntimeError as e:
+                if isinstance(e.__cause__, FaultyStreamError):
+                    eager_failed()
+                else:
+                    raise e
+
+        if self.stream is None:
+            self.stream = GeneratorStream(
+                generator=self.generator,
+                gen_kwargs=self.gen_kwargs,
+                caching=self.caching,
+                copying=self.copying,
+            )
+
+    def __iter__(self):
+        return self.stream.__iter__()
+
+    def peek(self):
+        return self.stream.peek()
+
+    def take(self, n):
+        return self.stream.take(n)
+
+    def set_copying(self, copying: bool):
+        self.stream.set_copying(copying)
+
 
 class MultiStream(dict):
     """A class for handling multiple streams of data in a dictionary-like format.
@@ -112,7 +203,7 @@ class MultiStream(dict):
             isinstance(key, str), "MultiStream keys must be strings"
         super().__init__(data)
 
-    def get_generator(self, key):
+    def get_generator(self, key) -> Generator:
         """Gets a generator for a specified key.
 
         Args:
@@ -129,7 +220,7 @@ class MultiStream(dict):
 
     def set_copying(self, copying: bool):
         for stream in self.values():
-            stream.copying = copying
+            stream.set_copying(copying)
 
     def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
@@ -178,7 +269,7 @@ class MultiStream(dict):
         assert all(isinstance(v, ReusableGenerator) for v in generators.values())
         return cls(
             {
-                key: GeneratorStream(
+                key: DynamicStream(
                     generator.generator,
                     gen_kwargs=generator.gen_kwargs,
                     caching=caching,
@@ -204,7 +295,7 @@ class MultiStream(dict):
         """
         return cls(
             {
-                key: GeneratorStream(
+                key: DynamicStream(
                     iterable.__iter__,
                     caching=caching,
                     copying=copying,

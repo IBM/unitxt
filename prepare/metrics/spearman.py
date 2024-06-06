@@ -1,13 +1,13 @@
 import numpy as np
 from unitxt import add_to_catalog
-from unitxt.blocks import CopyFields
 from unitxt.metrics import MetricPipeline, Spearmanr
+from unitxt.operators import Copy
 from unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="spearmanr",
     preprocess_steps=[
-        CopyFields(field_to_field=[("references/0", "references")]),
+        Copy(field="references/0", to_field="references"),
     ],
     metric=Spearmanr(),
     prediction_type="float",

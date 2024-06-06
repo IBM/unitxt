@@ -22,8 +22,11 @@ from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
 from .struct_data_operators import (
     ListToKeyValPairs,
+    MapHTMLTableToJSON,
     SerializeKeyValPairs,
+    SerializeTableAsDFLoader,
     SerializeTableAsIndexedRowMajor,
+    SerializeTableAsJson,
     SerializeTableAsMarkdown,
     SerializeTableRowAsList,
     SerializeTableRowAsText,

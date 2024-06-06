@@ -3,13 +3,9 @@
     "main_score": "sacrebleu",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "task_data/target_language",
-                    "task_data/tokenize"
-                ]
-            ],
+            "type": "copy",
+            "field": "task_data/target_language",
+            "to_field": "task_data/tokenize",
             "not_exist_ok": true,
             "get_default": "en"
         },

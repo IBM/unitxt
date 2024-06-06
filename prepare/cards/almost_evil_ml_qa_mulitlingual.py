@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     ListFieldValues,
     RemoveFields,
@@ -11,13 +11,12 @@ from unitxt.test_utils.card import test_card
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
 # Counter({'en': 1995, 'de': 2302, 'it': 2210, 'fr': 2156, 'es': 2090, 'ru': 2058, 'nl': 2017, 'pt': 1994})
-
 for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
         preprocess_steps=[
             LoadJson(field="METADATA", to_field="metadata"),
-            CopyFields(field_to_field=[("metadata/language", "extracted_language")]),
+            Copy(field="metadata/language", to_field="extracted_language"),
             FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix(

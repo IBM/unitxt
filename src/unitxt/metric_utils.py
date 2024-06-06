@@ -15,7 +15,7 @@ from .operator import (
 from .operators import (
     ApplyMetric,
     ApplyOperatorsField,
-    CopyFields,
+    Copy,
     FlattenInstances,
     MergeStreams,
     SplitByNestedGroup,
@@ -23,7 +23,7 @@ from .operators import (
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_settings
-from .stream import GeneratorStream, MultiStream
+from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
 
 
@@ -109,7 +109,7 @@ class MultiStreamScoreMean(MultiStreamOperator):
 
         return MultiStream(
             {
-                stream_name: GeneratorStream(
+                stream_name: DynamicStream(
                     never_peek_twice_generator,
                     gen_kwargs={
                         "stream_name": stream_name,
@@ -132,7 +132,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
     ) -> MultiStream:
         return MultiStream(
             {
-                split_name: GeneratorStream(
+                split_name: DynamicStream(
                     self.zip,
                     gen_kwargs={"predictions": predictions, "references": references},
                 )
@@ -155,10 +155,9 @@ class MetricRecipe(SequentialOperatorInitializer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             LoadJson(field="task_data"),
-            CopyFields(
-                field_to_field={
-                    "source": "task_data/source",
-                }
+            Copy(
+                field="source",
+                to_field="task_data/source",
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
