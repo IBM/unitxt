@@ -4,7 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     RenameFields,
 )
@@ -33,9 +33,9 @@ card = TaskCard(
                 "model_output": "answer",
             }
         ),
-        CopyFields(field_to_field={"question/0": "question"}),
-        CopyFields(field_to_field={"answer/0": "answer"}),
-        CopyFields(field_to_field={"reference_answer/0": "reference_answer"}),
+        Copy(field="question/0", to_field="question"),
+        Copy(field="answer/0", to_field="answer"),
+        Copy(field="reference_answer/0", to_field="reference_answer"),
     ],
     task="tasks.response_assessment.rating.single_turn_with_reference",
     templates=[

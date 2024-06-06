@@ -14,7 +14,7 @@ from unitxt.operators import (
     AugmentPrefixSuffix,
     AugmentWhitespace,
     CastFields,
-    CopyFields,
+    Copy,
     DeterministicBalancer,
     DivideAllFieldsBy,
     DuplicateInstances,
@@ -2227,7 +2227,7 @@ label (str):
         targets = [{"a": 1}, {"a": 2}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a/0": "a"}),
+            operator=Copy(field="a/0", to_field="a"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2242,7 +2242,7 @@ label (str):
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a": "a/x"}),
+            operator=Copy(field="a", to_field="a/x"),
             inputs=inputs,
             targets=targets,
             tester=self,

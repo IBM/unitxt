@@ -11,13 +11,9 @@
             "to_field": "metadata"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "metadata/language",
-                    "extracted_language"
-                ]
-            ]
+            "type": "copy",
+            "field": "metadata/language",
+            "to_field": "extracted_language"
         },
         {
             "type": "filter_by_condition",

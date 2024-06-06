@@ -36,16 +36,14 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
+            "type": "copy",
+            "field": "question/0",
+            "to_field": "question"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer/0": "answer"
-            }
+            "type": "copy",
+            "field": "answer/0",
+            "to_field": "answer"
         }
     ],
     "task": "tasks.response_assessment.rating.single_turn",

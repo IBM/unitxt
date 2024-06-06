@@ -4,7 +4,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     MapInstanceValues,
     RenameFields,
@@ -42,10 +42,10 @@ card = TaskCard(
                 "category": "group",
             }
         ),
-        CopyFields(field_to_field={"question/0": "question"}),
-        CopyFields(field_to_field={"answer_a/0": "answer_a"}),
-        CopyFields(field_to_field={"answer_b/0": "answer_b"}),
-        CopyFields(field_to_field={"reference_answer/0": "reference_answer"}),
+        Copy(field="question/0", to_field="question"),
+        Copy(field="answer_a/0", to_field="answer_a"),
+        Copy(field="answer_b/0", to_field="answer_b"),
+        Copy(field="reference_answer/0", to_field="reference_answer"),
     ],
     task="tasks.response_assessment.pairwise_comparison.single_turn_with_reference",
     templates=[

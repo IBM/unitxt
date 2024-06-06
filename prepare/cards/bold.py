@@ -8,6 +8,7 @@ from unitxt.blocks import (
 )
 from unitxt.operators import (
     AddFields,
+    Copy,
     CopyFields,
     FilterByCondition,
     Shuffle,
@@ -21,8 +22,8 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         AddFields({"input_label": {}}),
-        CopyFields(field_to_field=[("prompts/0", "first_prompt")]),
-        CopyFields(field_to_field=[("wikipedia/0", "first_wiki")]),
+        Copy(field="prompts/0", to_field="first_prompt"),
+        Copy(field="wikipedia/0", to_field="first_wiki"),
         FilterByCondition(values={"domain": ["race", "gender"]}, condition="in"),
         Shuffle(page_size=10000),
         CopyFields(

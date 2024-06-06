@@ -7,13 +7,9 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "answers/text",
-                    "answers"
-                ]
-            ]
+            "type": "copy",
+            "field": "answers/text",
+            "to_field": "answers"
         },
         {
             "type": "add_fields",

@@ -3,22 +3,14 @@
     "main_score": "perplexity",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "contexts",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "contexts",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "question",
-                    "prediction"
-                ]
-            ]
+            "type": "copy",
+            "field": "question",
+            "to_field": "prediction"
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small"

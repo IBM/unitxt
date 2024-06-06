@@ -6,7 +6,7 @@ from unitxt.collections_operators import DuplicateByList, Slice
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     AddFields,
-    CopyFields,
+    Copy,
     IndexOf,
     ListFieldValues,
     MapInstanceValues,
@@ -108,7 +108,7 @@ card = TaskCard(
         "splitters.small_no_test",
         Split(field="src", by=": "),
         Slice(field="src", start=1),
-        CopyFields(field_to_field={"src/0": "instruction"}),
+        Copy(field="src/0", to_field="instruction"),
         Join(field="src", by=": "),
         ListFieldValues(
             fields=["tgt", "src"],
@@ -158,7 +158,7 @@ card = TaskCard(
             to_field="choices_texts",
         ),
         ShuffleFieldValues(field="choices_texts"),
-        CopyFields(field_to_field={"task": "required_attribute"}),
+        Copy(field="task", to_field="required_attribute"),
         MapInstanceValues(
             mappers={
                 "required_attribute": {
@@ -169,7 +169,7 @@ card = TaskCard(
                 }
             }
         ),
-        CopyFields(field_to_field={"task": "attribute_type"}),
+        Copy(field="task", to_field="attribute_type"),
         MapInstanceValues(
             mappers={
                 "attribute_type": {
@@ -218,7 +218,7 @@ card = TaskCard(
         Split(field="src", by=": "),
         Slice(field="src", start=1),
         Join(field="src", by=": "),
-        CopyFields(field_to_field={"task": "required_attribute"}),
+        Copy(field="task", to_field="required_attribute"),
         MapInstanceValues(
             mappers={
                 "required_attribute": {
@@ -229,7 +229,7 @@ card = TaskCard(
                 }
             }
         ),
-        CopyFields(field_to_field={"task": "attribute_type"}),
+        Copy(field="task", to_field="attribute_type"),
         MapInstanceValues(
             mappers={
                 "attribute_type": {

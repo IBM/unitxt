@@ -58,28 +58,24 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
+            "type": "copy",
+            "field": "question/0",
+            "to_field": "question"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer_a/0": "answer_a"
-            }
+            "type": "copy",
+            "field": "answer_a/0",
+            "to_field": "answer_a"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer_b/0": "answer_b"
-            }
+            "type": "copy",
+            "field": "answer_b/0",
+            "to_field": "answer_b"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "reference_answer/0": "reference_answer"
-            }
+            "type": "copy",
+            "field": "reference_answer/0",
+            "to_field": "reference_answer"
         }
     ],
     "task": "tasks.response_assessment.pairwise_comparison.single_turn_with_reference",

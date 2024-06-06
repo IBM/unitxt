@@ -3,13 +3,9 @@
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "task_data/contexts",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "task_data/contexts",
+            "to_field": "references"
         }
     ],
     "postpreprocess_steps": [

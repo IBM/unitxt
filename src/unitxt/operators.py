@@ -1025,7 +1025,7 @@ class Perturb(FieldOperator):
         return value
 
 
-class CopyFields(FieldOperator):
+class Copy(FieldOperator):
     """Copies values from specified fields to specified fields.
 
     Args (of parent class):
@@ -1033,13 +1033,13 @@ class CopyFields(FieldOperator):
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
-        CopyField(field_to_field={"a": "b"}
+        Copy(field_to_field={"a": "b"}
         would yield {"a": 2, "b": 2}, and when processed by
-        CopyField(field_to_field={"a": "c"} would yield
+        Copy(field_to_field={"a": "c"} would yield
         {"a": 2, "b": 3, "c": 2}
 
         with field names containing / , we can also copy inside the field:
-        CopyFields(field_to_field={"a/0": "a"})
+        Copy(field="a/0",to_field="a")
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
@@ -1047,6 +1047,10 @@ class CopyFields(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return copy.deepcopy(value)
+
+
+class CopyFields(Copy):
+    pass
 
 
 class GetItemByIndex(FieldOperator):

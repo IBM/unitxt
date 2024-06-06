@@ -3,22 +3,14 @@
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "contexts",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "contexts",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "answer",
-                    "prediction"
-                ]
-            ]
+            "type": "copy",
+            "field": "answer",
+            "to_field": "prediction"
         }
     ],
     "metric": "metrics.bert_score.deberta_large_mnli"
