@@ -28,4 +28,4 @@ jobs:
        run: pip install -e .
 
      - name: Run Tests
-       run: python utils/prepare_all_artifacts.py
+       run: python -m utils/prepare_all_artifacts.py
