@@ -11,7 +11,7 @@ from unitxt.operators import (
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
-from prepare.cards.mt_bench.common import mt_bench_rating_hf_space_processing_steps
+from ...common import mt_bench_rating_hf_space_processing_steps
 
 card = TaskCard(
     loader=LoadFromHFSpace(
