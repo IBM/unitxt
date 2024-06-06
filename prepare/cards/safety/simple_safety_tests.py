@@ -26,7 +26,11 @@ card = TaskCard(
     ],
     task="tasks.generation",
     templates=["templates.generation.empty"],
-    __tags__={},
+    __description__="100 test prompts across five harm areas that LLMs, for the vast majority of applications, should refuse to comply with.",
+    __tags__={
+        "languages": ["english"],
+        "urls": {"arxiv": "https://arxiv.org/abs/2311.08370"},
+    },
 )
 
 test_card(
