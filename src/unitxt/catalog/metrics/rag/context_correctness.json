@@ -3,22 +3,14 @@
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "context_ids",
-                    "prediction"
-                ]
-            ]
+            "type": "copy",
+            "field": "context_ids",
+            "to_field": "prediction"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "ground_truths_context_ids",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "ground_truths_context_ids",
+            "to_field": "references"
         }
     ],
     "metric": "metrics.mrr"

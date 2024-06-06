@@ -37,22 +37,19 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
+            "type": "copy",
+            "field": "question/0",
+            "to_field": "question"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer/0": "answer"
-            }
+            "type": "copy",
+            "field": "answer/0",
+            "to_field": "answer"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "reference_answer/0": "reference_answer"
-            }
+            "type": "copy",
+            "field": "reference_answer/0",
+            "to_field": "reference_answer"
         }
     ],
     "task": "tasks.response_assessment.rating.single_turn_with_reference",

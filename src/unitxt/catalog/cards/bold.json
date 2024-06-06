@@ -18,22 +18,14 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "prompts/0",
-                    "first_prompt"
-                ]
-            ]
+            "type": "copy",
+            "field": "prompts/0",
+            "to_field": "first_prompt"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "wikipedia/0",
-                    "first_wiki"
-                ]
-            ]
+            "type": "copy",
+            "field": "wikipedia/0",
+            "to_field": "first_wiki"
         },
         {
             "type": "filter_by_condition",

@@ -28,10 +28,9 @@
             "by": ": "
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "task": "required_attribute"
-            }
+            "type": "copy",
+            "field": "task",
+            "to_field": "required_attribute"
         },
         {
             "type": "map_instance_values",
@@ -45,10 +44,9 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "task": "attribute_type"
-            }
+            "type": "copy",
+            "field": "task",
+            "to_field": "attribute_type"
         },
         {
             "type": "map_instance_values",

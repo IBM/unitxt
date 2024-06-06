@@ -3,22 +3,14 @@
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "question",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "question",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "answer",
-                    "prediction"
-                ]
-            ]
+            "type": "copy",
+            "field": "answer",
+            "to_field": "prediction"
         },
         {
             "type": "list_field_values",
