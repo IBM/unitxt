@@ -1,17 +1,17 @@
 {
     "type": "task_card",
     "loader": {
-        "type": "load_hf",
-        "path": "OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments",
-        "split": "train"
+        "type": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl"
+        }
     },
     "preprocess_steps": [
-        {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
         {
             "type": "filter_by_condition",
             "values": {
@@ -22,7 +22,7 @@
         {
             "type": "filter_by_condition",
             "values": {
-                "reference": "[]"
+                "reference": null
             },
             "condition": "ne"
         },
@@ -58,20 +58,10 @@
             }
         },
         {
-            "type": "literal_eval",
-            "to_field": "question",
-            "field": "question"
-        },
-        {
             "type": "copy_fields",
             "field_to_field": {
                 "question/0": "question"
             }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "answer_a",
-            "field": "answer_a"
         },
         {
             "type": "copy_fields",
@@ -80,20 +70,10 @@
             }
         },
         {
-            "type": "literal_eval",
-            "to_field": "answer_b",
-            "field": "answer_b"
-        },
-        {
             "type": "copy_fields",
             "field_to_field": {
                 "answer_b/0": "answer_b"
             }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "reference_answer",
-            "field": "reference_answer"
         },
         {
             "type": "copy_fields",
