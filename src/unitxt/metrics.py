@@ -7,9 +7,8 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
-from operator import itemgetter
 from statistics import mean
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, List, Literal, Optional, Tuple
 
 import evaluate
 import numpy
@@ -18,7 +17,13 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
-from .dataclass import AbstractField, InternalField, NonPositionalField, OptionalField
+from .dataclass import (
+    AbstractField,
+    Field,
+    InternalField,
+    NonPositionalField,
+    OptionalField,
+)
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -27,7 +32,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy
+from .operators import CopyFields, FilterByCondition, SplitByValue
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -184,17 +189,25 @@ class Metric(Artifact):
             return self.__id__
         return self.__class__.__name__
 
-    def consume_stream(self, stream: Stream):
+    def consume_stream(
+        self,
+        stream: Stream,
+        references_field_name="references",
+        prediction_field_name="prediction",
+        task_data_field_name="additional_inputs",
+    ):
         references = []
         predictions = []
         additional_inputs = []
         instances = []
         for instance in stream:
             instance = self.verify_instance(instance)
-            references.append(instance["references"])
-            predictions.append(instance["prediction"])
+            references.append(instance[references_field_name])
+            predictions.append(instance[prediction_field_name])
             additional_inputs.append(
-                instance["additional_inputs"] if "additional_inputs" in instance else {}
+                instance[task_data_field_name]
+                if task_data_field_name in instance
+                else {}
             )
             instances.append(instance)
         return predictions, references, additional_inputs, instances
@@ -224,12 +237,95 @@ class Metric(Artifact):
         pass
 
 
+class Aggregator(Artifact):
+    @abstractmethod
+    def aggregate_one_group_score_named(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        pass
+
+
+class SimpleAggregator(Aggregator):
+    aggregating_func: Callable[[List[Dict[str, Any]], str], float]
+
+    def aggregate_one_group_score_named(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        result = {}
+        for score_name in score_names:
+            result[score_name] = self.aggregating_func(instances, score_name)
+        return result
+
+
+def average_item_scores(instances: List[dict], score_name: str) -> float:
+    """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
+
+    Args:
+        instances: list of dicts of each instance's instance scores.
+        score_name: score field names to compute the mean for.
+    """
+    return nan_mean(
+        [instance["score"]["instance"][score_name] for instance in instances]
+    )
+
+
+def max_item_scores(instances: List[dict], score_name: str) -> float:
+    """Calculate max of a set of instance scores (given by score_name), omitting NaN values.
+
+    Args:
+        instances: list of dicts of each instance's instance scores.
+        score_name: score field names to compute the mean for.
+    """
+    return nan_max(
+        [instance["score"]["instance"][score_name] for instance in instances]
+    )
+
+
+class AverageItemsAggregator(SimpleAggregator):
+    aggregating_func = Field(default_factory=lambda: average_item_scores)
+
+
+# to be used by GlobalMetric that is not yet defined
+class GlobalMetricAggregator(Aggregator):
+    metric: Metric
+
+    def aggregate_one_group_score_named(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        predictions, references, task_data, _ = self.metric.consume_stream(
+            stream=instances, task_data_field_name="task_data"
+        )
+        self.metric._validate_references_and_prediction(references, predictions)
+        return self.metric.compute(references, predictions, task_data)
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
     n_resamples: int = None
     confidence_level: float = 0.95
     ci_scores: List[str] = None
+
+    # Whether to filter the instances before employing the aggregation for the global score.
+    # useful when the user is interested in only a subset of the instances, defined
+    # by a condition evaluated on each instance.
+    filter_by_condition: FilterByCondition = None
+
+    # whether to split the instances to groups, aggregate over each
+    # and use the (non-weighted) averaged global scores of the groups-
+    # as the whole stream global score.
+    split_to_groups_by: SplitByValue = None
+
+    # in case of grouping by, the following boolean flag specifies whether resampling for CI
+    # should be done from the individual groups' scores (True), as if each group is represented by
+    # one instance whose instance["score"]["instance"][score_name] is the group's global score for score_name,
+    # Or from the whole stream (False), where each resample is then split to
+    # groups, the score of which is then computed, and finally averaged with the other groups' scores, as done
+    # here for the original whole stream.
+    ci_samples_from_groups_scores: bool = False
+
+    # the basic aggregation along the instances: no split to groups, no filtering
+    aggregator: Aggregator = Field(default_factory=lambda: AverageItemsAggregator())
 
     @staticmethod
     def new_random_generator():
@@ -246,30 +342,6 @@ class MetricWithConfidenceInterval(Metric):
             self.n_resamples is not None
             and self.n_resamples > 1
             and num_predictions > 1
-        )
-
-    @staticmethod
-    def average_item_scores(instances: List[dict], score_name: str):
-        """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
-
-        Args:
-            instances: list of dicts of each instance's instance scores.
-            score_name: score field names to compute the mean for.
-        """
-        return nan_mean(
-            [instance["score"]["instance"][score_name] for instance in instances]
-        )
-
-    @staticmethod
-    def max_item_scores(instances: List[dict], score_name: str):
-        """Calculate max of a set of instance scores (given by score_name), omitting NaN values.
-
-        Args:
-            instances: list of dicts of each instance's instance scores.
-            score_name: score field names to compute the mean for.
-        """
-        return nan_max(
-            [instance["score"]["instance"][score_name] for instance in instances]
         )
 
     @staticmethod
@@ -317,7 +389,7 @@ class MetricWithConfidenceInterval(Metric):
             # if aggregation_func is None, we simply take the mean of the resampled instance scores
             # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
-            aggregation_func = self.average_item_scores
+            aggregation_func = AverageItemsAggregator().aggregate_one_group_score_named
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -330,8 +402,8 @@ class MetricWithConfidenceInterval(Metric):
                 # iterate over the rows and compute the metric on each resampling
                 scores = numpy.apply_along_axis(
                     lambda resampled_instances: aggregation_func(
-                        resampled_instances, score_name
-                    ),
+                        instances=resampled_instances, score_names=score_names
+                    )[score_name],
                     axis=axis,
                     arr=arr,
                 )
@@ -386,7 +458,7 @@ class MetricWithConfidenceInterval(Metric):
         return values
 
     def compute_global_confidence_intervals(
-        self, references, predictions, task_data, score_name
+        self, instances: List[Dict[str, Any]], score_name: str
     ):
         """Computed confidence intervals for a set of references and predictions."""
         random_gen = self.new_random_generator()
@@ -394,13 +466,11 @@ class MetricWithConfidenceInterval(Metric):
         def statistic(arr, axis):
             # arr is a 2d array where each row is a resampling, so we
             # iterate over the rows and compute the metric on each resampling
-            def metric(sample_refs, sample_preds, sample_task_data):
+            def metric(sample: List[Dict[str, Any]]):
                 try:
-                    return self._compute(
-                        references=sample_refs,
-                        predictions=sample_preds,
-                        task_data=sample_task_data,
-                    )["score"]
+                    return self.compute_stream_score(
+                        instances=sample, score_names=[score_name]
+                    )[score_name]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
@@ -409,11 +479,7 @@ class MetricWithConfidenceInterval(Metric):
 
             # resample the instance scores, and then return the global score each time
             scores = numpy.apply_along_axis(
-                lambda x: metric(
-                    sample_refs=[references[i] for i in x],
-                    sample_preds=[predictions[i] for i in x],
-                    sample_task_data=[task_data[i] for i in x],
-                ),
+                lambda x: metric(sample=[instances[i] for i in x]),
                 axis=axis,
                 arr=arr,
             )
@@ -424,7 +490,7 @@ class MetricWithConfidenceInterval(Metric):
             return self.resample_from_non_nan(scores)
 
         result = {}
-        num_predictions = len(predictions)
+        num_predictions = len(instances)
         if self._can_compute_confidence_intervals(num_predictions=num_predictions):
             identifiers = list(range(num_predictions))
 
@@ -445,6 +511,129 @@ class MetricWithConfidenceInterval(Metric):
             result[f"{score_name}_ci_high"] = ci.high
         return result
 
+    # The following aggregates over one group, which can be the whole stream when self.split_to_groups_by is None, for metric evaluation.
+    # It takes filtering into account, but does not assume further
+    # splitting of the input instances into groups by split_to_groups_by.
+    # Returns a dictionary of named scores
+    def aggregate_one_group(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        if self.filter_by_condition is not None:
+            filtered_instances = [
+                instance
+                for instance in instances
+                if self.filter_by_condition._is_required(instance)
+            ]
+            instances = filtered_instances
+
+        return self.aggregator.aggregate_one_group_score_named(
+            instances=instances, score_names=score_names
+        )
+
+    # The following does deal with split_to_groups_by, when is not None. Returned is a dict whose keys
+    # are the groups' names', and the values are dicts themselves. Each being the respective group's
+    # global score: what the group's instances carry in their instance["score"]["global"], when evaluated
+    # taking into account all settings except for split_to_groups_by.
+    # That is, splitting to groups by is done just once, if at all. The groups yielded from the top splitting are not further
+    # split by by split_to_groups_by.
+    # To generalize the process, when split_to_groups_by is None, this method returns a dict, whose single key
+    # is "whole_stream".
+    def aggregate_stream_to_groups_scores(
+        self,
+        instances: List[Dict[str, Any]],
+        score_names: List[str],
+    ) -> dict:
+        if score_names is None:
+            score_names = [self.main_score]
+        # to generalize the process, we say this global score is calculated by groups,
+        # since also when self.split_to_groups_by is None, we say we deal with groups,
+        # a single group in this case, being the whole input stream.
+        if self.split_to_groups_by is None:
+            return {
+                "whole_stream": self.aggregate_one_group(
+                    instances=instances, score_names=score_names
+                )
+            }
+        ms = MultiStream.from_iterables({"orig": instances})
+        ms = self.split_to_groups_by(ms)
+        ms_dict = ms.to_dict_of_lists()
+        groups_global_scores = {}
+        for group_name in sorted(ms_dict.keys()):
+            groups_global_scores[group_name] = self.aggregate_one_group(
+                instances=ms_dict[group_name], score_names=score_names
+            )
+        return groups_global_scores
+
+    # Average over the groups' score generated above. Each group's global score is a dict, being the global/aggregated_score
+    # computed for the group (be it a  sub-stream or the whole stream), or nan (if the group nullified or something).
+    # nan-s are excluded, because the averaging is via nan_mean
+    # so hereunder we average over the different fields of the dicts, each field separately.
+    # We prepare for a score being a string (and expected to be the same for all groups, like
+    # "score_name"), a float (which we average) or a list (which we may want to concatenate;
+    # e.g. the lists that rouge returns for use_aggregator=False, we need, in such a case, to reorder the
+    # instances, so that the instances correspond one to one with the concatenated lists of floats.
+    # but the instances that underwent the metric might be filtered, not the whole stream.  So we will not concatenate,
+    # but average, and then average over the groups, like for simple floats).
+    def average_groups_global_scores(self, groups_global_scores: dict) -> dict:
+        assert len(groups_global_scores) > 0, "Where have all the groups gone?"
+        if len(groups_global_scores) == 1:
+            return next(iter(groups_global_scores.values()))
+
+        result = defaultdict(list)
+
+        fields_to_average = set()
+        for group_name in sorted(groups_global_scores.keys()):
+            group_global_score = groups_global_scores[group_name]
+            # the score of the current group is a dict
+            for k, v in group_global_score.items():
+                if isinstance(v, str):
+                    result[k] = v
+                elif isinstance(v, float):
+                    fields_to_average.add(k)
+                    result[k].append(v)
+                else:
+                    assert isoftype(
+                        v, List[float]
+                    ), f"unexpected type of score {v} in group's score field {k}"
+                    result[k].append(np.nanmean(v))
+                    fields_to_average.add(k)
+
+        for k, v in result.items():
+            if k in fields_to_average:
+                result[k] = np.nanmean(v)
+        return result
+
+    # computes the global score taking all settings: splitting to groups, filtering, control-comparison,
+    # and which accumulation of scores (max, mean, global evaluation)
+    def compute_stream_score(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        assert score_names is not None
+        groups_global_scores = self.aggregate_stream_to_groups_scores(
+            instances=instances, score_names=score_names
+        )
+        return self.average_groups_global_scores(
+            groups_global_scores=groups_global_scores
+        )
+
+    def ci_from_groups_global_scores(
+        self, groups_global_scores: dict, score_prefix: str = ""
+    ) -> dict:
+        # dress the individual groups's score like instance scores: for each group generate
+        # a dict having just the "score" field, and in it -- just the "instance" section,
+        # and in that section: all the score_names whose values is the aggregation over that group.
+        # then sample from them, aggregating by simple average:
+        to_sample_from = [
+            {"score": {"instance": groups_global_scores[group_name]}}
+            for group_name in sorted(groups_global_scores.keys())
+        ]
+        return self.score_based_confidence_interval(
+            instances=to_sample_from,
+            score_names=list(set(self.ci_scores)),
+            ci_score_prefix=score_prefix,
+            aggregation_func=AverageItemsAggregator().aggregate_one_group_score_named,
+        )
+
 
 class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     """A class for computing metrics that require joint calculations over all instances and are not just aggregation of scores of individuals instances.
@@ -454,13 +643,14 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     need to be considered.  Accuracy, on the other hand, is just an average of the accuracy of all the instances.
     """
 
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_global_metrics
     )
 
     # calculate scores for single instances
     process_single_instances = True
 
+    # flake8: noqa: C901
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         references = []
         predictions = []
@@ -513,20 +703,57 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
             instance["score"]["instance"].update(
                 self._add_score_prefixes_to_score_dict(instance_score)
             )
-        self._validate_references_and_prediction(references, predictions)
 
-        result = self._compute(references, predictions, task_data)
+        self.aggregator = GlobalMetricAggregator(metric=self)
 
-        global_score.update(self._add_score_prefixes_to_score_dict(result))
-        score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, task_data, score_name
+        result = self.compute_stream_score(
+            instances=instances, score_names=[self.main_score]
         )
-        global_score.update(confidence_interval)
+        result = self._add_score_prefixes_to_score_dict(result)
+        # for backward compatibility, the following is different from "" only when
+        # self.split_to_groups_by is not None
+        field_name_full_prefix = ""
+        if self.split_to_groups_by is not None:
+            field_name_full_prefix = "group_"
+            if self.ci_samples_from_groups_scores:
+                field_name_full_prefix = "fixed_" + field_name_full_prefix
+
+            result = {
+                field_name_full_prefix + key: value for key, value in result.items()
+            }
+
+        result["score_name"] = (
+            field_name_full_prefix + self.score_prefix + self.main_score
+        )
+        result["score"] = result[result["score_name"]]
+        global_score.update(result)
+
+        if self.n_resamples is not None and self.n_resamples > 0:
+            if (
+                self.split_to_groups_by is None
+                or not self.ci_samples_from_groups_scores
+            ):
+                confidence_interval = self.compute_global_confidence_intervals(
+                    instances=instances, score_name=self.main_score
+                )
+            else:
+                groups_global_scores = self.aggregate_stream_to_groups_scores(
+                    instances=instances, score_names=[self.main_score]
+                )
+                confidence_interval = self.ci_from_groups_global_scores(
+                    groups_global_scores=groups_global_scores
+                )
+            confidence_interval_2 = {}
+            for key, value in confidence_interval.items():
+                if key.startswith("score_"):
+                    confidence_interval_2[key] = value
+                else:
+                    confidence_interval_2[field_name_full_prefix + key] = value
+            global_score.update(confidence_interval_2)
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
-            yield instance
+        yield from instances
 
     def _compute(
         self,
@@ -559,37 +786,82 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         pass
 
 
+class ControlComparisonAggregator(Aggregator):
+    # Generate a score that compares the scores of two subsets of the input stream: subset 'control' and subset 'comparison'
+    # The input stream (instances) may be one group (in case that split_to_groups_by is not None), or per the whole
+    # stream (in case that split_to_groups_by is None).
+    control_comparison_subsets: Dict[
+        Literal["control", "comparison"], FilterByCondition
+    ]
+    control_comparison_floats_comparator: Callable[[List[float], List[float]], float]
+    return_abs_value: bool = False
+
+    def aggregate_one_group_score_named(
+        self, instances: List[Dict[str, Any]], score_names: List[str]
+    ) -> dict:
+        subsets_dict = {
+            side: [
+                instance
+                for instance in instances
+                if self.control_comparison_subsets[side]._is_required(instance)
+            ]
+            for side in ["control", "comparison"]
+        }
+        dict_to_return = {}
+        for score_name in score_names:
+            control_floats = [
+                instance["score"]["instance"][score_name]
+                for instance in subsets_dict["control"]
+            ]
+            comparison_floats = [
+                instance["score"]["instance"][score_name]
+                for instance in subsets_dict["comparison"]
+            ]
+            val = self.control_comparison_floats_comparator(
+                control_subset=control_floats, comparison_subset=comparison_floats
+            )
+
+            dict_to_return[score_name] = np.abs(val) if self.return_abs_value else val
+        return dict_to_return
+
+
+# for ease of use of these repeating args, we define them here
+
+split_by_group_id = Field(
+    default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
+)
+original_paraphrase_control_comparison = {
+    "control": FilterByCondition(
+        values={"task_data/variant_type": ["original"]}, condition="in"
+    ),
+    "comparison": FilterByCondition(
+        values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+    ),
+}
+
+
 class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
     main_score: str
+    score_names: List[str] = None
 
-    reduction_map: Dict[str, List[str]]
-
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    # the only aggregator allowed for BulkInstanceMetric
+    # aggregator: Aggregator  defined in MetricWithConfidenceInterval
+    aggregating_function_name: str = "mean"
+    split_to_groups_by = None
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        global_score = {}
-        instances = []
+        if self.main_score is None:
+            self.main_score = "f1"
+        if self.score_names is None:
+            self.score_names = [self.main_score]
 
         # consume the stream
-        references, predictions = map(
-            list,
-            zip(
-                *[
-                    itemgetter("references", "prediction")(
-                        self.verify_instance(instance)
-                    )
-                    for instance in stream
-                ]
-            ),
+        predictions, references, task_data, instances = self.consume_stream(
+            stream=stream, task_data_field_name="task_data"
         )
-
-        task_data = [
-            instance["task_data"] if "task_data" in instance else {}
-            for instance in stream
-        ]
         self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
         instance_scores = self.compute(
@@ -599,53 +871,51 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         )
 
         # add the score and score_name fields
-        for instance_score in instance_scores:
-            instance_score["score"] = instance_score[self.main_score]
-            instance_score["score_name"] = self.main_score
+        for isc in range(len(instance_scores)):
+            instance_scores[isc] = self._add_score_prefixes_to_score_dict(
+                instance_scores[isc]
+            )
 
-        for instance, score in zip(stream, instance_scores):
+            instance_scores[isc]["score"] = instance_scores[isc][
+                self._add_score_prefix(self.main_score)
+            ]
+            instance_scores[isc]["score_name"] = self._add_score_prefix(self.main_score)
+
+        for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
 
-            instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(score)
-            )
-            instances.append(instance)
+            instance["score"]["instance"].update(score)
 
-        for reduction, fields in self.reduction_map.items():
-            assert (
-                reduction in self.implemented_reductions
-            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+        gs = self.compute_stream_score(
+            instances=instances,
+            score_names=[
+                self._add_score_prefix(field_name) for field_name in self.score_names
+            ],
+        )
+        if self.main_score in self.score_names:
+            gs["score"] = gs[self.score_prefix + self.main_score]
+            gs["score_name"] = self.score_prefix + self.main_score
 
-            if reduction == "mean":
-                for field_name in fields:
-                    field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = mean(
-                        [
-                            instance["score"]["instance"][field_name_with_prefix]
-                            for instance in instances
-                        ]
-                    )
-                    if field_name == self.main_score:
-                        global_score["score"] = global_score[field_name_with_prefix]
-                        global_score["score_name"] = self.score_prefix + self.main_score
-
-                ci_fields = (
-                    list(set(self.ci_scores))
-                    if self.ci_scores is not None
-                    else [self.main_score]
-                )
-                ci_fields_with_prefix = [
-                    self._add_score_prefix(ci_field) for ci_field in ci_fields
-                ]
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=instances, score_names=ci_fields_with_prefix
-                )
-                global_score.update(confidence_interval)
+        ci_fields = (
+            list(set(self.ci_scores))
+            if self.ci_scores is not None
+            else [self.main_score]
+        )
+        ci_fields_with_prefix = [
+            self._add_score_prefix(ci_field) for ci_field in ci_fields
+        ]
+        confidence_interval = self.score_based_confidence_interval(
+            instances=instances,
+            score_names=ci_fields_with_prefix,
+            ci_score_prefix="",
+            aggregation_func=self.compute_stream_score,
+        )
+        gs.update(confidence_interval)
 
         for instance in instances:
-            instance["score"]["global"].update(global_score)
-            yield instance
+            instance["score"]["global"].update(gs)
+        yield from instances
 
     @abstractmethod
     def compute(
@@ -668,200 +938,114 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         See _validate_group_mean_reduction for formatting instructions.
     """
 
-    n_resamples: int = OptionalField(
+    n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
 
-    # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
-    # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
-    # require an additional column (e.g., a subgroup identifier) by which the instance scores will be grouped
-    # if subgroup_column is not None, a column by the specified name will be required in task_data
-    subgroup_column = None
-    implemented_reductions: List[str] = field(
-        default_factory=lambda: ["mean", "group_mean", "max"]
-    )
+    # list of names of scores to be aggregated over. each sitting in instance["score"]["instance"].
+    # if None, [self.main_score] is used to aggregate over
+    score_names: List[str] = None
 
-    reduction_map: Dict[str, List[str]] = AbstractField()
+    # How to yield one score, float, for each score_name in score_names, from a list of instances: either the whole stream or one group.
+    # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
+    # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
+    # Tyically, aggregating is to be overridden by the subclasses.
+    # aggregator: Aggregator   # defined in MetricWithConfidenceInterval
+
+    # This name is used to prefix the score_name.
+    # Use to be expanded to global metric and bulk instance  too.
+    aggregating_function_name: str = "mean"
 
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
-    def _validate_group_mean_reduction(self, instances: List[dict]):
-        """Ensure that group_mean reduction_map is properly formatted.
-
-        Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
-
-        class GroupVarianceAccuracy(Accuracy):
-            reduction_map = {'group_mean': {'agg_func': ['variance', np.var, True]}}
-
-        reduction_map must be a dict with values containing
-        - an 'agg_func' field with value being a 3-element list where
-            - 1st element is a string name of the aggregation function (used in naming the CI report)
-            - 2nd element is the callable aggregation function
-            - 3rd element is a Boolean indicator of whether, during bootstrap CI calculation, the groups are to be sampled as single units.
-                If True, the group scores are calculated and then resampled.  This treats the group units as the unit of
-                interest for which the CI is being compared.
-                If False, the instances are resampled individually, and the groups determined
-                (meaning the groups may be of slightly different size or composition from the original
-                depending on the resampling of the instances).
-        - Optional: 'score_fields' key with list value containing the string names of fields to apply the aggregation to
-            - If not present, the parent class main_score is used.
-
-        The aggregation function (2nd element of agg_func) can be one of two types:
-        1. simple: calculate a summary statistic from a single group of values (e.g. mean, median, etc.).
-            This is best suited for cases where the instances are independent of each other, other than belonging to the same group
-        2. comparison: requires subgroup_column to be specified.  This function conducts
-            a comparison between scores for differing values of subgroup_column (e.g., 'original' vs 'paraphrase').
-            An example is where the original instance is a question, and the others are various paraphrases
-            or perturbations of this question.  Here, the function would return, say, a comparison of the instance accuracies
-            rather than, say, the average instance accuracy.
-            In these cases, we recommend setting the 3rd parameter to be True so that the groups are resampled together.
-
-        Example:
-            class GroupVsBaselineDiffAccuracy(Accuracy):
-                subgroup_column = 'variant_type'
-                reduction_map = {'group_mean': {'agg_func': ['accuracy_diff', accuracy_diff, True],}}
-
-            # where the function is defined as
-            def accuracy_diff(subgroup_scores_dict, expected_subgroup_types=['original', 'paraphrase']):
-                validate_subgroup_types(subgroup_scores_dict, expected_subgroup_types)
-                from statistics import mean
-                return mean(subgroup_scores_dict['paraphrase']) - mean(subgroup_scores_dict['original'])
-            The input dataset should look like:
-
-            'group_id'  'question'                                   'variant_type'
-            1           'How do you fix a car engine?'               'original'
-            1           'What is the best way to fix an engine?'     'paraphrase'
-            1           'How do you repair a car engine?'            'paraphrase'
-            1           'How do I repair my engine?'                 'paraphrase'
-            2           'Why are ants eating my food?'               'original'
-        """
-        # instances need to all have task_data field with field group_id
-        assert all(
-            "task_data" in instance for instance in instances
-        ), "each instance must have an task_data field"
-        assert all(
-            isinstance(instance["task_data"], dict) for instance in instances
-        ), "each instance must have an task_data field that is a dict"
-        assert all(
-            "group_id" in instance["task_data"] for instance in instances
-        ), "each instance task_data dict must have a key group_id"
-
-        # validate the reduction_map
-        assert (
-            "group_mean" in self.reduction_map
-        ), "reduction_map must have a 'group_mean' key"
-        fields = self.reduction_map["group_mean"]
-        # for group_mean, expects a dict
-        assert isinstance(fields, dict)
-        assert (
-            "agg_func" in fields
-        ), "fields should have a key 'agg_func' whose value is a 3-element list of a function name, function definition, and a boolean indicator"
-        assert isinstance(
-            fields["agg_func"], list
-        ), "fields['agg_func'] should be a list"
-        assert (
-            len(fields["agg_func"]) == 3
-        ), "fields['agg_func'] should be a 3-element list"
-        assert isinstance(
-            fields["agg_func"][0], str
-        ), "first item in fields['agg_func'] should be a string name of a function"
-        assert callable(
-            fields["agg_func"][1]
-        ), "second item in fields['agg_func'] should be a callable function"
-        assert isinstance(
-            fields["agg_func"][2], bool
-        ), "third item in fields['agg_func'] should be a boolean value"
-        if "score_fields" in fields:
-            assert isinstance(fields["score_fields"], list)
-
-        # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
-        # this field exists
-        if self.subgroup_column is not None:
-            assert all(
-                self.subgroup_column in instance["task_data"] for instance in instances
-            ), f"each instance task_data dict must have a key {self.subgroup_column}"
+    def verify(self):
+        assert self.aggregator is not None
+        assert issubclass(type(self.aggregator), Aggregator)
+        assert self.split_to_groups_by is None or (
+            issubclass(type(self.split_to_groups_by), SplitByValue)
+        )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        if self.score_names is None:
+            self.score_names = [self.main_score]
         instances = self.compute_instance_scores(stream)
-        global_score = {}
-        for reduction_type, reduction_params in self.reduction_map.items():
-            assert (
-                reduction_type in self.implemented_reductions
-            ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
+        # each instance now has, in its "score/instance" field, a dict mapping each
+        # score name from self.score_names (at least these) to the instance's score for
+        # that score name. the name of the score that shows in score/instance
+        # is a member of self.score_names, prefixed by self.score_prefix that is
+        # an optional string arg, per user's choice
+        # We now proceed to calculate (update) global score in each "score/global"
 
-            field_name_full_prefix = ""
-            # used for passing to the bootstrapping, depends on whether the groups are fixed or not
-            aggregation_function = None
-            if reduction_type == "mean":
-                aggregation_function = self.average_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instances
-            elif reduction_type == "max":
-                aggregation_function = self.max_item_scores
-                reduction_fields = list(set(reduction_params))
-                # no group reduction, so resample instances individually
-                scores_to_resample = instances
-            elif reduction_type == "group_mean":
-                aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction(instances=instances)
-                reduction_fields = (
-                    [self.main_score]
-                    if "score_fields" not in reduction_params
-                    else list(set(reduction_params["score_fields"]))
-                )
-                aggregation_function_name = str(reduction_params["agg_func"][0])
-                field_name_full_prefix = "group_" + aggregation_function_name + "_"
-                do_resample_as_group = reduction_params["agg_func"][2]
-                if do_resample_as_group:
-                    # append fixed_ to name because resamples the groups as fixed units
-                    field_name_full_prefix = "fixed_" + field_name_full_prefix
-                (
-                    scores_to_resample,
-                    aggregation_function,
-                ) = self._set_up_group_mean_aggregation(
-                    instances, reduction_params, reduction_fields
-                )
-            else:
-                raise ValueError(
-                    f"Reduction {reduction_type} is not supported, please specify a valid reduction method in reduction_map {self.reduction_map}."
-                )
+        gs = self.compute_stream_score(
+            instances=instances,
+            score_names=[
+                self._add_score_prefix(field_name) for field_name in self.score_names
+            ],
+        )
+        # for backward compatibility, the following is different from "" only when
+        # self.split_to_groups_by is not None
+        field_name_full_prefix = ""
+        if self.split_to_groups_by is not None:
+            field_name_full_prefix = "group_" + self.aggregating_function_name + "_"
+            if self.ci_samples_from_groups_scores:
+                field_name_full_prefix = "fixed_" + field_name_full_prefix
 
-            # calculate global scores for each reduction field
-            for field_name in reduction_fields:
-                field_name_full = (
-                    field_name_full_prefix + self.score_prefix + field_name
-                )
-                # if group resampling (3rd element of agg_func parameter) is True, then
-                #   1. scores_to_resample are the group scores, and
-                #   2. aggregation_function is to take the raw mean
-                # if no group resampling (3rd element of agg_func parameter) is False, then
-                #   1. scores_to_resample are the original instance scores, and
-                #   2. aggregation_function is to apply the group aggregation from the instance scores
-                # either way, the application of aggregation_function to scores_to_resample yields the global score
-                global_score[field_name_full] = aggregation_function(
-                    scores_to_resample, self.score_prefix + field_name
-                )
-                if field_name == self.main_score:
-                    global_score["score"] = global_score[field_name_full]
-                    global_score["score_name"] = field_name_full
+        if len(field_name_full_prefix) > 0:
+            gs = {field_name_full_prefix + key: value for key, value in gs.items()}
 
-            # need to specify which fields should have CIs calculated for them through ci_scores
-            # (will not automatically calculate CIs for fields in reduction map)
-            if self.ci_scores is not None:
+        if self.main_score in self.score_names:
+            gs["score"] = gs[
+                field_name_full_prefix + self.score_prefix + self.main_score
+            ]
+            gs["score_name"] = (
+                field_name_full_prefix + self.score_prefix + self.main_score
+            )
+
+        # CI:
+        # if arg split_to_groups_by is None, or ci_samples_from_groups_scores is False:
+        # ci as usual, over the whole input stream, with aggregation function that
+        # was used above for the whole stream or the individual groups.
+        # Need to specify which fields should have CIs calculated for them through ci_scores
+        # (will not automatically calculate CIs for fields in reduction map)
+        if (
+            self.ci_scores is not None
+            and self.n_resamples is not None
+            and self.n_resamples > 0
+        ):
+            if (
+                self.split_to_groups_by is None
+                or not self.ci_samples_from_groups_scores
+            ):
                 confidence_interval = self.score_based_confidence_interval(
-                    instances=scores_to_resample,
+                    instances=instances,
                     score_names=[
                         self.score_prefix + ci_score for ci_score in set(self.ci_scores)
                     ],
                     ci_score_prefix=field_name_full_prefix,
-                    aggregation_func=aggregation_function,
+                    aggregation_func=self.compute_stream_score,
                 )
-                global_score.update(confidence_interval)
+            else:
+                # dress the individual groups' scores like instance scores: for each group, generate
+                # a dict having just the "score" field, and in it -- just the "instance" section,
+                # and in that section: all the score_names whose values is the aggregation over that group.
+                # then sample from them, aggregating by simple average:
+                groups_global_scores = self.aggregate_stream_to_groups_scores(
+                    instances=instances,
+                    score_names=[
+                        self._add_score_prefix(field_name)
+                        for field_name in self.score_names
+                    ],
+                )
+                confidence_interval = self.ci_from_groups_global_scores(
+                    groups_global_scores=groups_global_scores,
+                    score_prefix=field_name_full_prefix,
+                )
+            gs.update(confidence_interval)
 
+        # update global score in each instance
         for instance in instances:
-            instance["score"]["global"].update(global_score)
+            instance["score"]["global"].update(gs)
         yield from instances
 
     def compute_instance_scores(
@@ -905,107 +1089,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         return instances
 
-    def get_group_scores(
-        self, instances: List[dict], score_names: List[str], group_aggregation_func
-    ):
-        """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
-
-        Args:
-            instances: List of observation instances with instance-level scores (fields) computed.
-            score_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
-                or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
-                callable function returns a single score for the group
-
-        Returns:
-            List of dicts, each corresponding to a group of instances (defined by 'group_id'),
-                with an aggregate group score for each score_name
-        """
-        from collections import defaultdict
-
-        # three-level defaultdict:
-        # first is the grouping, second is the field name, the third is the subgroup_type (by default 'default')
-        group_to_instance_scores = defaultdict(
-            lambda: defaultdict(lambda: defaultdict(list))
-        )
-
-        # check if function has fields for subgroup_column
-        uses_subgroups = self.subgroup_column is not None
-        default_subgroup_name = "default"
-        # loop through the instances and group the scores
-        for instance in instances:
-            task_data = instance["task_data"]
-            group_key = task_data["group_id"]
-            # for functions that do comparisons between subgroup_column groups
-            # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
-            subgroup_type = (
-                task_data[self.subgroup_column]
-                if uses_subgroups
-                else default_subgroup_name
-            )
-            for score_name in score_names:
-                group_to_instance_scores[group_key][score_name][subgroup_type].append(
-                    instance["score"]["instance"][score_name]
-                )
-
-        # if group_aggregation_func expects a subgroup-types score dict, pass it; otherwise pass the default type list of scores
-        return [
-            {
-                "score": {
-                    "instance": {
-                        score_name: group_aggregation_func(
-                            score_dict
-                            if uses_subgroups
-                            else score_dict[default_subgroup_name]
-                        )
-                        for score_name, score_dict in group_to_instance_scores[
-                            group_name
-                        ].items()
-                    }
-                }
-            }
-            for group_name in sorted(
-                group_to_instance_scores.keys()
-            )  # sorted for consistency
-        ]
-
-    def _set_up_group_mean_aggregation(
-        self, instances, reduction_params, reduction_fields
-    ):
-        group_aggregation_func = reduction_params["agg_func"][1]
-        # if treat groups as units
-        do_resample_as_group = reduction_params["agg_func"][2]
-        if do_resample_as_group:
-            # pass the group aggregate---not instance---scores to resample as usual
-            aggregation_function = self.average_item_scores
-            scores_to_resample = self.get_group_scores(
-                instances, reduction_fields, group_aggregation_func
-            )
-        else:
-            # pass the instance scores to resample, and calculate the group aggregation on the resamplings
-            scores_to_resample = instances
-
-            def aggregation_function(
-                instances,
-                field_name,
-                group_aggregation_func=group_aggregation_func,
-            ):
-                group_scores = self.get_group_scores(
-                    instances, [field_name], group_aggregation_func
-                )
-                return nan_mean(
-                    [group["score"]["instance"][field_name] for group in group_scores]
-                )
-
-        return scores_to_resample, aggregation_function
-
     @abstractmethod
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         pass
 
 
 class Accuracy(InstanceMetric):
-    reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
     ci_scores = ["accuracy"]
 
@@ -1025,7 +1114,6 @@ class Accuracy(InstanceMetric):
 
 
 class JaccardIndex(InstanceMetric):
-    reduction_map = {"mean": ["jaccard_index"]}
     main_score = "jaccard_index"
     ci_scores = ["jaccard_index"]
 
@@ -1061,11 +1149,13 @@ class JaccardIndex(InstanceMetric):
 class MaxAccuracy(Accuracy):
     """Calculate the maximal accuracy over all instances as the global score."""
 
-    reduction_map = {"max": ["accuracy"]}
+    aggregating_function_name = "max"
+    aggregator = Field(
+        default_factory=lambda: SimpleAggregator(aggregating_func=max_item_scores)
+    )
 
 
 class UnsortedListExactMatch(InstanceMetric):
-    reduction_map = {"mean": ["unsorted_list_exact_match"]}
     main_score = "unsorted_list_exact_match"
     ci_scores = ["unsorted_list_exact_match"]
 
@@ -1079,7 +1169,6 @@ class UnsortedListExactMatch(InstanceMetric):
 
 
 class StringContainment(InstanceMetric):
-    reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
 
@@ -1584,7 +1673,6 @@ class Rouge(HuggingfaceMetric):
 # Computes char edit distance, ignoring whitespace
 class CharEditDistance(InstanceMetric):
     main_score = "char_edit_distance"
-    reduction_map = {"mean": [main_score]}
     ci_scores = [main_score]
     prediction_type = "str"
     single_reference_per_prediction = True
@@ -1615,7 +1703,6 @@ class CharEditDistance(InstanceMetric):
 
 class CharEditDistanceAccuracy(CharEditDistance):
     main_score = "char_edit_dist_accuracy"
-    reduction_map = {"mean": [main_score]}
     ci_scores = [main_score]
 
     accuracy_metric = True
@@ -1956,7 +2043,7 @@ def normalize_answer(s):
 
 
 class TokenOverlap(InstanceMetric):
-    reduction_map = {"mean": ["f1", "precision", "recall"]}
+    score_names = ["f1", "precision", "recall"]
     main_score = "f1"
     ci_scores = ["f1", "precision", "recall"]
     single_reference_per_prediction = False
@@ -1993,7 +2080,7 @@ class TokenOverlap(InstanceMetric):
 class BertScore(HuggingfaceBulkMetric):
     hf_metric_name = "bertscore"
     main_score = "f1"
-    reduction_map = {"mean": ["f1", "precision", "recall"]}
+    score_names = ["f1", "precision", "recall"]
     hf_metric_fields = ["f1", "precision", "recall"]
     ci_scores = ["f1", "precision", "recall"]
     model_name: str
@@ -2011,7 +2098,6 @@ class BertScore(HuggingfaceBulkMetric):
 
 
 class SentenceBert(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
 
@@ -2062,7 +2148,6 @@ class SentenceBert(BulkInstanceMetric):
 
 
 class Reward(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
 
@@ -2103,7 +2188,6 @@ class Reward(BulkInstanceMetric):
 
 
 class Detector(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
     main_score = "score"
     batch_size: int = 32
 
@@ -2138,11 +2222,10 @@ class LlamaIndexLLMMetric(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
     prediction_type: str = "str"
-    reduction_map: Dict[str, List[str]] = None
+
     openai_models: List[str] = ["gpt-3.5-turbo"]
-    anthropic_models: List[
-        str
-    ] = []  # this is here for the sake of documentation for future models
+    # anthropic_models is here for the sake of documentation for future models:
+    anthropic_models: List[str] = []
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
@@ -2202,6 +2285,11 @@ class LlamaIndexCorrectness(LlamaIndexLLMMetric):
 
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = (
+            f"correctness_llama_index_by_{self.model_name_normalized}_judge"
+        )
+
         super().prepare()
 
         from llama_index.core.evaluation import CorrectnessEvaluator
@@ -2283,7 +2371,6 @@ class Perplexity(BulkInstanceMetric):
     """Computes the likelihood of generating text Y after text X - P(Y|X)."""
 
     main_score = "perplexity"
-    reduction_map = {"mean": ["perplexity"]}
     prediction_type = "str"
 
     source_template: str
@@ -2710,7 +2797,6 @@ class RetrievalMetric(InstanceMetric):
 
 
 class MRR(RetrievalMetric):
-    reduction_map = {"mean": ["mrr"]}
     main_score = "mrr"
     ci_scores = ["mrr"]
 
@@ -2727,7 +2813,6 @@ class MRR(RetrievalMetric):
 
 
 class MAP(RetrievalMetric):
-    reduction_map = {"mean": ["map"]}
     main_score = "map"
     ci_scores = ["map"]
 
@@ -2752,17 +2837,16 @@ class MAP(RetrievalMetric):
 class RetrievalAtK(RetrievalMetric):
     k_list: List[int]
     main_score: str = None
-    reduction_map: Dict[str, List[str]] = None
 
     def prepare(self):
-        super().prepare()
         self.main_score = self.score_name("match", self.k_list[0])
         self.ci_scores = [
             self.score_name(measure, k)
             for measure in ["precision", "recall", "match"]
             for k in self.k_list
         ]
-        self.reduction_map = {"mean": self.ci_scores}
+        self.score_names = self.ci_scores
+        super().prepare()
 
     @staticmethod
     def score_name(measure: str, k: int):
@@ -2892,78 +2976,32 @@ class RemoteMetric(StreamOperator, Metric):
         pass
 
 
-def validate_subgroup_types(
-    subgroup_scores_dict: Dict[str, List],
-    control_subgroup_types: List[str],
-    comparison_subgroup_types: List[str],
-):
-    """Validate a dict of subgroup type instance score lists, and subgroup type lists.
-
-    Args:
-        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
-        control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
-        comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
-            to be compared to the control group.
-
-    Returns:
-        dict with all NaN scores removed; control_subgroup_types and comparison_subgroup_types will have non-unique elements removed
-    """
-    # note: subgroup_scores_dict is already a defaultdict of lists, so don't need to check that keys in control_ and comparison_subgroup_types exist in it
-    # remove any NaNs
-    subgroup_scores_dict.update(
-        {
-            subgroup_name: [score for score in score_list if not np.isnan(score)]
-            for subgroup_name, score_list in subgroup_scores_dict.items()
-        }
-    )
-    assert isinstance(
-        control_subgroup_types, list
-    ), "control_subgroup_types must be a list"
-    assert isinstance(
-        comparison_subgroup_types, list
-    ), "comparison_subgroup_types must be a list"
-    # make sure each list is unique, so that labels aren't double-counted
-    control_subgroup_types = list(set(control_subgroup_types))
-    comparison_subgroup_types = list(set(comparison_subgroup_types))
-
-    return subgroup_scores_dict, control_subgroup_types, comparison_subgroup_types
-
-
 def performance_drop_rate(
-    subgroup_scores_dict: Dict[str, List],
-    control_subgroup_types: List[str],
-    comparison_subgroup_types: List[str],
+    control_subset: List[float],
+    comparison_subset: List[float],
 ):
     """Percentage decrease of mean performance on test elements relative to that on a baseline (control).
 
     from https://arxiv.org/pdf/2306.04528.pdf.
 
     Args:
-        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
-        control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
-        comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
-            to be compared to the control group.
+        control_subset: list of scores of the instances that belong to the control (baseline) subset
+        comparison_subset: list of scores of the instances that belong to the subset
+            to be compared to the control subset.
 
     Returns:
         numeric PDR metric.
         If only one element (no test set) or the first is 0 (percentage change is undefined) return NaN
         otherwise, calculate PDR
     """
-    (
-        subgroup_scores_dict,
-        control_subgroup_types,
-        comparison_subgroup_types,
-    ) = validate_subgroup_types(
-        subgroup_scores_dict, control_subgroup_types, comparison_subgroup_types
-    )
+    no_nan_control_subset = [score for score in control_subset if not np.isnan(score)]
+    no_nan_comparison_subset = [
+        score for score in comparison_subset if not np.isnan(score)
+    ]
 
     # combine all scores from each label (if there are more than 1 in each group) into a list
-    group_scores_list = [
-        np.concatenate(
-            [subgroup_scores_dict[subgroup_name] for subgroup_name in name_list]
-        )
-        for name_list in [control_subgroup_types, comparison_subgroup_types]
-    ]
+    group_scores_list = [no_nan_control_subset, no_nan_comparison_subset]
+
     if any(len(scores) == 0 for scores in group_scores_list):
         # no comparison can be made since there is not at least one score per type
         return np.nan
@@ -3020,9 +3058,8 @@ def interpret_effect_size(x: float):
 
 
 def normalized_cohens_h(
-    subgroup_scores_dict: Dict[str, List],
-    control_subgroup_types: List[str],
-    comparison_subgroup_types: List[str],
+    control_subset: List[float],
+    comparison_subset: List[float],
     interpret=False,
 ):
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
@@ -3047,42 +3084,35 @@ def normalized_cohens_h(
         - a very large difference if 0.38197186 <= |norm h| < 0.63661977
         - a huge difference if 0.63661977 <= |norm h|
     Args:
-        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
-        control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
-        comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
+        control_subset: list of floats, extracted one from instance["score"]["instance"][score_name] , the score_name
+        that is hereby aggregated through control_comprison, and the instances are those that belong to the
+        control (baseline) subset
+        comparison_subset: list of floats extracted similarly from the comparison subset of the instances,
             to be compared to the control group.
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
-    (
-        subgroup_scores_dict,
-        control_subgroup_types,
-        comparison_subgroup_types,
-    ) = validate_subgroup_types(
-        subgroup_scores_dict, control_subgroup_types, comparison_subgroup_types
-    )
-
-    # requires scores to be in [0,1]
-    for subgroup_name, score_list in subgroup_scores_dict.items():
-        assert all(
-            0 <= score <= 1 for score in score_list
-        ), f"all {subgroup_name} scores must be in [0,1]"
-
-    # combine all scores from each label (if there are more than 1 in each group) into a list
-    group_scores_list = [
-        np.concatenate(
-            [subgroup_scores_dict[subgroup_name] for subgroup_name in name_list]
-        )
-        for name_list in [control_subgroup_types, comparison_subgroup_types]
+    no_nan_control_subset = [score for score in control_subset if not np.isnan(score)]
+    no_nan_comparison_subset = [
+        score for score in comparison_subset if not np.isnan(score)
     ]
 
-    if any(len(scores) == 0 for scores in group_scores_list):
+    # requires scores to be in [0,1]
+    assert all(
+        0 <= score <= 1 for score in no_nan_control_subset
+    ), "all control scores must be in [0,1]"
+
+    assert all(
+        0 <= score <= 1 for score in no_nan_comparison_subset
+    ), "all comparison scores must be in [0,1]"
+
+    if len(no_nan_control_subset) == 0 or len(no_nan_comparison_subset) == 0:
         # no comparison can be made since there is not at least one score per type
         h, norm_h = np.nan, np.nan
     else:
-        control_mean = mean(group_scores_list[0])
-        comparison_mean = mean(group_scores_list[1])
+        control_mean = mean(no_nan_control_subset)
+        comparison_mean = mean(no_nan_comparison_subset)
         h = 2 * (np.arcsin(np.sqrt(comparison_mean)) - np.arcsin(np.sqrt(control_mean)))
         norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
 
@@ -3093,9 +3123,8 @@ def normalized_cohens_h(
 
 
 def normalized_hedges_g(
-    subgroup_scores_dict: Dict[str, List[float]],
-    control_subgroup_types: List[str],
-    comparison_subgroup_types: List[str],
+    control_subset: List[float],
+    comparison_subset: List[float],
     interpret=False,
 ):
     """Hedge's g effect size between mean of two samples, normalized to interval [-1,1].  Better than Cohen's d for small sample sizes.
@@ -3103,31 +3132,23 @@ def normalized_hedges_g(
     Takes into account the variances within the samples, not just the means.
 
     Args:
-        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
-        control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
-        comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
+        control_subset: list of floats, extracted one from instance["score"]["instance"][score_name] , the score_name
+        that is hereby aggregated through control_comprison, and the instances are those that belong to the
+        control (baseline) subset
+        comparison_subset: list of floats extracted similarly from the comparison subset of the instances,
             to be compared to the control group.
         interpret: boolean, whether to interpret the significance of the score or not
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
-    (
-        subgroup_scores_dict,
-        control_subgroup_types,
-        comparison_subgroup_types,
-    ) = validate_subgroup_types(
-        subgroup_scores_dict, control_subgroup_types, comparison_subgroup_types
-    )
-
-    # combine all scores from each label (if there are more than 1 in each group) into a list
-    group_scores_list = [
-        np.concatenate(
-            [subgroup_scores_dict[subgroup_name] for subgroup_name in name_list]
-        )
-        for name_list in [control_subgroup_types, comparison_subgroup_types]
+    no_nan_control_subset = [score for score in control_subset if not np.isnan(score)]
+    no_nan_comparison_subset = [
+        score for score in comparison_subset if not np.isnan(score)
     ]
 
-    group_n = [len(scores) for scores in group_scores_list]
+    group_scores_list = [no_nan_control_subset, no_nan_comparison_subset]
+
+    group_n = [len(no_nan_control_subset), len(no_nan_comparison_subset)]
     if any(nn == 0 for nn in group_n) or all(nn <= 1 for nn in group_n):
         # if at least one sample size is 0 for one type, no comparison can be made at all
         # if both sample sizes are 1, then the denominator is undefined since divide by n1 + n2 - 2
@@ -3135,7 +3156,7 @@ def normalized_hedges_g(
         g, norm_g = np.nan, np.nan
     else:
         # otherwise, calculate the variances
-        group_mean = [mean(scores) for scores in group_scores_list]
+        group_mean = [mean(no_nan_control_subset), mean(no_nan_comparison_subset)]
         # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
         group_var = [
             0.0 if nn == 1 else np.var(scores, ddof=1)
@@ -3171,307 +3192,222 @@ def normalized_hedges_g(
     return norm_g, interpret_effect_size(g)
 
 
-def mean_subgroup_score(
-    subgroup_scores_dict: Dict[str, List], subgroup_types: List[str]
-):
-    """Return the mean instance score for a subset (possibly a single type) of variants (not a comparison).
-
-    Args:
-        subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
-        subgroup_types: the keys (subgroup types) for which the average will be computed.
-
-    Returns:
-        float score
-    """
-    subgroup_scores_dict, subgroup_types, _ = validate_subgroup_types(
-        subgroup_scores_dict, subgroup_types, []
-    )
-
-    # combine all desired subgroup scores
-    score_list = np.concatenate(
-        [subgroup_scores_dict[subgroup_name] for subgroup_name in subgroup_types]
-    )
-    if len(score_list) == 0:
-        # no scores to use
-        return np.nan
-    return mean(score_list)
-
-
 # metrics using mean reduction
 class GroupMeanAccuracy(Accuracy):
-    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
+    split_to_groups_by = split_by_group_id
 
 
 class FixedGroupMeanAccuracy(Accuracy):
     # the same as GroupMeanAccuracy, except the groups are fixed and are resampled together
-    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 # same as above, now using StringContainment
 class GroupMeanStringContainment(StringContainment):
-    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, False]}}
+    split_to_groups_by = split_by_group_id
 
 
 class FixedGroupMeanStringContainment(StringContainment):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
-    reduction_map = {"group_mean": {"agg_func": ["mean", nan_mean, True]}}
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 # take only the (fixed) group mean of baseline or other (paraphrases) scores
 class FixedGroupMeanBaselineAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    # take mean of "original" variants only
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "mean_baseline",
-                lambda scd: mean_subgroup_score(
-                    subgroup_scores_dict=scd, subgroup_types=["original"]
-                ),
-                True,
-            ],
-        }
-    }
+    filter_by_condition = Field(
+        default_factory=lambda: FilterByCondition(
+            values={"task_data/variant_type": ["original"]}, condition="in"
+        )
+    )
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
+    aggregating_function_name = "mean_baseline"
 
 
 class FixedGroupMeanParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    # take mean of "paraphrase" variants only
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "mean_paraphrase",
-                lambda scd: mean_subgroup_score(
-                    subgroup_scores_dict=scd, subgroup_types=["paraphrase"]
-                ),
-                True,
-            ],
-        }
-    }
+    filter_by_condition = Field(
+        default_factory=lambda: FilterByCondition(
+            values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+        )
+    )
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
+
+    aggregating_function_name = "mean_paraphrase"
 
 
 # same as above but using StringContainment
 class FixedGroupMeanBaselineStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    # take mean of "original" variants only
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "mean_baseline",
-                lambda scd: mean_subgroup_score(
-                    subgroup_scores_dict=scd, subgroup_types=["original"]
-                ),
-                True,
-            ],
-        }
-    }
+    filter_by_condition = Field(
+        default_factory=lambda: FilterByCondition(
+            values={"task_data/variant_type": ["original"]}, condition="in"
+        )
+    )
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
+    aggregating_function_name = "mean_baseline"
 
 
 class FixedGroupMeanParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    # take mean of "paraphrase" variants only
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "mean_paraphrase",
-                lambda scd: mean_subgroup_score(
-                    subgroup_scores_dict=scd, subgroup_types=["paraphrase"]
-                ),
-                True,
-            ],
-        }
-    }
+    filter_by_condition = Field(
+        default_factory=lambda: FilterByCondition(
+            values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+        )
+    )
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
+    aggregating_function_name = "mean_paraphrase"
 
 
 # using PDR
 class FixedGroupPDRParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "pdr_paraphrase",
-                lambda scd: performance_drop_rate(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=performance_drop_rate,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "pdr_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupPDRParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "pdr_paraphrase",
-                lambda scd: performance_drop_rate(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=performance_drop_rate,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "pdr_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class GroupMeanTokenOverlap(TokenOverlap):
-    reduction_map = {
-        "group_mean": {
-            "agg_func": ["mean", nan_mean, False],
-            "score_fields": ["f1", "precision", "recall"],
-        }
-    }
+    score_names = ["f1", "precision", "recall"]
+    split_to_groups_by = split_by_group_id
 
 
 # using Cohens's h for proportions
 class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "norm_cohens_h_paraphrase",
-                lambda scd: normalized_cohens_h(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_cohens_h,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "norm_cohens_h_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "norm_cohens_h_paraphrase",
-                lambda scd: normalized_cohens_h(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_cohens_h,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "norm_cohens_h_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 # using Hedges' g (takes into account internal variation in group scores)
 class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "norm_hedges_g_paraphrase",
-                lambda scd: normalized_hedges_g(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_hedges_g,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "norm_hedges_g_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "norm_hedges_g_paraphrase",
-                lambda scd: normalized_hedges_g(
-                    subgroup_scores_dict=scd,
-                    control_subgroup_types=["original"],
-                    comparison_subgroup_types=["paraphrase"],
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_hedges_g,
+            return_abs_value=False,
+        )
+    )
+
+    aggregating_function_name = "norm_hedges_g_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 # for above metrics, take absolute value of group score first; this measures variation in either direction
 class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "absval_norm_cohens_h_paraphrase",
-                lambda scd: np.abs(
-                    normalized_cohens_h(
-                        subgroup_scores_dict=scd,
-                        control_subgroup_types=["original"],
-                        comparison_subgroup_types=["paraphrase"],
-                    )
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_cohens_h,
+            return_abs_value=True,
+        )
+    )
+
+    aggregating_function_name = "absval_norm_cohens_h_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "absval_norm_cohens_h_paraphrase",
-                lambda scd: np.abs(
-                    normalized_cohens_h(
-                        subgroup_scores_dict=scd,
-                        control_subgroup_types=["original"],
-                        comparison_subgroup_types=["paraphrase"],
-                    )
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_cohens_h,
+            return_abs_value=True,
+        )
+    )
+
+    aggregating_function_name = "absval_norm_cohens_h_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "absval_norm_hedges_g_paraphrase",
-                lambda scd: np.abs(
-                    normalized_hedges_g(
-                        subgroup_scores_dict=scd,
-                        control_subgroup_types=["original"],
-                        comparison_subgroup_types=["paraphrase"],
-                    )
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_hedges_g,
+            return_abs_value=True,
+        )
+    )
+
+    aggregating_function_name = "absval_norm_hedges_g_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
-    subgroup_column = "variant_type"
-    reduction_map = {
-        "group_mean": {
-            "agg_func": [
-                "absval_norm_hedges_g_paraphrase",
-                lambda scd: np.abs(
-                    normalized_hedges_g(
-                        subgroup_scores_dict=scd,
-                        control_subgroup_types=["original"],
-                        comparison_subgroup_types=["paraphrase"],
-                    )
-                ),
-                True,
-            ],
-        }
-    }
+    aggregator = Field(
+        default_factory=lambda: ControlComparisonAggregator(
+            control_comparison_subsets=original_paraphrase_control_comparison,
+            control_comparison_floats_comparator=normalized_hedges_g,
+            return_abs_value=True,
+        )
+    )
+
+    aggregating_function_name = "absval_norm_hedges_g_paraphrase"
+    split_to_groups_by = split_by_group_id
+    ci_samples_from_groups_scores = True
 
 
 class BinaryMaxF1(F1Binary):
@@ -3524,7 +3460,6 @@ class BinaryMaxF1(F1Binary):
 class BinaryAccuracy(InstanceMetric):
     """Calculate accuracy for a binary task, using 0.5 as the threshold in the case of float predictions."""
 
-    reduction_map = {"mean": ["accuracy_binary"]}
     main_score = "accuracy_binary"
     ci_scores = ["accuracy_binary"]
     threshold = 0.5
