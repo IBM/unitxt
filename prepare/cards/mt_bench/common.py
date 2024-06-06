@@ -31,7 +31,7 @@ mt_bench_rating_hf_space_processing_steps = SequentialOperator(
         ),
         Apply(
             "model_id",
-            function=str.lower,
+            function="str.lower",
             to_field="model_id",
             apply_to_streams=["judgment", "model_answer"],
         ),
@@ -46,7 +46,8 @@ mt_bench_rating_hf_space_processing_steps = SequentialOperator(
             apply_to_streams=["judgment", "model_answer"],
         ),
         CopyFields(
-            field_to_field={"model_output/0/turns": "model_output"},
+            field="model_output/0/turns",
+            to_field="model_output",
             apply_to_streams=["model_answer"],
         ),
         JoinStreams(
@@ -104,7 +105,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
         ),
         Apply(
             "model_1",
-            function=str.lower,
+            function="str.lower",
             to_field="model_1",
             apply_to_streams=["judgment"],
         ),
@@ -120,7 +121,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
         ),
         Apply(
             "model_2",
-            function=str.lower,
+            function="str.lower",
             to_field="model_2",
             apply_to_streams=["judgment"],
         ),
@@ -135,7 +136,8 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             apply_to_streams=["judgment"],
         ),
         CopyFields(
-            field_to_field={"judge_model_id/0": "judge_model_id"},
+            field="judge_model_id/0",
+            to_field="judge_model_id",
             apply_to_streams=["judgment"],
         ),
         FilterByConditionBasedOnFields(
@@ -155,7 +157,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
         ),
         Apply(
             "model_id",
-            function=str.lower,
+            function="str.lower",
             to_field="model_id",
             apply_to_streams=["model_answer"],
         ),
@@ -170,7 +172,8 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             apply_to_streams=["model_answer"],
         ),
         CopyFields(
-            field_to_field={"model_output/0/turns": "model_output"},
+            field="model_output/0/turns",
+            to_field="model_output",
             apply_to_streams=["model_answer"],
         ),
         # endregion
