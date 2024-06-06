@@ -681,8 +681,10 @@ class LoadFromDictionary(Loader):
         .. code-block:: python
 
             data = {
-                "train": {"input": "SomeInput1", "output": "SomeResult1"},
-                "test": {"input": "SomeInput2", "output": "SomeResult2"},
+                "train": [{"input": "SomeInput1", "output": "SomeResult1"},
+                          {"input": "SomeInput2", "output": "SomeResult2"}],
+                "test":  [{"input": "SomeInput3", "output": "SomeResult3"},
+                          {"input": "SomeInput4", "output": "SomeResult4"}]
             }
             loader = LoadFromDictionary(data=data)
     """
