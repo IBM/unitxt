@@ -30,4 +30,4 @@ jobs:
      - name: Run Tests
        env:
          PYTHONPATH: ${{ github.workspace }}
-       run: python -m utils/prepare_all_artifacts
+       run: python utils/prepare_all_artifacts.py
