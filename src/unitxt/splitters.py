@@ -1,5 +1,6 @@
 import itertools
 from abc import abstractmethod
+from copy import deepcopy
 from random import Random
 from typing import Dict, List
 
@@ -138,8 +139,13 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         if "inputs" not in instance:
             raise ValueError(f"'inputs' field is missing from '{instance}'.")
-
-        return list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
+        # l = list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
+        try:
+            return [
+                item for item in instances_pool if item["inputs"] != instance["inputs"]
+            ]
+        except Exception as e:
+            raise e
 
 
 class RandomSampler(Sampler):
@@ -282,7 +288,7 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     ) -> Dict[str, object]:
         try:
             if self.local_cache is None:
-                self.local_cache = list(multi_stream[self.source_stream])
+                self.local_cache = deepcopy(list(multi_stream[self.source_stream]))
 
             source_stream = self.local_cache
             source_stream = self.sampler.filter_source_by_instance(
