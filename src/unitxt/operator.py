@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
-from .stream import DynamicStream, MultiStream, Stream
+from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
 from .utils import is_module_available
 
 
@@ -401,7 +401,7 @@ class InstanceOperatorValidator(InstanceOperator):
         try:
             first_instance = next(iterator)
         except StopIteration as e:
-            raise StopIteration(f"Stream '{stream_name}' is empty") from e
+            raise EmptyStreamError(f"Stream '{stream_name}' is empty") from e
         result = self._process_instance(first_instance, stream_name)
         self.validate(result)
         yield result

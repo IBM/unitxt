@@ -1,4 +1,6 @@
 import tempfile
+import traceback
+import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from typing import Any, Callable, Dict, Generator, Iterable, List
@@ -27,21 +29,31 @@ class Stream(Dataclass):
     def take(self, n):
         pass
 
+    @abstractmethod
+    def set_copying(self, copying: bool):
+        pass
+
 
 class ListStream(Stream):
     instances_list: List[Dict[str, Any]]
+    copying: bool = False
 
     def __iter__(self):
-        return iter(deepcopy(self.instances_list))
+        if self.copying:
+            return iter(deepcopy(self.instances_list))
+        return iter(self.instances_list)
 
     def peek(self):
-        return next(iter(self.instances_list))
+        return next(iter(self))
 
     def take(self, n) -> Generator:
         for i, instance in enumerate(self.instances_list):
             if i >= n:
                 break
             yield instance
+
+    def set_copying(self, copying: bool):
+        self.copying = copying
 
 
 class GeneratorStream(Stream):
@@ -94,9 +106,33 @@ class GeneratorStream(Stream):
                 break
             yield instance
 
+    def set_copying(self, copying: bool):
+        self.copying = copying
 
-class NoInstancesToGenerateAStreamFromError(Exception):
+
+class FaultyStreamError(Exception):
+    """Base class for all stream-related exceptions."""
+
     pass
+
+
+class MissingStreamError(FaultyStreamError):
+    """Raised when a required stream is missing."""
+
+    pass
+
+
+class EmptyStreamError(FaultyStreamError):
+    """Raised when a stream is unexpectedly empty."""
+
+    pass
+
+
+def eager_failed():
+    traceback.print_exc()
+    warnings.warn(
+        "The eager execution has failed due to the error above.", stacklevel=2
+    )
 
 
 class DynamicStream(Stream):
@@ -112,43 +148,15 @@ class DynamicStream(Stream):
                 instances_list = []
                 for instance in self.generator(**self.gen_kwargs):
                     instances_list.append(instance)
-                self.stream = ListStream(instances_list=instances_list)
-            except Exception as e:
-                if isinstance(e, NoInstancesToGenerateAStreamFromError):
-                    logger.info(
-                        "Recognized cause for self.generator does not yield: problems in spitting and mixing, typically - for demos pool generation. \nStack Trace:"
-                    )
-                    traceback = e.__traceback__
-                    while traceback:
-                        logger.info(
-                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
-                        )
-                        traceback = traceback.tb_next
-                    logger.info("End of Stack Trace")
-                    self.stream = None
-                elif "generator raised StopIteration" in str(e):
-                    logger.info(
-                        f"Self.generator can not yield: {e.__cause__}. \nStack Trace:"
-                    )
-                    traceback = e.__traceback__
-                    while traceback:
-                        logger.info(
-                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
-                        )
-                        traceback = traceback.tb_next
-                    logger.info("End of Stack Trace")
-                    self.stream = None
+                self.stream = ListStream(
+                    instances_list=instances_list, copying=self.copying
+                )
+            except FaultyStreamError:
+                eager_failed()
+            except RuntimeError as e:
+                if isinstance(e.__cause__, FaultyStreamError):
+                    eager_failed()
                 else:
-                    logger.info(
-                        f"Coule not yield from self.generator, for {e}. \nStack Trace:"
-                    )
-                    traceback = e.__traceback__
-                    while traceback:
-                        logger.info(
-                            f"{traceback.tb_frame.f_code.co_filename}: {traceback.tb_lineno}"
-                        )
-                        traceback = traceback.tb_next
-                    logger.info("End of Stack Trace")
                     raise e
 
         if self.stream is None:
@@ -167,6 +175,9 @@ class DynamicStream(Stream):
 
     def take(self, n):
         return self.stream.take(n)
+
+    def set_copying(self, copying: bool):
+        self.stream.set_copying(copying)
 
 
 class MultiStream(dict):
@@ -209,7 +220,7 @@ class MultiStream(dict):
 
     def set_copying(self, copying: bool):
         for stream in self.values():
-            stream.copying = copying
+            stream.set_copying(copying)
 
     def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:

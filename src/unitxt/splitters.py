@@ -13,7 +13,7 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
-from .stream import MultiStream
+from .stream import EmptyStreamError, FaultyStreamError, MultiStream
 
 
 class Splitter(MultiStreamOperator):
@@ -280,8 +280,6 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     def process(
         self, instance: Dict[str, object], multi_stream: MultiStream
     ) -> Dict[str, object]:
-        from .stream import NoInstancesToGenerateAStreamFromError
-
         try:
             if self.local_cache is None:
                 self.local_cache = list(multi_stream[self.source_stream])
@@ -297,7 +295,7 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
             sampled_instances = self.sampler.sample(source_stream)
             instance[self.target_field] = sampled_instances
             return instance
-        except Exception as e:
-            raise NoInstancesToGenerateAStreamFromError(
+        except FaultyStreamError as e:
+            raise EmptyStreamError(
                 f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
             ) from e
