@@ -154,7 +154,7 @@ test_card has an optional parameter flag debug. When set to True, the card is ex
 After each step it prints the number of instances in each split, and one example from each split.
 
 .. code-block:: python
-    
+
   # Shows the step by step processing of data.
   test_card(card,debug=True)
 
