@@ -2,7 +2,6 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import Copy, FilterByCondition, RenameFields
 from unitxt.test_utils.card import test_card
@@ -31,7 +30,6 @@ card = TaskCard(
         ),
         Copy(field="question/0", to_field="question"),
         Copy(field="answer/0", to_field="answer"),
-
     ],
     task="tasks.response_assessment.rating.single_turn",
     templates=["templates.response_assessment.rating.mt_bench_single_turn"],
