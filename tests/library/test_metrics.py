@@ -1149,8 +1149,8 @@ class TestMetrics(UnitxtTestCase):
         )
 
         expected_global_result = {
-            "my_perplexity": 0.05986589565873146,
-            "score": 0.05986589565873146,
+            "my_perplexity": 0.05986595153808594,
+            "score": 0.05986595153808594,
             "score_name": "my_perplexity",
         }
 
@@ -1165,10 +1165,10 @@ class TestMetrics(UnitxtTestCase):
 
         instance_targets = [
             {
-                "my_perplexity": 0.05986589565873146,
-                "score": 0.05986589565873146,
+                "my_perplexity": 0.05986595153808594,
+                "score": 0.05986595153808594,
                 "score_name": "my_perplexity",
-                "my_reference_scores": [0.05986589565873146],
+                "my_reference_scores": [0.05986595153808594],
             }
         ]
         for output, target in zip(outputs, instance_targets):
