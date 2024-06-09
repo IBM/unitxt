@@ -9,7 +9,6 @@ Explore the existing assets in Unitxt catalog and generate your prompt.
 
     <div class="gradio-loading">
         <div class="centered">
-
             <div class="spinner"></div>
             <h2>Loading...</h2>
         </div>

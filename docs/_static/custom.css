@@ -176,12 +176,12 @@ div.document div.documentwrapper {
   }
 
   .spinner {
-    border: 4px solid rgba(135, 134, 134, 0.775);
-    width: 40px;
-    height: 40px;
+    border: 5px solid rgb(255, 255, 255);
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    border-left-color: rgb(150, 3, 147);
-
+    border-left-color: #cfd0ff;
+    margin-left: 20px;
     animation: spin 1s ease infinite;
   }
 
