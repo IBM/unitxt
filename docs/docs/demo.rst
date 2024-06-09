@@ -16,6 +16,6 @@ Explore the existing assets in Unitxt catalog and generate your prompt.
     </div>
     <div class="wide-box-container">
         <div class="wide-box">
-            <gradio-app src="https://unitxt-ui.hf.space"></gradio-app>
+            <gradio-app src="https://unitxt-ui.hf.space" theme_mode="light" eager="true" info="false"></gradio-app>
         </div>
     </div>

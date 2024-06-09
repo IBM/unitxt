@@ -8,10 +8,12 @@ element.onload = function() {
         const loadingElement = document.querySelector(".gradio-loading");
         if (loadingElement) {
             loadingElement.style.display = 'none';
+            document.querySelector("gradio-app").style.display = 'block';
         }
     }
 
     const gradioApp = document.querySelector("gradio-app");
+    gradioApp.style.display = "none";
     gradioApp.addEventListener("render", handleLoadComplete);
 };
 element.onerror = function() {
