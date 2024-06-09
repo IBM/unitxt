@@ -170,14 +170,6 @@ demo = gr.Blocks()
 with demo:
     if config.HEADER_VISIBLE:
         with gr.Row():
-            # LOGO
-            logo = gr.Image(
-                config.BANNER_PATH,
-                show_label=False,
-                show_download_button=False,
-                show_share_button=False,
-                scale=0.3333,
-            )
             links = gr.Markdown(value=config.INTRO_TXT)
 
     with gr.Row():
@@ -252,6 +244,14 @@ with demo:
         with gr.Column(scale=3):
             with gr.Tabs() as tabs:
                 with gr.TabItem("Intro", id="intro"):
+                    logo = gr.Image(
+                        config.BANNER_PATH,
+                        show_label=False,
+                        show_download_button=False,
+                        show_share_button=False,
+                        container=False,
+                        width="50%",
+                    )
                     main_intro = gr.Markdown(config.MAIN_INTRO_TXT)
                 with gr.TabItem("Demo", id="demo"):
                     with gr.Row():
