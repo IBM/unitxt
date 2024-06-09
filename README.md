@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./assets/banner.png" alt="Image Description" width="100%" />
+    <img src="https://raw.githubusercontent.com/IBM/unitxt/main/assets/banner.png" alt="Image Description" width="100%" />
 </div>
 
 [![Button](https://img.shields.io/badge/Video-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
