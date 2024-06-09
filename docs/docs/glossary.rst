@@ -60,7 +60,14 @@ The catalog contains predefined data-task cards for various datasets :ref:`here 
 
 Demos (Demonstrations)
 ----------------------
-Demonstrations are the examples added to the model prompt in in-context learning.  In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a non zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>` as seen in :ref:`this figure <prompt_structure>`.  Different demo examples are choosen per instance from a fixed set of examples called a ``demo_pool``.  Usually the examples in the demo pool are taken from the train split, but this can be overridden by the ``demos_taken_from`` parameter.    The size of the demo pool is determined by a mandatory parameter called ``demos_pool_size`` parameter.  
+Demonstrations are the examples added to the model prompt in in-context learning.  
+In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a 
+non zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>` 
+as seen in :ref:`this figure <prompt_structure>`.  
+Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.  
+Usually the examples in the demo pool are taken from the train split, 
+but this can be overridden by the ``demos_taken_from`` parameter.    
+The size of the demo pool is determined by a mandatory parameter called ``demos_pool_size`` parameter.  
 
 
 Evaluation Pipeline

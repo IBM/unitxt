@@ -8,7 +8,18 @@
 Formats ✨
 =====================================
 
-Formats are the global textual layout of the example.
+Formats define the overall textual layout of the example, including system prompt, 
+in-context learning demonstrations, and other special tokens.
+The format and template works together to verbalize the model input - 
+the template verbalizes the task specific parts of the input prompt
+while the format verbalizes the model specific aspects of the input prompt.
+ 
+In-context learning is activated when the  ``num_demos`` parameter of 
+the :ref:`recipe <recipe>` is set to a non zero value.   
+Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.  
+Usually the examples in the demo pool are taken from the train split, but this can be overridden by the ``demos_taken_from`` parameter.    
+The size of the demo pool is determined by a mandatory parameter called ``demos_pool_size`` parameter.  
+
 
 .. _prompt_format_layout:
 .. image:: ../../assets/prompt_layout.png
@@ -18,7 +29,7 @@ Formats are the global textual layout of the example.
 
 It determines the positioning of the task `instruction`, `system_prompt` and `demos` the `source` query and required output form the model, the `target`.
 
-Below is in example of how to define the layout of the different pats.
+Below is in example of how to define the layout of the different parts.
 This example is based on this blog post explainging the prompt sturctre of the llama2 model: :ref:`Blog Post<https://huggingface.co/blog/llama2#how-to-prompt-llama-2>`
 
 So the actual template looks like this:
@@ -32,7 +43,7 @@ So the actual template looks like this:
 
    {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s><s>[INST] {{ user_msg_2 }} [/INST]
 
-An example for data point with the llama2 format:
+An example for data point with the llama2 format and system prompt.
 
 .. Example
 ::
