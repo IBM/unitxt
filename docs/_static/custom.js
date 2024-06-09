@@ -1,6 +1,6 @@
 let element = document.createElement('script');
 element.type = 'module';
-element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
+element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.36.0/gradio.js';
 element.onload = function() {
     console.log('Successfully loaded: ' + element.src);
     function handleLoadComplete() {
