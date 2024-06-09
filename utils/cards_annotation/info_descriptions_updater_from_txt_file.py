@@ -35,8 +35,8 @@ import logging
 import os
 import re
 
-from ..logging_utils import get_logger
-from ..text_utils import lines_defining_obj_in_card
+from unitxt.logging_utils import get_logger
+from unitxt.text_utils import lines_defining_obj_in_card
 
 logger = get_logger()
 logger.setLevel(logging.INFO)
