@@ -27,7 +27,6 @@ from .dataclass import (
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
-    InstanceOperator,
     MultiStreamOperator,
     StreamingOperator,
     StreamOperator,
@@ -73,16 +72,6 @@ def nan_max(x):
         # this is the desired behavior, but we want to avoid the warning here
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
-
-
-class UpdateStream(InstanceOperator):
-    update: dict
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        instance.update(self.update)
-        return instance
 
 
 class Metric(Artifact):
@@ -326,6 +315,8 @@ class MetricWithConfidenceInterval(Metric):
 
     # the basic aggregation along the instances: no split to groups, no filtering
     aggregator: Aggregator = Field(default_factory=lambda: AverageItemsAggregator())
+    # the name to associate with the aggregator, to participate in prefixes for score_names
+    aggregating_function_name: str = "mean"
 
     @staticmethod
     def new_random_generator():
@@ -634,6 +625,32 @@ class MetricWithConfidenceInterval(Metric):
             aggregation_func=AverageItemsAggregator().aggregate_one_group_score_named,
         )
 
+    def add_score_prefix_reflecting_grouping_to_global_score_dict(
+        self, gs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        # for backward compatibility, the following is different from "" only when
+        # self.split_to_groups_by is not None
+        field_name_full_prefix = ""
+        if self.split_to_groups_by is not None:
+            field_name_full_prefix = (
+                "group_" + self.aggregating_function_name + "_"
+            ).replace("__", "_")
+            if self.ci_samples_from_groups_scores:
+                field_name_full_prefix = "fixed_" + field_name_full_prefix
+
+        if len(field_name_full_prefix) > 0:
+            gs = {field_name_full_prefix + key: value for key, value in gs.items()}
+
+        if field_name_full_prefix + self.score_prefix + self.main_score in list(
+            gs.keys()
+        ):
+            gs["score_name"] = (
+                field_name_full_prefix + self.score_prefix + self.main_score
+            )
+            gs["score"] = gs[gs["score_name"]]
+
+        return gs, field_name_full_prefix
+
 
 class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
     """A class for computing metrics that require joint calculations over all instances and are not just aggregation of scores of individuals instances.
@@ -649,6 +666,9 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
 
     # calculate scores for single instances
     process_single_instances = True
+
+    aggregating_function_name = ""
+    # for global metric, the bare score names carry the name of the aggregation
 
     # flake8: noqa: C901
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -710,22 +730,11 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
             instances=instances, score_names=[self.main_score]
         )
         result = self._add_score_prefixes_to_score_dict(result)
-        # for backward compatibility, the following is different from "" only when
-        # self.split_to_groups_by is not None
-        field_name_full_prefix = ""
-        if self.split_to_groups_by is not None:
-            field_name_full_prefix = "group_"
-            if self.ci_samples_from_groups_scores:
-                field_name_full_prefix = "fixed_" + field_name_full_prefix
+        (
+            result,
+            field_name_full_prefix,
+        ) = self.add_score_prefix_reflecting_grouping_to_global_score_dict(result)
 
-            result = {
-                field_name_full_prefix + key: value for key, value in result.items()
-            }
-
-        result["score_name"] = (
-            field_name_full_prefix + self.score_prefix + self.main_score
-        )
-        result["score"] = result[result["score_name"]]
         global_score.update(result)
 
         if self.n_resamples is not None and self.n_resamples > 0:
@@ -743,13 +752,14 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 confidence_interval = self.ci_from_groups_global_scores(
                     groups_global_scores=groups_global_scores
                 )
-            confidence_interval_2 = {}
+
+            new_ci = {}
             for key, value in confidence_interval.items():
                 if key.startswith("score_"):
-                    confidence_interval_2[key] = value
+                    new_ci[key] = value
                 else:
-                    confidence_interval_2[field_name_full_prefix + key] = value
-            global_score.update(confidence_interval_2)
+                    new_ci[field_name_full_prefix + key] = value
+            global_score.update(new_ci)
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
@@ -849,7 +859,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     # the only aggregator allowed for BulkInstanceMetric
     # aggregator: Aggregator  defined in MetricWithConfidenceInterval
-    aggregating_function_name: str = "mean"
     split_to_groups_by = None
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
@@ -952,10 +961,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     # Tyically, aggregating is to be overridden by the subclasses.
     # aggregator: Aggregator   # defined in MetricWithConfidenceInterval
 
-    # This name is used to prefix the score_name.
-    # Use to be expanded to global metric and bulk instance  too.
-    aggregating_function_name: str = "mean"
-
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
@@ -983,24 +988,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 self._add_score_prefix(field_name) for field_name in self.score_names
             ],
         )
-        # for backward compatibility, the following is different from "" only when
-        # self.split_to_groups_by is not None
-        field_name_full_prefix = ""
-        if self.split_to_groups_by is not None:
-            field_name_full_prefix = "group_" + self.aggregating_function_name + "_"
-            if self.ci_samples_from_groups_scores:
-                field_name_full_prefix = "fixed_" + field_name_full_prefix
 
-        if len(field_name_full_prefix) > 0:
-            gs = {field_name_full_prefix + key: value for key, value in gs.items()}
-
-        if self.main_score in self.score_names:
-            gs["score"] = gs[
-                field_name_full_prefix + self.score_prefix + self.main_score
-            ]
-            gs["score_name"] = (
-                field_name_full_prefix + self.score_prefix + self.main_score
-            )
+        (
+            gs,
+            field_name_full_prefix,
+        ) = self.add_score_prefix_reflecting_grouping_to_global_score_dict(gs)
 
         # CI:
         # if arg split_to_groups_by is None, or ci_samples_from_groups_scores is False:
@@ -1041,6 +1033,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     groups_global_scores=groups_global_scores,
                     score_prefix=field_name_full_prefix,
                 )
+
             gs.update(confidence_interval)
 
         # update global score in each instance
