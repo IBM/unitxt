@@ -52,6 +52,7 @@ from .operator import SourceOperator
 from .operators import AddFields
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
+from .type_utils import isoftype
 
 logger = get_logger()
 settings = get_settings()
@@ -691,6 +692,25 @@ class LoadFromDictionary(Loader):
     """
 
     data: Dict[str, List[Dict[str, Any]]]
+
+    def verify(self):
+        super().verify()
+        if not isoftype(self.data, Dict[str, List[Dict[str, Any]]]):
+            raise ValueError(
+                f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
+                f"Expected data should map between split name and list of instances.\n"
+                f"Received value: {self.data}\n"
+            )
+        for split in self.data.keys():
+            if len(self.data[split]) == 0:
+                raise ValueError(f"Split {split} has no instances.")
+            first_instance = self.data[split][0]
+            for instance in self.data[split]:
+                if instance.keys() != first_instance.keys():
+                    raise ValueError(
+                        f"Not all instances in split '{split}' have the same fields.\n"
+                        f"instance {instance} has different fields different from {first_instance}"
+                    )
 
     def load_data(self) -> MultiStream:
         self.sef_default_data_classification(
