@@ -2,12 +2,16 @@ from unitxt import add_to_catalog
 from unitxt.blocks import AddFields, TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.operators import RenameFields
+from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 
 # https://huggingface.co/datasets/billsum
 card = TaskCard(
     loader=LoadHF(path="billsum"),
     preprocess_steps=[
+        SplitRandomMix(
+            {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
+        ),
         RenameFields(field_to_field={"text": "document"}),
         AddFields(fields={"document_type": "document"}),
     ],
