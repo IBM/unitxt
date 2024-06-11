@@ -31,7 +31,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import CopyFields, FilterByCondition, SplitByValue
+from .operators import Copy, FilterByCondition, SplitByValue
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
