@@ -6,7 +6,7 @@ from unitxt.metrics import (
     SentenceBert,
     TokenOverlap,
 )
-from unitxt.operators import Copy, CopyFields, ListFieldValues
+from unitxt.operators import Copy, ListFieldValues
 from unitxt.test_utils.metrics import test_metric
 
 metrics = {
@@ -42,7 +42,7 @@ instance_targets = [
     {"f1": 1.0, "precision": 1.0, "recall": 1.0, "score": 1.0, "score_name": "f1"},
     {"f1": 0, "precision": 0, "recall": 0, "score": 0, "score_name": "f1"},
 ]
-# Currently, CopyFields does not delete the source fields,
+# Currently, Copy does not delete the source fields,
 # so we get both "precision" and "precision_overlap_with_context" in results
 global_target = {
     "f1": 0.56,
@@ -70,7 +70,7 @@ metric = MetricPipeline(
     ],
     metric=metrics["metrics.token_overlap"],
     postpreprocess_steps=[
-        CopyFields(
+        Copy(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
                 ("score/global/recall", "score/global/recall_overlap_with_context"),
@@ -425,7 +425,7 @@ for axis, base_metric, main_score in [
         main_score=main_score,
         preprocess_steps=preprocess_steps,
         postpreprocess_steps=[
-            CopyFields(
+            Copy(
                 field_to_field={
                     "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
                     "score/instance/recall": f"score/instance/{axis}_recall_{base_metric}",

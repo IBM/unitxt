@@ -20,7 +20,7 @@
     },
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": [
                 [
                     "score/global/f1",

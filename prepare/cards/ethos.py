@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     TaskCard,
     TemplatesList,
@@ -19,7 +19,7 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "not hate speech", "1": "hate speech"}}
         ),
-        AddFields(
+        Set(
             fields={
                 "classes": ["not hate speech", "hate speech"],
                 "text_type": "sentence",

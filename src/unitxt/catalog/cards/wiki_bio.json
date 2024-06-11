@@ -37,7 +37,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "type_of_input": "Key-Value pairs",
                 "type_of_output": "Text"

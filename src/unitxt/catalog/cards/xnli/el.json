@@ -31,7 +31,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "type_of_relation": "entailment",
                 "text_a_type": "premise",

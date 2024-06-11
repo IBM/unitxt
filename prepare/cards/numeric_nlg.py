@@ -1,9 +1,9 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapHTMLTableToJSON,
     RenameFields,
     SerializeTableAsMarkdown,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -12,7 +12,7 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="kasnerz/numericnlg"),  # TODO: load from github repo
     preprocess_steps=[
-        AddFields(fields={"type_of_input": "table", "type_of_output": "description"}),
+        Set(fields={"type_of_input": "table", "type_of_output": "description"}),
         MapHTMLTableToJSON(field="table_html_clean", to_field="table_out"),
         SerializeTableAsMarkdown(field="table_out", to_field="input"),
         RenameFields(field="description", to_field="output"),

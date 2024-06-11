@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.test_utils.card import test_card
 
 dataset_name = "argument_topic"
@@ -81,7 +81,7 @@ class_names = [
 card = TaskCard(
     loader=LoadHF(path="ibm/argument_quality_ranking_30k", name=f"{dataset_name}"),
     preprocess_steps=[
-        AddFields(
+        Set(
             fields={
                 "classes": class_names,
                 "text_type": "argument",  # TODO maybe text?

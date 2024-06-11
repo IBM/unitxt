@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     Task,
     TaskCard,
@@ -20,7 +20,7 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "entailment", "1": "not entailment"}}
         ),
-        AddFields(
+        Set(
             fields={
                 "choices": ["entailment", "not entailment"],
             }

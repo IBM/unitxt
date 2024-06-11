@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddFields, ExtractFieldValues, RenameFields
+from unitxt.operators import ExtractFieldValues, RenameFields, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -9,7 +9,7 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),
         RenameFields(field="sentence", to_field="text"),
-        AddFields(
+        Set(
             fields={
                 "text_type": "sentence",
                 "type_of_class": "sentiment",

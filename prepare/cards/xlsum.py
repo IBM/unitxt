@@ -1,8 +1,8 @@
 from datasets import get_dataset_config_names
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -19,7 +19,7 @@ for lang in langs:
         loader=LoadHF(path="GEM/xlsum", name=lang),
         preprocess_steps=[
             RenameFields(field_to_field={"text": "document", "target": "summary"}),
-            AddFields(fields={"document_type": "document"}),
+            Set(fields={"document_type": "document"}),
         ],
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",

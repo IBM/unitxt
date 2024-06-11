@@ -1,9 +1,9 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     TaskCard,
 )
 from unitxt.test_utils.card import test_card
@@ -21,7 +21,7 @@ card = TaskCard(
     loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
     preprocess_steps=[
         MapInstanceValues({"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels.names,
                 "text_type": "text",

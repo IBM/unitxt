@@ -49,7 +49,7 @@ from .dataclass import InternalField, OptionalField
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
-from .operators import AddFields
+from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
@@ -111,7 +111,7 @@ class Loader(SourceOperator):
                 f"data_classification_policy =['confidential','pii'])\n"
             )
 
-        operator = AddFields(
+        operator = Set(
             fields={"data_classification_policy": self.data_classification_policy}
         )
         return operator(multi_stream)

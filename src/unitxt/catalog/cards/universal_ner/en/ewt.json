@@ -49,7 +49,7 @@
             "outside_label": "O"
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",
@@ -59,7 +59,7 @@
             "not_exist_ok": true
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "text_type": "text",
                 "class_type": "entity type",

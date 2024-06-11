@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
@@ -8,7 +8,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         Copy(field="answers/text", to_field="answers"),
-        AddFields({"context_type": "passage"}),
+        Set({"context_type": "passage"}),
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",

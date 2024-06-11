@@ -7,7 +7,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "topic": "science"
             }
@@ -20,7 +20,7 @@
             }
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "_choices/text": "choices",
                 "_choices/label": "labels"

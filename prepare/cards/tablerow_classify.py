@@ -1,9 +1,9 @@
 from unitxt.blocks import (
-    AddFields,
     LoadFromKaggle,
     MapInstanceValues,
     RenameFields,
     SerializeTableRowAsText,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -21,7 +21,7 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"HeartDisease": "label"}),
         MapInstanceValues(mappers={"label": {"0": "Normal", "1": "Heart Disease"}}),
-        AddFields(
+        Set(
             fields={
                 "text_type": "Person medical record",
                 "type_of_class": "Heart Disease Possibility",

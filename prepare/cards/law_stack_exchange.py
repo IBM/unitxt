@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -43,7 +43,7 @@ card = TaskCard(
         RenameFields(field_to_field={"text_label": "label"}),
         ListFieldValues(fields=["title", "body"], to_field="text"),
         JoinStr(separator=". ", field="text", to_field="text"),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels,
                 "text_type": "text",

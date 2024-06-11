@@ -7,7 +7,7 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "context_type": "story"
             }
@@ -40,7 +40,7 @@
             "to_field": "last_turn"
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "last_turn/user": "question",
                 "last_turn/system": "answer"

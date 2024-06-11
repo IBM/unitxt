@@ -74,7 +74,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field": "judge_model_id/0",
             "to_field": "judge_model_id",
             "apply_to_streams": [
@@ -92,7 +92,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "winner_model_1_ordered_first": "winner"
             },
@@ -134,7 +134,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field": "model_output/0/turns",
             "to_field": "model_output",
             "apply_to_streams": [

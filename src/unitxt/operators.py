@@ -59,6 +59,7 @@ import requests
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     InstanceOperator,
@@ -222,7 +223,7 @@ class FlattenInstances(InstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class AddFields(InstanceOperator):
+class Set(InstanceOperator):
     """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
@@ -232,17 +233,17 @@ class AddFields(InstanceOperator):
 
     Examples:
         # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
-        AddFields(fields={"classes": ["positive","negatives"]})
+        Set(fields={"classes": ["positive","negatives"]})
 
         # Add a 'start' field under the 'span' field with a value of 0 to all streams
-        AddFields(fields={"span/start": 0}
+        Set(fields={"span/start": 0}
 
         # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
-        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+        Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
 
         # Add a 'classes' field on a given list, prevent modification of original list
         # from changing the instance.
-        AddFields(fields={"classes": alist}), use_deepcopy=True)
+        Set(fields={"classes": alist}), use_deepcopy=True)
         # if now alist is modified, still the instances remain intact.
     """
 
@@ -263,6 +264,11 @@ class AddFields(InstanceOperator):
                 value = deepcopy(value)
             dict_set(instance, key, value)
         return instance
+
+
+@deprecation(version="1.11.0", alternative=Set)
+class AddFields(Set):
+    pass
 
 
 class RemoveFields(InstanceOperator):
@@ -1049,6 +1055,7 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
+@deprecation(version="1.11.0", alternative=Copy)
 class CopyFields(Copy):
     pass
 
@@ -1556,7 +1563,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             for ele in values_and_counts
         ]
 
-        addmostcommons = AddFields(fields={self.to_field: values_to_keep})
+        addmostcommons = Set(fields={self.to_field: values_to_keep})
         return addmostcommons(multi_stream)
 
 

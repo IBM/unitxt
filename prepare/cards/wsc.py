@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    Set,
     TemplatesList,
 )
 from unitxt.card import TaskCard
@@ -15,7 +15,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "False", "1": "True"}}),
-        AddFields(
+        Set(
             fields={
                 "choices": ["False", "True"],
             }

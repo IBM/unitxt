@@ -4,7 +4,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Get, Slice
-from unitxt.operators import AddFields, ListFieldValues, ShuffleFieldValues
+from unitxt.operators import ListFieldValues, Set, ShuffleFieldValues
 from unitxt.string_operators import Join, Replace, Split, Strip
 from unitxt.test_utils.card import test_card
 
@@ -25,7 +25,7 @@ card = TaskCard(
             to_field="choices",
         ),
         ShuffleFieldValues(field="choices"),
-        AddFields(
+        Set(
             fields={
                 "input_type": "dialog",
                 "output_type": "response",

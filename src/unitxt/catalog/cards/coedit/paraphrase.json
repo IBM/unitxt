@@ -24,7 +24,7 @@
             "by": ": "
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "text_type": "sentence"
             }

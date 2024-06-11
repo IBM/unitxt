@@ -5,7 +5,6 @@ from typing import Any, Dict
 from unitxt.formats import SystemFormat
 from unitxt.operators import (
     AddConstant,
-    AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
@@ -44,6 +43,7 @@ from unitxt.operators import (
     RemoveValues,
     RenameFields,
     SelectFields,
+    Set,
     Shuffle,
     ShuffleFieldValues,
     SplitByValue,
@@ -753,7 +753,7 @@ label (str):
             self.assertEqual(output["prediction"], target["prediction"])
             self.assertEqual(output["references"], target["references"])
 
-    def test_add_fields(self):
+    def test_set(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -765,13 +765,13 @@ label (str):
         ]
 
         check_operator(
-            operator=AddFields(fields={"c": 3}),
+            operator=Set(fields={"c": 3}),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_add_fields_with_query(self):
+    def test_set_with_query(self):
         inputs = [
             {"a": {"a": 1, "b": 2}, "b": 2},
             {"a": {"a": 2, "b": 3}, "b": 3},
@@ -783,13 +783,13 @@ label (str):
         ]
 
         check_operator(
-            operator=AddFields(fields={"a/c": 5}),
+            operator=Set(fields={"a/c": 5}),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_add_fields_with_deep_copy(self):
+    def test_set_with_deep_copy(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -803,7 +803,7 @@ label (str):
         ]
 
         outputs = check_operator(
-            operator=AddFields(fields={"c": alist}, use_deepcopy=True),
+            operator=Set(fields={"c": alist}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -819,7 +819,7 @@ label (str):
         ]
 
         outputs = check_operator(
-            operator=AddFields(fields={"c/d": alist}, use_deepcopy=True),
+            operator=Set(fields={"c/d": alist}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,

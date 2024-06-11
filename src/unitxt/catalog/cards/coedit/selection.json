@@ -72,7 +72,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "choices_text_type": "sentences"
             }

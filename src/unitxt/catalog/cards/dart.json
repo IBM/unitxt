@@ -27,7 +27,7 @@
             "to_field": "output"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "type_of_input": "Triples",
                 "type_of_output": "Text"

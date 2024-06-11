@@ -12,7 +12,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "input_label": {}
             }
@@ -42,7 +42,7 @@
             "page_size": 10000
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",

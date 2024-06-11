@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
-    CopyFields,
+    Copy,
     LoadHF,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -12,14 +12,14 @@ card = TaskCard(
     loader=LoadHF(path="openai/summarize_from_feedback", name="comparisons"),
     preprocess_steps=[
         "splitters.small_no_test",
-        CopyFields(
+        Copy(
             field_to_field={
                 "info/post": "input",
                 "summaries/*/text": "choices",
             }
         ),
         RenameFields(field_to_field={"choice": "output_choice"}),
-        AddFields(
+        Set(
             fields={
                 "input_type": "post",
                 "output_type": "summary",

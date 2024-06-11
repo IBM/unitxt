@@ -1,6 +1,6 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -15,7 +15,7 @@ card = TaskCard(
     loader=LoadHF(path="google/boolq"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(
+        Set(
             {
                 "text_a_type": "passage",
                 "text_b_type": "question",
@@ -60,7 +60,7 @@ card = TaskCard(
     loader=LoadHF(path="google/boolq"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(
+        Set(
             {
                 "context_type": "passage",
                 "choices": ["yes", "no"],

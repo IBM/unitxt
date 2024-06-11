@@ -4,8 +4,8 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import (
-    AddFields,
     RenameFields,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -15,7 +15,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         RenameFields(field_to_field={"prompt": "input"}),
-        AddFields(
+        Set(
             fields={
                 "output": "None",
                 "type_of_input": "question",

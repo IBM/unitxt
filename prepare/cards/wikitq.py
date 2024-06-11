@@ -1,7 +1,7 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     SerializeTableAsIndexedRowMajor,
+    Set,
     TaskCard,
     TruncateTableCells,
     TruncateTableRows,
@@ -13,7 +13,7 @@ card = TaskCard(
     loader=LoadHF(path="wikitablequestions"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields({"context_type": "table"}),
+        Set({"context_type": "table"}),
         TruncateTableCells(max_length=15, table="table", text_output="answers"),
         TruncateTableRows(field="table", rows_to_keep=50),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),

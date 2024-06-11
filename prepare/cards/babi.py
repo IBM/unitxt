@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, LoadHF, RenameFields, TaskCard
+from unitxt.blocks import LoadHF, RenameFields, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import ListFieldValues
 from unitxt.test_utils.card import test_card
@@ -7,7 +7,7 @@ card = TaskCard(
     loader=LoadHF(path="Muennighoff/babi"),
     preprocess_steps=[
         RenameFields(field_to_field={"passage": "context"}),
-        AddFields({"context_type": "description"}),
+        Set({"context_type": "description"}),
         ListFieldValues(fields=["answer"], to_field="answers"),
     ],
     task="tasks.qa.with_context.extractive",

@@ -1,9 +1,9 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -26,7 +26,7 @@ card = TaskCard(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
         MapInstanceValues(mappers={"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels.names,
                 "text_type": "sentence",

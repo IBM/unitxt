@@ -6,7 +6,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "type_of_input": "table",
                 "type_of_output": "description"

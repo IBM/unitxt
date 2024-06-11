@@ -10,7 +10,7 @@
     ],
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "score/instance/f1": "score/instance/faithfullness_f1_token_overlap",
                 "score/instance/recall": "score/instance/faithfullness_recall_token_overlap",

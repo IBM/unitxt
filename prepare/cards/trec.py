@@ -3,10 +3,10 @@ import sys
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -85,7 +85,7 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"fine_label": "label"}),
         MapInstanceValues(mappers={"label": map_label_to_text}),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
                 "text_type": "utterance",

@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
-from unitxt.operators import AddFields, ListFieldValues, RenameFields
+from unitxt.operators import ListFieldValues, RenameFields, Set
 from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
@@ -26,7 +26,7 @@ for dataset_name in [
             path="heegyu/bbq", name=dataset_name, data_classification_policy=["public"]
         ),
         preprocess_steps=[
-            AddFields({"context_type": "description"}),
+            Set({"context_type": "description"}),
             RenameFields(field_to_field={"label": "answer"}),
             ListFieldValues(fields=["ans0", "ans1", "ans2"], to_field="choices"),
         ],

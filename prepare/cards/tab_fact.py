@@ -1,9 +1,9 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
     SerializeTableAsIndexedRowMajor,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -20,7 +20,7 @@ card = TaskCard(
             field_to_field={"table_serialized": "text_a", "statement": "text_b"}
         ),
         MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
-        AddFields(
+        Set(
             fields={
                 "type_of_relation": "entailment",
                 "text_a_type": "Table",

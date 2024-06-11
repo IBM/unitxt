@@ -1,9 +1,9 @@
 from datasets import get_dataset_config_names
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -144,7 +144,7 @@ for subset in get_dataset_config_names(dataset_name):
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
             ),
             RenameFields(field_to_field={"topics": "labels"}),
-            AddFields(
+            Set(
                 fields={
                     "classes": classlabels[subset],
                     "text_type": "text",

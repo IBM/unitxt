@@ -62,7 +62,7 @@
             "field": "choices"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "input_type": "dialog",
                 "output_type": "response",

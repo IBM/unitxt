@@ -60,7 +60,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "input_text_type": "sentence",
                 "output_text_type": "sentence"

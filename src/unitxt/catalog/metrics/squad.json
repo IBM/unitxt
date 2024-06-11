@@ -6,7 +6,7 @@
             "type": "add_id"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "use_deepcopy": true,
             "fields": {
                 "prediction_template": {
@@ -25,7 +25,7 @@
             }
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": [
                 [
                     "references",
@@ -46,7 +46,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": [
                 [
                     "reference_template",

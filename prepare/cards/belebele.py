@@ -3,10 +3,10 @@ from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     AddConstant,
-    AddFields,
     CastFields,
     ListFieldValues,
     RenameFields,
+    Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -153,7 +153,7 @@ for lang in language_codes:
             ),
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
-            AddFields({"context_type": "passage"}),
+            Set({"context_type": "passage"}),
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates="templates.qa.multiple_choice.with_context.no_intro.all",
