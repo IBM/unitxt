@@ -61,7 +61,9 @@ def depraction_wrapper(obj, version, alt_text):
     def wrapper(*args, **kwargs):
         if constants.version < version:
             warnings.warn(
-                f"{obj.__name__} is deprecated.", DeprecationWarning, stacklevel=2
+                f"{obj.__name__} is deprecated.{alt_text}",
+                DeprecationWarning,
+                stacklevel=2,
             )
         elif constants.version >= version:
             raise DeprecationError(f"{obj.__name__} is no longer supported.{alt_text}")
@@ -82,7 +84,7 @@ def deprecation(version, alternative=None):
     """
 
     def decorator(obj):
-        alt_text = f" Use {alternative} instead." if alternative else ""
+        alt_text = f" Use {alternative} instead." if alternative is not None else ""
         if callable(obj):
             func = obj
         elif hasattr(obj, "__init__"):

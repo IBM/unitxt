@@ -59,6 +59,7 @@ import requests
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     InstanceOperator,
@@ -265,6 +266,7 @@ class Set(InstanceOperator):
         return instance
 
 
+@deprecation(version="1.11.0", alternative=Set)
 class AddFields(Set):
     pass
 
@@ -1053,6 +1055,7 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
+@deprecation(version="1.11.0", alternative=Copy)
 class CopyFields(Copy):
     pass
 
