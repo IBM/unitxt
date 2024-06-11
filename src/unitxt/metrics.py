@@ -27,7 +27,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import CopyFields
+from .operators import Copy
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -1123,7 +1123,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
-        self.prepare_score = CopyFields(
+        self.prepare_score = Copy(
             field_to_field=[
                 [
                     f"score/instance/{self.metric._add_score_prefix(self.main_score)}",

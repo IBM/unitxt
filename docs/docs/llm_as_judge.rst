@@ -272,7 +272,6 @@ We will create a card, as we do for every other Unitxt scenario:
     from unitxt.catalog import add_to_catalog
     from unitxt.loaders import LoadHF
     from unitxt.operators import (
-        CopyFields,
         Copy,
         FilterByCondition,
         RenameFields,
@@ -295,9 +294,9 @@ We will create a card, as we do for every other Unitxt scenario:
                     "model_output": "answer",
                 }
             ),
-            LiteralEval("question", to_field="question"),
+            LiteralEval(field="question"),
             Copy(field="question/0", to_field="question"),
-            LiteralEval("answer", to_field="answer"),
+            LiteralEval(field="answer"),
             Copy(field="answer/0", to_field="answer")
 ,
         ],

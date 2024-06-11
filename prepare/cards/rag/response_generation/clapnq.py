@@ -8,7 +8,7 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     Set,
 )
 from unitxt.test_utils.card import test_card
@@ -19,7 +19,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         SplitRandomMix({"train": "train", "test": "validation"}),
-        CopyFields(
+        Copy(
             field_to_field={
                 "passages/*/text": "contexts",
                 "input": "question",

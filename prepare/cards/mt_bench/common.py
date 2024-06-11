@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.operators import (
     Apply,
-    CopyFields,
+    Copy,
     FilterByConditionBasedOnFields,
     MapInstanceValues,
     RenameFields,
@@ -45,7 +45,7 @@ mt_bench_rating_hf_space_processing_steps = SequentialOperator(
             strict=False,
             apply_to_streams=["judgment", "model_answer"],
         ),
-        CopyFields(
+        Copy(
             field="model_output/0/turns",
             to_field="model_output",
             apply_to_streams=["model_answer"],
@@ -135,7 +135,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             strict=False,
             apply_to_streams=["judgment"],
         ),
-        CopyFields(
+        Copy(
             field="judge_model_id/0",
             to_field="judge_model_id",
             apply_to_streams=["judgment"],
@@ -145,7 +145,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             condition="eq",
             apply_to_streams=["judgment"],
         ),
-        CopyFields(
+        Copy(
             field_to_field={"winner_model_1_ordered_first": "winner"},
             apply_to_streams=["judgment"],
         ),
@@ -171,7 +171,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             strict=False,
             apply_to_streams=["model_answer"],
         ),
-        CopyFields(
+        Copy(
             field="model_output/0/turns",
             to_field="model_output",
             apply_to_streams=["model_answer"],

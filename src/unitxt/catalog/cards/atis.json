@@ -261,7 +261,7 @@
             "outside_label": "O"
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",

@@ -10,7 +10,7 @@ from .normalizers import NormalizeListFields
 from .operators import (
     AddID,
     CastFields,
-    CopyFields,
+    Copy,
     DivideAllFieldsBy,
     MapInstanceValues,
     RenameFields,

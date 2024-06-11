@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     Set,
 )
 from unitxt.processors import SplitStrip
@@ -108,7 +108,7 @@ card = TaskCard(
             inside_labels=["I-" + c for c in classes],
             outside_label="O",
         ),
-        CopyFields(
+        Copy(
             field_to_field={
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",

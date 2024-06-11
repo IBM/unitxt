@@ -58,7 +58,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field": "model_output/0/turns",
             "to_field": "model_output",
             "apply_to_streams": [

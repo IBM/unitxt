@@ -22,7 +22,7 @@
             }
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "input": "input_label/input",
                 "label": "input_label/label"

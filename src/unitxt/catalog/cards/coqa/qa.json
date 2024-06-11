@@ -40,7 +40,7 @@
             "to_field": "last_turn"
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "last_turn/user": "question",
                 "last_turn/system": "answer"

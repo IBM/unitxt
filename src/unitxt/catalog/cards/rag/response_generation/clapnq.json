@@ -13,7 +13,7 @@
             }
         },
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "passages/*/text": "contexts",
                 "input": "question",

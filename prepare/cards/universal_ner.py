@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     GetItemByIndex,
     RenameFields,
     Set,
@@ -60,7 +60,7 @@ for sub_task in sub_tasks:
                 inside_labels=["I-PER", "I-ORG", "I-LOC"],
                 outside_label="O",
             ),
-            CopyFields(
+            Copy(
                 field_to_field={
                     "spans/*/start": "spans_starts",
                     "spans/*/end": "spans_ends",

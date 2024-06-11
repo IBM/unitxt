@@ -8,7 +8,6 @@ from unitxt.blocks import (
 )
 from unitxt.operators import (
     Copy,
-    CopyFields,
     FilterByCondition,
     Set,
     Shuffle,
@@ -26,7 +25,7 @@ card = TaskCard(
         Copy(field="wikipedia/0", to_field="first_wiki"),
         FilterByCondition(values={"domain": ["race", "gender"]}, condition="in"),
         Shuffle(page_size=10000),
-        CopyFields(
+        Copy(
             field_to_field={
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",

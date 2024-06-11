@@ -6,7 +6,7 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import CopyFields, FilterByCondition, Set, Shuffle
+from unitxt.operators import Copy, FilterByCondition, Set, Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
@@ -521,7 +521,7 @@ card = TaskCard(
         # FilterByCondition(values = {"label":["discrimination"]}, condition = "in") ,
         Shuffle(page_size=2800),
         Set({"input_label": {}}),
-        CopyFields(
+        Copy(
             field_to_field={"input": "input_label/input", "label": "input_label/label"}
         ),
         DumpJson(field="input_label"),

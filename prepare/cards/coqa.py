@@ -2,7 +2,7 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
 from unitxt.dialog_operators import SerializeDialog
-from unitxt.operators import CopyFields, ZipFieldValues
+from unitxt.operators import Copy, ZipFieldValues
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -17,7 +17,7 @@ card = TaskCard(
         Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
         DuplicateBySubLists(field="dialog"),
         Get(field="dialog", item=-1, to_field="last_turn"),
-        CopyFields(
+        Copy(
             field_to_field={"last_turn/user": "question", "last_turn/system": "answer"},
         ),
         Wrap(

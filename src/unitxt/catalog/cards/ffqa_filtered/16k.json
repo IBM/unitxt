@@ -6,7 +6,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "conversations/0/value": "inputs",
                 "conversations/0/tok_len": "inputs_len",

@@ -4,7 +4,7 @@
     "preprocess_steps": [],
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "score/instance/f1": "score/instance/correctness_f1_bert_score.deberta_v3_base_mnli_xnli_ml",
                 "score/instance/recall": "score/instance/correctness_recall_bert_score.deberta_v3_base_mnli_xnli_ml",

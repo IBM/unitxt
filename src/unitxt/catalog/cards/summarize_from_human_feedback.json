@@ -8,7 +8,7 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": {
                 "info/post": "input",
                 "summaries/*/text": "choices"

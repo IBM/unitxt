@@ -1,5 +1,5 @@
 from unitxt.blocks import (
-    CopyFields,
+    Copy,
     LoadHF,
     RenameFields,
     Set,
@@ -12,7 +12,7 @@ card = TaskCard(
     loader=LoadHF(path="openai/summarize_from_feedback", name="comparisons"),
     preprocess_steps=[
         "splitters.small_no_test",
-        CopyFields(
+        Copy(
             field_to_field={
                 "info/post": "input",
                 "summaries/*/text": "choices",
