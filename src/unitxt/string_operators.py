@@ -37,6 +37,27 @@ class TokensSplit(FieldOperator):
         return self.tokenizer.tokenize(value)
 
 
+class TokensSlice(FieldOperator):
+    model: str
+    start: Optional[int] = None
+    stop: Optional[int] = None
+    step: Optional[int] = None
+
+    _requirements_list = ["transformers"]
+
+    def prepare(self):
+        super().prepare()
+        from transformers import AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+
+    def process_value(self, value: str) -> str:
+        encoded = self.tokenizer.encode(value)
+        slicer = slice(self.start, self.stop, self.step)
+        sliced = encoded[slicer]
+        return self.tokenizer.decode(sliced)
+
+
 class Join(FieldOperator):
     by: str
 
