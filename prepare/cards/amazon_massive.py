@@ -1,9 +1,9 @@
 from datasets import get_dataset_config_names, load_dataset_builder
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -27,7 +27,7 @@ for lang in langs:
         preprocess_steps=[
             MapInstanceValues(mappers={"intent": mappers}),
             RenameFields(field_to_field={"utt": "text", "intent": "label"}),
-            AddFields(
+            Set(
                 fields={
                     "classes": classlabels.names,
                     "text_type": "sentence",

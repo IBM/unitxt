@@ -1,10 +1,10 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     IndexOf,
     ListFieldValues,
     RenameFields,
+    Set,
     ShuffleFieldValues,
 )
 from unitxt.test_utils.card import test_card
@@ -21,7 +21,7 @@ card = TaskCard(
         RenameFields(
             field_to_field={"support": "context"},
         ),
-        AddFields({"context_type": "paragraph"}),
+        Set({"context_type": "paragraph"}),
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",

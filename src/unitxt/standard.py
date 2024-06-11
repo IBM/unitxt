@@ -5,7 +5,7 @@ from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
+from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -220,7 +220,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         self.metadata.steps.append(
-            AddFields(
+            Set(
                 fields={
                     "recipe_metadata": {
                         "template": self.template,

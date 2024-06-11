@@ -1,9 +1,9 @@
 from datasets import get_dataset_config_names
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.test_utils.card import test_card
@@ -23,7 +23,7 @@ for subset in get_dataset_config_names(dataset_name):
         loader=LoadHF(path=f"{dataset_name}", name=subset),
         preprocess_steps=[
             RenameFields(field_to_field={"qtext": "text", "category": "label"}),
-            AddFields(
+            Set(
                 fields={
                     "classes": categories,
                     "text_type": "question",

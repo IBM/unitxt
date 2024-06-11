@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
-    AddFields,
     CopyFields,
+    Set,
 )
 from unitxt.processors import SplitStrip
 from unitxt.span_lableing_operators import IobExtractor
@@ -117,7 +117,7 @@ card = TaskCard(
             get_default=[],
             not_exist_ok=True,
         ),
-        AddFields(
+        Set(
             fields={
                 "text_type": "text",
                 "class_type": "entity type",

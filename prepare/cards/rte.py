@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -15,7 +15,7 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "entailment", "1": "not entailment"}}
         ),
-        AddFields(
+        Set(
             fields={
                 "classes": ["entailment", "not entailment"],
                 "type_of_relation": "entailment",

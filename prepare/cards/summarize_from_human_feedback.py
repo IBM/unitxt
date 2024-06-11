@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     CopyFields,
     LoadHF,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -19,7 +19,7 @@ card = TaskCard(
             }
         ),
         RenameFields(field_to_field={"choice": "output_choice"}),
-        AddFields(
+        Set(
             fields={
                 "input_type": "post",
                 "output_type": "summary",

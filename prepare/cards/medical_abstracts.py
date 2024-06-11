@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -35,7 +35,7 @@ card = TaskCard(
             field_to_field={"medical_abstract": "text", "condition_label": "label"}
         ),
         MapInstanceValues(mappers={"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "abstract",

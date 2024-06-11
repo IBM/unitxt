@@ -1,9 +1,9 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     TaskCard,
 )
 from unitxt.splitters import DiverseLabelsSampler
@@ -22,7 +22,7 @@ card = TaskCard(
     loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels.feature.names,
                 "text_type": "text",

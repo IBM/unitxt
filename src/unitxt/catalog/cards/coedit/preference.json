@@ -44,7 +44,7 @@
             "field": "choices"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "output_type": "sentence",
                 "input_type": "sentence"

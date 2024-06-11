@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddFields, CastFields, RenameFields
+from unitxt.operators import CastFields, RenameFields, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -16,7 +16,7 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"label": "answer"}),
         CastFields(fields={"answer": "int"}),
-        AddFields(fields={"context_type": "sentence"}),
+        Set(fields={"context_type": "sentence"}),
     ],
     task="tasks.completion.multiple_choice",
     templates="templates.completion.multiple_choice.all",

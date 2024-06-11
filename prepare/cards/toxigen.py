@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
-from unitxt.operators import AddFields, MapInstanceValues, RenameFields, Shuffle
+from unitxt.operators import MapInstanceValues, RenameFields, Set, Shuffle
 from unitxt.splitters import SplitRandomMix
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
@@ -18,7 +18,7 @@ card = TaskCard(
         MapInstanceValues(mappers={"prompt_label": {"0": "not toxic", "1": "toxic"}}),
         RenameFields(field_to_field={"prompt": "text"}),
         RenameFields(field_to_field={"prompt_label": "label"}),
-        AddFields(
+        Set(
             fields={
                 "classes": ["not toxic", "toxic"],
                 "text_type": "text",

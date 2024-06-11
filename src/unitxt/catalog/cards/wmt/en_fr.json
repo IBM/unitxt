@@ -21,7 +21,7 @@
             ]
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "source_language": "english",
                 "target_language": "french"

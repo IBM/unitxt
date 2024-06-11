@@ -87,8 +87,8 @@ input and output fields of the task.  We also need to add new fields for the sou
         # Copy the fields to prepare the fields required by the task schema
         Copy(field="translation/en", to_field="text"),
         Copy(field="translation/de", to_field="translation"),
-        
-        AddFields( # add new fields required by the task schema
+        # Set new fields required by the task schema
+        Set(
             fields={
                 "source_language": "english",
                 "target_language": "deutch",
@@ -142,7 +142,7 @@ the Unitxt catalog.
 
         from unitxt.card import TaskCard
         from unitxt.loaders import LoadHF
-        from unitxt.operators import Copy, AddFields
+        from unitxt.operators import Copy, Set
         from unitxt.test_utils.card import test_card
 
         card = TaskCard(
@@ -151,8 +151,8 @@ the Unitxt catalog.
                 # Copy the fields to prepare the fields required by the task schema
                 Copy(field="translation/en", to_field="text"),
                 Copy(field="translation/de", to_field="translation"),
-                
-                AddFields( # add new fields required by the task schema
+
+                Set( # add new fields required by the task schema
                     fields={
                         "source_language": "english",
                         "target_language": "deutch",

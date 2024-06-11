@@ -34,7 +34,7 @@
             "to_field": "text"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "classes": [
                     "business",

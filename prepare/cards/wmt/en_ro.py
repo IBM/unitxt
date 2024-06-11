@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, CopyFields, LoadHF, TaskCard
+from unitxt.blocks import CopyFields, LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
@@ -11,7 +11,7 @@ card = TaskCard(
                 ["translation/ro", "translation"],
             ],
         ),
-        AddFields(
+        Set(
             fields={
                 "source_language": "english",
                 "target_language": "romanian",

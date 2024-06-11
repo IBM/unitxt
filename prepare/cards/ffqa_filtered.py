@@ -5,11 +5,11 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     CopyFields,
     ExecuteExpression,
     FilterByCondition,
     ListFieldValues,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -102,7 +102,7 @@ def add_card(split: str):
                 imports_list=["re"],
                 to_field="question",
             ),
-            AddFields({"context_type": "document"}),
+            Set({"context_type": "document"}),
             SplitRandomMix(
                 {
                     "train": f"{split}[80%]",

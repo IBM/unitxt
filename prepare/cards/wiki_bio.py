@@ -1,9 +1,9 @@
 from unitxt.blocks import (
-    AddFields,
     ListToKeyValPairs,
     LoadHF,
     RenameFields,
     SerializeKeyValPairs,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -20,9 +20,7 @@ card = TaskCard(
         ),
         SerializeKeyValPairs(field_to_field=[["kvpairs", "input"]]),
         RenameFields(field_to_field={"target_text": "output"}),
-        AddFields(
-            fields={"type_of_input": "Key-Value pairs", "type_of_output": "Text"}
-        ),
+        Set(fields={"type_of_input": "Key-Value pairs", "type_of_output": "Text"}),
     ],
     task="tasks.generation",
     templates="templates.generation.all",

@@ -27,7 +27,7 @@
             "to_field": "answers"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "context_type": "context"
             }

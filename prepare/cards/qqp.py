@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     InputOutputTemplate,
     LoadHF,
     MapInstanceValues,
+    Set,
     Task,
     TaskCard,
     TemplatesList,
@@ -17,7 +17,7 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "not duplicated", "1": "duplicated"}}
         ),
-        AddFields(
+        Set(
             fields={
                 "choices": ["not duplicated", "duplicated"],
             }

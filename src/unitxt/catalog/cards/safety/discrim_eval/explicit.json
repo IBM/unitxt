@@ -16,7 +16,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "answer": "yes",
                 "choices": [

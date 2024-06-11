@@ -1,8 +1,8 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
+    Set,
     TaskCard,
 )
 from unitxt.operators import MapInstanceValues
@@ -20,7 +20,7 @@ card = TaskCard(
     loader=LoadHF(path=dataset_name, name=subset),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
                 "text_type": "text",

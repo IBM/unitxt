@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, AddID, CopyFields
+from unitxt.blocks import AddID, CopyFields, Set
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import MetricPipeline, Squad
 from unitxt.test_utils.metrics import test_metric
@@ -7,7 +7,7 @@ metric = MetricPipeline(
     main_score="f1",
     preprocess_steps=[
         AddID(),
-        AddFields(
+        Set(
             {
                 "prediction_template": {"prediction_text": "PRED", "id": "ID"},
                 "reference_template": {

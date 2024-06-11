@@ -14,7 +14,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "text_type": "clause",
                 "classes": [

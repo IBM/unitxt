@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -14,7 +14,7 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
         RenameFields(field_to_field={"sentence": "text"}),
-        AddFields(
+        Set(
             fields={
                 "classes": ["unacceptable", "acceptable"],
                 "text_type": "text",

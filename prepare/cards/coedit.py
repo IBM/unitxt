@@ -5,12 +5,12 @@ from unitxt.card import TaskCard
 from unitxt.collections_operators import DuplicateByList, Slice
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    AddFields,
     Copy,
     IndexOf,
     ListFieldValues,
     MapInstanceValues,
     RenameFields,
+    Set,
     Shuffle,
     ShuffleFieldValues,
 )
@@ -70,7 +70,7 @@ error_detection_card = TaskCard(
         ),
         DuplicateByList(field="correct_and_incorrect", to_field="text"),
         IndexOf(index_of="text", search_in="correct_and_incorrect", to_field="label"),
-        AddFields(
+        Set(
             fields={
                 "class": "Grammatically incorrect",
                 "text_type": "text",
@@ -115,7 +115,7 @@ card = TaskCard(
             to_field="choices",
         ),
         ShuffleFieldValues(field="choices"),
-        AddFields(
+        Set(
             fields={
                 "output_type": "sentence",
                 "input_type": "sentence",
@@ -180,7 +180,7 @@ card = TaskCard(
                 }
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "choices_text_type": "sentences",
             }
@@ -240,7 +240,7 @@ card = TaskCard(
                 }
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "input_text_type": "sentence",
                 "output_text_type": "sentence",
@@ -278,7 +278,7 @@ card = TaskCard(
         Split(field="src", by=": "),
         Slice(field="src", start=1),
         Join(field="src", by=": "),
-        AddFields(
+        Set(
             fields={
                 "text_type": "sentence",
             }

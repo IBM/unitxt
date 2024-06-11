@@ -4,9 +4,9 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    AddFields,
     Copy,
     RenameFields,
+    Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -22,7 +22,7 @@ card = TaskCard(
                 "category": "group",
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "output": "None",
                 "type_of_input": "question",

@@ -43,7 +43,7 @@
             "process_every_value": true
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "classes": [
                     "admiration",

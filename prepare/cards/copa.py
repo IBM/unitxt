@@ -2,10 +2,10 @@ from unitxt.blocks import LoadHF
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     ListFieldValues,
     MapInstanceValues,
     RenameFields,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -23,7 +23,7 @@ card = TaskCard(
                 }
             }
         ),
-        AddFields({"context_type": "sentence"}),
+        Set({"context_type": "sentence"}),
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",

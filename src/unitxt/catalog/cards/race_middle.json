@@ -7,7 +7,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "numbering": [
                     "A",
@@ -53,7 +53,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "context_type": "article"
             }

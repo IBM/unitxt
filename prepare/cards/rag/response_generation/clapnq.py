@@ -8,8 +8,8 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.operators import (
-    AddFields,
     CopyFields,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -26,7 +26,7 @@ card = TaskCard(
                 "output/*/answer": "reference_answers",
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "contexts_ids": [],
             }

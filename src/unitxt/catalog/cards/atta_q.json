@@ -16,7 +16,7 @@
             "page_size": 2800
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "input_label": {}
             }

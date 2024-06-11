@@ -1,10 +1,10 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     ExecuteExpression,
     ListFieldValues,
     RenameFields,
+    Set,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
@@ -21,7 +21,7 @@ card_abstractive = TaskCard(
         ),
         ListFieldValues(fields=["utterance"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
-        AddFields({"context_type": "document"}),
+        Set({"context_type": "document"}),
     ],
     task="tasks.qa.with_context.abstractive",
     templates="templates.qa.with_context.all",
@@ -51,7 +51,7 @@ card_extractive = TaskCard(
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
-        AddFields({"context_type": "document"}),
+        Set({"context_type": "document"}),
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",

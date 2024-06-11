@@ -18,7 +18,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "choices": [
                     "not equivalent",

@@ -39,7 +39,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "classes": [
                     "credit reporting or credit repair services or other personal consumer reports",

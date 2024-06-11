@@ -32,7 +32,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "context_type": "paragraph"
             }

@@ -5,8 +5,8 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.operators import (
-    AddFields,
     RenameFields,
+    Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.templates import MultipleChoiceTemplate
@@ -21,7 +21,7 @@ for dataset_name in ["explicit", "implicit"]:
         ),
         preprocess_steps=[
             RenameSplits({"train": "test"}),
-            AddFields(
+            Set(
                 fields={
                     "answer": "yes",
                     "choices": ["yes", "no"],

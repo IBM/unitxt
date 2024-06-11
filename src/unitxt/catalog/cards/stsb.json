@@ -23,7 +23,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "attribute_name": "similarity",
                 "min_value": 1.0,

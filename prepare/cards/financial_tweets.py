@@ -2,9 +2,9 @@ import sys
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -49,7 +49,7 @@ card = TaskCard(
             }  # TODO see the mapping due to sizes?
         ),
         MapInstanceValues(mappers={"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "tweet",

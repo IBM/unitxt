@@ -25,7 +25,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "output": "None",
                 "type_of_input": "question",

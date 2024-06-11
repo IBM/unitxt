@@ -81,7 +81,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "classes": [
                     "Abbreviation: Abbreviation.",

@@ -175,7 +175,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "classes": [
                     "restaurant reviews",

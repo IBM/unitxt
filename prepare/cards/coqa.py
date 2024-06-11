@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
 from unitxt.dialog_operators import SerializeDialog
@@ -9,7 +9,7 @@ card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(fields={"context_type": "story"}),
+        Set(fields={"context_type": "story"}),
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",
@@ -65,7 +65,7 @@ card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(fields={"context_type": "dialog", "completion_type": "response"}),
+        Set(fields={"context_type": "dialog", "completion_type": "response"}),
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",

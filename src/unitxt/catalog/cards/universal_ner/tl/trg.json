@@ -59,7 +59,7 @@
             "not_exist_ok": true
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "text_type": "text",
                 "class_type": "entity type",

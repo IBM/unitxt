@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import CopyFields, IndexOf, RenameFields
 from unitxt.test_utils.card import test_card
@@ -9,7 +9,7 @@ for subtask in subtasks:
     card = TaskCard(
         loader=LoadHF(path="ai2_arc", name=subtask),
         preprocess_steps=[
-            AddFields({"topic": "science"}),
+            Set({"topic": "science"}),
             RenameFields(field_to_field={"answerKey": "label", "choices": "_choices"}),
             CopyFields(
                 field_to_field={"_choices/text": "choices", "_choices/label": "labels"}

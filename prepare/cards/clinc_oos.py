@@ -3,10 +3,10 @@ import sys
 from datasets import get_dataset_config_names, load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.operators import Shuffle
@@ -28,7 +28,7 @@ for subset in get_dataset_config_names(dataset_name):
             Shuffle(page_size=sys.maxsize),
             RenameFields(field_to_field={"intent": "label"}),
             MapInstanceValues(mappers={"label": map_label_to_text}),
-            AddFields(
+            Set(
                 fields={
                     "classes": classes,
                     "text_type": "sentence",

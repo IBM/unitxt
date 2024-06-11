@@ -13,7 +13,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "topic": "high school world history"
             }

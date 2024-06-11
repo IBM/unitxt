@@ -20,7 +20,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "document_type": "document"
             }

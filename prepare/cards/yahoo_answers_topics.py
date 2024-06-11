@@ -2,10 +2,10 @@ import sys
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -43,7 +43,7 @@ card = TaskCard(
             to_field="text",
         ),
         JoinStr(separator=" ", field="text", to_field="text"),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
                 "text_type": "text",

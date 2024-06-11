@@ -6,7 +6,7 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesList,
 )
-from unitxt.operators import AddFields, CopyFields, Shuffle
+from unitxt.operators import CopyFields, Set, Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
@@ -16,7 +16,7 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         Shuffle(page_size=2800),
-        AddFields({"input_label": {}}),
+        Set({"input_label": {}}),
         CopyFields(
             field_to_field={"input": "input_label/input", "label": "input_label/label"}
         ),
