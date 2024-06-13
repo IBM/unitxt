@@ -8,7 +8,7 @@ add_to_catalog(
         inputs={
             "contexts": "List[str]",
             "contexts_ids": "List[int]",
-            "dialog": "List[Dict]",
+            "dialog": "List[Dict[str,str]]",
         },
         outputs={"reference_answers": "List[str]"},
         metrics=[
@@ -18,6 +18,6 @@ add_to_catalog(
         ],
         augmentable_inputs=["contexts"],
     ),
-    "tasks.rag.response_generation.multi_turn",
+    "tasks.rag.response_generation_multi_turn",
     overwrite=True,
 )

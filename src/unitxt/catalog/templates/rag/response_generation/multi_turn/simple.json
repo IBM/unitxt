@@ -1,0 +1,6 @@
+{
+    "type": "dialog_dict_template",
+    "field": "dialog",
+    "input_format": "{contexts}\n\n{dialog}",
+    "references_field": "reference_answers"
+}
