@@ -935,6 +935,42 @@ class InterleaveListsToDialogOperator(InstanceOperator):
         return instance
 
 
+class DialogDictListToDialogOperator(InstanceOperator):
+    """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
+
+     The list of tuples if of format (role, turn_content), where the role label is specified by
+     the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
+
+    The user turns and assistant turns field are specified in the arguments.
+     The value of each of the 'fields' is assumed to be a list.
+
+    """
+
+    field: str
+    to_field: str
+    user_role_label: str = "user"
+    assistant_role_label: str = "assistant"
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        dialog_list = instance[self.field]
+        assert isinstance(dialog_list, list)
+
+        interleaved_dialog = []
+        for turn in dialog_list:
+            assert isinstance(turn, dict)
+            assert "role" in turn
+            role = turn["role"]
+            assert "content" in turn
+            content = turn["content"]
+
+            interleaved_dialog.append((role, content))
+
+        instance[self.to_field] = interleaved_dialog
+        return instance
+
+
 class IndexOf(InstanceOperator):
     """For a given instance, finds the offset of value of field 'index_of', within the value of field 'search_in'."""
 
