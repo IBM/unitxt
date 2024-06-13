@@ -1,7 +1,10 @@
 import abc
+import json
 import os
 from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Union
+
+from tqdm import tqdm
 
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
@@ -158,6 +161,9 @@ class OpenAiInferenceEngineParams(Artifact):
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    return_logprobs: Optional[bool] = False
+    top_logprobs: Optional[int] = 0
+    n: Optional[int] = 1
 
 
 class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -169,6 +175,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     _requirement = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
+    data_classification_policy = ["public"]
 
     def prepare(self):
         from openai import OpenAI
@@ -183,8 +190,9 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         self.client = OpenAI(api_key=api_key)
 
     def _infer(self, dataset):
-        return [
-            self.client.chat.completions.create(
+        outputs = []
+        for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            response = self.client.chat.completions.create(
                 messages=[
                     # {
                     #     "role": "system",
@@ -203,6 +211,24 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 stop=self.parameters.stop,
                 temperature=self.parameters.temperature,
                 top_p=self.parameters.top_p,
+                logprobs=self.parameters.return_logprobs,
+                top_logprobs=self.parameters.top_logprobs,
             )
-            for instance in dataset
-        ]
+            if self.parameters.return_logprobs:
+                top_logprobs_response = response.choices[0].logprobs.content
+                example_list_of_dicts = [
+                    {
+                        "top_tokens": [
+                            {"text": obj.token, "logprob": obj.logprob}
+                            for obj in generated_token.top_logprobs
+                        ]
+                    }
+                    for generated_token in top_logprobs_response
+                ]
+                output = json.dumps(example_list_of_dicts)
+            else:
+                output = response.choices[0].message.content
+
+            outputs.append(output)
+
+        return outputs
