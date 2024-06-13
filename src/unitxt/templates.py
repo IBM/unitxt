@@ -586,6 +586,47 @@ class MultiReferenceTemplate(InputOutputTemplate):
         return target, references
 
 
+class DialogDictTemplate(MultiReferenceTemplate):
+    field: str
+    user_label_format: str = "###User:"
+    assistant_label_format: str = "###Assistant::"
+    system_label_format: str = "###System:"
+    turns_separator: str = "\n\n"
+    label_separator: str = " "
+    role_key: str = "role"
+    content_key: str = "content"
+    user_role_label: str = "user"
+    assistant_role_label: str = "assistant"
+    system_role_label: str = "system"
+
+    def process_dialog(self, inputs: Dict[str, object]):
+        dialog = inputs[self.field]
+        assert isoftype(dialog, List[Dict[str, str]])
+
+        dialog_str = ""
+        for i, turn in enumerate(dialog):
+            assert self.content_key in turn
+            content = turn["content"]
+            assert self.role_key in turn
+            role = turn["role"]
+
+            turns_separator = "" if i == 0 else self.turns_separator
+            if role == self.user_role_label:
+                dialog_str += f"{turns_separator}{self.user_label_format}{self.label_separator}{content}"
+            elif role == self.assistant_role_label:
+                dialog_str += f"{turns_separator}{self.assistant_label_format}{self.label_separator}{content}"
+            elif role == self.system_role_label:
+                dialog_str += f"{turns_separator}{self.system_label_format}{self.label_separator}{content}"
+
+        inputs[self.field] = dialog_str
+        return inputs
+
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        return self.process_dialog(inputs), outputs
+
+
 def escape_chars(s, chars_to_escape):
     for char in chars_to_escape:
         s = s.replace(char, f"\\{char}")
