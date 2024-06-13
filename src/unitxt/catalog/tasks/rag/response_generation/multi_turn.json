@@ -3,7 +3,7 @@
     "inputs": {
         "contexts": "List[str]",
         "contexts_ids": "List[int]",
-        "dialog": "List[Dict]"
+        "dialog": "List[Dict[str, str]]"
     },
     "outputs": {
         "reference_answers": "List[str]"
