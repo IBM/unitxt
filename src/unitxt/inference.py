@@ -213,6 +213,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 top_p=self.parameters.top_p,
                 logprobs=self.parameters.return_logprobs,
                 top_logprobs=self.parameters.top_logprobs,
+                n=self.parameters.n,
             )
             if self.parameters.return_logprobs:
                 top_logprobs_response = response.choices[0].logprobs.content
