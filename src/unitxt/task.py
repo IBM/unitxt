@@ -27,6 +27,9 @@ class Task(InstanceOperator):
         prediction_type (Optional[str]):
             Need to be consistent with all used metrics. Defaults to None, which means that it will
             be set to Any.
+        defaults (Optional[Dict[str, Any]]):
+            An optional dictionary with default values for chosen input/output keys. Needs to be
+            consistent with names and types provided in 'inputs' and/or 'outputs' arguments.
 
     The output instance contains three fields:
         "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
@@ -39,6 +42,7 @@ class Task(InstanceOperator):
     metrics: List[str]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
+    defaults: Optional[Dict[str, Any]] = None
 
     def verify(self):
         for io_type in ["inputs", "outputs"]:
@@ -72,6 +76,8 @@ class Task(InstanceOperator):
                 augmentable_input in self.inputs
             ), f"augmentable_input {augmentable_input} is not part of {self.inputs}"
 
+        self.verify_defaults()
+
     @staticmethod
     @lru_cache(maxsize=None)
     def get_metric_prediction_type(metric_id: str):
@@ -99,9 +105,46 @@ class Task(InstanceOperator):
                 f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
+    def verify_defaults(self):
+        if self.defaults:
+            if not isinstance(self.defaults, dict):
+                raise ValueError(
+                    f"If specified, the 'defaults' must be a dictionary, "
+                    f"however, '{self.defaults}' was provided instead, "
+                    f"which is of type '{type(self.defaults)}'."
+                )
+
+            for default_name, default_value in self.defaults.items():
+                assert isinstance(default_name, str), (
+                    f"If specified, all keys of the 'defaults' must be strings, "
+                    f"however, the key '{default_name}' is of type '{type(default_name)}'."
+                )
+
+                val_type = self.inputs.get(default_name) or self.outputs.get(
+                    default_name
+                )
+
+                assert val_type, (
+                    f"If specified, all keys of the 'defaults' must refer to a chosen "
+                    f"key in either 'inputs' or 'outputs'. However, the name '{default_name}' "
+                    f"was provided which does not match any of the keys."
+                )
+
+                assert isoftype(default_value, parse_type_string(val_type)), (
+                    f"The value of '{default_name}' from the 'defaults' must be of "
+                    f"type '{val_type}', however, it is of type '{type(default_value)}'."
+                )
+
+    def set_default_values(self, instance: Dict[str, Any]) -> Dict[str, Any]:
+        if self.defaults:
+            instance.update(self.defaults)
+        return instance
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        instance = self.set_default_values(instance)
+
         verify_required_schema(self.inputs, instance)
         verify_required_schema(self.outputs, instance)
 
@@ -119,3 +162,94 @@ class Task(InstanceOperator):
 
 class FormTask(Task):
     pass
+
+
+class SubTask(Task):
+    """Task created as a result of augmenting other sub-tasks.
+
+    The class takes multiple given sub-tasks and creates a new one inheriting their
+    attributes. This is done by updating 'inputs', 'outputs', 'metrics', 'defaults'
+    and 'augmentable_inputs' of the task. The ordering of a list of sub-tasks matters,
+    as fields with the same keys may be overwritten by successive tasks in the list.
+    The base attributes of the SubTask class (i.e. 'metrics', 'inputs' etc.) may be
+    also specified, and they will have priority over fields of provided sub-tasks.
+    As for the 'prediction_type', the attribute must be consistent across all sub-tasks.
+
+    Attributes:
+        sub_tasks (List[Union[Task, str]]):
+            List of either 'Task' objects, or strings representing tasks which can be
+            retrieved from a local catalog. The instance is created based on specified
+            tasks and their attributes.
+
+    Examples:
+        sub_task = Task(
+            inputs={"number": "float"},
+            outputs={"label": "str"},
+            prediction_type="str",
+            metrics=["metrics.accuracy"],
+        )
+        main_task = SubTask(sub_tasks=["tasks.generation", sub_task])
+        assert main_task.inputs == {
+            "input": "str",
+            "type_of_input": "str",
+            "type_of_output": "str",
+            "number": "float",
+        }
+        assert main_task.metrics == [
+            "metrics.accuracy", "metrics.normalized_sacrebleu"
+        ]
+    """
+
+    sub_tasks: List[Union[Task, str]]
+    inputs: Dict[str, str] = {}
+    outputs: Dict[str, str] = {}
+    metrics: List[str] = []
+    defaults: Dict[str, Any] = {}
+
+    def verify_sub_tasks(self):
+        sub_tasks = []
+        for sub_task in self.sub_tasks:
+            if isinstance(sub_task, str):
+                sub_task = fetch_artifact(sub_task)[0]
+            if not isinstance(sub_task, Task):
+                raise ValueError(
+                    f"All elements of the 'sub_tasks' list must be either a defined "
+                    f"Task object, or a string name of a task which can be retrieved "
+                    f"from the local catalog. However, '{sub_task}' was provided instead."
+                )
+            sub_task.verify()
+            sub_tasks.append(sub_task)
+        self.sub_tasks: List[Task] = sub_tasks
+
+    def verify_prediction_types(self):
+        if self.prediction_type is None or self.prediction_type == "Any":
+            return
+
+        prediction_types = [sub_task.prediction_type for sub_task in self.sub_tasks]
+        prediction_type = self.prediction_type
+        assert prediction_types.count(prediction_type) == len(prediction_types), (
+            f"The specified 'prediction_type' is '{prediction_type}' and it needs "
+            f"to be consistent with prediction types of given sub-tasks. However, "
+            f"sub tasks have the following prediction types: '{prediction_types}'."
+        )
+
+    def expand_task(self):
+        inputs, outputs, defaults = {}, {}, {}
+        for sub_task in self.sub_tasks:
+            inputs.update(sub_task.inputs)
+            outputs.update(sub_task.outputs)
+            if sub_task.defaults:
+                defaults.update(sub_task.defaults)
+            self.metrics += sub_task.metrics
+            self.augmentable_inputs += sub_task.augmentable_inputs
+        self.inputs = {**inputs, **self.inputs}
+        self.outputs = {**outputs, **self.outputs}
+        self.defaults = {**defaults, **self.defaults}
+        self.metrics = list(set(self.metrics))
+        self.augmentable_inputs = list(set(self.augmentable_inputs))
+
+    def verify(self):
+        self.verify_sub_tasks()
+        self.verify_prediction_types()
+        self.expand_task()
+        super().verify()
