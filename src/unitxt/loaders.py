@@ -617,7 +617,7 @@ class LoadFromIBMCloud(Loader):
                         object_key,
                         local_dir + "/" + os.path.basename(temp_file.name),
                     )
-                    os.rename(
+                    os.renames(
                         local_dir + "/" + os.path.basename(temp_file.name),
                         local_dir + "/" + data_file,
                     )
