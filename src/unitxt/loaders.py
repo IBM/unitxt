@@ -168,6 +168,7 @@ class LoadHF(Loader):
     ] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
+    revision: Optional[str] = None
     _cache: dict = InternalField(default=None)
     requirements_list: List[str] = OptionalField(default_factory=list)
 
@@ -199,6 +200,7 @@ class LoadHF(Loader):
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
+                        revision=self.revision,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
