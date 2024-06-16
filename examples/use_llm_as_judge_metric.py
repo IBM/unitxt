@@ -50,7 +50,9 @@ def infer_llm(dataset, model):
 
 @cache_func_in_file
 def create_predictions_for_ds_and_model(dataset, model):
-    dataset = load_dataset("unitxt/data", dataset, split="train")
+    dataset = load_dataset(
+        "unitxt/data", dataset, split="train", trust_remote_code=True
+    )
     model = pipeline(model=model)
     predictions = infer_llm(dataset, model)
     return predictions, dataset

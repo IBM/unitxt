@@ -26,6 +26,7 @@ class TestExamples(UnitxtTestCase):
         dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0",
+            trust_remote_code=True,
             download_mode="force_redownload",
         )
         print_dict(dataset["train"][0])
@@ -35,6 +36,7 @@ class TestExamples(UnitxtTestCase):
         dataset = load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
+            trust_remote_code=True,
             download_mode="force_redownload",
         )
         import evaluate

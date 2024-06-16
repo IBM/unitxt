@@ -35,6 +35,7 @@ class HFTests(UnitxtTestCase):
         load_dataset(
             unitxt.dataset_file,
             "card=cards.wnli,template_card_index=0",
+            trust_remote_code=True,
             download_mode="force_redownload",
         )
 
