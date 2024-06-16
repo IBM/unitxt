@@ -7,7 +7,10 @@ from unitxt.blocks import (
     SplitRandomMix,
     TaskCard,
 )
+from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
+
+settings = get_settings()
 
 dataset_name = "reuters21578"
 
@@ -136,7 +139,9 @@ classlabels = {
 classlabels["ModLewis"] = classlabels["ModApte"]
 classlabels["ModHayes"] = sorted(classlabels["ModApte"] + ["bfr", "hk"])
 
-for subset in get_dataset_config_names(dataset_name):
+for subset in get_dataset_config_names(
+    dataset_name, trust_remote_code=settings.allow_unverified_code
+):
     card = TaskCard(
         loader=LoadHF(path=f"{dataset_name}", name=subset),
         preprocess_steps=[
