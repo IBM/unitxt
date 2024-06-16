@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddFields, ExtractFieldValues, RenameFields
+from unitxt.operators import ExtractFieldValues, RenameFields, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -9,7 +9,7 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),
         RenameFields(field="sentence", to_field="text"),
-        AddFields(
+        Set(
             fields={
                 "text_type": "sentence",
                 "type_of_class": "sentiment",
@@ -40,7 +40,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE Dataset Summary GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems. Supported Tasks and Leaderboards The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks: ax A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Stanford Sentiment Treebank consists of sentences from movie reviews and human annotations of their sentiment. The task is to predict the sentiment of a given sentence. It uses the two-way (positive/negative) class split, with only sentence-level labels… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

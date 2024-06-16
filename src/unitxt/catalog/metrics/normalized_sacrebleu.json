@@ -3,39 +3,38 @@
     "main_score": "sacrebleu",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "task_data/target_language",
-                    "task_data/tokenize"
-                ]
-            ],
+            "type": "copy",
+            "field": "task_data/target_language",
+            "to_field": "task_data/tokenize",
             "not_exist_ok": true,
             "get_default": "en"
+        },
+        {
+            "type": "lower_case",
+            "field": "task_data/tokenize"
         },
         {
             "type": "map_instance_values",
             "mappers": {
                 "task_data/tokenize": {
+                    "german": null,
                     "deutch": null,
-                    "french": null,
-                    "romanian": null,
-                    "english": null,
-                    "German": null,
-                    "French": null,
-                    "Spanish": null,
-                    "Portuguese": null,
-                    "Arabic": "intl",
-                    "Korean": "ko-mecab",
-                    "fr": null,
                     "de": null,
-                    "es": null,
-                    "pt": null,
+                    "french": null,
+                    "fr": null,
+                    "romanian": null,
+                    "ro": null,
+                    "english": null,
                     "en": null,
+                    "spanish": null,
+                    "es": null,
+                    "portuguese": null,
+                    "pt": null,
+                    "arabic": "intl",
                     "ar": "intl",
+                    "korean": "ko-mecab",
                     "ko": "ko-mecab",
                     "japanese": "ja-mecab",
-                    "Japanese": "ja-mecab",
                     "ja": "ja-mecab"
                 }
             },

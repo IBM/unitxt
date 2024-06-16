@@ -4,8 +4,8 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import (
-    AddFields,
     RenameFields,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -15,7 +15,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         RenameFields(field_to_field={"prompt": "input"}),
-        AddFields(
+        Set(
             fields={
                 "output": "None",
                 "type_of_input": "question",
@@ -26,7 +26,11 @@ card = TaskCard(
     ],
     task="tasks.generation",
     templates=["templates.generation.empty"],
-    __tags__={},
+    __description__="100 test prompts across five harm areas that LLMs, for the vast majority of applications, should refuse to comply with.",
+    __tags__={
+        "languages": ["english"],
+        "urls": {"arxiv": "https://arxiv.org/abs/2311.08370"},
+    },
 )
 
 test_card(

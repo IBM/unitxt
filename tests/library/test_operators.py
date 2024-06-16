@@ -5,7 +5,6 @@ from typing import Any, Dict
 from unitxt.formats import SystemFormat
 from unitxt.operators import (
     AddConstant,
-    AddFields,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
@@ -14,7 +13,7 @@ from unitxt.operators import (
     AugmentPrefixSuffix,
     AugmentWhitespace,
     CastFields,
-    CopyFields,
+    Copy,
     DeterministicBalancer,
     DivideAllFieldsBy,
     DuplicateInstances,
@@ -25,6 +24,7 @@ from unitxt.operators import (
     FeatureGroupedShuffle,
     FieldOperator,
     FilterByCondition,
+    FilterByConditionBasedOnFields,
     FilterByExpression,
     FlattenInstances,
     FromIterables,
@@ -42,6 +42,8 @@ from unitxt.operators import (
     RemoveFields,
     RemoveValues,
     RenameFields,
+    SelectFields,
+    Set,
     Shuffle,
     ShuffleFieldValues,
     SplitByValue,
@@ -51,6 +53,7 @@ from unitxt.operators import (
     ZipFieldValues,
 )
 from unitxt.stream import MultiStream
+from unitxt.stream_operators import DeleteSplits, JoinStreams
 from unitxt.templates import InputOutputTemplate, MultiReferenceTemplate
 from unitxt.test_utils.operators import (
     apply_operator,
@@ -750,7 +753,7 @@ label (str):
             self.assertEqual(output["prediction"], target["prediction"])
             self.assertEqual(output["references"], target["references"])
 
-    def test_add_fields(self):
+    def test_set(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -762,13 +765,13 @@ label (str):
         ]
 
         check_operator(
-            operator=AddFields(fields={"c": 3}),
+            operator=Set(fields={"c": 3}),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_add_fields_with_query(self):
+    def test_set_with_query(self):
         inputs = [
             {"a": {"a": 1, "b": 2}, "b": 2},
             {"a": {"a": 2, "b": 3}, "b": 3},
@@ -780,13 +783,13 @@ label (str):
         ]
 
         check_operator(
-            operator=AddFields(fields={"a/c": 5}),
+            operator=Set(fields={"a/c": 5}),
             inputs=inputs,
             targets=targets,
             tester=self,
         )
 
-    def test_add_fields_with_deep_copy(self):
+    def test_set_with_deep_copy(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -800,7 +803,7 @@ label (str):
         ]
 
         outputs = check_operator(
-            operator=AddFields(fields={"c": alist}, use_deepcopy=True),
+            operator=Set(fields={"c": alist}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -816,7 +819,7 @@ label (str):
         ]
 
         outputs = check_operator(
-            operator=AddFields(fields={"c/d": alist}, use_deepcopy=True),
+            operator=Set(fields={"c/d": alist}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2224,7 +2227,7 @@ label (str):
         targets = [{"a": 1}, {"a": 2}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a/0": "a"}),
+            operator=Copy(field="a/0", to_field="a"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2239,7 +2242,7 @@ label (str):
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
         check_operator(
-            operator=CopyFields(field_to_field={"a": "a/x"}),
+            operator=Copy(field="a", to_field="a/x"),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -3076,3 +3079,74 @@ Agent:"""
             "'percentage_to_perturb' should be in the range 0..100. Received 200",
             str(ae.exception),
         )
+
+    def test_join_streams(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {"question": "question_1", "id": "1"},
+                    {"question": "question_2", "id": "2"},
+                ],
+                "answers": [
+                    {"answer": "answer_1", "id": "1"},
+                    {"answer": "answer_2", "id": "2"},
+                ],
+                "train": [{"field": "train1"}],
+            }
+        )
+        output_multi_stream = JoinStreams(
+            left_stream="questions",
+            right_stream="answers",
+            how="inner",
+            on=["id"],
+            new_stream_name="questions_and_answers",
+        )(input_multi_stream)
+        self.assertListEqual(
+            list(output_multi_stream.keys()),
+            ["questions", "answers", "train", "questions_and_answers"],
+        )
+        joined_stream = list(output_multi_stream["questions_and_answers"])
+        expected_joined_stream = [
+            {"question": "question_1", "id": "1", "answer": "answer_1"},
+            {"question": "question_2", "id": "2", "answer": "answer_2"},
+        ]
+        TestOperators().compare_streams(joined_stream, expected_joined_stream)
+
+    def test_delete_split(self):
+        input_multi_stream = MultiStream(
+            {
+                "train": [{"field": "train1"}],
+                "dev": [{"field": "dev1"}],
+                "test": [{"field": "test1"}],
+            }
+        )
+        output_multi_stream = DeleteSplits(splits=["train", "dev"])(input_multi_stream)
+        self.assertListEqual(list(output_multi_stream.keys()), ["test"])
+
+    def test_filter_by_condition_based_on_fields(self):
+        inputs = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
+        targets = [{"question": "question_1", "id_1": "1", "id_2": "1"}]
+        check_operator(
+            operator=FilterByConditionBasedOnFields(
+                values={"id_1": "id_2"}, condition="eq"
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_select_fields(self):
+        input_multi_stream = MultiStream(
+            {
+                "questions": [
+                    {"question": "question_1", "id_1": "1", "id_2": "1"},
+                ],
+            }
+        )
+        output_multi_stream = SelectFields(fields=["question", "id_1"])(
+            input_multi_stream
+        )
+        self.assertListEqual(list(output_multi_stream.keys()), ["questions"])
+        joined_stream = list(output_multi_stream["questions"])
+        expected_joined_stream = [{"question": "question_1", "id_1": "1"}]
+        TestOperators().compare_streams(joined_stream, expected_joined_stream)

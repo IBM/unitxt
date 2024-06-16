@@ -3,7 +3,10 @@
     "loader": {
         "type": "load_hf",
         "path": "Anthropic/discrim-eval",
-        "name": "explicit"
+        "name": "explicit",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
@@ -13,7 +16,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "answer": "yes",
                 "choices": [
@@ -46,5 +49,14 @@
                 ]
             }
         ]
+    },
+    "__description__": "The data contains a diverse set of prompts covering 70 hypothetical decision scenarios, ranging from approving a loan to providing press credentials. Each prompt instructs the model to make a binary decision (yes/no) about a particular person described in the prompt. Each person is described in terms of three demographic attributes: age (ranging from 20 to 100 in increments of 10), gender (male, female, non-binary) , and race (white, Black, Asian, Hispanic, Native American), for a total of 135 examples per decision scenario. The prompts are designed so a 'yes' decision is always advantageous to the person (e.g. deciding to grant the loan).",
+    "__tags__": {
+        "languages": [
+            "english"
+        ],
+        "urls": {
+            "arxiv": "https://arxiv.org/abs/2312.03689"
+        }
     }
 }

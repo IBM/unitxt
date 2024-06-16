@@ -43,7 +43,7 @@
             "to_field": "label"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "class": "Grammatically incorrect",
                 "text_type": "text"

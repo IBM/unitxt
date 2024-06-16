@@ -1,7 +1,7 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -21,7 +21,7 @@ card = TaskCard(
                 "label": "attribute_value",
             }
         ),
-        AddFields(
+        Set(
             fields={"attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0}
         ),
     ],
@@ -48,7 +48,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE Dataset Summary GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems. Supported Tasks and Leaderboards The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks: ax A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Semantic Textual Similarity Benchmark (Cer et al., 2017) is a collection of sentence pairs drawn from news headlines, video and image captions, and natural language inference data. Each pair is human-annotated with a similarity score from 1 to 5… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

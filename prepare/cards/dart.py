@@ -1,12 +1,12 @@
 from unitxt.blocks import (
-    AddFields,
-    CopyFields,
     LoadHF,
     RenameFields,
     SerializeTriples,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,10 +15,8 @@ card = TaskCard(
         "splitters.small_no_test",
         SerializeTriples(field_to_field=[["tripleset", "serialized_triples"]]),
         RenameFields(field_to_field={"serialized_triples": "input"}),
-        CopyFields(
-            field_to_field={"annotations/text/0": "output"},
-        ),
-        AddFields(fields={"type_of_input": "Triples", "type_of_output": "Text"}),
+        Copy(field="annotations/text/0", to_field="output"),
+        Set(fields={"type_of_input": "Triples", "type_of_output": "Text"}),
     ],
     task="tasks.generation",
     templates="templates.generation.all",

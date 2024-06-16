@@ -7,7 +7,7 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "text_a_type": "passage",
                 "text_b_type": "question",

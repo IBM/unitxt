@@ -1,6 +1,6 @@
 let element = document.createElement('script');
 element.type = 'module';
-element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.14.0/gradio.js';
+element.src = 'https://gradio.s3-us-west-2.amazonaws.com/4.36.0/gradio.js';
 element.onload = function() {
     console.log('Successfully loaded: ' + element.src);
     function handleLoadComplete() {
@@ -8,10 +8,12 @@ element.onload = function() {
         const loadingElement = document.querySelector(".gradio-loading");
         if (loadingElement) {
             loadingElement.style.display = 'none';
+            document.querySelector("gradio-app").style.display = 'block';
         }
     }
 
     const gradioApp = document.querySelector("gradio-app");
+    gradioApp.style.display = "none";
     gradioApp.addEventListener("render", handleLoadComplete);
 };
 element.onerror = function() {

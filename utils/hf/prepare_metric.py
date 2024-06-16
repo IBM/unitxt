@@ -6,6 +6,7 @@ import tempfile
 from huggingface_hub import HfApi
 
 files = glob.glob("./src/unitxt/*.py")
+files.append("README.md")
 
 api = HfApi(token=os.environ["HUGGINGFACE_HUB_TOKEN"])
 
@@ -20,6 +21,28 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
         shutil.copy(file, os.path.join(temp_dir, file_name))
 
+        if file == "README.md":
+            header = """
+---
+title: "Unitxt Metric"
+emoji: 📈
+colorFrom: pink
+colorTo: purple
+sdk: static
+app_file: README.md
+pinned: false
+---
+            """.strip()
+
+            # Step 1: Read the existing content
+            with open(os.path.join(temp_dir, file_name)) as file:
+                readme = file.read()
+
+                readme = header + "\n" + readme
+
+            with open(os.path.join(temp_dir, file_name), "w") as file:
+                file.write(readme)
+
         print(f"  - {file_name}")
 
     api.upload_folder(
@@ -28,3 +51,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
         repo_id="unitxt/metric",
         repo_type="space",
     )
+
+with open("./version.py") as f:
+    version = f.read().strip().replace("version = ", "").replace('"', "")
+
+api.create_tag(repo_id="unitxt/metric", repo_type="space", tag=version)

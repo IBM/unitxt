@@ -22,13 +22,12 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "annotations/text/0": "output"
-            }
+            "type": "copy",
+            "field": "annotations/text/0",
+            "to_field": "output"
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "type_of_input": "Triples",
                 "type_of_output": "Text"

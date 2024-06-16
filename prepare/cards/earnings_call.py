@@ -11,7 +11,7 @@ https://github.ibm.com/ai-models-evaluation/crfm-helm-enterprise
 card = TaskCard(
     loader=LoadHF(path="jlh-ibm/earnings_call"),
     preprocess_steps=[
-        AddFields(
+        Set(
             fields={
                 "text_type": "earning call",
                 "classes": ["positive", "negative"],

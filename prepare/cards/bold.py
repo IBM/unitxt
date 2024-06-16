@@ -7,9 +7,9 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     FilterByCondition,
+    Set,
     Shuffle,
 )
 from unitxt.splitters import RenameSplits
@@ -20,12 +20,12 @@ card = TaskCard(
     loader=LoadHF(path="AlexaAI/bold"),
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
-        AddFields({"input_label": {}}),
-        CopyFields(field_to_field=[("prompts/0", "first_prompt")]),
-        CopyFields(field_to_field=[("wikipedia/0", "first_wiki")]),
+        Set({"input_label": {}}),
+        Copy(field="prompts/0", to_field="first_prompt"),
+        Copy(field="wikipedia/0", to_field="first_wiki"),
         FilterByCondition(values={"domain": ["race", "gender"]}, condition="in"),
         Shuffle(page_size=10000),
-        CopyFields(
+        Copy(
             field_to_field={
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",

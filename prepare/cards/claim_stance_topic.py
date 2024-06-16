@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.test_utils.card import test_card
 
 dataset_name = "claim_stance_topic"
@@ -66,7 +66,7 @@ class_names = [
 card = TaskCard(
     loader=LoadHF(path="ibm/claim_stance", name=f"{dataset_name}"),
     preprocess_steps=[
-        AddFields(
+        Set(
             fields={
                 "classes": class_names,
                 "text_type": "argument",  # TODO maybe text?

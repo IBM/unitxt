@@ -1,6 +1,6 @@
 from unitxt.blocks import InputOutputTemplate, LoadHF, TaskCard, TemplatesDict
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddFields, RenameFields
+from unitxt.operators import RenameFields, Set
 from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
@@ -112,7 +112,7 @@ for task_name, task_cfg in task_cfgs.items():
                     task_cfg["non_task_entries"]["label_field_name"]: "label",
                 }
             ),
-            AddFields(
+            Set(
                 fields={
                     "text_type": task_cfg["text_type"],
                     "classes": task_cfg["classes"],
@@ -151,7 +151,7 @@ for task_name, task_cfg in task_cfgs.items():
             ],
         },
         __description__=(
-            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models."
+            "LegalBench is a collection of benchmark tasks for evaluating legal reasoning in large language models… See the full description on the dataset page: https://huggingface.co/datasets/nguha/legalbench"
         ),
     )
 

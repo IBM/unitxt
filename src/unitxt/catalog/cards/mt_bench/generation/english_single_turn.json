@@ -13,10 +13,9 @@
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "turns/0": "turns"
-            }
+            "type": "copy",
+            "field": "turns/0",
+            "to_field": "turns"
         },
         {
             "type": "rename_fields",
@@ -26,7 +25,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "output": "None",
                 "type_of_input": "question",

@@ -6,10 +6,11 @@ import shutil
 from pathlib import Path
 
 from unitxt import get_logger
-from unitxt.settings_utils import get_constants
+from unitxt.settings_utils import get_constants, get_settings
 
 logger = get_logger()
 constants = get_constants()
+settings = get_settings()
 
 
 def import_module_from_file(file_path):
@@ -20,6 +21,9 @@ def import_module_from_file(file_path):
     # Create a new module based on the specification
     module = importlib.util.module_from_spec(spec)
     # Load the module
+    logger.info(
+        f"allow unverified code in {file_path} : {settings.allow_unverified_code}"
+    )
     spec.loader.exec_module(module)
     return module
 

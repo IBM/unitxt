@@ -1,6 +1,6 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -9,7 +9,7 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="EdinburghNLP/xsum"),
     preprocess_steps=[
-        AddFields(fields={"document_type": "document"}),
+        Set(fields={"document_type": "document"}),
     ],
     task="tasks.summarization.abstractive",
     templates="templates.summarization.abstractive.all",
@@ -27,7 +27,10 @@ card = TaskCard(
         "task_ids": "news-articles-summarization",
     },
     __description__=(
-        "Extreme Summarization (XSum) Dataset. There are three features: - document: Input news article. - summary: One sentence summary of the article. - id: BBC ID of the article."
+        "Extreme Summarization (XSum) Dataset. There are three features:\n"
+        "- document: Input news article. \n"
+        "- summary: One sentence summary of the article. \n"
+        "- id: BBC ID of the article… See the full description on the dataset page: https://huggingface.co/datasets/EdinburghNLP/xsum"
     ),
 )
 

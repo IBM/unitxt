@@ -59,6 +59,7 @@ import requests
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     InstanceOperator,
@@ -76,7 +77,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, Stream
+from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -222,7 +223,7 @@ class FlattenInstances(InstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class AddFields(InstanceOperator):
+class Set(InstanceOperator):
     """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
@@ -232,17 +233,17 @@ class AddFields(InstanceOperator):
 
     Examples:
         # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
-        AddFields(fields={"classes": ["positive","negatives"]})
+        Set(fields={"classes": ["positive","negatives"]})
 
         # Add a 'start' field under the 'span' field with a value of 0 to all streams
-        AddFields(fields={"span/start": 0}
+        Set(fields={"span/start": 0}
 
         # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
-        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+        Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
 
         # Add a 'classes' field on a given list, prevent modification of original list
         # from changing the instance.
-        AddFields(fields={"classes": alist}), use_deepcopy=True)
+        Set(fields={"classes": alist}), use_deepcopy=True)
         # if now alist is modified, still the instances remain intact.
     """
 
@@ -265,6 +266,11 @@ class AddFields(InstanceOperator):
         return instance
 
 
+@deprecation(version="1.11.0", alternative=Set)
+class AddFields(Set):
+    pass
+
+
 class RemoveFields(InstanceOperator):
     """Remove specified fields from each instance in a stream.
 
@@ -280,6 +286,24 @@ class RemoveFields(InstanceOperator):
         for field_name in self.fields:
             del instance[field_name]
         return instance
+
+
+class SelectFields(InstanceOperator):
+    """Keep only specified fields from each instance in a stream.
+
+    Args:
+        fields (List[str]): The fields to keep from each instance.
+    """
+
+    fields: List[str]
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        new_instance = {}
+        for selected_field in self.fields:
+            new_instance[selected_field] = instance[selected_field]
+        return new_instance
 
 
 class InstanceFieldOperator(InstanceOperator):
@@ -1007,7 +1031,7 @@ class Perturb(FieldOperator):
         return value
 
 
-class CopyFields(FieldOperator):
+class Copy(FieldOperator):
     """Copies values from specified fields to specified fields.
 
     Args (of parent class):
@@ -1015,13 +1039,13 @@ class CopyFields(FieldOperator):
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
-        CopyField(field_to_field={"a": "b"}
+        Copy(field_to_field={"a": "b"}
         would yield {"a": 2, "b": 2}, and when processed by
-        CopyField(field_to_field={"a": "c"} would yield
+        Copy(field_to_field={"a": "c"} would yield
         {"a": 2, "b": 3, "c": 2}
 
         with field names containing / , we can also copy inside the field:
-        CopyFields(field_to_field={"a/0": "a"})
+        Copy(field="a/0",to_field="a")
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
@@ -1029,6 +1053,11 @@ class CopyFields(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return copy.deepcopy(value)
+
+
+@deprecation(version="1.11.0", alternative=Copy)
+class CopyFields(Copy):
+    pass
 
 
 class GetItemByIndex(FieldOperator):
@@ -1299,6 +1328,52 @@ class FilterByCondition(StreamOperator):
         return True
 
 
+class FilterByConditionBasedOnFields(FilterByCondition):
+    """Filters a stream based on a condition between 2 fields values.
+
+    Raises an error if either of the required fields names is missing from the input instance.
+
+    Args:
+       values (Dict[str, str]): The fields names that the filter operation is based on.
+       condition: the name of the desired condition operator between the specified field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(values = {"a":"b}, condition = "gt") will yield only instances where field "a" contains a value greater then the value in field "b".
+       FilterByCondition(values = {"a":"b}, condition = "le") will yield only instances where "a"<="b"
+    """
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.values.items():
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            try:
+                instance_value = dict_get(instance, value)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            if self.condition == "in":
+                if instance_key not in instance_value:
+                    return False
+            elif self.condition == "not in":
+                if instance_key in instance_value:
+                    return False
+            else:
+                func = self.condition_to_func[self.condition]
+                if func is None:
+                    raise ValueError(
+                        f"Function not defined for condition '{self.condition}'"
+                    )
+                if not func(instance_key, instance_value):
+                    return False
+        return True
+
+
 class ComputeExpressionMixin(Artifact):
     """Computes an expression expressed over fields of an instance.
 
@@ -1324,7 +1399,7 @@ class ComputeExpressionMixin(Artifact):
             return eval(self.expression, self.globals, instance)
 
         raise ValueError(
-            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+            f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
         )
 
 
@@ -1488,7 +1563,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             for ele in values_and_counts
         ]
 
-        addmostcommons = AddFields(fields={self.to_field: values_to_keep})
+        addmostcommons = Set(fields={self.to_field: values_to_keep})
         return addmostcommons(multi_stream)
 
 
@@ -1774,7 +1849,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream(
             {
-                self.new_stream_name: GeneratorStream(
+                self.new_stream_name: DynamicStream(
                     self.merge, gen_kwargs={"multi_stream": multi_stream}
                 )
             }

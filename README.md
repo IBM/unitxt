@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./assets/banner.png" alt="Image Description" width="100%" />
+    <img src="https://raw.githubusercontent.com/IBM/unitxt/main/assets/banner.png" alt="Image Description" width="100%" />
 </div>
 
 [![Button](https://img.shields.io/badge/Video-pink?style=for-the-badge)](https://unitxt.readthedocs.io/)
@@ -73,3 +73,4 @@ If you use Unitxt in your research, please cite our paper:
 }
 ```
 
+Unitxt emoji designed by [OpenMoji](https://openmoji.org/#) - the open-source emoji and icon project. License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/#)

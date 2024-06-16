@@ -7,7 +7,7 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "context_type": "table"
             }
@@ -35,7 +35,7 @@
     ],
     "task": "tasks.qa.with_context.extractive",
     "templates": "templates.qa.with_context.all",
-    "__description__": "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables.",
+    "__description__": "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables… See the full description on the dataset page: https://huggingface.co/datasets/wikitablequestions",
     "__tags__": {
         "annotations_creators": "crowdsourced",
         "arxiv": "1508.00305",

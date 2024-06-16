@@ -286,6 +286,34 @@ class TestLoaders(UnitxtTestCase):
                 original_instance["data_classification_policy"] = ["proprietary"]
                 self.assertEqual(original_instance, stream_instance)
 
+    def test_load_from_dictionary_errors(self):
+        data = [
+            {"input": "Input3", "output": "Result3"},
+        ]
+
+        with self.assertRaises(ValueError) as cm:
+            LoadFromDictionary(data=data)
+        self.assertEqual(
+            str(cm.exception),
+            f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
+            f"Expected data should map between split name and list of instances.\n"
+            f"Received value: {data}\n",
+        )
+
+        data = {
+            "train": [
+                {"input": "Input1", "output": "Result1"},
+                {"input2": "Input2", "output": "Result2"},
+            ],
+        }
+        with self.assertRaises(ValueError) as cm:
+            LoadFromDictionary(data=data)
+        self.assertEqual(
+            str(cm.exception),
+            f"Not all instances in split 'train' have the same fields.\n"
+            f"instance {data['train'][1]} has different fields different from {data['train'][0]}",
+        )
+
     def test_load_from_hf_space(self):
         params = {
             "space_name": "lmsys/mt-bench",

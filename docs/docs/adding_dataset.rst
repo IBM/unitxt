@@ -84,13 +84,11 @@ input and output fields of the task.  We also need to add new fields for the sou
 
     ...
     preprocess_steps=[
-        CopyFields( # Copy the fields to prepare the fields required by the task schema
-            field_to_field=[
-                ["translation/en", "text"],
-                ["translation/de", "translation"],
-            ],
-        ),
-        AddFields( # add new fields required by the task schema
+        # Copy the fields to prepare the fields required by the task schema
+        Copy(field="translation/en", to_field="text"),
+        Copy(field="translation/de", to_field="translation"),
+        # Set new fields required by the task schema
+        Set(
             fields={
                 "source_language": "english",
                 "target_language": "deutch",
@@ -144,19 +142,17 @@ the Unitxt catalog.
 
         from unitxt.card import TaskCard
         from unitxt.loaders import LoadHF
-        from unitxt.operators import CopyFields, AddFields
+        from unitxt.operators import Copy, Set
         from unitxt.test_utils.card import test_card
 
         card = TaskCard(
             loader=LoadHF(path="wmt16", name="de-en"),
             preprocess_steps=[
-                CopyFields( # copy the fields to prepare the fields required by the task schema
-                    field_to_field=[
-                        ["translation/en", "text"],
-                        ["translation/de", "translation"],
-                    ],
-                ),
-                AddFields( # add new fields required by the task schema
+                # Copy the fields to prepare the fields required by the task schema
+                Copy(field="translation/en", to_field="text"),
+                Copy(field="translation/de", to_field="translation"),
+
+                Set( # add new fields required by the task schema
                     fields={
                         "source_language": "english",
                         "target_language": "deutch",
@@ -168,6 +164,7 @@ the Unitxt catalog.
         )
 
         test_card(card)
+
 
 The `test_card` function generates the dataset using all templates defined in the card within context learning mode and one demonstration.
 It prints out three examples from the test fold, and runs the metrics defined on the datasets on

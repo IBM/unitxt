@@ -30,6 +30,7 @@ Available Loaders Overview:
 
 ------------------------
 """
+import fnmatch
 import itertools
 import os
 import tempfile
@@ -41,15 +42,17 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
+from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import InternalField, OptionalField
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
-from .operators import AddFields
+from .operators import Set
 from .settings_utils import get_settings
-from .stream import GeneratorStream, MultiStream
+from .stream import DynamicStream, MultiStream
+from .type_utils import isoftype
 
 logger = get_logger()
 settings = get_settings()
@@ -108,7 +111,7 @@ class Loader(SourceOperator):
                 f"data_classification_policy =['confidential','pii'])\n"
             )
 
-        operator = AddFields(
+        operator = Set(
             fields={"data_classification_policy": self.data_classification_policy}
         )
         return operator(multi_stream)
@@ -175,6 +178,10 @@ class LoadHF(Loader):
         super().verify()
 
     def filtered_load(self, dataset):
+        if not settings.allow_unverified_code:
+            raise ValueError(
+                f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+            )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return MultiStream(
             {
@@ -259,7 +266,7 @@ class LoadHF(Loader):
         self.log_limited_loading()
         return MultiStream(
             {
-                name: GeneratorStream(
+                name: DynamicStream(
                     generator=self.split_limited_load, gen_kwargs={"split_name": name}
                 )
                 for name in self._cache.keys()
@@ -349,7 +356,7 @@ class LoadCSV(Loader):
         if self.streaming:
             return MultiStream(
                 {
-                    name: GeneratorStream(
+                    name: DynamicStream(
                         generator=self.stream_csv, gen_kwargs={"file": file}
                     )
                     for name, file in self.files.items()
@@ -358,9 +365,7 @@ class LoadCSV(Loader):
 
         return MultiStream(
             {
-                name: GeneratorStream(
-                    generator=self.load_csv, gen_kwargs={"file": file}
-                )
+                name: DynamicStream(generator=self.load_csv, gen_kwargs={"file": file})
                 for name, file in self.files.items()
             }
         )
@@ -385,7 +390,6 @@ class LoadFromSklearn(Loader):
 
     dataset_name: str
     splits: List[str] = ["train", "test"]
-    data_classification_policy = ["public"]
 
     _requirements_list: List[str] = ["sklearn", "pandas"]
 
@@ -617,7 +621,7 @@ class LoadFromIBMCloud(Loader):
                         object_key,
                         local_dir + "/" + os.path.basename(temp_file.name),
                     )
-                    os.rename(
+                    os.renames(
                         local_dir + "/" + os.path.basename(temp_file.name),
                         local_dir + "/" + data_file,
                     )
@@ -683,13 +687,34 @@ class LoadFromDictionary(Loader):
         .. code-block:: python
 
             data = {
-                "train": {"input": "SomeInput1", "output": "SomeResult1"},
-                "test": {"input": "SomeInput2", "output": "SomeResult2"},
+                "train": [{"input": "SomeInput1", "output": "SomeResult1"},
+                          {"input": "SomeInput2", "output": "SomeResult2"}],
+                "test":  [{"input": "SomeInput3", "output": "SomeResult3"},
+                          {"input": "SomeInput4", "output": "SomeResult4"}]
             }
             loader = LoadFromDictionary(data=data)
     """
 
     data: Dict[str, List[Dict[str, Any]]]
+
+    def verify(self):
+        super().verify()
+        if not isoftype(self.data, Dict[str, List[Dict[str, Any]]]):
+            raise ValueError(
+                f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
+                f"Expected data should map between split name and list of instances.\n"
+                f"Received value: {self.data}\n"
+            )
+        for split in self.data.keys():
+            if len(self.data[split]) == 0:
+                raise ValueError(f"Split {split} has no instances.")
+            first_instance = self.data[split][0]
+            for instance in self.data[split]:
+                if instance.keys() != first_instance.keys():
+                    raise ValueError(
+                        f"Not all instances in split '{split}' have the same fields.\n"
+                        f"instance {instance} has different fields different from {first_instance}"
+                    )
 
     def load_data(self) -> MultiStream:
         self.sef_default_data_classification(
@@ -794,18 +819,79 @@ class LoadFromHFSpace(LoadHF):
         else:
             data_files = self.data_files
 
+        dir_paths_list = []
         for files in data_files:
             if isinstance(files, str):
                 files = [files]
-            # All files - within the same space - are downloaded into the same base directory:
-            paths = [self._download_file_from_space(file) for file in files]
-            dir_path = paths[0].replace(files[0], "")
 
-        return dir_path
+            paths = [self._download_file_from_space(file) for file in files]
+            dir_paths = [
+                path.replace(file_url, "") for path, file_url in zip(paths, files)
+            ]
+            dir_paths_list.extend(dir_paths)
+
+        # All files - within the same space - are downloaded into the same base directory:
+        assert len(set(dir_paths_list)) == 1
+
+        return f"{dir_paths_list.pop()}"
+
+    @staticmethod
+    def _is_wildcard(path: str) -> bool:
+        wildcard_characters = ["*", "?", "[", "]"]
+        return any(char in path for char in wildcard_characters)
+
+    def _get_file_list_from_wildcard_path(
+        self, pattern: str, repo_files: List
+    ) -> List[str]:
+        if self._is_wildcard(pattern):
+            return fnmatch.filter(repo_files, pattern)
+        return [pattern]
+
+    def _map_wildcard_path_to_full_paths(self):
+        api = HfApi()
+        repo_files = api.list_repo_files(self.space_name, repo_type="space")
+        if isinstance(self.data_files, str):
+            self.data_files = self._get_file_list_from_wildcard_path(
+                self.data_files, repo_files
+            )
+        elif isinstance(self.data_files, Mapping):
+            new_mapping = {}
+            for k, v in self.data_files.items():
+                if isinstance(v, list):
+                    assert all(isinstance(s, str) for s in v)
+                    new_mapping[k] = [
+                        file
+                        for p in v
+                        for file in self._get_file_list_from_wildcard_path(
+                            p, repo_files
+                        )
+                    ]
+                elif isinstance(v, str):
+                    new_mapping[k] = self._get_file_list_from_wildcard_path(
+                        v, repo_files
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"Loader does not support input 'data_files' of type Mapping[{type(v)}]"
+                    )
+
+            self.data_files = new_mapping
+        elif isinstance(self.data_files, list):
+            assert all(isinstance(s, str) for s in self.data_files)
+            self.data_files = [
+                file
+                for p in self.data_files
+                for file in self._get_file_list_from_wildcard_path(p, repo_files)
+            ]
+        else:
+            raise NotImplementedError(
+                f"Loader does not support input 'data_files' of type {type(self.data_files)}"
+            )
 
     def load_data(self):
         self.sef_default_data_classification(
             ["public"], "when loading from Huggingface spaces"
         )
+        self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()

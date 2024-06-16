@@ -1,9 +1,9 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -44,7 +44,7 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"label_text": "label"}),
         MapInstanceValues(mappers={"label": map_labels}),
-        AddFields(
+        Set(
             fields={
                 "classes": list(map_labels.values()),
                 "text_type": "text",
@@ -57,7 +57,7 @@ card = TaskCard(
     __tags__={"region": "us"},
     __description__=(
         "This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: \n"
-        '"The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a messages posted before and after a specific date."\n'
+        '"The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date."\n'
         "See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups."
     ),
 )

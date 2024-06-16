@@ -3,13 +3,9 @@
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "task_data/context",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "task_data/context",
+            "to_field": "references"
         },
         {
             "type": "list_field_values",
@@ -24,7 +20,7 @@
     },
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "type": "copy",
             "field_to_field": [
                 [
                     "score/global/f1",

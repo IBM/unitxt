@@ -6,13 +6,21 @@
     },
     "preprocess_steps": [
         {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
             "type": "rename_fields",
             "field_to_field": {
                 "text": "document"
             }
         },
         {
-            "type": "add_fields",
+            "type": "set",
             "fields": {
                 "document_type": "document"
             }

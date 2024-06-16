@@ -3,22 +3,14 @@
     "main_score": "recall",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "ground_truths",
-                    "references"
-                ]
-            ]
+            "type": "copy",
+            "field": "ground_truths",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "answer",
-                    "prediction"
-                ]
-            ]
+            "type": "copy",
+            "field": "answer",
+            "to_field": "prediction"
         }
     ],
     "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"

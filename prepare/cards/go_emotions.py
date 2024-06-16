@@ -1,8 +1,8 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
+    Set,
     TaskCard,
 )
 from unitxt.operators import MapInstanceValues
@@ -20,7 +20,7 @@ card = TaskCard(
     loader=LoadHF(path=dataset_name, name=subset),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
                 "text_type": "text",
@@ -44,7 +44,7 @@ card = TaskCard(
         "task_ids": ["multi-class-classification", "multi-label-classification"],
     },
     __description__=(
-        "Dataset Card for GoEmotions Dataset Summary The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits. Supported Tasks and Leaderboards This dataset is intended for multi-class, multi-label emotion classification. Languages The data is in English.… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
+        "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
     ),
 )
 test_card(card, debug=False)

@@ -1,10 +1,10 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     IndexOf,
     ListFieldValues,
     RenameFields,
+    Set,
     ShuffleFieldValues,
 )
 from unitxt.test_utils.card import test_card
@@ -21,7 +21,7 @@ card = TaskCard(
         RenameFields(
             field_to_field={"support": "context"},
         ),
-        AddFields({"context_type": "paragraph"}),
+        Set({"context_type": "paragraph"}),
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.all",
@@ -38,7 +38,7 @@ card = TaskCard(
         "task_ids": "closed-domain-qa",
     },
     __description__=(
-        'Dataset Card for "sciq" Dataset Summary The SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided. Supported Tasks and Leaderboards More Information Needed Languages More Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq.'
+        "The SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided. Supported Tasks and Leaderboards More Information Needed Languages More Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq."
     ),
 )
 test_card(card, strict=False)
