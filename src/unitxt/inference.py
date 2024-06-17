@@ -176,8 +176,7 @@ class OpenAiInferenceEngineParams(Artifact):
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-    top_logprobs: Optional[int] = 0
-    n: Optional[int] = 1
+    top_logprobs: Optional[int] = 20
 
 
 class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -225,7 +224,6 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 stop=self.parameters.stop,
                 temperature=self.parameters.temperature,
                 top_p=self.parameters.top_p,
-                n=self.parameters.n,
             )
             output = response.choices[0].message.content
 
@@ -257,7 +255,6 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 top_p=self.parameters.top_p,
                 logprobs=True,
                 top_logprobs=self.parameters.top_logprobs,
-                n=self.parameters.n,
             )
             top_logprobs_response = response.choices[0].logprobs.content
             output = [
