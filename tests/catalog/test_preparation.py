@@ -1,5 +1,4 @@
 import glob
-import importlib.util
 import os
 import time
 from datetime import timedelta
@@ -9,24 +8,12 @@ from unitxt.loaders import MissingKaggleCredentialsError
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_constants
 from unitxt.text_utils import print_dict
+from unitxt.utils import import_module_from_file
 
 from tests.utils import UnitxtCatalogPreparationTestCase
 
 logger = get_logger()
 constants = get_constants()
-
-
-def import_module_from_file(file_path):
-    # Get the module name (file name without extension)
-    module_name = os.path.splitext(os.path.basename(file_path))[0]
-    # Create a module specification
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    # Create a new module based on the specification
-    module = importlib.util.module_from_spec(spec)
-    # Load the module
-    spec.loader.exec_module(module)
-    return module
-
 
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

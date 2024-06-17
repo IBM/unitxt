@@ -4,7 +4,7 @@ from unitxt.text_utils import print_dict
 
 dataset = load_dataset(
     "unitxt/data",
-    "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
+    "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,loader_limit=200",
     trust_remote_code=True,
 )
 
