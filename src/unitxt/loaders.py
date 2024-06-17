@@ -149,7 +149,7 @@ class LoadHF(Loader):
         split: Optional specification of which split to load.
         data_files: Optional specification of particular data files to load.
         streaming: Bool indicating if streaming should be used.
-        filtering_lambda: A lambda function for filtering the data after loading.
+        filtering_lambda: A lambda function for filtering the data after loading. Use in case you want to set the dataset version.
 
     Example:
         Loading glue's mrpc dataset
