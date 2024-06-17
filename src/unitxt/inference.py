@@ -36,7 +36,7 @@ class InferenceEngine(abc.ABC, Artifact):
 
         """
         [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probability(dataset)
+        return self._infer_log_probs(dataset)
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
