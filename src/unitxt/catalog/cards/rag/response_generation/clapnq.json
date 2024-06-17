@@ -31,26 +31,24 @@
             }
         },
         {
-            "type": "apply",
-            "function": "builtins.str",
-            "to_field": "reference_answers",
-            "_argv": [
-                "reference_answers"
-            ]
-        },
-        {
             "type": "map_instance_values",
             "mappers": {
                 "reference_answers": {
-                    "['']": "[\"I'm sorry, I cannot answer this question based on the context.\", 'The answer is not in the text provided.', 'Unanswerable.', 'The provided context does not contain the information needed to answer this question.', 'There is not enough information in the text to answer this question.', 'The text does not provide an answer to this question.', 'Based on the context, an answer cannot be determined.', 'The answer to this question is not available in the provided context.', 'This question cannot be answered with the given information.', 'Insufficient context to provide an answer.']"
+                    "['']": [
+                        "I'm sorry, I cannot answer this question based on the context.",
+                        "The answer is not in the text provided.",
+                        "Unanswerable.",
+                        "The provided context does not contain the information needed to answer this question.",
+                        "There is not enough information in the text to answer this question.",
+                        "The text does not provide an answer to this question.",
+                        "Based on the context, an answer cannot be determined.",
+                        "The answer to this question is not available in the provided context.",
+                        "This question cannot be answered with the given information.",
+                        "Insufficient context to provide an answer."
+                    ]
                 }
             },
             "strict": false
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "reference_answers",
-            "field": "reference_answers"
         }
     ],
     "task": "tasks.rag.response_generation",

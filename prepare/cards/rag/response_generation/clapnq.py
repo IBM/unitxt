@@ -8,13 +8,11 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.operators import (
-    Apply,
     Copy,
     MapInstanceValues,
     Set,
     Shuffle,
 )
-from unitxt.processors import LiteralEval
 from unitxt.test_utils.card import test_card
 
 unanswerable_responses = [
@@ -46,12 +44,10 @@ card = TaskCard(
                 "contexts_ids": [],
             }
         ),
-        Apply("reference_answers", function=str, to_field="reference_answers"),
         MapInstanceValues(
-            mappers={"reference_answers": {"['']": str(unanswerable_responses)}},
+            mappers={"reference_answers": {"['']": unanswerable_responses}},
             strict=False,
         ),
-        LiteralEval("reference_answers", to_field="reference_answers"),
     ],
     task="tasks.rag.response_generation",
     templates=TemplatesDict({"default": "templates.rag.response_generation.simple"}),
