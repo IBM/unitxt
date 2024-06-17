@@ -2,8 +2,7 @@ from unitxt import get_logger
 from unitxt.api import evaluate
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
-    IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
+    HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
 from unitxt.standard import StandardRecipe
@@ -42,12 +41,13 @@ dataset = StandardRecipe(card=card, template_card_index="simple")().to_dataset()
 test_dataset = dataset["test"]
 
 
-model_name = "google/flan-t5-xxl"
-# inference_model = HFPipelineBasedInferenceEngine(
-#    model_name=model_name, max_new_tokens=32
-# )
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+model_name = "google/flan-t5-base"
+inference_model = HFPipelineBasedInferenceEngine(
+    model_name=model_name, max_new_tokens=32
+)
+
+# gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
+# inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
 predictions = inference_model.infer(test_dataset)
 dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
 

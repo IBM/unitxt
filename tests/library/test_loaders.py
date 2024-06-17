@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import unittest
 from unittest.mock import patch
 
 import ibm_boto3
@@ -186,6 +187,47 @@ class TestLoaders(UnitxtTestCase):
             "test",
         }, f"Unexpected fold {dataset.keys()}"
 
+    def test_load_from_HF_multiple_innvocation(self):
+        loader = LoadHF(
+            path="CohereForAI/aya_evaluation_suite",
+            name="aya_human_annotated",
+            # filtering_lambda='lambda instance: instance["language"]=="eng"',
+        )
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "arb")
+
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "arb")
+
+    @unittest.skip("Currently this fails from datasets 2.20")
+    def test_load_from_HF_multiple_innvocation_with_filter(self):
+        loader = LoadHF(
+            path="CohereForAI/aya_evaluation_suite",
+            name="aya_human_annotated",
+            filtering_lambda='lambda instance: instance["language"]=="eng"',
+        )
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")
+
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")
+
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
         ms = loader.process()
@@ -202,13 +244,7 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.stream_dataset()
-        dataset = ms.to_dataset()
-        self.assertEqual(
-            list(dataset.keys()), ["test"]
-        )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
-        ms = loader.load_dataset()
+        ms = loader.process()
         dataset = ms.to_dataset()
         self.assertEqual(
             list(dataset.keys()), ["test"]
