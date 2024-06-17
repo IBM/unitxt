@@ -1,53 +1,59 @@
-import unitxt
-from datasets import load_dataset
+import glob
+import os
+import time
+from datetime import timedelta
+from pathlib import Path
+
+from unitxt.logging_utils import get_logger
+from unitxt.settings_utils import get_constants
 from unitxt.text_utils import print_dict
+from unitxt.utils import import_module_from_file
 
 from tests.utils import UnitxtTestCase
 
+logger = get_logger()
+constants = get_constants()
+
+
+project_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+glob_query = os.path.join(project_dir, "examples", "**", "*.py")
+all_example_files = glob.glob(glob_query, recursive=True)
+
 
 class TestExamples(UnitxtTestCase):
-    def test_evaluate(self):
-        import evaluate
-        import unitxt
-        from unitxt.text_utils import print_dict
+    def test_examples(self):
+        logger.info(glob_query)
+        logger.info(f"Testing example files: {all_example_files}")
+        # Make sure the order in which the tests are run is deterministic
+        # Having a different order for local testing and github testing may cause diffs in results.
+        times = {}
+        all_example_files.sort()
 
-        dataset = unitxt.load_dataset("card=cards.wnli,template_card_index=0")
+        excluded_files = ["use_llm_as_judje_metric.py"]
+        for file in all_example_files:
+            logger.info(
+                "\n_____________________________________________\n"
+                f"  Testing examples file:\n  {file}."
+                "\n_____________________________________________\n"
+            )
+            if Path(file).name in excluded_files:
+                logger.info("Skipping file because in exclude list")
+            start_time = time.time()
+            with self.subTest(file=file):
+                import_module_from_file(file)
+                logger.info(f"Testing example file: {file} passed")
 
-        metric = evaluate.load(unitxt.metric_file)
-        results = metric.compute(
-            predictions=["none" for t in dataset["test"]], references=dataset["test"]
-        )
+            elapsed_time = time.time() - start_time
+            formatted_time = str(timedelta(seconds=elapsed_time))
+            logger.info(
+                "\n_____________________________________________\n"
+                f"  Finished testing examplefile:\n  {file}."
+                f"  Preparation Time: {formatted_time}"
+                "\n_____________________________________________\n"
+            )
 
-        print_dict(results[0])
-
-        self.assertTrue(True)
-
-    def test_load_dataset(self):
-        dataset = load_dataset(
-            unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0",
-            trust_remote_code=True,
-            download_mode="force_redownload",
-        )
-        print_dict(dataset["train"][0])
-        # self.assertDictEqual(target, dataset['train'][0])
-
-    def test_full_flow_of_hf(self):
-        dataset = load_dataset(
-            unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
-            trust_remote_code=True,
-            download_mode="force_redownload",
-        )
-        import evaluate
-
-        metric = evaluate.load(unitxt.metric_file)
-
-        results = metric.compute(
-            predictions=["entailment" for t in dataset["test"]],
-            references=dataset["test"],
-        )
-
-        print_dict(results[0])
-
-        # self.assertDictEqual(target, results[0])
+            times[file] = formatted_time
+        logger.info("Examplexamples table:")
+        print_dict(times)
