@@ -1,5 +1,4 @@
 import abc
-import json
 import os
 from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Union
@@ -18,10 +17,26 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
+    def _infer_log_probs(self, dataset):
+        """Perform inference on the input dataset."""
+        raise NotImplementedError(
+            f"{self.__name__} does not support inference returning log probabilities"
+        )
+
     def infer(self, dataset):
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
         return self._infer(dataset)
+
+    def infer_log_probs(self, dataset):
+        """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
+
+        For each instance , returns a list of top tokens per position.
+        [ "top_tokens": [ "text": ..., "logprob": ...} , ... ]
+
+        """
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer_log_probability(dataset)
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -161,7 +176,6 @@ class OpenAiInferenceEngineParams(Artifact):
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-    return_logprobs: Optional[bool] = False
     top_logprobs: Optional[int] = 0
     n: Optional[int] = 1
 
@@ -211,25 +225,50 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 stop=self.parameters.stop,
                 temperature=self.parameters.temperature,
                 top_p=self.parameters.top_p,
-                logprobs=self.parameters.return_logprobs,
+                n=self.parameters.n,
+            )
+            output = response.choices[0].message.content
+
+            outputs.append(output)
+
+        return outputs
+
+    def _infer_log_probs(self, dataset):
+        outputs = []
+        for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            response = self.client.chat.completions.create(
+                messages=[
+                    # {
+                    #     "role": "system",
+                    #     "content": self.system_prompt,
+                    # },
+                    {
+                        "role": "user",
+                        "content": instance["source"],
+                    }
+                ],
+                model=self.model_name,
+                frequency_penalty=self.parameters.frequency_penalty,
+                presence_penalty=self.parameters.presence_penalty,
+                max_tokens=self.parameters.max_tokens,
+                seed=self.parameters.seed,
+                stop=self.parameters.stop,
+                temperature=self.parameters.temperature,
+                top_p=self.parameters.top_p,
+                logprobs=True,
                 top_logprobs=self.parameters.top_logprobs,
                 n=self.parameters.n,
             )
-            if self.parameters.return_logprobs:
-                top_logprobs_response = response.choices[0].logprobs.content
-                example_list_of_dicts = [
-                    {
-                        "top_tokens": [
-                            {"text": obj.token, "logprob": obj.logprob}
-                            for obj in generated_token.top_logprobs
-                        ]
-                    }
-                    for generated_token in top_logprobs_response
-                ]
-                output = json.dumps(example_list_of_dicts)
-            else:
-                output = response.choices[0].message.content
-
+            top_logprobs_response = response.choices[0].logprobs.content
+            output = [
+                {
+                    "top_tokens": [
+                        {"text": obj.token, "logprob": obj.logprob}
+                        for obj in generated_token.top_logprobs
+                    ]
+                }
+                for generated_token in top_logprobs_response
+            ]
             outputs.append(output)
 
         return outputs
