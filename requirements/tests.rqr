@@ -20,4 +20,5 @@ fuzzywuzzy
 openai
 ibm-generative-ai
 bs4
+tenacity==8.3.0
 
