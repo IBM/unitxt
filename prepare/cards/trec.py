@@ -11,11 +11,15 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import Shuffle
+from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
+settings = get_settings()
 dataset_name = "trec"
 
-ds_builder = load_dataset_builder(dataset_name)
+ds_builder = load_dataset_builder(
+    dataset_name, trust_remote_code=settings.allow_unverified_code
+)
 classlabels = ds_builder.info.features["fine_label"]
 
 expand_label_text = {
