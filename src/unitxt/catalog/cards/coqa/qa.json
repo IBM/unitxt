@@ -40,6 +40,13 @@
             "to_field": "last_turn"
         },
         {
+            "type": "slice",
+            "field": "dialog",
+            "start": 0,
+            "stop": -1,
+            "to_field": "dialog"
+        },
+        {
             "type": "copy",
             "field_to_field": {
                 "last_turn/user": "question",
