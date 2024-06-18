@@ -10,6 +10,7 @@ from unitxt.templates import InputOutputTemplate, TemplatesDict
 
 logger = get_logger()
 
+# Set up question answer pairs in a dictionary
 data = {
     "test": [
         {"question": "What is the capital of Texas?", "answer": "Austin"},
@@ -18,13 +19,18 @@ data = {
 }
 
 card = TaskCard(
+    # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
+    # with different loaders.
     loader=LoadFromDictionary(data=data),
+    # Define the QA task input and output and metrics.
     task=Task(
         inputs={"question": "str"},
         outputs={"answer": "str"},
         prediction_type="str",
         metrics=["metrics.accuracy"],
     ),
+    # Create a simple template that formats the input.
+    # Add lowercase normalization as a post processor.
     templates=TemplatesDict(
         {
             "simple": InputOutputTemplate(
@@ -37,20 +43,30 @@ card = TaskCard(
     ),
 )
 
+# Verbalize the dataset using the template
 dataset = StandardRecipe(card=card, template_card_index="simple")().to_dataset()
 test_dataset = dataset["test"]
 
 
+# Infere using flan t5 base using HF API
 model_name = "google/flan-t5-base"
 inference_model = HFPipelineBasedInferenceEngine(
     model_name=model_name, max_new_tokens=32
 )
-
+# change to this to infer with IbmGenAI APIs:
+#
 # gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
 # inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+#
+# or to this to infer using OpenAI APIs:
+#
+# gen_params = IOpenAiInferenceEngineParams(max_new_tokens=32)
+# inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+#
 predictions = inference_model.infer(test_dataset)
 dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
 
+# Print results
 for sample, prediction in zip(dataset_with_scores, predictions):
     logger.info("*" * 80)
     logger.info(f"Model input:\n{sample['source']}")
