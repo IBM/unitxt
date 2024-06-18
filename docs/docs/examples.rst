@@ -1,6 +1,6 @@
 .. _examples:
 ==============
-Examples
+Examples ✨
 ==============
 
 Here you find complete examples of using Unitxt
