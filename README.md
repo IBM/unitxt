@@ -63,13 +63,31 @@ pre-commit install
 If you use Unitxt in your research, please cite our paper:
 
 ```
-@misc{unitxt,
-      title={Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI},
-      author={Elron Bandel and Yotam Perlitz and Elad Venezian and Roni Friedman-Melamed and Ofir Arviv and Matan Orbach and Shachar Don-Yehyia and Dafna Sheinwald and Ariel Gera and Leshem Choshen and Michal Shmueli-Scheuer and Yoav Katz},
-      year={2024},
-      eprint={2401.14019},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@inproceedings{bandel-etal-2024-unitxt,
+    title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
+    author = "Bandel, Elron  and
+      Perlitz, Yotam  and
+      Venezian, Elad  and
+      Friedman, Roni  and
+      Arviv, Ofir  and
+      Orbach, Matan  and
+      Don-Yehiya, Shachar  and
+      Sheinwald, Dafna  and
+      Gera, Ariel  and
+      Choshen, Leshem  and
+      Shmueli-Scheuer, Michal  and
+      Katz, Yoav",
+    editor = "Chang, Kai-Wei  and
+      Lee, Annie  and
+      Rajani, Nazneen",
+    booktitle = "Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 3: System Demonstrations)",
+    month = jun,
+    year = "2024",
+    address = "Mexico City, Mexico",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.naacl-demo.21",
+    pages = "207--215",
+    abstract = "In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations. The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.Addressing this need, we present Unitxt, an innovative library for customizable textual data preparation and evaluation tailored to generative language models. Unitxt natively integrates with common libraries like HuggingFace and LM-eval-harness and deconstructs processing flows into modular components, enabling easy customization and sharing between practitioners. These components encompass model-specific formats, task prompts, and many other comprehensive dataset processing definitions. The Unitxt Catalog centralizes these components, fostering collaboration and exploration in modern textual data workflows. Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively. Join the Unitxt community at https://github.com/IBM/unitxt",
 }
 ```
 
