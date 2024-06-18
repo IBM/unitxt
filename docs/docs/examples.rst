@@ -20,5 +20,5 @@ Here you find complete examples of using Unitxt
      - :ref:`Evaluating datasets <evaluating_datasets>`.  
    * - User defined Open QA evaluation
      - Demonstrates how to evaluate a user QA answering dataset in a standalone file using a user defined task and template.
-     - `standalone_qa_evaluation.py <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation.py>`_
+     - `standalone_qa_evaluation.py <https://github.com/IBM/unitxt/blob/main/examples/standalone_qa_evaluation.py>`_
      - :ref:`Add new dataset tutorial <adding_dataset>`.
