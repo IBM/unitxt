@@ -2,6 +2,7 @@ import unittest
 
 from unitxt import produce
 from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.stream import MultiStream
 
 from tests.utils import UnitxtTestCase
 
@@ -45,6 +46,31 @@ class TestInferenceEngine(UnitxtTestCase):
             f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
             f"accordingly.",
         )
+
+    def test_inference_engine_used_as_operator(self):
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32
+        )
+        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
+        instances = [
+            {"question": "How many days there are in a week", "answers": ["7"]},
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
+                "answers": ["2"],
+            },
+        ]
+        dataset = produce(instances, recipe)
+
+        output = inference_model(MultiStream.from_iterables({"test": dataset}))
+        output_instances = list(output["test"])
+        targets = ["365", "1"]
+
+        expected_instances = [
+            {**row, "prediction": target, "generation_info": None}
+            for row, target in zip(dataset, targets)
+        ]
+
+        self.assertListEqual(output_instances, expected_instances)
 
 
 if __name__ == "__main__":

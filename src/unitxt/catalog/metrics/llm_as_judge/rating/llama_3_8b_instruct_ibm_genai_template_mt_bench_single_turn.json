@@ -4,7 +4,6 @@
         "type": "ibm_gen_ai_inference_engine",
         "model_name": "meta-llama/llama-3-8b-instruct",
         "parameters": {
-            "type": "ibm_gen_ai_inference_engine_params",
             "max_new_tokens": 252
         }
     },

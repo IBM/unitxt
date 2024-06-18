@@ -1,7 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.inference import (
     IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 
@@ -13,7 +12,7 @@ format = "formats.llama3_chat"
 template = "templates.safety.unsafe_content"
 task = "rating.single_turn"
 
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=252)
+gen_params = {"max_new_tokens": 252}
 for model_id in model_list:
     inference_model = IbmGenAiInferenceEngine(
         model_name=model_id, parameters=gen_params

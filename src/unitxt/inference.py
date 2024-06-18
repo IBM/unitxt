@@ -1,15 +1,19 @@
 import abc
 import os
 from dataclasses import field
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, Generator, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
+from . import get_logger
 from .artifact import Artifact
-from .operator import PackageRequirementsMixin
+from .deprecation_utils import deprecation
+from .operator import PackageRequirementsMixin, PagedStreamOperator
+
+logger = get_logger()
 
 
-class InferenceEngine(abc.ABC, Artifact):
+class InferenceEngine(abc.ABC, PagedStreamOperator):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
@@ -25,8 +29,10 @@ class InferenceEngine(abc.ABC, Artifact):
 
     def infer(self, dataset):
         """Verifies instances of a dataset and performs inference."""
-        [self.verify_instance(instance) for instance in dataset]
-        return self._infer(dataset)
+        for instance in dataset:
+            self.verify_instance(instance)
+        outputs, _metadata = self._infer(dataset)
+        return outputs
 
     def infer_log_probs(self, dataset):
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
@@ -35,8 +41,15 @@ class InferenceEngine(abc.ABC, Artifact):
         [ "top_tokens": [ "text": ..., "logprob": ...} , ... ]
 
         """
-        [self.verify_instance(instance) for instance in dataset]
+        for instance in dataset:
+            self.verify_instance(instance)
         return self._infer_log_probs(dataset)
+
+    def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
+        for instance, output, metadata in zip(page, *self._infer(page)):
+            instance["prediction"] = output
+            instance["generation_info"] = metadata
+            yield instance
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -89,11 +102,13 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     def _infer(self, dataset):
         outputs = []
+        metadata = []
         for output in self.model([instance["source"] for instance in dataset]):
             if isinstance(output, list):
                 output = output[0]
             outputs.append(output["generated_text"])
-        return outputs
+            metadata.append(None)
+        return outputs, metadata
 
 
 class MockInferenceEngine(InferenceEngine):
@@ -106,6 +121,7 @@ class MockInferenceEngine(InferenceEngine):
         return ["[[10]]" for instance in dataset]
 
 
+@deprecation(version="1.11.0", alternative="Plain dictionary")
 class IbmGenAiInferenceEngineParams(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     max_new_tokens: Optional[int] = None
@@ -122,8 +138,8 @@ class IbmGenAiInferenceEngineParams(Artifact):
 class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     label: str = "ibm_genai"
     model_name: str
-    parameters: IbmGenAiInferenceEngineParams = field(
-        default_factory=IbmGenAiInferenceEngineParams
+    parameters: Union[IbmGenAiInferenceEngineParams, dict[str, Any]] = field(
+        default_factory=dict
     )
     _requirement = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
@@ -132,6 +148,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     def prepare(self):
         from genai import Client, Credentials
+        from genai.schema import TextGenerationParameters
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
@@ -142,30 +159,42 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         credentials = Credentials(api_key=api_key)
         self.client = Client(credentials=credentials)
 
-    def _infer(self, dataset):
-        from genai.schema import TextGenerationParameters
-
-        genai_params = TextGenerationParameters(
-            max_new_tokens=self.parameters.max_new_tokens,
-            min_new_tokens=self.parameters.min_new_tokens,
-            random_seed=self.parameters.random_seed,
-            repetition_penalty=self.parameters.repetition_penalty,
-            stop_sequences=self.parameters.stop_sequences,
-            temperature=self.parameters.temperature,
-            top_p=self.parameters.top_p,
-            top_k=self.parameters.top_k,
-            typical_p=self.parameters.typical_p,
-            decoding_method=self.parameters.decoding_method,
-        )
-
-        return [
-            response.results[0].generated_text
-            for response in self.client.text.generation.create(
-                model_id=self.model_name,
-                inputs=[instance["source"] for instance in dataset],
-                parameters=genai_params,
+        if (
+            getattr(self.parameters, "type", None)
+            == "ibm_gen_ai_inference_engine_params"
+        ):
+            logger.warning(
+                "Artifact IbmGenAiInferenceEngineParams is deprecated for GenAI parameter definition, please use plain "
+                "dictionary. This will raise an exception in the future"
             )
-        ]
+            self.parameters = self.parameters.to_dict()
+        TextGenerationParameters.model_validate(self.parameters)
+
+    def _infer(self, dataset):
+        from tqdm import tqdm
+
+        prompts = [instance["source"] for instance in dataset]
+
+        pb = tqdm(desc="Running text generation", total=len(prompts))
+        predictions = []
+        metadata = []
+
+        for resp in self.client.text.generation.create(
+            inputs=prompts, model_id=self.model_name, parameters=self.parameters
+        ):
+            for result in resp.results:
+                predictions.append(result.generated_text)
+                metadata.append(
+                    {
+                        "meta": resp.model_dump(exclude={"results"}, exclude_none=True),
+                        **result.model_dump(
+                            exclude={"generated_text"}, exclude_none=True
+                        ),
+                    }
+                )
+                pb.update()
+        pb.close()
+        return predictions, metadata
 
 
 class OpenAiInferenceEngineParams(Artifact):
@@ -204,6 +233,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     def _infer(self, dataset):
         outputs = []
+        metadata = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
                 messages=[
@@ -228,8 +258,9 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             output = response.choices[0].message.content
 
             outputs.append(output)
+            metadata.append(response.model_dump(exclude={"choices"}))
 
-        return outputs
+        return outputs, metadata
 
     def _infer_log_probs(self, dataset):
         outputs = []
