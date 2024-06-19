@@ -1,0 +1,25 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "TIGER-Lab/MMLU-Pro"
+    },
+    "preprocess_steps": [
+        {
+            "type": "rename_splits",
+            "mapper": {
+                "validation": "train"
+            }
+        },
+        {
+            "type": "rename_fields",
+            "field_to_field": {
+                "category": "topic",
+                "options": "choices",
+                "answer_index": "answer"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.with_topic.all"
+}
