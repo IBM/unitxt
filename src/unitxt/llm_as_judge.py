@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import evaluate, produce
+from .artifact import Artifact
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
@@ -38,6 +39,8 @@ class LLMAsJudge(BulkInstanceMetric):
             instances = []
             for task_data_instance in task_data:
                 template = task_data_instance["metadata"]["template"]
+                if Artifact.is_artifact_dict(template):
+                    template = Artifact.from_dict(template)
                 instance = SequentialOperator(
                     steps=[template, "formats.empty"]
                 ).process_instance(
