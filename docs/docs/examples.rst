@@ -19,7 +19,9 @@ Each example is self contained python file that you can run and later modify.
      - Demonstrates how to evaluate an existing entailment dataset (wnli) using Huggingface 
        datasets and evaluate APIs, with no installation required.  
      - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`_
-     - :ref:`Evaluating datasets <evaluating_datasets>`.  
+     - | :ref:`Evaluating datasets <evaluating_datasets>`.  
+       | :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`.
+       | :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
    * - Evaluate your question-answering dataset 
      - Demonstrates how to evaluate a user QA answering dataset in a standalone file using a user defined task and template.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/standalone_qa_evaluation.py>`_
