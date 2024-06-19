@@ -8,7 +8,6 @@ from unitxt.artifact import (
     reset_artifacts_json_cache,
 )
 from unitxt.catalog import add_to_catalog, get_from_catalog
-from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
@@ -30,15 +29,6 @@ class TestArtifact(UnitxtTestCase):
         artifact_identifier = "artifact.id.dummy"
         artifact.__id__ = artifact_identifier
         self.assertEqual(artifact_identifier, artifact.__id__)
-
-    def test_artifact_identifier_cannot_be_used_as_keyword_arg(self):
-        """Test that artifact_identifier cannot be set in construction.
-
-        Since it is an internal field, and isn't serialized, it should never be set when
-        constructing an Artifact from kwargs.
-        """
-        with self.assertRaises(UnexpectedArgumentError):
-            Artifact(__id__="artifact.id.dummy")
 
     def test_artifact_identifier_available_for_loaded_artifacts(self):
         artifact_identifier = "tasks.classification.binary"

@@ -11,7 +11,6 @@ from .dataclass import (
     AbstractField,
     Dataclass,
     Field,
-    InternalField,
     NonPositionalField,
     fields,
 )
@@ -127,7 +126,9 @@ class Artifact(Dataclass):
     __tags__: Dict[str, str] = NonPositionalField(
         default_factory=dict, required=False, also_positional=False
     )
-    __id__: str = InternalField(default=None, required=False, also_positional=False)
+    __id__: str = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
 
     data_classification_policy: List[str] = NonPositionalField(
         default=None, required=False, also_positional=False

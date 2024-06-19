@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
+from .metrics import Metric
 from .operator import InstanceOperator
 from .type_utils import (
     get_args,
@@ -36,7 +37,7 @@ class Task(InstanceOperator):
 
     inputs: Union[Dict[str, str], List[str]]
     outputs: Union[Dict[str, str], List[str]]
-    metrics: List[str]
+    metrics: Union[List[str], Metric]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
 
@@ -74,14 +75,15 @@ class Task(InstanceOperator):
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def get_metric_prediction_type(metric_id: str):
-        metric = fetch_artifact(metric_id)[0]
-        return metric.get_prediction_type()
+    def _fetch_metric(metric_id: str) -> Metric:
+        return fetch_artifact(metric_id)[0]
 
     def check_metrics_type(self) -> None:
         prediction_type = parse_type_string(self.prediction_type)
-        for metric_id in self.metrics:
-            metric_prediction_type = Task.get_metric_prediction_type(metric_id)
+        for metric in self.metrics:
+            if isinstance(metric, str):
+                metric = Task._fetch_metric(metric)
+            metric_prediction_type = metric.get_prediction_type()
 
             if (
                 prediction_type == metric_prediction_type
@@ -95,7 +97,7 @@ class Task(InstanceOperator):
                 continue
 
             raise ValueError(
-                f"The task's prediction type ({prediction_type}) and '{metric_id}' "
+                f"The task's prediction type ({prediction_type}) and '{metric.get_metric_name()}' "
                 f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
