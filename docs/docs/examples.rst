@@ -4,7 +4,7 @@ Examples ✨
 ==============
 
 Here you find complete examples showing how to perform different tasks using Unitxt. 
-Each example is self contained python file that you can run and later modify.
+Each example is a self contained python file that you can run and later modify.
 
 
 .. list-table:: 
