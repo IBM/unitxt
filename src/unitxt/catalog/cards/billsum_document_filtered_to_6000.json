@@ -31,7 +31,7 @@
         },
         {
             "type": "filter_by_expression",
-            "expression": "len(document) > 6000"
+            "expression": "len(document) <= 6000"
         }
     ],
     "task": "tasks.summarization.abstractive",
