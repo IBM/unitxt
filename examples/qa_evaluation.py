@@ -1,12 +1,12 @@
 from unitxt import get_logger
 from unitxt.api import evaluate
-from unitxt.blocks import Task, TaskCard
+from unitxt.blocks import TaskCard
+from unitxt.collections_operators import Wrap
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
 from unitxt.standard import StandardRecipe
-from unitxt.templates import InputOutputTemplate, TemplatesDict
 
 logger = get_logger()
 
@@ -22,33 +22,28 @@ card = TaskCard(
     # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
     # with different loaders.
     loader=LoadFromDictionary(data=data),
-    # Define the QA task input and output and metrics.
-    task=Task(
-        inputs={"question": "str"},
-        outputs={"answer": "str"},
-        prediction_type="str",
-        metrics=["metrics.accuracy"],
-    ),
-    # Create a simple template that formats the input.
-    # Add lowercase normalization as a post processor.
-    templates=TemplatesDict(
-        {
-            "simple": InputOutputTemplate(
-                instruction="Answer the following question.",
-                input_format="{question}",
-                output_format="{answer}",
-                postprocessors=["processors.lower_case"],
-            )
-        }
-    ),
+    # Use the standard open qa QA task input and output and metrics.
+    # It has "question" input field and "answers" output field.
+    # The default evaluation metric used is rouge.
+    task="tasks.qa.open",
+    # Because the standand QA tasks supports multiple references in the "answers" field,
+    # we wrap the raw dataset's "answer" field in a list and store in a the "answers" field.
+    preprocess_steps=[Wrap(field="answer", inside="list", to_field="answers")],
 )
 
-# Verbalize the dataset using the template
-dataset = StandardRecipe(card=card, template_card_index="simple")().to_dataset()
+# Verbalize the dataset using the catalog template which adds an instructio "Answer the question.",
+# and "Question:"/"Answer:" prefixes.
+#
+# "Answer the question.
+#  Question:
+#  What is the color of the sky?
+#  Answer:
+# "
+dataset = StandardRecipe(card=card, template="templates.qa.open.title")().to_dataset()
 test_dataset = dataset["test"]
 
 
-# Infere using flan t5 base using HF API
+# Infer using flan t5 base using HF API
 model_name = "google/flan-t5-base"
 inference_model = HFPipelineBasedInferenceEngine(
     model_name=model_name, max_new_tokens=32
@@ -60,14 +55,9 @@ inference_model = HFPipelineBasedInferenceEngine(
 #
 # or to this to infer using OpenAI APIs:
 #
-# gen_params = IOpenAiInferenceEngineParams(max_new_tokens=32)
+# gen_params = OpenAiInferenceEngineParams(max_new_tokens=32)
 # inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
 #
-# Note that to run with OpenAI APIs you need to change the loader specification, to
-# define that your data can be sent to a public API:
-#
-# loader=LoadFromDictionary(data=data,data_classification_policy=["public"]),
-
 predictions = inference_model.infer(test_dataset)
 dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
 
