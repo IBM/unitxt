@@ -14,6 +14,10 @@
             }
         },
         {
+            "type": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
             "type": "rename_fields",
             "field_to_field": {
                 "text": "document"
