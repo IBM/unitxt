@@ -28,7 +28,7 @@ Each example is a self contained python file that you can run and later modify.
      - :ref:`Add new dataset tutorial <adding_dataset>`.
    * - Evaluate your question-answering dataset  - reusing existing catalog assets
      - Demonstrates how to evaluate a user QA dataset using the predefined open qa task and templates.
-       It also shows how to use preprocessing steps to align the raw input of the dataset with the predefined task field.
+       It also shows how to use preprocessing steps to align the raw input of the dataset with the predefined task fields.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/qa_evaluation.py>`_
      - | :ref:`Add new dataset tutorial <adding_dataset>`.  
        | :ref:`Open QA task in catalog <catalog.tasks.qa.open>`.
