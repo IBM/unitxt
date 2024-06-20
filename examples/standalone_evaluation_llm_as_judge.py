@@ -18,7 +18,7 @@ data = {
     ]
 }
 
-rating_template = InputOutputTemplate(
+judge_correctness_template = InputOutputTemplate(
     instruction="Please act as an impartial judge and evaluate if the answer of the assistant is correct."
     "Rate the response on a scale of 1 to 10, where 1 means totally wrong, and 10 means totally correct,"
     ' by strictly following this format: "[[rating]]"'
@@ -30,17 +30,11 @@ rating_template = InputOutputTemplate(
     ],
 )
 
-add_to_catalog(
-    rating_template,
-    "templates.rating_template",
-    overwrite=True,
-)
-
 rating_metric = LLMAsJudge(
     inference_model=HFPipelineBasedInferenceEngine(
         model_name="google/flan-t5-large", max_new_tokens=256, use_fp16=True
     ),
-    template="templates.rating_template",
+    template=judge_correctness_template,
     task="rating.single_turn",
     format="formats.models.mistral.instruction",
     main_score="flan-t5-large_huggingface",
