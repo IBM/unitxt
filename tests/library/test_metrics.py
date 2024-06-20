@@ -17,6 +17,7 @@ from unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FinQAEval,
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
     FixedGroupAbsvalNormCohensHParaphraseStringContainment,
     FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
@@ -51,7 +52,6 @@ from unitxt.metrics import (
 )
 from unitxt.test_utils.metrics import apply_metric
 
-from prepare.metrics.fin_qa_metric import FinQAEval
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
@@ -1440,15 +1440,21 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]"""
 
         metric = FinQAEval()
-        references = [["94"], ["94"]]  # answers
+        references = [
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+        ]  # answers in gold
         task_data = [
-            {"table": table, "program_re": "subtract(5829, 5735)"},
-            {"table": table, "program_re": "subtract(5829, 5735)"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94%"},
         ]
         predictions = [
-            ["subtract(5829, 5730)"],  # manipulated answer
-            ["subtract(5829, 5735)"],
-        ]  # true answer
+            ["subtract(5829, 5735)"],  # true program
+            ["subtract(5829, 5730)"],  # manipulated program
+            ["subtract(5829, 5735)"],  # manipulated answer (in task data)
+        ]
 
         outputs = apply_metric(
             metric=metric,
@@ -1456,7 +1462,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
             references=references,
             task_data=task_data,
         )
-        actual_scores = [output["score"] for output in outputs]
-        target_scores = [0, 1]
+        actual_scores = [output["score"]["instance"]["accuracy"] for output in outputs]
+        target_scores = [1, 0, 1]
 
-        self.assertAlmostEqual(actual_scores, target_scores)
+        for i in range(len(actual_scores)):
+            self.assertAlmostEqual(actual_scores[i], target_scores[i])

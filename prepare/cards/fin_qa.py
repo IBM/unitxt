@@ -28,9 +28,9 @@ card = TaskCard(
             "post_text": "str",
             "question": "str",
         },
-        outputs={"program_re": "str"},
+        outputs={"program_re": "str", "answer": "str"},
         prediction_type="str",
-        metrics=[],  # ["metrics.fin_qa_metric"],
+        metrics=["metrics.fin_qa_metric"],
         augmentable_inputs=["pre_text", "serialized_table", "post_text", "question"],
     ),
     templates=TemplatesList(
@@ -74,5 +74,9 @@ card = TaskCard(
     },
 )
 
-test_card(card, num_demos=2, demos_pool_size=10)
+test_card(
+    card,
+    num_demos=2,
+    demos_pool_size=10,
+)
 add_to_catalog(card, "cards.fin_qa", overwrite=True)
