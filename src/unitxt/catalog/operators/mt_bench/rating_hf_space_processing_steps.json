@@ -14,10 +14,17 @@
             "__type__": "rename_fields",
             "field_to_field": {
                 "model": "model_id",
-                "judge": "judge_model_id",
                 "user_prompt": "judge_input",
                 "judgment": "judge_output"
             },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_fields",
+            "field": "judge/0",
+            "to_field": "judge_model_id",
             "apply_to_streams": [
                 "judgment"
             ]
