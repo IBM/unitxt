@@ -6,13 +6,23 @@
         "name": "wnli"
     },
     "preprocess_steps": [
-        "splitters.small_no_test",
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
         {
             "type": "rename_fields",
-            "field_to_field": {
-                "sentence1": "text_a",
-                "sentence2": "text_b"
-            }
+            "field": "sentence1",
+            "to_field": "text_a"
+        },
+        {
+            "type": "rename_fields",
+            "field": "sentence2",
+            "to_field": "text_b"
         },
         {
             "type": "map_instance_values",
@@ -29,9 +39,24 @@
                 "classes": [
                     "yes",
                     "no"
-                ],
-                "type_of_relation": "truthfulness",
-                "text_a_type": "premise",
+                ]
+            }
+        },
+        {
+            "type": "set",
+            "fields": {
+                "type_of_relation": "truthfulness"
+            }
+        },
+        {
+            "type": "set",
+            "fields": {
+                "text_a_type": "premise"
+            }
+        },
+        {
+            "type": "set",
+            "fields": {
                 "text_b_type": "hypothesis"
             }
         }
