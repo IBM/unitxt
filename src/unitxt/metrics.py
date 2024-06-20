@@ -1381,6 +1381,7 @@ class FinQAEval(InstanceMetric):
     reduction_map = {"mean": ["accuracy"]}
     main_score = "accuracy"
     ci_scores = ["accuracy"]
+    prediction_type = "str"
 
     def finqa_eval(
         self, references: List[List], prediction: str, task_data: Dict
@@ -1388,7 +1389,7 @@ class FinQAEval(InstanceMetric):
         exe_correct = False
         prog_correct = False
 
-        pred_item = program_tokenization(prediction[0])
+        pred_item = program_tokenization(prediction)
         gold_answer = task_data["answer"]
         table = task_data["table"]
         program = task_data["program_re"]
@@ -1407,7 +1408,7 @@ class FinQAEval(InstanceMetric):
         total = 0
         correct = 0
 
-        for pred, gold_item in zip(prediction, references):
+        for pred, gold_item in zip([prediction], references):
             if pred.lower().endswith(gold_item.lower()):
                 # for non numeric answers, just check if the answer is in the prediction
                 correct += 1

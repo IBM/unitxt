@@ -52,6 +52,7 @@
             "question": "str"
         },
         "outputs": {
+            "program_re": "str",
             "answer": "str"
         },
         "prediction_type": "str",

@@ -1439,21 +1439,49 @@ class TestConfidenceIntervals(UnitxtTestCase):
             ]
         ]"""
 
+        table2 = """[
+            [
+                "statement of income classification",
+                "statement of income loss on swaps",
+                "statement of income gain on note",
+                "statement of income net income effect",
+                "statement of income gain on swaps",
+                "loss on note",
+                "net income effect"
+            ],
+            [
+                "other income",
+                "$ -4614 ( 4614 )",
+                "$ 4614",
+                "$ 2014",
+                "$ 20692",
+                "$ -20692 ( 20692 )",
+                "$ 2014"
+            ]
+        ]"""
+
         metric = FinQAEval()
         references = [
             ["subtract(5829, 5735)"],
             ["subtract(5829, 5735)"],
             ["subtract(5829, 5735)"],
-        ]  # answers in gold
+            ["subtract(153.7, 139.9), divide(#0, 139.9)"],
+        ]
         task_data = [
             {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
             {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
-            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94%"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94$"},
+            {
+                "table": table2,
+                "program_re": "subtract(153.7, 139.9), divide(#0, 139.9)",
+                "answer": "9.9%",
+            },
         ]
         predictions = [
-            ["subtract(5829, 5735)"],  # true program
-            ["subtract(5829, 5730)"],  # manipulated program
-            ["subtract(5829, 5735)"],  # manipulated answer (in task data)
+            "subtract(5829, 5735)",  # true program
+            "subtract(5829, 5730)",  # manipulated program
+            "subtract(5829, 5735)",  # answer with special chars (in task data)
+            "subtract(153.7, 139.9), divide(#0, 139.9)",  # 2 operation
         ]
 
         outputs = apply_metric(
@@ -1463,7 +1491,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             task_data=task_data,
         )
         actual_scores = [output["score"]["instance"]["accuracy"] for output in outputs]
-        target_scores = [1, 0, 1]
+        target_scores = [1, 0, 1, 1]
 
         for i in range(len(actual_scores)):
             self.assertAlmostEqual(actual_scores[i], target_scores[i])
