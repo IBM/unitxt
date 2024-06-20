@@ -204,5 +204,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 temperature=self.parameters.temperature,
                 top_p=self.parameters.top_p,
             )
+            .choices[0]
+            .message.content
             for instance in dataset
         ]
