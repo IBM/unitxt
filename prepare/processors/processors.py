@@ -112,7 +112,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     SequentialOperator(
         steps=[
@@ -204,7 +203,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 parser = FirstCharacter(field="TBD")
 example = " A. This is the answer."
 logger.info(parser.process_value(example))
@@ -244,7 +242,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     SequentialOperator(
         steps=[
@@ -261,13 +258,11 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 double_brackets_regex = r"\[\[(.*?)\]\]"
 parser = ExtractWithRegex(regex=double_brackets_regex, field="TBD")
 example = "A. and also B. And that is why my final answer is [[Yes]]"
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == "Yes"
-
 
 add_to_catalog(
     SequentialOperator(
@@ -358,5 +353,24 @@ add_to_catalog(
 add_to_catalog(
     LiteralEval(field="prediction", process_every_value=False),
     "processors.literal_eval",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            RegexParser(
+                field="prediction",
+                regex=r"\[\[([AB<>=]+)\]\]",
+                process_every_value=False,
+            ),
+            RegexParser(
+                field="prediction",
+                regex=r"\[\[([AB<>=]+)\]\]",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.regex_parser_arena_hard_output",
     overwrite=True,
 )
