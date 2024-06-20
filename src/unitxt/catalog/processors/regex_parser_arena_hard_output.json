@@ -1,0 +1,17 @@
+{
+    "type": "sequential_operator",
+    "steps": [
+        {
+            "type": "regex_parser",
+            "field": "prediction",
+            "regex": "\\[\\[([AB<>=]+)\\]\\]",
+            "process_every_value": false
+        },
+        {
+            "type": "regex_parser",
+            "field": "prediction",
+            "regex": "\\[\\[([AB<>=]+)\\]\\]",
+            "process_every_value": false
+        }
+    ]
+}
