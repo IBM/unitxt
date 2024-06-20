@@ -202,13 +202,15 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
         return outputs
 
     def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+        if not self.shuffle:
+            return inputs, outputs
         outcome = random()  # A float between 0 and 1
         if outcome <= 0.5:
             choice_a_value = inputs[self.choice_a_field]
             choice_b_value = inputs[self.choice_b_field]
 
-            inputs[self.choice_a_field] = choice_a_value
-            inputs[self.choice_b_field] = choice_b_value
+            inputs[self.choice_a_field] = choice_b_value
+            inputs[self.choice_b_field] = choice_a_value
 
             answer = outputs[self.answer_field]
             assert answer in [
