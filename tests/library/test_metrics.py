@@ -51,6 +51,7 @@ from unitxt.metrics import (
 )
 from unitxt.test_utils.metrics import apply_metric
 
+from prepare.metrics.fin_qa_metric import FinQAEval
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
@@ -1397,3 +1398,65 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
+
+    def test_fin_qa_eval(self):
+        table = """[
+            [
+                "",
+                "amount ( in millions )"
+            ],
+            [
+                "2014 net revenue",
+                "$ 5735"
+            ],
+            [
+                "retail electric price",
+                "187"
+            ],
+            [
+                "volume/weather",
+                "95"
+            ],
+            [
+                "waterford 3 replacement steam generator provision",
+                "-32 ( 32 )"
+            ],
+            [
+                "miso deferral",
+                "-35 ( 35 )"
+            ],
+            [
+                "louisiana business combination customer credits",
+                "-107 ( 107 )"
+            ],
+            [
+                "other",
+                "-14 ( 14 )"
+            ],
+            [
+                "2015 net revenue",
+                "$ 5829"
+            ]
+        ]"""
+
+        metric = FinQAEval()
+        references = [["94"], ["94"]]  # answers
+        task_data = [
+            {"table": table, "program_re": "subtract(5829, 5735)"},
+            {"table": table, "program_re": "subtract(5829, 5735)"},
+        ]
+        predictions = [
+            ["subtract(5829, 5730)"],  # manipulated answer
+            ["subtract(5829, 5735)"],
+        ]  # true answer
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        actual_scores = [output["score"] for output in outputs]
+        target_scores = [0, 1]
+
+        self.assertAlmostEqual(actual_scores, target_scores)

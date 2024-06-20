@@ -6,7 +6,6 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.splitters import SplitRandomMix
 from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
@@ -15,7 +14,6 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="ibm/finqa", streaming=False),
     preprocess_steps=[
-        SplitRandomMix({"train": "train", "validation": "validation", "test": "test"}),
         CopyFields(field_to_field=[["pre_text/0", "pre_text"]]),
         CopyFields(field_to_field=[["post_text/0", "post_text"]]),
         MapTableListsToStdTableJSON(field_to_field=[["table", "stdtable"]]),
@@ -32,7 +30,7 @@ card = TaskCard(
         },
         outputs={"program_re": "str"},
         prediction_type="str",
-        metrics=[],  # TODO: add the script metric
+        metrics=[],  # ["metrics.fin_qa_metric"],
         augmentable_inputs=["pre_text", "serialized_table", "post_text", "question"],
     ),
     templates=TemplatesList(
@@ -62,6 +60,10 @@ card = TaskCard(
                 postprocessors=[],
             ),
         ]
+    ),
+    __description__=(
+        "FINQA is an expert-annotated QA dataset that aims to tackle numerical reasoning over real-world "
+        "financial data."
     ),
     __tags__={
         "modality": "table",
