@@ -30,23 +30,21 @@ def main():
             ],
             task="tasks.qa.multiple_choice.with_topic",
             templates="templates.qa.multiple_choice.with_topic.all",
-            # __tags__={
-            #     "annotations_creators": "no-annotation",
-            #     "arxiv": ["2009.03300", "2005.00700", "2005.14165", "2008.02275"],
-            #     "language": "en",
-            #     "language_creators": "expert-generated",
-            #     "license": "mit",
-            #     "multilinguality": "monolingual",
-            #     "region": "us",
-            #     "size_categories": "10K<n<100K",
-            #     "source_datasets": "original",
-            #     "task_categories": "question-answering",
-            #     "task_ids": "multiple-choice-qa",
-            # },
-            # __description__=(
-            #     "Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021). \n"
-            #     "This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
-            # ),
+            __tags__={
+                "annotations_creators": "no-annotation",
+                "arxiv": ["2406.01574"],
+                "language": "en",
+                "language_creators": "expert-generated",
+                "license": "mit",
+                "multilinguality": "monolingual",
+                "size_categories": "10K<n<100K",
+                "source_datasets": "original",
+                "task_categories": "question-answering",
+                "task_ids": "multiple-choice-qa",
+            },
+            __description__=(
+                "MMLU-Pro dataset is a more robust and challenging massive multi-task understanding dataset tailored to more rigorously benchmark large language models' capabilities. This dataset contains 12K complex questions across various disciplines."
+            ),
         )
         if topic == topics[0]:
             test_card(
