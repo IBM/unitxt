@@ -19,7 +19,7 @@ format = SystemFormat(
     demo_format="{source}\n\n{target_prefix}{target}\n\n",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
     "{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n"
-    "{instruction}\\N{demos}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n"
+    "{instruction}{demos}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n"
     "{target_prefix}",
 )
 
