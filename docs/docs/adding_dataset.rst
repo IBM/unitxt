@@ -37,7 +37,7 @@ While language models generate textual predictions, the metrics often evaluate o
 spearman correlation is evaluated on numeric predictions vs numeric reference, and multi-label F1 is evaluated on a list of string class name prediction_type
 vs a reference list of string classes.  The `prediction_type` of the task defines the common prediction (and reference) types for all metrics of the task.
 
-Note that the the Task does not perform any verbalization or formatting of the task input and output fields - this is the responsibility of the Template.
+Note that the Task does not perform any verbalization or formatting of the task input and output fields - this is the responsibility of the Template.
 
 In our example, we will formalize a translation task between `source_language` and a `target_language`.
 The text to translate is in the field `text` and the reference answer in the `translation` field.
