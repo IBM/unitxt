@@ -109,6 +109,18 @@ the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
 The catalog contains predefined formats :ref:`here <catalog.formats>`.
 
+.. _inference_engine:
+
+Inference Engine
+----------------
+
+An inference engine in Unitxt is an object that performs model inference on Unitxt datasets.
+Unitxt provides out of the box inference engines that wrap Huggingface pipelines and OpenAI and IBMGenAI APIs. 
+Since Unitxt has separate data preparation and evaluation pipelines, you can use any external code or engine to generate
+model predictions. The built in inference engines can make it more convenient  
+They also ensure that no sensitive data is passed to external services. 
+(`see code example here <https://github.com/IBM/unitxt/blob/main/examples/standalone_qa_evaluation.py>`_)
+
 .. _operator:
 
 Operator
@@ -137,6 +149,22 @@ template could remove trailing whitespace, take the first word, convert `Yes`` t
 
 .. _recipe:
 
+Prediction and Processed Prediction
+------------------------------------
+
+A prediction is the output of the model on the input provided to it.
+The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other 
+framework or code.  The predictions over all instances are  passed to the evaluation pipeline, together with the original dataset.
+
+The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post processors <post_processors>` 
+before being passed to the :ref:`Metrics <metric>`.  The post processors converts the textual prediction to the 
+type required by the metrics. For example, `Yes` and `No` values could be first normalized to `yes`` and `no` and then converted 
+into `0.0`` and `1.0`.
+
+After evaluation, the `prediction` field of each instance in the result datasets contains the prediction returned by the model and 
+the  `processed_prediction` field holds the prediction after post processing by the template.
+
+
 Recipe
 ------
 
@@ -147,20 +175,24 @@ This includes :ref:`DataTask card <data_task_card>`, :ref:`Template <template>`,
 
 .. _references:
 
-References
---------------------------
+References and Processed References
+------------------------------------
 
 References are the "correct answers" for the task for a given instance.
 They are stored as a list of strings in the `references` field of the generated Unitxt dataset.
-For example, a reference for a binary classification task could be `Yes`` or `No`.
+For example, a reference for a binary classification task could be `Yes` or `No`.
 
 It is expect that the model will get a perfect score from the metrics if the model prediction
 is equal to one of the references.
  
 The textual references are processed by the :ref:`Template <template>`'s :ref:`Post processors <post_processors>` 
-before passed to the :ref:`Metrics <metric>`.  The post processor de-verbalize the textual representation
-of the references and converted it to the types required by the metric. For example, `Yes` and `No`
+before being passed to the :ref:`Metrics <metric>`.  The post processor converts the textual representation
+of the references and converted them to the type required by the metrics. For example, `Yes` and `No`
 values could be converted into `0.0`` and `1`.
+
+The `references` field of the dataset contains the textual references, and the result dataset after evaluation
+contains an additional `processed_references` field with the references after post processing by the template.
+
 
 .. _target:
 
