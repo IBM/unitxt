@@ -64,7 +64,7 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         instruction="The following {document_type} is to be summarized into one sentence.",
-        input_format="{document_type}:\n{document}Summary:\n",
+        input_format="{document_type}:\n{document}\nSummary:\n",
         output_format="{summary}",
         postprocessors=[
             "processors.take_first_non_empty_line",
@@ -86,7 +86,7 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         instruction="Write a succinct summary of the following {document_type}.",
-        input_format="{document_type}:\n{document}Summary:\n",
+        input_format="{document_type}:\n{document}\nSummary:\n",
         output_format="{summary}",
     ),
     "templates.summarization.abstractive.instruct_write_succinct",
