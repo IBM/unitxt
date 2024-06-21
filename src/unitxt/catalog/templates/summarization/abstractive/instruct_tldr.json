@@ -1,0 +1,5 @@
+{
+    "type": "input_output_template",
+    "instruction": "TL;DR:",
+    "input_format": "{document}"
+}
