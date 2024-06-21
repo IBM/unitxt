@@ -1,5 +1,6 @@
 {
     "type": "input_output_template",
     "instruction": "TL;DR:",
-    "input_format": "{document}"
+    "input_format": "{document}",
+    "output_format": "{summary}"
 }

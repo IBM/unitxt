@@ -160,6 +160,7 @@ add_to_catalog(
     InputOutputTemplate(
         instruction="TL;DR:",
         input_format="{document}",
+        output_format="{summary}",
     ),
     "templates.summarization.abstractive.instruct_tldr",
     overwrite=True,
