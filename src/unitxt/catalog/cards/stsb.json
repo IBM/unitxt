@@ -25,7 +25,6 @@
         {
             "type": "set",
             "fields": {
-                "attribute_name": "similarity",
                 "min_value": 1.0,
                 "max_value": 5.0
             }

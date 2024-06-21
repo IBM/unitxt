@@ -33,8 +33,7 @@
                     "Business",
                     "Sci/Tech"
                 ],
-                "text_type": "sentence",
-                "type_of_class": "topic"
+                "text_type": "sentence"
             }
         }
     ],

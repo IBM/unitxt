@@ -70,7 +70,6 @@ card = TaskCard(
             fields={
                 "classes": class_names,
                 "text_type": "argument",  # TODO maybe text?
-                "type_of_class": "topic",
             }
         ),
     ],

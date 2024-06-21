@@ -9,5 +9,8 @@
     ],
     "metrics": [
         "metrics.rouge"
-    ]
+    ],
+    "defaults": {
+        "text_type": "text"
+    }
 }

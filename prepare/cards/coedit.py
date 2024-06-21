@@ -73,7 +73,6 @@ error_detection_card = TaskCard(
         Set(
             fields={
                 "class": "Grammatically incorrect",
-                "text_type": "text",
             }
         ),
         Shuffle(page_size=sys.maxsize),

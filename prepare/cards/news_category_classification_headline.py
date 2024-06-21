@@ -74,7 +74,6 @@ card = TaskCard(
             fields={
                 "classes": classlabels,
                 "text_type": "sentence",
-                "type_of_class": "topic",
             }
         ),
     ],

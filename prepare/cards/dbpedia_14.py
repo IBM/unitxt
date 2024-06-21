@@ -46,7 +46,6 @@ card = TaskCard(
             fields={
                 "classes": classes,
                 "text_type": "paragraph",
-                "type_of_class": "topic",
             }
         ),
     ],

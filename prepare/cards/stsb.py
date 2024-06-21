@@ -21,9 +21,7 @@ card = TaskCard(
                 "label": "attribute_value",
             }
         ),
-        Set(
-            fields={"attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0}
-        ),
+        Set(fields={"min_value": 1.0, "max_value": 5.0}),
     ],
     task="tasks.regression.two_texts",
     templates="templates.regression.two_texts.all",

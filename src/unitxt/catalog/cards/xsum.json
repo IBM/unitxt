@@ -4,14 +4,6 @@
         "type": "load_hf",
         "path": "EdinburghNLP/xsum"
     },
-    "preprocess_steps": [
-        {
-            "type": "set",
-            "fields": {
-                "document_type": "document"
-            }
-        }
-    ],
     "task": "tasks.summarization.abstractive",
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {

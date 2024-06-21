@@ -69,8 +69,7 @@
                     "stock commentary",
                     "stock movement"
                 ],
-                "text_type": "tweet",
-                "type_of_class": "topic"
+                "text_type": "tweet"
             }
         }
     ],

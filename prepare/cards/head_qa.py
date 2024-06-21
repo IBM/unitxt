@@ -32,7 +32,6 @@ for subset in get_dataset_config_names(
                 fields={
                     "classes": categories,
                     "text_type": "question",
-                    "type_of_class": "topic",
                 }
             ),
         ],

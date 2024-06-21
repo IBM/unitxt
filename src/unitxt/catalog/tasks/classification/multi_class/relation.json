@@ -20,5 +20,9 @@
     "augmentable_inputs": [
         "text_a",
         "text_b"
-    ]
+    ],
+    "defaults": {
+        "text_a_type": "first text",
+        "text_b_type": "second text"
+    }
 }

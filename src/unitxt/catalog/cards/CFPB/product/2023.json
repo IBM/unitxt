@@ -51,9 +51,7 @@
                     "money transfer or virtual currency or money service",
                     "vehicle loan or lease",
                     "student loan"
-                ],
-                "text_type": "text",
-                "type_of_class": "topic"
+                ]
             }
         }
     ],

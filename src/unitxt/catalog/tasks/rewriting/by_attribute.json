@@ -11,5 +11,9 @@
     ],
     "metrics": [
         "metrics.rouge"
-    ]
+    ],
+    "defaults": {
+        "input_text_type": "text",
+        "output_text_type": "text"
+    }
 }

@@ -11,12 +11,6 @@
             "field_to_field": {
                 "text": "document"
             }
-        },
-        {
-            "type": "set",
-            "fields": {
-                "document_type": "document"
-            }
         }
     ],
     "task": "tasks.summarization.abstractive",

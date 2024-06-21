@@ -17,5 +17,8 @@
     "augmentable_inputs": [
         "text1",
         "text2"
-    ]
+    ],
+    "defaults": {
+        "attribute_name": "similarity"
+    }
 }

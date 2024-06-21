@@ -39,7 +39,6 @@ card = TaskCard(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "abstract",
-                "type_of_class": "topic",
             }
         ),
     ],

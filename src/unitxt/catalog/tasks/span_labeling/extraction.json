@@ -18,5 +18,9 @@
     ],
     "augmentable_inputs": [
         "text"
-    ]
+    ],
+    "defaults": {
+        "text_type": "text",
+        "class_type": "entity type"
+    }
 }

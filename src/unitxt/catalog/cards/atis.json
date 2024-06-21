@@ -273,8 +273,6 @@
         {
             "type": "set",
             "fields": {
-                "text_type": "text",
-                "class_type": "entity type",
                 "classes": [
                     "aircraft_code",
                     "airline_code",

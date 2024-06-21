@@ -17,5 +17,9 @@
     ],
     "augmentable_inputs": [
         "text"
-    ]
+    ],
+    "defaults": {
+        "text_type": "text",
+        "type_of_class": "topic"
+    }
 }

@@ -24,8 +24,7 @@
                     "pharmacology",
                     "psychology"
                 ],
-                "text_type": "question",
-                "type_of_class": "topic"
+                "text_type": "question"
             }
         }
     ],

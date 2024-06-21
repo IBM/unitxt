@@ -53,7 +53,6 @@ card = TaskCard(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "tweet",
-                "type_of_class": "topic",
             }
         ),
     ],

@@ -21,7 +21,6 @@ card = TaskCard(
         Set(
             fields={
                 "classes": ["not toxic", "toxic"],
-                "text_type": "text",
                 "type_of_class": "toxicity",
             }
         ),
