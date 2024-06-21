@@ -18,6 +18,7 @@ from .operators import (
     Copy,
     FlattenInstances,
     MergeStreams,
+    RenameFields,
     SplitByNestedGroup,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -156,11 +157,27 @@ class MetricRecipe(SequentialOperatorInitializer):
             FromPredictionsAndOriginalData(),
             LoadJson(field="task_data"),
             Copy(
+                field="prediction",
+                to_field="raw_prediction",
+            ),
+            Copy(
+                field="references",
+                to_field="raw_references",
+            ),
+            Copy(
                 field="source",
                 to_field="task_data/source",
             ),
             ApplyOperatorsField(
                 operators_field="postprocessors",
+            ),
+            Copy(
+                field="prediction",
+                to_field="processed_prediction",
+            ),
+            Copy(
+                field="references",
+                to_field="processed_references",
             ),
             SplitByNestedGroup(
                 field_name_of_group="group",
@@ -172,6 +189,18 @@ class MetricRecipe(SequentialOperatorInitializer):
             ),
             MultiStreamScoreMean(),
             MergeStreams(),
+            RenameFields(
+                field="raw_prediction",
+                to_field="prediction",
+            ),
+            RenameFields(
+                field="raw_references",
+                to_field="references",
+            ),
+            Copy(
+                field="source",
+                to_field="task_data/source",
+            ),
         ]
 
 

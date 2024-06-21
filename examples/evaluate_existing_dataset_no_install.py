@@ -22,7 +22,7 @@ predictions = ["entailment" for t in dataset["test"]]
 # (f1_micro, f1_macro, accuracy, including confidence intervals)
 
 metric = evaluate.load("unitxt/metric")
-results = metric.compute(predictions=predictions, references=dataset["test"])
+evaluated_dataset = metric.compute(predictions=predictions, references=dataset["test"])
 
 # print the aggregated scores dictionary.
-print_dict(results[0]["score"]["global"])
+print_dict(evaluated_dataset[0]["score"]["global"])
