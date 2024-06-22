@@ -5,8 +5,9 @@ from unitxt.templates import (
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="{contexts}\n\nPlease answer the following question about this context.\n\n"
-        "question: {question}.\n\nanswer:",
+        instruction="Please respond to the following question using the context",
+        input_format="Context: {contexts}\nQuestion: {question}.\n",
+        target_prefix="Response:",
         references_field="reference_answers",
     ),
     "templates.rag.response_generation.simple",
