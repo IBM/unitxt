@@ -1,0 +1,15 @@
+{
+    "type": "task",
+    "inputs": {
+        "question": "str",
+        "answer_a": "str",
+        "answer_b": "str"
+    },
+    "outputs": {
+        "winner": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}
