@@ -21,13 +21,28 @@
                 "model_input": "question",
                 "model_1_output": "answer_a",
                 "model_2_output": "answer_b",
-                "score_model_1_ordered_first": "winner",
-                "category": "group"
+                "score_model_1_ordered_first": "answer_a_preference",
+                "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b"
+            }
+        },
+        {
+            "type": "map_instance_values",
+            "mappers": {
+                "answer_a_preference": {
+                    "A=B": 0,
+                    "A>B": 1,
+                    "A>>B": 3,
+                    "B>A": -1,
+                    "B>>A": -3
+                }
             }
         }
     ],
     "task": "tasks.response_assessment.pairwise_comparative_rating.single_turn",
     "templates": [
-        "templates.response_assessment.pairwise_comparative_rating.arena_hard"
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling"
     ]
 }

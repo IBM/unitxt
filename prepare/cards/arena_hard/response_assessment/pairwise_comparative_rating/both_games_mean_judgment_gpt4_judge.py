@@ -14,16 +14,6 @@ score_mapper = {"A=B": 0, "A>B": 1, "A>>B": 3, "B>A": -1, "B>>A": -3}
 
 score_mapper_reversed = {k: -1 * v for k, v in score_mapper.items()}
 
-score_to_label_mapper = {
-    "0": "A=B",
-    "1": "A>B",
-    "2": "A>>B",
-    "3": "A>>B",
-    "-1": "B>A",
-    "-2": "B>>A",
-    "-3": "B>>A",
-}
-
 card = TaskCard(
     loader=LoadFromHFSpace(
         space_name="lmsys/arena-hard-browser",
@@ -44,21 +34,25 @@ card = TaskCard(
             }
         ),
         ExecuteExpression(
-            to_field="winner",
+            to_field="answer_a_preference",
             expression="int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))",
         ),
-        MapInstanceValues(mappers={"winner": score_to_label_mapper}),
         RenameFields(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_a",
                 "model_2_output": "answer_b",
                 "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b",
             }
         ),
     ],
     task="tasks.response_assessment.pairwise_comparative_rating.single_turn",
-    templates=["templates.response_assessment.pairwise_comparative_rating.arena_hard"],
+    templates=[
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
+    ],
 )
 
 test_card(card, demos_taken_from="test", strict=False, loader_limit=100000)
