@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "abacusai/WikiQA-Free_Form_QA"
     },
     "preprocess_steps": [
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "conversations/0/value": "inputs",
                 "conversations/0/tok_len": "inputs_len",
@@ -14,21 +14,21 @@
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "answer"
             ],
             "to_field": "answers"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "inputs_len": 2048
             },
             "condition": "lt"
         },
         {
-            "type": "execute_expression",
+            "__type__": "execute_expression",
             "expression": "re.search(r\"Document:\\s(.*)(\\n\\n|$)\", inputs).group(1)",
             "imports_list": [
                 "re"
@@ -36,7 +36,7 @@
             "to_field": "context"
         },
         {
-            "type": "execute_expression",
+            "__type__": "execute_expression",
             "expression": "re.search(r\"Question:\\s(.*)(\\n\\n|$)\", inputs).group(1)",
             "imports_list": [
                 "re"
@@ -44,13 +44,13 @@
             "to_field": "question"
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "document"
             }
         },
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "2k[80%]",
                 "validation": "2k[10%]",

@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "Input: Can we say \"{text_b}\" if \"{text_a}\"?\n",
     "output_format": "{label}\n",
     "target_prefix": "Output:",

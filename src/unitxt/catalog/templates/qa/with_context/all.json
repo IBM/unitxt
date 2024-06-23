@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.qa.with_context.simple",
         "templates.qa.with_context.simple2",

@@ -1,12 +1,12 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "extract_mt_bench_label_judgment",
+            "__type__": "extract_mt_bench_label_judgment",
             "field": "prediction"
         },
         {
-            "type": "extract_mt_bench_label_judgment",
+            "__type__": "extract_mt_bench_label_judgment",
             "field": "references",
             "process_every_value": true
         }

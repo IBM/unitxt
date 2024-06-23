@@ -1,5 +1,5 @@
 {
-    "type": "span_labeling_template",
+    "__type__": "span_labeling_template",
     "input_format": "{text}",
     "labels_support": [
         "positive"

@@ -1,24 +1,24 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "Muennighoff/babi"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "passage": "context"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "description"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "answer"
             ],
