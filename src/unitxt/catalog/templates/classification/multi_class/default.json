@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "Classify the {type_of_class} of the following {text_type} to one of these options: {classes}. {text_type}: {text}",
     "output_format": "{label}",
     "postprocessors": [

@@ -1,4 +1,4 @@
 {
-    "type": "bert_score",
+    "__type__": "bert_score",
     "model_name": "bert-base-uncased"
 }

@@ -1,5 +1,5 @@
 {
-    "type": "multiple_choice_template",
+    "__type__": "multiple_choice_template",
     "input_format": "Pregunta: {question}.\nRespuestas: \n{choices}.\nRespuesta:",
     "target_field": "answer",
     "choices_separator": "\n",

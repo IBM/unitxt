@@ -1,5 +1,5 @@
 {
-    "type": "span_labeling_template",
+    "__type__": "span_labeling_template",
     "input_format": "From the following {text_type}, extract entities having a sentiment: {sentiment_class}. If there  none, output None. \n{text_type}: {text}\n",
     "labels_support": [
         "positive"

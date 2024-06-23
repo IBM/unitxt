@@ -1,4 +1,4 @@
 {
-    "type": "rouge",
+    "__type__": "rouge",
     "n_resamples": null
 }
