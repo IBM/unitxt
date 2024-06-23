@@ -3,13 +3,16 @@
     "inputs": {
         "question": "str",
         "answer_a": "str",
-        "answer_b": "str"
+        "answer_b": "str",
+        "model_a": "str",
+        "model_b": "str"
     },
     "outputs": {
-        "winner": "str"
+        "answer_a_preference": "int"
     },
-    "prediction_type": "str",
+    "prediction_type": "int",
     "metrics": [
+        "metrics.weighted_win_rate_correlation",
         "metrics.accuracy"
     ]
 }
