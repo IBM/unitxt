@@ -233,6 +233,54 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
         return inputs, outputs
 
 
+class PairwiseComparativeRatingTemplate(InputOutputTemplate):
+    """PairwiseChoiceTemplate.
+
+    Args:
+         choice_a_field (str): The field which contains choice_a value
+         choice_b_field (str): The field which contains choice_b value
+         answer_field (str): The field which contains the answer value.
+           Should be of type Literal["choice_1", "choice_2", "tie"]
+         reverse_preference_map (Dict[str,str]): A dictionary that maps answers to their reversed counterparts.
+         Used when shuffling the answers.
+         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+
+    shuffle: 50% of the time:
+     1) The values of choice_a_field and choice_b_field will be swapped.
+     2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
+
+    """
+
+    choice_a_field: str
+    choice_b_field: str
+    answer_field: str
+    reverse_preference_map: Dict[str, str]
+    shuffle: bool
+
+    def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+        if not self.shuffle:
+            return inputs, outputs
+        outcome = random()  # A float between 0 and 1
+        if outcome <= 0.5:
+            choice_a_value = inputs[self.choice_a_field]
+            choice_b_value = inputs[self.choice_b_field]
+
+            inputs[self.choice_a_field] = choice_b_value
+            inputs[self.choice_b_field] = choice_a_value
+
+            outputs[self.answer_field] = self.reverse_preference_map[
+                outputs[self.answer_field]
+            ]
+
+        return inputs, outputs
+
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        inputs, outputs = self.shuffle_values(inputs, outputs)
+        return inputs, outputs
+
+
 class DialogFieldsData(Artifact):
     user_role_label: str
     assistant_role_label: str
