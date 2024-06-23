@@ -36,22 +36,8 @@
         },
         {
             "type": "execute_expression",
-            "to_field": "winner",
+            "to_field": "answer_a_preference",
             "expression": "int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))"
-        },
-        {
-            "type": "map_instance_values",
-            "mappers": {
-                "winner": {
-                    "0": "A=B",
-                    "1": "A>B",
-                    "2": "A>>B",
-                    "3": "A>>B",
-                    "-1": "B>A",
-                    "-2": "B>>A",
-                    "-3": "B>>A"
-                }
-            }
         },
         {
             "type": "rename_fields",
@@ -59,12 +45,15 @@
                 "model_input": "question",
                 "model_1_output": "answer_a",
                 "model_2_output": "answer_b",
-                "category": "group"
+                "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b"
             }
         }
     ],
     "task": "tasks.response_assessment.pairwise_comparative_rating.single_turn",
     "templates": [
-        "templates.response_assessment.pairwise_comparative_rating.arena_hard"
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling"
     ]
 }

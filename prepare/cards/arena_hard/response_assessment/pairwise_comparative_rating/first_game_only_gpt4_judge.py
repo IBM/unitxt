@@ -4,9 +4,12 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
+    MapInstanceValues,
     RenameFields,
 )
 from unitxt.test_utils.card import test_card
+
+score_mapper = {"A=B": 0, "A>B": 1, "A>>B": 3, "B>A": -1, "B>>A": -3}
 
 card = TaskCard(
     loader=LoadFromHFSpace(
@@ -26,13 +29,23 @@ card = TaskCard(
                 "model_input": "question",
                 "model_1_output": "answer_a",
                 "model_2_output": "answer_b",
-                "score_model_1_ordered_first": "winner",
+                "score_model_1_ordered_first": "answer_a_preference",
                 "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b",
+            },
+        ),
+        MapInstanceValues(
+            {
+                "answer_a_preference": score_mapper,
             }
         ),
     ],
     task="tasks.response_assessment.pairwise_comparative_rating.single_turn",
-    templates=["templates.response_assessment.pairwise_comparative_rating.arena_hard"],
+    templates=[
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
+    ],
 )
 
 test_card(card, demos_taken_from="test", strict=False, loader_limit=100000)
