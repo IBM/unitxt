@@ -239,10 +239,8 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
     Args:
          choice_a_field (str): The field which contains choice_a value
          choice_b_field (str): The field which contains choice_b value
-         answer_field (str): The field which contains the answer value.
-           Should be of type Literal["choice_1", "choice_2", "tie"]
-         reverse_preference_map (Dict[str,str]): A dictionary that maps answers to their reversed counterparts.
-         Used when shuffling the answers.
+         answer_field (str): The field which contains the answer value. The value should be an int.
+          Positive for preferring choice_a, and negative for preferring choice_b
          shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
@@ -254,7 +252,6 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
     choice_a_field: str
     choice_b_field: str
     answer_field: str
-    reverse_preference_map: Dict[str, str]
     shuffle: bool
 
     def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
@@ -268,9 +265,8 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
             inputs[self.choice_a_field] = choice_b_value
             inputs[self.choice_b_field] = choice_a_value
 
-            outputs[self.answer_field] = self.reverse_preference_map[
-                outputs[self.answer_field]
-            ]
+            assert isinstance(outputs[self.answer_field], int)
+            outputs[self.answer_field] = int(outputs[self.answer_field]) * -1
 
         return inputs, outputs
 
