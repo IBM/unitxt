@@ -6,14 +6,7 @@ for to_shuffle in [True, False]:
         PairwiseComparativeRatingTemplate(
             choice_a_field="answer_a",
             choice_b_field="answer_b",
-            answer_field="winner",
-            reverse_preference_map={
-                "A>>B": "B>>A",
-                "A>B": "B>A",
-                "A=B": "A=B",
-                "B>A": "A>B",
-                "B>>A": "A>>B",
-            },
+            answer_field="answer_a_preference",
             shuffle=to_shuffle,
             instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
             " assistants to the user prompt displayed below. You will be given assistant A's answer and"
@@ -41,8 +34,8 @@ for to_shuffle in [True, False]:
             input_format="<|User Prompt|>\n{question}\n\n"
             "<|The Start of Assistant A's Answer|>\n{answer_a}\n<|The End of Assistant A's Answer|>\n\n"
             "<|The Start of Assistant B's Answer|>\n{answer_b}\n<|The End of Assistant B's Answer|>",
-            postprocessors=["processors.extract_mt_bench_label_judgment"],
-            output_format="[[{winner}]]",
+            postprocessors=["processors.extract_arena_hard_numerical_judgment"],
+            output_format="{answer_a_preference}",
         ),
         f"templates.response_assessment.pairwise_comparative_rating.arena_hard{'_with_shuffling' if to_shuffle else ''}",
         overwrite=True,
