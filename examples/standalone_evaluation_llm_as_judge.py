@@ -11,13 +11,14 @@ from unitxt.templates import InputOutputTemplate, TemplatesDict
 
 logger = get_logger()
 
+# First, we define the examples data.
 data = {
     "test": [
         {"question": "What is the capital of Texas?", "answer": ""},
         {"question": "What is the color of the sky?", "answer": ""},
     ]
 }
-
+# Second, We define the prompt we show to the judge.
 judge_correctness_template = InputOutputTemplate(
     instruction="Please act as an impartial judge and evaluate if the answer of the assistant is correct."
     "Rate the response on a scale of 1 to 10, where 1 means totally wrong, and 10 means totally correct,"
@@ -29,18 +30,17 @@ judge_correctness_template = InputOutputTemplate(
         r"processors.extract_mt_bench_rating_judgment",
     ],
 )
-
+# Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
     inference_model=HFPipelineBasedInferenceEngine(
         model_name="google/flan-t5-large", max_new_tokens=256, use_fp16=True
     ),
     template=judge_correctness_template,
     task="rating.single_turn",
-    format="formats.models.mistral.instruction",
     main_score="flan-t5-large_huggingface",
     strip_system_prompt_and_format_from_inputs=False,
 )
-
+# we wrapped all ingredients in a task card.
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
     task=Task(
@@ -61,16 +61,20 @@ card = TaskCard(
     ),
 )
 
+# Convert card to a dataset
 recipe = StandardRecipe(card=card, template_card_index="simple")
 stream = recipe()
 dataset = stream.to_dataset()
 test_dataset = dataset["test"]
 
+# Infer a model to get predictions.
 model_name = "google/flan-t5-base"
 inference_model = HFPipelineBasedInferenceEngine(
     model_name=model_name, max_new_tokens=32
 )
 predictions = inference_model.infer(test_dataset)
+
+# Evaluate the predictions using the defined metric.
 dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
 
 for sample, prediction in zip(dataset_with_scores, predictions):
