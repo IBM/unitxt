@@ -27,7 +27,9 @@
                 "model_1_output": "answer_a",
                 "model_2_output": "answer_b",
                 "score_model_1_ordered_first": "winner",
-                "category": "group"
+                "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b"
             },
             "apply_to_streams": [
                 "test"
@@ -40,7 +42,9 @@
                 "model_1_output": "answer_b",
                 "model_2_output": "answer_a",
                 "score_model_2_ordered_first": "winner",
-                "category": "group"
+                "category": "group",
+                "model_1": "model_b",
+                "model_2": "model_a"
             },
             "apply_to_streams": [
                 "game_2"
