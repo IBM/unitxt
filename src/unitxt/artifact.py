@@ -3,6 +3,7 @@ import inspect
 import json
 import os
 import pkgutil
+import re
 from abc import abstractmethod
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Union, final
@@ -19,13 +20,24 @@ from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
 from .utils import artifacts_json_cache, json_dump, save_to_file
 
 logger = get_logger()
 settings = get_settings()
+constants = get_constants()
+
+
+def is_name_legal_for_catalog(name):
+    return re.match(r"^[\w" + constants.catalog_hierarchy_sep + "]+$", name)
+
+
+def verify_legal_catalog_name(name):
+    assert is_name_legal_for_catalog(
+        name
+    ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
 class Artifactories:
@@ -283,8 +295,18 @@ class Artifact(Dataclass):
         data = self.to_dict()
         return json_dump(data)
 
+    def serialize(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return self.to_json()
+
     def save(self, path):
         save_to_file(path, self.to_json())
+
+    @classmethod
+    def deserialize(cls, artifact_rep):
+        data = json.loads(artifact_rep)
+        return Artifact.from_dict(data)
 
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
@@ -413,21 +435,15 @@ def fetch_artifact(artifact_rep):
     if Artifact.is_artifact_file(artifact_rep):
         return Artifact.load(artifact_rep), None
 
-    try:
+    if is_name_legal_for_catalog(artifact_rep):
         artifactory, artifact_rep, args = get_artifactory_name_and_args(
             name=artifact_rep
         )
-    except UnitxtArtifactNotFoundError as e:
-        try:
-            data = json.loads(artifact_rep)
-            artifact = Artifact.from_dict(data)
-            return artifact, None
-        except Exception as json_error:
-            raise e from json_error
+        return artifactory.get_with_overwrite(
+            artifact_rep, overwrite_args=args
+        ), artifactory
 
-    return artifactory.get_with_overwrite(
-        artifact_rep, overwrite_args=args
-    ), artifactory
+    return Artifact.deserialize(artifact_rep), None
 
 
 def get_artifactory_name_and_args(

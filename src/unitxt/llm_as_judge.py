@@ -142,6 +142,5 @@ class LLMAsJudge(BulkInstanceMetric):
                 self.main_score: instance["processed_prediction"],
                 "judge_raw_output": verdict,
             }
-            for instance in meta_scores
-            for verdict in verdicts
+            for instance, verdict in zip(meta_scores, verdicts)
         ]
