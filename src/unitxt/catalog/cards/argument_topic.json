@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "ibm/argument_quality_ranking_30k",
         "name": "argument_topic"
     },
     "preprocess_steps": [
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "affirmative action",

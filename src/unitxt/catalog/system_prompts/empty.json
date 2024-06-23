@@ -1,4 +1,4 @@
 {
-    "type": "textual_system_prompt",
+    "__type__": "textual_system_prompt",
     "text": ""
 }

@@ -1,19 +1,19 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "cais/mmlu",
         "name": "high_school_statistics"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "dev": "train"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "topic": "high school statistics"
             }

@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_from_hf_space",
+        "__type__": "load_from_hf_space",
         "space_name": "lmsys/mt-bench",
         "revision": "a4b674c",
         "data_files": {
@@ -13,40 +13,40 @@
     "preprocess_steps": [
         "operators.mt_bench.rating_hf_space_processing_steps",
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "turn": 2
             },
             "condition": "eq"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "reference": null
             },
             "condition": "ne"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "score": "rating",
                 "category": "group"
             }
         },
         {
-            "type": "interleave_lists_to_dialog_operator",
+            "__type__": "interleave_lists_to_dialog_operator",
             "user_turns_field": "model_input",
             "assistant_turns_field": "model_output",
             "to_field": "dialog"
         },
         {
-            "type": "interleave_lists_to_dialog_operator",
+            "__type__": "interleave_lists_to_dialog_operator",
             "user_turns_field": "model_input",
             "assistant_turns_field": "reference",
             "to_field": "reference_dialog"

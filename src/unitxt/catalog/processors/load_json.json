@@ -1,15 +1,15 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "load_json",
+            "__type__": "load_json",
             "field": "prediction",
             "process_every_value": false,
             "allow_failure": true,
             "failure_value": []
         },
         {
-            "type": "load_json",
+            "__type__": "load_json",
             "field": "references",
             "process_every_value": true,
             "allow_failure": true,
