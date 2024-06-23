@@ -102,6 +102,8 @@ class JoinStreams(MultiStreamOperator):
             left_on=self.left_on,
             right_on=self.right_on,
         )
+
+        assert len(merged_df) > 0, "JoinStreams resulted in an empty stream."
         return merged_df.to_dict(orient="records")
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -123,4 +125,22 @@ class DeleteSplits(MultiStreamOperator):
         generators = {
             key: val for key, val in multi_stream.items() if key not in self.splits
         }
+        return MultiStream(generators)
+
+
+class DuplicateSplit(MultiStreamOperator):
+    """Operator which duplicate a split.
+
+    Attributes:
+        split (str): The split to duplicate from the stream.
+        to_split (str): The duplicate split's name.
+    """
+
+    split: str
+    to_split: str
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        assert self.split in multi_stream
+        generators = multi_stream
+        generators[self.to_split] = generators[self.split]
         return MultiStream(generators)
