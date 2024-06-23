@@ -1,0 +1,37 @@
+{
+    "type": "task_card",
+    "loader": {
+        "type": "load_hf",
+        "path": "nvidia/ChatRAG-Bench",
+        "name": "sqa",
+        "split": "test"
+    },
+    "preprocess_steps": [
+        {
+            "type": "split_random_mix",
+            "mix": {
+                "train": "test[0.6]",
+                "validation": "test[0.2]",
+                "test": "test[0.2]"
+            }
+        },
+        {
+            "type": "copy",
+            "field_to_field": {
+                "ctxs/*/text": "contexts",
+                "messages": "dialog",
+                "answers": "reference_answers"
+            }
+        },
+        {
+            "type": "set",
+            "fields": {
+                "contexts_ids": []
+            }
+        }
+    ],
+    "task": "tasks.rag.response_generation_multi_turn",
+    "templates": {
+        "default": "templates.rag.response_generation.multi_turn.simple"
+    }
+}
