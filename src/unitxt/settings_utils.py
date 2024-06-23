@@ -1,6 +1,6 @@
 import os
 
-import pkg_resources
+from importlib.resources import files
 
 from .version import version
 
@@ -142,9 +142,7 @@ if Constants.is_uninitilized():
     constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
     constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
     try:
-        constants.default_catalog_path = pkg_resources.resource_filename(
-            "unitxt", "catalog"
-        )
+        constants.default_catalog_path = files('unitxt').joinpath('catalog')
     except ModuleNotFoundError:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path
