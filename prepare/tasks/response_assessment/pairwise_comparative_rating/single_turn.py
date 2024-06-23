@@ -7,12 +7,14 @@ add_to_catalog(
             "question": "str",
             "answer_a": "str",
             "answer_b": "str",
+            "model_a": "str",
+            "model_b": "str",
         },
         outputs={
-            "winner": "str",
+            "answer_a_preference": "int",  # Positive numbers for preferring answer_a, negative for answer_b.
         },
-        prediction_type="str",
-        metrics=["metrics.accuracy"],
+        prediction_type="int",
+        metrics=["metrics.weighted_win_rate_correlation", "metrics.accuracy"],
     ),
     "tasks.response_assessment.pairwise_comparative_rating.single_turn",
     overwrite=True,
