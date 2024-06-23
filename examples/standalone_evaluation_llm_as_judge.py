@@ -1,4 +1,4 @@
-from unitxt import add_to_catalog, get_logger
+from unitxt import get_logger
 from unitxt.api import evaluate
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
@@ -30,7 +30,7 @@ judge_correctness_template = InputOutputTemplate(
     ],
 )
 
-rating_metric = LLMAsJudge(
+llm_judge_metric = LLMAsJudge(
     inference_model=HFPipelineBasedInferenceEngine(
         model_name="google/flan-t5-large", max_new_tokens=256, use_fp16=True
     ),
@@ -41,19 +41,13 @@ rating_metric = LLMAsJudge(
     strip_system_prompt_and_format_from_inputs=False,
 )
 
-add_to_catalog(
-    rating_metric,
-    "metrics.rating_metric",
-    overwrite=True,
-)
-
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
     task=Task(
         inputs={"question": "str"},
         outputs={"answer": "str"},
         prediction_type="str",
-        metrics=["metrics.rating_metric"],
+        metrics=[llm_judge_metric],
     ),
     templates=TemplatesDict(
         {
@@ -67,7 +61,9 @@ card = TaskCard(
     ),
 )
 
-dataset = StandardRecipe(card=card, template_card_index="simple")().to_dataset()
+recipe = StandardRecipe(card=card, template_card_index="simple")
+stream = recipe()
+dataset = stream.to_dataset()
 test_dataset = dataset["test"]
 
 model_name = "google/flan-t5-base"

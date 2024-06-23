@@ -22,7 +22,7 @@ from .parsing_utils import (
 from .settings_utils import get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import artifacts_json_cache, save_json
+from .utils import artifacts_json_cache, json_dump, save_to_file
 
 logger = get_logger()
 settings = get_settings()
@@ -279,9 +279,12 @@ class Artifact(Dataclass):
     def _to_raw_dict(self):
         return {"__type__": self.__type__, **self._init_dict}
 
-    def save(self, path):
+    def to_json(self):
         data = self.to_dict()
-        save_json(path, data)
+        return json_dump(data)
+
+    def save(self, path):
+        save_to_file(path, self.to_json())
 
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
@@ -404,13 +407,27 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-def fetch_artifact(name):
-    if Artifact.is_artifact_file(name):
-        return Artifact.load(name), None
+def fetch_artifact(artifact_rep):
+    if isinstance(artifact_rep, Artifact):
+        return artifact_rep, None
+    if Artifact.is_artifact_file(artifact_rep):
+        return Artifact.load(artifact_rep), None
 
-    artifactory, name, args = get_artifactory_name_and_args(name=name)
+    try:
+        artifactory, artifact_rep, args = get_artifactory_name_and_args(
+            name=artifact_rep
+        )
+    except UnitxtArtifactNotFoundError as e:
+        try:
+            data = json.loads(artifact_rep)
+            artifact = Artifact.from_dict(data)
+            return artifact, None
+        except Exception as json_error:
+            raise e from json_error
 
-    return artifactory.get_with_overwrite(name, overwrite_args=args), artifactory
+    return artifactory.get_with_overwrite(
+        artifact_rep, overwrite_args=args
+    ), artifactory
 
 
 def get_artifactory_name_and_args(
