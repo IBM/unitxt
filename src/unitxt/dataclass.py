@@ -175,7 +175,7 @@ def get_fields(cls, attrs):
 
         args = {
             "name": field_name,
-            "__type__": field_type,
+            "type": field_type,
             "origin_cls": attrs["__qualname__"],
         }
 
@@ -187,7 +187,7 @@ def get_fields(cls, attrs):
                 args = {
                     "default": field.default,
                     "name": field.name,
-                    "__type__": field.type,
+                    "type": field.type,
                     "init": field.init,
                     "default_factory": field.default_factory,
                     **args,
