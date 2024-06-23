@@ -6,6 +6,7 @@ from unitxt.operators import CastFields, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
+    ExtractArenaHardNumericalJudgment,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
@@ -356,21 +357,15 @@ add_to_catalog(
     overwrite=True,
 )
 
+
 add_to_catalog(
     SequentialOperator(
         steps=[
-            RegexParser(
+            ExtractArenaHardNumericalJudgment(
                 field="prediction",
-                regex=r"\[\[([AB<>=]+)\]\]",
-                process_every_value=False,
-            ),
-            RegexParser(
-                field="prediction",
-                regex=r"\[\[([AB<>=]+)\]\]",
-                process_every_value=False,
             ),
         ]
     ),
-    "processors.regex_parser_arena_hard_output",
+    "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
 )
