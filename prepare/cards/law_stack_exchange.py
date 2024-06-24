@@ -43,15 +43,9 @@ card = TaskCard(
         RenameFields(field_to_field={"text_label": "label"}),
         ListFieldValues(fields=["title", "body"], to_field="text"),
         JoinStr(separator=". ", field="text", to_field="text"),
-        Set(
-            fields={
-                "classes": classlabels,
-                "text_type": "text",
-                "type_of_class": "topic",
-            }
-        ),
+        Set(fields={"classes": classlabels}),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "flags": ["law", "stackexchange"],

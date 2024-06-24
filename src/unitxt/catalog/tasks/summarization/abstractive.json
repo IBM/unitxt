@@ -10,5 +10,8 @@
     "prediction_type": "str",
     "metrics": [
         "metrics.rouge"
-    ]
+    ],
+    "defaults": {
+        "document_type": "document"
+    }
 }
