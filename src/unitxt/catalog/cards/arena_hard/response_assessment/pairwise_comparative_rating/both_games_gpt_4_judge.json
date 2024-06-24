@@ -60,6 +60,12 @@
             "add_origin_stream_name": false
         },
         {
+            "__type__": "delete_splits",
+            "splits": [
+                "game_2"
+            ]
+        },
+        {
             "__type__": "map_instance_values",
             "mappers": {
                 "answer_a_preference": {

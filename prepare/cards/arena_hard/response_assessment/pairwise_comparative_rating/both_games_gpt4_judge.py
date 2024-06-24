@@ -8,7 +8,7 @@ from unitxt.operators import (
     MergeStreams,
     RenameFields,
 )
-from unitxt.stream_operators import DuplicateSplit
+from unitxt.stream_operators import DeleteSplits, DuplicateSplit
 from unitxt.test_utils.card import test_card
 
 score_mapper = {"A=B": 0, "A>B": 1, "A>>B": 3, "B>A": -1, "B>>A": -3}
@@ -56,6 +56,7 @@ card = TaskCard(
             new_stream_name="test",
             add_origin_stream_name=False,
         ),
+        DeleteSplits(splits=["game_2"]),
         MapInstanceValues(
             {
                 "answer_a_preference": score_mapper,
