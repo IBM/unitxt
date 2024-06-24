@@ -1,5 +1,7 @@
+from unitxt.api import evaluate
 from unitxt.fusion import FixedFusion, WeightedFusion
 from unitxt.operators import IterableSource
+from unitxt.standard import StandardRecipe
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -303,3 +305,31 @@ class TestFusion(UnitxtTestCase):
         # check_operator(
         # operator, inputs=None, targets=targets, tester=self, sort_outputs_by="x"
         # )
+
+    def test_end_to_end(self):
+        dataset = WeightedFusion(
+            origins={
+                "wnli": StandardRecipe(
+                    card="cards.wnli",
+                    template="templates.classification.multi_class.relation.default",
+                ),
+                "rte": StandardRecipe(
+                    card="cards.rte",
+                    template="templates.classification.multi_class.relation.default",
+                ),
+                "stsb": StandardRecipe(
+                    card="cards.stsb", template="templates.regression.two_texts.title"
+                ),
+            },
+            weights={"wnli": 1, "rte": 1, "stsb": 1},
+            max_total_examples=30,
+        )().to_dataset()
+        predictions = ["not entailment"] * 20 + ["2"] * 10
+        result = evaluate(predictions=predictions, data=dataset["test"])
+
+        self.assertEqual(result[0]["score"]["global"]["rte"]["score"], 0.5)
+        self.assertEqual(result[0]["score"]["global"]["wnli"]["score"], 0.5)
+        self.assertAlmostEqual(
+            result[0]["score"]["global"]["stsb"]["score"], 0.046, places=3
+        )
+        self.assertAlmostEqual(result[0]["score"]["global"]["score"], 0.349, places=3)
