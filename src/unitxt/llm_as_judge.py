@@ -109,9 +109,6 @@ class LLMAsJudge(BulkInstanceMetric):
         return instances
 
     def prepare(self):
-        assert (
-            not self.pairwise_comparison_include_swapped_positions
-        ), "Feature not yet fully implemented"
         super().prepare()
         if self.task == "pairwise_comparative_rating.single_turn":
             self.reduction_map = {"weighted_win_rate": [self.main_score]}
