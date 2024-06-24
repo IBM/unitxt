@@ -150,6 +150,7 @@ def is_made_of_sub_strings(string, sub_strings):
 # It also prepares for the case that  __description__ tag does not contain balanced
 # parentheses, since it is often cut in the middle, (with  "... see more at")
 # flake8: noqa: B007
+# flake8: noqa: C901
 def lines_defining_obj_in_card(
     all_lines: List[str], obj_name: str, start_search_at_line: int = 0
 ) -> Tuple[int, int]:
@@ -165,25 +166,53 @@ def lines_defining_obj_in_card(
     ending_line = starting_line - 1
     while ending_line < len(all_lines):
         ending_line += 1
-        num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))
-        num_of_closes += len(re.findall(r"[)}\]]", all_lines[ending_line]))
-        if num_of_closes == num_of_opens:
-            break
+
         if "__description__" in all_lines[ending_line]:
-            # can not trust parentheses inside description.
-            # trust the indentation enforced by ruff, and the way we build __description__:
+            # can not trust parentheses inside description, because this is mainly truncated
+            # free text.
+            # We do trust the indentation enforced by ruff, and the way we build __description__:
             # a line consisting of only __description__=(
             # followed by one or more lines of text, can not trust opens and closes
             # in them, followed by a line consisting of only:  ),
             # where the ) is indented with the beginning of __description__
+            # We also prepare for the case that, when not entered by us, __description__=
+            # is not followed by a ( and the whole description does not end with a single ) in its line.
+            # We build on ruff making the line following the description start with same indentation
+            # or 4 less (i.e., the following line is the closing of the card).
             tag_indentation = all_lines[ending_line].index("__description__")
-            last_line_to_start_with = (" " * tag_indentation) + ")"
-            while not all_lines[ending_line].startswith(last_line_to_start_with):
+            starts_with_parent = "__description__=(" in all_lines[ending_line]
+            if starts_with_parent:
+                last_line_to_start_with = (" " * tag_indentation) + r"\)"
+            else:
+                # actually, the line that follows the description
+                last_line_to_start_with1 = (" " * tag_indentation) + "[^ ]"
+                last_line_to_start_with2 = (" " * (tag_indentation - 4)) + "[^ ]"
+                last_line_to_start_with = (
+                    "("
+                    + last_line_to_start_with1
+                    + "|"
+                    + last_line_to_start_with2
+                    + ")"
+                )
+            ending_line += 1
+            while not re.search("^" + last_line_to_start_with, all_lines[ending_line]):
                 ending_line += 1
             if "__description__" in obj_name:
-                return (starting_line, ending_line)
-            num_of_closes += 1  # for this last line of desc
-            # continue to the line following the end of description
+                return (
+                    starting_line,
+                    ending_line if starts_with_parent else ending_line - 1,
+                )
+
+            if starts_with_parent:
+                ending_line += 1
+
+            # we conrinue in card, having passed the description, ending line points
+            # to the line that follows description
+
+        num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))
+        num_of_closes += len(re.findall(r"[)}\]]", all_lines[ending_line]))
+        if num_of_closes == num_of_opens:
+            break
 
     if num_of_closes != num_of_opens:
         raise ValueError(
