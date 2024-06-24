@@ -17,5 +17,8 @@
     ],
     "augmentable_inputs": [
         "text"
-    ]
+    ],
+    "defaults": {
+        "text_type": "text"
+    }
 }

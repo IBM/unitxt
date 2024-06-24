@@ -19,6 +19,7 @@
         "text"
     ],
     "defaults": {
-        "text_type": "text"
+        "text_type": "text",
+        "type_of_class": "topic"
     }
 }

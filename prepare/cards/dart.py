@@ -16,7 +16,7 @@ card = TaskCard(
         SerializeTriples(field_to_field=[["tripleset", "serialized_triples"]]),
         RenameFields(field_to_field={"serialized_triples": "input"}),
         Copy(field="annotations/text/0", to_field="output"),
-        Set(fields={"type_of_input": "Triples", "type_of_output": "Text"}),
+        Set(fields={"type_of_input": "Triples"}),
     ],
     task="tasks.generation",
     templates="templates.generation.all",
