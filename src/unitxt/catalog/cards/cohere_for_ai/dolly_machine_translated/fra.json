@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "CohereForAI/aya_evaluation_suite",
         "name": "dolly_machine_translated",
         "streaming": true,
@@ -9,7 +9,7 @@
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "test[90%]",
                 "validation": "test[5%]",
@@ -17,14 +17,14 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "inputs": "question",
                 "targets": "answers"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "answers"
             ],

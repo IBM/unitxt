@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "list_to_empty_entities_tuples",
+            "__type__": "list_to_empty_entities_tuples",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "list_to_empty_entities_tuples",
+            "__type__": "list_to_empty_entities_tuples",
             "field": "references",
             "process_every_value": true
         }

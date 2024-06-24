@@ -1,5 +1,5 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": null,
     "preprocess_steps": [],
     "task": "tasks.response_assessment.rating.single_turn_with_reference"

@@ -1,5 +1,5 @@
 {
-    "type": "huggingface_metric",
+    "__type__": "huggingface_metric",
     "hf_metric_name": "src/metrics/regard",
     "main_score": "regard",
     "hf_main_score": "score",

@@ -1,20 +1,20 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "GEM/xlsum",
         "name": "oromo"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "text": "document",
                 "target": "summary"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "document_type": "document"
             }
