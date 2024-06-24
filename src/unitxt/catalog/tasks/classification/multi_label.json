@@ -1,5 +1,5 @@
 {
-    "type": "task",
+    "__type__": "task",
     "inputs": {
         "text": "str",
         "text_type": "str",
@@ -19,7 +19,6 @@
         "text"
     ],
     "defaults": {
-        "text_type": "text",
-        "type_of_classes": "topics"
+        "text_type": "text"
     }
 }

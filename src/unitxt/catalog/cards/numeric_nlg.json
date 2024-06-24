@@ -1,29 +1,29 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "kasnerz/numericnlg"
     },
     "preprocess_steps": [
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "type_of_input": "table",
                 "type_of_output": "description"
             }
         },
         {
-            "type": "map_html_table_to_json",
+            "__type__": "map_html_table_to_json",
             "field": "table_html_clean",
             "to_field": "table_out"
         },
         {
-            "type": "serialize_table_as_markdown",
+            "__type__": "serialize_table_as_markdown",
             "field": "table_out",
             "to_field": "input"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field": "description",
             "to_field": "output"
         }

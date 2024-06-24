@@ -1,8 +1,8 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "extract_with_regex",
+            "__type__": "extract_with_regex",
             "regex": "\\[\\[(.*?)\\]\\]",
             "field": "prediction",
             "process_every_value": false

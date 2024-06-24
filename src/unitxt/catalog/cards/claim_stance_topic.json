@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "ibm/claim_stance",
         "name": "claim_stance_topic"
     },
     "preprocess_steps": [
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "advertising",
@@ -70,7 +70,7 @@
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "language": "en",

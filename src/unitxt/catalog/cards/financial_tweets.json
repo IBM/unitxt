@@ -1,16 +1,16 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "zeroshot/twitter-financial-news-topic"
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[85%]",
                 "validation": "train[15%]",
@@ -18,7 +18,7 @@
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "analyst update",
@@ -45,7 +45,7 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "analyst update",
@@ -73,7 +73,7 @@
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "annotations_creators": "other",

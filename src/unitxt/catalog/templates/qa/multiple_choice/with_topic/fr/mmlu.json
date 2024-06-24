@@ -1,5 +1,5 @@
 {
-    "type": "multiple_choice_template",
+    "__type__": "multiple_choice_template",
     "input_format": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n{question}.\nRéponses \n{choices}.\nRéponse:",
     "target_field": "answer",
     "choices_separator": "\n",

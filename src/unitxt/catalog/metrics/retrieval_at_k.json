@@ -1,5 +1,5 @@
 {
-    "type": "retrieval_at_k",
+    "__type__": "retrieval_at_k",
     "k_list": [
         1,
         3,

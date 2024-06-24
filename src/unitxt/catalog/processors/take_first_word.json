@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "take_first_word",
+            "__type__": "take_first_word",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "take_first_word",
+            "__type__": "take_first_word",
             "field": "references",
             "process_every_value": true
         }

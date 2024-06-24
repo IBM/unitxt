@@ -53,7 +53,7 @@ for subset, url in subset_and_urls.items():
             MapInstanceValues(mappers={"label": mappers[subset]}),
             Set(fields={"classes": list(mappers[subset].values())}),
         ],
-        task="tasks.classification.multi_class",
+        task="tasks.classification.multi_class.topic_classification",
         templates="templates.classification.multi_class.all",
     )
     test_card(card, debug=False)

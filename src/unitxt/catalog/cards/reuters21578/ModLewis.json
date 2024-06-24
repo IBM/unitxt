@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "reuters21578",
         "name": "ModLewis"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[85%]",
                 "validation": "train[15%]",
@@ -15,13 +15,13 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "topics": "labels"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "acq",
@@ -142,7 +142,8 @@
                     "wpi",
                     "yen",
                     "zinc"
-                ]
+                ],
+                "type_of_classes": "topics"
             }
         }
     ],

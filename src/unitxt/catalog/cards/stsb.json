@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "glue",
         "name": "stsb"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[95%]",
                 "validation": "train[5%]",
@@ -15,7 +15,7 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "sentence1": "text1",
                 "sentence2": "text2",
@@ -23,14 +23,14 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "min_value": 1.0,
                 "max_value": 5.0
             }
         }
     ],
-    "task": "tasks.regression.two_texts",
+    "task": "tasks.regression.two_texts.similarity",
     "templates": "templates.regression.two_texts.all",
     "__tags__": {
         "annotations_creators": "other",

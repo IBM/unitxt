@@ -46,7 +46,7 @@ card = TaskCard(
         MapInstanceValues(mappers={"label": map_labels}),
         Set(fields={"classes": list(map_labels.values())}),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={"region": "us"},
     __description__=(

@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "extract_safe_unsafe_judgment",
+            "__type__": "extract_safe_unsafe_judgment",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "extract_safe_unsafe_judgment",
+            "__type__": "extract_safe_unsafe_judgment",
             "field": "references",
             "process_every_value": true
         }

@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_from_hf_space",
+        "__type__": "load_from_hf_space",
         "space_name": "lmsys/mt-bench",
         "revision": "a4b674c",
         "data_files": {
@@ -13,21 +13,21 @@
     "preprocess_steps": [
         "operators.mt_bench.pairwise_hf_space_processing_steps",
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "turn": 1
             },
             "condition": "eq"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "reference": null
             },
             "condition": "ne"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "winner": [
                     "model_1",
@@ -38,7 +38,7 @@
             "condition": "in"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "winner": {
                     "model_1": "choice_a",
@@ -48,7 +48,7 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -58,22 +58,22 @@
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "question/0",
             "to_field": "question"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "answer_a/0",
             "to_field": "answer_a"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "answer_b/0",
             "to_field": "answer_b"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "reference_answer/0",
             "to_field": "reference_answer"
         }

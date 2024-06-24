@@ -1,5 +1,5 @@
 {
-    "type": "augment_prefix_suffix",
+    "__type__": "augment_prefix_suffix",
     "augment_task_input": true,
     "prefixes": {
         " ": 20,

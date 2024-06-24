@@ -1,11 +1,10 @@
 from unitxt import get_logger
-from unitxt.api import evaluate
+from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
-from unitxt.standard import StandardRecipe
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 
 logger = get_logger()
@@ -44,7 +43,7 @@ card = TaskCard(
 )
 
 # Verbalize the dataset using the template
-dataset = StandardRecipe(card=card, template_card_index="simple")().to_dataset()
+dataset = load_dataset(card=card, template_card_index="simple")
 test_dataset = dataset["test"]
 
 
