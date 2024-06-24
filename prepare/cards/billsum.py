@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import Set, TaskCard
+from unitxt.blocks import TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.operators import RenameFields
 from unitxt.splitters import SplitRandomMix
@@ -13,7 +13,6 @@ card = TaskCard(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
         RenameFields(field_to_field={"text": "document"}),
-        Set(fields={"document_type": "document"}),
     ],
     task="tasks.summarization.abstractive",
     templates="templates.summarization.abstractive.all",

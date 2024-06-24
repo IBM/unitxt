@@ -29,8 +29,7 @@
         {
             "__type__": "set",
             "fields": {
-                "type_of_input": "Triples",
-                "type_of_output": "Text"
+                "type_of_input": "Triples"
             }
         }
     ],
