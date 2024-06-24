@@ -177,18 +177,13 @@ class LoadHF(Loader):
                 self._requirements_list.append(requirement)
         super().verify()
 
-    def filtered_load(self, dataset):
+    def filter_load(self, dataset):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
             )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
-        return MultiStream(
-            {
-                name: dataset[name].filter(eval(self.filtering_lambda))
-                for name in dataset
-            }
-        )
+        return dataset.filter(eval(self.filtering_lambda))
 
     def stream_dataset(self):
         if self._cache is None:
@@ -211,15 +206,16 @@ class LoadHF(Loader):
                         ) from e
                     raise e
 
-            if self.filtering_lambda is not None:
-                dataset = self.filtered_load(dataset)
-
             if self.split is not None:
                 dataset = {self.split: dataset}
 
             self._cache = dataset
+
         else:
             dataset = self._cache
+
+        if self.filtering_lambda is not None:
+            dataset = self.filter_load(dataset)
 
         return dataset
 
@@ -244,9 +240,6 @@ class LoadHF(Loader):
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
 
-            if self.filtering_lambda is not None:
-                dataset = self.filtered_load(dataset)
-
             if self.split is None:
                 for split in dataset.keys():
                     dataset[split] = dataset[split].to_iterable_dataset()
@@ -254,20 +247,25 @@ class LoadHF(Loader):
                 dataset = {self.split: dataset}
 
             self._cache = dataset
+
         else:
             dataset = self._cache
 
+        if self.filtering_lambda is not None:
+            dataset = self.filter_load(dataset)
+
         return dataset
 
-    def split_limited_load(self, split_name):
-        yield from itertools.islice(self._cache[split_name], self.get_limit())
+    def split_limited_load(self, dataset, split_name):
+        yield from itertools.islice(dataset[split_name], self.get_limit())
 
-    def limited_load(self):
+    def limited_load(self, dataset):
         self.log_limited_loading()
         return MultiStream(
             {
                 name: DynamicStream(
-                    generator=self.split_limited_load, gen_kwargs={"split_name": name}
+                    generator=self.split_limited_load,
+                    gen_kwargs={"dataset": dataset, "split_name": name},
                 )
                 for name in self._cache.keys()
             }
@@ -290,7 +288,7 @@ class LoadHF(Loader):
             dataset = self.load_dataset()
 
         if self.get_limit() is not None:
-            return self.limited_load()
+            return self.limited_load(dataset=dataset)
 
         return MultiStream.from_iterables(dataset)
 
