@@ -526,6 +526,7 @@ class TestRecipes(UnitxtTestCase):
             dataset_file,
             "type=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
             streaming=True,
+            trust_remote_code=True,
         )
 
         iterator = iter(d["train"])

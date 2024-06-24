@@ -1399,7 +1399,7 @@ class ComputeExpressionMixin(Artifact):
             return eval(self.expression, self.globals, instance)
 
         raise ValueError(
-            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+            f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
         )
 
 

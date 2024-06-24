@@ -178,6 +178,10 @@ class LoadHF(Loader):
         super().verify()
 
     def filtered_load(self, dataset):
+        if not settings.allow_unverified_code:
+            raise ValueError(
+                f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+            )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return MultiStream(
             {
