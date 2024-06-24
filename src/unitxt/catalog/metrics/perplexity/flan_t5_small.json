@@ -1,5 +1,5 @@
 {
-    "type": "perplexity",
+    "__type__": "perplexity",
     "model_name": "google/flan-t5-small",
     "source_template": "Complete the given content: {reference}",
     "target_template": "{prediction}"

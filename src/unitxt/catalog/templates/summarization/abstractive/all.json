@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.summarization.abstractive.formal",
         "templates.summarization.abstractive.formal_without_label",

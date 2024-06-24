@@ -1,20 +1,20 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "sacrebleu",
     "preprocess_steps": [
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "task_data/target_language",
             "to_field": "task_data/tokenize",
             "not_exist_ok": true,
             "get_default": "en"
         },
         {
-            "type": "lower_case",
+            "__type__": "lower_case",
             "field": "task_data/tokenize"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "task_data/tokenize": {
                     "german": null,
@@ -42,6 +42,6 @@
         }
     ],
     "metric": {
-        "type": "normalized_sacrebleu"
+        "__type__": "normalized_sacrebleu"
     }
 }

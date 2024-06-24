@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "openai_humaneval",
         "split": "test"
     },
     "preprocess_steps": [
         {
-            "type": "execute_expression",
+            "__type__": "execute_expression",
             "expression": "[t for t in re.findall(r\"assert.*?(?=\\n\\s*assert|$)\", test.replace(\"candidate\", entry_point), re.DOTALL)]",
             "imports_list": [
                 "re"
@@ -16,7 +16,7 @@
         }
     ],
     "task": {
-        "type": "task",
+        "__type__": "task",
         "inputs": [
             "prompt"
         ],
@@ -30,10 +30,10 @@
         ]
     },
     "templates": {
-        "type": "templates_list",
+        "__type__": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "__type__": "input_output_template",
                 "input_format": "{prompt}\n",
                 "output_format": "{prompt}\n{canonical_solution}"
             }

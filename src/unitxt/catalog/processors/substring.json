@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "substring",
+            "__type__": "substring",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "substring",
+            "__type__": "substring",
             "field": "references",
             "process_every_value": true
         }

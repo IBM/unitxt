@@ -1,12 +1,11 @@
 from unitxt import get_logger
-from unitxt.api import evaluate
+from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
-from unitxt.standard import StandardRecipe
 
 logger = get_logger()
 
@@ -39,7 +38,7 @@ card = TaskCard(
 #  What is the color of the sky?
 #  Answer:
 # "
-dataset = StandardRecipe(card=card, template="templates.qa.open.title")().to_dataset()
+dataset = load_dataset(card=card, template="templates.qa.open.title")
 test_dataset = dataset["test"]
 
 

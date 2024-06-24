@@ -117,13 +117,7 @@ card = TaskCard(
             get_default=[],
             not_exist_ok=True,
         ),
-        Set(
-            fields={
-                "text_type": "text",
-                "class_type": "entity type",
-                "classes": classes,
-            }
-        ),
+        Set(fields={"classes": classes}),
     ],
     task="tasks.span_labeling.extraction",
     templates="templates.span_labeling.extraction.all",

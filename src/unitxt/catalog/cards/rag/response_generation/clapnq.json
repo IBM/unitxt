@@ -1,19 +1,19 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "PrimeQA/clapnq"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train",
                 "test": "validation"
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "passages/*/text": "contexts",
                 "input": "question",
@@ -21,7 +21,7 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "contexts_ids": []
             }

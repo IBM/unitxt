@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "sciq"
     },
     "preprocess_steps": [
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "distractor1",
                 "distractor2",
@@ -16,23 +16,23 @@
             "to_field": "choices"
         },
         {
-            "type": "shuffle_field_values",
+            "__type__": "shuffle_field_values",
             "field": "choices"
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "search_in": "choices",
             "index_of": "correct_answer",
             "to_field": "answer"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "support": "context"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "paragraph"
             }

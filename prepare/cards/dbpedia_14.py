@@ -46,11 +46,10 @@ card = TaskCard(
             fields={
                 "classes": classes,
                 "text_type": "paragraph",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "machine-generated",

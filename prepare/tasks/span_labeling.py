@@ -20,6 +20,7 @@ add_to_catalog(
             "metrics.ner",
         ],
         augmentable_inputs=["text"],
+        defaults={"text_type": "text", "class_type": "entity type"},
     ),
     "tasks.span_labeling.extraction",
     overwrite=True,

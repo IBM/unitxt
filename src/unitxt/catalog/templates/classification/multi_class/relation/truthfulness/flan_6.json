@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "question: \"{text_a}\" is true.\nSo, is \"{text_b}\" true as well?\n",
     "output_format": "{label}\n",
     "target_prefix": "prediction: ",

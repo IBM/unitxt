@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.targeted_sentiment_extraction.negative.sentiment_extracted",
         "templates.targeted_sentiment_extraction.negative.having_sentiment",

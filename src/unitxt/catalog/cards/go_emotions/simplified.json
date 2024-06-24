@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "go_emotions",
         "name": "simplified"
     },
     "preprocess_steps": [
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "labels": {
                     "0": "admiration",
@@ -43,7 +43,7 @@
             "process_every_value": true
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "admiration",
@@ -75,7 +75,6 @@
                     "surprise",
                     "neutral"
                 ],
-                "text_type": "text",
                 "type_of_classes": "emotions"
             }
         }
