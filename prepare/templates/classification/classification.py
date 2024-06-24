@@ -57,17 +57,64 @@ add_to_catalog(
 )
 
 add_to_catalog(
+    InputOutputTemplate(
+        instruction="What is the {type_of_class} expressed in the following {text_type}?\nSelect one out of the following options: {classes}.",
+        input_format="{text_type}:\n{text}\n{type_of_class}: ",
+        output_format="{label}",
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case_till_punc",
+        ],
+    ),
+    "templates.classification.multi_class.instruct_question_selects",
+    overwrite=True,
+)
+
+add_to_catalog(
+    InputOutputTemplate(
+        instruction="What is the {type_of_class} expressed in the following {text_type}?\nSelect one out of the following options: {classes}.",
+        input_format="{text_type}: {text}\nI think the {type_of_class} is ",
+        output_format="{label}",
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case_till_punc",
+        ],
+    ),
+    "templates.classification.multi_class.instruct_question_select_i_think",
+    overwrite=True,
+)
+
+add_to_catalog(
+    InputOutputTemplate(
+        instruction="Select one out of the following options: {classes}. What is the {type_of_class} in this {text_type}?",
+        input_format="{text_type}: {text}\n{type_of_class}: ",
+        output_format="{label}",
+        postprocessors=[
+            "processors.take_first_non_empty_line",
+            "processors.lower_case_till_punc",
+        ],
+    ),
+    "templates.classification.multi_class.instruct_select_question",
+    overwrite=True,
+)
+
+
+add_to_catalog(
     TemplatesList(
         [
             "templates.classification.multi_class.default",
             "templates.classification.multi_class.instruction",
             "templates.classification.multi_class.title",
             "templates.classification.multi_class.empty",
+            "templates.classification.multi_class.instruct_question_selects",
+            "templates.classification.multi_class.instruct_question_select_i_think",
+            "templates.classification.multi_class.instruct_select_question",
         ]
     ),
     "templates.classification.multi_class.all",
     overwrite=True,
 )
+
 
 # Multi label
 
