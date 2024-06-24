@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "lex_glue",
         "name": "unfair_tos"
     },
     "preprocess_steps": [
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "labels": {
                     "0": "Limitation of liability",
@@ -23,7 +23,7 @@
             "process_every_value": true
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "Limitation of liability",
@@ -41,7 +41,7 @@
         }
     ],
     "sampler": {
-        "type": "diverse_labels_sampler",
+        "__type__": "diverse_labels_sampler",
         "choices": "classes",
         "labels": "labels"
     },

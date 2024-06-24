@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.translation.directed.simple",
         "templates.translation.directed.formal",

@@ -1,5 +1,5 @@
 {
-    "type": "length_balancer",
+    "__type__": "length_balancer",
     "fields": [
         "outputs/labels"
     ],

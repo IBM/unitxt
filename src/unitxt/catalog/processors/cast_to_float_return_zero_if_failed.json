@@ -1,8 +1,8 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "prediction": "float"
             },
@@ -11,7 +11,7 @@
             }
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "references": "float"
             },

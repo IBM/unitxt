@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "Question:\nSA: \"{text_a}\"\n\nSB: \"{text_b}\"\n\nIs SB true, based on SA?\n",
     "output_format": "{label}",
     "target_prefix": "Answer: ",

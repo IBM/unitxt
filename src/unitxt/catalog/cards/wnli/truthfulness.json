@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "glue",
         "name": "wnli"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[95%]",
                 "validation": "train[5%]",
@@ -15,17 +15,17 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field": "sentence1",
             "to_field": "text_a"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field": "sentence2",
             "to_field": "text_b"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "yes",
@@ -34,7 +34,7 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "yes",
@@ -43,19 +43,19 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "type_of_relation": "truthfulness"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "text_a_type": "premise"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "text_b_type": "hypothesis"
             }

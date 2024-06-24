@@ -41,7 +41,7 @@ def all_subtypes_of_artifact(artifact):
     to_return = []
     for key, value in artifact.items():
         if isinstance(value, str):
-            if key == "type":
+            if key == "__type__":
                 to_return.append(value)
         else:
             to_return.extend(all_subtypes_of_artifact(value))
@@ -50,7 +50,7 @@ def all_subtypes_of_artifact(artifact):
 
 # flake8: noqa: C901
 def make_content(artifact, label, all_labels):
-    artifact_type = artifact["type"]
+    artifact_type = artifact["__type__"]
     artifact_class = Artifact._class_register.get(artifact_type)
     type_class_name = artifact_class.__name__
     artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"

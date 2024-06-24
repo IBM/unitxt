@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "Problem: If \"{text_a}\", does it follow that \"{text_b}\"?\n",
     "output_format": "Answer: {label}\n",
     "postprocessors": [

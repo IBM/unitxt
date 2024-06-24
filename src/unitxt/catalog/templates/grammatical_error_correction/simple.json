@@ -1,5 +1,5 @@
 {
-    "type": "multi_reference_template",
+    "__type__": "multi_reference_template",
     "instruction": "Make the minimal amount of changes to correct grammar and spelling errors in the following text.\n",
     "input_format": "Original text: {original_text}",
     "references_field": "corrected_texts",
