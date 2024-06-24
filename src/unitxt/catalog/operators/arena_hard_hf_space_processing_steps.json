@@ -1,8 +1,8 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "cluster": "group"
             },
@@ -11,7 +11,7 @@
             ]
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "turns/0/content": "model_input"
             },
@@ -20,7 +20,7 @@
             ]
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "choices/0/turns/0/content": "model_output",
                 "choices/0/turns/0/token_len": "model_output_token_len"
@@ -30,7 +30,7 @@
             ]
         },
         {
-            "type": "apply",
+            "__type__": "apply",
             "function": "str.lower",
             "to_field": "model_id",
             "apply_to_streams": [
@@ -41,7 +41,7 @@
             ]
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "games/0/user_prompt": "judge_input_model_1_ordered_first",
                 "games/1/user_prompt": "judge_input_model_2_ordered_first",
@@ -55,7 +55,7 @@
             ]
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model": "model_2",
                 "judge": "judge_model_id"
@@ -65,7 +65,7 @@
             ]
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "model_1": "gpt-4-0314"
             },
@@ -74,7 +74,7 @@
             ]
         },
         {
-            "type": "apply",
+            "__type__": "apply",
             "function": "builtins.str",
             "to_field": "judge_input_model_1_ordered_first",
             "apply_to_streams": [
@@ -85,7 +85,7 @@
             ]
         },
         {
-            "type": "apply",
+            "__type__": "apply",
             "function": "builtins.str",
             "to_field": "judge_input_model_2_ordered_first",
             "apply_to_streams": [
@@ -96,7 +96,7 @@
             ]
         },
         {
-            "type": "apply",
+            "__type__": "apply",
             "function": "str.lower",
             "to_field": "model_1",
             "apply_to_streams": [
@@ -107,7 +107,7 @@
             ]
         },
         {
-            "type": "apply",
+            "__type__": "apply",
             "function": "str.lower",
             "to_field": "model_2",
             "apply_to_streams": [
@@ -118,7 +118,7 @@
             ]
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "score_model_1_ordered_first": [
                     "A=B",
@@ -141,7 +141,7 @@
             ]
         },
         {
-            "type": "join_streams",
+            "__type__": "join_streams",
             "left_stream": "questions",
             "right_stream": "judgment",
             "how": "inner",
@@ -151,7 +151,7 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_id": "model_1",
                 "model_output": "model_1_output"
@@ -161,7 +161,7 @@
             ]
         },
         {
-            "type": "join_streams",
+            "__type__": "join_streams",
             "left_stream": "merged_stream",
             "right_stream": "model_answer",
             "how": "inner",
@@ -172,7 +172,7 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_1": "model_2",
                 "model_1_output": "model_2_output"
@@ -182,7 +182,7 @@
             ]
         },
         {
-            "type": "join_streams",
+            "__type__": "join_streams",
             "left_stream": "merged_stream",
             "right_stream": "model_answer",
             "how": "inner",
@@ -193,7 +193,7 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "type": "delete_splits",
+            "__type__": "delete_splits",
             "splits": [
                 "questions",
                 "model_answer",
@@ -201,13 +201,13 @@
             ]
         },
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "merged_stream": "test"
             }
         },
         {
-            "type": "select_fields",
+            "__type__": "select_fields",
             "fields": [
                 "question_id",
                 "category",

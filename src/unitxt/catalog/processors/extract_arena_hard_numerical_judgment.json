@@ -1,8 +1,8 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "extract_arena_hard_numerical_judgment",
+            "__type__": "extract_arena_hard_numerical_judgment",
             "field": "prediction"
         }
     ]
