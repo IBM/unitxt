@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_from_hf_space",
+        "__type__": "load_from_hf_space",
         "space_name": "lmsys/arena-hard-browser",
         "revision": "03b91ca",
         "data_files": {
@@ -16,12 +16,12 @@
     "preprocess_steps": [
         "operators.arena_hard_hf_space_processing_steps",
         {
-            "type": "duplicate_split",
+            "__type__": "duplicate_split",
             "split": "test",
             "to_split": "game_2"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -36,7 +36,7 @@
             ]
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_b",
@@ -51,7 +51,7 @@
             ]
         },
         {
-            "type": "merge_streams",
+            "__type__": "merge_streams",
             "streams_to_merge": [
                 "test",
                 "game_2"
@@ -60,7 +60,7 @@
             "add_origin_stream_name": false
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "answer_a_preference": {
                     "A=B": 0,
