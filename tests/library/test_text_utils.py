@@ -106,3 +106,26 @@ class TestTextUtils(UnitxtTestCase):
         )
         self.assertEqual("        card = TaskCard(\n", all_lines[starting])
         self.assertEqual("        )\n", all_lines[ending])
+
+        starting_desc_in_card, ending_desc_in_card = lines_defining_obj_in_card(
+            all_lines=all_lines[starting:ending],
+            obj_name="__description__",
+        )
+        self.assertIn("__description__=(", all_lines[starting + starting_desc_in_card])
+
+        # now test with __description__ that does not open with ( nor ends with a
+        # closing ) that is alone in its line
+        with open("prepare/cards/numeric_nlg.py") as fp:
+            all_lines = fp.readlines()
+        starting, ending = lines_defining_obj_in_card(
+            all_lines=all_lines, obj_name="TaskCard("
+        )
+        self.assertEqual("card = TaskCard(\n", all_lines[starting])
+        self.assertEqual(")\n", all_lines[ending])
+
+        starting_desc_in_card, ending_desc_in_card = lines_defining_obj_in_card(
+            all_lines=all_lines[starting:ending],
+            obj_name="__description__",
+        )
+        self.assertEqual(starting_desc_in_card, ending_desc_in_card)
+        self.assertIn("__description__=", all_lines[starting + starting_desc_in_card])

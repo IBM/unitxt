@@ -16,11 +16,17 @@ The primary task in any operator development is to implement the `process` funct
 
 General or Specelized Operators
 --------------------------------
-Some operators are specielized in specific task such as:
+Some operators are specielized in specific data or specific operations such as:
 
-- :class:`loaders<unitxt.loaders>` for loading data.
+- :class:`loaders<unitxt.loaders>` for accessing data from various sources.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
+- :class:`stream_operators<unitxt.stream_operators>` for changing joining and mixing streams.
 - :class:`struct_data_operators<unitxt.struct_data_operators>` for structured data operators.
+- :class:`collections_operators<unitxt.collections_operators>` for handling collections such as lists and dictionaries.
+- :class:`dialog_operators<unitxt.dialog_operators>` for handling dialogs.
+- :class:`string_operators<unitxt.string_operators>` for handling strings.
+- :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
+- :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
 Other specelized operators are used by unitxt internally:
 

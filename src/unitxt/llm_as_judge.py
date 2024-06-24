@@ -136,7 +136,10 @@ class LLMAsJudge(BulkInstanceMetric):
         verdicts = self.inference_model.infer(dataset)
         meta_scores = evaluate(predictions=verdicts, data=dataset)
         return [
-            {self.main_score: instance["prediction"], "judge_raw_output": verdict}
+            {
+                self.main_score: instance["processed_prediction"],
+                "judge_raw_output": verdict,
+            }
             for instance in meta_scores
             for verdict in verdicts
         ]
