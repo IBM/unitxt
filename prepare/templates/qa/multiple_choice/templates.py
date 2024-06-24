@@ -212,6 +212,18 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="Question: {question}\n{choices}\n",
+        target_prefix="Answer: ",
+        target_field="answer",
+        choices_separator="\n",
+        postprocessors=["processors.first_character"],
+    ),
+    "templates.qa.multiple_choice.helm",
+    overwrite=True,
+)
+
 # lm_eval_harness
 
 input_format = "Question: {question}\nChoices:\n{choices}\nAnswer:"
