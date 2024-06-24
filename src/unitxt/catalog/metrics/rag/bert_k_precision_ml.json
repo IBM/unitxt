@@ -1,14 +1,14 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "contexts",
             "to_field": "references"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "answer",
             "to_field": "prediction"
         }

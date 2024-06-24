@@ -120,7 +120,7 @@ class MissingArtifactTypeError(ValueError):
 class Artifact(Dataclass):
     _class_register = {}
 
-    type: str = Field(default=None, final=True, init=False)
+    __type__: str = Field(default=None, final=True, init=False)
     __description__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -135,7 +135,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "type" in d
+        return isinstance(d, dict) and "__type__" in d
 
     @classmethod
     def verify_artifact_dict(cls, d):
@@ -143,10 +143,10 @@ class Artifact(Dataclass):
             raise ValueError(
                 f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
             )
-        if "type" not in d:
+        if "__type__" not in d:
             raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["type"]):
-            raise UnrecognizedArtifactTypeError(d["type"])
+        if not cls.is_registered_type(d["__type__"]):
+            raise UnrecognizedArtifactTypeError(d["__type__"])
 
     @classmethod
     def get_artifact_type(cls):
@@ -212,7 +212,7 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            return cls._class_register[obj.pop("type")](**obj)
+            return cls._class_register[obj.pop("__type__")](**obj)
 
         return obj
 
@@ -261,7 +261,7 @@ class Artifact(Dataclass):
 
     @final
     def __post_init__(self):
-        self.type = self.register_class(self.__class__)
+        self.__type__ = self.register_class(self.__class__)
 
         for field in fields(self):
             if issubtype(
@@ -277,7 +277,7 @@ class Artifact(Dataclass):
             self.verify()
 
     def _to_raw_dict(self):
-        return {"type": self.type, **self._init_dict}
+        return {"__type__": self.__type__, **self._init_dict}
 
     def save(self, path):
         data = self.to_dict()

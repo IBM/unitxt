@@ -34,8 +34,9 @@ string class names as predictions.   The post processor may convert the string o
 (e.g. by splitting using a separator).
 
 2. **References** (`references` - optional):  This is a list of gold references, from the same type of the prediction.
-For example, in multi-label f1, it is the correct list of string class labels.
-The references are created by the template and converted to the the right type by the template's post processors.
+For example, if the prediction is a string, the references field are a list of strings.  If the prediction is 
+a list of strings (e.g in multi-label classification), then the references field is a *list* of lists of strings.  
+The metric should return a perfect score, if the prediction is equal to one of the references.
 
 3. **Task data** (`task_data` - optional) - all the input and output fields of a task as a dictionary.
 The input fields can be used to create reference-less metrics.

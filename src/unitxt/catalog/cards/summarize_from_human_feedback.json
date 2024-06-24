@@ -1,27 +1,27 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "openai/summarize_from_feedback",
         "name": "comparisons"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "info/post": "input",
                 "summaries/*/text": "choices"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "choice": "output_choice"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "input_type": "post",
                 "output_type": "summary",

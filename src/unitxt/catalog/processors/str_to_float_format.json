@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "str_to_float_format",
+            "__type__": "str_to_float_format",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "str_to_float_format",
+            "__type__": "str_to_float_format",
             "field": "references",
             "process_every_value": true
         }

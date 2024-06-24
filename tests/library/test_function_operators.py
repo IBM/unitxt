@@ -50,7 +50,7 @@ class TestFunctionOperators(UnitxtTestCase):
 
         self.assertDictEqual(
             {
-                "type": "apply",
+                "__type__": "apply",
                 "function": "str.upper",
                 "to_field": "b",
                 "_argv": ("a",),

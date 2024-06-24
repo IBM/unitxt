@@ -1,5 +1,9 @@
 import numpy as np
 from unitxt.api import evaluate, load_dataset, produce
+from unitxt.card import TaskCard
+from unitxt.loaders import LoadHF
+from unitxt.task import Task
+from unitxt.templates import InputOutputTemplate, TemplatesList
 
 from tests.utils import UnitxtTestCase
 
@@ -171,3 +175,36 @@ class TestAPI(UnitxtTestCase):
         }
 
         self.assertDictEqual(target, result)
+
+    def test_load_dataset_from_dict(self):
+        card = TaskCard(
+            loader=LoadHF(path="glue", name="wnli"),
+            task=Task(
+                inputs=["sentence1", "sentence2"],
+                outputs=["label"],
+                metrics=["metrics.accuracy"],
+            ),
+            templates=TemplatesList(
+                [
+                    InputOutputTemplate(
+                        input_format="Sentence1: {sentence1} Sentence2: {sentence2}",
+                        output_format="{label}",
+                    ),
+                    InputOutputTemplate(
+                        input_format="Sentence2: {sentence2} Sentence1: {sentence1}",
+                        output_format="{label}",
+                    ),
+                ]
+            ),
+        )
+
+        dataset = load_dataset(card=card, template_card_index=1, loader_limit=5)
+
+        self.assertEqual(len(dataset["train"]), 5)
+        self.assertEqual(
+            dataset["train"]["source"][0].strip(),
+            "Sentence2: The carrot had a hole. "
+            "Sentence1: I stuck a pin through a carrot. "
+            "When I pulled the pin out, it had a hole.",
+        )
+        self.assertEqual(dataset["train"]["metrics"][0], ["metrics.accuracy"])

@@ -1,33 +1,33 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "PatronusAI/financebench"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[10%]",
                 "test": "train[90%]"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "answer": "answers",
                 "evidence_text": "context"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "answers"
             ],
             "to_field": "answers"
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "context"
             }

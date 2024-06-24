@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "capitalize",
+            "__type__": "capitalize",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "capitalize",
+            "__type__": "capitalize",
             "field": "references",
             "process_every_value": true
         }

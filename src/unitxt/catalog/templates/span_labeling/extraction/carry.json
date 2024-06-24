@@ -1,5 +1,5 @@
 {
-    "type": "span_labeling_template",
+    "__type__": "span_labeling_template",
     "input_format": "{text_type}: {text}\nFrom this {text_type}, extract entities that carry one of the following types: {classes}.",
     "postprocessors": [
         "processors.to_span_label_pairs"
