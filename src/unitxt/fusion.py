@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Dict, Generator, List, Optional, Union
 
 from .dataclass import NonPositionalField
-from .operator import SourceOperator
+from .operator import MultiStreamOperator, SourceOperator
 from .random_utils import new_random_generator
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
@@ -18,7 +18,7 @@ class BaseFusion(SourceOperator):
                 If None, all splits are included.
     """
 
-    origins: Union[List[SourceOperator], Dict[str, SourceOperator]]
+    origins: Union[List[MultiStreamOperator], Dict[str, MultiStreamOperator]]
     include_splits: Optional[List[str]] = NonPositionalField(default=None)
 
     @abstractmethod
@@ -26,8 +26,8 @@ class BaseFusion(SourceOperator):
         pass
 
     def prepare(self):
-        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
-            self.origins, List[SourceOperator]
+        assert isoftype(self.origins, Dict[str, MultiStreamOperator]) or isoftype(
+            self.origins, List[MultiStreamOperator]
         )
         self.named_origins = (
             {i: self.origins[i]() for i in range(len(self.origins))}
@@ -103,9 +103,10 @@ class WeightedFusion(BaseFusion):
             If None, all instances are returned
     """
 
-    origins: Union[Dict[str, MultiStream], List[MultiStream]] = None
+    origins: Union[Dict[str, MultiStreamOperator], List[MultiStreamOperator]] = None
     weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
     max_total_examples: int = None
+    ignore_origin_groups: List[str] = ["unitxt"]
 
     def verify(self):
         super().verify()
@@ -114,8 +115,8 @@ class WeightedFusion(BaseFusion):
         assert len(self.origins) == len(
             self.weights
         ), "origins and weights must have the same length"
-        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
-            self.origins, List[SourceOperator]
+        assert isoftype(self.origins, Dict[str, MultiStreamOperator]) or isoftype(
+            self.origins, List[MultiStreamOperator]
         )
         assert isoftype(self.weights, Dict[str, Union[int, float]]) or isoftype(
             self.weights, List[Union[int, float]]
@@ -149,7 +150,10 @@ class WeightedFusion(BaseFusion):
             try:
                 instance = next(iterator)
                 if isinstance(origin_name, str):
-                    if "group" in instance:
+                    if (
+                        "group" in instance
+                        and instance["group"] not in self.ignore_origin_groups
+                    ):
                         instance["group"] = origin_name + "/" + instance["group"]
                     else:
                         instance["group"] = origin_name
