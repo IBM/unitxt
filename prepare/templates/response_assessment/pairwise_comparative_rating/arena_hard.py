@@ -6,6 +6,8 @@ for to_shuffle in [True, False]:
         PairwiseComparativeRatingTemplate(
             choice_a_field="answer_a",
             choice_b_field="answer_b",
+            choice_a_id_field="model_a",
+            choice_b_id_field="model_b",
             answer_field="answer_a_preference",
             shuffle=to_shuffle,
             instruction="Please act as an impartial judge and evaluate the quality of the responses provided by two AI"
