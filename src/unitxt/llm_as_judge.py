@@ -21,15 +21,22 @@ class LLMAsJudge(BulkInstanceMetric):
         inference_model (InferenceEngine): the module that creates the inference of the judge llm.
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
         batch_size (int): The size of the bulk.
+        pairwise_comparison_include_swapped_positions bool): If True, the comparison will be done twice,
+                                   once with the original instance and once with the models swapped.
     """
 
     main_score: str = "llm_as_judge"
-    task: Literal["rating.single_turn", "single_turn_with_reference"]
+    task: Literal[
+        "rating.single_turn",
+        "rating.single_turn_with_reference",
+        "pairwise_comparative_rating.single_turn",
+    ]
     template: str
     format: Optional[str] = None
     system_prompt: Optional[str] = None
     strip_system_prompt_and_format_from_inputs: bool = True
     inference_model: InferenceEngine
+    pairwise_comparison_include_swapped_positions: bool = False
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
 
@@ -70,13 +77,42 @@ class LLMAsJudge(BulkInstanceMetric):
                 {
                     "question": input_instance,
                     "answer": prediction,
-                    "reference_answer": reference,
+                    "reference_answer": reference[0],
                     "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
                 )
             ]
+        elif self.task == "pairwise_comparative_rating.single_turn":
+            instances = [
+                {
+                    "question": input_instance,
+                    "answer_a": prediction,
+                    "answer_b": reference[0],
+                    "model_a": "input_model",
+                    "model_b": "baseline_model",
+                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice
+                }
+                for input_instance, prediction, reference in zip(
+                    input_instances, predictions, references
+                )
+            ]
+            if self.pairwise_comparison_include_swapped_positions:
+                reversed_instances = [
+                    {
+                        "question": input_instance,
+                        "answer_a": reference[0],
+                        "answer_b": prediction,
+                        "model_a": "baseline_model",
+                        "model_b": "input_model",
+                        "answer_a_preference": 0,  # This is a dummy value that is not used in practice
+                    }
+                    for input_instance, prediction, reference in zip(
+                        input_instances, predictions, references
+                    )
+                ]
+                instances.extend(reversed_instances)
         else:
             raise NotImplementedError(
                 f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
@@ -88,7 +124,11 @@ class LLMAsJudge(BulkInstanceMetric):
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
 
-        supported_tasks = ["rating.single_turn", "rating.single_turn_with_reference"]
+        supported_tasks = [
+            "rating.single_turn",
+            "rating.single_turn_with_reference",
+            "pairwise_comparative_rating.single_turn",
+        ]
         assert self.task in supported_tasks, (
             f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             f"The supported tasks types are: {', '.join(supported_tasks)}."
@@ -135,8 +175,39 @@ class LLMAsJudge(BulkInstanceMetric):
         dataset = produce(instances, recipe)
         verdicts = self.inference_model.infer(dataset)
         meta_scores = evaluate(predictions=verdicts, data=dataset)
-        return [
-            {self.main_score: instance["prediction"], "judge_raw_output": verdict}
-            for instance in meta_scores
-            for verdict in verdicts
-        ]
+
+        res_list = []
+        for instance, verdict in zip(meta_scores, verdicts):
+            if self.task == "pairwise_comparative_rating.single_turn":
+                is_model_b_the_baseline = (
+                    instance["task_data"]["model_b"] == "baseline_model"
+                )
+                if is_model_b_the_baseline:
+                    model_a_preference_score = instance["prediction"]
+                else:
+                    model_a_preference_score = instance["prediction"] * -1
+
+                if model_a_preference_score > 0:
+                    instance_res_list = [
+                        {self.main_score: 1, "judge_raw_output": verdict}
+                        for _ in range(model_a_preference_score)
+                    ]
+                elif model_a_preference_score < 0:
+                    instance_res_list = [
+                        {self.main_score: 0, "judge_raw_output": verdict}
+                        for _ in range(abs(model_a_preference_score))
+                    ]
+                else:
+                    instance_res_list = [
+                        {self.main_score: 1, "judge_raw_output": verdict}
+                    ]
+
+                res_list.extend(instance_res_list)
+            else:
+                res = {
+                    self.main_score: instance["prediction"],
+                    "judge_raw_output": verdict,
+                }
+                res_list.append(res)
+
+        return res_list
