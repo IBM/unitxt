@@ -1,3 +1,4 @@
+import numpy as np
 from unitxt.api import evaluate, load_dataset, produce
 from unitxt.card import TaskCard
 from unitxt.loaders import LoadHF
@@ -40,7 +41,52 @@ class TestAPI(UnitxtTestCase):
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
-        self.assertAlmostEqual(results[0]["score"]["global"]["score"], 0.026, 3)
+        instance_with_results = {
+            "metrics": ["metrics.spearman"],
+            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
+            "target": "5.0",
+            "references": ["5.0"],
+            "task_data": {
+                "text1": "A plane is taking off.",
+                "text2": "An air plane is taking off.",
+                "attribute_name": "similarity",
+                "min_value": 1.0,
+                "max_value": 5.0,
+                "attribute_value": 5.0,
+                "metadata": {"template": "templates.regression.two_texts.simple"},
+                "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
+            },
+            "group": "unitxt",
+            "origin": "all~unitxt",
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.cast_to_float_return_zero_if_failed",
+            ],
+            "data_classification_policy": ["public"],
+            "prediction": "2.5",
+            "processed_prediction": 2.5,
+            "processed_references": [5.0],
+            "score": {
+                "global": {
+                    "score": 0.026315789473684213,
+                    "score_ci_high": 0.9639697714358006,
+                    "score_ci_low": -0.970678676196682,
+                    "score_name": "spearmanr",
+                    "spearmanr": 0.026315789473684213,
+                    "spearmanr_ci_high": 0.9639697714358006,
+                    "spearmanr_ci_low": -0.970678676196682,
+                },
+                "instance": {
+                    "score": np.nan,
+                    "score_name": "spearmanr",
+                    "spearmanr": np.nan,
+                },
+            },
+        }
+        # Processors are not serialized by correctly yet
+        del results[0]["postprocessors"]
+        del instance_with_results["postprocessors"]
+        self.assertDictEqual(results[0], instance_with_results)
 
     def test_evaluate_with_metrics_external_setup(self):
         dataset = load_dataset(
