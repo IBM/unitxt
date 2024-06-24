@@ -25,11 +25,11 @@ for model_id in model_list:
         task=task,
         format=format,
         main_score=metric_label,
-        pairwise_comparison_include_swapped_positions=True,
+        pairwise_comparison_include_swapped_positions=False,
     )
 
     add_to_catalog(
         metric,
-        f"metrics.llm_as_judge.pairwise_comparative_rating.{model_label}_template_{template_label}_include_swapped_positions",
+        f"metrics.llm_as_judge.pairwise_comparative_rating.{model_label}_template_{template_label}",
         overwrite=True,
     )

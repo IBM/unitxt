@@ -574,7 +574,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     reduction_map: Dict[str, List[str]]
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    implemented_reductions: List[str] = field(
+        default_factory=lambda: ["mean", "weighted_win_rate"]
+    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
@@ -649,6 +651,26 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instances=instances, score_names=ci_fields_with_prefix
                 )
                 global_score.update(confidence_interval)
+            if reduction == "weighted_win_rate":
+                for field_name in fields:
+                    field_name_with_prefix = self._add_score_prefix(field_name)
+                    total_battles = 0
+                    wins = 0
+                    for instance in instances:
+                        s = instance["score"]["instance"][field_name_with_prefix]
+                        if s > 0:
+                            total_battles += s
+                            wins += s
+                        elif s < 0:
+                            total_battles += abs(s)
+                        else:
+                            total_battles += 2
+                            wins += 1
+
+                    global_score[field_name_with_prefix] = wins / total_battles
+                    if field_name == self.main_score:
+                        global_score["score"] = global_score[field_name_with_prefix]
+                        global_score["score_name"] = self.score_prefix + self.main_score
 
         for instance in instances:
             instance["score"]["global"].update(global_score)

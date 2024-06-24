@@ -12,5 +12,5 @@
     "task": "pairwise_comparative_rating.single_turn",
     "format": "formats.llama3_chat",
     "main_score": "llama_3_70b_instruct_ibm_genai_template_arena_hard",
-    "pairwise_comparison_include_swapped_positions": true
+    "pairwise_comparison_include_swapped_positions": false
 }
