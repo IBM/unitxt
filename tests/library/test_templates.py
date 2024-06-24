@@ -1,15 +1,16 @@
 from typing import Dict, List, Tuple
 
 from unitxt.templates import (
+    BaseTemplate,
     InputOutputTemplate,
     InputOutputTemplateWithCustomTarget,
     KeyValTemplate,
     MultiLabelTemplate,
     MultipleChoiceTemplate,
     MultiReferenceTemplate,
+    MultiTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
-    Template,
     TemplateFormatKeyError,
     TemplatesDict,
     YesNoTemplate,
@@ -275,6 +276,193 @@ class TestTemplates(UnitxtTestCase):
             str(ke.exception),
         )
 
+    def test_multi_template_single_sample(self):
+        template_1 = InputOutputTemplate(
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+        )
+
+        template_2 = InputOutputTemplate(
+            input_format="This is my text2:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+        )
+
+        template = MultiTemplate(templates=[template_1, template_2])
+
+        inputs = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
+            },
+        ]
+
+        targets = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
+                "source": "This is my text2:'hello world'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive, 1",
+                "references": ["positive, 1"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_multi_template_multi_sample(self):
+        template_1 = InputOutputTemplate(
+            input_format="This is my text:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+        )
+
+        template_2 = InputOutputTemplate(
+            input_format="This is my text2:'{text}'",
+            output_format="{label}",
+            instruction="Classify sentiment into: {labels}.\n",
+            target_prefix="Sentiment is: ",
+        )
+
+        template = MultiTemplate(
+            templates=[template_1, template_2], samples_per_instance=2
+        )
+
+        inputs = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
+            },
+        ]
+
+        targets = [
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
+                "source": "This is my text2:'hello world'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
+                "outputs": {"label": "positive"},
+                "source": "This is my text:'hello world'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": "positive"},
+                "source": "This is my text2:'hello world\n, hell'",
+                "target": "positive",
+                "references": ["positive"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
+                "source": "This is my text:'hello world\n, hell'",
+                "target": "positive, 1",
+                "references": ["positive, 1"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+            {
+                "inputs": {
+                    "labels": ["positive", "negative"],
+                    "text": ["hello world\n", "hell"],
+                },
+                "outputs": {"label": ["positive", "1"]},
+                "source": "This is my text2:'hello world\n, hell'",
+                "target": "positive, 1",
+                "references": ["positive, 1"],
+                "instruction": "Classify sentiment into: positive, negative.\n",
+                "target_prefix": "Sentiment is: ",
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
     def test_input_output_reference_template_and_standard_template(self):
         template = InputOutputTemplateWithCustomTarget(
             input_format="This is my text:'{text}'",
@@ -310,7 +498,7 @@ class TestTemplates(UnitxtTestCase):
                 outputs={"label": "positive", "references": "1"}
             )
 
-        class ToCoverTemplate(Template):
+        class ToCoverTemplate(BaseTemplate):
             def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
                 ret = super().inputs_to_source(inputs)
                 return (ret, ret)

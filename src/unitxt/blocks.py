@@ -36,12 +36,12 @@ from .struct_data_operators import (
 )
 from .task import FormTask, Task
 from .templates import (
+    BaseTemplate,
     InputOutputTemplate,
     MultiLabelTemplate,
     MultiReferenceTemplate,
     OutputQuantizingTemplate,
     SpanLabelingTemplate,
-    Template,
     TemplatesDict,
     TemplatesList,
 )

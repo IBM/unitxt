@@ -1,13 +1,15 @@
+import copy
 import json
 from abc import abstractmethod
 from random import random
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
+from .stream import Stream
 from .type_utils import isoftype
 
 
@@ -21,6 +23,10 @@ class TemplateFormatKeyError(KeyError):
 
 
 class Template(InstanceOperator):
+    pass
+
+
+class BaseTemplate(Template):
     """The role of template is to take the fields of every instance and verbalize it.
 
     Meaning the template is taking the instance and generating source, target and references.
@@ -122,7 +128,32 @@ class Template(InstanceOperator):
             ) from e
 
 
-class InputOutputTemplate(Template):
+class MultiTemplate(Template):
+    templates: List[BaseTemplate]
+    samples_per_instance: int = 1
+
+    def _process_stream(
+        self, stream: Stream, stream_name: Optional[str] = None
+    ) -> Generator:
+        yield from self.process(stream, stream_name)
+
+    def verify(self):
+        super().verify()
+        assert self.samples_per_instance <= len(
+            self.templates
+        ), "samples_per_instance must be smaller or equal to length of templates list."
+
+    def process(self, stream: Stream, stream_name) -> Generator[Any, None, None]:
+        for instance in stream:
+            random_generator = new_random_generator(
+                {**instance["inputs"], **instance["outputs"]}
+            )
+            sample = random_generator.sample(self.templates, self.samples_per_instance)
+            for template in sample:
+                yield template.process(copy.deepcopy(instance), stream_name)
+
+
+class InputOutputTemplate(BaseTemplate):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
     Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
@@ -286,7 +317,7 @@ class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
         )
 
 
-class MultipleChoiceTemplate(Template):
+class MultipleChoiceTemplate(BaseTemplate):
     """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
 
     input_format: str
@@ -426,7 +457,7 @@ class MultipleChoiceTemplate(Template):
         return result
 
 
-class YesNoTemplate(Template):
+class YesNoTemplate(BaseTemplate):
     """A template for generating binary Yes/No questions asking whether an input text is of a specific class.
 
     input_format:
@@ -483,7 +514,7 @@ class YesNoTemplate(Template):
         return self.no_answer, [self.no_answer]
 
 
-class KeyValTemplate(Template):
+class KeyValTemplate(BaseTemplate):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
     Args specify with what separators to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
@@ -662,10 +693,10 @@ class SpanLabelingJsonTemplate(SpanLabelingBaseTemplate):
 class TemplatesList(ListCollection):
     def verify(self):
         for template in self.items:
-            assert isinstance(template, Template)
+            assert isinstance(template, BaseTemplate)
 
 
 class TemplatesDict(Dict):
     def verify(self):
         for _key, template in self.items():
-            assert isinstance(template, Template)
+            assert isinstance(template, BaseTemplate)

@@ -89,9 +89,7 @@ def check_operator(
 
         return outputs
 
-    if inputs is None:
-        inputs = [None] * len(targets)
-    for input, output, target in zip(inputs, outputs, targets):
-        with tester.subTest(operator=operator, input=input):
+    for output, target in zip(outputs, targets):
+        with tester.subTest(operator=operator, target=target):
             tester.assertDictEqual(output, target)
     return outputs
