@@ -28,6 +28,10 @@
             "fields": {
                 "document_type": "document"
             }
+        },
+        {
+            "__type__": "filter_by_expression",
+            "expression": "len(document) <= 6000"
         }
     ],
     "task": "tasks.summarization.abstractive",
