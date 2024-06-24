@@ -251,6 +251,8 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
 
     choice_a_field: str
     choice_b_field: str
+    choice_a_id_field: str
+    choice_b_id_field: str
     answer_field: str
     shuffle: bool
 
@@ -261,9 +263,13 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
         if outcome <= 0.5:
             choice_a_value = inputs[self.choice_a_field]
             choice_b_value = inputs[self.choice_b_field]
-
             inputs[self.choice_a_field] = choice_b_value
             inputs[self.choice_b_field] = choice_a_value
+
+            choice_a_id_value = inputs[self.choice_a_id_field]
+            choice_b_id_value = inputs[self.choice_b_id_field]
+            inputs[self.choice_a_id_field] = choice_b_id_value
+            inputs[self.choice_b_id_field] = choice_a_id_value
 
             assert isinstance(outputs[self.answer_field], int)
             outputs[self.answer_field] = int(outputs[self.answer_field]) * -1
