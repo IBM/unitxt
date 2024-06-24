@@ -5,6 +5,8 @@ from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 
+# TODO: pairwise ranking cannot be used with shuffled template. Need to add support.
+
 
 class LLMAsJudge(BulkInstanceMetric):
     """LLM as judge based metric class for evaluating correctness.
@@ -120,7 +122,12 @@ class LLMAsJudge(BulkInstanceMetric):
         return instances
 
     def prepare(self):
+        assert (
+            not self.pairwise_comparison_include_swapped_positions
+        ), "Feature not yet fully implemented"
         super().prepare()
+        if self.task == "pairwise_comparative_rating.single_turn":
+            self.reduction_map = {"weighted_win_rate": [self.main_score]}
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
 
