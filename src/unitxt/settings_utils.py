@@ -1,5 +1,5 @@
+import importlib.util
 import os
-from importlib.resources import files
 
 from .version import version
 
@@ -140,9 +140,11 @@ if Constants.is_uninitilized():
     constants.dataset_file = os.path.join(os.path.dirname(__file__), "dataset.py")
     constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
     constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
-    try:
-        constants.default_catalog_path = files("unitxt").joinpath("catalog")
-    except ModuleNotFoundError:
+    unitxt_pkg = importlib.util.find_spec("unitxt")
+    if unitxt_pkg and unitxt_pkg.origin:
+        unitxt_dir = os.path.dirname(unitxt_pkg.origin)
+        default_catalog_path = os.path.join(unitxt_dir, "catalog")
+    else:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path
     constants.dataset_url = "unitxt/data"
