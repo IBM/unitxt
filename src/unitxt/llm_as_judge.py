@@ -25,8 +25,6 @@ class LLMAsJudge(BulkInstanceMetric):
         inference_model (InferenceEngine): the module that creates the inference of the judge llm.
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
         batch_size (int): The size of the bulk.
-        pairwise_comparison_include_swapped_positions bool): If True, the comparison will be done twice,
-                                   once with the original instance and once with the models swapped.
     """
 
     main_score: str = "llm_as_judge"
