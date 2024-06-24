@@ -6,6 +6,7 @@ from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 
 # TODO: pairwise ranking cannot be used with shuffled template. Need to add support.
+# TODO: Support using both positions
 
 
 class LLMAsJudge(BulkInstanceMetric):
@@ -38,7 +39,6 @@ class LLMAsJudge(BulkInstanceMetric):
     system_prompt: Optional[str] = None
     strip_system_prompt_and_format_from_inputs: bool = True
     inference_model: InferenceEngine
-    pairwise_comparison_include_swapped_positions: bool = False
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
 
@@ -100,21 +100,6 @@ class LLMAsJudge(BulkInstanceMetric):
                     input_instances, predictions, references
                 )
             ]
-            if self.pairwise_comparison_include_swapped_positions:
-                reversed_instances = [
-                    {
-                        "question": input_instance,
-                        "answer_a": reference[0],
-                        "answer_b": prediction,
-                        "model_a": "baseline_model",
-                        "model_b": "input_model",
-                        "answer_a_preference": 0,  # This is a dummy value that is not used in practice
-                    }
-                    for input_instance, prediction, reference in zip(
-                        input_instances, predictions, references
-                    )
-                ]
-                instances.extend(reversed_instances)
         else:
             raise NotImplementedError(
                 f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
