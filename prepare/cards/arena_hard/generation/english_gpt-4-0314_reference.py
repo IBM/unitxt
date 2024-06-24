@@ -9,7 +9,6 @@ from unitxt.operators import (
 )
 from unitxt.test_utils.card import test_card
 
-# TODO: Check how many ties there are and if its represented in a good way
 card = TaskCard(
     loader=LoadFromHFSpace(
         space_name="lmsys/arena-hard-browser",

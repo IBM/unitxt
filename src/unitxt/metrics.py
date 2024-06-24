@@ -524,7 +524,6 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-
         global_score.update(self._add_score_prefixes_to_score_dict(result))
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
@@ -663,49 +662,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         pass
-
-
-class WeightedWinRate(GlobalMetric):
-    main_score = "weighted_win_rate"
-    average = None  # Report per class then aggregate by mean
-    metric = "weighted_win_rate"
-
-    prediction_type = "int"
-
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Any],
-    ) -> dict:
-        """Computes a scores dictionary on a list of references, predictions and input.
-
-        This function is called once per instance, and then another time
-        over all data instances.
-
-        Returns:
-            a dictionary of scores that is set as:
-              the instance scores when called on a single data instance
-              the global score when called on the all data instances
-        """
-        if len(predictions) == 1:
-            prediction = predictions[0]
-            return {"raw_win_score": prediction}
-
-        model_wins = 0
-        baseline_wins = 0
-        for prediction in predictions:
-            if prediction > 0:
-                model_wins += prediction
-            elif prediction < 0:
-                baseline_wins += -1 * prediction
-            else:
-                model_wins += 1
-                baseline_wins += 1
-
-        model_win_rate = model_wins / (model_wins + baseline_wins)
-
-        return {"weighted_win_rate": model_win_rate}
 
 
 class WeightedWinRateCorrelation(GlobalMetric):
