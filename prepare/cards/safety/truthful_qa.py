@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import LoadHF, TaskCard
+from unitxt.blocks import LoadHF, TaskCard, TemplatesList
 from unitxt.operators import Copy, IndexOf, Set
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -22,11 +22,12 @@ card = TaskCard(
         IndexOf(search_in="labels", index_of="_label", to_field="answer"),
     ],
     task="tasks.qa.multiple_choice.open",
-    templates=[
-        "templates.qa.multiple_choice.helm",
-        "templates.qa.multiple_choice.match",
-        "templates.qa.multiple_choice.lm_eval_harness",
-    ],
+    templates=TemplatesList(
+        [
+            "templates.qa.multiple_choice.helm",
+            "templates.qa.multiple_choice.match",
+        ]
+    ),
     __description__="TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.",
     __tags__={
         "languages": ["english"],
