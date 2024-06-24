@@ -1406,6 +1406,7 @@ class ComputeExpressionMixin(Artifact):
 
         raise ValueError(
             f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
+            "\nNote: If using test_card() with the default setting, increase loader_limit to avoid missing conditions due to limited data sampling."
         )
 
 
