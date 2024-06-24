@@ -108,7 +108,7 @@ add_to_catalog(
         prediction_type="str",
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],
-        defaults={"text_type": "text", "type_of_class": "topic"},
+        defaults={"text_type": "text"},
     ),
     "tasks.classification.multi_class.with_classes_descriptions",
     overwrite=True,
