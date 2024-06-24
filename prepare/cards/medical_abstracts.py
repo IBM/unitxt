@@ -39,11 +39,10 @@ card = TaskCard(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "abstract",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
 )
 test_card(card, debug=False)

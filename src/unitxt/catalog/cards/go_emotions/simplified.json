@@ -75,7 +75,6 @@
                     "surprise",
                     "neutral"
                 ],
-                "text_type": "text",
                 "type_of_classes": "emotions"
             }
         }

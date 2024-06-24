@@ -45,11 +45,10 @@
                     "cardiovascular diseases",
                     "general pathological conditions"
                 ],
-                "text_type": "abstract",
-                "type_of_class": "topic"
+                "text_type": "abstract"
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all"
 }
