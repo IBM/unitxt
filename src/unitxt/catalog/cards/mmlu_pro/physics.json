@@ -1,29 +1,29 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "TIGER-Lab/MMLU-Pro"
     },
     "preprocess_steps": [
         {
-            "type": "filter_by_expression",
+            "__type__": "filter_by_expression",
             "expression": "category == 'physics'"
         },
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "validation": "train"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "options": "choices",
                 "answer_index": "answer"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "topic": "physics"
             }

@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "instruction": "The following {document_type} is to be summarized into one sentence.",
     "input_format": "{document_type}:\n{document}\nSummary:\n",
     "output_format": "{summary}",

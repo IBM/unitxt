@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "instruction": "Summarize the following text into one sentence.",
     "input_format": "Text:\n{document}\nSummary:\n",
     "output_format": "{summary}",

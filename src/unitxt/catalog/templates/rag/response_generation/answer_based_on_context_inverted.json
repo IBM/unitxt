@@ -1,5 +1,5 @@
 {
-    "type": "multi_reference_template",
+    "__type__": "multi_reference_template",
     "instruction": "Answer the question, basing your answer on the context",
     "input_format": "Question: {question}.\nContext: {contexts}\n",
     "target_prefix": "Answer:",

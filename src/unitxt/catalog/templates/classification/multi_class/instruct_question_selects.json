@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "instruction": "What is the {type_of_class} expressed in the following {text_type}?\nSelect one out of the following options: {classes}.",
     "input_format": "{text_type}:\n{text}\n{type_of_class}: ",
     "output_format": "{label}",

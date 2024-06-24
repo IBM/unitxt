@@ -7,11 +7,11 @@
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "text": "text",
                 "answer": "label"
