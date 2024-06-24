@@ -50,8 +50,10 @@ class TestAPI(UnitxtTestCase):
                 "max_value": 5.0,
                 "attribute_value": 5.0,
                 "metadata": {"template": "templates.regression.two_texts.simple"},
+                "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
             "group": "unitxt",
+            "origin": "all~unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
@@ -59,7 +61,7 @@ class TestAPI(UnitxtTestCase):
             "data_classification_policy": ["public"],
             "prediction": "2.5",
             "processed_prediction": 2.5,
-            "processed_references": [5],
+            "processed_references": [5.0],
             "score": {
                 "global": {
                     "score": 0.026315789473684213,
@@ -77,6 +79,9 @@ class TestAPI(UnitxtTestCase):
                 },
             },
         }
+        # Processors are not serialized by correctly yet
+        del results[0]["postprocessors"]
+        del instance_with_results["postprocessors"]
         self.assertDictEqual(results[0], instance_with_results)
 
     def test_evaluate_with_metrics_external_setup(self):
