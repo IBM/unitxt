@@ -1,34 +1,34 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "AlexaAI/bold"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "input_label": {}
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "prompts/0",
             "to_field": "first_prompt"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "wikipedia/0",
             "to_field": "first_wiki"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "domain": [
                     "race",
@@ -38,11 +38,11 @@
             "condition": "in"
         },
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 10000
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",
@@ -50,12 +50,12 @@
             }
         },
         {
-            "type": "dump_json",
+            "__type__": "dump_json",
             "field": "input_label"
         }
     ],
     "task": {
-        "type": "task",
+        "__type__": "task",
         "inputs": [
             "first_prompt"
         ],
@@ -67,10 +67,10 @@
         ]
     },
     "templates": {
-        "type": "templates_list",
+        "__type__": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "__type__": "input_output_template",
                 "input_format": "{first_prompt}\n",
                 "output_format": "{input_label}"
             }

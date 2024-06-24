@@ -51,4 +51,4 @@ class TestCatalogs(UnitxtTestCase):
             with open(os.path.join(tmp_dir, "test", "save.json")) as f:
                 content = json.load(f)
 
-            self.assertDictEqual(content, {"type": "class_to_save", "t": 1})
+            self.assertDictEqual(content, {"__type__": "class_to_save", "t": 1})

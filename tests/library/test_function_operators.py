@@ -25,7 +25,7 @@ class TestFunctionOperators(UnitxtTestCase):
 
     def test_apply_function_operator_for_library_function(self):
         operator = SequentialOperator(
-            [
+            steps=[
                 Apply(function=dict, to_field="t"),
                 CopyFields(field_to_field={"a": "t/a", "b": "t/b"}),
                 Apply("t", function=json.dumps, to_field="t"),
@@ -50,7 +50,7 @@ class TestFunctionOperators(UnitxtTestCase):
 
         self.assertDictEqual(
             {
-                "type": "apply",
+                "__type__": "apply",
                 "function": "str.upper",
                 "to_field": "b",
                 "_argv": ("a",),

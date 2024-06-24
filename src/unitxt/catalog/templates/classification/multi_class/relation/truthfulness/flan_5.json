@@ -1,5 +1,5 @@
 {
-    "type": "input_output_template",
+    "__type__": "input_output_template",
     "input_format": "Problem: Sentence: \"{text_a}\";\nAnother sentence: \"{text_b}\"?",
     "output_format": "{label}",
     "target_prefix": "A: ",

@@ -1,5 +1,5 @@
 {
-    "type": "task",
+    "__type__": "task",
     "inputs": {
         "dialog_a": "List[Tuple[str, str]]",
         "dialog_b": "List[Tuple[str, str]]",

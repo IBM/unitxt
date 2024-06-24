@@ -13,7 +13,7 @@ logger = get_logger()
 class TestArtifactRecovery(UnitxtTestCase):
     def test_correct_artifact_recovery(self):
         args = {
-            "type": "standard_recipe",
+            "__type__": "standard_recipe",
             "card": "cards.sst2",
             "template_card_index": 0,
             "demos_pool_size": 100,
@@ -24,7 +24,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_correct_artifact_recovery_with_overwrite(self):
         args = {
-            "type": "standard_recipe",
+            "__type__": "standard_recipe",
             "card": "cards.sst2",
             "template_card_index": 0,
             "demos_pool_size": 100,
@@ -45,7 +45,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_bad_artifact_recovery_bad_type(self):
         args = {
-            "type": "standard_recipe",
+            "__type__": "standard_recipe",
             "card": "cards.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,
@@ -61,7 +61,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_subclass_registration_and_loading(self):
         args = {
-            "type": "dummy_not_exist",
+            "__type__": "dummy_not_exist",
         }
         with self.assertRaises(UnrecognizedArtifactTypeError):
             Artifact.from_dict(args)
@@ -75,6 +75,6 @@ class TestArtifactRecovery(UnitxtTestCase):
             pass
 
         args = {
-            "type": "dummy_exist_for_loading",
+            "__type__": "dummy_exist_for_loading",
         }
         Artifact.from_dict(args)
