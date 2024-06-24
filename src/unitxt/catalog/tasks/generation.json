@@ -14,5 +14,8 @@
     ],
     "augmentable_inputs": [
         "input"
-    ]
+    ],
+    "defaults": {
+        "type_of_output": "Text"
+    }
 }

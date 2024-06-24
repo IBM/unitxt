@@ -1,6 +1,5 @@
 from unitxt.blocks import (
     LoadHF,
-    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -8,9 +7,6 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="EdinburghNLP/xsum"),
-    preprocess_steps=[
-        Set(fields={"document_type": "document"}),
-    ],
     task="tasks.summarization.abstractive",
     templates="templates.summarization.abstractive.all",
     __tags__={

@@ -45,8 +45,7 @@
         {
             "__type__": "set",
             "fields": {
-                "class": "Grammatically incorrect",
-                "text_type": "text"
+                "class": "Grammatically incorrect"
             }
         },
         {
