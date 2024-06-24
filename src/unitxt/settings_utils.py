@@ -143,7 +143,7 @@ if Constants.is_uninitilized():
     unitxt_pkg = importlib.util.find_spec("unitxt")
     if unitxt_pkg and unitxt_pkg.origin:
         unitxt_dir = os.path.dirname(unitxt_pkg.origin)
-        default_catalog_path = os.path.join(unitxt_dir, "catalog")
+        constants.default_catalog_path = os.path.join(unitxt_dir, "catalog")
     else:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path
