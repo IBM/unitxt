@@ -6,8 +6,9 @@ from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 
-# TODO: pairwise ranking cannot be used with shuffled template. Need to add support.
 # TODO: Support using both positions
+# TODO: Add a metric for judge bias to positions.
+# TODO: Maybe also add a metric to the meta-eval
 
 
 class LLMAsJudge(BulkInstanceMetric):
