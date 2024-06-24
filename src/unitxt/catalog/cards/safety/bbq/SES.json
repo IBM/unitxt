@@ -32,9 +32,7 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.with_context",
-    "templates": [
-        "templates.qa.multiple_choice.with_context.match"
-    ],
+    "templates": "templates.qa.multiple_choice.with_context.all",
     "__description__": "Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
     "__tags__": {
         "languages": [
