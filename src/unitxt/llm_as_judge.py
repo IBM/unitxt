@@ -190,27 +190,15 @@ class LLMAsJudge(BulkInstanceMetric):
                 else:
                     model_a_preference_score = instance["prediction"] * -1
 
-                if model_a_preference_score > 0:
-                    instance_res_list = [
-                        {self.main_score: 1, "judge_raw_output": verdict}
-                        for _ in range(model_a_preference_score)
-                    ]
-                elif model_a_preference_score < 0:
-                    instance_res_list = [
-                        {self.main_score: 0, "judge_raw_output": verdict}
-                        for _ in range(abs(model_a_preference_score))
-                    ]
-                else:
-                    instance_res_list = [
-                        {self.main_score: 1, "judge_raw_output": verdict}
-                    ]
-
-                res_list.extend(instance_res_list)
+                res = {
+                    self.main_score: model_a_preference_score,
+                    "judge_raw_output": verdict,
+                }
             else:
                 res = {
                     self.main_score: instance["prediction"],
                     "judge_raw_output": verdict,
                 }
-                res_list.append(res)
+            res_list.append(res)
 
         return res_list
