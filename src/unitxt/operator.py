@@ -458,15 +458,8 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         pass
 
 
-class SequentialOperator(MultiStreamOperator):
-    """A class representing a sequential operator in the streaming system.
-
-    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a
-    `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
-    """
-
-    max_steps = None
-
+class SequentialMixin(Artifact):
+    max_steps: Optional[int] = None
     steps: List[StreamingOperator] = field(default_factory=list)
 
     def num_steps(self) -> int:
@@ -488,22 +481,27 @@ class SequentialOperator(MultiStreamOperator):
     def _get_max_steps(self):
         return self.max_steps if self.max_steps is not None else len(self.steps)
 
+
+class SequentialOperator(MultiStreamOperator, SequentialMixin):
+    """A class representing a sequential operator in the streaming system.
+
+    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a
+    `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
+    """
+
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         for operator in self.steps[0 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
 
 
-class SourceSequentialOperator(SequentialOperator):
+class SourceSequentialOperator(SourceOperator, SequentialMixin):
     """A class representing a source sequential operator in the streaming system.
 
     A source sequential operator is a type of `SequentialOperator` that starts with a source operator.
     The first operator in its list of steps is a `SourceOperator`, which generates the initial `MultiStream`
     that the other operators then process.
     """
-
-    def __call__(self) -> MultiStream:
-        return super().__call__()
 
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         assert (
