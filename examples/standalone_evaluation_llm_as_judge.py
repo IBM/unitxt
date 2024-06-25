@@ -93,6 +93,9 @@ for instance in evaluated_dataset:
     logger.info(
         f"Model prediction (as returned by the model):\n{instance['prediction']}"
     )
+    logger.info(
+        f"Model prediction (after post processing):\n{instance['processed_prediction']}"
+    )
     logger.info(f"References:\n{instance['references']}")
     score_name = instance["score"]["instance"]["score_name"]
     score = instance["score"]["instance"]["score"]
