@@ -75,5 +75,11 @@ evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 for instance in evaluated_dataset:
     print_dict(
         instance,
-        keys=["source", "prediction", "processed_prediction", "references", "score"],
+        keys_to_print=[
+            "source",
+            "prediction",
+            "processed_prediction",
+            "references",
+            "score",
+        ],
     )

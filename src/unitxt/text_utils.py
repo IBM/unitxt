@@ -114,8 +114,8 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     return res
 
 
-def print_dict(d, indent=0, indent_delta=4, max_chars=None, keys=None):
-    dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys)
+def print_dict(d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None):
+    dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
     logger.info(dict_str)
 
