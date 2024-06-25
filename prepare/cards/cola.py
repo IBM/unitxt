@@ -17,7 +17,6 @@ card = TaskCard(
         Set(
             fields={
                 "classes": ["unacceptable", "acceptable"],
-                "text_type": "text",
                 "type_of_class": "grammatical acceptability",
             }
         ),

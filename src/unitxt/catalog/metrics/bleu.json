@@ -1,5 +1,5 @@
 {
-    "type": "huggingface_metric",
+    "__type__": "huggingface_metric",
     "hf_metric_name": "bleu",
     "main_score": "bleu",
     "scale": 1.0,

@@ -1,6 +1,13 @@
-from unitxt.blocks import InputOutputTemplate, LoadHF, TaskCard, TemplatesDict
+import sys
+
+from unitxt.blocks import (
+    InputOutputTemplate,
+    LoadHF,
+    TaskCard,
+    TemplatesDict,
+)
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import RenameFields, Set
+from unitxt.operators import RenameFields, Set, Shuffle
 from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
@@ -96,31 +103,34 @@ for task_name, task_cfg in task_cfgs.items():
     card = TaskCard(
         loader=LoadHF(path="nguha/legalbench", name=task_name),
         preprocess_steps=(
-            [
-                FormatText(
-                    text=task_cfg["non_task_entries"]["text_verbalizer"],
-                    to_field="text",
-                )
+            [Shuffle(page_size=sys.maxsize)]
+            + (
+                [
+                    FormatText(
+                        text=task_cfg["non_task_entries"]["text_verbalizer"],
+                        to_field="text",
+                    )
+                ]
+                if task_cfg["non_task_entries"].get("text_verbalizer", False)
+                else []
+            )
+            + [
+                RenameFields(
+                    field_to_field={
+                        task_cfg["non_task_entries"]["text_field_name"]: "text",
+                        task_cfg["non_task_entries"]["label_field_name"]: "label",
+                    }
+                ),
+                Set(
+                    fields={
+                        "text_type": task_cfg["text_type"],
+                        "classes": task_cfg["classes"],
+                        "type_of_class": task_cfg["type_of_class"],
+                        "classes_descriptions": task_cfg["classes_descriptions"],
+                    }
+                ),
             ]
-            if task_cfg["non_task_entries"].get("text_verbalizer", False)
-            else []
-        )
-        + [
-            RenameFields(
-                field_to_field={
-                    task_cfg["non_task_entries"]["text_field_name"]: "text",
-                    task_cfg["non_task_entries"]["label_field_name"]: "label",
-                }
-            ),
-            Set(
-                fields={
-                    "text_type": task_cfg["text_type"],
-                    "classes": task_cfg["classes"],
-                    "type_of_class": task_cfg["type_of_class"],
-                    "classes_descriptions": task_cfg["classes_descriptions"],
-                }
-            ),
-        ],
+        ),
         task="tasks.classification.multi_class.with_classes_descriptions",
         templates=TemplatesDict(
             {
@@ -157,3 +167,7 @@ for task_name, task_cfg in task_cfgs.items():
 
     test_card(card, format="formats.textual_assistant")
     add_to_catalog(card, f"cards.legalbench.{task_name}", overwrite=True)
+
+
+# from unitxt import load_dataset
+# ds = load_dataset("card=cards.legalbench.proa,template_card_index=default")

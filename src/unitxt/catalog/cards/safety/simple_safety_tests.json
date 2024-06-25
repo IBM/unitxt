@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "Bertievidgen/SimpleSafetyTests",
         "data_classification_policy": [
             "public"
@@ -9,13 +9,13 @@
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "prompt": "input"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "output": "None",
                 "type_of_input": "question",

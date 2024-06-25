@@ -117,54 +117,6 @@ class SideEffectOperator(StreamingOperator):
         pass
 
 
-class SourceOperator(StreamingOperator):
-    """A class representing a source operator in the streaming system.
-
-    A source operator is responsible for generating the data stream from some source, such as a database or a file.
-    This is the starting point of a stream processing pipeline.
-    The `SourceOperator` class is a type of `SourceOperator`, which is a special type of `StreamingOperator`
-    that generates an output stream but does not take any input streams.
-
-    When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses
-    to generate the required `MultiStream`.
-
-    """
-
-    caching: bool = NonPositionalField(default=None)
-
-    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        multi_stream = self.process()
-        if self.caching is not None:
-            multi_stream.set_caching(self.caching)
-        return multi_stream
-
-    @abstractmethod
-    def process(self) -> MultiStream:
-        pass
-
-
-class StreamInitializerOperator(SourceOperator):
-    """A class representing a stream initializer operator in the streaming system.
-
-    A stream initializer operator is a special type of `SourceOperator` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
-
-    When called, a `StreamInitializerOperator` invokes its `process` method, passing any supplied arguments and keyword arguments. The `process` method should be implemented by all subclasses to generate the required `MultiStream` based on the given arguments and keyword arguments.
-
-    """
-
-    caching: bool = NonPositionalField(default=None)
-
-    def __call__(self, *args, **kwargs) -> MultiStream:
-        multi_stream = self.process(*args, **kwargs)
-        if self.caching is not None:
-            multi_stream.set_caching(self.caching)
-        return self.process(*args, **kwargs)
-
-    @abstractmethod
-    def process(self, *args, **kwargs) -> MultiStream:
-        pass
-
-
 def instance_generator(instance):
     yield instance
 
@@ -211,6 +163,55 @@ class MultiStreamOperator(StreamingOperator):
         multi_stream = MultiStream({stream_name: stream_single(instance)})
         processed_multi_stream = self(multi_stream)
         return next(iter(processed_multi_stream[stream_name]))
+
+
+class SourceOperator(MultiStreamOperator):
+    """A class representing a source operator in the streaming system.
+
+    A source operator is responsible for generating the data stream from some source, such as a database or a file.
+    This is the starting point of a stream processing pipeline.
+    The `SourceOperator` class is a type of `SourceOperator`, which is a special type of `StreamingOperator`
+    that generates an output stream but does not take any input streams.
+
+    When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses
+    to generate the required `MultiStream`.
+
+    """
+
+    def _process_multi_stream(
+        self, multi_stream: Optional[MultiStream] = None
+    ) -> MultiStream:
+        result = self.process()
+        assert isinstance(
+            result, MultiStream
+        ), "MultiStreamOperator must return a MultiStream"
+        return result
+
+    @abstractmethod
+    def process(self) -> MultiStream:
+        pass
+
+
+class StreamInitializerOperator(SourceOperator):
+    """A class representing a stream initializer operator in the streaming system.
+
+    A stream initializer operator is a special type of `SourceOperator` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
+
+    When called, a `StreamInitializerOperator` invokes its `process` method, passing any supplied arguments and keyword arguments. The `process` method should be implemented by all subclasses to generate the required `MultiStream` based on the given arguments and keyword arguments.
+
+    """
+
+    caching: bool = NonPositionalField(default=None)
+
+    def __call__(self, *args, **kwargs) -> MultiStream:
+        multi_stream = self.process(*args, **kwargs)
+        if self.caching is not None:
+            multi_stream.set_caching(self.caching)
+        return self.process(*args, **kwargs)
+
+    @abstractmethod
+    def process(self, *args, **kwargs) -> MultiStream:
+        pass
 
 
 class StreamOperator(MultiStreamOperator):
@@ -458,15 +459,8 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
         pass
 
 
-class SequentialOperator(MultiStreamOperator):
-    """A class representing a sequential operator in the streaming system.
-
-    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a
-    `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
-    """
-
-    max_steps = None
-
+class SequentialMixin(Artifact):
+    max_steps: Optional[int] = None
     steps: List[StreamingOperator] = field(default_factory=list)
 
     def num_steps(self) -> int:
@@ -488,22 +482,27 @@ class SequentialOperator(MultiStreamOperator):
     def _get_max_steps(self):
         return self.max_steps if self.max_steps is not None else len(self.steps)
 
+
+class SequentialOperator(MultiStreamOperator, SequentialMixin):
+    """A class representing a sequential operator in the streaming system.
+
+    A sequential operator is a type of `MultiStreamOperator` that applies a sequence of other operators to a
+    `MultiStream`. It maintains a list of `StreamingOperator`s and applies them in order to the `MultiStream`.
+    """
+
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         for operator in self.steps[0 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
 
 
-class SourceSequentialOperator(SequentialOperator):
+class SourceSequentialOperator(SourceOperator, SequentialMixin):
     """A class representing a source sequential operator in the streaming system.
 
     A source sequential operator is a type of `SequentialOperator` that starts with a source operator.
     The first operator in its list of steps is a `SourceOperator`, which generates the initial `MultiStream`
     that the other operators then process.
     """
-
-    def __call__(self) -> MultiStream:
-        return super().__call__()
 
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
         assert (

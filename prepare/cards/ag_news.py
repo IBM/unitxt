@@ -30,11 +30,10 @@ card = TaskCard(
             fields={
                 "classes": classlabels.names,
                 "text_type": "sentence",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "found",

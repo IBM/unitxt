@@ -1,0 +1,10 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "What is the {type_of_class} expressed in the following {text_type}?\nSelect one out of the following options: {classes}.",
+    "input_format": "{text_type}: {text}\nI think the {type_of_class} is ",
+    "output_format": "{label}",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.lower_case_till_punc"
+    ]
+}
