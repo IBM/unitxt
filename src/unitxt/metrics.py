@@ -14,11 +14,6 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import evaluate
 import numpy
 import numpy as np
-from metrics.fin_qa_eval.fin_qa_eval_script import (
-    equal_program,
-    eval_program,
-    program_tokenization,
-)
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -1389,15 +1384,44 @@ class FinQAEval(InstanceMetric):
         exe_correct = False
         prog_correct = False
 
-        pred_item = program_tokenization(prediction)
+        import importlib.util as iua
+        import os
+
+        import requests
+
+        # download finqa evaluation script, load as a module and use it on the fly
+        def download_finqa_eval_script_file(url, local_path):
+            if not os.path.exists(local_path):
+                response = requests.get(url)
+                response.raise_for_status()
+                with open(local_path, "wb") as file:
+                    file.write(response.content)
+
+        def load_finqa_eval_module_from_file(file_path, module_name):
+            spec = iua.spec_from_file_location(module_name, file_path)
+            module = iua.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+
+        remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/code/evaluate/evaluate.py"
+        local_filepath = "finqa_eval_script.py"
+        module_name = "finqa_eval"
+
+        download_finqa_eval_script_file(remote_url, local_filepath)
+        finqa_module = load_finqa_eval_module_from_file(local_filepath, module_name)
+
+        # Clean up the downloaded file after loading the module
+        os.remove(local_filepath)
+
+        pred_item = finqa_module.program_tokenization(prediction)
         gold_answer = task_data["answer"]
         table = task_data["table"]
         program = task_data["program_re"]
-        gold = program_tokenization(program)
-        invalid_flag, exe_res = eval_program(pred_item, table)
+        gold = finqa_module.program_tokenization(program)
+        invalid_flag, exe_res = finqa_module.eval_program(pred_item, table)
         if invalid_flag == 0 and float(exe_res) == float(gold_answer):
             exe_correct = True
-            if equal_program(gold, pred_item):
+            if finqa_module.equal_program(gold, pred_item):
                 prog_correct = True
 
         return float(exe_correct and prog_correct)
