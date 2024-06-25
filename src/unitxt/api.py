@@ -104,3 +104,10 @@ def produce(instance_or_instances, recipe_query):
     if not is_list:
         result = result[0]
     return result
+
+
+def infer(instance_or_instances, recipe_query, engine):
+    dataset = produce(instance_or_instances, recipe_query)
+    predictions = engine.infer(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
+    return [result["processed_predictions"] for result in results]
