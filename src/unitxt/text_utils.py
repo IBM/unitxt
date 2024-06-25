@@ -69,7 +69,7 @@ def camel_to_snake_case(s):
     return s.lower()
 
 
-def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
+def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     """Constructs a formatted string of a dictionary.
 
     Args:
@@ -77,13 +77,21 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
         indent (int, optional): The current level of indentation. Defaults to 0.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
         max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
+        keys (List[Str], optional): the list of fields to print
     """
     max_chars = max_chars or shutil.get_terminal_size()[0] - 10
     indent_str = " " * indent
     indent_delta_str = " " * indent_delta
     res = ""
 
-    for key, value in d.items():
+    if keys is None:
+        keys = d.keys()
+    for key in keys:
+        if key not in d.keys():
+            raise ValueError(
+                f"Dictionary does not contain field {key} specified in 'keys' argument. The available keys are {d.keys()}"
+            )
+        value = d[key]
         if isinstance(value, dict):
             res += f"{indent_str}{key}:\n"
             res += construct_dict_str(value, indent + indent_delta, max_chars=max_chars)
@@ -106,8 +114,8 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
     return res
 
 
-def print_dict(d, indent=0, indent_delta=4, max_chars=None):
-    dict_str = construct_dict_str(d, indent, indent_delta, max_chars)
+def print_dict(d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None):
+    dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
     logger.info(dict_str)
 
