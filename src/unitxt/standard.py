@@ -117,7 +117,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             postprocessors = self.postprocessors
 
         if self.metrics is None:
-            metrics = self.card.task.metrics
+            metrics = [
+                metric if isinstance(metric, str) else metric.to_json()
+                for metric in self.card.task.metrics
+            ]
         else:
             metrics = self.metrics
         return metrics, postprocessors
