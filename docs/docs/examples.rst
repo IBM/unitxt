@@ -33,3 +33,8 @@ Each example is a self contained python file that you can run and later modify.
      - | :ref:`Add new dataset tutorial <adding_dataset>`.  
        | :ref:`Open QA task in catalog <catalog.tasks.qa.open>`.
        | :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`.
+   * - Evaluate your question-answering dataset  - using LLM as a judge
+     - Demonstrates how to evaluate a user QA answering dataset in a standalone file using a user defined task and template. In addition, it shows how to define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge>`_
+     - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
