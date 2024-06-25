@@ -1,3 +1,5 @@
+from json.decoder import JSONDecodeError
+
 from .artifact import Artifact, UnitxtArtifactNotFoundError, fetch_artifact
 from .logging_utils import get_logger
 from .parsing_utils import parse_key_equals_value_string_to_dict
@@ -13,7 +15,7 @@ def fetch(artifact_name):
     try:
         artifact, _ = fetch_artifact(artifact_name)
         return artifact
-    except UnitxtArtifactNotFoundError:
+    except (UnitxtArtifactNotFoundError, JSONDecodeError):
         return None
 
 

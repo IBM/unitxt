@@ -435,7 +435,8 @@ def fetch_artifact(artifact_rep):
     if Artifact.is_artifact_file(artifact_rep):
         return Artifact.load(artifact_rep), None
 
-    if is_name_legal_for_catalog(artifact_rep):
+    name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
+    if is_name_legal_for_catalog(name):
         artifactory, artifact_rep, args = get_artifactory_name_and_args(
             name=artifact_rep
         )
