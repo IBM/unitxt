@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import evaluate, produce
+from .artifact import Artifact, settings
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
@@ -121,17 +122,18 @@ class LLMAsJudge(BulkInstanceMetric):
         )
 
         card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
-        recipe = (
-            f"card={card},"
-            f"template={self.template},"
-            "demos_pool_size=0,"
-            "num_demos=0"
-        )
+        recipe_args = {
+            "card": card,
+            "template": self.template,
+            "demos_pool_size": 0,
+            "num_demos": 0,
+            "__type__": settings.default_recipe,
+        }
         if self.system_prompt:
-            recipe = f"{recipe},system_prompt={self.system_prompt}"
+            recipe_args["system_prompt"] = self.system_prompt
         if self.format:
-            recipe = f"{recipe},format={self.format}"
-
+            recipe_args["format"] = self.format
+        recipe = Artifact.from_dict(recipe_args)
         dataset = produce(instances, recipe)
         verdicts = self.inference_model.infer(dataset)
         meta_scores = evaluate(predictions=verdicts, data=dataset)
@@ -140,6 +142,5 @@ class LLMAsJudge(BulkInstanceMetric):
                 self.main_score: instance["processed_prediction"],
                 "judge_raw_output": verdict,
             }
-            for instance in meta_scores
-            for verdict in verdicts
+            for instance, verdict in zip(meta_scores, verdicts)
         ]

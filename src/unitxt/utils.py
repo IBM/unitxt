@@ -49,11 +49,14 @@ def load_json(path):
             ) from e
 
 
-def save_json(path, data):
+def save_to_file(path, data):
     with open(path, "w") as f:
-        dumped = json.dumps(data, indent=4, ensure_ascii=False)
-        f.write(dumped)
+        f.write(data)
         f.write("\n")
+
+
+def json_dump(data):
+    return json.dumps(data, indent=4, ensure_ascii=False)
 
 
 def is_package_installed(package_name):

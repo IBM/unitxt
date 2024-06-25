@@ -1,5 +1,4 @@
 import os
-import re
 from collections import Counter
 from functools import lru_cache
 from pathlib import Path
@@ -13,6 +12,7 @@ from .artifact import (
     Artifactory,
     get_artifactory_name_and_args,
     reset_artifacts_json_cache,
+    verify_legal_catalog_name,
 )
 from .logging_utils import get_logger
 from .settings_utils import get_constants
@@ -112,12 +112,6 @@ class GithubCatalog(LocalCatalog):
         url = self.path(artifact_identifier)
         response = requests.head(url)
         return response.status_code == 200
-
-
-def verify_legal_catalog_name(name):
-    assert re.match(
-        r"^[\w" + constants.catalog_hierarchy_sep + "]+$", name
-    ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
 def add_to_catalog(

@@ -31,7 +31,7 @@ for dataset_name in [
             ListFieldValues(fields=["ans0", "ans1", "ans2"], to_field="choices"),
         ],
         task="tasks.qa.multiple_choice.with_context",
-        templates=["templates.qa.multiple_choice.with_context.match"],
+        templates="templates.qa.multiple_choice.with_context.all",
         __description__="Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
         __tags__={
             "languages": ["english"],
@@ -39,7 +39,7 @@ for dataset_name in [
         },
     )
 
-    test_card(card, strict=False, demos_taken_from="test", num_demos=0)
+    test_card(card, strict=False)
     add_to_catalog(card, "cards.safety.bbq." + dataset_name, overwrite=True)
 
 settings.allow_unverified_code = orig_settings
