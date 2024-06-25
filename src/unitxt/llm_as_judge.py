@@ -127,7 +127,7 @@ class LLMAsJudge(BulkInstanceMetric):
             "template": self.template,
             "demos_pool_size": 0,
             "num_demos": 0,
-            "type": settings.default_recipe,
+            "__type__": settings.default_recipe,
         }
         if self.system_prompt:
             recipe_args["system_prompt"] = self.system_prompt

@@ -32,7 +32,7 @@ def get_dataset_artifact(dataset):
     recipe = fetch(dataset)
     if recipe is None:
         args = parse(dataset)
-        if "type" not in args:
-            args["type"] = settings.default_recipe
+        if "__type__" not in args:
+            args["__type__"] = settings.default_recipe
         recipe = Artifact.from_dict(args)
     return recipe

@@ -1,12 +1,11 @@
 from unitxt import get_logger
-from unitxt.api import evaluate
+from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.loaders import LoadFromDictionary
-from unitxt.standard import StandardRecipe
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 
 logger = get_logger()
@@ -75,9 +74,7 @@ card = TaskCard(
 )
 
 # Convert card to a dataset
-recipe = StandardRecipe(card=card, template_card_index="simple")
-stream = recipe()
-dataset = stream.to_dataset()
+dataset = load_dataset(card=card, template_card_index="simple")
 test_dataset = dataset["test"]
 
 # Infer a model to get predictions.
@@ -88,17 +85,18 @@ inference_model = HFPipelineBasedInferenceEngine(
 predictions = inference_model.infer(test_dataset)
 
 # Evaluate the predictions using the defined metric.
-dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
-for sample, prediction in zip(dataset_with_scores, predictions):
+for instance in evaluated_dataset:
     logger.info("*" * 80)
-    logger.info(f"Model input:\n{sample['source']}")
-    logger.info(f"Model prediction (as returned by the model):\n{prediction}")
-    logger.info(f"Model prediction (after post processing):\n{sample['prediction']}")
-    logger.info(f"References:\n{sample['references']}")
-    score_name = sample["score"]["instance"]["score_name"]
-    score = sample["score"]["instance"]["score"]
+    logger.info(f"Model input:\n{instance['source']}")
+    logger.info(
+        f"Model prediction (as returned by the model):\n{instance['prediction']}"
+    )
+    logger.info(f"References:\n{instance['references']}")
+    score_name = instance["score"]["instance"]["score_name"]
+    score = instance["score"]["instance"]["score"]
     logger.info(f"Sample score ({score_name}) : {score}")
-global_score = dataset_with_scores[0]["score"]["global"]["score"]
+global_score = evaluated_dataset[0]["score"]["global"]["score"]
 logger.info("*" * 80)
 logger.info(f"Aggregated score ({score_name}) : {global_score}")
