@@ -9,7 +9,7 @@ from copy import deepcopy
 from dataclasses import field
 from operator import itemgetter
 from statistics import mean
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 import evaluate
 import numpy
@@ -1936,23 +1936,14 @@ class NER(CustomF1):
         return str(element)
 
 
-def normalize_answer(s):
-    """Lower text and remove punctuation, articles and extra whitespace."""
+class RelationExtraction(CustomF1):
+    prediction_type = "List[Tuple[str,str,str]]"
 
-    def remove_articles(text):
-        return re.sub(r"\b(a|an|the)\b", " ", text)
+    def get_element_group(self, element, additional_input):
+        return element[1]
 
-    def white_space_fix(text):
-        return " ".join(text.split())
-
-    def remove_punc(text):
-        exclude = set(string.punctuation)
-        return "".join(ch for ch in text if ch not in exclude)
-
-    def lower(text):
-        return text.lower()
-
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
+    def get_element_representation(self, element, additional_input):
+        return str(element)
 
 
 class TokenOverlap(InstanceMetric):
