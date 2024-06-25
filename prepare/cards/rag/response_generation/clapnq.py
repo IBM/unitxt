@@ -9,9 +9,23 @@ from unitxt.blocks import (
 )
 from unitxt.operators import (
     Copy,
+    MapInstanceValues,
     Set,
 )
 from unitxt.test_utils.card import test_card
+
+unanswerable_responses = [
+    "I'm sorry, I cannot answer this question based on the context.",
+    "The answer is not in the text provided.",
+    "Unanswerable.",
+    "The provided context does not contain the information needed to answer this question.",
+    "There is not enough information in the text to answer this question.",
+    "The text does not provide an answer to this question.",
+    "Based on the context, an answer cannot be determined.",
+    "The answer to this question is not available in the provided context.",
+    "This question cannot be answered with the given information.",
+    "Insufficient context to provide an answer.",
+]
 
 card = TaskCard(
     loader=LoadHF(
@@ -30,6 +44,10 @@ card = TaskCard(
             fields={
                 "contexts_ids": [],
             }
+        ),
+        MapInstanceValues(
+            mappers={"reference_answers": {"['']": unanswerable_responses}},
+            strict=False,
         ),
     ],
     task="tasks.rag.response_generation",
