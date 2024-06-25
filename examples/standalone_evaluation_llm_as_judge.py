@@ -7,6 +7,7 @@ from unitxt.inference import (
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
+from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -87,19 +88,15 @@ predictions = inference_model.infer(test_dataset)
 # Evaluate the predictions using the defined metric.
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
+# Print results
 for instance in evaluated_dataset:
-    logger.info("*" * 80)
-    logger.info(f"Model input:\n{instance['source']}")
-    logger.info(
-        f"Model prediction (as returned by the model):\n{instance['prediction']}"
+    print_dict(
+        instance,
+        keys_to_print=[
+            "source",
+            "prediction",
+            "processed_prediction",
+            "references",
+            "score",
+        ],
     )
-    logger.info(
-        f"Model prediction (after post processing):\n{instance['processed_prediction']}"
-    )
-    logger.info(f"References:\n{instance['references']}")
-    score_name = instance["score"]["instance"]["score_name"]
-    score = instance["score"]["instance"]["score"]
-    logger.info(f"Sample score ({score_name}) : {score}")
-global_score = evaluated_dataset[0]["score"]["global"]["score"]
-logger.info("*" * 80)
-logger.info(f"Aggregated score ({score_name}) : {global_score}")
