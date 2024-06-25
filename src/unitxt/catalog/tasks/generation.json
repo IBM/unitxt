@@ -10,7 +10,7 @@
     },
     "prediction_type": "str",
     "metrics": [
-        "metrics.rouge"
+        "metrics.normalized_sacrebleu"
     ],
     "augmentable_inputs": [
         "input"
