@@ -1,18 +1,18 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "papluca/language-identification"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "labels": "label"
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "ar": "arabic",
