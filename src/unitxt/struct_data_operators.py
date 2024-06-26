@@ -590,18 +590,23 @@ class MapHTMLTableToJSON(FieldOperator):
 
         # Extract header
         header = []
-        header_cells = soup.find("thead").find_all("th")
-        for cell in header_cells:
-            header.append(cell.get_text())
+        try:
+            header_cells = soup.find_all("th")
+            for cell in header_cells:
+                header.append(cell.get_text())
+        except:
+            pass
 
         # Extract rows
         rows = []
-        for row in soup.find("tbody").find_all("tr"):
-            row_data = []
-            for cell in row.find_all("td"):
-                row_data.append(cell.get_text())
-            rows.append(row_data)
-
-        # return dictionary
+        try:
+            for row in soup.find_all("tr"):
+                row_data = []
+                for cell in row.find_all("td"):
+                    row_data.append(cell.get_text())
+                if row_data:
+                    rows.append(row_data)
+        except:
+            pass
 
         return {"header": header, "rows": rows}
