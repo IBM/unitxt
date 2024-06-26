@@ -2,9 +2,7 @@ import os
 
 from unitxt.blocks import (
     LoadHF,
-    MapHTMLTableToJSON,
     RenameFields,
-    SerializeTableAsIndexedRowMajor,
     Set,
     TaskCard,
 )
@@ -22,13 +20,13 @@ data_files = {
 card = TaskCard(
     loader=LoadHF(path="json", data_files=data_files),
     preprocess_steps=[
-        "splitters.small_no_test",
-        MapHTMLTableToJSON(field_to_field=[["table/html_code", "stdtable"]]),
-        SerializeTableAsIndexedRowMajor(
-            field_to_field=[["stdtable", "table_serialized"]]
-        ),
+        # "splitters.small_no_test",
+        # MapHTMLTableToJSON(field_to_field=[["table/html_code", "stdtable"]]),
+        # SerializeTableAsIndexedRowMajor(
+        #     field_to_field=[["stdtable", "table_serialized"]]
+        # ),
         RenameFields(
-            field_to_field={"table_serialized": "text_a", "statement": "text_b"}
+            field_to_field={"table/html_code": "text_a", "statement": "text_b"}
         ),
         # MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
         Set(
