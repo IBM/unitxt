@@ -14,7 +14,7 @@ templates = [
 for template in templates:
     task = "pairwise_comparative_rating.single_turn"
 
-    gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=2048)
+    gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=2048, random_seed=42)
     for model_id in model_list:
         inference_model = IbmGenAiInferenceEngine(
             model_name=model_id, parameters=gen_params
