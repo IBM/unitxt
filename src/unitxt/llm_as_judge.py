@@ -173,9 +173,9 @@ class LLMAsJudge(BulkInstanceMetric):
                     instance["task_data"]["model_b"] == "baseline_model"
                 )
                 if is_model_b_the_baseline:
-                    model_a_preference_score = instance["prediction"]
+                    model_a_preference_score = instance["processed_prediction"]
                 else:
-                    model_a_preference_score = instance["prediction"] * -1
+                    model_a_preference_score = instance["processed_prediction"] * -1
 
                 res = {
                     self.main_score: model_a_preference_score,
@@ -183,7 +183,7 @@ class LLMAsJudge(BulkInstanceMetric):
                 }
             else:
                 res = {
-                    self.main_score: instance["prediction"],
+                    self.main_score: instance["processed_prediction"],
                     "judge_raw_output": verdict,
                 }
             res_list.append(res)
