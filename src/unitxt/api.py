@@ -110,8 +110,8 @@ def produce(instance_or_instances, recipe_query):
     return result
 
 
-def infer(instance_or_instances, recipe_query, engine):
-    dataset = produce(instance_or_instances, recipe_query)
+def infer(instance_or_instances, recipe, engine):
+    dataset = produce(instance_or_instances, recipe)
     engine, _ = fetch_artifact(engine)
     predictions = engine.infer(dataset)
     return post_process(predictions, dataset)

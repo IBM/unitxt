@@ -4,9 +4,28 @@
 
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
-=========
-Inference
-=========
+========================
+Inference and Production
+========================
+
+In this guide you will learn how to use unitxt pipeline recipe in production.
+
+For instance if you learn how to make end-to-end functions like:
+
+.. code-block:: python
+
+  def paraphrase(text):
+    return unitxt.infer(
+      [{"input_text": text, "output_text": ""}],
+      recipe="card=cards.coedit.paraphrase,template=templates.rewriting.paraphrase.default",
+      engine="engines.model.flan.t5_small.hf"
+    )
+
+.. code-block:: python
+
+  paraphrase("So simple to paraphrase!")
+
+
 
 Unitxt is capable of:
  - Producing processed data according to a given recipe.
