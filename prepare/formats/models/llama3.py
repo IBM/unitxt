@@ -22,10 +22,11 @@ If a question does not make any sense, or is not factually coherent, explain why
 
 format = SystemFormat(
     demo_format="<|start_header_id|>user<|end_header_id|>\n\n"
-    "{instruction}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     "{target_prefix}{target}<|eot_id|>",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    "{DEFAULT_SYSTEM_PROMPT}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>"
+    + DEFAULT_SYSTEM_PROMPT
+    + "<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
 )
 
@@ -37,10 +38,10 @@ add_to_catalog(
 
 format = SystemFormat(
     demo_format="<|start_header_id|>user<|end_header_id|>\n\n"
-    "{instruction}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     "{target_prefix}{target}<|eot_id|>",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    "{system_prompt}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>"
+    "{system_prompt}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
 )
 
