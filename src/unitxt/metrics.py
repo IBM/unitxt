@@ -19,11 +19,13 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .dataclass import AbstractField, InternalField, NonPositionalField, OptionalField
+from .inference import HFPipelineBasedInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
+    SequentialOperator,
     StreamingOperator,
     StreamOperator,
 )
@@ -3771,3 +3773,61 @@ class FuzzyNer(CustomF1Fuzzy):
 
     def get_element_representation(self, element, additional_input):
         return str(element)
+
+
+class IsCodeMixed(BulkInstanceMetric):
+    """Uses a generative model to assess whether a given text is code-mixed.
+
+    Our goal is to identify whether a text is code-mixed, i.e., contains a mixture of different
+    languages.
+    The model is asked to identify the language of the text; if the model response begins with
+    a number we take this as an indication that the text is code-mixed, for example:
+    - Model response: "The text is written in 2 different languages"
+    vs.
+    - Model response: "The text is written in German"
+
+    Note that this metric is quite tailored to specific model-template combinations, as it relies on the assumption
+    that the model will complete the answer prefix "The text is written in ___" in a particular way.
+
+    """
+
+    main_score = "is_code_mixed"
+    reduction_map = {"mean": [main_score]}
+    prediction_type = "str"
+
+    def prepare(self):
+        model_id = "Nexusflow/Starling-LM-7B-beta"
+        self.inference_model = HFPipelineBasedInferenceEngine(
+            model_name=model_id, max_new_tokens=1
+        )
+        # the processing steps for preparing the prompt (instruction, answer prefix etc.)
+        # that we send to the generative model
+        self.processor = SequentialOperator(
+            steps=[
+                "tasks.language_identification",
+                "templates.language_identification.simple",
+                "formats.models.starling",
+            ]
+        )
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        processed_data = self._prepare_instances_for_model(predictions)
+        preds = self.inference_model.infer(processed_data)
+
+        # where the generated outputs begin with a number, the text gets a score of 1 (i.e., code-mixed)
+        scores = [int(pred.isnumeric()) for pred in preds]
+        return [{self.main_score: s} for s in scores]
+
+    def _prepare_instances_for_model(self, texts: List[str]):
+        stream = MultiStream(
+            {
+                "test": [{"text": text, "label": ""} for text in texts],
+            }
+        )
+        processed_stream = self.processor.process(stream)
+        return processed_stream.to_dataset()["test"]
