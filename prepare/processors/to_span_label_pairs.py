@@ -6,8 +6,10 @@ from unitxt.processors import (
     ListToEmptyEntitiesTuples,
     RegexParser,
 )
+from unitxt.settings_utils import get_constants
 from unitxt.struct_data_operators import LoadJson
 
+constants = get_constants()
 logger = get_logger()
 
 # parse string like "1:hlle, 2:world" list of tuples using regex
@@ -25,7 +27,12 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             RegexParser(regex=regex, field="prediction", process_every_value=False),
-            RegexParser(regex=regex, field="references", process_every_value=True),
+            RegexParser(
+                regex=regex,
+                field="references",
+                process_every_value=True,
+                dont_apply_to_streams=[constants.inference_stream],
+            ),
         ]
     ),
     "processors.to_span_label_pairs",

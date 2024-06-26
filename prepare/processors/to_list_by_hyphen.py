@@ -1,8 +1,10 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
 from unitxt.operators import RemoveValues
+from unitxt.settings_utils import get_constants
 from unitxt.string_operators import RegexSplit
 
+constants = get_constants()
 regex = "(?:^|\n)- "
 
 add_to_catalog(
@@ -19,6 +21,7 @@ add_to_catalog(
                 field="references",
                 unallowed_values=["", " "],
                 process_every_value=True,
+                dont_apply_to_streams=[constants.inference_stream],
             ),
         ]
     ),

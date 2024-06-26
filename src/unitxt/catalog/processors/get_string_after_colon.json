@@ -11,6 +11,9 @@
             "__type__": "get_string_after",
             "substring": ":",
             "field": "references",
+            "dont_apply_to_streams": [
+                "__INFERENCE_STREAM__"
+            ],
             "process_every_value": true
         }
     ]

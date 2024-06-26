@@ -14,10 +14,10 @@ For instance, you learn how to make end-to-end functions like `paraphrase()`:
 
 .. code-block:: python
 
-  def paraphrase(text):
+  def paraphrase(input_text):
     return unitxt.infer(
-      [{"input_text": text, "output_text": ""}],
-      recipe="card=cards.coedit.paraphrase,template=templates.rewriting.paraphrase.default",
+      [{"input_text": input_text}],
+      recipe="task=tasks.rewriting.paraphrase,template=templates.rewriting.paraphrase.default,format=formats.models.flan.exq_exa",
       engine="engines.model.flan.t5_small.hf"
     )
 
@@ -35,13 +35,13 @@ In general, Unitxt is capable of:
 Produce Data
 ------------
 
-First, define a recipe:
+First lets define a task based recipe:
 
 .. code-block:: python
 
-  recipe = "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2"
+  recipe = "task=tasks.classification.multi_class.relation,template=templates.classification.multi_class.relation.default"
 
-Next, prepare a Python dictionary that matches the schema required by the recipe:
+Next, prepare a Python dictionary that matches the inputs schema required by the task:
 
 .. code-block:: python
 
@@ -60,6 +60,18 @@ Then, produce the model-ready input data with the `produce` function:
 .. code-block:: python
 
   from unitxt import produce
+
+  result = produce(instance, recipe)
+
+If we want to add to the data few shot examples, we should specify recipe with a data card:
+
+.. code-block:: python
+
+  recipe = "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2"
+
+Again we can now produce the data with the few shot demonstrations:
+
+.. code-block:: python
 
   result = produce(instance, recipe)
 
@@ -112,12 +124,12 @@ You can also implement an end-to-end inference pipeline using your preferred dat
 
   infer(instance, recipe, engine)
 
-Alternatively, you can specify any inference engine from the catalog:
+Alternatively, you can specify any task, template and inference engine from the catalog:
 
 .. code-block:: python
 
   infer(
     instance,
-    recipe="card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
+    recipe="task=tasks.classification.multi_class.relation,template=templates.classification.multi_class.relation.default",
     engine="engines.model.flan.t5_small.hf"
   )

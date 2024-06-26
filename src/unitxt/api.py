@@ -6,7 +6,7 @@ from datasets import DatasetDict
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
-from .metric_utils import _compute, _post_process
+from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
 from .standard import StandardRecipe
 
@@ -92,7 +92,7 @@ def evaluate(predictions, data) -> List[Dict[str, Any]]:
 
 
 def post_process(predictions, data) -> List[Dict[str, Any]]:
-    return _post_process(predictions=predictions, references=data)
+    return _inference_post_process(predictions=predictions, references=data)
 
 
 @lru_cache

@@ -26,14 +26,20 @@ from unitxt.processors import (
     YesNoToInt,
     YesToOneElseZero,
 )
+from unitxt.settings_utils import get_constants
 
+constants = get_constants()
 logger = get_logger()
 
 add_to_catalog(
     SequentialOperator(
         steps=[
             TakeFirstNonEmptyLine(field="prediction", process_every_value=False),
-            TakeFirstNonEmptyLine(field="references", process_every_value=True),
+            TakeFirstNonEmptyLine(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.take_first_non_empty_line",
@@ -44,7 +50,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             LowerCaseTillPunc(field="prediction", process_every_value=False),
-            LowerCaseTillPunc(field="references", process_every_value=True),
+            LowerCaseTillPunc(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.lower_case_till_punc",
@@ -58,7 +68,10 @@ add_to_catalog(
                 string="hate speech", field="prediction", process_every_value=False
             ),
             StringOrNotString(
-                string="hate speech", field="references", process_every_value=True
+                string="hate speech",
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
             ),
         ]
     ),
@@ -70,7 +83,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             LowerCase(field="prediction", process_every_value=False),
-            LowerCase(field="references", process_every_value=True),
+            LowerCase(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.lower_case",
@@ -81,7 +98,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             Capitalize(field="prediction", process_every_value=False),
-            Capitalize(field="references", process_every_value=True),
+            Capitalize(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.capitalize",
@@ -92,7 +113,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             Substring(field="prediction", process_every_value=False),
-            Substring(field="references", process_every_value=True),
+            Substring(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.substring",
@@ -105,7 +130,12 @@ add_to_catalog(
             GetStringAfter(
                 substring=":", field="prediction", process_every_value=False
             ),
-            GetStringAfter(substring=":", field="references", process_every_value=True),
+            GetStringAfter(
+                substring=":",
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.get_string_after_colon",
@@ -120,7 +150,10 @@ add_to_catalog(
                 string="toxic", field="prediction", process_every_value=False
             ),
             StringOrNotString(
-                string="toxic", field="references", process_every_value=True
+                string="toxic",
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
             ),
         ]
     ),
@@ -132,7 +165,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             ConvertToBoolean(field="prediction", process_every_value=False),
-            ConvertToBoolean(field="references", process_every_value=True),
+            ConvertToBoolean(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.convert_to_boolean",
@@ -143,7 +180,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             TakeFirstWord(field="prediction", process_every_value=False),
-            TakeFirstWord(field="references", process_every_value=True),
+            TakeFirstWord(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.take_first_word",
@@ -154,7 +195,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             YesNoToInt(field="prediction", process_every_value=False),
-            YesNoToInt(field="references", process_every_value=True),
+            YesNoToInt(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.yes_no_to_int",
@@ -165,7 +210,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             StrToFloatFormat(field="prediction", process_every_value=False),
-            StrToFloatFormat(field="references", process_every_value=True),
+            StrToFloatFormat(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.str_to_float_format",
@@ -176,7 +225,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             ToYesOrNone(field="prediction", process_every_value=False),
-            ToYesOrNone(field="references", process_every_value=True),
+            ToYesOrNone(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.to_yes_or_none",
@@ -197,7 +250,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             StanceToProCon(field="prediction", process_every_value=False),
-            StanceToProCon(field="references", process_every_value=True),
+            StanceToProCon(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.stance_to_pro_con",
@@ -218,7 +275,11 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             FirstCharacter(field="prediction", process_every_value=False),
-            FirstCharacter(field="references", process_every_value=True),
+            FirstCharacter(
+                field="references",
+                dont_apply_to_streams=[constants.inference_stream],
+                process_every_value=True,
+            ),
         ]
     ),
     "processors.first_character",
@@ -235,6 +296,7 @@ add_to_catalog(
             ),
             RemoveValues(
                 field="references/0",
+                dont_apply_to_streams=[constants.inference_stream],
                 unallowed_values=["none"],
                 process_every_value=False,
             ),
@@ -253,6 +315,7 @@ add_to_catalog(
             ),
             MatchClosestOption(
                 field="references",
+                dont_apply_to_streams=[constants.inference_stream],
                 process_every_value=True,
             ),
         ]
@@ -292,6 +355,7 @@ add_to_catalog(
             ),
             CastFields(
                 fields={"references": "float"},
+                dont_apply_to_streams=constants.inference_stream,
                 process_every_value=True,
             ),
         ]
@@ -309,6 +373,7 @@ add_to_catalog(
             ),
             CastFields(
                 fields={"references": "float"},
+                dont_apply_to_streams=constants.inference_stream,
                 process_every_value=True,
             ),
         ]
@@ -325,6 +390,7 @@ add_to_catalog(
             ),
             ExtractMtBenchRatingJudgment(
                 field="references",
+                dont_apply_to_streams=[constants.inference_stream],
                 process_every_value=True,
             ),
         ]
@@ -341,6 +407,7 @@ add_to_catalog(
             ),
             ExtractMtBenchLabelJudgment(
                 field="references",
+                dont_apply_to_streams=[constants.inference_stream],
                 process_every_value=True,
             ),
         ]

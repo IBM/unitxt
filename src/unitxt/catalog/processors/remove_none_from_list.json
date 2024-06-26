@@ -12,6 +12,9 @@
         {
             "__type__": "remove_values",
             "field": "references/0",
+            "dont_apply_to_streams": [
+                "__INFERENCE_STREAM__"
+            ],
             "unallowed_values": [
                 "none"
             ],

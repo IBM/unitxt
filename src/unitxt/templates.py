@@ -8,7 +8,10 @@ from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
+from .settings_utils import get_constants
 from .type_utils import isoftype
+
+constants = get_constants()
 
 
 class TemplateFormatKeyError(KeyError):
@@ -75,16 +78,23 @@ class Template(InstanceOperator):
         instruction, target_prefix = self.inputs_to_instruction_and_target_prefix(
             inputs
         )
-        target, references = self.outputs_to_target_and_references(outputs)
 
-        return {
+        result = {
             **instance,
             "source": source,
-            "target": target,
-            "references": references,
             "instruction": instruction,
             "target_prefix": target_prefix,
         }
+
+        if stream_name == constants.inference_stream:
+            return result
+
+        target, references = self.outputs_to_target_and_references(outputs)
+
+        result["target"] = target
+        result["references"] = references
+
+        return result
 
     @abstractmethod
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
@@ -188,6 +198,9 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
     choice_b_label: str
     choice_tie_label: str
     shuffle: bool
+
+    def verify(self):
+        super().verify()
 
     def verbalize_answer_field(self, outputs: Dict[str, object]):
         answer = outputs[self.answer_field]
@@ -400,29 +413,46 @@ class MultipleChoiceTemplate(Template):
 
         return target, [target]
 
-    def _shuffle_choices(self, instance):
-        target_index = self.outputs_to_target_index(instance["outputs"])
-        original_label_choice = instance["outputs"][self.choices_field][target_index]
+    def _shuffle_choices(self, instance, stream_name):
+        if stream_name != constants.inference_stream:
+            target_index = self.outputs_to_target_index(instance["outputs"])
+            original_label_choice = instance["outputs"][self.choices_field][
+                target_index
+            ]
         choices = instance["inputs"][self.choices_field]
-        random_generator = new_random_generator(
-            {**instance["inputs"], **instance["outputs"]}
-        )
+
+        if stream_name == constants.inference_stream:
+            random_seed = {**instance["inputs"]}
+        else:
+            random_seed = {**instance["inputs"], **instance["outputs"]}
+
+        random_generator = new_random_generator(random_seed)
         random_generator.shuffle(choices)
         instance["inputs"][self.choices_field] = choices
+
+        if stream_name == constants.inference_stream:
+            return instance
+
         instance["outputs"][self.choices_field] = choices
         instance["outputs"][self.target_field] = choices.index(original_label_choice)
+
         return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         if self.shuffle_choices:
-            instance = self._shuffle_choices(instance)
+            instance = self._shuffle_choices(instance, stream_name)
         result = super().process(instance, stream_name)
-        if "options" not in result["outputs"]:
-            result["outputs"]["options"] = self.inputs_to_choices(
-                instance["outputs"], self.target_choice_format
+        if stream_name == constants.inference_stream:
+            result["inputs"]["options"] = self.inputs_to_choices(
+                instance["inputs"], self.target_choice_format
             )
+        else:
+            if "options" not in result["outputs"]:
+                result["outputs"]["options"] = self.inputs_to_choices(
+                    instance["outputs"], self.target_choice_format
+                )
         return result
 
 

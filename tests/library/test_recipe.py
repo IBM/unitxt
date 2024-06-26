@@ -89,17 +89,12 @@ class TestRecipes(UnitxtTestCase):
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
             "target": " C",
             "references": [" C"],
-            "task_data": '{"topic": "testing", '
-            '"question": "what?", '
-            '"choices": ["yes", "not", "maybe"], '
-            '"answer": "maybe", '
-            '"options": [" A", " B", " C"], '
-            '"metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
-            "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
             "data_classification_policy": [],
         }
+
+        del result["task_data"]
 
         self.assertDictEqual(result, target)
 

@@ -1244,7 +1244,7 @@ class ApplyOperatorsField(InstanceOperator):
 
         # we now have a list of nanes of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
-        return operator.process_instance(instance)
+        return operator.process_instance(instance, stream_name=stream_name)
 
 
 class FilterByCondition(StreamOperator):
@@ -1764,7 +1764,7 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
                 operator, StreamingOperator
             ), f"Operator {operator_name} must be a StreamOperator"
 
-            stream = operator(MultiStream({"tmp": stream}))["tmp"]
+            stream = operator(MultiStream({stream_name: stream}))[stream_name]
 
         yield from stream
 
@@ -1805,7 +1805,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # Here we keep all the fields besides the score, and restore them after the metric finishes.
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
-        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = MultiStream({stream_name: stream})
         multi_stream = CopyFields(
             field_to_field={k: f"{k}_orig" for k in keys_to_restore}
         )(multi_stream)
@@ -1827,7 +1827,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
             multi_stream
         )
-        stream = multi_stream["tmp"]
+        stream = multi_stream[stream_name]
         yield from stream
 
 
