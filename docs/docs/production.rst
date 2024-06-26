@@ -4,21 +4,25 @@
 
    To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
 
-=====================================
-Dynamic Data Processing For Inference
-=====================================
+=========
+Inference
+=========
 
-Unitxt can be used to process data dynamically and generate model-ready inputs on the fly, based on a given task recipe.
+Unitxt is capable of:
+ - Producing processed data according to a given recipe.
+ - Post-processing predictions based on a recipe.
+ - Performing end-to-end inference using a recipe and a specified inference engine.
 
-First define a recipe:
+Produce Data
+------------
+
+First, define a recipe:
 
 .. code-block:: python
 
   recipe = "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2"
 
-
-Second, prepare an python dictionary object in the exact schema of the task used in that recipe:
-
+Next, prepare a Python dictionary that matches the schema required by the recipe:
 
 .. code-block:: python
 
@@ -32,19 +36,25 @@ Second, prepare an python dictionary object in the exact schema of the task used
     "text_b_type": "hypothesis",
   }
 
-Then you can produce the model-ready input data with the `produce` function:
+Then, produce the model-ready input data with the `produce` function:
 
 .. code-block:: python
 
   from unitxt import produce
 
-  result = produce([instance], recipe)
+  result = produce(instance, recipe)
 
-Then you have the formatted instance in the result. If you `print(result[0]["source"])` you will get:
+To view the formatted instance, print the result:
 
 .. code-block::
 
-    Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.
+  print(result["source"])
+
+This will output instances like:
+
+.. code-block::
+
+    Given a premise and a hypothesis, classify the entailment of the hypothesis as either 'entailment' or 'not entailment'.
 
     premise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth., hypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.
     The entailment class is entailment
@@ -55,6 +65,40 @@ Then you have the formatted instance in the result. If you `print(result[0]["sou
     premise: It works perfectly, hypothesis: It works!
     The entailment class is
 
+Post Process Data
+-----------------
 
+After obtaining predictions, they can be post-processed:
 
+.. code-block:: python
 
+  from unitxt import post_process
+
+  prediction = model.generate(result["source"])
+  processed_result = post_process(predictions=[prediction], data=[result])[0]
+
+End to End Inference Pipeline
+-----------------------------
+
+You can also implement an end-to-end inference pipeline using your preferred data and an inference engine:
+
+.. code-block:: python
+
+  from unitxt import infer
+  from unitxt.inference import HFPipelineBasedInferenceEngine
+
+  engine = HFPipelineBasedInferenceEngine(
+      model_name="google/flan-t5-small", max_new_tokens=32
+  )
+
+  infer(instance, recipe, engine)
+
+Alternatively, you can specify any inference engine from the catalog:
+
+.. code-block:: python
+
+  infer(
+    instance,
+    recipe="card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
+    engine="engines.model.flan.t5_small.hf"
+  )
