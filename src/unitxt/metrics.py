@@ -1377,6 +1377,7 @@ class FinQAEval(InstanceMetric):
     main_score = "program_accuracy"
     ci_scores = ["program_accuracy", "execution_accuracy"]
     prediction_type = "str"
+    finqa_module = ""
 
     def finqa_eval_program(
         self, references: List[List], prediction: str, task_data: Dict, finqa_module
@@ -1447,19 +1448,25 @@ class FinQAEval(InstanceMetric):
             total += 1
         return float(correct) / total
 
-    def compute(self, references: List[List], prediction: str, task_data: Dict) -> dict:
+    def prepare(self):
+        super().prepare()
+
         import importlib.util as iua
         import os
 
         import requests
 
         # download finqa evaluation script, load as a module and use it on the fly
-        def download_finqa_eval_script_file(url, local_path):
+        def download_finqa_eval_script_file(url, local_path, hash_of_script):
             if not os.path.exists(local_path):
                 response = requests.get(url)
                 response.raise_for_status()
+                content = response.content
+                # assert hash(content) == hash_of_script, \
+                #     f'URL ("{url}") is different than expected. Make sure you added the right one.'
+
                 with open(local_path, "wb") as file:
-                    file.write(response.content)
+                    file.write(content)
 
         def load_finqa_eval_module_from_file(file_path, module_name):
             spec = iua.spec_from_file_location(module_name, file_path)
@@ -1467,26 +1474,31 @@ class FinQAEval(InstanceMetric):
             spec.loader.exec_module(module)
             return module
 
+        # remote_url = "https://github.com/czyssrs/FinQA/blob/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/code/evaluate/evaluate.py"
         local_filepath = "finqa_eval_script.py"
         module_name = "finqa_eval"
+        hash_of_script = 5083967287067854908
 
-        download_finqa_eval_script_file(remote_url, local_filepath)
-        finqa_module = load_finqa_eval_module_from_file(local_filepath, module_name)
+        download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
+        self.finqa_module = load_finqa_eval_module_from_file(
+            local_filepath, module_name
+        )
 
         # Clean up the downloaded file after loading the module
         os.remove(local_filepath)
 
+    def compute(self, references: List[List], prediction: str, task_data: Dict) -> dict:
         try:
             program_accuracy = self.finqa_eval_program(
-                references, prediction, task_data, finqa_module
+                references, prediction, task_data, self.finqa_module
             )
         except:
             program_accuracy = 0
 
         try:
             execution_accuracy = self.finqa_eval_execution(
-                references, prediction, task_data, finqa_module
+                references, prediction, task_data, self.finqa_module
             )
         except:
             # fall back to evaluating the python expression.
