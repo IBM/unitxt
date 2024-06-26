@@ -9,6 +9,7 @@ from .dataclass import Dataclass
 from .dict_utils import dict_set
 from .operator import (
     MultiStreamOperator,
+    SequentialOperator,
     SequentialOperatorInitializer,
     StreamInitializerOperator,
 )
@@ -146,6 +147,59 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 # When receiving instances from this scheme, the keys and values are returned as two separate
 # lists, and are converted to a dictionary.
 
+_post_process_steps = SequentialOperator(
+    steps=[
+        Copy(
+            field="prediction",
+            to_field="raw_prediction",
+        ),
+        Copy(
+            field="references",
+            to_field="raw_references",
+        ),
+        Copy(
+            field="source",
+            to_field="task_data/source",
+        ),
+        ApplyOperatorsField(
+            operators_field="postprocessors",
+        ),
+        Copy(
+            field="prediction",
+            to_field="processed_prediction",
+        ),
+        Copy(
+            field="references",
+            to_field="processed_references",
+        ),
+    ]
+)
+
+
+class PostProcessRecipe(SequentialOperatorInitializer):
+    def prepare(self):
+        register_all_artifacts()
+        self.steps = [
+            FromPredictionsAndOriginalData(),
+            _post_process_steps,
+        ]
+
+
+def _post_process(
+    predictions: List[str],
+    references: Iterable,
+    split_name: str = "all",
+):
+    _reset_env_local_catalogs()
+    register_all_artifacts()
+    recipe = PostProcessRecipe()
+
+    multi_stream = recipe(
+        predictions=predictions, references=references, split_name=split_name
+    )
+
+    return [instance["processed_prediction"] for instance in multi_stream[split_name]]
+
 
 class MetricRecipe(SequentialOperatorInitializer):
     calc_confidence_intervals: bool = True
@@ -156,29 +210,7 @@ class MetricRecipe(SequentialOperatorInitializer):
         self.steps = [
             FromPredictionsAndOriginalData(),
             LoadJson(field="task_data"),
-            Copy(
-                field="prediction",
-                to_field="raw_prediction",
-            ),
-            Copy(
-                field="references",
-                to_field="raw_references",
-            ),
-            Copy(
-                field="source",
-                to_field="task_data/source",
-            ),
-            ApplyOperatorsField(
-                operators_field="postprocessors",
-            ),
-            Copy(
-                field="prediction",
-                to_field="processed_prediction",
-            ),
-            Copy(
-                field="references",
-                to_field="processed_references",
-            ),
+            _post_process_steps,
             SplitByNestedGroup(
                 field_name_of_group="group",
                 number_of_fusion_generations=self.number_of_fusion_generations,
