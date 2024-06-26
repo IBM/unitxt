@@ -5,7 +5,8 @@
         "model_name": "meta-llama/llama-3-70b-instruct",
         "parameters": {
             "__type__": "ibm_gen_ai_inference_engine_params",
-            "max_new_tokens": 2048
+            "max_new_tokens": 2048,
+            "random_seed": 42
         }
     },
     "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
