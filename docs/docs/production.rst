@@ -8,9 +8,9 @@
 Inference and Production
 ========================
 
-In this guide you will learn how to use unitxt pipeline recipe in production.
+In this guide you will learn how to use unitxt data recipes in production.
 
-For instance if you learn how to make end-to-end functions like:
+For instance, you learn how to make end-to-end functions like `paraphrase()`:
 
 .. code-block:: python
 
@@ -21,13 +21,13 @@ For instance if you learn how to make end-to-end functions like:
       engine="engines.model.flan.t5_small.hf"
     )
 
+Which then can be used like:
+
 .. code-block:: python
 
   paraphrase("So simple to paraphrase!")
 
-
-
-Unitxt is capable of:
+In general, Unitxt is capable of:
  - Producing processed data according to a given recipe.
  - Post-processing predictions based on a recipe.
  - Performing end-to-end inference using a recipe and a specified inference engine.
