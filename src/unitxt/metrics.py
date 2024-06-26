@@ -1373,58 +1373,37 @@ class RecallBinary(F1Binary):
 
 
 class FinQAEval(InstanceMetric):
-    reduction_map = {"mean": ["accuracy"]}
-    main_score = "accuracy"
-    ci_scores = ["accuracy"]
+    reduction_map = {"mean": ["program_accuracy", "execution_accuracy"]}
+    main_score = "program_accuracy"
+    ci_scores = ["program_accuracy", "execution_accuracy"]
     prediction_type = "str"
 
-    def finqa_eval(
-        self, references: List[List], prediction: str, task_data: Dict
-    ) -> float:
-        exe_correct = False
+    def finqa_eval_program(
+        self, references: List[List], prediction: str, task_data: Dict, finqa_module
+    ) -> (float, float):
         prog_correct = False
+        pred_item = finqa_module.program_tokenization(prediction)
+        program = task_data["program_re"]
+        gold = finqa_module.program_tokenization(program)
+        if finqa_module.equal_program(pred_item, gold):
+            prog_correct = True
 
-        import importlib.util as iua
-        import os
+        return float(prog_correct)
 
-        import requests
-
-        # download finqa evaluation script, load as a module and use it on the fly
-        def download_finqa_eval_script_file(url, local_path):
-            if not os.path.exists(local_path):
-                response = requests.get(url)
-                response.raise_for_status()
-                with open(local_path, "wb") as file:
-                    file.write(response.content)
-
-        def load_finqa_eval_module_from_file(file_path, module_name):
-            spec = iua.spec_from_file_location(module_name, file_path)
-            module = iua.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-
-        remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/code/evaluate/evaluate.py"
-        local_filepath = "finqa_eval_script.py"
-        module_name = "finqa_eval"
-
-        download_finqa_eval_script_file(remote_url, local_filepath)
-        finqa_module = load_finqa_eval_module_from_file(local_filepath, module_name)
-
-        # Clean up the downloaded file after loading the module
-        os.remove(local_filepath)
-
+    def finqa_eval_execution(
+        self, references: List[List], prediction: str, task_data: Dict, finqa_module
+    ) -> (float, float):
+        exe_correct = False
+        last_char = prediction.rfind(")")
+        prediction = prediction[: last_char + 1]
         pred_item = finqa_module.program_tokenization(prediction)
         gold_answer = task_data["answer"]
         table = task_data["table"]
-        program = task_data["program_re"]
-        gold = finqa_module.program_tokenization(program)
         invalid_flag, exe_res = finqa_module.eval_program(pred_item, table)
         if invalid_flag == 0 and float(exe_res) == float(gold_answer):
             exe_correct = True
-            if finqa_module.equal_program(gold, pred_item):
-                prog_correct = True
 
-        return float(exe_correct and prog_correct)
+        return float(exe_correct)
 
     def python_expression_eval(
         self, references: List[List], prediction: str, task_data: Dict
@@ -1432,6 +1411,8 @@ class FinQAEval(InstanceMetric):
         total = 0
         correct = 0
 
+        last_char = prediction.rfind(")")
+        prediction = prediction[: last_char + 1]
         for pred, gold_item in zip([prediction], references):
             if pred.lower().endswith(gold_item.lower()):
                 # for non numeric answers, just check if the answer is in the prediction
@@ -1467,15 +1448,56 @@ class FinQAEval(InstanceMetric):
         return float(correct) / total
 
     def compute(self, references: List[List], prediction: str, task_data: Dict) -> dict:
-        acc = 0
+        import importlib.util as iua
+        import os
+
+        import requests
+
+        # download finqa evaluation script, load as a module and use it on the fly
+        def download_finqa_eval_script_file(url, local_path):
+            if not os.path.exists(local_path):
+                response = requests.get(url)
+                response.raise_for_status()
+                with open(local_path, "wb") as file:
+                    file.write(response.content)
+
+        def load_finqa_eval_module_from_file(file_path, module_name):
+            spec = iua.spec_from_file_location(module_name, file_path)
+            module = iua.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+
+        remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/code/evaluate/evaluate.py"
+        local_filepath = "finqa_eval_script.py"
+        module_name = "finqa_eval"
+
+        download_finqa_eval_script_file(remote_url, local_filepath)
+        finqa_module = load_finqa_eval_module_from_file(local_filepath, module_name)
+
+        # Clean up the downloaded file after loading the module
+        os.remove(local_filepath)
+
         try:
-            acc = self.finqa_eval(references, prediction, task_data)
+            program_accuracy = self.finqa_eval_program(
+                references, prediction, task_data, finqa_module
+            )
+        except:
+            program_accuracy = 0
+
+        try:
+            execution_accuracy = self.finqa_eval_execution(
+                references, prediction, task_data, finqa_module
+            )
         except:
             # fall back to evaluating the python expression.
-            acc = max(
-                self.python_expression_eval(references, prediction, task_data), acc
+            execution_accuracy = max(
+                self.python_expression_eval(references, prediction, task_data), 0
             )
-        return {self.main_score: acc}
+
+        return {
+            "program_accuracy": program_accuracy,
+            "execution_accuracy": execution_accuracy,
+        }
 
 
 class PrecisionBinary(F1Binary):

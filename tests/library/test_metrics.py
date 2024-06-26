@@ -1465,12 +1465,14 @@ class TestConfidenceIntervals(UnitxtTestCase):
             ["subtract(5829, 5735)"],
             ["subtract(5829, 5735)"],
             ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
             ["subtract(153.7, 139.9), divide(#0, 139.9)"],
         ]
         task_data = [
             {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
             {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
-            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94$"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94%%"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
             {
                 "table": table2,
                 "program_re": "subtract(153.7, 139.9), divide(#0, 139.9)",
@@ -1478,10 +1480,11 @@ class TestConfidenceIntervals(UnitxtTestCase):
             },
         ]
         predictions = [
-            "subtract(5829, 5735)",  # true program
-            "subtract(5829, 5730)",  # manipulated program
-            "subtract(5829, 5735)",  # answer with special chars (in task data)
-            "subtract(153.7, 139.9), divide(#0, 139.9)",  # 2 operation
+            "subtract(5829, 5735)",  # right program, right accuracy
+            "subtract(5829, 5730)--",  # wrong program, wrong accuracy
+            "subtract(5829, 5735)   ",  # answer with special chars (in task data)
+            "subtract(5824, 5730), ",  # wrong program, right accuracy
+            "subtract(153.7, 139.9), divide(#0, 139.9), ,",  # 2 operations
         ]
 
         outputs = apply_metric(
@@ -1490,8 +1493,15 @@ class TestConfidenceIntervals(UnitxtTestCase):
             references=references,
             task_data=task_data,
         )
-        actual_scores = [output["score"]["instance"]["accuracy"] for output in outputs]
-        target_scores = [1, 0, 1, 1]
+        actual_scores = [
+            (
+                output["score"]["instance"]["program_accuracy"]
+                + output["score"]["instance"]["execution_accuracy"]
+            )
+            / 2
+            for output in outputs
+        ]
+        target_scores = [1, 0, 1, 0.5, 1]
 
         for i in range(len(actual_scores)):
             self.assertAlmostEqual(actual_scores[i], target_scores[i])
