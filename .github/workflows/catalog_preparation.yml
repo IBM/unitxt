@@ -21,6 +21,7 @@ jobs:
        with:
          python-version: '3.9'
          cache: 'pip' # caching pip dependencies
+     - run: echo "VIRTUAL_ENV=${Python_ROOT_DIR}" >> $GITHUB_ENV
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
      - run: uv pip install -r requirements/base.rqr
      - run: uv pip install -r requirements/tests.rqr
