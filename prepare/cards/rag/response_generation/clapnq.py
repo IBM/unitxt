@@ -77,3 +77,15 @@ add_to_catalog(
     "cards.rag.response_generation.clapnq",
     overwrite=True,
 )
+
+debug = False
+if debug:
+    from unitxt import evaluate, load_dataset
+
+    ds = load_dataset(
+        "card=cards.rag.response_generation.clapnq,template=templates.rag.response_generation.answer_based_on_context_inverted,demos_pool_size=100,num_demos=2,format=formats.llama3_chat,system_prompt=system_prompts.empty,demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True",
+    )
+
+    predictions = ds["test"]["target"]
+    # 3. create a metric and evaluate the results.
+    scores = evaluate(predictions=predictions, data=ds["test"])
