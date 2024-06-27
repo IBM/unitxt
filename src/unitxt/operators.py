@@ -350,6 +350,8 @@ class InstanceFieldOperator(InstanceOperator):
     not_exist_ok: bool = False
 
     def verify_field_definition(self):
+        if hasattr(self, "_field_to_field") and self._field_to_field is not None:
+            return
         assert (
             (self.field is None) != (self.field_to_field is None)
         ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
@@ -376,7 +378,9 @@ class InstanceFieldOperator(InstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
-        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            self._field_to_field is not None
+        ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         assert (
             len(self._field_to_field) > 0
         ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
@@ -411,10 +415,6 @@ class InstanceFieldOperator(InstanceOperator):
             "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str]."
         )
 
-    def before_process_multi_stream(self):
-        super().before_process_multi_stream()
-        self.verify_field_definition()
-
     @abstractmethod
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
@@ -422,6 +422,7 @@ class InstanceFieldOperator(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        self.verify_field_definition()
         # Need to deep copy instance, because when assigning two dictionary fields,
         # dict_set() the target field dictionary fields.
         # This means that if this target field was assigned to another field before,
