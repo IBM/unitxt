@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from .api import evaluate, produce
+from .api import post_process, produce
 from .artifact import Artifact, settings
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
@@ -135,12 +135,12 @@ class LLMAsJudge(BulkInstanceMetric):
             recipe_args["format"] = self.format
         recipe = Artifact.from_dict(recipe_args)
         dataset = produce(instances, recipe)
-        verdicts = self.inference_model.infer(dataset)
-        meta_scores = evaluate(predictions=verdicts, data=dataset)
+        predictions = self.inference_model.infer(dataset)
+        scores = post_process(predictions=predictions, data=dataset)
         return [
             {
-                self.main_score: instance["processed_prediction"],
-                "judge_raw_output": verdict,
+                self.main_score: score,
+                "judge_raw_output": prediction,
             }
-            for instance, verdict in zip(meta_scores, verdicts)
+            for score, prediction in zip(scores, predictions)
         ]
