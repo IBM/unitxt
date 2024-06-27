@@ -1,4 +1,5 @@
 import random
+import warnings
 
 from .api import evaluate, infer, load, load_dataset, post_process, produce
 from .catalog import add_to_catalog, get_from_catalog
@@ -21,3 +22,6 @@ local_catalog_path = constants.local_catalog_path
 
 dataset_url = constants.dataset_url
 metric_url = constants.metric_url
+
+if settings.default_verbosity in ["error", "critical"]:
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
