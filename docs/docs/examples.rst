@@ -63,5 +63,13 @@ Each example is a self contained python file that you can run and later modify.
        The example adds two LLM judges, one that uses the ground truth (references) from the dataset and one that does not.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluation_summarization_dataset_llm_as_judge.py>`_
      - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+   * - Evaluate your model on the Arena Hard benchmark using a custom LLMaJ.
+     - Demonstrates how to evaluate a user model on the Arena Hard benchmark, using an LLMaJ other than the GPT4.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_model_using_arena_hard>`_
+     - | :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`.
+   * - Evaluate a judge model performance judging the Arena Hard Benchmark.
+     - Demonstrates how to evaluate the capabilities of a user model, to act as a judge on the Arena Hard benchmark. The model is evaluated on it's capabilities to give a judgment that is in correlation with GPT4 judgment on the benchmark.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard>`_
+     - | :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_meta_evaluation>`.
 
 
