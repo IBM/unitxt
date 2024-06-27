@@ -140,7 +140,7 @@ When it comes to the assessment of answer quality, we typically see an attempt t
 
 As a counter approach, the holistic view on quality aims to characterize this property using simple, direct, questions in a realistic scenario. For example, in the comparative setup, instead of asking human labelers to rate answers by various abstract properties as mentioned above and then somehow mixing all the scores together and concluding which answer is better, it directly asks the labelers to indicate which answer is better in the use-case in which the answer is to be given (e.g. a chatbot about enterprise HR policies). 
 
-The underlying assumption here is that the labeler will implicitly appeal to all fine-grained properties like naturalness, conciseness, faithfulness, etc. and reward the overall better answer. 
+The underlying assumption here is that the labeler implicitly considers all fine-grained properties like naturalness, conciseness, faithfulness, etc. and reward the overall better answer. 
 
 For completeness, in a non-comparative setup, the holistic approach could, for example, ask the labeler to indicate if he/she would recommend the answer to a friend who asks the question, appealing, as in the comparative setup, to overall judgement.  
 
