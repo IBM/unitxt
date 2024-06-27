@@ -10,7 +10,7 @@
             "get_default": "en"
         },
         {
-            "__type__": "lower_case",
+            "__type__": "lower",
             "field": "task_data/tokenize"
         },
         {
