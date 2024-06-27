@@ -48,7 +48,7 @@ This definition outlines the inputs, outputs, and reference fields necessary for
 
 Metrics
 ========
-RAG evaluation is done using automatic reference-based and referwence-less metrics as described below. The figure below shows a range of automatic metrics for RAG organized with pointers to their inputs and implementation. The metrics are explained below the figure.
+RAG evaluation is performed using both automatic `reference-based` and `reference-less` metrics. The figure below displays a variety of automatic metrics for RAG, organized with pointers to their inputs and implementations. Detailed explanations of these metrics are provided below the figure.
 
 .. image:: ../../assets/rag/metrics_slide.png
    :alt: RAG Metrics
