@@ -21,10 +21,9 @@ jobs:
       with:
         python-version: '3.9'
         cache: 'pip' # caching pip dependencies
-    - run: pip install -r requirements/base.rqr
-    - run: pip install -r requirements/tests.rqr
-    - run: pip install -e .
-    - run: pip install coverage[toml]
+    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - run: uv pip install --system -e ".[tests]"
+    - run: uv pip install --system coverage[toml]
 
     - name: Run Tests
       run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"

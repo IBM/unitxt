@@ -22,11 +22,7 @@ jobs:
          python-version: '3.9'
          cache: 'pip' # caching pip dependencies
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-     - run: uv pip install -r requirements/base.rqr
-     - run: uv pip install -r requirements/tests.rqr
-
-     - name: Install Unitxt From Source
-       run: uv pip install -e .
+     - run: uv pip install --system -e ".[tests]"
 
      - name: Run Tests
        run: python utils/prepare_all_artifacts.py
