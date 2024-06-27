@@ -21,7 +21,7 @@ jobs:
         python-version: '3.9'
         cache: 'pip' # caching pip dependencies
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system -e ".[tests]".
+    - run: uv pip install --system ".[tests]"
     - run: uv pip install --system coverage[toml]
 
     - name: Run Tests

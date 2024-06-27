@@ -22,7 +22,7 @@ jobs:
          python-version: '3.9'
          cache: 'pip' # caching pip dependencies
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-     - run: uv pip install --system -e ".[tests]"
+     - run: uv pip install --system ".[tests]"
 
      - name: Run Tests
        run: python -m unittest discover -s tests/catalog -p "test_*.py"
