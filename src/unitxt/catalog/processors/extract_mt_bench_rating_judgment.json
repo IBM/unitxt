@@ -1,17 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "extract_mt_bench_rating_judgment",
-            "field": "prediction"
-        },
-        {
-            "__type__": "extract_mt_bench_rating_judgment",
-            "field": "references",
-            "dont_apply_to_streams": [
-                "__INFERENCE_STREAM__"
-            ],
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "extract_mt_bench_rating_judgment"
+    }
 }

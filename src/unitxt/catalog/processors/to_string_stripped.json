@@ -1,18 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "to_string_stripped",
-            "field": "prediction",
-            "process_every_value": false
-        },
-        {
-            "__type__": "to_string_stripped",
-            "field": "references",
-            "process_every_value": true,
-            "dont_apply_to_streams": [
-                "__INFERENCE_STREAM__"
-            ]
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "to_string_stripped"
+    }
 }

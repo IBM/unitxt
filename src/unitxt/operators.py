@@ -82,13 +82,14 @@ from .operator import (
     StreamOperator,
 )
 from .random_utils import new_random_generator
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
 
 settings = get_settings()
+constants = get_constants()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -348,9 +349,24 @@ class InstanceFieldOperator(InstanceOperator):
     get_default: Any = None
     not_exist_ok: bool = False
 
-    def verify(self):
-        super().verify()
+    def verify_field_definition(self):
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
 
+        if self.field_to_field is None:
+            self._field_to_field = [
+                (self.field, self.to_field if self.to_field is not None else self.field)
+            ]
+        else:
+            self._field_to_field = (
+                list(self.field_to_field.items())
+                if isinstance(self.field_to_field, dict)
+                else self.field_to_field
+            )
         assert (
             self.field is not None or self.field_to_field is not None
         ), "Must supply a field to work on"
@@ -395,31 +411,13 @@ class InstanceFieldOperator(InstanceOperator):
             "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str]."
         )
 
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        self.verify_field_definition()
+
     @abstractmethod
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
-
-    def prepare(self):
-        super().prepare()
-
-        # prepare is invoked before verify, hence must make some checks here, before the changes done here
-        assert (
-            (self.field is None) != (self.field_to_field is None)
-        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
-        assert (
-            self.to_field is None or self.field_to_field is None
-        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
-
-        if self.field_to_field is None:
-            self._field_to_field = [
-                (self.field, self.to_field if self.to_field is not None else self.field)
-            ]
-        else:
-            self._field_to_field = (
-                list(self.field_to_field.items())
-                if isinstance(self.field_to_field, dict)
-                else self.field_to_field
-            )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -1085,6 +1083,31 @@ class AddID(InstanceOperator):
     ) -> Dict[str, Any]:
         instance[self.id_field_name] = str(uuid.uuid4()).replace("-", "")
         return instance
+
+
+class Cast(FieldOperator):
+    """Casts specified fields to specified types.
+
+    Args:
+        default (object): A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+    """
+
+    to: str
+    failure_default: Optional[Any] = "__UNDEFINED__"
+
+    def prepare(self):
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
+
+    def process_value(self, value):
+        try:
+            return self.types[self.to](value)
+        except ValueError as e:
+            if self.failure_default == "__UNDEFINED__":
+                raise ValueError(
+                    f'Failed to cast value {value} to type "{self.to}", and no default value is provided.'
+                ) from e
+            return self.failure_default
 
 
 class CastFields(InstanceOperator):

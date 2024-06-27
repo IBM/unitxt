@@ -1,24 +1,9 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "remove_values",
-            "field": "prediction",
-            "unallowed_values": [
-                "none"
-            ],
-            "process_every_value": false
-        },
-        {
-            "__type__": "remove_values",
-            "field": "references/0",
-            "dont_apply_to_streams": [
-                "__INFERENCE_STREAM__"
-            ],
-            "unallowed_values": [
-                "none"
-            ],
-            "process_every_value": false
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "remove_values",
+        "unallowed_values": [
+            "none"
+        ]
+    }
 }
