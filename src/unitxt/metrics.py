@@ -1451,6 +1451,7 @@ class FinQAEval(InstanceMetric):
     def prepare(self):
         super().prepare()
 
+        import hashlib
         import importlib.util as iua
         import os
 
@@ -1462,8 +1463,9 @@ class FinQAEval(InstanceMetric):
                 response = requests.get(url)
                 response.raise_for_status()
                 content = response.content
-                # assert hash(content) == hash_of_script, \
-                #     f'URL ("{url}") is different than expected. Make sure you added the right one.'
+                assert (
+                    hashlib.md5(content).hexdigest() == hash_of_script
+                ), f'URL ("{url}") is different than expected. Make sure you added the right one.'
 
                 with open(local_path, "wb") as file:
                     file.write(content)
@@ -1474,11 +1476,10 @@ class FinQAEval(InstanceMetric):
             spec.loader.exec_module(module)
             return module
 
-        # remote_url = "https://github.com/czyssrs/FinQA/blob/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
-        remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/code/evaluate/evaluate.py"
-        local_filepath = "finqa_eval_script.py"
+        remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
+        local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = 5083967287067854908
+        hash_of_script = "42430b8613082bb4b85d49210284135d"
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
