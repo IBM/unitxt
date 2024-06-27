@@ -15,6 +15,8 @@ from .settings_utils import get_settings
 settings = get_settings()
 logger = get_logger()
 
+Instance = Dict[str, Any]
+
 
 class Stream(Dataclass):
     @abstractmethod
@@ -35,7 +37,7 @@ class Stream(Dataclass):
 
 
 class ListStream(Stream):
-    instances_list: List[Dict[str, Any]]
+    instances_list: List[Instance]
     copying: bool = False
 
     def __iter__(self):

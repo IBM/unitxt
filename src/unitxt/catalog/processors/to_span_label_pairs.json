@@ -1,17 +1,7 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "regex_parser",
-            "regex": "\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*:\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*(?=,|$)",
-            "field": "prediction",
-            "process_every_value": false
-        },
-        {
-            "__type__": "regex_parser",
-            "regex": "\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*:\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*(?=,|$)",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "regex_parser",
+        "regex": "\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*:\\s*((?:[^,:\\\\]|\\\\.)+?)\\s*(?=,|$)"
+    }
 }

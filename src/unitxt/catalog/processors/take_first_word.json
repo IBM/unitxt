@@ -1,15 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "take_first_word",
-            "field": "prediction",
-            "process_every_value": false
-        },
-        {
-            "__type__": "take_first_word",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "take_first_word"
+    }
 }

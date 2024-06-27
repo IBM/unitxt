@@ -5,6 +5,9 @@ from typing import Any, Dict, List, Optional
 from datasets import Features, Sequence, Value
 
 from .operator import InstanceOperatorValidator
+from .settings_utils import get_constants
+
+constants = get_constants()
 
 UNITXT_DATASET_SCHEMA = Features(
     {
@@ -18,6 +21,24 @@ UNITXT_DATASET_SCHEMA = Features(
         "data_classification_policy": Sequence(Value("string")),
     }
 )
+
+
+UNITXT_INFERENCE_SCHEMA = Features(
+    {
+        "source": Value("string"),
+        "metrics": Sequence(Value("string")),
+        "group": Value("string"),
+        "postprocessors": Sequence(Value("string")),
+        "task_data": Value(dtype="string"),
+        "data_classification_policy": Sequence(Value("string")),
+    }
+)
+
+
+def get_schema(stream_name):
+    if stream_name == constants.inference_stream:
+        return UNITXT_INFERENCE_SCHEMA
+    return UNITXT_DATASET_SCHEMA
 
 
 class ToUnitxtGroup(InstanceOperatorValidator):
@@ -37,20 +58,23 @@ class ToUnitxtGroup(InstanceOperatorValidator):
     ) -> Dict[str, Any]:
         task_data = {
             **instance["inputs"],
-            **instance["outputs"],
             "metadata": {
                 "template": self.artifact_to_jsonable(
                     instance["recipe_metadata"]["template"]
                 )
             },
         }
+
+        if stream_name != constants.inference_stream:
+            task_data = {**task_data, **instance["outputs"]}
+
         instance["task_data"] = json.dumps(task_data)
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []
 
             for key in instance.keys():
-                if key not in UNITXT_DATASET_SCHEMA:
+                if key not in get_schema(stream_name):
                     keys_to_delete.append(key)
 
             for key in keys_to_delete:
@@ -68,7 +92,8 @@ class ToUnitxtGroup(InstanceOperatorValidator):
         assert isinstance(
             instance, dict
         ), f"Instance should be a dict, got {type(instance)}"
+        schema = get_schema(stream_name)
         assert all(
-            key in instance for key in UNITXT_DATASET_SCHEMA
-        ), f"Instance should have the following keys: {UNITXT_DATASET_SCHEMA}. Instance is: {instance}"
-        UNITXT_DATASET_SCHEMA.encode_example(instance)
+            key in instance for key in schema
+        ), f"Instance should have the following keys: {schema}. Instance is: {instance}"
+        schema.encode_example(instance)

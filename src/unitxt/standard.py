@@ -8,11 +8,14 @@ from .operator import SequentialOperator, SourceSequentialOperator, StreamingOpe
 from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
+from .settings_utils import get_constants
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
+from .task import Task
 from .templates import Template
 
+constants = get_constants()
 logger = get_logger()
 
 
@@ -26,7 +29,8 @@ class AddDemosField(SpreadSplit):
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
-    card: TaskCard
+    card: TaskCard = None
+    task: Task = None
     template: Template = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
@@ -63,6 +67,14 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def verify(self):
         super().verify()
+        if self.task is None and self.card is None:
+            raise ValueError("Set card or task in the recipe")
+        if self.card is None and (
+            self.num_demos > 0 or self.demos_pool_size is not None
+        ):
+            raise ValueError(
+                "To use num_demos and demos_pool_size in recipe set a card."
+            )
         if self.num_demos > 0:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
@@ -119,31 +131,33 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.metrics is None:
             metrics = [
                 metric if isinstance(metric, str) else metric.to_json()
-                for metric in self.card.task.metrics
+                for metric in self.task.metrics
             ]
         else:
             metrics = self.metrics
         return metrics, postprocessors
 
     def set_pipelines(self):
-        self.loading = SequentialOperator()
-        self.loading.__description__ = "Loading the data from the data source."
-        self.metadata = SequentialOperator()
-        self.metadata.__description__ = (
-            "Adding metadata (e.g. format, system prompt, template)  "
+        self.loading = SequentialOperator(
+            __description__="Loading the data from the data source."
         )
-        self.standardization = SequentialOperator()
-        self.standardization.__description__ = (
-            "Standardizing the raw dataset fields to task field definition."
+        self.metadata = SequentialOperator(
+            __description__="Adding metadata (e.g. format, system prompt, template)  "
         )
-        self.processing = SequentialOperator()
-        self.processing.__description__ = (
-            "Setting task fields (and selecting demos per sample if needed)."
+        self.standardization = SequentialOperator(
+            __description__="Standardizing the raw dataset fields to task field definition."
         )
-        self.verblization = SequentialOperator()
-        self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
-        self.finalize = SequentialOperator()
-        self.finalize.__description__ = "Adding post processors. Removing intermediate fields. Creating the final output dataset."
+
+        self.processing = SequentialOperator(
+            __description__="Setting task fields (and selecting demos per sample if needed)."
+        )
+
+        self.verblization = SequentialOperator(
+            __description__="Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
+        )
+        self.finalize = SequentialOperator(
+            __description__="Adding post processors. Removing intermediate fields. Creating the final output dataset."
+        )
 
         self.steps = [
             self.loading,
@@ -180,8 +194,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self._demos_pool_cache = None
 
     def production_preprocess(self, task_instances):
-        ms = MultiStream.from_iterables({"__inference__": task_instances})
-        return list(self.inference_instance(ms)["__inference__"])
+        ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        return list(self.inference_instance(ms)[constants.inference_stream])
 
     def production_demos_pool(self):
         if self.num_demos > 0:
@@ -197,30 +211,36 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.before_process_multi_stream()
         multi_stream = MultiStream.from_iterables(
             {
-                "__inference__": self.production_preprocess(task_instances),
+                constants.inference_stream: self.production_preprocess(task_instances),
                 self.demos_pool_name: self.production_demos_pool(),
             }
         )
         multi_stream = self.inference(multi_stream)
-        return list(multi_stream["__inference__"])
+        return list(multi_stream[constants.inference_stream])
 
     def prepare(self):
         # To avoid the Python's mutable default list trap, we set the default value to None
         # and then set it to an empty list if it is None.
-        if self.card.preprocess_steps is None:
+        if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
+
+        if self.task is None:
+            self.task = self.card.task
 
         self.set_pipelines()
 
-        loader = self.card.loader
-        if self.loader_limit:
-            loader.loader_limit = self.loader_limit
-            logger.info(f"Loader line limit was set to  {self.loader_limit}")
-        self.loading.steps.append(loader)
+        if self.card is not None:
+            loader = self.card.loader
+            if self.loader_limit:
+                loader.loader_limit = self.loader_limit
+                logger.info(f"Loader line limit was set to  {self.loader_limit}")
+            self.loading.steps.append(loader)
 
-        # This is required in case loader_limit is not enforced by the loader
-        if self.loader_limit:
-            self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
+            # This is required in case loader_limit is not enforced by the loader
+            if self.loader_limit:
+                self.loading.steps.append(
+                    StreamRefiner(max_instances=self.loader_limit)
+                )
 
         self.metadata.steps.append(
             Set(
@@ -234,9 +254,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             )
         )
 
-        self.standardization.steps.extend(self.card.preprocess_steps)
+        if self.card:
+            self.standardization.steps.extend(self.card.preprocess_steps)
 
-        self.processing.steps.append(self.card.task)
+        self.processing.steps.append(self.task)
 
         if self.augmentor.augment_task_input:
             self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)

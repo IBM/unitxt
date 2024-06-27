@@ -2,19 +2,23 @@
     "__type__": "sequential_operator",
     "steps": [
         {
-            "__type__": "regex_split",
-            "field": "references",
-            "by": "(?:^|\n)- ",
-            "process_every_value": true
+            "__type__": "post_process",
+            "process_prediction": false,
+            "operator": {
+                "__type__": "regex_split",
+                "by": "(?:^|\n)- "
+            }
         },
         {
-            "__type__": "remove_values",
-            "field": "references",
-            "unallowed_values": [
-                "",
-                " "
-            ],
-            "process_every_value": true
+            "__type__": "post_process",
+            "process_prediction": false,
+            "operator": {
+                "__type__": "remove_values",
+                "unallowed_values": [
+                    "",
+                    " "
+                ]
+            }
         }
     ]
 }

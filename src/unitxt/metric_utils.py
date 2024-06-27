@@ -24,9 +24,11 @@ from .operators import (
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
+
+constants = get_constants()
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
@@ -156,6 +158,7 @@ _post_process_steps = SequentialOperator(
         Copy(
             field="references",
             to_field="raw_references",
+            dont_apply_to_streams=[constants.inference_stream],
         ),
         Copy(
             field="source",
@@ -171,6 +174,7 @@ _post_process_steps = SequentialOperator(
         Copy(
             field="references",
             to_field="processed_references",
+            dont_apply_to_streams=[constants.inference_stream],
         ),
     ]
 )
@@ -185,10 +189,10 @@ class PostProcessRecipe(SequentialOperatorInitializer):
         ]
 
 
-def _post_process(
+def _inference_post_process(
     predictions: List[str],
     references: Iterable,
-    split_name: str = "all",
+    split_name: str = constants.inference_stream,
 ):
     _reset_env_local_catalogs()
     register_all_artifacts()

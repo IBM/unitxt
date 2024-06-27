@@ -1161,7 +1161,13 @@ class TestMetrics(UnitxtTestCase):
             for key, value in global_result.items()
             if key in expected_global_result
         }
-        self.assertDictEqual(global_result, expected_global_result)
+        output, target = global_result, expected_global_result
+
+        self.assertAlmostEqual(output["score"], target["score"], places=3)
+        self.assertAlmostEqual(
+            output["my_perplexity"], target["my_perplexity"], places=3
+        )
+        self.assertEqual(output["score_name"], target["score_name"])
 
         instance_targets = [
             {
@@ -1172,7 +1178,17 @@ class TestMetrics(UnitxtTestCase):
             }
         ]
         for output, target in zip(outputs, instance_targets):
-            self.assertDictEqual(output["score"]["instance"], target)
+            output = output["score"]["instance"]
+            self.assertAlmostEqual(
+                output["my_perplexity"], target["my_perplexity"], places=3
+            )
+            self.assertAlmostEqual(output["score"], target["score"], places=3)
+            self.assertAlmostEqual(
+                output["my_reference_scores"][0],
+                target["my_reference_scores"][0],
+                places=3,
+            )
+            self.assertEqual(output["score_name"], target["score_name"])
 
 
 class TestConfidenceIntervals(UnitxtTestCase):

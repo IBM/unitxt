@@ -1,14 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "extract_mt_bench_label_judgment",
-            "field": "prediction"
-        },
-        {
-            "__type__": "extract_mt_bench_label_judgment",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "extract_mt_bench_label_judgment"
+    }
 }

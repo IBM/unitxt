@@ -1,14 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "match_closest_option",
-            "field": "prediction"
-        },
-        {
-            "__type__": "match_closest_option",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "match_closest_option"
+    }
 }

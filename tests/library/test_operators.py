@@ -2190,7 +2190,7 @@ label (str):
         with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
-            ).process(instance={"a": [1, 2, 3], "b": [11]})
+            ).process_instance({"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
             str(ae.exception),

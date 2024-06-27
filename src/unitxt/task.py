@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import fetch_artifact
 from .logging_utils import get_logger
 from .operator import InstanceOperator
+from .settings_utils import get_constants
 from .type_utils import (
     get_args,
     get_origin,
@@ -11,6 +12,9 @@ from .type_utils import (
     parse_type_string,
     verify_required_schema,
 )
+
+constants = get_constants()
+logger = get_logger()
 
 
 class Task(InstanceOperator):
@@ -49,7 +53,7 @@ class Task(InstanceOperator):
         for io_type in ["inputs", "outputs"]:
             data = self.inputs if io_type == "inputs" else self.outputs
             if not isoftype(data, Dict[str, str]):
-                get_logger().warning(
+                logger.warning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
                     f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
@@ -62,7 +66,7 @@ class Task(InstanceOperator):
                     self.outputs = data
 
         if not self.prediction_type:
-            get_logger().warning(
+            logger.warning(
                 "'prediction_type' was not set in Task. It is used to check the output of "
                 "template post processors is compatible with the expected input of the metrics. "
                 "Setting `prediction_type` to 'Any' (no checking is done). In future version "
@@ -147,18 +151,22 @@ class Task(InstanceOperator):
         instance = self.set_default_values(instance)
 
         verify_required_schema(self.inputs, instance)
-        verify_required_schema(self.outputs, instance)
-
         inputs = {key: instance[key] for key in self.inputs.keys()}
-        outputs = {key: instance[key] for key in self.outputs.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
-        return {
+        result = {
             "inputs": inputs,
-            "outputs": outputs,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
         }
+
+        if stream_name == constants.inference_stream:
+            return result
+
+        verify_required_schema(self.outputs, instance)
+        result["outputs"] = {key: instance[key] for key in self.outputs.keys()}
+
+        return result
 
 
 class FormTask(Task):

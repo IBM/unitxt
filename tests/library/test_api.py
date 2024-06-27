@@ -23,8 +23,8 @@ class TestAPI(UnitxtTestCase):
             '"attribute_name": "similarity", '
             '"min_value": 1.0, '
             '"max_value": 5.0, '
-            '"attribute_value": 5.0, '
-            '"metadata": {"template": "templates.regression.two_texts.simple"}}',
+            '"metadata": {"template": "templates.regression.two_texts.simple"}, '
+            '"attribute_value": 5.0}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -112,7 +112,6 @@ class TestAPI(UnitxtTestCase):
     def test_produce_with_recipe(self):
         result = produce(
             {
-                "label": "?",
                 "text_a": "It works perfectly",
                 "text_b": "It works!",
                 "classes": ["entailment", "not entailment"],
@@ -126,15 +125,12 @@ class TestAPI(UnitxtTestCase):
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "target": "?",
-            "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
             '"text_a_type": "premise", '
             '"text_b": "It works!", '
             '"text_b_type": "hypothesis", '
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
-            '"label": "?", '
             '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
@@ -146,11 +142,36 @@ class TestAPI(UnitxtTestCase):
 
         self.assertDictEqual(target, result)
 
+    def test_produce_with_task(self):
+        result = produce(
+            {
+                "text_a": "It works perfectly",
+                "text_b": "It works!",
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
+            },
+            "task=tasks.classification.multi_class.relation,template=templates.classification.multi_class.relation.default",
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": [],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"template": "templates.classification.multi_class.relation.default"}}',
+            "group": "unitxt",
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+        }
+        self.assertDictEqual(target, result)
+
     def test_produce_with_recipe_with_list_of_instances(self):
         result = produce(
             [
                 {
-                    "label": "?",
                     "text_a": "It works perfectly",
                     "text_b": "It works!",
                     "classes": ["entailment", "not entailment"],
@@ -165,15 +186,12 @@ class TestAPI(UnitxtTestCase):
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "target": "?",
-            "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
             '"text_a_type": "premise", '
             '"text_b": "It works!", '
             '"text_b_type": "hypothesis", '
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
-            '"label": "?", '
             '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
@@ -222,10 +240,22 @@ class TestAPI(UnitxtTestCase):
         engine = "engines.model.flan.t5_small.hf"
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
+            {"question": "How many days there are in a week"},
             {
                 "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
+            },
+        ]
+        predictions = infer(instances, recipe, engine)
+        targets = ["365", "1"]
+        self.assertListEqual(predictions, targets)
+
+    def test_infer_with_task(self):
+        engine = "engines.model.flan.t5_small.hf"
+        recipe = "task=tasks.qa.open,template=templates.qa.open.simple"
+        instances = [
+            {"question": "How many days there are in a week"},
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
             },
         ]
         predictions = infer(instances, recipe, engine)

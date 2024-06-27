@@ -1,11 +1,14 @@
 from abc import abstractmethod
 from dataclasses import field
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Dict, Generator, List, Optional, Union
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
-from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
+from .settings_utils import get_constants
+from .stream import DynamicStream, EmptyStreamError, Instance, MultiStream, Stream
 from .utils import is_module_available
+
+constants = get_constants()
 
 
 class Operator(Artifact):
@@ -121,7 +124,7 @@ def instance_generator(instance):
     yield instance
 
 
-def stream_single(instance: Dict[str, Any]) -> Stream:
+def stream_single(instance: Instance) -> Stream:
     return DynamicStream(
         generator=instance_generator, gen_kwargs={"instance": instance}
     )
@@ -135,8 +138,13 @@ class MultiStreamOperator(StreamingOperator):
 
     caching: bool = NonPositionalField(default=None)
 
-    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
+    def __call__(
+        self, multi_stream: Optional[MultiStream] = None, **instance: Instance
+    ) -> Union[MultiStream, Instance]:
         self.before_process_multi_stream()
+        if instance:
+            if multi_stream is not None:
+                return self.process_instance(instance)
         result = self._process_multi_stream(multi_stream)
         if self.caching is not None:
             result.set_caching(self.caching)
@@ -158,11 +166,11 @@ class MultiStreamOperator(StreamingOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         pass
 
-    def process_instance(self, instance, stream_name="tmp"):
+    def process_instance(self, instance, stream_name=constants.instance_stream):
         instance = self.verify_instance(instance)
         multi_stream = MultiStream({stream_name: stream_single(instance)})
         processed_multi_stream = self(multi_stream)
-        return next(iter(processed_multi_stream[stream_name]))
+        return instance_result(processed_multi_stream[stream_name])
 
 
 class SourceOperator(MultiStreamOperator):
@@ -212,6 +220,15 @@ class StreamInitializerOperator(SourceOperator):
     @abstractmethod
     def process(self, *args, **kwargs) -> MultiStream:
         pass
+
+
+def instance_result(result_stream):
+    result = list(result_stream)
+    if len(result) == 0:
+        return None
+    if len(result) == 1:
+        return result[0]
+    return result
 
 
 class StreamOperator(MultiStreamOperator):
@@ -277,12 +294,12 @@ class StreamOperator(MultiStreamOperator):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         pass
 
-    def process_instance(self, instance, stream_name="tmp"):
+    def process_instance(self, instance, stream_name=constants.instance_stream):
         instance = self.verify_instance(instance)
         processed_stream = self._process_single_stream(
             stream_single(instance), stream_name
         )
-        return next(iter(processed_stream))
+        return instance_result(processed_stream)
 
 
 class SingleStreamOperator(StreamOperator):
@@ -323,10 +340,10 @@ class PagedStreamOperator(StreamOperator):
     def process(self, page: List[Dict], stream_name: Optional[str] = None) -> Generator:
         pass
 
-    def process_instance(self, instance, stream_name="tmp"):
+    def process_instance(self, instance, stream_name=constants.instance_stream):
         instance = self.verify_instance(instance)
         processed_stream = self._process_page([instance], stream_name)
-        return next(iter(processed_stream))
+        return instance_result(processed_stream)
 
 
 class SingleStreamReducer(StreamingOperator):
@@ -335,7 +352,7 @@ class SingleStreamReducer(StreamingOperator):
     A single-stream reducer is a type of `StreamingOperator` that operates on individual `Stream` objects within a `MultiStream` and reduces each `Stream` to a single output value. The `process` method should be implemented by subclasses to define the specific reduction operation to be performed on each `Stream`.
     """
 
-    def __call__(self, multi_stream: Optional[MultiStream] = None) -> Dict[str, Any]:
+    def __call__(self, multi_stream: Optional[MultiStream] = None) -> Instance:
         result = {}
         for stream_name, stream in multi_stream.items():
             stream = self.process(stream)
@@ -370,18 +387,18 @@ class InstanceOperator(StreamOperator):
                 ) from e
 
     def _process_instance(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, instance: Instance, stream_name: Optional[str] = None
+    ) -> Instance:
         instance = self.verify_instance(instance)
         return self.process(instance, stream_name)
 
     @abstractmethod
     def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, instance: Instance, stream_name: Optional[str] = None
+    ) -> Instance:
         pass
 
-    def process_instance(self, instance, stream_name="tmp"):
+    def process_instance(self, instance, stream_name=constants.instance_stream):
         return self._process_instance(instance, stream_name)
 
 
@@ -404,28 +421,11 @@ class InstanceOperatorValidator(InstanceOperator):
         except StopIteration as e:
             raise EmptyStreamError(f"Stream '{stream_name}' is empty") from e
         result = self._process_instance(first_instance, stream_name)
-        self.validate(result)
+        self.validate(result, stream_name)
         yield result
         yield from (
             self._process_instance(instance, stream_name) for instance in iterator
         )
-
-
-class BaseFieldOperator(Artifact):
-    """A class representing a field operator in the streaming system.
-
-    A field operator is a type of `Artifact` that operates on a single field within an instance. It takes an instance and a field name as input, processes the field, and updates the field in the instance with the processed value.
-    """
-
-    def __call__(self, data: Dict[str, Any], field: str) -> dict:
-        data = self.verify_instance(data)
-        value = self.process(data[field])
-        data[field] = value
-        return data
-
-    @abstractmethod
-    def process(self, value: Any) -> Any:
-        pass
 
 
 class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
@@ -436,7 +436,12 @@ class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
     In order to make this efficient and to avoid qudratic complexity, it caches the accessible streams by default.
     """
 
-    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
+    def __call__(
+        self, multi_stream: Optional[MultiStream] = None, **instance: Instance
+    ) -> MultiStream:
+        if instance:
+            raise NotImplementedError("Instance mode is not supported")
+
         result = {}
 
         for stream_name, stream in multi_stream.items():
