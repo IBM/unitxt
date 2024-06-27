@@ -29,6 +29,5 @@ class UnitxtCatalogPreparationTestCase(unittest.TestCase):
         unitxt.settings.use_only_local_catalogs = True
         # unitxt.settings.global_loader_limit = 300
         unitxt.settings.max_log_message_size = 1000
-        unitxt.settings.log_level = "error"
         register_local_catalog_for_tests()
         cls.maxDiff = None

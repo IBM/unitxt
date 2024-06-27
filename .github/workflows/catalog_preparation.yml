@@ -13,6 +13,7 @@ jobs:
      env:
        OS: ubuntu-latest
        GENAI_KEY: "dummy"
+       UNITXT_LOG_LEVEL: ERROR
 
      steps:
      - uses: actions/checkout@v4
