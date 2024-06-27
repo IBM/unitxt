@@ -15,7 +15,7 @@ Retrieval-Augmented Generation (RAG) pipelines consist of the following steps:
 #. A generative model is prompted to answer the user question based on the retrieved content. 
 #. The generated answer is returned to the user.
 
-RAG evaluation covers the performance of both the retrieval system and the generative model. We will refer to the output of the retrieval system as ``retrieved texts`` or ``contexts`` (an ordered list of texts with ids) and the output of the generative model as ``generated answer`` (a text string). 
+RAG evaluation covers the performance of both the retrieval system and the generative model. We refer to the output of the retrieval system as ``retrieved texts`` or ``contexts`` (an ordered list of texts with ids) and the output of the generative model as ``generated answer`` (a text string). 
 
 
 .. _rag_task:
