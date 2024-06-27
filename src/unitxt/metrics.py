@@ -3795,6 +3795,8 @@ class IsCodeMixed(BulkInstanceMetric):
     reduction_map = {"mean": [main_score]}
     prediction_type = "str"
 
+    _requirements_list: List[str] = ["transformers", "torch"]
+
     def prepare(self):
         model_id = "Nexusflow/Starling-LM-7B-beta"
         self.inference_model = HFPipelineBasedInferenceEngine(
