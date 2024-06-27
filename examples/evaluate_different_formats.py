@@ -47,6 +47,7 @@ dataset = load_dataset(
     card=card,
     template=template,
     format="formats.llama3_chat",
+    system_prompt="system_prompts.models.llama2",
     num_demos=2,
     demos_pool_size=3,
 )

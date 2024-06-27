@@ -25,7 +25,7 @@ format = SystemFormat(
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     "{target_prefix}{target}<|eot_id|>",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    + DEFAULT_SYSTEM_PROMPT
+    + "{system_prompt}{instruction}"
     + "<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
 )
@@ -41,7 +41,7 @@ format = SystemFormat(
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     "{target_prefix}{target}<|eot_id|>",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    "{system_prompt}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
+    "{system_prompt}{instruction}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
 )
 
