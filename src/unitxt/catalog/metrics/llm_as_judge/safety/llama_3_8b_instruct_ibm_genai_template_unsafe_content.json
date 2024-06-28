@@ -10,6 +10,6 @@
     },
     "template": "templates.safety.unsafe_content",
     "task": "rating.single_turn",
-    "format": "formats.llama3_chat",
+    "format": "formats.llama3_instruct",
     "main_score": "llama_3_8b_instruct_ibm_genai_template_unsafe_content"
 }

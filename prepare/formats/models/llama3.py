@@ -12,14 +12,6 @@ from unitxt.formats import SystemFormat
 #
 # {{ model_answer_1 }}<|eot_id|>
 
-# The following is a Llama-2 default prompt obtained from online sources
-# See: https://developer.ibm.com/tutorials/awb-prompt-engineering-llama-2/
-DEFAULT_SYSTEM_PROMPT = """\
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."""
-
-
 format = SystemFormat(
     demo_format="<|start_header_id|>user<|end_header_id|>\n\n"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
@@ -32,21 +24,36 @@ format = SystemFormat(
 
 add_to_catalog(
     format,
-    "formats.llama3_chat",
+    "formats.llama3_instruct",
     overwrite=True,
 )
 
 format = SystemFormat(
-    demo_format="<|start_header_id|>user<|end_header_id|>\n\n"
-    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-    "{target_prefix}{target}<|eot_id|>",
+    demo_format="{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    "{target_prefix}{target}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    "{system_prompt}{instruction}<|eot_id|>{demos}<|start_header_id|>user<|end_header_id|>\n\n"
+    "{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{instruction}\n\n"
+    "{demos}"
     "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
 )
 
 add_to_catalog(
     format,
-    "formats.llama3_instruct",
+    "formats.llama3_instruct_alt1",
+    overwrite=True,
+)
+
+format = SystemFormat(
+    demo_format="{source}\n\n{target_prefix}{target}\n\n",
+    model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+    "{system_prompt}{instruction}"
+    "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+    "{demos}"
+    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
+)
+
+add_to_catalog(
+    format,
+    "formats.llama3_instruct_alt2",
     overwrite=True,
 )
