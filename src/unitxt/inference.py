@@ -238,15 +238,13 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     """Runs inference using ibm-watsonx-ai.
 
     Attributes:
-        client (ibm_watsonx_ai.client.APIClient, optional):
-            By default, it is created by a class instance but can be directly
-            provided instead.
-        credentials (Union[Dict[str, str], ibm_watsonx_ai.credentials.Credentials], optional):
-            By default, it is created by a class instance which tries to retrieve
+        client: By default, it is created by a class instance but can be directly
+            provided instead as an instance of 'ibm_watsonx_ai.client.APIClient'.
+        credentials: By default, it is created by a class instance which tries to retrieve
             proper environment variables ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY").
             However, either a dictionary with the following keys: "url", "apikey",
-            "project_id", or an instance of 'Credentials' can be directly provided
-            instead.
+            "project_id", or an instance of 'ibm_watsonx_ai.credentials.Credentials'
+            can be directly provided instead.
         model_name (str, optional): ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
@@ -274,11 +272,8 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         results = wml_inference.infer(dataset["test"])
     """
 
-    from ibm_watsonx_ai.client import APIClient
-    from ibm_watsonx_ai.credentials import Credentials
-
-    client: Optional[APIClient] = None
-    credentials: Optional[Union[Dict[str, str], Credentials]] = None
+    client = None
+    credentials = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     parameters: WMLInferenceEngineParams = field(
@@ -289,7 +284,9 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     label: str = "wml"
     _requirement = {
-        "ibm-watsonx-ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'"
+        "ibm-watsonx-ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
+        "It is advised to have Python version >=3.10 installed, as at lower version this package "
+        "may cause conflicts with other installed packages."
     }
 
     data_classification_policy = ["proprietary"]
@@ -311,7 +308,7 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
         return credentials
 
-    def _initialize_wml_client(self) -> APIClient:
+    def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
         if self.credentials is None:
