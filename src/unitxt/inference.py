@@ -301,8 +301,8 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             env_var = os.environ.get(env_var_name)
             assert env_var, (
                 f"Error while trying to run 'WMLInferenceEngine'. "
-                f"Please set the env variable: '{env_var}', or directly "
-                f"provide an instance of ibm-watsonx-ai 'Credentials' "
+                f"Please set the env variable: '{env_var_name}', or "
+                f"directly provide an instance of ibm-watsonx-ai 'Credentials' "
                 f"to the engine."
             )
 
