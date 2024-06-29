@@ -29,21 +29,6 @@ add_to_catalog(
 )
 
 format = SystemFormat(
-    demo_format="{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-    "{target_prefix}{target}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n",
-    model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-    "{system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{instruction}\n\n"
-    "{demos}"
-    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
-)
-
-add_to_catalog(
-    format,
-    "formats.llama3_instruct_alt1",
-    overwrite=True,
-)
-
-format = SystemFormat(
     demo_format="{source}\n\n{target_prefix}{target}\n\n",
     model_input_format="<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
     "{system_prompt}{instruction}"
@@ -54,6 +39,6 @@ format = SystemFormat(
 
 add_to_catalog(
     format,
-    "formats.llama3_instruct_alt2",
+    "formats.llama3_instruct_all_demos_in_one_turn",
     overwrite=True,
 )
